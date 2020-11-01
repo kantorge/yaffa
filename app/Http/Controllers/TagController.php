@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Tag;
 use App\Http\Requests\TagRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class TagController extends Controller
 {
@@ -33,7 +34,9 @@ class TagController extends Controller
             return $tag;
         });
 
-        return view('tags.index',['tags'=>$tags]);
+        JavaScript::put(['tags' => $tags]);
+
+        return view('tags.index');
     }
 
     public function create()

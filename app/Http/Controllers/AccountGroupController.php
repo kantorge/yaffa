@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\AccountGroup;
 use App\Http\Requests\AccountGroupRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class AccountGroupController extends Controller
 {
@@ -32,6 +33,8 @@ class AccountGroupController extends Controller
             $accountGroup['delete_url'] = action('AccountGroupController@destroy', $accountGroup);
             return $accountGroup;
         });
+
+        JavaScript::put(['accountGroups' => $accountGroups]);
 
         return view('accountgroups.index',['accountGroups'=>$accountGroups]);
     }

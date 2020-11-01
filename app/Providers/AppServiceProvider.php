@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Account;
 use App\Payee;
+use App\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -35,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'account' => Account::class,
             'payee' => Payee::class,
+            'transaction_detail_standard' => TransactionDetailStandard::class,
+            'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
     }
 }

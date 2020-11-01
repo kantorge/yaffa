@@ -16,7 +16,7 @@ class AccountSeeder extends Seeder
     public function run()
     {
         /* specific values */
-        $account = AccountEntity::create(
+        $account = new AccountEntity(
             [
                 'name' => 'Pénztárca',
                 'active' => 1,
@@ -24,19 +24,21 @@ class AccountSeeder extends Seeder
             ]
         );
 
-        $accountConfig = Account::create(
+        $accountConfig = new Account(
             [
                 'opening_balance' => 1000,
-                'account_groups_id' => AccountGroup::where('name', 'Készpénz')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Készpénz')->pluck('id')->first(),
                 'currencies_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
             ]
         );
+        $accountConfig->save();
+
         $account->config()->associate($accountConfig);
 
         $account->save();
 
         /* specific values */
-        $account = AccountEntity::create(
+        $account = new AccountEntity(
             [
                 'name' => 'Bankszámla',
                 'active' => 1,
@@ -44,13 +46,15 @@ class AccountSeeder extends Seeder
             ]
         );
 
-        $accountConfig = Account::create(
+        $accountConfig = new Account(
             [
                 'opening_balance' => 1000,
-                'account_groups_id' => AccountGroup::where('name', 'Bankszámla')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Bankszámla')->pluck('id')->first(),
                 'currencies_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );
+        $accountConfig->save();
+
         $account->config()->associate($accountConfig);
 
         $account->save();

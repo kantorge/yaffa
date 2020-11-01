@@ -7,6 +7,7 @@ use App\InvestmentGroup;
 use App\Currency;
 use App\Http\Requests\InvestmentRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class InvestmentController extends Controller
 {
@@ -35,7 +36,9 @@ class InvestmentController extends Controller
             return $investment;
         });
 
-        return view('investments.index',['investments'=>$investments]);
+        JavaScript::put(['investments' => $investments]);
+
+        return view('investments.index');
     }
 
     public function edit($id)

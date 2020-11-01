@@ -21,37 +21,37 @@
         <!-- /.card-header -->
         <div class="card-body">
             <div class="form-group">
-                {{ Form::label('name', \App\Currency::label('name'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
             <div class="form-group">
-                {{ Form::label('iso_code', \App\Currency::label('iso_code'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('iso_code', 'ISO Code', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('iso_code', old('iso_code'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
             <div class="form-group">
-                {{ Form::label('num_digits', \App\Currency::label('num_digits'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('num_digits', 'Number of digits', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('num_digits', old('num_digits'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
             <div class="form-group">
-                {{ Form::label('suffix', \App\Currency::label('suffix'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('suffix', 'Suffix', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('suffix', old('suffix'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
             <div class="form-group">
-                {{ Form::label('base', \App\Currency::label('base'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('base', 'Base currency', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::checkbox('base', '1') }}
                 </div>
             </div>
             <div class="form-group">
-                {{ Form::label('auto_update', \App\Currency::label('auto_update'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('auto_update', 'Automatic update', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::checkbox('auto_update', '1') }}
                 </div>

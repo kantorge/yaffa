@@ -17,8 +17,8 @@ class CreateAccountEntitiesTable extends Migration
             $table->id();
             $table->string('name', 191)->unique();
             $table->boolean('active')->default('1');
-            $table->string('config_type')->nullable();
-            $table->unsignedInteger('config_id')->nullable();
+            $table->string('config_type');
+            $table->unsignedInteger('config_id');
             $table->timestamps();
         });
     }

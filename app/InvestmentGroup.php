@@ -2,13 +2,11 @@
 
 namespace App;
 
-use App\Traits\LabelsTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
 class InvestmentGroup extends Model
 {
-    use LabelsTrait;
 
     protected $table = 'investment_groups';
 
@@ -27,10 +25,5 @@ class InvestmentGroup extends Model
                 'name' => 'required|min:2|max:191|unique:investment_groups,name' . ($id ? ",$id" : ''),
             ];
     }
-
-    public static $labels = [
-        'id' => 'ID',
-        'name' => 'Investment group'
-    ];
 
 }

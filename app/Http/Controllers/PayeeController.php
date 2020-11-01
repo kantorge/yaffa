@@ -7,6 +7,7 @@ use App\Category;
 use App\Http\Requests\AccountEntityRequest;
 use App\Payee;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class PayeeController extends Controller
 {
@@ -38,11 +39,9 @@ class PayeeController extends Controller
             return $payee;
         });
 
-        return view('payees.index',
-                    [
-                        'payees' => $payees
-                    ]
-                );
+        JavaScript::put(['payees' => $payees]);
+
+        return view('payees.index');
     }
 
     public function edit($id)
@@ -51,6 +50,7 @@ class PayeeController extends Controller
             ->find($id);
 
         //get all categories
+        //TODO: ezt érdemes AJAX-ból hívni?
         $categories = Category::all();
         $categories->sortBy('full_name');
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Category;
 use App\Http\Requests\CategoryRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class CategoryController extends Controller
 {
@@ -24,7 +25,10 @@ class CategoryController extends Controller
             $category['delete_url'] = action('CategoryController@destroy', $category);
             return $category;
         });
-        return view('categories.index',['categories'=>$categories]);
+
+        JavaScript::put(['categories' => $categories]);
+
+        return view('categories.index');
     }
 
     public function create()

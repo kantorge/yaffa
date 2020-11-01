@@ -54,4 +54,17 @@ class AccountApiController extends Controller
         //return data
         return response()->json($accounts, Response::HTTP_OK);
     }
+
+    public function getAccountCurrencyLabel(Request $request) {
+
+		if (empty($request->get('account_id'))) {
+			die("");
+		}
+
+        $account = Account::find($request->get('account_id'));
+        $currency = \App\Currency::find($account->currencies_id);
+
+		echo $currency->suffix;
+    }
+
 }

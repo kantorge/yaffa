@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Account;
 use App\AccountEntity;
 use App\Http\Controllers\Controller;
 use App\Payee;
@@ -22,7 +23,7 @@ class PayeeApiController extends Controller
 		if ($request->get('q')) {
             $payees = $this->payee
                 ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', $request->get('q') . '%')
+                ->where('name', 'LIKE', '%' . $request->get('q') . '%')
                 ->where('active', 1)
                 ->orderBy('name')
                 ->take(10)
@@ -54,4 +55,18 @@ class PayeeApiController extends Controller
         //return data
         return response()->json($payees, Response::HTTP_OK);
     }
+
+    public function getDefaultCategoryForPayee(Request $request) {
+        if (empty($request->get('payee_id'))) {
+			return response("", Response::HTTP_OK);
+        }
+
+        $payee = AccountEntity::with(['config', 'config.categories'])->find($request->get('payee_id'));
+
+        if(!$payee->config->categories) {
+            return response("", Response::HTTP_OK);
+        }
+
+        return response($payee->config->categories->only(['id', 'full_name']), Response::HTTP_OK);
+	}
 }

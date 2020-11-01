@@ -33,10 +33,6 @@ class Payee extends AccountEntity
         'categories_id',
     ];
 
-    public static $labels = [
-        'category' => 'Category',
-    ];
-
     public function config()
     {
         return $this->morphOne(AccountEntity::class, 'config');

@@ -27,21 +27,21 @@
         <!-- /.card-header -->
         <div class="card-body">
             <div class="form-group">
-                {{ Form::label('name', \App\Category::label('name'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('active', \App\Category::label('active'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('active', 'Active', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::checkbox('active', '1', 1) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('parent_id', \App\Category::label('parent'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('parent_id', 'Parent', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::select('parent_id', $parents, old('parent_id'), ['class' => 'form-control', 'placeholder' => 'Parent']) }}
                 </div>

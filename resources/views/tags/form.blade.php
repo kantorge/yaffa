@@ -27,7 +27,7 @@
         <!-- /.card-header -->
         <div class="card-body">
             <div class="form-group">
-                {{ Form::label('name', \App\Tag::label('name'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>

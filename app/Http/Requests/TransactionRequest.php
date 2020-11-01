@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class TransactionRequest extends FormRequest
+{
+    public function authorize()
+    {
+        return true;
+    }
+
+    public function rules()
+    {
+        $rules = [
+            'transaction_type_id' => "required|exists:transaction_types,id",
+            'comment' => 'nullable|max:191',
+            'reconciled' => 'boolean',  //TODO: applyschedule and budget related rules
+            'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
+            'transactionItems' => 'array',
+            'transactionItems.*' => 'array',
+            'transactionItems.*.amount' => 'required|numeric|gt:0',
+            'transactionItems.*.category' => 'required|exists:categories,id',
+            'transactionItems.*.comment' => 'nullable|max:191',
+        ];
+
+        //adjust detail related rules, based on transaction type
+        //TODO: make it more dynamic instead of fixed IDs
+        if ($this->get('transaction_type_id') === 1) {
+            //withdrawal
+            $rules = array_merge($rules, [
+                'config.account_from_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,account'
+                ],
+                'config.account_to_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,payee'
+                ],
+                'config.amount_from' => 'required|numeric|gt:0',
+                'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+            ]);
+        } else if ($this->get('transaction_type_id') === 2) {
+            //deposit
+            $rules = array_merge($rules, [
+                'config.account_from_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,payeee'
+                ],
+                'config.account_to_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,account'
+                ],
+                'config.amount_from' => 'required|numeric|gt:0',
+                'config.amount_to' => 'required|numeric|gt:0',
+            ]);
+        } else if ($this->get('transaction_type_id') === 3) {
+            //deposit
+            $rules = array_merge($rules, [
+                'config.account_from_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,account'
+                ],
+                'config.account_to_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,account'
+                ],
+                'config.amount_from' => 'required|numeric|gt:0',
+                'config.amount_to' => 'required|numeric|gt:0',
+            ]);
+        }
+
+        //adjust date and schedule related rules
+        if (   $this->get('entry_type_schedule')
+            || $this->get('entry_type_budget')) {
+
+            $rules = array_merge($rules, [
+                'schedule_start' => 'required|date',
+                'schedule_next' => 'required|date',  //TODO: not earlier than schedule_start
+                'schedule_end' => 'nullable|date', //TODO: not earlier than schedule_start
+                'schedule_frequency' => 'required',
+                'schedule_interval' => 'required|numeric|gte:1',
+                'schedule_count' => 'nullable|numeric|gte:1',
+            ]);
+        } else {
+            $rules = array_merge($rules, [
+                'date' => 'required|date'
+            ]);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Load validator error messages to standard notifications array
+     *
+     * @return void
+     */
+    public function withValidator(Validator $validator): void
+    {
+
+        $validator->after(function (Validator $validator) {
+            foreach ($validator->errors()->all() as $message) {
+                add_notification($message, 'danger');
+            }
+        });
+    }
+
+    /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    protected function prepareForValidation()
+    {
+        //get transaction type ID by name
+        if ($this->transaction_type) {
+            $this->merge([
+                'transaction_type_id' => \App\TransactionType::where('name', $this->transaction_type)->first()->id
+            ]);
+        }
+
+        //check for checkbox-es
+        $this->merge([
+            'reconciled' => $this->reconciled ?? 0,
+            'is_schedule' => $this->entry_type_schedule ?? 0,
+            'is_budget' => $this->entry_type_budget ?? 0,
+        ]);
+
+        //dd($this);
+    }
+}

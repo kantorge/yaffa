@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\InvestmentGroup;
 use App\Http\Requests\InvestmentGroupRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class InvestmentGroupController extends Controller
 {
@@ -33,7 +34,9 @@ class InvestmentGroupController extends Controller
             return $investmentGroup;
         });
 
-        return view('investmentgroups.index',['investmentGroups'=>$investmentGroups]);
+        JavaScript::put(['investmentGroups' => $investmentGroups]);
+
+        return view('investmentgroups.index');
     }
 
     public function create()

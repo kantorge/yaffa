@@ -8,6 +8,7 @@ use App\AccountGroup;
 use App\Currency;
 use App\Http\Requests\AccountEntityRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class AccountController extends Controller
 {
@@ -27,7 +28,7 @@ class AccountController extends Controller
     {
         //Show all accounts from the database and return to view
         $accounts = $this->account
-            ->with(['config', 'config.account_groups', 'config.currencies'])
+            ->with(['config', 'config.account_group', 'config.currencies'])
             ->get();
 
         //support DataTables with action URLs
@@ -37,12 +38,14 @@ class AccountController extends Controller
             return $account;
         });
 
-        return view('accounts.index',['accounts'=>$accounts]);
+        JavaScript::put(['accounts' => $accounts]);
+
+        return view('accounts.index');
     }
 
     public function edit($id)
     {
-        $account = AccountEntity::with(['config', 'config.account_groups', 'config.currencies'])
+        $account = AccountEntity::with(['config', 'config.account_group', 'config.currencies'])
             ->find($id);
 
         //get all account groups

@@ -27,42 +27,42 @@
         <!-- /.card-header -->
         <div class="card-body">
             <div class="form-group">
-                {{ Form::label('name', \App\Investment::label('name'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('active', \App\Investment::label('active'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('active', 'Active', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::checkbox('active', '1', 1) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('name', \App\Investment::label('symbol'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Symbol', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('symbol', old('symbol'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('name', \App\Investment::label('comment'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Comment', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('comment', old('comment'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('task_id', \App\Investment::label('investment_group'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('task_id', 'Investment group', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::select('investment_groups_id', $allInvestmentGropus, old('investment_groups_id'), ['class' => 'form-control']) }}
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('task_id', \App\Investment::label('currency'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('task_id', 'Currency', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::select('currencies_id', $allCurrencies, old('currencies_id'), ['class' => 'form-control']) }}
                 </div>

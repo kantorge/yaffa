@@ -3,12 +3,9 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\LabelsTrait;
 
 class Category extends Model
 {
-
-    use LabelsTrait;
 
     protected $table = 'categories';
 
@@ -43,12 +40,6 @@ class Category extends Model
                 'parent_id' => 'in:category,id',
             ];
     }
-
-    public static $labels = [
-        'id' => 'ID',
-        'name' => 'Category',
-        'parent' => 'Kategória csoport',
-    ];
 
     public function parent()
     {

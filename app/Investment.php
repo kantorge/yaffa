@@ -2,14 +2,11 @@
 
 namespace App;
 
-use App\Traits\LabelsTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
 class Investment extends Model
 {
-
-    use LabelsTrait;
 
     protected $guarded = [];
 
@@ -48,10 +45,6 @@ class Investment extends Model
     protected $with = [
         'investment_groups',
         'currencies',
-    ];
-
-    public static $labels = [
-
     ];
 
     public function investment_groups()

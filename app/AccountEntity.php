@@ -2,14 +2,11 @@
 
 namespace App;
 
-use App\Traits\LabelsTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
 class AccountEntity extends Model
 {
-    use LabelsTrait;
-
     protected $table = 'account_entities';
 
     /**
@@ -30,12 +27,6 @@ class AccountEntity extends Model
 
     protected $casts = [
         'active' => 'boolean',
-    ];
-
-    public static $labels = [
-        'id' => 'ID',
-        'name' => 'Name',
-        'active' => 'Active',
     ];
 
     public function config()

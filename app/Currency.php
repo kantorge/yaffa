@@ -3,12 +3,9 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\LabelsTrait;
 
 class Currency extends Model
 {
-
-    use LabelsTrait;
 
     protected $table = 'currencies';
 
@@ -43,13 +40,4 @@ class Currency extends Model
             ];
     }
 
-    public static $labels = [
-        'id' => 'ID',
-        'name' => 'Currency',
-        'iso_code' => 'ISO Code',
-        'num_digits' => 'Number of decimal digits',
-        'suffix' => 'Suffix',
-        'base' => 'Base currency',
-        'auto_update' => 'Automatic exchange rate update'
-    ];
 }

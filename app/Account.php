@@ -31,14 +31,8 @@ class Account extends AccountEntity
      */
     protected $fillable = [
         'opening_balance',
-        'account_groups_id',
+        'account_group_id',
         'currencies_id',
-    ];
-
-    public static $labels = [
-        'opening_balance' => 'Opening balance',
-        'account_group' => 'Account group',
-        'currency' => 'Currency',
     ];
 
     public function config()
@@ -46,7 +40,7 @@ class Account extends AccountEntity
         return $this->morphOne(AccountEntity::class, 'config');
     }
 
-    public function account_groups()
+    public function account_group()
     {
         return $this->belongsTo(AccountGroup::class);
     }

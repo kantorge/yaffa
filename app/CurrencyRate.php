@@ -3,12 +3,9 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\LabelsTrait;
 
 class CurrencyRate extends Model
 {
-
-    use LabelsTrait;
 
     protected $table = 'currency_rates';
 
@@ -24,6 +21,4 @@ class CurrencyRate extends Model
         'rate',
     ];
 
-    public static $labels = [
-    ];
 }

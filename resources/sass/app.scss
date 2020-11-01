@@ -1,1 +1,30 @@
-//
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic');
+@import '~@fortawesome/fontawesome-free/css/all.css';
+// OverlayScrollbars
+@import '~overlayscrollbars/css/OverlayScrollbars.css';
+// iCheck
+@import '~icheck-bootstrap/icheck-bootstrap.css';
+// AdminLTE
+@import '../../vendor/almasaeed2010/adminlte/dist/css/adminlte.css';
+// Bootstrap
+// Already imported by AdminLTE
+//@import '~bootstrap/scss/bootstrap';
+
+//Daterangepicker
+@import "~daterangepicker/daterangepicker.css";
+
+//Select2
+@import 'select2/dist/css/select2';
+
+.hidden {
+    display: none;
+}
+
+.notbold{
+    font-weight: normal;
+}
+
+#transaction_item_prototype {
+    display: none;
+}

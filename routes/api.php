@@ -19,4 +19,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::get('/assets/account', 'API\AccountApiController@getList');
+Route::get('/assets/get_account_currency', 'API\AccountApiController@getAccountCurrencyLabel');
+
+Route::get('/assets/category', 'API\CategoryApiController@getList');
+
 Route::get('/assets/payee', 'API\PayeeApiController@getList');
+Route::get('/assets/get_default_category_for_payee', 'API\PayeeApiController@getDefaultCategoryForPayee');
+
+Route::get('/assets/tag', 'API\TagApiController@getList');

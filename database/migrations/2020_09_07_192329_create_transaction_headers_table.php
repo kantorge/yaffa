@@ -13,10 +13,10 @@ class CreateTransactionHeadersTable extends Migration
      */
     public function up()
     {
-        Schema::create('transaction_headers', function (Blueprint $table) {
+        Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->date('date');
-            $table->foreignId('transaction_types_id');
+            $table->date('date')->nullable();
+            $table->foreignId('transaction_type_id');
             $table->boolean('reconciled')->default('0');
             $table->boolean('is_schedule')->default('0');
             $table->boolean('is_budget')->default('0');
@@ -26,8 +26,9 @@ class CreateTransactionHeadersTable extends Migration
             $table->unsignedInteger('config_id')->nullable();
 
             $table->timestamps();
+            //$table->softDeletes();
 
-            $table->foreign('transaction_types_id')->references('id')->on('transaction_types');
+            $table->foreign('transaction_type_id')->references('id')->on('transaction_types');
         });
     }
 
@@ -38,6 +39,6 @@ class CreateTransactionHeadersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('transaction_headers');
+        Schema::dropIfExists('transactions');
     }
 }

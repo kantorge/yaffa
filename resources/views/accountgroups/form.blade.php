@@ -3,7 +3,7 @@
 @section('title', 'Account groups')
 
 @section('content_header')
-<h1>Account groups</h1>
+    <h1>Account groups</h1>
 @stop
 
 @section('content')
@@ -27,7 +27,7 @@
         <!-- /.card-header -->
         <div class="card-body">
             <div class="form-group">
-                {{ Form::label('name', \App\AccountGroup::label('name'), ['class' => 'control-label col-xs-3']) }}
+                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
                     {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
                 </div>

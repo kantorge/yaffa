@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Currency;
 use App\Http\Requests\CurrencyRequest;
 use Illuminate\Http\Request;
+use JavaScript;
 
 class CurrencyController extends Controller
 {
@@ -25,7 +26,9 @@ class CurrencyController extends Controller
             return $currency;
         });
 
-        return view('currencies.index',['currencies'=>$currencies]);
+        JavaScript::put(['currencies' => $currencies]);
+
+        return view('currencies.index');
     }
 
     public function create()

@@ -11,5 +11,15 @@ const mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/js/app.js', 'public/js')
+mix.js([
+        'resources/js/app.js',
+        'vendor/almasaeed2010/adminlte/plugins/bootstrap/js/bootstrap.bundle.js',  //TODO: ezt miért kell külön hívni?
+    ], 'public/js')
+    .extract([
+        'datatables.net',
+        'datatables.net-bs4',
+        'jquery',
+        'mathjs',
+        'select2'
+    ], 'public/js/vendor.js')
     .sass('resources/sass/app.scss', 'public/css');
