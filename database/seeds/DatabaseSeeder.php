@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
         $this->call(InvestmentGroupTableSeeder::class);
         $this->call(InvestmentTableSeeder::class);
         $this->call(TagTableSeeder::class);
+        $this->call(TransactionSeeder::class);
     }
 }
