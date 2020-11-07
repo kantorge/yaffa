@@ -43,6 +43,8 @@ class TransactionController extends Controller
     {
         $validated = $request->validated();
 
+        //dd($validated);
+
         DB::transaction(function () use ($validated) {
             $transaction = Transaction::create($validated);
 
@@ -59,13 +61,15 @@ class TransactionController extends Controller
                     )
                 );
 
-                foreach($item['tags'] as $tag) {
-                    $newTag = Tag::firstOrCreate(
-                        ['id' => $tag],
-                        ['name' => $tag]
-                    );
+                if (array_key_exists('tags', $item)) {
+                    foreach($item['tags'] as $tag) {
+                        $newTag = Tag::firstOrCreate(
+                            ['id' => $tag],
+                            ['name' => $tag]
+                        );
 
-                    $newItem->tags()->attach($newTag);
+                        $newItem->tags()->attach($newTag);
+                    }
                 }
 
                 $transactionItems[]= $newItem;
@@ -97,14 +101,17 @@ class TransactionController extends Controller
         $transaction = Transaction::with(
             [
                 'config',
+                'config.accountFrom',
+                'config.accountTo',
                 'transactionType',
                 'transactionItems',
                 'transactionItems.tags',
-                'transactionItems.category'
+                'transactionItems.category',
             ])
             ->find($id);
 
-        //dd($transaction);
+            //dd($transaction);
+            //dd($transaction->toArray());
 
         $baseTransactionData = [
             'transactionType' => $transaction->transactionType->name,

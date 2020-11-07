@@ -59,15 +59,39 @@
                                     <div class="col-sm-9">
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
                                             <label class="btn btn-primary" id="transaction_type_withdrawal_label">
-                                                <input id="transaction_type_withdrawal" name="transaction_type" type="radio" value="withdrawal">
+                                                <input
+                                                    id="transaction_type_withdrawal"
+                                                    name="transaction_type"
+                                                    type="radio"
+                                                    value="withdrawal"
+                                                    {{ (isset($transaction['transactionType'])
+                                                        ? ($transaction['transactionType']['name'] == 'withdrawal' ? 'checked="checked"': '')
+                                                        : '') }}
+                                                >
                                                 Withdrawal
                                             </label>
                                             <label class="btn btn-primary" id="transaction_type_deposit_label">
-                                                <input id="transaction_type_deposit" name="transaction_type" type="radio" value="deposit">
+                                                <input
+                                                    id="transaction_type_deposit"
+                                                    name="transaction_type"
+                                                    type="radio"
+                                                    value="deposit"
+                                                    {{ (isset($transaction['transactionType'])
+                                                        ? ($transaction['transactionType']['name'] == 'deposit' ? 'checked="checked"': '')
+                                                        : '') }}
+                                                >
                                                 Deposit
                                             </label>
                                             <label class="btn btn-primary" id="transaction_type_transfer_label">
-                                                <input id="transaction_type_transfer" name="transaction_type" type="radio" value="transfer">
+                                                <input
+                                                    id="transaction_type_transfer"
+                                                    name="transaction_type"
+                                                    type="radio"
+                                                    value="transfer"
+                                                    {{ (isset($transaction['transactionType'])
+                                                        ? ($transaction['transactionType']['name'] == 'transfer' ? 'checked="checked"': '')
+                                                        : '') }}
+                                                >
                                                 Transfer
                                             </label>
                                         </div>
@@ -91,38 +115,29 @@
                                     <div class="col-sm-3">
                                     </div>
                                 </div>
-
-                                <div class="form-group row" id="transaction_account_from_container">
-                                    <label for="transaction_account_from" class="control-label col-sm-3" id="account_from_label">
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label" id="account_from_label">
                                         Account from
                                     </label>
                                     <div class="col-sm-9">
-                                        {{ Form::select(
-                                            'config[account_from_id]',
-                                            [],
-                                            null,
-                                            [
-                                                'id'            => 'transaction_account_from',
-                                                'class'			=> 'form-control'
-                                            ])
-                                        }}
+                                        <select id="account_from" class="form-control" name="config[account_from_id]">
+                                            @if(isset($transaction['config']['account_from_id']))
+                                                <option value="{{ $transaction['config']['accountFrom']['id'] }}" selected="selected">{{ $transaction['config']['accountFrom']['name'] }}</option>
+                                            @endif
+                                        </select>
                                     </div>
                                 </div>
 
-                                <div class="form-group row" id="transaction_account_to_container">
-                                    <label for="transaction_account_to" class="control-label col-sm-3" id="account_to_label">
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-3" id="account_to_label">
                                         Payee
                                     </label>
                                     <div class="col-sm-9">
-                                        {{ Form::select(
-                                            'config[account_to_id]',
-                                            [],
-                                            null,
-                                            [
-                                                'id'            => 'transaction_account_to',
-                                                'class'			=> 'form-control'
-                                            ])
-                                        }}
+                                        <select id="account_to" class="form-control" name="config[account_to_id]">
+                                            @if(isset($transaction['config']['account_to_id']))
+                                                <option value="{{ $transaction['config']['accountTo']['id'] }}" selected="selected">{{ $transaction['config']['accountTo']['name'] }}</option>
+                                            @endif
+                                        </select>
                                     </div>
                                 </div>
 
@@ -194,7 +209,7 @@
                         <!--div class="card-footer">
                         </div-->
                     </div>
-                <!-- /.card -->
+                    <!-- /.card -->
 
                 </div>
                 <!--/.col (left) -->
@@ -504,77 +519,6 @@ $(document).ready(function() {
 		});
 	}
 });
-
-
-//schedule related functions
-function updateSchedule () {
-    $("#rruleText").html(window.rule.toText());
-    //$("#schedule_rrule").val(
-    var r =
-        window.rrule.RRule.optionsToString({
-            freq: window.rule.options.freq,
-            dtstart: window.rule.options.dtstart,
-            interval: window.rule.options.interval,
-            count: window.rule.options.count,
-            until: window.rule.options.until
-        })
-    ;
-
-    //console.log(r);
-    //console.log (window.rrule.RRule.fromString(r));
-};
-
-var rule;
-
-$( document ).ready(function() {
-    window.rule = new rrule.RRule();
-
-    //frequency
-    $("#schedule_frequency").change(function(){
-        window.rule.options.freq = rrule.Frequency[$(this).val()];
-        updateSchedule ();
-    })
-    //one time setup
-    $("#schedule_frequency").change();
-
-    //interval
-    $("#schedule_interval").blur(function(){
-        var amount = 1;
-		try {
-			var amount = math.eval(this.value.replace(/\s/g,""));
-			//console.log('result: ' +amount);
-			if(amount <= 0) throw Error("Positive number expected");
-			$(this).closest(".form-group").removeClass("has-error");
-			$(this).val	(amount);
-		} catch (err) {
-			$(this).closest(".form-group").addClass("has-error");
-        }
-
-        window.rule.options.interval = amount;
-        $(this).valid();
-        updateSchedule ();
-    });
-
-   //count
-   $("#schedule_count").blur(function(){
-        var amount = 1;
-        try {
-            var amount = math.eval(this.value.replace(/\s/g,""));
-            //console.log('result: ' +amount);
-            if(amount <= 0) throw Error("Positive number expected");
-            $(this).closest(".form-group").removeClass("has-error");
-            $(this).val	(amount);
-        } catch (err) {
-            $(this).closest(".form-group").addClass("has-error");
-        }
-
-        window.rule.options.count = amount;
-        $(this).valid();
-        updateSchedule ();
-    });
-
-});
-
 */
 </script>
 @endsection

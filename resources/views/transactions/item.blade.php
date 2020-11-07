@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
-                <label for="" class="control-label">Category</label>
+                <label>Category</label>
                 <select class="form-control category" style="width:100%" name="transactionItems[{{ $counter }}][category]">
                     @if(isset($item['category']))
                         <option value="{{ $item['category']['id'] }}" selected="selected">{{ $item['category']['full_name'] }}</option>
@@ -12,7 +12,7 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label for="" class="control-label">
+                <label class="control-label">
                     Amount <span class='transaction_currency_from'></span>
                 </label>
                 <div class="input-group">
@@ -39,13 +39,13 @@
     <div class="row transaction_detail_container" style="display:none;">
         <div class="col-md-6">
             <div class="form-group">
-                <label for="" class="control-label">Comment</label>
+                <label class="control-label">Comment</label>
                 <input class="form-control transaction_item_comment" name="transactionItems[{{ $counter }}][comment]" value="{{ $item['comment'] ?? '' }}" type="text">
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
-                <label for="" class="control-label">Tags</label>
+                <label class="control-label">Tags</label>
                 <select style="width: 100%" class="form-control tag" multiple="multiple" name="transactionItems[{{ $counter }}][tags][]">
                     @if(isset($item['tags']))
                         @foreach($item['tags'] as $tag)

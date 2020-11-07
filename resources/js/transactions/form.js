@@ -4,7 +4,7 @@ require('jquery-validation');
 
 math = require("mathjs");
 
-RRule = require('rrule').RRule;
+//RRule = require('rrule').RRule;
 
 require('select2');
 
@@ -151,10 +151,13 @@ window.transactionData = {
 	 * - currency of accounts is different
 	 */
 	updateExchangeRate() {
+        /*
+        TODO: is this needed?
 		//prevent running before having elements set
 		if (!Object.keys(this.elements).length) {
 			return false;
-		}
+        }
+        */
 
 		if (this.isToCurrencyPresent()) {
 			if (this.from.amount !== 0 && this.to.amount !== 0) {
@@ -200,16 +203,13 @@ window.transactionData = {
 
 };
 
-//indicate, that first run happens
-window.firstRun = true;
-
 $( function () {
     //merge existing data into data template
     window.transactionData = Object.assign(window.baseTransactionData, window.transactionData);
 
 	//assign various key elements to transaction variable
-    transactionData.elements.toAccountInput = $("#transaction_account_to");
-    transactionData.elements.fromAccountInput = $("#transaction_account_from");
+    transactionData.elements.toAccountInput = $("#account_to");
+    transactionData.elements.fromAccountInput = $("#account_from");
 	transactionData.elements.toAmountGroup = $("#amount_to_group");
 	transactionData.elements.toAmountInput = $("#transaction_amount_to");
 	transactionData.elements.fromAmountGroup = $("#amount_from_group");
@@ -217,18 +217,13 @@ $( function () {
 
 	//attach transaction type selection events to change visibility of selects
     $("#transaction_type_withdrawal_label").on('click', function() {
-        //get confirmation if not set by script on first run
-		if (!window.firstRun) {
-			//ignore click if already selected
-			if (transactionData.transactionType == $("#transaction_type_withdrawal").val()) {
-				return false;
-			}
-			if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
-				return false;
-			}
-		} else {
-			window.firstRun = false;
-		}
+        //ignore click if already selected
+        if (transactionData.transactionType == $("#transaction_type_withdrawal").val()) {
+            return false;
+        }
+        if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+            return false;
+        }
     });
 
     $("#transaction_type_withdrawal").on('change', function() {
@@ -254,16 +249,11 @@ $( function () {
 
     $("#transaction_type_deposit_label").click(function(event) {
         //get confirmation if not set by script on first run
-        if (!window.firstRun) {
-            //ignore click if already selected
-            if (transactionData.transactionType == $("#transaction_type_deposit").val()) {
-                return false;
-            }
-            if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
-                return false;
-            }
-        } else {
-            window.firstRun = false;
+        if (transactionData.transactionType == $("#transaction_type_deposit").val()) {
+            return false;
+        }
+        if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+            return false;
         }
     });
 
@@ -294,16 +284,11 @@ $( function () {
         }
 
         //get confirmation if not set by script on first run
-        if (!window.firstRun) {
-            //ignore click if already selected
-            if (transactionData.transactionType == $("#transaction_type_transfer").val()) {
-                return false;
-            }
-            if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
-                return false;
-            }
-        } else {
-            window.firstRun = false;
+        if (transactionData.transactionType == $("#transaction_type_transfer").val()) {
+            return false;
+        }
+        if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+            return false;
         }
     });
 
@@ -483,56 +468,42 @@ $( function () {
         transactionData.updateExchangeRate();
     });
 
-    $('#transaction_date').daterangepicker({
+    var datePickerStandardSettings = {
         singleDatePicker: true,
         showDropdowns: true,
         locale: {
             format: 'YYYY-MM-DD'
         },
         autoApply: true
+    };
+    $('#transaction_date').daterangepicker(datePickerStandardSettings);
+    $('#schedule_start').daterangepicker(datePickerStandardSettings);
+    $('#schedule_next').daterangepicker(datePickerStandardSettings);
+    $('#schedule_end').daterangepicker(datePickerStandardSettings);
+
+    function processNumericInput(element) {
+        var amount = 1;
+		try {
+			var amount = math.evaluate(element.value.replace(/\s/g,""));
+			//console.log('result: ' +amount);
+			if(amount <= 0) throw Error("Positive number expected");
+			$(element).closest(".form-group").removeClass("has-error");
+			$(element).val	(amount);
+		} catch (err) {
+			$(element).closest(".form-group").addClass("has-error");
+        }
+
+        $(element).valid();
+    }
+
+    //interval
+    $("#schedule_interval").on('blur', function(){
+        processNumericInput(this);
     });
 
-    $('#schedule_start').daterangepicker({
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
-    });
-
-    $('#schedule_start').on('apply.daterangepicker', function(ev, picker) {
-        //window.rule.options.dtstart = picker.startDate; //new Date(Date.UTC(inst.selectedYear, inst.selectedMonth, inst.selectedDay, 0, 0));
-
-        //updateSchedule ();
-        //console.log(picker.startDate);
-    });
-
-    $('#schedule_next').daterangepicker({
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
-    });
-
-
-    $('#schedule_end').daterangepicker({
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
-    });
-
-    $('#schedule_end').on('apply.daterangepicker', function(ev, picker) {
-        //window.rule.options.until = new Date(Date.UTC(inst.selectedYear, inst.selectedMonth, inst.selectedDay, 0, 0));
-
-        //updateSchedule ();
-        //console.log(picker.startDate.format('YYYY-MM-DD'));
-        //console.log(picker.endDate.format('YYYY-MM-DD'));
+    //count
+    $("#schedule_count").on('blur', function(){
+        processNumericInput(this);
     });
 
   //set callback type
@@ -622,16 +593,7 @@ $( function () {
 
 			Parse input. Display error, if NaN. Update totals.
         */
-		try {
-			var amount = math.evaluate(this.value.replace(/\s/g,""));
-            //console.log('result: ' +amount);
-            if(amount <= 0) throw Error("Positive number expected");
-			$(this).closest(".form-group").removeClass("has-error");
-			$(this).val	(amount);
-		} catch (err) {
-			$(this).closest(".form-group").addClass("has-error");
-		}
-
+        processNumericInput(this);
 		transactionData.updateTotals();
 	});
 
@@ -689,10 +651,8 @@ $( function () {
 		transactionData.updateExchangeRate();
 	});
 
-
-
     //form validation
-/*
+    /*
 	$("#formTransaction").validate({
 		debug: true,
 		ignore: '.ignore, :hidden',
@@ -736,6 +696,13 @@ $( function () {
 				},
 				dateISO: true
             },
+            schedule_next: {
+				required: function() {
+					return (   $("#entry_type_schedule").is(':checked')
+					        || $("#entry_type_budget").is(':checked'));
+				},
+				dateISO: true
+            },
             schedule_end: {
 				dateISO: true
             },
@@ -771,7 +738,7 @@ $( function () {
         },
 		errorClass: 'has-error'
     });
-*/
+    */
 
     //on load initializations
 
@@ -801,16 +768,15 @@ $( function () {
         transactionItemTagSelectFunctionality($(s));
     });
 
-    //click the selective show button once
-    document.getElementById('itemListShow').click();
-
-    //select transaction type or withdrawal by default
-    document.getElementById("transaction_type_" + transactionData.transactionType).click();
-
     //setup toggle detail functionality
     $(".toggle_transaction_detail").on('click', function(){
         $(this).closest(".transaction_item_row").find(".transaction_detail_container").toggle();
     })
+
+    //adjust amount selectors
+    //TODO: is it done be other initialization?
+    transactionData.updateTotals();
+    transactionData.updateExchangeRate();
 
     //item list collapse and expand functionality
     $("#itemListCollapse").on('click', function(){
@@ -826,9 +792,12 @@ $( function () {
             }
         });
     });
-    $("#itemListExpand").click(function(){
+    $("#itemListExpand").on('click', function(){
         $(".transaction_item_row").find(".transaction_detail_container").show();
     });
+
+    //click the selective show button once
+    document.getElementById('itemListShow').click();
 });
 
 function transactionItemCategorySelectFunctionality (element) {
@@ -951,7 +920,7 @@ $.validator.addMethod('minStrict', function (value, el, param) {
     return value > param;
 });
 
-function clickCancel(){
+window.clickCancel = function() {
   if(confirm('Are you sure you want to discard any changes?')) {
       window.history.back();
   }

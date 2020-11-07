@@ -27,4 +27,14 @@ class TransactionDetailStandard extends Transaction
         return $this->morphOne(Transaction::class, 'config');
     }
 
+    public function accountFrom()
+    {
+        return $this->belongsTo(AccountEntity::class, 'account_from_id');
+    }
+
+    public function accountTo()
+    {
+        return $this->belongsTo(AccountEntity::class, 'account_to_id');
+    }
+
 }
