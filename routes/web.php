@@ -15,14 +15,17 @@ use App\Http\Requests\TransactionRequest;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/','MainController@index');
 
 Route::resource('accountgroups', 'AccountGroupController');
 Route::resource('accounts', 'AccountController');
 Route::resource('categories', 'CategoryController');
 Route::resource('currencies', 'CurrencyController');
+Route::get('currencyrates/{from}/{to}', [
+    'as' => 'currencyrates.index',
+    'uses' => 'CurrencyRateController@index'
+]);
+Route::resource('currencyrates', 'CurrencyRateController', ['except' => ['index']]);
 Route::resource('investmentgroups', 'InvestmentGroupController');
 Route::resource('investments', 'InvestmentController');
 Route::resource('payees', 'PayeeController');

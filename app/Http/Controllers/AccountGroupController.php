@@ -36,7 +36,7 @@ class AccountGroupController extends Controller
 
         JavaScript::put(['accountGroups' => $accountGroups]);
 
-        return view('accountgroups.index',['accountGroups'=>$accountGroups]);
+        return view('accountgroups.index');
     }
 
     public function create()

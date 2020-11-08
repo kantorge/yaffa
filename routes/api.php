@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/* TODO: ez kell valamire
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+*/
 
 Route::get('/assets/account', 'API\AccountApiController@getList');
 Route::get('/assets/get_account_currency', 'API\AccountApiController@getAccountCurrencyLabel');

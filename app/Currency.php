@@ -40,4 +40,13 @@ class Currency extends Model
             ];
     }
 
+    public function ratesFrom()
+    {
+      return $this->belongsToMany(Currency::class,'currency_rates','from_id','to_id');
+    }
+
+    public function ratesTo()
+    {
+      return $this->belongsToMany(Currency::class,'currency_rates','to_id','from_id');
+    }
 }

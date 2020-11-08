@@ -12,6 +12,9 @@ if (window.location.pathname === '/categories') {
 if (window.location.pathname === '/currencies') {
     require('./currencies/index');
 }
+if (  /^\/currencyrates\/\d+\/\d+/.test(window.location.pathname)) {
+    require('./currencyrates/index');
+}
 if (window.location.pathname === '/investmentgroups') {
     require('./investmentgroups/index');
 }
