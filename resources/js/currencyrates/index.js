@@ -1,6 +1,11 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs4' );
 
+import * as am4core from "@amcharts/amcharts4/core";
+import * as am4charts from "@amcharts/amcharts4/charts";
+import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+am4core.useTheme(am4themes_animated);
+
 $(function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
@@ -38,4 +43,22 @@ $(function () {
         e.preventDefault();
         $('#form-delete-' + $(this).data('form')).submit();
     });
+
+
+    var chart = am4core.create("chartdiv", am4charts.XYChart);
+    chart.data = currencyRates;
+
+    chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+
+    var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
+    categoryAxis.dataFields.category = "date";
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "rate";
+    series.dataFields.dateX = "date";
+
+    var scrollbarX = new am4charts.XYChartScrollbar();
+    scrollbarX.series.push(series);
+    chart.scrollbarX = scrollbarX;
 });
