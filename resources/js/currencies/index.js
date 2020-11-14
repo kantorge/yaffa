@@ -1,7 +1,7 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs4' );
 
-$(document).ready( function () {
+$(function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
     $('#table').DataTable({
@@ -36,6 +36,10 @@ $(document).ready( function () {
             title: "Auto update"
         },
         {
+            data: "latest_rate",
+            title: "Latest rate to base currency"
+        },
+        {
             data: "id",
             title: "Actions",
             render: function ( data, type, row, meta ) {
@@ -43,7 +47,8 @@ $(document).ready( function () {
                        '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                        //base currency cannot be deleted
                        ( !row.base
-                         ? '<button class="btn btn-sm btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                         ? '<a href="/currencyrates/' + row.id + '/' + baseCurrency.id + '" class="btn btn-sm btn-info"><i class="fa fa-chart-line" title="Rates"></i></a> ' +
+                           '<button class="btn btn-sm btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                            '<form id="form-delete-' + row.id + '" action="' + row.delete_url + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>'
                          : '');
             },

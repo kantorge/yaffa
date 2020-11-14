@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class Transaction extends Model
@@ -57,6 +58,33 @@ class Transaction extends Model
 
     public function transactionSchedule(){
         return $this->hasOne(TransactionSchedule::class);
+    }
+
+    public function tags()
+    {
+        $tags = [];
+
+        $this->transactionItems()
+            ->each(function ($item, $key) use (&$tags) {
+                $item->tags->each(function($tag) use (&$tags) {
+                    $tags[$tag->id] = $tag->name;
+                } );
+
+            });
+
+        return $tags;
+    }
+
+    public function categories()
+    {
+        $categories = [];
+
+        $this->transactionItems()
+            ->each(function ($item, $key) use (&$categories) {
+                $categories[$item->category_id] = $item->category->full_name;
+            });
+
+        return $categories;
     }
 
     /*

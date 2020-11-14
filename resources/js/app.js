@@ -6,6 +6,9 @@ if (window.location.pathname === '/accountgroups') {
 if (window.location.pathname === '/accounts') {
     require('./accounts/index');
 }
+if (  /^\/accounts\/history\/\d+/.test(window.location.pathname)) {
+    require('./accounts/history');
+}
 if (window.location.pathname === '/categories') {
     require('./categories/index');
 }

@@ -29,3 +29,5 @@ Route::get('/assets/payee', 'API\PayeeApiController@getList');
 Route::get('/assets/get_default_category_for_payee', 'API\PayeeApiController@getDefaultCategoryForPayee');
 
 Route::get('/assets/tag', 'API\TagApiController@getList');
+
+Route::put('/transaction/{transaction}/reconciled/{newState}', 'API\TransactionApiController@reconcile');

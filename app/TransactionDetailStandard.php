@@ -22,6 +22,11 @@ class TransactionDetailStandard extends Transaction
         'amount_to',
     ];
 
+    protected $casts = [
+        'amount_from' => 'integer',
+        'amount_to' => 'integer',
+    ];
+
     public function config()
     {
         return $this->morphOne(Transaction::class, 'config');
