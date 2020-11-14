@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Currency;
+use App\CurrencyRate;
 use App\Http\Requests\CurrencyRequest;
 use Illuminate\Http\Request;
 use JavaScript;
@@ -19,14 +20,27 @@ class CurrencyController extends Controller
         //Show all currencies from the database and return to view
         $currencies = Currency::all();
 
+        $baseCurrency = Currency::where('base', 1)->firstOrFail();
+
         //support DataTables with action URLs
-        $currencies->map(function ($currency) {
+        $currencies->map(function ($currency) use ($baseCurrency) {
+            $rate = CurrencyRate::where('from_id', $currency->id)
+                                    ->where('to_id', $baseCurrency->id)
+                                    ->latest('date')
+                                    ->first();
+
+            $currency['latest_rate'] = ($rate instanceof CurrencyRate ? $rate->rate : null);
             $currency['edit_url'] = route('currencies.edit', $currency);
             $currency['delete_url'] = action('CurrencyController@destroy', $currency);
             return $currency;
         });
 
-        JavaScript::put(['currencies' => $currencies]);
+        //dd($currencies[1]->rate->rate);
+
+        JavaScript::put([
+            'currencies' => $currencies,
+            'baseCurrency' => $baseCurrency,
+        ]);
 
         return view('currencies.index');
     }

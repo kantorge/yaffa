@@ -14,12 +14,15 @@ class CreateCurrencyRatesTable extends Migration
     public function up()
     {
         Schema::create('currency_rates', function (Blueprint $table) {
-            $table->id();
-            $table->date('date');
-            $table->decimal('rate', 8, 4);
+            $table->bigIncrements('id');
+
             $table->foreignId('from_id');
             $table->foreignId('to_id');
+
             $table->timestamps();
+
+            $table->date('date');
+            $table->decimal('rate', 8, 4);
 
             $table->foreign('from_id')->references('id')->on('currencies');
             $table->foreign('to_id')->references('id')->on('currencies');

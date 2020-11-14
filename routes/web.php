@@ -18,10 +18,13 @@ use App\Http\Requests\TransactionRequest;
 Route::get('/','MainController@index');
 
 Route::resource('accountgroups', 'AccountGroupController');
+
+Route::get('/accounts/history/{account}', 'MainController@account_details');
 Route::resource('accounts', 'AccountController');
+
 Route::resource('categories', 'CategoryController');
 Route::resource('currencies', 'CurrencyController');
-Route::get('currencyrates/{from}/{to}', [
+Route::get('/currencyrates/{from}/{to}', [
     'as' => 'currencyrates.index',
     'uses' => 'CurrencyRateController@index'
 ]);
