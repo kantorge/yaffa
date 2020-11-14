@@ -3,6 +3,7 @@
 use App\Tag;
 use App\Transaction;
 use App\TransactionItem;
+use App\TransactionSchedule;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ class TransactionSeeder extends Seeder
      */
     public function run()
     {
-        //create withdrawalse
+        //create standard withdrawals
         $withdrawals = factory(Transaction::class,rand(5, 10))->states('withdrawal')->create();
 
         $withdrawals->each(function($transaction) {
@@ -31,6 +32,22 @@ class TransactionSeeder extends Seeder
 
         //create transfers
         $transfers = factory(Transaction::class,rand(5, 10))->states('transfer')->create();
+
+        //create standard withdrawals with schedule
+        $withdrawals_with_schedule = factory(Transaction::class,rand(1, 5))->states('withdrawal_schedule')->create();
+
+        $withdrawals_with_schedule->each(function($transaction) {
+            $this->createTransactionSchedule($transaction);
+            $this->createTransactionProperties($transaction);
+        });
+    }
+
+    private function createTransactionSchedule(Transaction $transaction)
+    {
+        $schedule = factory(TransactionSchedule::class)->create([
+            'transaction_id' => $transaction->id,
+        ]);
+        $transaction->push();
     }
 
     private function createTransactionProperties(Transaction $transaction) {
@@ -39,6 +56,7 @@ class TransactionSeeder extends Seeder
         ]);
 
         //Grab all tags
+        //TODO: can this be called only once per seeding?
         $tags = Tag::all();
 
         $newTransactionItems->each(function ($item) use ($tags) {

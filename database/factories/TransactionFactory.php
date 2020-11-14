@@ -10,6 +10,7 @@ use Faker\Generator as Faker;
 
 $factory->define(Transaction::class, function (Faker $faker) {
     return [
+        "schedule" => 0,
         "comment" => $faker->boolean(50) ? $faker->text($maxNbChars = 191)  : null,
         "reconciled" => $faker->boolean(50) ? 1  : 0,
         "config_type" => "transaction_detail_standard",  //TODO: random or driven
@@ -19,6 +20,14 @@ $factory->define(Transaction::class, function (Faker $faker) {
 
 $factory->state(Transaction::class, 'withdrawal', function() {
     return [
+        "transaction_type_id" => TransactionType::where('name', 'withdrawal')->first()->id,
+        "config_id" => factory(TransactionDetailStandard::class)->states('withdrawal')->create()->id
+    ];
+});
+
+$factory->state(Transaction::class, 'withdrawal_schedule', function() {
+    return [
+        "schedule" => 1,
         "transaction_type_id" => TransactionType::where('name', 'withdrawal')->first()->id,
         "config_id" => factory(TransactionDetailStandard::class)->states('withdrawal')->create()->id
     ];
