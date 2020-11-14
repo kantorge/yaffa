@@ -24,8 +24,8 @@ class Transaction extends Model
         'date',
         'transaction_type_id',
         'reconciled',
-        'is_schedule',
-        'is_budget',
+        'schedule',
+        'budget',
         'comment',
         'config_type',
         'config_id'
@@ -36,9 +36,9 @@ class Transaction extends Model
     //protected $with = ['config'];
 
     protected $casts = [
-        'active' => 'reconciled',
-        'active' => 'is_schedule',
-        'active' => 'is_budget',
+        'reconciled' => 'boolean',
+        'schedule' => 'boolean',
+        'budget' => 'boolean',
     ];
 
     public function config()

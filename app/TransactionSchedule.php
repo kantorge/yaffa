@@ -14,6 +14,7 @@ class TransactionSchedule extends Model
      * @var array
      */
     protected $fillable = [
+        'transaction_id',
         'start_date',
         'next_date',
         'end_date',

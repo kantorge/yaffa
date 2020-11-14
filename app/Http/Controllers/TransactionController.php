@@ -9,6 +9,7 @@ use App\Transaction;
 use App\TransactionItem;
 use App\TransactionType;
 use App\TransactionDetailStandard;
+use App\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 use JavaScript;
 
@@ -51,8 +52,27 @@ class TransactionController extends Controller
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
+            if (   $transaction->schedule
+               || $transaction->budget) {
+                $transactionSchedule = TransactionSchedule::create(
+                        [
+                            'transaction_id' => $transaction->id,
+                            'start_date' => $validated['schedule_start'],
+                            'next_date' => $validated['schedule_next'],
+                            'end_date' => $validated['schedule_end'],
+                            'frequency' => $validated['schedule_frequency'],
+                            'interval' => $validated['schedule_interval'],
+                            'count' => $validated['schedule_count'],
+                        ]
+                );
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
+
             $transactionItems = [];
             foreach ($validated['transactionItems'] as $item) {
+                if(is_null($item['amount'])) {
+                    continue;
+                }
 
                 $newItem = TransactionItem::create(
                     array_merge(
@@ -103,6 +123,7 @@ class TransactionController extends Controller
                 'config',
                 'config.accountFrom',
                 'config.accountTo',
+                'transactionSchedule',
                 'transactionType',
                 'transactionItems',
                 'transactionItems.tags',

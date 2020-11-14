@@ -14,14 +14,14 @@ class CreateTransactionSchedulesTable extends Migration
     public function up()
     {
         Schema::create('transaction_schedules', function (Blueprint $table) {
-            //$table->bigIncrements('id');
+            $table->bigIncrements('id');
             $table->bigInteger('transaction_id')->unsigned();
             $table->date('start_date');
             $table->date('next_date')->nullable();
             $table->date('end_date')->nullable();
             $table->string('frequency');
-            $table->integer('interval');
-            $table->integer('count');
+            $table->integer('interval')->nullable();
+            $table->integer('count')->nullable();
             $table->timestamps();
 
             $table->foreign('transaction_id')->references('id')->on('transactions')->onDelete('CASCADE');

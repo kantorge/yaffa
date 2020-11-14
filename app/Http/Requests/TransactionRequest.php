@@ -19,12 +19,14 @@ class TransactionRequest extends FormRequest
         $rules = [
             'transaction_type_id' => "required|exists:transaction_types,id",
             'comment' => 'nullable|max:191',
-            'reconciled' => 'boolean',  //TODO: applyschedule and budget related rules
+            'reconciled' => 'boolean',  //TODO: apply schedule and budget related rules
+            'schedule' => 'boolean',
+            'budget' => 'boolean',
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
             'transactionItems' => 'array',
             'transactionItems.*' => 'array',
-            'transactionItems.*.amount' => 'required|numeric|gt:0',
-            'transactionItems.*.category' => 'required|exists:categories,id',
+            'transactionItems.*.amount' => 'nullable|numeric|gt:0',
+            'transactionItems.*.category' => 'nullable|exists:categories,id',
             'transactionItems.*.comment' => 'nullable|max:191',
         ];
 
@@ -75,15 +77,15 @@ class TransactionRequest extends FormRequest
         }
 
         //adjust date and schedule related rules
-        if (   $this->get('entry_type_schedule')
-            || $this->get('entry_type_budget')) {
+        if (   $this->get('schedule')
+            || $this->get('budget')) {
 
             $rules = array_merge($rules, [
                 'schedule_start' => 'required|date',
                 'schedule_next' => 'required|date',  //TODO: not earlier than schedule_start
                 'schedule_end' => 'nullable|date', //TODO: not earlier than schedule_start
                 'schedule_frequency' => 'required',
-                'schedule_interval' => 'required|numeric|gte:1',
+                'schedule_interval' => 'nullable|numeric|gte:1',
                 'schedule_count' => 'nullable|numeric|gte:1',
             ]);
         } else {
@@ -127,8 +129,8 @@ class TransactionRequest extends FormRequest
         //check for checkbox-es
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
-            'is_schedule' => $this->entry_type_schedule ?? 0,
-            'is_budget' => $this->entry_type_budget ?? 0,
+            'schedule' => $this->schedule ?? 0,
+            'budget' => $this->budget ?? 0,
         ]);
 
         //dd($this);
