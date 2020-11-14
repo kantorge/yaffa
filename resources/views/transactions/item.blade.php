@@ -25,13 +25,13 @@
         </div>
         <div class="col-md-1">
             <div class="form-group">
-                {{ Form::label('', "&nbsp;") }}
+                <label>&nbsp;</label>
                 <button type="button" class="btn btn-info toggle_transaction_detail" title="Show item details"><i class="fa fa-edit"></i></button>
             </div>
         </div>
         <div class="col-md-1">
             <div class="form-group">
-                {{ Form::label('', "&nbsp;") }}
+                <label>&nbsp;</label>
                 <button type="button" class="btn btn-danger remove_transaction_item" title="Remove transaction item"><i class="fa fa-minus"></i></button>
             </div>
         </div>

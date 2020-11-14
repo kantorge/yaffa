@@ -29,7 +29,7 @@
     <div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">
-                @if(isset($transaction))
+                @if(isset($transaction->id))
                     Modify transaction
                 @else
                     Add transaction
