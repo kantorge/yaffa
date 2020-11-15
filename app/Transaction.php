@@ -88,6 +88,13 @@ class Transaction extends Model
         return $categories;
     }
 
+    function delete()
+    {
+        $this->config()->delete();
+
+        parent::delete();
+    }
+
     /*
     public function transactionDetailsStandard()
     {

@@ -145,4 +145,16 @@ class TransactionController extends Controller
 
         return view('transactions.form', ['transaction' => $transaction]);
     }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  Transaction  $transaction
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Transaction $transaction)
+    {
+        $transaction->delete();
+        return redirect()->back();
+    }
 }

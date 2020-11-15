@@ -31,7 +31,7 @@ $(document).ready( function () {
     });
 
     $('.data-delete').on('click', function (e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
+        if (!confirm('Are you sure to want to delete this tag? It will be removed from all associated transactions, and this action cannot be undone.')) return;
         e.preventDefault();
         $('#form-delete-' + $(this).data('form')).submit();
     });

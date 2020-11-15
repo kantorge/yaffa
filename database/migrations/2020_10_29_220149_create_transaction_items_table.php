@@ -21,7 +21,7 @@ class CreateTransactionItemsTable extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('comment', 191)->nullable();
 
-            $table->foreign('transaction_id')->references('id')->on('transactions');
+            $table->foreign('transaction_id')->references('id')->on('transactions')->onDelete('CASCADE');
             $table->foreign('category_id')->references('id')->on('categories');
         });
     }

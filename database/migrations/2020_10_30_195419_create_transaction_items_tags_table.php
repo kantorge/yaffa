@@ -20,7 +20,7 @@ class CreateTransactionItemsTagsTable extends Migration
             $table->foreignId('tag_id');
 
             $table->foreign('transaction_item_id')->references('id')->on('transaction_items')->onDelete('cascade');
-            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade')->onDelete('cascade');
         });
     }
 
