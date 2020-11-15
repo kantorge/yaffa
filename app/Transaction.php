@@ -56,7 +56,8 @@ class Transaction extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
-    public function transactionSchedule(){
+    public function transactionSchedule()
+    {
         return $this->hasOne(TransactionSchedule::class);
     }
 
