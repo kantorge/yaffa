@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Account;
 use App\Payee;
 use App\TransactionDetailStandard;
+use App\TransactionDetailInvestment;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;

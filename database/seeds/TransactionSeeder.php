@@ -40,6 +40,9 @@ class TransactionSeeder extends Seeder
             $this->createTransactionSchedule($transaction);
             $this->createTransactionProperties($transaction);
         });
+
+        //investment buy
+        $buys = factory(Transaction::class,rand(1, 5))->states('buy')->create();
     }
 
     private function createTransactionSchedule(Transaction $transaction)
