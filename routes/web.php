@@ -24,13 +24,32 @@ Route::resource('accounts', 'AccountController');
 
 Route::resource('categories', 'CategoryController');
 Route::resource('currencies', 'CurrencyController');
+
 Route::get('/currencyrates/{from}/{to}', [
     'as' => 'currencyrates.index',
     'uses' => 'CurrencyRateController@index'
 ]);
-Route::resource('currencyrates', 'CurrencyRateController', ['except' => ['index']]);
+Route::resource('currencyrates',
+    'CurrencyRateController',
+    [
+        'except' => [
+            'index'
+        ]
+    ]);
+
 Route::resource('investmentgroups', 'InvestmentGroupController');
 Route::resource('investments', 'InvestmentController');
 Route::resource('payees', 'PayeeController');
 Route::resource('tags', 'TagController');
-Route::resource('transactions', 'TransactionController');
+
+Route::get('/transactions/create/standard', 'TransactionController@createStandard');
+Route::get('/transactions/create/investment', 'TransactionController@createInvestment');
+Route::post('/transactions/standard', 'TransactionController@storeStandard')->name('transactions.storeStandard');
+Route::post('/transactions/investment', 'TransactionController@storeInvestment')->name('transactions.storeInvestment');
+Route::resource('transactions',
+    'TransactionController',
+    [
+        'only' => [
+            'delete'
+        ]
+    ]);

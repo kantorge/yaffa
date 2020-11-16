@@ -30,7 +30,16 @@ if (window.location.pathname === '/payees') {
 if (window.location.pathname === '/tags') {
     require('./tags/index');
 }
-if (   window.location.pathname === '/transactions/create'
+if (   window.location.pathname === '/transactions/create/standard'
     || /^\/transactions\/\d+\/edit/.test(window.location.pathname)) {
-    require('./transactions/form');
+    require('./transactions/formCommon');
+    require('./transactions/formSchedule');
+    require('./transactions/formStandard');
+}
+
+if (   window.location.pathname === '/transactions/create/investment'
+    || /^\/transactions\/\d+\/edit/.test(window.location.pathname)) {
+    require('./transactions/formCommon');
+    require('./transactions/formSchedule');
+    require('./transactions/formInvestment');
 }

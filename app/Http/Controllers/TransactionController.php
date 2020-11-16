@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
 use App\Category;
+use App\Investment;
 use App\Tag;
 use App\Transaction;
 use App\TransactionItem;
@@ -17,7 +18,7 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    public function create()
+    public function createStandard()
     {
         //get all categories for reference
         $categories = Category::all();
@@ -37,10 +38,19 @@ class TransactionController extends Controller
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
-        return view('transactions.form', ['transaction' => $transaction]);
+        return view('transactions.form_standard', ['transaction' => $transaction]);
     }
 
-    public function store(TransactionRequest $request)
+    public function createInvestment()
+    {
+        $transaction = new Transaction([
+            'transaction_type_id' => TransactionType::where('name', 'buy')->first()->id
+        ]);
+
+        return view('transactions.form_investment', ['transaction' => $transaction]);
+    }
+
+    public function storeStandard (TransactionRequest $request)
     {
         $validated = $request->validated();
 
@@ -104,6 +114,11 @@ class TransactionController extends Controller
         add_notification('Transaction added', 'success');
 
         return redirect("/");
+    }
+
+    public function storeInvestment(TransactionRequest $request)
+    {
+        $validated = $request->validated();
     }
 
     /**
