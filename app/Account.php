@@ -49,4 +49,26 @@ class Account extends AccountEntity
     {
         return $this->belongsTo(Currency::class);
     }
+
+    public function openingBalance() {
+        return [
+            'id' => null,
+            'date' => null,
+            'transaction_name' => 'Opening balance',
+            'transaction_type' => 'Opening balance',
+            'transaction_operator' => 'plus',
+            'account_from_id' => null,
+            'account_from_name' => null,
+            'account_to_id' => null,
+            'account_to_name' => null,
+            'amount_from' => 0,
+            'amount_to' => $this->opening_balance,
+            'tags' => [],
+            'categories' => [],
+            'reconciled' => 0,
+            'comment' => null,
+            'edit_url' => null,
+            'delete_url' => null,
+        ];
+    }
 }
