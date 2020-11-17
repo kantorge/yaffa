@@ -42,8 +42,8 @@ Route::resource('investments', 'InvestmentController');
 Route::resource('payees', 'PayeeController');
 Route::resource('tags', 'TagController');
 
-Route::get('/transactions/create/standard', 'TransactionController@createStandard');
-Route::get('/transactions/create/investment', 'TransactionController@createInvestment');
+Route::get('/transactions/create/standard', 'TransactionController@createStandard')->name('transactions.createStandard');
+Route::get('/transactions/create/investment', 'TransactionController@createInvestment')->name('transactions.createInvestment');
 Route::post('/transactions/standard', 'TransactionController@storeStandard')->name('transactions.storeStandard');
 Route::post('/transactions/investment', 'TransactionController@storeInvestment')->name('transactions.storeInvestment');
 Route::resource('transactions',
