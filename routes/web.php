@@ -29,12 +29,9 @@ Route::get('/currencyrates/{from}/{to}', [
     'as' => 'currencyrates.index',
     'uses' => 'CurrencyRateController@index'
 ]);
-Route::resource('currencyrates',
-    'CurrencyRateController',
-    [
-        'except' => [
-            'index'
-        ]
+Route::resource('currencyrates', 'CurrencyRateController')
+    ->except([
+        'index'
     ]);
 
 Route::resource('investmentgroups', 'InvestmentGroupController');
@@ -46,10 +43,11 @@ Route::get('/transactions/create/standard', 'TransactionController@createStandar
 Route::get('/transactions/create/investment', 'TransactionController@createInvestment')->name('transactions.createInvestment');
 Route::post('/transactions/standard', 'TransactionController@storeStandard')->name('transactions.storeStandard');
 Route::post('/transactions/investment', 'TransactionController@storeInvestment')->name('transactions.storeInvestment');
-Route::resource('transactions',
-    'TransactionController',
-    [
-        'only' => [
-            'delete'
-        ]
+Route::get('/transactions/{transaction}/edit/standard', 'TransactionController@editStandard')->name('transactions.editStandard');
+Route::get('/transactions/{transaction}/edit/investment', 'TransactionController@editInvestment')->name('transactions.editInvestment');
+Route::patch('/transactions/{transaction}/standard', 'TransactionController@updateStandard')->name('transactions.updateStandard');
+Route::patch('/transactions/{transaction}/investment', 'TransactionController@updateInvestment')->name('transactions.updateInvestment');
+Route::resource('transactions', 'TransactionController')
+    ->only([
+        'destroy'
     ]);

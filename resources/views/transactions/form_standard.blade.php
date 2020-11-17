@@ -10,7 +10,7 @@
     @if(isset($transaction->id))
         <form
             accept-charset="UTF-8"
-            action="{{ route('transactions.update', ['transaction' => $transaction->id]) }}"
+            action="{{ route('transactions.updateStandard', ['transaction' => $transaction->id]) }}"
             autocomplete="off"
             id="formTransaction"
             method="POST"

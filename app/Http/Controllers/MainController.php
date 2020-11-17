@@ -137,8 +137,8 @@ class MainController extends Controller
                         'categories' => array_values($transaction->categories()),
                         'reconciled' => $transaction->reconciled,
                         'comment' => $transaction->comment,
-                        'edit_url' => route('transactions.edit', $transaction->id),
-                        'delete_url' => action('TransactionController@destroy', $transaction->id),
+                        'edit_url' => route('transactions.editStandard', $transaction->id),
+                        'delete_url' => route('transactions.destroy', $transaction->id),
                     ];
             })
             ->sortByDesc('transactionType')
@@ -168,8 +168,8 @@ class MainController extends Controller
                         'tags' => array_values($transaction->tags()),
                         'categories' => array_values($transaction->categories()),
                         'comment' => $transaction->comment,
-                        'edit_url' => route('transactions.edit', $transaction->id),
-                        'delete_url' => action('TransactionController@destroy', $transaction->id),
+                        'edit_url' => route('transactions.editStandard', $transaction->id),
+                        'delete_url' => route('transactions.destroy', $transaction->id),
                     ];
                 })
             ->sortBy('next_date');

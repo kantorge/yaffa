@@ -127,7 +127,7 @@ class TransactionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function editStandard($id)
     {
         //get all categories for reference
         $categories = Category::all();
@@ -158,7 +158,7 @@ class TransactionController extends Controller
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
-        return view('transactions.form', ['transaction' => $transaction]);
+        return view('transactions.form_standard', ['transaction' => $transaction]);
     }
 
     /**
