@@ -10,8 +10,6 @@ use Illuminate\Http\Response;
 
 class AccountApiController extends Controller
 {
-    protected $account;
-
     public function __construct(AccountEntity $account)
     {
         $this->account = $account->where('config_type', 'account');
@@ -19,22 +17,22 @@ class AccountApiController extends Controller
 
     public function getList(Request $request)
     {
-		if ($request->get('q')) {
-            $accounts = $this->account
-                ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', $request->get('q') . '%')
-                ->where('active', 1)
-                ->orderBy('name')
-                ->take(10)
-                ->get();
-		} else {
-            $accounts = $this->account
-                ->select(['id', 'name AS text'])
-                ->where('active', 1)
-                ->orderBy('name')
-                ->take(10)
-                ->get();
-            //get top active payees, considering selected account as well
+        $accounts = $this->account
+            ->select(['id', 'name AS text'])
+            ->when($request->get('q'), function($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+            })
+            ->where('active', 1)
+            ->orderBy('name')
+            ->take(10)
+            ->get();
+
+        //return data
+        return response()->json($accounts, Response::HTTP_OK);
+    }
+
+
+            //TODO: get top active accounts, considering selected account as well
             /*
             $accountField = ($this->input->get('transaction_type') == 'deposit' ? 'accounts_to_id' : 'accounts_from_id');
             $query = "SELECT    `head`.`payees_id` AS `id`,
@@ -49,11 +47,6 @@ class AccountApiController extends Controller
                         LIMIT 5";
             $json = $this->db->query($query)->result();
             */
-        }
-
-        //return data
-        return response()->json($accounts, Response::HTTP_OK);
-    }
 
     public function getAccountCurrencyLabel(Request $request) {
 

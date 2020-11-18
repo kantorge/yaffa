@@ -20,21 +20,19 @@ class PayeeApiController extends Controller
 
     public function getList(Request $request)
     {
-		if ($request->get('q')) {
-            $payees = $this->payee
-                ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', '%' . $request->get('q') . '%')
-                ->where('active', 1)
-                ->orderBy('name')
-                ->take(10)
-                ->get();
-		} else {
-            $payees = $this->payee
-                ->select(['id', 'name AS text'])
-                ->where('active', 1)
-                ->orderBy('name')
-                ->take(10)
-                ->get();
+        $payees = $this->payee
+            ->select(['id', 'name AS text'])
+            ->when($request->get('q'), function($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+            })
+            ->where('active', 1)
+            ->orderBy('name')
+            ->take(10)
+            ->get();
+
+        //return data
+        return response()->json($payees, Response::HTTP_OK);
+    }
             //get top active payees, considering selected account as well
             /*
             $accountField = ($this->input->get('transaction_type') == 'deposit' ? 'accounts_to_id' : 'accounts_from_id');
@@ -50,11 +48,7 @@ class PayeeApiController extends Controller
                         LIMIT 5";
             $json = $this->db->query($query)->result();
             */
-        }
 
-        //return data
-        return response()->json($payees, Response::HTTP_OK);
-    }
 
     public function getDefaultCategoryForPayee(Request $request) {
         if (empty($request->get('payee_id'))) {

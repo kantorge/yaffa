@@ -1,22 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
-use App\Tag;
 use App\Http\Controllers\Controller;
+use App\Investment;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
-class TagApiController extends Controller
+class InvestmentApiController extends Controller
 {
-    public function __construct(Tag $tag)
+    public function __construct(Investment $investment)
     {
-        $this->tag = $tag;
+        $this->investment = $investment;
     }
 
     public function getList(Request $request)
     {
-        $tags = $this->tag
+		$investments = $this->investment
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function($query) use ($request) {
                 $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
@@ -26,6 +25,6 @@ class TagApiController extends Controller
             ->get();
 
         //return data
-        return response()->json($tags, Response::HTTP_OK);
+        return response()->json($investments, Response::HTTP_OK);
     }
 }
