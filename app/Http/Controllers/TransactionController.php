@@ -119,6 +119,35 @@ class TransactionController extends Controller
     public function storeInvestment(TransactionRequest $request)
     {
         $validated = $request->validated();
+
+        DB::transaction(function () use ($validated) {
+            $transaction = Transaction::create($validated);
+
+            $transactionDetails = TransactionDetailInvestment::create($validated['config']);
+            $transaction->config()->associate($transactionDetails);
+
+            if (   $transaction->schedule) {
+                $transactionSchedule = TransactionSchedule::create(
+                        [
+                            'transaction_id' => $transaction->id,
+                            'start_date' => $validated['schedule_start'],
+                            'next_date' => $validated['schedule_next'],
+                            'end_date' => $validated['schedule_end'],
+                            'frequency' => $validated['schedule_frequency'],
+                            'interval' => $validated['schedule_interval'],
+                            'count' => $validated['schedule_count'],
+                        ]
+                );
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
+
+            $transaction->push();
+
+        });
+
+        add_notification('Transaction added', 'success');
+
+        return redirect("/");
     }
 
     /**
@@ -147,7 +176,6 @@ class TransactionController extends Controller
             ->find($id);
 
             //dd($transaction);
-            //dd($transaction->toArray());
 
         $baseTransactionData = [
             'transactionType' => $transaction->transactionType->name,
@@ -159,6 +187,20 @@ class TransactionController extends Controller
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
         return view('transactions.form_standard', ['transaction' => $transaction]);
+    }
+
+    public function editInvestment(Transaction $transaction) {
+        $transaction->load(
+            [
+                'config',
+                'config.account',
+                'config.investment',
+                'transactionSchedule',
+                'transactionType',
+            ]
+        );
+
+        return view('transactions.form_investment', ['transaction' => $transaction]);
     }
 
     /**

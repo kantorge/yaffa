@@ -8,8 +8,7 @@ math = require("mathjs");
 
 require('select2');
 
-
-var transactionData = {
+window.transactionData = {
 	elements : {},
 
 	data : {
@@ -44,25 +43,17 @@ var transactionData = {
 
 		this.updateTotal();
 	},
-	set newCurrencyAccount (x) {
-		this.currency.account = x;
-
-		this.updateCurrencies();
-	},
-	set newCurrencyInvestment (x) {
-		this.currency.investment = x;
-
-		this.updateCurrencies();
-	},
-	updateTotal() {
-        var commissionMultiplier = (transactionData.transactionTypeDetails[transactionData.transactionType].amount_operator == 'plus' ? -1 : 1);
-		this.data.total = this.data.quantity * this.data.price + this.data.dividend + (commissionMultiplier * this.data.commission);
-		$("#transaction_total").val(this.data.total);
-	},
-	updateCurrencies() {
-		$(".transaction_currency").html(this.currency.account);
-	}
 };
+
+window.updateTotal = function() {
+	//var commissionMultiplier = (transactionData.transactionTypeDetails[transactionData.transactionType].amount_operator == 'plus' ? -1 : 1);
+	//this.data.total = this.data.quantity * this.data.price + this.data.dividend + (commissionMultiplier * this.data.commission);
+	$("#transaction_total").val(this.data.total);
+}
+
+window.updateCurrencies = function() {
+	$(".transaction_currency").html(transactionData.elements.accounts.data('currency'));
+}
 
 function disableInputWithMath(element) {
 	element.prop('disabled', true);
@@ -73,16 +64,17 @@ function enableInputWithMath(element) {
 	element.prop('disabled', false);
 }
 
-$( document ).ready(function() {
+$( function () {
 	transactionData.elements.quantity = $("#transaction_quantity");
 	transactionData.elements.price = $("#transaction_price");
 	transactionData.elements.commission = $("#transaction_commission");
 	transactionData.elements.dividend = $("#transaction_dividend");
+	transactionData.elements.investments = $("#transaction_investment");
+	transactionData.elements.accounts = $("#transaction_account");
 
-    var elementInvestments = $("#transaction_investment");
-    elementInvestments.select2({
+    transactionData.elements.investments.select2({
 		ajax: {
-			url: site_url + 'ajax/investments',
+			url: '/api/assets/investment',
 			dataType: 'json',
 			delay: 150,
 			processResults: function (data) {
@@ -97,25 +89,27 @@ $( document ).ready(function() {
 		allowClear: true
 	});
 
-	elementInvestments.on('select2:select', function (e) {
+	transactionData.elements.investments.on('select2:select', function (e) {
 		$.ajax({
-			url: site_url + 'ajax/get_currency_currency_label',
+			url: '/assets/investment',
 			data: {currency_id: e.params.data.id}
 		})
 		.done(function( data ) {
-			transactionData.newCurrencyInvestment = data;
+			transactionData.elements.investments.data('currency', data);
+			window.updateCurrencies();
 		});
 	});
 
-	elementInvestments.on('select2:unselect', function (e) {
-		transactionData.newCurrencyAccount = null;
+	transactionData.elements.investments.on('select2:unselect', function (e) {
+		transactionData.elements.investments.data('currency', null);
+		window.updateCurrencies();
     });
 
     //get default value for investment, if it is set
     if (transactionData.investment) {
 		$.ajax({
 			type: 'GET',
-			url: site_url + 'ajax/get_investment_data',
+			url: '/assets/investment',
 			dataType: 'json',
 			data: {
 				id: transactionData.investment
@@ -135,11 +129,9 @@ $( document ).ready(function() {
 		});
 	}
 
-
-    var elementAccounts = $("#transaction_account");
-    elementAccounts.select2({
+    transactionData.elements.accounts.select2({
 		ajax: {
-			url: site_url + 'ajax/accounts',
+			url: '/api/assets/account',
 			dataType: 'json',
 			delay: 150,
 			processResults: function (data) {
@@ -152,26 +144,29 @@ $( document ).ready(function() {
 		selectOnClose: true,
 		placeholder: "Select account",
 		allowClear: true
-    });
-	elementAccounts.on('select2:select', function (e) {
+	});
+
+	transactionData.elements.accounts.on('select2:select', function (e) {
 		$.ajax({
-			url: site_url + 'ajax/get_account_currency_label',
+			url: '/api/assets/get_account_currency',
 			data: {account_id: e.params.data.id}
 		})
 		.done(function( data ) {
-			transactionData.newCurrencyAccount = data;
+			transactionData.elements.accounts.data('currency', data);
+			window.updateCurrencies();
 		});
 	});
 
-	elementAccounts.on('select2:unselect', function (e) {
-		transactionData.newCurrencyAccount = null;
+	transactionData.elements.accounts.on('select2:unselect', function (e) {
+		transactionData.elements.accounts.data('currency', null);
+		window.updateCurrencies();
     });
 
     //get default value for account, if it is set
     if (transactionData.account) {
 		$.ajax({
 			type: 'GET',
-			url: site_url + 'ajax/get_account_data',
+			url: 'ajax/get_account_data',
 			dataType: 'json',
 			data: {
 				id: transactionData.account
@@ -193,12 +188,11 @@ $( document ).ready(function() {
 
 	$("#transaction_type").change(function() {
 		//console.log($(this).val());
-        transactionData.validator.resetForm();
+        //transactionData.validator.resetForm();
         transactionData.transactionType = $(this).val();
 
-		if (   $(this).val() == 4
-		    || $(this).val() == 5) {
-			//buy or sell
+		if (   $(this).val() == 'Buy'
+		    || $(this).val() == 'Sell') {
 			enableInputWithMath(transactionData.elements.quantity);
 			enableInputWithMath(transactionData.elements.price);
 			enableInputWithMath(transactionData.elements.commission);
@@ -206,7 +200,9 @@ $( document ).ready(function() {
 			disableInputWithMath(transactionData.elements.dividend);
 		} else
 
-		if (   $(this).val() == 8) {
+		if (   $(this).val() == 'Dividend'
+			|| $(this).val() == 'S-Term Cap Gains Dist'
+			|| $(this).val() == 'L-Term Cap Gains Dist') {
 			//dividend
 			disableInputWithMath(transactionData.elements.quantity);
 			disableInputWithMath(transactionData.elements.price);
@@ -215,8 +211,8 @@ $( document ).ready(function() {
 			enableInputWithMath(transactionData.elements.dividend);
 		} else
 
-		if (   $(this).val() == 6
-		    || $(this).val() == 7) {
+		if (   $(this).val() == 'Add shares'
+		    || $(this).val() == 'Remove shares') {
 			//add or remove
 			enableInputWithMath(transactionData.elements.quantity);
 			disableInputWithMath(transactionData.elements.price);
@@ -231,20 +227,10 @@ $( document ).ready(function() {
 			Handle changes to numerical inputs.
 			Parse input. Display error, if NaN. Update total.
 		*/
-		var amount = 0;
-		try {
-			amount = math.eval(this.value.replace(/\s/g,""));
-			//console.log('result: ' +amount);
-			$(this).closest(".form-group").removeClass("has-error");
-			$(this).val	(amount);
-		} catch (err) {
-			$(this).closest(".form-group").addClass("has-error");
-		}
 
-		transactionData['new' + this.dataset.control] = amount || 0;
+		processNumericInput(this);
+		window.updateTotal();
 	});
-
-
 
     //datepicker
 	$('#transaction_date').daterangepicker(datePickerStandardSettings);
@@ -349,7 +335,7 @@ $( document ).ready(function() {
 	//initial transaction type
     $("#transaction_type").change();
 
-    //set callback type
-    $("#callback_" + (defaultCallback || 'new')).click();
+	//set callback type
+    document.getElementById("callback_" + defaultCallback).click();
 
 });

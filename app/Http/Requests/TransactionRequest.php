@@ -104,7 +104,14 @@ class TransactionRequest extends FormRequest
         } elseif ($this->get('config_type') === 'transaction_detail_investment') {
             //adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
-
+                'config.account_id' => [
+                    'required',
+                    'exists:account_entities,id,config_type,account'
+                ],
+                'config.investment_id' => [
+                    'required',
+                    'exists:investments,id'
+                ],
             ]);
 
 
@@ -113,9 +120,9 @@ class TransactionRequest extends FormRequest
                 || $this->get('transaction_type_id') === 5) {
                 //buy OR sell
                 $rules = array_merge($rules, [
-                    'price' => 'required|numeric|gt_0',
-                    'quantity' => 'required|numeric|gt_0',
-                    'commission' => 'required|numeric|gt_0',
+                    'config.price' => 'required|numeric|gt:0',
+                    'config.quantity' => 'required|numeric|gt:0',
+                    'config.commission' => 'nullable|numeric|gte:0',
                 ]);
 
             }

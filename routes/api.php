@@ -25,6 +25,8 @@ Route::get('/assets/get_account_currency', 'API\AccountApiController@getAccountC
 
 Route::get('/assets/category', 'API\CategoryApiController@getList');
 
+Route::get('/assets/investment', 'API\InvestmentApiController@getList');
+
 Route::get('/assets/payee', 'API\PayeeApiController@getList');
 Route::get('/assets/get_default_category_for_payee', 'API\PayeeApiController@getDefaultCategoryForPayee');
 

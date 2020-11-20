@@ -31,14 +31,14 @@ if (window.location.pathname === '/tags') {
     require('./tags/index');
 }
 if (   window.location.pathname === '/transactions/create/standard'
-    || /^\/transactions\/\d+\/edit/.test(window.location.pathname)) {
+    || /^\/transactions\/\d+\/edit\/standard/.test(window.location.pathname)) {
     require('./transactions/formCommon');
     require('./transactions/formSchedule');
     require('./transactions/formStandard');
 }
 
 if (   window.location.pathname === '/transactions/create/investment'
-    || /^\/transactions\/\d+\/edit/.test(window.location.pathname)) {
+    || /^\/transactions\/\d+\/edit\/investment/.test(window.location.pathname)) {
     require('./transactions/formCommon');
     require('./transactions/formSchedule');
     require('./transactions/formInvestment');
