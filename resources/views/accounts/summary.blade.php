@@ -17,9 +17,9 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Total value</h3>
-			        <span class="pull-right">
+			        <div class="card-tools">
 				        TODO
-			        </span>
+			        </div>
                 </div>
                 <!-- /.box-header -->
                 <div class="card-body">
@@ -67,43 +67,40 @@
         <!-- /.col -->
 
 		<div class="col-md-4">
-			<div class="box">
-				<div class="box-header with-border">
-					<h3 class="box-title">View filters</h3>
-					<div class="box-tools pull-right">
-						<!-- Collapse Button -->
-						<button type="button" class="btn btn-box-tool" data-widget="collapse">
-							<i class="fa fa-minus"></i>
-						</button>
-					</div>
-					<!-- /.box-tools -->
-				</div>
-				<!-- /.box-header -->
-				<div class="box-body">
-					<p>
-						<a href="<?='/accounts/index/inactive/0'?>">Show active accounts only</a>
-					</p>
-					<p>
-						<a href="<?='accounts/index/inactive/1'?>">Show all accounts</a>
-					</p>
-				</div>
-				<!-- /.box-body -->
-			</div>
-			<!-- /.box -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">View filters</h3>
 
-			<div class="box" id="upcomingTransactionsBox">
-				<div class="box-header with-border">
-					<h3 class="box-title">Upcoming transactions</h3>
-					<div class="box-tools pull-right">
-						<!-- Collapse Button -->
-						<button type="button" class="btn btn-box-tool" data-widget="collapse">
-							<i class="fa fa-minus"></i>
-						</button>
-					</div>
-					<!-- /.box-tools -->
-				</div>
-                <!-- /.box-header -->
-				<div class="box-body">
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    <!-- /.card-tools -->
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body" style="display: block;">
+                    <p>
+                        <a href="<?='/accounts/index/inactive/0'?>">Show active accounts only</a>
+                    </p>
+                    <p>
+                        <a href="<?='accounts/index/inactive/1'?>">Show all accounts</a>
+                    </p>
+                </div>
+                <!-- /.card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Upcoming transactions</h3>
+
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    <!-- /.card-tools -->
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body" style="display: block;">
                     <ul class="todo-list" id="upcomingTransactionsContainer">
                         <li class="hidden" id="upcomingTransactionsPrototype">
                             <small class="label" style="margin-left: 0px;"></small>
@@ -115,12 +112,12 @@
                         </li>
                     </ul>
                 </div>
-                <!-- /.box-body -->
+                <!-- /.card-body -->
                 <div class="overlay">
                     <i class="fa fa-refresh fa-spin"></i>
                 </div>
-			</div>
-			<!-- /.box -->
+            </div>
+
 		</div>
 		<!-- /.col -->
       </div>
