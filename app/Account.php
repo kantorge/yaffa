@@ -45,7 +45,7 @@ class Account extends AccountEntity
         return $this->belongsTo(AccountGroup::class);
     }
 
-    public function currencies()
+    public function currency()
     {
         return $this->belongsTo(Currency::class);
     }

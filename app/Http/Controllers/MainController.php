@@ -13,7 +13,13 @@ use JavaScript;
 class MainController extends Controller
 {
     public function index() {
-        $accounts = AccountEntity::where('config_type', 'account')->get()->load(['config', 'config.account_group']);
+        $accounts = AccountEntity::where('config_type', 'account')
+            ->get()
+            ->load([
+                'config',
+                'config.account_group',
+                'config.currency',
+            ]);
         //TODO: would this be a better approach?
         //$accounts = Account::all()->load(['config']);
 

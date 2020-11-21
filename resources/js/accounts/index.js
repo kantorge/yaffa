@@ -28,7 +28,7 @@ $(function() {
             title: "Account group"
         },
         {
-            data: "config.currencies.name",
+            data: "config.currency.name",
             title: "Currency"
         },
         {

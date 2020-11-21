@@ -28,7 +28,7 @@ class AccountController extends Controller
     {
         //Show all accounts from the database and return to view
         $accounts = $this->account
-            ->with(['config', 'config.account_group', 'config.currencies'])
+            ->with(['config', 'config.account_group', 'config.currency'])
             ->get();
 
         //support DataTables with action URLs
@@ -45,7 +45,7 @@ class AccountController extends Controller
 
     public function edit($id)
     {
-        $account = AccountEntity::with(['config', 'config.account_group', 'config.currencies'])
+        $account = AccountEntity::with(['config', 'config.account_group', 'config.currency'])
             ->find($id);
 
         //get all account groups

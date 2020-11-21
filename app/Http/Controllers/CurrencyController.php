@@ -30,8 +30,6 @@ class CurrencyController extends Controller
             return $currency;
         });
 
-        //dd($currencies[1]->rate->rate);
-
         JavaScript::put([
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
