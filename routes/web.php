@@ -19,7 +19,7 @@ Route::get('/','MainController@index');
 
 Route::resource('accountgroups', 'AccountGroupController');
 
-Route::get('/accounts/history/{account}', 'MainController@account_details');
+Route::get('/accounts/history/{account}', 'MainController@account_details')->name('accounts.history');
 Route::resource('accounts', 'AccountController');
 
 Route::resource('categories', 'CategoryController');

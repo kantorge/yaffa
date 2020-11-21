@@ -54,9 +54,22 @@ class MainController extends Controller
         });
 
         $summary = $accounts
-            ->groupBy('account_group');
+            ->groupBy('account_group')
+            ->map(function ($group, $key) {
+                return [
+                    'group' => $key,
+                    'accounts' => $group,
+                    'sum' => $group->sum('sum')
+                ];
+            });
 
-        return view('accounts.summary', ['summary' => $summary]);
+        $total = $summary->sum('sum');
+
+        return view('accounts.summary',
+             [
+                'summary' => array_values($summary->toArray()),
+                'total' => $total,
+            ]);
     }
 
     public function account_details(Account $account) {

@@ -18,29 +18,32 @@
                 <div class="card-header">
                     <h3 class="card-title">Total value</h3>
 			        <div class="card-tools">
-				        TODO
+				        {{ $total }}
 			        </div>
                 </div>
                 <!-- /.box-header -->
                 <div class="card-body">
                     <div id="accordion">
                         @forelse($summary as $key => $item)
-                            <div class="card card-primary">
+                            <div class="card card-outline card-primary">
                                 <div class="card-header">
                                     <h4 class="card-title">
-                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" class="collapsed" aria-expanded="false">
-                                            {{ $key }}
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ $key }}" class="collapsed" aria-expanded="false">
+                                            {{ $item['group'] }}
                                         </a>
                                     </h4>
+                                    <div class="card-tools">
+                                        {{ $item['sum'] }}
+                                    </div>
                                 </div>
-                                <div id="collapseOne" class="panel-collapse in collapse">
+                                <div id="collapse{{ $key }}" class="panel-collapse in collapse">
                                     <div class="card-body">
                                         <ul class="list-group list-group-flush">
-                                            @foreach($item as $account)
+                                            @foreach($item['accounts'] as $account)
                                                 <li  class="list-group-item">
-                                                    <a href="/accounts/account_details?account_id={{ $account->id }}" class="product-title">
+                                                    <a href="{{ route('accounts.history', ['account' => $account->id]) }}" class="product-title">
                                                         {{ $account->name }}
-                                                        <span class="pull-right <?=($account['sum'] < 0 ? "text-danger" : "")?>">
+                                                        <span class="float-right <?=($account['sum'] < 0 ? "text-danger" : "")?>">
                                                             <?=$account['sum']?>
                     <?php //if ($base_currency['id'] != $account['currencies_id']) {?>
                                                             / <?php //NiceNumber($account['balance'] * $currency_rates[$account['currencies_id']], 0, 0, $base_currency['suffix'])?>
