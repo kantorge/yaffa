@@ -23,11 +23,11 @@ $(function() {
             title: "Symbol"
         },
         {
-            data: "investment_groups.name",
+            data: "investment_group.name",
             title: "Investment group"
         },
         {
-            data: "currencies.name",
+            data: "currency.name",
             title: "Currency"
         },
         {

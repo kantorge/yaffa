@@ -28,7 +28,7 @@ class AccountSeeder extends Seeder
             [
                 'opening_balance' => 1000,
                 'account_group_id' => AccountGroup::where('name', 'Készpénz')->pluck('id')->first(),
-                'currencies_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
+                'currency_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
             ]
         );
         $accountConfig->save();
@@ -50,7 +50,7 @@ class AccountSeeder extends Seeder
             [
                 'opening_balance' => 1000,
                 'account_group_id' => AccountGroup::where('name', 'Bankszámla')->pluck('id')->first(),
-                'currencies_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
+                'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );
         $accountConfig->save();

@@ -57,14 +57,14 @@
             <div class="form-group">
                 {{ Form::label('task_id', 'Investment group', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
-                    {{ Form::select('investment_groups_id', $allInvestmentGropus, old('investment_groups_id'), ['class' => 'form-control']) }}
+                    {{ Form::select('investment_group_id', $allInvestmentGropus, old('investment_group_id'), ['class' => 'form-control']) }}
                 </div>
             </div>
 
             <div class="form-group">
                 {{ Form::label('task_id', 'Currency', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
-                    {{ Form::select('currencies_id', $allCurrencies, old('currencies_id'), ['class' => 'form-control']) }}
+                    {{ Form::select('currency_id', $allCurrencies, old('currency_id'), ['class' => 'form-control']) }}
                 </div>
             </div>
         </div>

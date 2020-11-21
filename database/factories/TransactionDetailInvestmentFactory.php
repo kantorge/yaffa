@@ -18,13 +18,13 @@ $factory->define(TransactionDetailInvestment::class, function (Faker $faker) {
                 'config',
                 [\App\Account::class],
                 function (Builder $query) {
-                    $query->where('currencies_id', 1);
+                    $query->where('currency_id', 1);
                 }
             )
             ->inRandomOrder()
             ->first()
             ->id,
-        "investment_id" => Investment::where('currencies_id', 1)
+        "investment_id" => Investment::where('currency_id', 1)
             ->inRandomOrder()
             ->first()
             ->id,

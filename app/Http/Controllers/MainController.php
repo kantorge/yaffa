@@ -52,9 +52,9 @@ class MainController extends Controller
                     });
 
             //apply currency exchange, if necesary
-            if ($account->config->currencies_id != $baseCurrency->id) {
+            if ($account->config->currency_id != $baseCurrency->id) {
                 $account['sum_foreign'] = $account['sum'];
-                $account['sum'] = $account['sum'] * $currencies->find($account->config->currencies_id)->rate();
+                $account['sum'] = $account['sum'] * $currencies->find($account->config->currency_id)->rate();
             }
 
             return $account;

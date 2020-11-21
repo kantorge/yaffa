@@ -20,8 +20,8 @@ class InvestmentRequest extends FormRequest
             'symbol' => 'required|min:2|max:191|unique:investments,symbol,' . \Request::instance()->id,
             'comment' => 'nullable|max:191',
             'active' => 'boolean',
-            'investment_groups_id' => "required|exists:account_groups,id",
-            'currencies_id' => "required|exists:currencies,id",
+            'investment_group_id' => "required|exists:account_groups,id",
+            'currency_id' => "required|exists:currencies,id",
         ];
 
         return $rules;

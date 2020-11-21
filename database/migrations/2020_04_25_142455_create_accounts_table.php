@@ -17,11 +17,11 @@ class CreateAccountsTable extends Migration
             $table->id();
             $table->bigInteger('opening_balance')->default(0);
             $table->foreignId('account_group_id');
-            $table->foreignId('currencies_id');
+            $table->foreignId('currency_id');
             $table->timestamps();
 
             $table->foreign('account_group_id')->references('id')->on('account_groups');
-            $table->foreign('currencies_id')->references('id')->on('currencies');
+            $table->foreign('currency_id')->references('id')->on('currencies');
         });
     }
 

@@ -55,7 +55,7 @@ class AccountApiController extends Controller
 		}
 
         $account = Account::find($request->get('account_id'));
-        $currency = \App\Currency::find($account->currencies_id);
+        $currency = \App\Currency::find($account->currency_id);
 
 		echo $currency->suffix;
     }

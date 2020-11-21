@@ -57,7 +57,7 @@
             <div class="form-group">
                 {{ Form::label('task_id', 'Currency', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
-                    {{ Form::select('config[currencies_id]', $allCurrencies, old('config[currencies_id]'), ['class' => 'form-control']) }}
+                    {{ Form::select('config[currency_id]', $allCurrencies, old('config[currency_id]'), ['class' => 'form-control']) }}
                 </div>
             </div>
         </div>

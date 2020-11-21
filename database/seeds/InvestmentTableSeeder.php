@@ -21,8 +21,8 @@ class InvestmentTableSeeder extends Seeder
                 'name' => 'Magyar Telekom',
                 'active' => 1,
                 'symbol' => 'MTEL',
-                'investment_groups_id' => InvestmentGroup::where('name', 'Részvény')->pluck('id')->first(),
-                'currencies_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
+                'investment_group_id' => InvestmentGroup::where('name', 'Részvény')->pluck('id')->first(),
+                'currency_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
             ]
         );
     }

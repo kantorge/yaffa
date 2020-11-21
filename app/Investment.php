@@ -34,8 +34,8 @@ class Investment extends Model
         'symbol',
         'comment',
         'active',
-        'investment_groups_id',
-        'currencies_id',
+        'investment_group_id',
+        'currency_id',
     ];
 
     protected $casts = [
@@ -43,16 +43,16 @@ class Investment extends Model
     ];
 
     protected $with = [
-        'investment_groups',
-        'currencies',
+        'investment_group',
+        'currency',
     ];
 
-    public function investment_groups()
+    public function investment_group()
     {
         return $this->belongsTo(InvestmentGroup::class);
     }
 
-    public function currencies()
+    public function currency()
     {
         return $this->belongsTo(Currency::class);
     }

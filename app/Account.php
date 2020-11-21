@@ -32,7 +32,7 @@ class Account extends AccountEntity
     protected $fillable = [
         'opening_balance',
         'account_group_id',
-        'currencies_id',
+        'currency_id',
     ];
 
     public function config()

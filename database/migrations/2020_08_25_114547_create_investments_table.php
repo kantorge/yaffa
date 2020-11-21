@@ -19,13 +19,13 @@ class CreateInvestmentsTable extends Migration
             $table->string('symbol', 191)->unique();
             $table->string('comment', 191)->nullable();
             $table->boolean('active')->default('1');
-            $table->foreignId('investment_groups_id');
-            $table->foreignId('currencies_id');
+            $table->foreignId('investment_group_id');
+            $table->foreignId('currency_id');
 
             $table->timestamps();
 
-            $table->foreign('investment_groups_id')->references('id')->on('investment_groups');
-            $table->foreign('currencies_id')->references('id')->on('currencies');
+            $table->foreign('investment_group_id')->references('id')->on('investment_groups');
+            $table->foreign('currency_id')->references('id')->on('currencies');
 
         });
     }

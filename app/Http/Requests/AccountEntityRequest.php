@@ -25,7 +25,7 @@ class AccountEntityRequest extends FormRequest
             $rules = array_merge($rules, [
                 'config.opening_balance'  => 'required|numeric',
                 'config.account_group_id' => "required|exists:account_groups,id",
-                'config.currencies_id' => "required|exists:currencies,id",
+                'config.currency_id' => "required|exists:currencies,id",
             ]);
         }
 
