@@ -66,9 +66,6 @@ class MainController extends Controller
             return $account;
         });
 
-
-        dd($accounts);
-
         $summary = $accounts
             ->groupBy('account_group')
             ->map(function ($group, $key) {

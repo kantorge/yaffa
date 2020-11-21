@@ -25,14 +25,14 @@
                 <div class="card-body">
                     <div id="accordion">
                         @forelse($summary as $key => $item)
-                            <div class="card card-outline card-primary">
+                            <div class="card card-outline {{ ($item['sum'] < 0 ? 'card-danger' : 'card-primary') }}">
                                 <div class="card-header">
                                     <h4 class="card-title">
                                         <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ $key }}" class="collapsed" aria-expanded="false">
                                             {{ $item['group'] }}
                                         </a>
                                     </h4>
-                                    <div class="card-tools">
+                                    <div class="card-tools {{ ($item['sum'] < 0 ? 'text-danger' : '') }}">
                                         {{ $item['sum'] }}
                                     </div>
                                 </div>
@@ -45,9 +45,9 @@
                                                         {{ $account->name }}
                                                         <span class="float-right <?=($account['sum'] < 0 ? "text-danger" : "")?>">
                                                             <?=$account['sum']?>
-                    <?php //if ($base_currency['id'] != $account['currencies_id']) {?>
-                                                            / <?php //NiceNumber($account['balance'] * $currency_rates[$account['currencies_id']], 0, 0, $base_currency['suffix'])?>
-                    <?php //}?>
+                                                            @if(isset($account['sum_foreign']))
+                                                                / {{ $account['sum_foreign'] }}
+                                                            @endif
                                                         </span>
                                                     </a>
                                                 </li >
@@ -59,7 +59,6 @@
                         @empty
                             No data
                         @endforelse
-
 
                     </div>
                 </div>
