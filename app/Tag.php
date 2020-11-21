@@ -23,13 +23,6 @@ class Tag extends Model
         'name',
     ];
 
-    public static function rules ($id = 0) {
-        return
-            [
-                'name' => 'required|min:2|max:191|unique:tags,name' . ($id ? ",$id" : ''),
-            ];
-    }
-
     public function transactionItems()
     {
         //return $this->belongsToMany(RelatedModel, pivot_table_name, foreign_key_of_current_model_in_pivot_table, foreign_key_of_other_model_in_pivot_table);

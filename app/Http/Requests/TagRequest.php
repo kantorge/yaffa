@@ -26,9 +26,9 @@ class TagRequest extends FormRequest
      */
     public function rules()
     {
-        $tag = $this->route('tag');
-
-        return (new \App\Tag)->rules($tag);
+        return [
+            'name' => 'required|min:2|max:191|unique:tags,name' . ($id ? ",$id" : ''),
+        ];
     }
 
     /**
