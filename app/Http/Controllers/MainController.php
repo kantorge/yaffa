@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Account;
 use App\AccountEntity;
+use App\Currency;
 use App\Transaction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -13,9 +14,15 @@ class MainController extends Controller
 {
     public function index() {
         $accounts = AccountEntity::where('config_type', 'account')->get()->load(['config', 'config.account_group']);
+        //TODO: would this be a better approach?
         //$accounts = Account::all()->load(['config']);
 
-        $accounts->map(function($account) {
+        //get all currencies for rate calculation
+        $baseCurrency = Currency::where('base', 1)->firstOrFail();
+        $currencies = Currency::all();
+
+        $accounts->map(function($account) use ($currencies, $baseCurrency) {
+            //get all standard transactions
             $transactions = Transaction::with(
                 [
                     'config',
@@ -34,24 +41,27 @@ class MainController extends Controller
                 )
                 ->get();
 
+            //get account group name for later grouping
             $account['account_group'] = $account->config->account_group->name;
 
+            //get summary of transactions
             $account['sum'] = $transactions
-            ->map(function ($transaction) use ($account) {
-                return [
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
-                        'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
-                        'amount_from' => $transaction->config->amount_from,
-                        'amount_to' => $transaction->config->amount_to,
-                    ];
-                })
-            ->sum(function ($transaction) {
-                    return ($transaction['transaction_operator'] == 'minus' ? -$transaction['amount_from'] : $transaction['amount_to']);
-                });
+                ->sum(function ($transaction) use ($account) {
+                        $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
+                        return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
+                    });
+
+            //apply currency exchange, if necesary
+            if ($account->config->currencies_id != $baseCurrency->id) {
+                $account['sum_foreign'] = $account['sum'];
+                $account['sum'] = $account['sum'] * $currencies->find($account->config->currencies_id)->rate();
+            }
 
             return $account;
         });
+
+
+        dd($accounts);
 
         $summary = $accounts
             ->groupBy('account_group')

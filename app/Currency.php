@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\CurrencyRate;
 use Illuminate\Database\Eloquent\Model;
 
 class Currency extends Model
@@ -40,4 +41,14 @@ class Currency extends Model
             ];
     }
 
+    public function rate() {
+        $baseCurrency = Currency::where('base', 1)->firstOrFail();
+
+        $rate = CurrencyRate::where('from_id', $this->id)
+                                    ->where('to_id', $baseCurrency->id)
+                                    ->latest('date')
+                                    ->first();
+
+        return ($rate instanceof CurrencyRate ? $rate->rate : null);
+    }
 }

@@ -23,13 +23,8 @@ class CurrencyController extends Controller
         $baseCurrency = Currency::where('base', 1)->firstOrFail();
 
         //support DataTables with action URLs
-        $currencies->map(function ($currency) use ($baseCurrency) {
-            $rate = CurrencyRate::where('from_id', $currency->id)
-                                    ->where('to_id', $baseCurrency->id)
-                                    ->latest('date')
-                                    ->first();
-
-            $currency['latest_rate'] = ($rate instanceof CurrencyRate ? $rate->rate : null);
+        $currencies->map(function ($currency) {
+            $currency['latest_rate'] = $currency->rate();
             $currency['edit_url'] = route('currencies.edit', $currency);
             $currency['delete_url'] = action('CurrencyController@destroy', $currency);
             return $currency;
