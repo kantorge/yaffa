@@ -36,6 +36,7 @@ class Investment extends Model
         'active',
         'investment_group_id',
         'currency_id',
+        'investment_price_provider_id',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class Investment extends Model
     protected $with = [
         'investment_group',
         'currency',
+        'investment_price_provider'
     ];
 
     public function investment_group()
@@ -55,5 +57,10 @@ class Investment extends Model
     public function currency()
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function investment_price_provider()
+    {
+        return $this->belongsTo(InvestmentPriceProvider::class);
     }
 }

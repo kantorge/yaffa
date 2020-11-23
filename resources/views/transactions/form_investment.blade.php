@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="transaction_account" class="control-label">Account</label>
+                                <label class="control-label">Account</label>
                                 <select
                                     class="form-control"
                                     data-currency=""
@@ -131,7 +131,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="transaction_quantity" class="control-label">Quantity</label>
-                                <input type="text" name="config[quantity]" value="" data-control="Quantity" id="transaction_quantity" maxlength="10" class="form-control input-with-math">
+                                <input
+                                    class="form-control input-with-math"
+                                    id="transaction_quantity"
+                                    maxlength="10"
+                                    name="config[quantity]"
+                                    type="text"
+                                    value="{{ old('config[quantity]', $transaction['config']['quantity'] ?? 0) }}"
+                                >
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -139,7 +146,6 @@
                                 <label for="transaction_price" class="control-label">Price</label>
                                 <input
                                     class="form-control input-with-math"
-                                    data-control="Price"
                                     id="transaction_price"
                                     maxlength="10"
                                     name="config[price]"
@@ -153,19 +159,36 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="transaction_commission" class="control-label">Commission</label>
-                                <input type="text" name="config[comission]" value="" data-control="Commission" id="transaction_commission" maxlength="10" class="form-control input-with-math">
+                                <input
+                                    class="form-control input-with-math"
+                                    id="transaction_comission"
+                                    maxlength="10"
+                                    name="config[comission]"
+                                    type="text"
+                                    value="{{ old('config[comission]', $transaction['config']['comission'] ?? 0) }}"
+                                >
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="transaction_dividend" class="control-label">Amount</label>
-                                <input type="text" name="config[divident]" value="" data-control="Dividend" id="transaction_dividend" maxlength="10" class="form-control input-with-math" disabled="">
+                                <input
+                                    class="form-control input-with-math"
+                                    id="transaction_dividend"
+                                    maxlength="10"
+                                    name="config[divident]"
+                                    type="text"
+                                    value="{{ old('config[divident]', $transaction['config']['divident'] ?? 0) }}"
+                                >
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="transaction_total" class="control-label">Total <span class="transaction_currency"></span></label>
-                        <input type="text" name="total" value="" id="transaction_total" maxlength="10" class="form-control" disabled="disabled">
+                        <label for="transaction_total" class="control-label">
+                            Total
+                            <span class="transaction_currency"></span>
+                        </label>
+                        <input type="text" name="total" value="" id="transaction_total" class="form-control" disabled="disabled">
                     </div>
                 </div>
             </div>

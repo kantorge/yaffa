@@ -19,10 +19,10 @@ class CreateCurrencyRatesTable extends Migration
             $table->foreignId('from_id');
             $table->foreignId('to_id');
 
-            $table->timestamps();
-
             $table->date('date');
             $table->decimal('rate', 8, 4);
+
+            $table->timestamps();
 
             $table->foreign('from_id')->references('id')->on('currencies');
             $table->foreign('to_id')->references('id')->on('currencies');

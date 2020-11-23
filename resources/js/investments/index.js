@@ -4,7 +4,7 @@ require( 'datatables.net-bs4' );
 $(function() {
 
     $('#table').DataTable({
-        data: investments,
+        data: investments.map(c => { c.investment_price_provider = c.investment_price_provider || {name: ''};return c;}),
         columns: [
         {
             data: "id",
@@ -29,6 +29,10 @@ $(function() {
         {
             data: "currency.name",
             title: "Currency"
+        },
+        {
+            data: "investment_price_provider.name",
+            title: "Price provider"
         },
         {
             data: "id",

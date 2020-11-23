@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Investment;
 use App\InvestmentGroup;
+use App\InvestmentPriceProvider;
 use App\Currency;
 use App\Http\Requests\InvestmentRequest;
 use Illuminate\Http\Request;
@@ -26,7 +27,8 @@ class InvestmentController extends Controller
     public function index()
     {
         //Show all investments from the database and return to view
-        $investments = $this->investment
+        $investments = $this
+            ->investment
             ->get();
 
         //support DataTables with action URLs
@@ -51,7 +53,15 @@ class InvestmentController extends Controller
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('investments.form',['investment'=> $investment, 'allInvestmentGropus' => $allInvestmentGropus, 'allCurrencies' => $allCurrencies]);
+        //get all price providers
+        $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
+
+        return view('investments.form', [
+            'investment'=> $investment,
+            'allInvestmentGropus' => $allInvestmentGropus,
+            'allCurrencies' => $allCurrencies,
+            'allInvestmentPriceProviders' => $allInvestmentPriceProviders,
+        ]);
     }
 
     public function update(InvestmentRequest $request, Investment $investment)
@@ -68,14 +78,20 @@ class InvestmentController extends Controller
 
     public function create()
     {
-
         //get all investment groups
         $allInvestmentGropus = InvestmentGroup::pluck('name', 'id')->all();
 
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('investments.form', ['allInvestmentGropus' => $allInvestmentGropus, 'allCurrencies' => $allCurrencies]);
+        //get all price providers
+        $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
+
+        return view('investments.form', [
+            'allInvestmentGropus' => $allInvestmentGropus,
+            'allCurrencies' => $allCurrencies,
+            'allInvestmentPriceProviders' => $allInvestmentPriceProviders,
+        ]);
     }
 
     public function store(InvestmentRequest $request)

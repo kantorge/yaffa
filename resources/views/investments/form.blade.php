@@ -67,6 +67,13 @@
                     {{ Form::select('currency_id', $allCurrencies, old('currency_id'), ['class' => 'form-control']) }}
                 </div>
             </div>
+
+            <div class="form-group">
+                {{ Form::label('task_id', 'Price provider', ['class' => 'control-label col-xs-3']) }}
+                <div class="col-xs-9">
+                    {{ Form::select('investment_price_provider_id', $allInvestmentPriceProviders, old('investment_price_provider_id'), ['class' => 'form-control', 'placeholder' => 'None']) }}
+                </div>
+            </div>
         </div>
         <!-- /.card-body -->
         <div class="card-footer">

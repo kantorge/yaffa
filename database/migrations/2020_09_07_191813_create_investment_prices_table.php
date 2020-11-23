@@ -16,11 +16,11 @@ class CreateInvestmentPricesTable extends Migration
         Schema::create('investment_prices', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->foreignId('investments_id');
+            $table->foreignId('investment_id');
             $table->decimal('price', 10, 4);
             $table->timestamps();
 
-            $table->foreign('investments_id')->references('id')->on('investments');
+            $table->foreign('investment_id')->references('id')->on('investments');
         });
     }
 
