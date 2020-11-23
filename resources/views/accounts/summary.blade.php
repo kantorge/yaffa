@@ -82,10 +82,10 @@
                 <!-- /.card-header -->
                 <div class="card-body" style="display: block;">
                     <p>
-                        <a href="<?='/accounts/index/inactive/0'?>">Show active accounts only</a>
+                        <a href="{{ route('accounts.summary') }}">Show active accounts only</a>
                     </p>
                     <p>
-                        <a href="<?='accounts/index/inactive/1'?>">Show all accounts</a>
+                        <a href="{{ route('accounts.summary', ['withClosed' => 'withClosed']) }}">Show all accounts</a>
                     </p>
                 </div>
                 <!-- /.card-body -->

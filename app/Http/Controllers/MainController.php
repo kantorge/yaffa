@@ -12,8 +12,11 @@ use JavaScript;
 
 class MainController extends Controller
 {
-    public function index() {
+    public function index($withClosed = null) {
         $accounts = AccountEntity::where('config_type', 'account')
+            ->when(!$withClosed, function($query) {
+                $query->where('active', '1');
+            })
             ->get()
             ->load([
                 'config',

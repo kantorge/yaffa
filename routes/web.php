@@ -20,6 +20,7 @@ Route::get('/','MainController@index');
 Route::resource('accountgroups', 'AccountGroupController');
 
 Route::get('/accounts/history/{account}', 'MainController@account_details')->name('accounts.history');
+Route::get('/accounts/summary/{withClosed?}', 'MainController@index')->name('accounts.summary');
 Route::resource('accounts', 'AccountController');
 
 Route::resource('categories', 'CategoryController');
