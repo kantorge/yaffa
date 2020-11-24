@@ -14,15 +14,26 @@
 
     <div class="card">
         <div class="card-header">
-            Transaction history
+            <a data-toggle="collapse" href="#collapseHistory" aria-expanded="true">
+                Transaction history
+            </a>
             <div class="card-tools">
-                <a href="/transactions/create" class="btn btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
+                <a
+                    class="btn {{($withForecast ? 'btn-primary' : 'btn-secondary') }}"
+                    href="{{ route('accounts.history', ['account' => $account->id, 'withForecast' => ($withForecast ? '' : 'withForecast')]) }}"
+                    title="{{($withForecast ? 'Without forecast' : 'With forecast') }}">
+                    <i class="fa fa-calendar"></i>
+                </a>
+                <a href="/transactions/create/standard" class="btn btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
+                <a href="/transactions/create/investment" class="btn btn-success" title="New investment transaction"><i class="fa fa-chart-line"></i></a>
             </div>
             <!-- /.card-tools -->
         </div>
         <!-- /.card-header -->
-        <div class="card-body">
-            <table class="table table-bordered table-hover dataTable no-footer" role="grid" id="historyTable"></table>
+        <div id="collapseHistory" class="panel-collapse collapse show">
+            <div class="card-body">
+                <table class="table table-bordered table-hover dataTable no-footer" role="grid" id="historyTable"></table>
+            </div>
         </div>
         <!-- /.card-body -->
     </div>

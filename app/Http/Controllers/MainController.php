@@ -88,7 +88,7 @@ class MainController extends Controller
             ]);
     }
 
-    public function account_details(Account $account) {
+    public function account_details(Account $account, $withForecast = null) {
         //get account details
         $account->load('config');
 
@@ -210,6 +210,10 @@ class MainController extends Controller
             'scheduleData' => $scheduleData,
         ]);
 
-        return view('accounts.history');
+        return view('accounts.history',
+            [
+                'account' => $account,
+                'withForecast' => $withForecast,
+            ]);
     }
 }
