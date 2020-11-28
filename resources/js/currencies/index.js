@@ -29,11 +29,29 @@ $(function () {
         },
         {
             data: "base",
-            title: "Base currency"
+            title: "Base currency",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '');
+            },
+            className: "text-center",
         },
         {
             data: "auto_update",
-            title: "Auto update"
+            title: "Auto update",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="far fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
         },
         {
             data: "latest_rate",

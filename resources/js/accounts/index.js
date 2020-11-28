@@ -17,7 +17,16 @@ $(function() {
         },
         {
             data: "active",
-            title: "Active"
+            title: "Active",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="far fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
         },
         {
             data: "config.opening_balance",
