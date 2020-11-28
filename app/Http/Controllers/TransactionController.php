@@ -189,7 +189,8 @@ class TransactionController extends Controller
         return view('transactions.form_standard', ['transaction' => $transaction]);
     }
 
-    public function editInvestment(Transaction $transaction) {
+    public function editInvestment(Transaction $transaction)
+    {
         $transaction->load(
             [
                 'config',
@@ -201,6 +202,61 @@ class TransactionController extends Controller
         );
 
         return view('transactions.form_investment', ['transaction' => $transaction]);
+    }
+
+    public function updateStandard (TransactionRequest $request, Transaction $transaction)
+    {
+        $validated = $request->validated();
+
+        $transaction->fill($validated);
+        $transaction->config->fill($validated['config']);
+
+        if (   $transaction->schedule
+            || $transaction->budget) {
+
+                $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
+                $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
+                $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
+                $transaction->transactionSchedule()->frequency = $validated['frequency'];
+                $transaction->transactionSchedule()->interval = $validated['interval'];
+                $transaction->transactionSchedule()->count = $validated['count'];
+        }
+
+        $transactionItems = [];
+        foreach ($validated['transactionItems'] as $item) {
+            if(is_null($item['amount'])) {
+                continue;
+            }
+
+            $newItem = TransactionItem::create(
+                array_merge(
+                    $item,
+                    ['transaction_id' => $transaction->id]
+                )
+            );
+
+            if (array_key_exists('tags', $item)) {
+                foreach($item['tags'] as $tag) {
+                    $newTag = Tag::firstOrCreate(
+                        ['id' => $tag],
+                        ['name' => $tag]
+                    );
+
+                    $newItem->tags()->attach($newTag);
+                }
+            }
+
+            $transactionItems[]= $newItem;
+        }
+
+        $transaction->transactionItems()->delete();
+        $transaction->transactionItems()->saveMany($transactionItems);
+
+        $transaction->push();
+
+        add_notification('Transaction updated', 'success');
+
+        return redirect("/");
     }
 
     /**

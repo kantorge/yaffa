@@ -19,7 +19,8 @@ $(function() {
                 className: "text-center",
                 render: function ( data, type, row, meta ) {
                     if (type == 'filter') {
-                        return  (row.transaction_type == 'Standard' || row.transaction_type == 'Investment'
+                        return  (   !row.schedule
+                                 && (row.transaction_type == 'Standard' || row.transaction_type == 'Investment')
                                 ?   (row.reconciled == 1
                                         ? 'Reconciled'
                                         : 'Uncleared'
@@ -27,7 +28,8 @@ $(function() {
                                 : 'Unavailable'
                             );
                     }
-                    return  (row.transaction_type == 'Standard' || row.transaction_type == 'Investment'
+                    return  (   !row.schedule
+                             && (row.transaction_type == 'Standard' || row.transaction_type == 'Investment')
                                 ?   (row.reconciled == 1
                                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -94,6 +96,11 @@ $(function() {
             {
                 data: 'running_total',
                 title: 'Running total',
+                createdCell: function (td, cellData, rowData, row, col) {
+                    if (cellData < 0) {
+                        $(td).addClass('text-danger');
+                    }
+                }
             },
             {
                 data: "comment",
@@ -122,22 +129,25 @@ $(function() {
                     if (row.transaction_type == 'Opening balance') {
                         return null;
                     }
-                    return '' +
-                        '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    if (row.schedule) {
+                        if (row.schedule_is_first) {
+                            return  '' +
+                                    '<a href="' + row.enterwithedit_url +'" class="btn btn-sm btn-success"><i class="fa fa-pen" title="Edit and insert instance"></i></a> ' +
+                                    '<a href="' + row.skip_url +'" class="btn btn-sm btn-warning"><i class="fa fa-forward" title=Skip current schedule"></i></a> ';
+                        }
+                        return null;
+                    }
+
+                    return  '' +
+                            '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                             '<button class="btn btn-sm btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                             '<form id="form-delete-' + row.id + '" action="' + row.delete_url + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
                 orderable: false
             }
         ],
-        /*
-        "rowCallback": function( row, data ) {
-
-            tableRunningTotal += (data.transaction_operator == 'minus' ? data.amount_from : data.amount_to);
-          },
-        */
-       createdRow: function( row, data, dataIndex ) {
-            if ( /^Schedule_/.test(data.group) ) {
+        createdRow: function( row, data, dataIndex ) {
+            if (data.schedule) {
                 $(row).addClass('text-muted text-italic');
             }
         },
@@ -275,12 +285,6 @@ $(function() {
                 orderable: false
             }
         ],
-        /*
-        "rowCallback": function( row, data ) {
-
-            tableRunningTotal += (data.transaction_operator == 'minus' ? data.amount_from : data.amount_to);
-          },
-        */
 
         createdRow: function( row, data, dataIndex ) {
             var nextDate = new Date(data.next_date.replace( /(\d{4})-(\d{2})-(\d{2})/, "$2/$3/$1"));
@@ -299,16 +303,9 @@ $(function() {
         scroller:       true,
         stateSave:      true,
         processing:     true,
-        paging:         false
+        paging:         false,
     });
 
-    /*
-    historyTable.on( 'order.dt search.dt', function () {
-        historyTable.column(6, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
-            cell.innerHTML = i+1;
-        } );
-    }).draw();
-    */
     $('.data-delete').on('click', function (e) {
         if (!confirm('Are you sure to want to delete this item?')) return;
         e.preventDefault();

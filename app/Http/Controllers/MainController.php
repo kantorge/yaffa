@@ -6,9 +6,14 @@ use App\Account;
 use App\AccountEntity;
 use App\Currency;
 use App\Transaction;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use JavaScript;
+use Recurr\Rule;
+use Recurr\Transformer\ArrayTransformer;
+use Recurr\Transformer\ArrayTransformerConfig;
+use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class MainController extends Controller
 {
@@ -17,12 +22,12 @@ class MainController extends Controller
             ->when(!$withClosed, function($query) {
                 $query->where('active', '1');
             })
-            ->get()
-            ->load([
+            ->with([
                 'config',
                 'config.account_group',
                 'config.currency',
-            ]);
+            ])
+            ->get();
         //TODO: would this be a better approach?
         //$accounts = Account::all()->load(['config']);
 
@@ -30,25 +35,26 @@ class MainController extends Controller
         $baseCurrency = Currency::where('base', 1)->firstOrFail();
         $currencies = Currency::all();
 
-        $accounts->map(function($account) use ($currencies, $baseCurrency) {
-            //get all standard transactions
-            $transactions = Transaction::with(
-                [
-                    'config',
-                    'transactionType',
-                ])
-                ->where('schedule', 0)
-                ->where('budget', 0)
-                //TODO: filter for standard transactions
-                ->whereHasMorph(
-                    'config',
-                    [\App\TransactionDetailStandard::class],
-                    function (Builder $query) use ($account) {
-                        $query->Where('account_from_id', $account->id);
-                        $query->orWhere('account_to_id', $account->id);
-                    }
-                )
-                ->get();
+        $accounts
+            ->map(function($account) use ($currencies, $baseCurrency) {
+                //get all standard transactions
+                $transactions = Transaction::with(
+                    [
+                        'config',
+                        'transactionType',
+                    ])
+                    ->where('schedule', 0)
+                    ->where('budget', 0)
+                    //TODO: filter for standard transactions
+                    ->whereHasMorph(
+                        'config',
+                        [\App\TransactionDetailStandard::class],
+                        function (Builder $query) use ($account) {
+                            $query->Where('account_from_id', $account->id);
+                            $query->orWhere('account_to_id', $account->id);
+                        }
+                    )
+                    ->get();
 
             //get account group name for later grouping
             $account['account_group'] = $account->config->account_group->name;
@@ -60,11 +66,15 @@ class MainController extends Controller
                         return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
                     });
 
+            //add opening balance
+            $account['sum'] += $account->config->openingBalance()['amount_to'];
+
             //apply currency exchange, if necesary
             if ($account->config->currency_id != $baseCurrency->id) {
                 $account['sum_foreign'] = $account['sum'];
                 $account['sum'] = $account['sum'] * $currencies->find($account->config->currency_id)->rate();
             }
+            $account['currency'] = $account->config->currency;
 
             return $account;
         });
@@ -75,16 +85,19 @@ class MainController extends Controller
                 return [
                     'group' => $key,
                     'accounts' => $group,
-                    'sum' => $group->sum('sum')
+                    'sum' => $group->sum('sum'),
                 ];
             });
 
         $total = $summary->sum('sum');
 
+        //dd($summary);
+
         return view('accounts.summary',
              [
                 'summary' => array_values($summary->toArray()),
                 'total' => $total,
+                'baseCurrency' => $baseCurrency,
             ]);
     }
 
@@ -144,6 +157,92 @@ class MainController extends Controller
 
         //dd($schedules);
 
+        $scheduleData = $schedules
+            ->map(function ($transaction) use ($account) {
+            return [
+                        'id' => $transaction->id,
+                        'schedule' => $transaction->transactionSchedule,
+                        'next_date' => $transaction->transactionSchedule->next_date,
+                        'transaction_name' => $transaction->transactionType->name,
+                        'transaction_type' => $transaction->transactionType->type,
+                        'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
+                        'account_from_id' => $transaction->config->account_from_id,
+                        'account_from_name' => $transaction->config->accountFrom->name,
+                        'account_to_id' => $transaction->config->account_to_id,
+                        'account_to_name' => $transaction->config->accountTo->name,
+                        'amount_from' => $transaction->config->amount_from,
+                        'amount_to' => $transaction->config->amount_to,
+                        'tags' => array_values($transaction->tags()),
+                        'categories' => array_values($transaction->categories()),
+                        'comment' => $transaction->comment,
+                        'edit_url' => route('transactions.editStandard', $transaction->id),
+                        'delete_url' => route('transactions.destroy', $transaction->id),
+                    ];
+                })
+            ->sortBy('next_date');
+
+        //dd($scheduleData);
+
+        //add schedule to history items, if needeed
+        $scheduledItems = [];
+        if ($withForecast) {
+            $scheduleData->each(function($transaction) use (&$scheduledItems) {
+                //dd($transaction);
+                $rule = new Rule();
+                $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
+
+                if ($transaction['schedule']->end_date) {
+                    $rule->setUntil(new Carbon($transaction['schedule']->end_date));
+                }
+
+                $rule->setFreq($transaction['schedule']->frequency);
+
+                if ($transaction['schedule']->count) {
+                    $rule->setCount($transaction['schedule']->count);
+                }
+                if ($transaction['schedule']->interval) {
+                    $rule->setInterval($transaction['schedule']->interval);
+                }
+
+                $transformer = new ArrayTransformer();
+
+                $transformerConfig = new ArrayTransformerConfig();
+                $transformerConfig->setVirtualLimit(5000);
+                $transformerConfig->enableLastDayOfMonthFix();
+                $transformer->setConfig($transformerConfig);
+
+                $startDate = new Carbon($transaction['schedule']->next_date);
+                $startDate->startOfDay();
+                if (is_null($transaction['schedule']->end_date)) {
+                    $endDate = new Carbon('next year');
+                } else {
+                    $endDate = new Carbon($transaction['schedule']->end_date);
+                }
+                $endDate->startOfDay();
+
+                $constraint = new BetweenConstraint($startDate, $endDate, true);
+
+                $first = true;
+
+                foreach ($transformer->transform($rule,$constraint) as $instance) {
+                    //dd($instance);
+                    $transaction['date'] = $instance->getStart()->format('Y-m-d');
+                    $transaction['schedule'] = true;
+                    $transaction['schedule_is_first'] = $first;
+                    $transaction['skip_url'] = '';
+                    $transaction['enterwithedit_url'] = '';
+
+                    $scheduledItems[] = $transaction;
+
+                    $first = false;
+
+                }
+
+            });
+
+        }
+        //dd($scheduledItems);
+
         $subTotal = 0;
 
         //adjust data, sort transactions, create running total
@@ -169,8 +268,11 @@ class MainController extends Controller
                         'edit_url' => route('transactions.editStandard', $transaction->id),
                         'delete_url' => route('transactions.destroy', $transaction->id),
                     ];
-            })
-            ->sortByDesc('transactionType')
+            });
+
+        $merged = $transactionData->merge($scheduledItems);
+
+        $data = $merged->sortByDesc('transactionType')
             ->sortBy('date')
             //add opening item to beginning of transaction list
             ->prepend($account->openingBalance())
@@ -180,33 +282,10 @@ class MainController extends Controller
                 return $item;
             });
 
-        $scheduleData = $schedules
-            ->map(function ($transaction) use ($account) {
-            return [
-                        'id' => $transaction->id,
-                        'next_date' => $transaction->transactionSchedule->next_date,
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
-                        'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
-                        'account_from_id' => $transaction->config->account_from_id,
-                        'account_from_name' => $transaction->config->accountFrom->name,
-                        'account_to_id' => $transaction->config->account_to_id,
-                        'account_to_name' => $transaction->config->accountTo->name,
-                        'amount_from' => $transaction->config->amount_from,
-                        'amount_to' => $transaction->config->amount_to,
-                        'tags' => array_values($transaction->tags()),
-                        'categories' => array_values($transaction->categories()),
-                        'comment' => $transaction->comment,
-                        'edit_url' => route('transactions.editStandard', $transaction->id),
-                        'delete_url' => route('transactions.destroy', $transaction->id),
-                    ];
-                })
-            ->sortBy('next_date');
-
         //dd($data);
 
         JavaScript::put([
-            'transactionData' => $transactionData,
+            'transactionData' => $data,
             'scheduleData' => $scheduleData,
         ]);
 

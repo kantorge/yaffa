@@ -17,7 +17,8 @@
         "laravel/framework": "^7.0",
         "laravel/ui": "^2.0",
         "laravelcollective/html": "^6.1",
-        "nesbot/carbon": "^2.40"
+        "nesbot/carbon": "^2.40",
+        "simshaun/recurr": "^4.0"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

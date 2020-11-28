@@ -37869,3 +37869,7 @@ a.text-muted:hover {
   display: none;
 }
 
+.text-italic {
+  font-style: italic;
+}
+

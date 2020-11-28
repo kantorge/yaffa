@@ -7,6 +7,7 @@ use App\Payee;
 use App\TransactionDetailStandard;
 use App\TransactionDetailInvestment;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -40,5 +41,9 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_standard' => TransactionDetailStandard::class,
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
+
+        Blade::directive('NiceNumber', function ($expression) {
+            return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";
+        });
     }
 }

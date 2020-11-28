@@ -32,7 +32,7 @@
         <!-- /.card-header -->
         <div id="collapseHistory" class="panel-collapse collapse show">
             <div class="card-body">
-                <table class="table table-bordered table-hover dataTable no-footer" role="grid" id="historyTable"></table>
+                <table class="table table-bordered table-hover dataTable no-footer" id="historyTable"></table>
             </div>
         </div>
         <!-- /.card-body -->
@@ -46,7 +46,7 @@
         </div>
         <!-- /.card-header -->
         <div class="card-body">
-            <table class="table table-bordered table-hover dataTable no-footer" role="grid" id="scheduleTable"></table>
+            <table class="table table-bordered table-hover dataTable no-footer" id="scheduleTable"></table>
         </div>
         <!-- /.card-body -->
     </div>

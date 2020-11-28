@@ -18,7 +18,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Total value</h3>
 			        <div class="card-tools">
-				        {{ $total }}
+                        @NiceNumber($total) {{ $baseCurrency['suffix'] }}
 			        </div>
                 </div>
                 <!-- /.box-header -->
@@ -33,7 +33,7 @@
                                         </a>
                                     </h4>
                                     <div class="card-tools {{ ($item['sum'] < 0 ? 'text-danger' : '') }}">
-                                        {{ $item['sum'] }}
+                                        @NiceNumber($item['sum']) {{ $baseCurrency['suffix'] }}
                                     </div>
                                 </div>
                                 <div id="collapse{{ $key }}" class="panel-collapse in collapse">
@@ -44,10 +44,13 @@
                                                     <a href="{{ route('accounts.history', ['account' => $account->id]) }}" class="product-title">
                                                         {{ $account->name }}
                                                         <span class="float-right <?=($account['sum'] < 0 ? "text-danger" : "")?>">
-                                                            <?=$account['sum']?>
                                                             @if(isset($account['sum_foreign']))
-                                                                / {{ $account['sum_foreign'] }}
+                                                                @NiceNumber($account['sum_foreign'])
+                                                                {{ $account['currency']['suffix'] }}
+                                                                /
                                                             @endif
+
+                                                            @NiceNumber($account['sum']) {{ $baseCurrency['suffix'] }}
                                                         </span>
                                                     </a>
                                                 </li >
