@@ -128,7 +128,11 @@ window.transactionData = {
     },
 
     isPayeePresent() {
-        return (this.from.type == 'payee' || this.to.type == 'payee');
+        if (this.from.type !== 'payee' && this.to.type !== 'payee') {
+            return false;
+        };
+
+        return (this.payeeCategory.id !== null);
     },
 
     getpayeeType() {
