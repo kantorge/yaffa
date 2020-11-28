@@ -181,8 +181,6 @@ class MainController extends Controller
                 })
             ->sortBy('next_date');
 
-        //dd($scheduleData);
-
         //add schedule to history items, if needeed
         $scheduledItems = [];
         if ($withForecast) {
@@ -282,11 +280,9 @@ class MainController extends Controller
                 return $item;
             });
 
-        //dd($data);
-
         JavaScript::put([
             'transactionData' => $data,
-            'scheduleData' => $scheduleData,
+            'scheduleData' => array_values($scheduleData->toArray()),
         ]);
 
         return view('accounts.history',

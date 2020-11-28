@@ -6,7 +6,7 @@ require( 'datatables.net-bs4' );
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-    var historyTable = $('#historyTable').DataTable({
+    $('#historyTable').DataTable({
         data: transactionData,
         columns: [
             {
@@ -191,8 +191,7 @@ $(function() {
         }
     });
 
-
-    var scheduleTable = $('#scheduleTable').DataTable({
+    $('#scheduleTable').DataTable({
         data: scheduleData,
         columns: [
             {
@@ -221,7 +220,7 @@ $(function() {
                     } else if (row.transaction_type == 'Opening balance') {
                         return 'Opening balance';
                     }
-                    return null;
+                    return '';
                 },
             },
             {
@@ -277,8 +276,8 @@ $(function() {
             {
                 title: "Actions",
                 render: function ( data, type, row, meta ) {
-                    return '' +
-                        '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    return  '' +
+                            '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                             '<button class="btn btn-sm btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                             '<form id="form-delete-' + row.id + '" action="' + row.delete_url + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
