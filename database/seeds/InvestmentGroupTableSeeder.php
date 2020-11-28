@@ -12,15 +12,25 @@ class InvestmentGroupTableSeeder extends Seeder
      */
     public function run()
     {
-        /* random strings */
-        //factory(InvestmentGroup::class, 5)->create();
+        $this->seedSql();
+    }
 
-        /* specific values */
+    private function seedRandom() {
+        factory(InvestmentGroup::class, 5)->create();
+    }
+
+    private function seedFixed() {
         InvestmentGroup::create([
             'name' => 'Részvény'
         ]);
         InvestmentGroup::create([
             'name' => 'Befektetési alap'
         ]);
+    }
+
+    private function seedSql() {
+        Eloquent::unguard();
+        $path = 'storage/fin_migrations/investment_groups.sql';
+        DB::unprepared(file_get_contents($path));
     }
 }

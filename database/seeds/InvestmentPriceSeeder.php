@@ -1,37 +1,28 @@
 <?php
 
-use App\Tag;
+use App\Investment;
+use App\InvestmentPrice;
 use Illuminate\Database\Seeder;
 
-class TagTableSeeder extends Seeder
+class InvestmentPriceSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      *
      * @return void
      */
-
     public function run()
     {
         $this->seedSql();
     }
 
     private function seedRandom() {
-        factory(Tag::class, 5)->create();
-    }
-
-    private function seedFixed() {
-        Tag::create([
-            'name' => 'Gyerek'
-        ]);
-        Tag::create([
-            'name' => 'Nyaralás'
-        ]);
+        //TODO
     }
 
     private function seedSql() {
         Eloquent::unguard();
-        $path = 'storage/fin_migrations/tags.sql';
+        $path = 'storage/fin_migrations/investment_prices.sql';
         DB::unprepared(file_get_contents($path));
     }
 }

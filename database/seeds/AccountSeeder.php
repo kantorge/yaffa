@@ -15,6 +15,16 @@ class AccountSeeder extends Seeder
      */
     public function run()
     {
+        $this->seedSql();
+    }
+
+    private function seedRandom()
+    {
+        //TODO
+    }
+
+    private function seedFixed()
+    {
         /* specific values */
         $account = new AccountEntity(
             [
@@ -58,5 +68,12 @@ class AccountSeeder extends Seeder
         $account->config()->associate($accountConfig);
 
         $account->save();
+    }
+
+    private function seedSql()
+    {
+        Eloquent::unguard();
+        $path = 'storage/fin_migrations/accounts.sql';
+        DB::unprepared(file_get_contents($path));
     }
 }

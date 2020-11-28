@@ -12,10 +12,14 @@ class CurrencyTableSeeder extends Seeder
      */
     public function run()
     {
-        /* random strings */
-        //factory(Currency::class, 5)->create();
+        $this->seedSql();
+    }
 
-        /* specific values */
+    private function seedRandom() {
+        factory(Currency::class, 5)->create();
+    }
+
+    private function seedFixed() {
         Currency::create([
             'name' => 'Forint',
             'iso_code' => 'HUF',
@@ -40,6 +44,11 @@ class CurrencyTableSeeder extends Seeder
             'base' => null,
             'auto_update' => true,
         ]);
+    }
 
+    private function seedSql() {
+        Eloquent::unguard();
+        $path = 'storage/fin_migrations/currencies.sql';
+        DB::unprepared(file_get_contents($path));
     }
 }

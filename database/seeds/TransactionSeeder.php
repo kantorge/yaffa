@@ -17,24 +17,24 @@ class TransactionSeeder extends Seeder
     public function run()
     {
         //create standard withdrawals
-        $withdrawals = factory(Transaction::class,rand(5, 10))->states('withdrawal')->create();
+        $withdrawals = factory(Transaction::class, rand(50, 100))->states('withdrawal')->create();
 
         $withdrawals->each(function($transaction) {
             $this->createTransactionProperties($transaction);
         });
 
         //create deposits
-        $deposits = factory(Transaction::class,rand(5, 10))->states('deposit')->create();
+        $deposits = factory(Transaction::class, rand(50, 100))->states('deposit')->create();
 
         $deposits->each(function($transaction) {
             $this->createTransactionProperties($transaction);
         });
 
         //create transfers
-        $transfers = factory(Transaction::class,rand(5, 10))->states('transfer')->create();
+        $transfers = factory(Transaction::class, rand(50, 100))->states('transfer')->create();
 
         //create standard withdrawals with schedule
-        $withdrawals_with_schedule = factory(Transaction::class,rand(1, 5))->states('withdrawal_schedule')->create();
+        $withdrawals_with_schedule = factory(Transaction::class, rand(1, 5))->states('withdrawal_schedule')->create();
 
         $withdrawals_with_schedule->each(function($transaction) {
             $this->createTransactionSchedule($transaction);
@@ -42,7 +42,7 @@ class TransactionSeeder extends Seeder
         });
 
         //investment buy
-        $buys = factory(Transaction::class,rand(1, 5))->states('buy')->create();
+        $buys = factory(Transaction::class, rand(10, 50))->states('buy')->create();
     }
 
     private function createTransactionSchedule(Transaction $transaction)

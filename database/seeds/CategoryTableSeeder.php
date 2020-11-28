@@ -12,7 +12,14 @@ class CategoryTableSeeder extends Seeder
      */
     public function run()
     {
-        /* specific values */
+        $this->seedSql();
+    }
+
+    private function seedRandom() {
+        //TODO
+    }
+
+    private function seedFixed() {
         Category::create([
             'name' => 'Élelmiszer',
             'parent_id' => null
@@ -25,6 +32,11 @@ class CategoryTableSeeder extends Seeder
             'name' => 'Étterem',
             'parent_id' => Category::where('name', 'Élelmiszer')->pluck('id')->first(),
         ]);
+    }
 
+    private function seedSql() {
+        Eloquent::unguard();
+        $path = 'storage/fin_migrations/categories.sql';
+        DB::unprepared(file_get_contents($path));
     }
 }

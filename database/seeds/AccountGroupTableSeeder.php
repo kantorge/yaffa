@@ -12,10 +12,16 @@ class AccountGroupTableSeeder extends Seeder
      */
     public function run()
     {
-        /* random strings */
-        //factory(AccountGroup::class, 5)->create();
+        $this->seedSql();
+    }
 
-        /* specific values */
+    private function seedRandom()
+    {
+        factory(AccountGroup::class, 5)->create();
+    }
+
+    private function seedFixed()
+    {
         AccountGroup::create([
             'name' => 'Készpénz'
         ]);
@@ -28,5 +34,12 @@ class AccountGroupTableSeeder extends Seeder
         AccountGroup::create([
             'name' => 'Befektetés'
         ]);
+    }
+
+    private function seedSql()
+    {
+        Eloquent::unguard();
+        $path = 'storage/fin_migrations/account_groups.sql';
+        DB::unprepared(file_get_contents($path));
     }
 }
