@@ -20,6 +20,7 @@ class InvestmentRequest extends FormRequest
             'symbol' => 'required|min:2|max:191|unique:investments,symbol,' . \Request::instance()->id,
             'comment' => 'nullable|max:191',
             'active' => 'boolean',
+            'auto_update' => 'boolean',
             'investment_group_id' => "required|exists:account_groups,id",
             'currency_id' => "required|exists:currencies,id",
             'investment_price_provider_id' => 'nullable|exists:investment_price_providers,id',
@@ -53,6 +54,7 @@ class InvestmentRequest extends FormRequest
         //check for checkbox-es
         $this->merge([
             'active' => $this->active ?? 0,
+            'auto_update' => $this->auto_update ?? 0,
         ]);
     }
 }

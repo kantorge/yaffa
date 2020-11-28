@@ -34,6 +34,7 @@ class Investment extends Model
         'symbol',
         'comment',
         'active',
+        'auto_update',
         'investment_group_id',
         'currency_id',
         'investment_price_provider_id',
@@ -41,6 +42,7 @@ class Investment extends Model
 
     protected $casts = [
         'active' => 'boolean',
+        'auto_update' => 'boolean',
     ];
 
     protected $with = [

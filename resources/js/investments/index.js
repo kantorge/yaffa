@@ -16,7 +16,16 @@ $(function() {
         },
         {
             data: "active",
-            title: "Active"
+            title: "Active",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="far fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
         },
         {
             data: "symbol",
@@ -33,6 +42,19 @@ $(function() {
         {
             data: "investment_price_provider.name",
             title: "Price provider"
+        },
+        {
+            data: "auto_update",
+            title: "Auto update",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="far fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
         },
         {
             data: "id",

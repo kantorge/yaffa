@@ -19,6 +19,7 @@ class CreateInvestmentsTable extends Migration
             $table->string('symbol', 191)->unique();
             $table->string('comment', 191)->nullable();
             $table->boolean('active')->default('1');
+            $table->boolean('auto_update')->default('0');
             $table->foreignId('investment_group_id');
             $table->foreignId('currency_id');
 

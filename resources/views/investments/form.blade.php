@@ -74,6 +74,13 @@
                     {{ Form::select('investment_price_provider_id', $allInvestmentPriceProviders, old('investment_price_provider_id'), ['class' => 'form-control', 'placeholder' => 'None']) }}
                 </div>
             </div>
+
+            <div class="form-group">
+                {{ Form::label('auto_update', 'Auto update', ['class' => 'control-label col-xs-3']) }}
+                <div class="col-xs-9">
+                    {{ Form::checkbox('auto_update', '1', 1) }}
+                </div>
+            </div>
         </div>
         <!-- /.card-body -->
         <div class="card-footer">
