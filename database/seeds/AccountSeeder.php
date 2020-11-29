@@ -13,9 +13,22 @@ class AccountSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
     {
-        $this->seedSql();
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
     }
 
     private function seedRandom()
@@ -75,5 +88,33 @@ class AccountSeeder extends Seeder
         Eloquent::unguard();
         $path = 'storage/fin_migrations/accounts.sql';
         DB::unprepared(file_get_contents($path));
+    }
+
+    private function seedDb()
+    {
+        $old = DB::connection('mysql_fin_migration')->table('accounts')->get();
+
+        foreach ($old as $item) {
+            $account = new AccountEntity(
+                [
+                    'name' => $item->name,
+                    'active' => $item->active,
+                    'config_type' => 'account',
+                ]
+            );
+
+            $accountConfig = new Account(
+                [
+                    'opening_balance' => $item->opening_balance,
+                    'account_group_id' => $item->account_groups_id,
+                    'currency_id' => $item->currencies_id,
+                ]
+            );
+            $accountConfig->save();
+
+            $account->config()->associate($accountConfig);
+
+            $account->save();
+       }
     }
 }

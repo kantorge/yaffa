@@ -43,7 +43,7 @@
             <div class="form-group">
                 {{ Form::label('payee_id', 'Category', ['class' => 'control-label col-xs-3']) }}
                 <div class="col-xs-9">
-                    {{ Form::select('config[categories_id]', $categories, old('config[categories_id]'), ['class' => 'form-control', 'placeholder' => 'Default category']) }}
+                    {{ Form::select('config[category_id]', $categories, old('config[category_id]'), ['class' => 'form-control', 'placeholder' => 'Default category']) }}
                 </div>
             </div>
         </div>

@@ -14,7 +14,7 @@ class AddPriceProviderToInvestmentsTable extends Migration
     public function up()
     {
         Schema::table('investments', function (Blueprint $table) {
-            $table->foreignId('investment_price_provider_id')->nullable();
+            $table->foreignId('investment_price_provider_id')->nullable()->after('currency_id');
             $table->foreign('investment_price_provider_id')->references('id')->on('investment_price_providers');
         });
     }

@@ -30,7 +30,7 @@ class Payee extends AccountEntity
      * @var array
      */
     protected $fillable = [
-        'categories_id',
+        'category_id',
     ];
 
     public function config()

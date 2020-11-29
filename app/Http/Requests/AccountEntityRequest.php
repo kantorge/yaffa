@@ -31,7 +31,7 @@ class AccountEntityRequest extends FormRequest
 
         if ($this->config_type === 'payee') {
             $rules = array_merge($rules, [
-                'config.categories_id' => "nullable|exists:categories,id",
+                'config.category_id' => "nullable|exists:categories,id",
             ]);
         }
 

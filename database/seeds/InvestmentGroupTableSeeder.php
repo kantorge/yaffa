@@ -10,11 +10,23 @@ class InvestmentGroupTableSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
     {
-        $this->seedSql();
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
     }
-
     private function seedRandom() {
         factory(InvestmentGroup::class, 5)->create();
     }
@@ -32,5 +44,17 @@ class InvestmentGroupTableSeeder extends Seeder
         Eloquent::unguard();
         $path = 'storage/fin_migrations/investment_groups.sql';
         DB::unprepared(file_get_contents($path));
+    }
+
+    private function seedDb()
+    {
+        $old = DB::connection('mysql_fin_migration')->table('investment_groups')->get();
+
+        foreach ($old as $item) {
+            InvestmentGroup::create([
+                'id' => $item->id,
+                'name' => $item->name,
+            ]);
+       }
     }
 }

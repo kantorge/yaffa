@@ -15,11 +15,13 @@ class CreateAccountEntitiesTable extends Migration
     {
         Schema::create('account_entities', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 191)->unique();
+            $table->string('name', 191);
             $table->boolean('active')->default('1');
             $table->string('config_type');
             $table->unsignedInteger('config_id');
             $table->timestamps();
+
+            $table->unique(['config_type', 'name']);
         });
     }
 

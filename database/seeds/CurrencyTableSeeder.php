@@ -10,9 +10,22 @@ class CurrencyTableSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
     {
-        $this->seedSql();
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
     }
 
     private function seedRandom() {
@@ -49,6 +62,23 @@ class CurrencyTableSeeder extends Seeder
     private function seedSql() {
         Eloquent::unguard();
         $path = 'storage/fin_migrations/currencies.sql';
-        DB::unprepared(file_get_contents($path));
+        DB::connection('mysql')->unprepared(file_get_contents($path));
+    }
+
+    private function seedDb()
+    {
+        $old = DB::connection('mysql_fin_migration')->table('currencies')->get();
+
+        foreach ($old as $item) {
+            Currency::create([
+                'id' => $item->id,
+                'name' => $item->name,
+                'iso_code' => $item->iso_code,
+                'num_digits' => $item->num_digits,
+                'suffix' => $item->suffix,
+                'base' => $item->base,
+                'auto_update' => $item->auto_update,
+            ]);
+       }
     }
 }

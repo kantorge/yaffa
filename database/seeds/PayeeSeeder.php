@@ -12,8 +12,29 @@ class PayeeSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
     {
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
+    }
+
+    private function seedRandom() {
+        //TODO
+    }
+
+    private function seedFixed() {
         /* specific values */
         $payee = new AccountEntity(
             [
@@ -25,7 +46,7 @@ class PayeeSeeder extends Seeder
 
         $payeeConfig = new Payee(
             [
-                'categories_id' => Category::where('name', 'Alapanyag, fűszer, konzerv')->pluck('id')->first(),
+                'category_id' => Category::where('name', 'Alapanyag, fűszer, konzerv')->pluck('id')->first(),
             ]
         );
         $payeeConfig->save();
@@ -49,5 +70,35 @@ class PayeeSeeder extends Seeder
         $payee->config()->associate($payeeConfig);
 
         $payee->save();
+    }
+
+    private function seedSql() {
+        //TODO
+    }
+
+    private function seedDb()
+    {
+        $old = DB::connection('mysql_fin_migration')->table('payees')->get();
+
+        foreach ($old as $item) {
+            $account = new AccountEntity(
+                [
+                    'name' => $item->name,
+                    'active' => $item->active,
+                    'config_type' => 'payee',
+                ]
+            );
+
+            $payeeConfig = new Payee(
+                [
+                    'category_id' => $item->categories_id,
+                ]
+            );
+            $payeeConfig->save();
+
+            $account->config()->associate($payeeConfig);
+
+            $account->save();
+       }
     }
 }

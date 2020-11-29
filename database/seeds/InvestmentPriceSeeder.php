@@ -1,6 +1,6 @@
 <?php
 
-use App\Investment;
+//use App\Investment;
 use App\InvestmentPrice;
 use Illuminate\Database\Seeder;
 
@@ -11,12 +11,29 @@ class InvestmentPriceSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
     {
-        $this->seedSql();
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
     }
 
     private function seedRandom() {
+        //TODO
+    }
+
+    private function seedFixed() {
         //TODO
     }
 
@@ -24,5 +41,20 @@ class InvestmentPriceSeeder extends Seeder
         Eloquent::unguard();
         $path = 'storage/fin_migrations/investment_prices.sql';
         DB::unprepared(file_get_contents($path));
+    }
+
+    private function seedDb()
+    {
+        $old = DB::connection('mysql_fin_migration')->table('investment_prices')->get();
+
+        foreach ($old as $item) {
+            InvestmentPrice::create([
+                'date' => $item->date,
+                'investment_id' => $item->investments_id,
+                'price' => $item->price,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+            ]);
+       }
     }
 }

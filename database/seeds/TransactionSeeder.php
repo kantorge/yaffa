@@ -14,7 +14,25 @@ class TransactionSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run($extra)
+    {
+        switch($extra) {
+            case 'random':
+                $this->seedRandom();
+                break;
+            case 'fixed':
+                $this->seedFixed();
+                break;
+            case 'sql':
+                $this->seedSql();
+                break;
+            case 'db':
+                $this->seedDb();
+                break;
+        }
+    }
+
+    public function seedRandom()
     {
         //create standard withdrawals
         $withdrawals = factory(Transaction::class, rand(50, 100))->states('withdrawal')->create();
@@ -43,6 +61,26 @@ class TransactionSeeder extends Seeder
 
         //investment buy
         $buys = factory(Transaction::class, rand(10, 50))->states('buy')->create();
+    }
+
+    private function seedSql() {
+        //TODO
+    }
+
+    private function seedDb()
+    {
+        /*
+        $old = DB::connection('mysql_fin_migration')
+            ->table('transaction_headers')
+            ->whereNull('deleted_at')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->take(1)
+            ->get();
+dd($old);
+        foreach ($old as $item) {
+
+       }
+       */
     }
 
     private function createTransactionSchedule(Transaction $transaction)
