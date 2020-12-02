@@ -55,6 +55,6 @@ class InvestmentGroupTableSeeder extends Seeder
                 'id' => $item->id,
                 'name' => $item->name,
             ]);
-       }
+        }
     }
 }

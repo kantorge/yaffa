@@ -115,6 +115,6 @@ class AccountSeeder extends Seeder
             $account->config()->associate($accountConfig);
 
             $account->save();
-       }
+        }
     }
 }

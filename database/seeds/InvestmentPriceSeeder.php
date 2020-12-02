@@ -47,6 +47,12 @@ class InvestmentPriceSeeder extends Seeder
     {
         $old = DB::connection('mysql_fin_migration')->table('investment_prices')->get();
 
+        // creates a new progress bar based on item count
+        $progressBar = $this->command->getOutput()->createProgressBar(count($old));
+
+        // starts and displays the progress bar
+        $progressBar->start();
+
         foreach ($old as $item) {
             InvestmentPrice::create([
                 'date' => $item->date,
@@ -55,6 +61,11 @@ class InvestmentPriceSeeder extends Seeder
                 'created_at' => $item->created_at,
                 'updated_at' => $item->updated_at,
             ]);
-       }
+
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
+        $this->command->getOutput()->writeln('');
     }
 }

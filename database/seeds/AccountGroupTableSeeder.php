@@ -65,6 +65,6 @@ class AccountGroupTableSeeder extends Seeder
                 'id' => $item->id,
                 'name' => $item->name,
             ]);
-       }
+        }
     }
 }

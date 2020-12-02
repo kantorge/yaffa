@@ -79,6 +79,6 @@ class CurrencyTableSeeder extends Seeder
                 'base' => $item->base,
                 'auto_update' => $item->auto_update,
             ]);
-       }
+        }
     }
 }

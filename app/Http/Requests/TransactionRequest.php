@@ -25,6 +25,9 @@ class TransactionRequest extends FormRequest
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
         ];
 
+        //basic transaction has no schedule at all, or has schedule enabled
+        $isBasic = (!$this->get('schedule') && ! $this->get('budget')) || $this->get('schedule');
+
         //adjust date and schedule related rules
         if (   $this->get('schedule')
             || $this->get('budget')) {
@@ -57,16 +60,17 @@ class TransactionRequest extends FormRequest
             ]);
 
             //adjust detail related rules, based on transaction type
+            //accounts are only needed for basic setup (not budget only)
             //TODO: make it more dynamic instead of fixed IDs
             if ($this->get('transaction_type_id') === 1) {
                 //withdrawal
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        'required',
+                        ($isBasic ? 'required' : 'nullable'),
                         'exists:account_entities,id,config_type,account'
                     ],
                     'config.account_to_id' => [
-                        'required',
+                        ($isBasic ? 'required' : 'nullable'),
                         'exists:account_entities,id,config_type,payee'
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
@@ -76,18 +80,18 @@ class TransactionRequest extends FormRequest
                 //deposit
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
-                        'required',
+                        ($isBasic ? 'required' : 'nullable'),
                         'exists:account_entities,id,config_type,payeee'
                     ],
                     'config.account_to_id' => [
-                        'required',
+                        ($isBasic ? 'required' : 'nullable'),
                         'exists:account_entities,id,config_type,account'
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
                 ]);
             } else if ($this->get('transaction_type_id') === 3) {
-                //deposit
+                //transfer
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',

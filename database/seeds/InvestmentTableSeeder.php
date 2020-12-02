@@ -90,6 +90,6 @@ class InvestmentTableSeeder extends Seeder
                 'investment_group_id' => $item->investment_groups_id,
                 'investment_price_provider_id' => $item->price_provider_id,
             ]);
-       }
+        }
     }
 }

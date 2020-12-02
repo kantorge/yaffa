@@ -65,6 +65,6 @@ class CategoryTableSeeder extends Seeder
                 'active' => $item->active,
             ]);
 
-       }
+        }
     }
 }

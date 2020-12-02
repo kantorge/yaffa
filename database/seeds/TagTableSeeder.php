@@ -10,7 +10,6 @@ class TagTableSeeder extends Seeder
      *
      * @return void
      */
-
     public function run($extra)
     {
         switch($extra) {

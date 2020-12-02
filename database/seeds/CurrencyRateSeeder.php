@@ -63,6 +63,12 @@ class CurrencyRateSeeder extends Seeder
     {
         $old = DB::connection('mysql_fin_migration')->table('currency_rates')->get();
 
+        // creates a new progress bar based on item count
+        $progressBar = $this->command->getOutput()->createProgressBar(count($old));
+
+        // starts and displays the progress bar
+        $progressBar->start();
+
         foreach ($old as $item) {
             CurrencyRate::create([
                 'date' => $item->date,
@@ -70,6 +76,9 @@ class CurrencyRateSeeder extends Seeder
                 'from_id' => $item->from_id,
                 'to_id' => $item->to_id,
             ]);
-       }
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
     }
 }
