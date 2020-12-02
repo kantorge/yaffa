@@ -22,8 +22,6 @@ class CreateCurrencyRatesTable extends Migration
             $table->date('date');
             $table->decimal('rate', 8, 4);
 
-            $table->timestamps();
-
             $table->foreign('from_id')->references('id')->on('currencies');
             $table->foreign('to_id')->references('id')->on('currencies');
 

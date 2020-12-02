@@ -15,8 +15,8 @@ class CreateTransactionDetailsStandardTable extends Migration
     {
         Schema::create('transaction_details_standard', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('account_from_id');
-            $table->foreignId('account_to_id');
+            $table->foreignId('account_from_id')->nullable();
+            $table->foreignId('account_to_id')->nullable();
             $table->decimal('amount_from', 12, 2);
             $table->decimal('amount_to', 12, 2);
 

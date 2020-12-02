@@ -19,10 +19,10 @@ class CreateTransactionDetailsInvestmentTable extends Migration
             $table->foreignId('account_id');
             $table->foreignId('investment_id');
 
-            $table->double('price', 10, 4);
-            $table->double('quantity', 14, 4);
+            $table->double('price', 10, 4)->nullable();
+            $table->double('quantity', 14, 4)->nullable();
             $table->double('commission', 14, 4);
-            $table->double('dividend', 12, 2);
+            $table->double('dividend', 12, 2)->nullable();
 
             $table->foreign('account_id')->references('id')->on('account_entities');
             $table->foreign('investment_id')->references('id')->on('investments');
