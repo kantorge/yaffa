@@ -9,6 +9,8 @@ class CurrencyRate extends Model
 
     protected $table = 'currency_rates';
 
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *
