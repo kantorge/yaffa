@@ -1,5 +1,6 @@
 <?php
 
+use App\AccountEntity;
 use App\Tag;
 use App\Transaction;
 use App\TransactionDetailStandard;
@@ -89,11 +90,13 @@ class TransactionSeeder extends Seeder
                 'transaction_schedules.frequency',
                 'transaction_schedules.interval',
                 'transaction_schedules.count',
+                'payees.name AS payee',
             )
             ->whereNull('deleted_at')
             ->leftJoin('transaction_types', 'transaction_headers.transaction_types_id', '=', 'transaction_types.id')
             ->leftJoin('transaction_schedules', 'transaction_headers.id', '=', 'transaction_schedules.id')
             ->leftJoin('transaction_standard_details', 'transaction_headers.id', '=', 'transaction_standard_details.transaction_headers_id')
+            ->leftJoin('payees', 'payees.id', '=', 'transaction_standard_details.payees_id')
             ->where('transaction_types.type', '=', 'standard')
             ->get();
 
@@ -180,25 +183,33 @@ class TransactionSeeder extends Seeder
             switch ($oldTransaction->transaction_types_id) {
                 //withdrawal
                 case "1":
-                  $transaction['config']['account_from_id'] = $oldTransaction->accounts_from_id;
-                  $transaction['config']['account_to_id'] = $oldTransaction->payees_id;
-                  $transaction['config']['amount_from'] = $sum;
-                  $transaction['config']['amount_to'] = $sum;
-                  break;
+                    $payee = AccountEntity::where('config_type', 'payee')
+                                            ->where('name', $oldTransaction->payee)
+                                            ->first();
+
+                    $transaction['config']['account_from_id'] = $oldTransaction->accounts_from_id;
+                    $transaction['config']['account_to_id'] = ($payee ? $payee->id : null);//$oldTransaction->payees_id;
+                    $transaction['config']['amount_from'] = $sum;
+                    $transaction['config']['amount_to'] = $sum;
+                    break;
                 //deposit
                 case "2":
-                  $transaction['config']['account_from_id'] = $oldTransaction->payees_id;
-                  $transaction['config']['account_to_id'] = $oldTransaction->accounts_to_id;
-                  $transaction['config']['amount_from'] = $sum;
-                  $transaction['config']['amount_to'] = $sum;
-                  break;
+                    $payee = AccountEntity::where('config_type', 'payee')
+                                            ->where('name', $oldTransaction->payee)
+                                            ->first();
+
+                    $transaction['config']['account_to_id'] = ($payee ? $payee->id : null);//$oldTransaction->payees_id;
+                    $transaction['config']['account_to_id'] = $oldTransaction->accounts_to_id;
+                    $transaction['config']['amount_from'] = $sum;
+                    $transaction['config']['amount_to'] = $sum;
+                    break;
                 //transaction
                 case "3":
-                  $transaction['config']['account_from_id'] = $oldTransaction->accounts_from_id;
-                  $transaction['config']['account_to_id'] = $oldTransaction->accounts_to_id;
-                  $transaction['config']['amount_from'] = $sum;
-                  $transaction['config']['amount_to'] = $oldTransaction->amount_to;
-                  break;
+                    $transaction['config']['account_from_id'] = $oldTransaction->accounts_from_id;
+                    $transaction['config']['account_to_id'] = $oldTransaction->accounts_to_id;
+                    $transaction['config']['amount_from'] = $sum;
+                    $transaction['config']['amount_to'] = $oldTransaction->amount_to;
+                    break;
             }
 
             //could this be used from the main controller
