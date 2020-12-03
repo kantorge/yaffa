@@ -80,11 +80,12 @@ class MainController extends Controller
         });
 
         $summary = $accounts
+            ->sortBy('account_group')
             ->groupBy('account_group')
             ->map(function ($group, $key) {
                 return [
                     'group' => $key,
-                    'accounts' => $group,
+                    'accounts' => $group->sortBy('name'),
                     'sum' => $group->sum('sum'),
                 ];
             });
