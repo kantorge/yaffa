@@ -198,7 +198,7 @@ class TransactionSeeder extends Seeder
                                             ->where('name', $oldTransaction->payee)
                                             ->first();
 
-                    $transaction['config']['account_to_id'] = ($payee ? $payee->id : null);//$oldTransaction->payees_id;
+                    $transaction['config']['account_from_id'] = ($payee ? $payee->id : null);//$oldTransaction->payees_id;
                     $transaction['config']['account_to_id'] = $oldTransaction->accounts_to_id;
                     $transaction['config']['amount_from'] = $sum;
                     $transaction['config']['amount_to'] = $sum;
