@@ -9,6 +9,7 @@ use App\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+//use Illuminate\Support\Facades\Log;
 use JavaScript;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
@@ -247,6 +248,7 @@ class MainController extends Controller
         //adjust data, sort transactions, create running total
         $transactionData = $transactions
             ->map(function ($transaction) use ($account) {
+                //Log::debug($transaction);
                 return
                     [
                         'id' => $transaction->id,

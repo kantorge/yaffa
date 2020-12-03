@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+//use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class Transaction extends Model
@@ -82,7 +83,9 @@ class Transaction extends Model
 
         $this->transactionItems()
             ->each(function ($item, $key) use (&$categories) {
-                $categories[$item->category_id] = $item->category->full_name;
+                if ($item->category) {
+                    $categories[$item->category_id] = $item->category->full_name;
+                }
             });
 
         return $categories;
