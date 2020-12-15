@@ -7,7 +7,7 @@
 @section('title', 'Account  history')
 
 @section('content_header')
-    <h1>Account history</h1>
+    <h1>Account history - {{ $account->config->name }}</h1>
 @stop
 
 @section('content')
