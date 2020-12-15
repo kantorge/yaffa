@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\InvestmentPrice;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
@@ -65,4 +67,69 @@ class Investment extends Model
     {
         return $this->belongsTo(InvestmentPriceProvider::class);
     }
+
+    public function latestPrice($type = 'combined') {
+        $investmentId = $this->id;
+
+        if ($type == 'stored' || $type == 'combined') {
+            $price = InvestmentPrice::where('investment_id', $investmentId)
+                                        ->latest('date')
+                                        ->first();
+        } else {
+            $price = null;
+        }
+
+        if ($type == 'transaction' || $type == 'combined') {
+            $transaction = \App\Transaction::with(
+                [
+                    'config',
+                    'transactionType',
+                ])
+                ->where('schedule', 0)
+                ->where('budget', 0)
+                ->whereHasMorph(
+                    'config',
+                    [\App\TransactionDetailInvestment::class],
+                    function (Builder $query) use ($investmentId) {
+                        $query
+                            ->Where('investment_id', $investmentId)
+                            ->WhereNotNull('price');
+                    }
+                )
+                ->latest('date')
+                ->first();
+        } else {
+            $transaction = null;
+        }
+
+        if ($type == 'stored') {
+            return ($price instanceof InvestmentPrice ? $price->price : null);
+        }
+
+        if ($type == 'transaction') {
+            return ($transaction instanceof Transaction ? $transaction->config->price : null);
+        }
+
+        //combined is needed and we have both data: get latest
+        if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
+            if ($price->date > $transaction->date) {
+                return $price->price;
+            } else {
+                return $transaction->config->price;
+            }
+        }
+
+        //we have only stored data
+        if ($price instanceof InvestmentPrice) {
+            return $price->price;
+        }
+
+        //we have only transaction data
+        if ($transaction instanceof Transaction) {
+            return $transaction->config->price;
+        }
+
+        return null;
+    }
+
 }
