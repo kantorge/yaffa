@@ -27,6 +27,10 @@ class TransactionDetailInvestment extends Transaction
     protected $casts = [
         'account_id' => 'integer',
         'investment_id' => 'integer',
+        'price' => 'float',
+        'quantity' => 'float',
+        'commission' => 'float',
+        'dividend' => 'float',
     ];
 
     public function config()
