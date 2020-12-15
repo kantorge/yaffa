@@ -18,6 +18,21 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class MainController extends Controller
 {
+    /**
+     * Get the current value of all accounts.
+     *
+     * Loop all accounts, and calculate their current values, including:
+     *  - opening balance
+     *  - all standard transactions: + deposits - withdrawals +/- transactions respectively
+     *  - all investment transaction monetary value: + sell - buy + dividends
+     *  - latest value of all investments, based on actual volume: + buy + add - sell - removal
+     *
+     * Transaction types table holds information of operators to be used, except transfer, which depends on direction
+     *
+     *
+     * @param  mixed $withClosed Indicate, whether closed accounts should also be displayed
+     * @return void
+     */
     public function index($withClosed = null) {
         $accounts = AccountEntity::where('config_type', 'account')
             ->when(!$withClosed, function($query) {
@@ -38,15 +53,17 @@ class MainController extends Controller
 
         $accounts
             ->map(function($account) use ($currencies, $baseCurrency) {
+                //get account group name for later grouping
+                $account['account_group'] = $account->config->account_group->name;
+
                 //get all standard transactions
-                $transactions = Transaction::with(
+                $standardTransactions = Transaction::with(
                     [
                         'config',
                         'transactionType',
                     ])
                     ->where('schedule', 0)
                     ->where('budget', 0)
-                    //TODO: filter for standard transactions
                     ->whereHasMorph(
                         'config',
                         [\App\TransactionDetailStandard::class],
@@ -57,18 +74,51 @@ class MainController extends Controller
                     )
                     ->get();
 
-            //get account group name for later grouping
-            $account['account_group'] = $account->config->account_group->name;
+                //get all investment transactions
+                $investmentTransactions = Transaction::with(
+                    [
+                        'config',
+                        'transactionType',
+                    ])
+                    ->where('schedule', 0)
+                    ->where('budget', 0)
+                    ->whereHasMorph(
+                        'config',
+                        [\App\TransactionDetailInvestment::class],
+                        function (Builder $query) use ($account) {
+                            $query->Where('account_id', $account->id);
+                        }
+                    )
+                    ->get();
+
+            $transactions = $standardTransactions->merge($investmentTransactions);
 
             //get summary of transactions
             $account['sum'] = $transactions
                 ->sum(function ($transaction) use ($account) {
-                        $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
-                        return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
+                        if ($transaction->config_type == 'transaction_detail_standard') {
+                            $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
+                            return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
+                        }
+                        if ($transaction->config_type == 'transaction_detail_investment') {
+                            $operator = $transaction->transactionType->amount_operator;
+                            if (!$operator) {
+                                return 0;
+                            }
+                            return ($operator == 'minus'
+                                    ? - $transaction->config->price * $transaction->config->quantity
+                                    : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
+                                    - $transaction->config->commission;
+                        }
+
+                        return 0;
                     });
 
             //add opening balance
             $account['sum'] += $account->config->openingBalance()['amount_to'];
+
+            //add value of investments
+
 
             //apply currency exchange, if necesary
             if ($account->config->currency_id != $baseCurrency->id) {
@@ -80,6 +130,7 @@ class MainController extends Controller
             return $account;
         });
 
+        //get summary by accounts
         $summary = $accounts
             ->sortBy('account_group')
             ->groupBy('account_group')
