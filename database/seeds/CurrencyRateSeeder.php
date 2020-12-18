@@ -4,6 +4,7 @@ use App\Currency;
 use App\CurrencyRate;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CurrencyRateSeeder extends Seeder
 {
@@ -80,5 +81,6 @@ class CurrencyRateSeeder extends Seeder
         }
 
         $progressBar->finish();
+        $this->command->getOutput()->writeln('');
     }
 }
