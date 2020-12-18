@@ -68,6 +68,46 @@ class Investment extends Model
         return $this->belongsTo(InvestmentPriceProvider::class);
     }
 
+    public function getCurrentQuantity(AccountEntity $account = null)
+    {
+        $investmentId = $this->id;
+
+        //get all investment transactions for current investment
+        $transactions = Transaction::with(
+            [
+                'config',
+                'transactionType',
+            ])
+            ->where('schedule', 0)
+            ->where('budget', 0)
+            ->where('config_type', 'transaction_detail_investment')
+            ->whereHasMorph(
+                'config',
+                [\App\TransactionDetailInvestment::class],
+                function (Builder $query) use ($investmentId, $account) {
+                    $query->Where('investment_id', $investmentId);
+                    if (!is_null($account)) {
+                        $query->where('transaction_details_investment.account_id', '=', $account->id);
+                    }
+                }
+            )
+            ->get();
+
+        $quantity = $transactions->sum(function($transaction) {
+            $operator = $transaction->transactionType->quantity_operator;
+            if (!$operator) {
+                return 0;
+            }
+
+            return ($operator == 'minus'
+                    ? - $transaction->config->quantity
+                    : $transaction->config->quantity);
+        });
+
+        return $quantity;
+
+    }
+
     public function latestPrice($type = 'combined') {
         $investmentId = $this->id;
 
