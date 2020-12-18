@@ -91,44 +91,55 @@ class MainController extends Controller
                     )
                     ->get();
 
-            $transactions = $standardTransactions->merge($investmentTransactions);
+                $transactions = $standardTransactions->merge($investmentTransactions);
 
-            //get summary of transactions
-            $account['sum'] = $transactions
-                ->sum(function ($transaction) use ($account) {
-                        if ($transaction->config_type == 'transaction_detail_standard') {
-                            $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
-                            return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
-                        }
-                        if ($transaction->config_type == 'transaction_detail_investment') {
-                            $operator = $transaction->transactionType->amount_operator;
-                            if (!$operator) {
-                                return 0;
+                //get summary of transactions
+                $account['sum'] = $transactions
+                    ->sum(function ($transaction) use ($account) {
+                            if ($transaction->config_type == 'transaction_detail_standard') {
+                                $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
+                                return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
                             }
-                            return ($operator == 'minus'
-                                    ? - $transaction->config->price * $transaction->config->quantity
-                                    : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
-                                    - $transaction->config->commission;
-                        }
+                            if ($transaction->config_type == 'transaction_detail_investment') {
+                                $operator = $transaction->transactionType->amount_operator;
+                                if (!$operator) {
+                                    return 0;
+                                }
+                                return ($operator == 'minus'
+                                        ? - $transaction->config->price * $transaction->config->quantity
+                                        : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
+                                        - $transaction->config->commission;
+                            }
 
-                        return 0;
-                    });
+                            return 0;
+                        });
 
-            //add opening balance
-            $account['sum'] += $account->config->openingBalance()['amount_to'];
+                //add opening balance
+                $account['sum'] += $account->config->openingBalance()['amount_to'];
 
-            //add value of investments
+                //add value of investments
+                $investments = $account->config->getAssociatedInvestmentsAndQuantity();
+                $account['sum'] += $investments->sum(function($item) {
+
+                    $investment = \App\Investment::find($item['investment']);
+                    if ($item['quantity'] > 0) {
+                        return $item['quantity'] * $investment->getLatestPrice();
+                    }
+                    return 0;
+                });
+
+                //$account['investment_value'] = $investmentTransactions
 
 
-            //apply currency exchange, if necesary
-            if ($account->config->currency_id != $baseCurrency->id) {
-                $account['sum_foreign'] = $account['sum'];
-                $account['sum'] = $account['sum'] * $currencies->find($account->config->currency_id)->rate();
-            }
-            $account['currency'] = $account->config->currency;
+                //apply currency exchange, if necesary
+                if ($account->config->currency_id != $baseCurrency->id) {
+                    $account['sum_foreign'] = $account['sum'];
+                    $account['sum'] = $account['sum'] * $currencies->find($account->config->currency_id)->rate();
+                }
+                $account['currency'] = $account->config->currency;
 
-            return $account;
-        });
+                return $account;
+            });
 
         //get summary by accounts
         $summary = $accounts
@@ -159,7 +170,7 @@ class MainController extends Controller
         $account->load('config');
 
         //get standard transactions related to selected account
-        $transactions = Transaction::with(
+        $standardTransactions = Transaction::with(
             [
                 'config',
                 'config.accountFrom',
@@ -181,6 +192,23 @@ class MainController extends Controller
                 }
             )
             ->orderBy('date')
+            ->get();
+
+        //get all investment transactions
+        $investmentTransactions = Transaction::with(
+            [
+                'config',
+                'transactionType',
+            ])
+            ->where('schedule', 0)
+            ->where('budget', 0)
+            ->whereHasMorph(
+                'config',
+                [\App\TransactionDetailInvestment::class],
+                function (Builder $query) use ($account) {
+                    $query->Where('account_id', $account->id);
+                }
+            )
             ->get();
 
         //get standard transactions with schedule
@@ -297,7 +325,7 @@ class MainController extends Controller
         $subTotal = 0;
 
         //adjust data, sort transactions, create running total
-        $transactionData = $transactions
+        $transactionDataStandard = $standardTransactions
             ->map(function ($transaction) use ($account) {
                 //Log::debug($transaction);
                 return
@@ -322,7 +350,7 @@ class MainController extends Controller
                     ];
             });
 
-        $merged = $transactionData->merge($scheduledItems);
+        $merged = $transactionDataStandard->merge($scheduledItems);
 
         $data = $merged->sortByDesc('transactionType')
             ->sortBy('date')

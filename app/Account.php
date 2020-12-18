@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Validation\Rule;
@@ -52,7 +53,8 @@ class Account extends AccountEntity
         return $this->belongsTo(Currency::class);
     }
 
-    public function openingBalance() {
+    public function openingBalance()
+    {
         return [
             'id' => null,
             'date' => null,
@@ -73,4 +75,57 @@ class Account extends AccountEntity
             'delete_url' => null,
         ];
     }
+
+    public function getAssociatedInvestmentsAndQuantity()
+    {
+        $accountId = $this->id;
+
+        //get all investment transactions for current investment
+        $transactions = Transaction::with(
+            [
+                'config',
+                'config.investment',
+                'transactionType',
+            ])
+            ->where('schedule', 0)
+            ->where('budget', 0)
+            ->where('config_type', 'transaction_detail_investment')
+            ->whereHasMorph(
+                'config',
+                [\App\TransactionDetailInvestment::class],
+                function (Builder $query) use ($accountId) {
+                    $query->where('account_id', '=', $accountId);
+                }
+            )
+            ->get();
+
+        $investments = $transactions
+            ->map(function ($transaction) {
+                    $operator = $transaction->transactionType->quantity_operator;
+                    if (!$operator) {
+                        $quantity = 0;
+                    } else {
+                        $quantity = ($operator == 'minus'
+                                   ? - $transaction->config->quantity
+                                   : $transaction->config->quantity);
+                    }
+
+                    return [
+                        'investment' => $transaction->config->investment,
+                        'quantity' => $quantity,
+                    ];
+                //return $transaction->config->investment_id;
+            })
+            ->groupBy('investment.id')
+            ->map(function ($investment, $key) {
+                return [
+                    'investment' => $key,
+                    'quantity' => $investment->sum('quantity'),
+                ];
+            });
+
+        return $investments;
+
+    }
+
 }

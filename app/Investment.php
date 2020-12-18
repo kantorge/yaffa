@@ -87,7 +87,7 @@ class Investment extends Model
                 function (Builder $query) use ($investmentId, $account) {
                     $query->Where('investment_id', $investmentId);
                     if (!is_null($account)) {
-                        $query->where('transaction_details_investment.account_id', '=', $account->id);
+                        $query->where('account_id', '=', $account->id);
                     }
                 }
             )
@@ -108,7 +108,7 @@ class Investment extends Model
 
     }
 
-    public function latestPrice($type = 'combined') {
+    public function getLatestPrice($type = 'combined') {
         $investmentId = $this->id;
 
         if ($type == 'stored' || $type == 'combined') {
