@@ -23,8 +23,8 @@ class TransactionDetailStandard extends Transaction
     ];
 
     protected $casts = [
-        'amount_from' => 'integer',
-        'amount_to' => 'integer',
+        'amount_from' => 'float',
+        'amount_to' => 'float',
     ];
 
     public function config()
