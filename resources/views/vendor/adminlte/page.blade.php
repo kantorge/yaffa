@@ -22,7 +22,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('transactions.createStandard') }}">
                             <i class="fa fa-cart-plus"></i>
-                            New transactions
+                            New transaction
                         </a>
                     </li>
                     <li class="nav-item">

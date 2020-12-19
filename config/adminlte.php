@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'YAFFA',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -45,8 +45,8 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    'logo' => '<b>Y</b>affa',
+    'logo_img' => 'images/logo-small.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -64,7 +64,7 @@ return [
     |
     */
 
-    'usermenu_enabled' => true,
+    'usermenu_enabled' => false,
     'usermenu_header' => false,
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
@@ -127,7 +127,7 @@ return [
     'classes_content_header' => '',
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
-    'classes_sidebar_nav' => '',
+    'classes_sidebar_nav' => 'nav-legacy nav-compact nav-child-indent',
     'classes_topnav' => 'navbar-white navbar-light',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
@@ -237,40 +237,65 @@ return [
             'topnav' => true,
         ],
         [
+            'icon'    => 'nav-icon fa fa-database',
             'text'    => 'assets',
             'submenu' => [
                 [
+                    'icon' => 'nav-icon fas fa-layer-group',
                     'text' => 'account_groups',
                     'url'  => 'accountgroups',
                 ],
                 [
+                    'icon' => 'nav-icon fas fa-wallet',
                     'text' => 'accounts',
                     'url'  => 'accounts',
                 ],
                 [
+                    'icon' => 'nav-icon fa fa-store',
                     'text' => 'payees',
                     'url'  => 'payees',
                 ],
                 [
+                    'icon' => 'nav-icon fas fa-layer-group',
                     'text' => 'investment_groups',
                     'url'  => 'investmentgroups',
                 ],
                 [
+                    'icon' => 'nav-icon fas fa-money-check-alt',
                     'text' => 'investments',
                     'url'  => 'investments',
                 ],
                 [
+                    'icon' => 'nav-icon fa fa-tags',
                     'text' => 'tags',
                     'url'  => 'tags',
                 ],
                 [
+                    'icon' => 'nav-icon fa fa-folder-open',
                     'text' => 'categories',
                     'url'  => 'categories',
                 ],
                 [
+                    'icon' => 'nav-icon fas fa-money-bill-wave',
                     'text' => 'currencies',
                     'url'  => 'currencies',
                 ]
+            ],
+        ],
+        [
+            'icon'    => 'nav-icon fas fa-bolt',
+            'text'    => 'quick actions',
+            'submenu' => [
+                [
+                    'icon'  => 'nav-icon fa fa-cart-plus',
+                    'text'  => 'New transaction',
+                    'route' => 'transactions.createStandard',
+                ],
+                [
+                    'icon'  => 'nav-icon fa fa-chart-line',
+                    'text'  => 'New investment transaction',
+                    'route' => 'transactions.createInvestment',
+                ],
             ],
         ],
 
