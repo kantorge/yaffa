@@ -9,6 +9,7 @@ use App\TransactionDetailInvestment;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 
@@ -41,6 +42,17 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_standard' => TransactionDetailStandard::class,
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
+
+        //load list of active accounts to all views
+        $accounts = \App\AccountEntity
+            ::select('name', 'id')
+            ->where('config_type', 'account')
+            ->where('active', 1)
+            ->orderBy('name')
+            ->get()
+            ->pluck('name', 'id');
+
+        View::share('accountsForNavbar', $accounts);
 
         Blade::directive('NiceNumber', function ($expression) {
             return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";

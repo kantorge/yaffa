@@ -132,15 +132,15 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_is_first) {
                             return  '' +
-                                    '<a href="' + row.enterwithedit_url +'" class="btn btn-sm btn-success"><i class="fa fa-pen" title="Edit and insert instance"></i></a> ' +
-                                    '<a href="' + row.skip_url +'" class="btn btn-sm btn-warning"><i class="fa fa-forward" title=Skip current schedule"></i></a> ';
+                                    '<a href="' + row.enterwithedit_url +'" class="btn btn-xs btn-success"><i class="fa fa-pen" title="Edit and insert instance"></i></a> ' +
+                                    '<a href="' + row.skip_url +'" class="btn btn-xs btn-warning"><i class="fa fa-forward" title=Skip current schedule"></i></a> ';
                         }
                         return null;
                     }
 
                     return  '' +
-                            '<a href="' + row.edit_url +'" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                            '<button class="btn btn-sm btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                            '<a href="' + row.edit_url +'" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + row.id + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                             '<form id="form-delete-' + row.id + '" action="' + row.delete_url + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
                 orderable: false

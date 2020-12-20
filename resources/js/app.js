@@ -43,3 +43,8 @@ if (   window.location.pathname === '/transactions/create/investment'
     require('./transactions/formSchedule');
     require('./transactions/formInvestment');
 }
+
+document.getElementById('jump_to_account').addEventListener('change', function() {
+    console.log(this);
+    window.location.href = "/accounts/history/" + this.value;
+});

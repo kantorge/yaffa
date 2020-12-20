@@ -9,6 +9,22 @@
 
     {{-- Sidebar menu --}}
     <div class="sidebar">
+
+        @if(count($accountsForNavbar) > 0)
+            {{-- Sidebar account list --}}
+            <div class="mt-2 pb-2">
+                <div class="input-group">
+                    <form action="#" method="get" class="sidebar-form">
+                        <select id="jump_to_account" class="form-control form-control-sidebar">
+                            @foreach($accountsForNavbar as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column {{ config('adminlte.classes_sidebar_nav', '') }}"
                 data-widget="treeview" role="menu"
