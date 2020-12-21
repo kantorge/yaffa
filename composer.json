@@ -21,6 +21,7 @@
         "simshaun/recurr": "^4.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.5",
         "facade/ignition": "^2.0",
         "fzaninotto/faker": "^1.9.1",
         "laravel/tinker": "^2.0",
