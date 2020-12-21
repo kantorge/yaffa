@@ -25,14 +25,15 @@ class CurrencyController extends Controller
         //support DataTables with action URLs
         $currencies->map(function ($currency) {
             $currency['latest_rate'] = $currency->rate();
-            $currency['edit_url'] = route('currencies.edit', $currency);
-            $currency['delete_url'] = action('CurrencyController@destroy', $currency);
             return $currency;
         });
 
+        //pass data for DataTables
         JavaScript::put([
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
+            'editUrl' => route('currencies.edit', '#ID#'),
+            'deleteUrl' => action('CurrencyController@destroy', '#ID#'),
         ]);
 
         return view('currencies.index');

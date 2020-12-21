@@ -19,7 +19,6 @@ class PayeeController extends Controller
         $this->payee = $payee->where('config_type', 'payee');
     }
 
-
     /**
      * Display a listing of the resource.
      *
@@ -32,14 +31,12 @@ class PayeeController extends Controller
             ->with(['config', 'config.categories'])
             ->get();
 
-        //support DataTables with action URLs
-        $payees->map(function ($payee) {
-            $payee['edit_url'] = route('payees.edit', $payee);
-            $payee['delete_url'] = action('PayeeController@destroy', $payee);
-            return $payee;
-        });
-
-        JavaScript::put(['payees' => $payees]);
+        //pass data for DataTables
+        JavaScript::put([
+            'payees' => $payees,
+            'editUrl' => route('payees.edit', '#ID#'),
+            'deleteUrl' => action('PayeeController@destroy', '#ID#'),
+        ]);
 
         return view('payees.index');
     }
@@ -97,12 +94,12 @@ class PayeeController extends Controller
 
         $validated = $request->validated();
 
-        $payee = AccountEntity::create($validated);
+        $payee = new AccountEntity($validated);
 
         $payeeConfig = Payee::create($validated['config']);
         $payee->config()->associate($payeeConfig);
 
-        $payee->save();
+        $payee->push();
 
         add_notification('Payee added', 'success');
 

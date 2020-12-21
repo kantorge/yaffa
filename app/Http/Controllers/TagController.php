@@ -27,14 +27,12 @@ class TagController extends Controller
         //Show all account groups from the database and return to view
         $tags = $this->tag->all();
 
-        //support DataTables with action URLs
-        $tags->map(function ($tag) {
-            $tag['edit_url'] = route('tags.edit', $tag);
-            $tag['delete_url'] = action('TagController@destroy', $tag);
-            return $tag;
-        });
-
-        JavaScript::put(['tags' => $tags]);
+        //pass data for DataTables
+        JavaScript::put([
+            'tags' => $tags,
+            'editUrl' => route('tags.edit', '#ID#'),
+            'deleteUrl' => action('TagController@destroy', '#ID#'),
+        ]);
 
         return view('tags.index');
     }

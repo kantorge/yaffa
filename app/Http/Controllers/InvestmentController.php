@@ -31,14 +31,12 @@ class InvestmentController extends Controller
             ->investment
             ->get();
 
-        //support DataTables with action URLs
-        $investments->map(function ($investment) {
-            $investment['edit_url'] = route('investments.edit', $investment);
-            $investment['delete_url'] = action('InvestmentController@destroy', $investment);
-            return $investment;
-        });
-
-        JavaScript::put(['investments' => $investments]);
+        //pass data for DataTables
+        JavaScript::put([
+            'investments' => $investments,
+            'editUrl' => route('investments.edit', '#ID#'),
+            'deleteUrl' => action('InvestmentController@destroy', '#ID#'),
+        ]);
 
         return view('investments.index');
     }

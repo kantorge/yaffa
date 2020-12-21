@@ -16,17 +16,15 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        //Show all currencies from the database and return to view
+        //Show all categories from the database and return to view
         $categories = Category::with(['parent'])->get();
 
-        //support DataTables with action URLs
-        $categories->map(function ($category) {
-            $category['edit_url'] = route('categories.edit', $category);
-            $category['delete_url'] = action('CategoryController@destroy', $category);
-            return $category;
-        });
-
-        JavaScript::put(['categories' => $categories]);
+        //pass data for DataTables
+        JavaScript::put([
+            'categories' => $categories,
+            'editUrl' => route('categories.edit', '#ID#'),
+            'deleteUrl' => action('CategoryController@destroy', '#ID#'),
+        ]);
 
         return view('categories.index');
     }

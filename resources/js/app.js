@@ -45,6 +45,5 @@ if (   window.location.pathname === '/transactions/create/investment'
 }
 
 document.getElementById('jump_to_account').addEventListener('change', function() {
-    console.log(this);
     window.location.href = "/accounts/history/" + this.value;
 });

@@ -27,14 +27,12 @@ class AccountGroupController extends Controller
         //Show all account groups from the database and return to view
         $accountGroups = $this->accountGroup->all();
 
-        //support DataTables with action URLs
-        $accountGroups->map(function ($accountGroup) {
-            $accountGroup['edit_url'] = route('accountgroups.edit', $accountGroup);
-            $accountGroup['delete_url'] = action('AccountGroupController@destroy', $accountGroup);
-            return $accountGroup;
-        });
-
-        JavaScript::put(['accountGroups' => $accountGroups]);
+        //pass data for DataTables
+        JavaScript::put([
+            'accountGroups' => $accountGroups,
+            'editUrl' => route('accountgroups.edit', '#ID#'),
+            'deleteUrl' => action('AccountGroupController@destroy', '#ID#'),
+        ]);
 
         return view('accountgroups.index');
     }

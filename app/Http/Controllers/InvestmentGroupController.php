@@ -24,17 +24,15 @@ class InvestmentGroupController extends Controller
      */
     public function index()
     {
-        //Show all account groups from the database and return to view
+        //Show all investment groups from the database and return to view
         $investmentGroups = $this->investmentGroup->all();
 
-        //support DataTables with action URLs
-        $investmentGroups->map(function ($investmentGroup) {
-            $investmentGroup['edit_url'] = route('investmentgroups.edit', $investmentGroup);
-            $investmentGroup['delete_url'] = action('InvestmentGroupController@destroy', $investmentGroup);
-            return $investmentGroup;
-        });
-
-        JavaScript::put(['investmentGroups' => $investmentGroups]);
+        //pass data for DataTables
+        JavaScript::put([
+            'investmentGroups' => $investmentGroups,
+            'editUrl' => route('investmentgroups.edit', '#ID#'),
+            'deleteUrl' => action('InvestmentGroupController@destroy', '#ID#'),
+        ]);
 
         return view('investmentgroups.index');
     }

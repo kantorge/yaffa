@@ -31,14 +31,12 @@ class AccountController extends Controller
             ->with(['config', 'config.account_group', 'config.currency'])
             ->get();
 
-        //support DataTables with action URLs
-        $accounts->map(function ($account) {
-            $account['edit_url'] = route('accounts.edit', $account);
-            $account['delete_url'] = action('AccountController@destroy', $account);
-            return $account;
-        });
-
-        JavaScript::put(['accounts' => $accounts]);
+        //pass data for DataTables
+        JavaScript::put([
+            'accounts' => $accounts,
+            'editUrl' => route('accounts.edit', '#ID#'),
+            'deleteUrl' => action('AccountController@destroy', '#ID#'),
+        ]);
 
         return view('accounts.index');
     }
@@ -90,12 +88,12 @@ class AccountController extends Controller
 
         $validated = $request->validated();
 
-        $account = AccountEntity::create($validated);
+        $account = new AccountEntity($validated);
 
         $accountConfig = Account::create($validated['config']);
         $account->config()->associate($accountConfig);
 
-        $account->save();
+        $account->push();
 
         add_notification('Account added', 'success');
 
