@@ -46,6 +46,8 @@ Route::post('/transactions/standard', 'TransactionController@storeStandard')->na
 Route::post('/transactions/investment', 'TransactionController@storeInvestment')->name('transactions.storeInvestment');
 Route::get('/transactions/{transaction}/edit/standard', 'TransactionController@editStandard')->name('transactions.editStandard');
 Route::get('/transactions/{transaction}/edit/investment', 'TransactionController@editInvestment')->name('transactions.editInvestment');
+Route::get('/transactions/{transaction}/clone/standard', 'TransactionController@cloneStandard')->name('transactions.cloneStandard');
+Route::get('/transactions/{transaction}/clone/investment', 'TransactionController@cloneInvestment')->name('transactions.cloneInvestment');
 Route::patch('/transactions/{transaction}/standard', 'TransactionController@updateStandard')->name('transactions.updateStandard');
 Route::patch('/transactions/{transaction}/investment', 'TransactionController@updateInvestment')->name('transactions.updateInvestment');
 Route::resource('transactions', 'TransactionController')
