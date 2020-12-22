@@ -12,7 +12,7 @@
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^1.0",
         "guzzlehttp/guzzle": "^6.3",
-        "jeroennoten/laravel-adminlte": "^3.5",
+        "jeroennoten/laravel-adminlte": "dev-laravel7",
         "laracasts/utilities": "^3.2",
         "laravel/framework": "^7.0",
         "laravel/ui": "^2.0",
@@ -67,5 +67,20 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
         ]
-    }
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "jeroennoten/laravel-adminlte",
+                "version": "dev-laravel7",
+                "source": {
+                    "url": "https://github.com/kantorge/Laravel-AdminLTE.git",
+                    "type": "git",
+                    "reference": "dev-laravel7"
+                }
+
+            }
+        }
+      ]
 }
