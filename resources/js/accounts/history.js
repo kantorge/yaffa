@@ -5,6 +5,7 @@ require( 'datatables.net-bs' );
 
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
     $('#historyTable').DataTable({
         data: transactionData,
@@ -84,18 +85,21 @@ $(function() {
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'minus' ? row.amount_from : null);
+                    return (row.transaction_operator == 'minus' ? numberRenderer(row.amount_from) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'plus' ? row.amount_to : null);
+                    return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
                 },
             },
             {
                 data: 'running_total',
                 title: 'Running total',
+                render: function ( data, type, row, meta ) {
+                    return numberRenderer(data);
+                },
                 createdCell: function (td, cellData, rowData, row, col) {
                     if (cellData < 0) {
                         $(td).addClass('text-danger');
@@ -133,7 +137,7 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_is_first) {
                             return  '' +
-                                    '<a href="' + urlEnterWithEdit.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pen" title="Edit and insert instance"></i></a> ' +
+                                    '<a href="' + urlEnterWithEdit.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                                     '<a href="' + urlSkip.replace('#ID#', data) + '" class="btn btn-xs btn-warning"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></a> ';
                         }
                         return null;
@@ -174,10 +178,10 @@ $(function() {
 
                 var currentState = $(this).data("reconciled");
 
-                $(this).removeClass().addClass('fa fa-spinner fa-spin reconcile');
+                $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
                 $.ajax ({
-                    type: 'PUT',  //GET
+                    type: 'PUT',
                     url: '/api/transaction/' + $(this).data("id") + '/reconciled/' + (!currentState ? 1 : 0),
                     dataType: "json",
                     context: this,
@@ -248,13 +252,13 @@ $(function() {
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'minus' ? row.amount_from : null);
+                    return (row.transaction_operator == 'minus' ? numberRenderer(row.amount_from) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'plus' ? row.amount_to : null);
+                    return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
                 },
             },
             {
