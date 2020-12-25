@@ -768,6 +768,11 @@ $( function () {
 
     //click the selective show button once
     document.getElementById('itemListShow').click();
+
+    //display fixed footer
+    setTimeout(function() {
+        $("footer").removeClass("hidden");
+    }, 1000);
 });
 
 function transactionItemCategorySelectFunctionality (element) {

@@ -1,5 +1,5 @@
 require( 'datatables.net' );
-require( 'datatables.net-bs4' );
+require( 'datatables.net-bs' );
 
 $(function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
@@ -49,7 +49,7 @@ $(function () {
                 }
                 return (  data
                         ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="far fa-square text-danger" title="No"></i>');
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
@@ -65,7 +65,7 @@ $(function () {
                         '<a href="' + editUrl.replace('#ID#', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                        //base currency cannot be deleted
                        ( !row.base
-                         ? '<a href="/currencyrates/' + row.id + '/' + baseCurrency.id + '" class="btn btn-sm btn-info"><i class="fa fa-chart-line" title="Rates"></i></a> ' +
+                         ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-sm btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
                            '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                            '<form id="form-delete-' + data + '" action="' + deleteUrl.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>'
                          : '');

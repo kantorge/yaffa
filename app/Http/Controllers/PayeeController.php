@@ -28,8 +28,20 @@ class PayeeController extends Controller
     {
         //Show all payees from the database and return to view
         $payees = $this->payee
-            ->with(['config', 'config.categories'])
+            ->with(['config'])
             ->get();
+
+        //get categories to display name
+        $categories = Category::with(['parent'])->get();
+
+        $payees->map(function($payee) use ($categories) {
+            if (is_null($payee->config->category_id)) {
+                $payee['config']['category_full_name'] = '';
+            } else {
+                $payee['config']['category_full_name'] = $categories->find($payee->config->category_id)->full_name;
+            }
+            return $payee;
+        });
 
         //pass data for DataTables
         JavaScript::put([

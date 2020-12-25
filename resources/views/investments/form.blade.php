@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('title', 'Investments')
 
@@ -9,88 +9,247 @@
 @section('content')
 
     @if(isset($investment))
-        {{ Form::model($investment, ['route' => ['investments.update', $investment->id], 'method' => 'patch']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('investments.update', $investment->id) }}"
+            autocomplete="off"
+            method="POST"
+        >
+        <input name="_method" type="hidden" value="PATCH">
     @else
-        {{ Form::open(['route' => 'investments.store']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('investments.store') }}"
+            autocomplete="off"
+            method="POST"
+        >
     @endif
 
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">
-                @if(isset($investment))
+    <div class="box box-primary">
+        <div class="box-header">
+            <h3 class="box-title">
+                @if(isset($investment->id))
                     Modify investment
                 @else
                     Add new investment
                 @endif
             </h3>
         </div>
-        <!-- /.card-header -->
-        <div class="card-body">
+        <!-- /.box-header -->
+        <div class="box-body form-horizontal">
             <div class="form-group">
-                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="name" class="control-label col-sm-3">
+                    Name
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="{{old('name', $investment->name ?? '' )}}"
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('active', 'Active', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('active', '1', 1) }}
+                <label for="active" class="control-label col-sm-3">
+                    Active
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="active"
+                        class="checkbox-inline"
+                        name="active"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('active') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($investment))
+                            @if ($investment->active == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('name', 'Symbol', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('symbol', old('symbol'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="symbol" class="control-label col-sm-3">
+                    Symbol
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="symbol"
+                        name="symbol"
+                        type="text"
+                        value="{{old('symbol', $investment->symbol ?? '' )}}"
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('name', 'Comment', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('comment', old('comment'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="comment" class="control-label col-sm-3">
+                    Comment
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="comment"
+                        name="comment"
+                        type="text"
+                        value="{{old('comment', $investment->comment ?? '' )}}"
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('task_id', 'Investment group', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::select('investment_group_id', $allInvestmentGropus, old('investment_group_id'), ['class' => 'form-control']) }}
+                <label for="investment_group_id" class="control-label col-sm-3">
+                    Investment group
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="investment_group_id"
+                        name="investment_group_id"
+                    >
+                        @forelse($allInvestmentGropus as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('investment_group_id') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($investment))
+                                    @if ($investment['investment_group_id'] == $id)
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @empty
+
+                        @endforelse
+
+                    </select>
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('task_id', 'Currency', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::select('currency_id', $allCurrencies, old('currency_id'), ['class' => 'form-control']) }}
+                <label for="currency_id" class="control-label col-sm-3">
+                    Currency
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="currency_id"
+                        name="currency_id"
+                    >
+                        @forelse($allCurrencies as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('currency_id') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($investment))
+                                    @if ($investment['currency_id'] == $id)
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @empty
+
+                        @endforelse
+
+                    </select>
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('task_id', 'Price provider', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::select('investment_price_provider_id', $allInvestmentPriceProviders, old('investment_price_provider_id'), ['class' => 'form-control', 'placeholder' => 'None']) }}
+                <label for="investment_price_provider_id" class="control-label col-sm-3">
+                    Price provider
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="investment_price_provider_id"
+                        name="investment_price_provider_id"
+                    >
+                        <option value=''> < No price provider ></option>
+                        @forelse($allInvestmentPriceProviders as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('investment_price_provider_id') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($investment))
+                                    @if ($investment['investment_price_provider_id'] == $id)
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @empty
+
+                        @endforelse
+
+                    </select>
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('auto_update', 'Auto update', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('auto_update', '1', 1) }}
+                <label for="auto_update" class="control-label col-sm-3">
+                    Auto update
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="auto_update"
+                        class="checkbox-inline"
+                        name="auto_update"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('auto_update') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($investment))
+                            @if ($investment->auto_update == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
                 </div>
             </div>
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-            {{ Form::hidden('id', old('id')) }}
-            {{ Form::submit('Save', ['class' => 'btn btn-primary']) }}
+        <!-- /.box-body -->
+        <div class="box-footer">
+            @csrf
+            <input
+                name="id"
+                type="hidden"
+                value="{{old('id', $investment['id'] ?? '' )}}"
+            >
+
+            <input class="btn btn-primary" type="submit" value="Save">
+            <a href="{{ route('investments.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>
-        <!-- /.card-footer -->
+        <!-- /.box-footer -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
 
-    {{ Form::close() }}
+    </form>
 
 @stop

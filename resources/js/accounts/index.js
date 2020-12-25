@@ -1,5 +1,5 @@
 require( 'datatables.net' );
-require( 'datatables.net-bs4' );
+require( 'datatables.net-bs' );
 
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
@@ -24,7 +24,7 @@ $(function() {
                 }
                 return (  data
                         ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="far fa-square text-danger" title="No"></i>');
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
@@ -45,8 +45,8 @@ $(function() {
             title: "Actions",
             render: function ( data, type, row, meta ) {
                 return '' +
-                       '<a href="' + editUrl.replace('#ID#', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                        '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                       '<a href="' + editUrl.replace('#ID#', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                        '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                         '<form id="form-delete-' + data + '" action="' + deleteUrl.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
             },
             orderable: false

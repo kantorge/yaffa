@@ -9,6 +9,7 @@ use App\Currency;
 use App\Http\Requests\AccountEntityRequest;
 use Illuminate\Http\Request;
 use JavaScript;
+//use Barryvdh\Debugbar\Facade as Debugbar;
 
 class AccountController extends Controller
 {
@@ -47,12 +48,17 @@ class AccountController extends Controller
             ->find($id);
 
         //get all account groups
-        $allAccountGropus = AccountGroup::pluck('name', 'id')->all();
+        $allAccountGroups = AccountGroup::pluck('name', 'id')->all();
 
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('accounts.form',['account'=> $account, 'allAccountGropus' => $allAccountGropus, 'allCurrencies' => $allCurrencies]);
+        return view('accounts.form',
+            [
+                'account'=> $account,
+                'allAccountGroups' => $allAccountGroups,
+                'allCurrencies' => $allCurrencies
+        ]);
     }
 
     public function update(AccountEntityRequest $request, AccountEntity $account)
@@ -75,12 +81,12 @@ class AccountController extends Controller
     {
 
         //get all account groups
-        $allAccountGropus = AccountGroup::pluck('name', 'id')->all();
+        $allAccountGroups = AccountGroup::pluck('name', 'id')->all();
 
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('accounts.form', ['allAccountGropus' => $allAccountGropus, 'allCurrencies' => $allCurrencies]);
+        return view('accounts.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
 
     public function store(AccountEntityRequest $request)

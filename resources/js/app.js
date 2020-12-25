@@ -45,5 +45,15 @@ if (   window.location.pathname === '/transactions/create/investment'
 }
 
 document.getElementById('jump_to_account').addEventListener('change', function() {
+    if (this.value == '') {
+        return false;
+    }
     window.location.href = "/accounts/history/" + this.value;
+});
+
+$( function () {
+    //generally available cancel button with confirmation
+    $(".cancel.confirm-needed").on("click", function(e) {
+        return confirm('Are you sure to abandon this form?');
+    });
 });

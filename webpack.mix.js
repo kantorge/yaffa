@@ -13,11 +13,11 @@ const mix = require('laravel-mix');
 
 mix.js([
         'resources/js/app.js',
-        'vendor/almasaeed2010/adminlte/plugins/bootstrap/js/bootstrap.bundle.js',  //TODO: ezt miért kell külön hívni?
+        'vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/js/bootstrap.min.js',
     ], 'public/js')
     .extract([
         'datatables.net',
-        'datatables.net-bs4',
+        'datatables.net-bs',
         'jquery',
         'mathjs',
         'select2'

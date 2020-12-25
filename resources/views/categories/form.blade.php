@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('title', 'Categories')
 
@@ -9,53 +9,123 @@
 @section('content')
 
     @if(isset($category))
-        {{ Form::model($category, ['route' => ['categories.update', $category->id], 'method' => 'patch']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('categories.update', $category->id) }}"
+            autocomplete="off"
+            method="POST"
+        >
+        <input name="_method" type="hidden" value="PATCH">
     @else
-        {{ Form::open(['route' => 'categories.store']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('categories.store') }}"
+            autocomplete="off"
+            method="POST"
+        >
     @endif
 
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">
-                @if(isset($account))
+    <div class="box box-primary">
+        <div class="box-header">
+            <h3 class="box-title">
+                @if(isset($category->id))
                     Modify category
                 @else
                     Add new category
                 @endif
             </h3>
         </div>
-        <!-- /.card-header -->
-        <div class="card-body">
+        <!-- /.box-header -->
+        <div class="box-body form-horizontal">
             <div class="form-group">
-                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="name" class="control-label col-sm-3">
+                    Name
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="{{old('name', $category->name ?? '' )}}"
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('active', 'Active', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('active', '1', 1) }}
+                <label for="active" class="control-label col-sm-3">
+                    Active
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="active"
+                        class="checkbox-inline"
+                        name="active"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('active') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($category))
+                            @if ($category['active'] == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('parent_id', 'Parent', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::select('parent_id', $parents, old('parent_id'), ['class' => 'form-control', 'placeholder' => 'Parent']) }}
+                <label for="parent_id" class="control-label col-sm-3">
+                    Parent
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="parent_id"
+                        name="parent_id"
+                        placeholder="Parent category"
+                    >
+                        <option value=''> < No parent category ></option>
+                        @foreach($parents as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('parent_id') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($category))
+                                    @if ($category->parent_id == $id))
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @endforeach
+
+                    </select>
                 </div>
             </div>
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-            {{ Form::hidden('id', old('id')) }}
-            {{ Form::submit('Save', ['class' => 'btn btn-primary']) }}
+        <!-- /.box-body -->
+        <div class="box-footer">
+            @csrf
+            <input
+                name="id"
+                type="hidden"
+                value="{{old('id', $category['id'] ?? '' )}}"
+            >
+
+            <input class="btn btn-primary" type="submit" value="Save">
         </div>
-        <!-- /.card-footer -->
+        <!-- /.box-footer -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
 
-    {{ Form::close() }}
+    </form>
 
 @stop

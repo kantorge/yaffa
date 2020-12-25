@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('title', 'Payees')
 
@@ -9,54 +9,130 @@
 @section('content')
 
     @if(isset($payee))
-        {{ Form::model($payee, ['route' => ['payees.update', $payee->id], 'method' => 'patch']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('payees.update', $payee->id) }}"
+            autocomplete="off"
+            method="POST"
+        >
+        <input name="_method" type="hidden" value="PATCH">
     @else
-        {{ Form::open(['route' => 'payees.store']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('payees.store') }}"
+            autocomplete="off"
+            method="POST"
+        >
     @endif
 
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">
-                @if(isset($payee))
+    <div class="box box-primary">
+        <div class="box-header">
+            <h3 class="box-title">
+                @if(isset($payee->id))
                     Modify payee
                 @else
                     Add new payee
                 @endif
             </h3>
         </div>
-        <!-- /.card-header -->
-        <div class="card-body">
+        <!-- /.box-header -->
+        <div class="box-body form-horizontal">
             <div class="form-group">
-                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="name" class="control-label col-sm-3">
+                    Name
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="{{old('name', $payee->name ?? '' )}}"
+                    >
+                </div>
+            </div>
+
+           <div class="form-group">
+                <label for="active" class="control-label col-sm-3">
+                    Active
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="active"
+                        class="checkbox-inline"
+                        name="active"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('active') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($payee))
+                            @if ($payee['active'] == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
                 </div>
             </div>
 
             <div class="form-group">
-                {{ Form::label('active', 'Active', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('active', '1', 1) }}
-                </div>
-            </div>
+                <label for="category_id" class="control-label col-sm-3">
+                    Default category
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="category_id"
+                        name="config[category_id]"
+                    >
+                        <option value=''> < No default category></option>
+                        @forelse($categories as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('config.category_id') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($payee))
+                                    @if ($payee->config->category_id == $id)
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @empty
 
-            <div class="form-group">
-                {{ Form::label('payee_id', 'Category', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::select('config[category_id]', $categories, old('config[category_id]'), ['class' => 'form-control', 'placeholder' => 'Default category']) }}
+                        @endforelse
+
+                    </select>
                 </div>
             </div>
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-            {{ Form::hidden('id', old('id')) }}
-            {{ Form::hidden('config_type', old('config_type', 'payee')) }}
-            {{ Form::submit('Save', ['class' => 'btn btn-primary']) }}
+        <!-- /.box-body -->
+        <div class="box-footer">
+            @csrf
+            <input
+                name="id"
+                type="hidden"
+                value="{{old('id', $payee['id'] ?? '' )}}"
+            >
+            <input
+                name="config_type"
+                type="hidden"
+                value="{{old('config_type', 'payee' )}}"
+            >
+
+            <input class="btn btn-primary" type="submit" value="Save">
+            <a href="{{ route('payees.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>
-        <!-- /.card-footer -->
+        <!-- /.box-footer -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
 
-    {{ Form::close() }}
+    </form>
 
 @stop

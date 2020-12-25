@@ -55,6 +55,7 @@ class InvestmentRequest extends FormRequest
         $this->merge([
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
+            'investment_price_provider_id' => $this->parent_id ?? null,
         ]);
     }
 }

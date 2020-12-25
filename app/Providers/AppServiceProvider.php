@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         //load list of active accounts to all views
+        //TODO: this fails during a clean migration
         $accounts = \App\AccountEntity
             ::select('name', 'id')
             ->where('config_type', 'account')

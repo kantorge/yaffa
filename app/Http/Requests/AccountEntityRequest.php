@@ -63,6 +63,7 @@ class AccountEntityRequest extends FormRequest
         //check for checkbox-es
         $this->merge([
             'active' => $this->active ?? 0,
+            'config.category_id' => $this->config->category_id ?? null,
         ]);
     }
 }

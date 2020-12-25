@@ -1,5 +1,5 @@
 require( 'datatables.net' );
-require( 'datatables.net-bs4' );
+require( 'datatables.net-bs' );
 
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";

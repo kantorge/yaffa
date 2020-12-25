@@ -49,6 +49,7 @@ class CategoryRequest extends FormRequest
         //check for checkbox-es
         $this->merge([
             'active' => $this->active ?? 0,
+            'parent_id' => $this->parent_id ?? null,
         ]);
     }
 }

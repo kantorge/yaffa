@@ -336,6 +336,11 @@ $( function () {
     $("#transaction_type").change();
 
 	//set callback type
-    document.getElementById("callback_" + defaultCallback).click();
+	var defaultCallback = defaultCallback || 'new';
+	document.getElementById("callback_" + defaultCallback).click();
 
+	//display fixed footer
+    setTimeout(function() {
+        $("footer").removeClass("hidden");
+    }, 1000);
 });

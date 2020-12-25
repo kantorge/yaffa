@@ -1,21 +1,37 @@
 // Fonts
 @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic');
-@import '~@fortawesome/fontawesome-free/css/all.css';
-// OverlayScrollbars
-@import '~overlayscrollbars/css/OverlayScrollbars.css';
-// iCheck
-@import '~icheck-bootstrap/icheck-bootstrap.css';
-// AdminLTE
-@import '../../vendor/almasaeed2010/adminlte/dist/css/adminlte.css';
-// Bootstrap
-// Already imported by AdminLTE
-//@import '~bootstrap/scss/bootstrap';
+
+// AdminLTE, including Bootstrap
+@import '../../vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/css/bootstrap.min.css';
+@import '../../vendor/almasaeed2010/adminlte/bower_components/font-awesome/css/font-awesome.min.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/AdminLTE.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-blue.css';
+
+// Datatables
+@import "~datatables.net-bs/css/dataTables.bootstrap.css";
 
 //Daterangepicker
 @import "~daterangepicker/daterangepicker.css";
 
 //Select2
 @import 'select2/dist/css/select2';
+
+//sidebar select fix
+.skin-blue .sidebar-form select {
+  box-shadow: none;
+  background-color: #374850;
+  border: 1px solid transparent;
+  height: 35px;
+  color: #666;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 2px;
+}
+.skin-blue .sidebar-form select:focus {
+  background-color: #fff;
+  color: #666;
+}
 
 .hidden {
     display: none;

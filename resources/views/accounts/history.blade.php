@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('meta_tags')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -12,44 +12,42 @@
 
 @section('content')
 
-    <div class="card">
-        <div class="card-header">
-            <a data-toggle="collapse" href="#collapseHistory" aria-expanded="true">
+    <div class="box">
+        <div class="box-header">
+            <h3 class="box-title">
                 Transaction history
-            </a>
-            <div class="card-tools">
+            </h3>
+            <div class="pull-right box-tools">
                 <a
-                    class="btn {{($withForecast ? 'btn-primary' : 'btn-secondary') }}"
+                    class="btn {{($withForecast ? 'btn-primary' : 'btn-info') }}"
                     href="{{ route('accounts.history', ['account' => $account->id, 'withForecast' => ($withForecast ? '' : 'withForecast')]) }}"
                     title="{{($withForecast ? 'Without forecast' : 'With forecast') }}">
                     <i class="fa fa-calendar"></i>
                 </a>
                 <a href="/transactions/create/standard" class="btn btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
-                <a href="/transactions/create/investment" class="btn btn-success" title="New investment transaction"><i class="fa fa-chart-line"></i></a>
+                <a href="/transactions/create/investment" class="btn btn-success" title="New investment transaction"><i class="fa fa-line-chart"></i></a>
             </div>
-            <!-- /.card-tools -->
+            <!-- /.box-tools -->
         </div>
-        <!-- /.card-header -->
-        <div id="collapseHistory" class="panel-collapse collapse show">
-            <div class="card-body">
-                <table class="table table-bordered table-hover no-footer" id="historyTable"></table>
-            </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+            <table class="table table-bordered table-hover no-footer" id="historyTable"></table>
         </div>
-        <!-- /.card-body -->
+        <!-- /.box-body -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
 
-    <div class="card">
-        <div class="card-header">
+    <div class="box">
+        <div class="box-header">
             Scheduled transactions
-            <!-- /.card-tools -->
+            <!-- /.box-tools -->
         </div>
-        <!-- /.card-header -->
-        <div class="card-body">
+        <!-- /.box-header -->
+        <div class="box-body">
             <table class="table table-bordered table-hover dataTable no-footer" id="scheduleTable"></table>
         </div>
-        <!-- /.card-body -->
+        <!-- /.box-body -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
 
 @stop

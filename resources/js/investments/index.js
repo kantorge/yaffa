@@ -1,5 +1,5 @@
 require( 'datatables.net' );
-require( 'datatables.net-bs4' );
+require( 'datatables.net-bs' );
 
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
@@ -24,7 +24,7 @@ $(function() {
                 }
                 return (  data
                         ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="far fa-square text-danger" title="No"></i>');
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
@@ -53,7 +53,7 @@ $(function() {
                 }
                 return (  data
                         ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="far fa-square text-danger" title="No"></i>');
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },

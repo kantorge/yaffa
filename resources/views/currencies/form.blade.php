@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('title', 'Currencies')
 
@@ -9,63 +9,152 @@
 @section('content')
 
     @if(isset($currency))
-        {{ Form::model($currency, ['route' => ['currencies.update', $currency->id], 'method' => 'patch']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('currencies.update', $currency->id) }}"
+            autocomplete="off"
+            method="POST"
+        >
+        <input name="_method" type="hidden" value="PATCH">
     @else
-        {{ Form::open(['route' => 'currencies.store']) }}
+        <form
+            accept-charset="UTF-8"
+            action="{{ route('currencies.store') }}"
+            autocomplete="off"
+            method="POST"
+        >
     @endif
 
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">Add new currency</h3>
+    <div class="box box-primary">
+        <div class="box-header">
+            <h3 class="box-title">Add new currency</h3>
         </div>
-        <!-- /.card-header -->
-        <div class="card-body">
+        <!-- /.box-header -->
+        <div class="box-body form-horizontal">
             <div class="form-group">
-                {{ Form::label('name', 'Name', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('name', old('name'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
+                <label for="name" class="control-label col-sm-3">
+                    Name
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="{{old('name', $currency->name ?? '' )}}"
+                    >
                 </div>
             </div>
-            <div class="form-group">
-                {{ Form::label('iso_code', 'ISO Code', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('iso_code', old('iso_code'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
-                </div>
-            </div>
-            <div class="form-group">
-                {{ Form::label('num_digits', 'Number of digits', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('num_digits', old('num_digits'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
-                </div>
-            </div>
-            <div class="form-group">
-                {{ Form::label('suffix', 'Suffix', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::text('suffix', old('suffix'), ['class' => 'form-control', 'autocomplete' => 'off']) }}
-                </div>
-            </div>
-            <div class="form-group">
-                {{ Form::label('base', 'Base currency', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('base', '1') }}
-                </div>
-            </div>
-            <div class="form-group">
-                {{ Form::label('auto_update', 'Automatic update', ['class' => 'control-label col-xs-3']) }}
-                <div class="col-xs-9">
-                    {{ Form::checkbox('auto_update', '1') }}
-                </div>
-            </div>
-        </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-            {{ Form::hidden('id', old('id')) }}
-            {{ Form::submit('Save', ['class' => 'btn btn-primary']) }}
-        </div>
-        <!-- /.card-footer -->
-    </div>
-    <!-- /.card -->
 
-    {{ Form::close() }}
+            <div class="form-group">
+                <label for="iso_code" class="control-label col-sm-3">
+                    ISO Code
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="iso_code"
+                        name="iso_code"
+                        type="text"
+                        value="{{old('iso_code', $currency->iso_code ?? '' )}}"
+                    >
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="num_digits" class="control-label col-sm-3">
+                    Number of digits
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="num_digits"
+                        name="num_digits"
+                        type="text"
+                        value="{{old('num_digits', $currency->num_digits ?? '' )}}"
+                    >
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="suffix" class="control-label col-sm-3">
+                    Suffix
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="suffix"
+                        name="suffix"
+                        type="text"
+                        value="{{old('suffix', $currency->suffix ?? '' )}}"
+                    >
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="base" class="control-label col-sm-3">
+                    Base currency
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="base"
+                        class="checkbox-inline"
+                        name="base"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('base') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($currency))
+                            @if ($currency->base == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auto_update" class="control-label col-sm-3">
+                    Automatic update
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="auto_update"
+                        class="checkbox-inline"
+                        name="auto_update"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('auto_update') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($currency))
+                            @if ($currency->auto_update == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
+                </div>
+            </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer">
+            @csrf
+            <input
+                name="id"
+                type="hidden"
+                value="{{old('id', $currency['id'] ?? '' )}}"
+            >
+
+            <input class="btn btn-primary" type="submit" value="Save">
+            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+        </div>
+        <!-- /.box-footer -->
+    </div>
+    <!-- /.box -->
+
+    </form>
 
 @stop

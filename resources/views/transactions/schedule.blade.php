@@ -1,10 +1,10 @@
                     <!-- schedule settings -->
-                    <div class="card" id="schedule_container">
-                        <div class="card-header with-border">
-                            <h3 class="card-title">Schedule</h3>
+                    <div class="box" id="schedule_container">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Schedule</h3>
                         </div>
-                        <!-- /.card-header -->
-                        <div class="card-body" id="">
+                        <!-- /.box-header -->
+                        <div class="box-body" id="">
                             <div class="row">
                                 <div class="col-md-4">
                                     <label for="schedule_frequency" class="control-label">Frequency</label>
@@ -74,9 +74,9 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- /.card-body -->
+                        <!-- /.box-body -->
 
-                        <!-- div class="card-footer">
+                        <!-- div class="box-footer">
                         </div !-->
                     </div>
-                    <!-- /.card -->
+                    <!-- /.box -->

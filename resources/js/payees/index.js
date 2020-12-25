@@ -1,9 +1,9 @@
 require( 'datatables.net' );
-require( 'datatables.net-bs4' );
+require( 'datatables.net-bs' );
 
 $(document).ready( function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    payees = payees.map(c => { c.config.categories = c.config.categories || {full_name: ''};return c;});
+    //payees = payees.map(c => { c.config.categories = c.config.categories || {full_name: ''};return c;});
 
     $('#table').DataTable({
         data: payees,
@@ -25,12 +25,12 @@ $(document).ready( function () {
                 }
                 return (  data
                         ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="far fa-square text-danger" title="No"></i>');
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
         {
-            data: "config.categories.full_name",
+            data: "config.category_full_name",
             title: "Category"
         },
         {

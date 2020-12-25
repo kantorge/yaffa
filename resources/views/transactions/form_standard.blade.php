@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('template.page')
 
 @section('classes_body', "layout-footer-fixed")
 
@@ -26,9 +26,9 @@
         >
     @endif
 
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">
+    <div class="box box-primary">
+        <div class="box-header">
+            <h3 class="box-title">
                 @if(isset($transaction->id))
                     Modify transaction
                 @else
@@ -36,22 +36,22 @@
                 @endif
             </h3>
         </div>
-        <!-- /.card-header -->
+        <!-- /.box-header -->
 
-        <div class="card-body">
+        <div class="box-body">
             <div class="row">
                 <!-- left column -->
                 <div class="col-md-4">
                     <!-- general form elements -->
-                    <div class="card ">
-                        <div class="card-header with-border">
-                            <h3 class="card-title">
+                    <div class="box ">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">
                                 Transaction properties
                             </h3>
                         </div>
-                        <!-- /.card-header -->
+                        <!-- /.box-header -->
 
-                        <div class="card-body">
+                        <div class="box-body">
                             <div class="form-horizontal">
                                 <div class="form-group row" id="transaction_type_container">
                                     <label class="control-label col-sm-3">
@@ -200,12 +200,12 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- /.card-body -->
+                        <!-- /.box-body -->
 
-                        <!--div class="card-footer">
+                        <!--div class="box-footer">
                         </div-->
                     </div>
-                    <!-- /.card -->
+                    <!-- /.box -->
 
                 </div>
                 <!--/.col (left) -->
@@ -213,10 +213,10 @@
                 <!-- right column -->
                 <div class="col-md-8">
                     <!-- general form elements -->
-                    <div class="card">
-                        <div class="card-header with-border">
-                            <h3 class="card-title">Transaction items</h3>
-                            <div class="card-tools">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Transaction items</h3>
+                            <div class="box-tools">
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-sm btn-info" id="itemListCollapse" title="Collapse all items"><i class="fa fa-compress"></i></button>
                                     <button type="button" class="btn btn-sm btn-info" id="itemListShow" title="Expand items with data"><i class="fa fa-expand"></i></button>
@@ -225,8 +225,8 @@
                                 <button type="button" class="btn btn-sm btn-success new_transaction_item" title="New transaction item"><i class="fa fa-plus"></i></button>
                             </div>
                         </div>
-                        <!-- /.card-header -->
-                        <div class="card-body" id="transaction_item_container">
+                        <!-- /.box-header -->
+                        <div class="box-body" id="transaction_item_container">
                             <div class="list-group">
 
                                 @forelse($transaction->transactionItems as $key => $item)
@@ -237,9 +237,9 @@
 
                             </div>
                         </div>
-                        <!-- /.card-body -->
+                        <!-- /.box-body -->
 
-                        <div class="card-footer">
+                        <div class="box-footer">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="row">
@@ -323,7 +323,7 @@
                         </div>
 
                     </div>
-                    <!-- /.card -->
+                    <!-- /.box -->
 
                     @include('transactions.schedule')
 
@@ -333,45 +333,10 @@
             </div>
             <!-- /.row -->
 
-            <footer class="main-footer layout-footer-fixed">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-2">
-                            <label for="callback" class="control-label">After saving</label>
-                        </div>
-                        <div class="col-sm-8">
-                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-outline-secondary" id="callback_new_label">
-                                    <input name="callback" type="radio" value="new" id="callback_new">
-                                    Add an other transaction
-                                </label>
-                                <label class="btn btn-outline-secondary" id="callback_clone_label">
-                                    <input name="callback" type="radio" value="clone" id="callback_clone">
-                                    Clone this transaction
-                                </label>
-                                <label class="btn btn-outline-secondary" id="callback_returnToAccount_label">
-                                    <input name="callback" type="radio" value="returnToAccount" id="callback_return_to_account">
-                                    Return to selected account
-                                </label>
-                                <label class="btn btn-outline-secondary" id="callback_returnToDashboard_label">
-                                    <input name="callback" type="radio" value="returnToDashboard" id="callback_return_to_dashboard">
-                                    Return to dashboard
-                                </label>
-                            </div>
-                        </div>
-                    <div class="box-tools col-sm-2">
-                        <div class="pull-right">
-                            <input type="submit" class="btn btn-sm btn-default" id="cancelButton" onclick="return clickCancel();" value="Cancel">
-                            <input class="btn btn-primary" type="submit" value="Save">
-                        </div>
-                    </div>
-                </div>
-            </footer>
-
         </div>
-        <!-- /.card-body -->
+        <!-- /.box-body -->
 
-        <div class="card-footer">
+        <div class="box-footer">
             @csrf
             <input
                 name="id"
@@ -384,9 +349,43 @@
                 value="transaction_detail_standard"
             >
         </div>
-        <!-- /.card-footer -->
+        <!-- /.box-footer -->
     </div>
-    <!-- /.card -->
+    <!-- /.box -->
+
+    <footer class="main-footer navbar-fixed-bottom hidden">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-2">
+                    <label for="callback" class="control-label">After saving</label>
+                </div>
+                <div class="col-sm-8">
+                    <div class="btn-group btn-group-justified" data-toggle="buttons">
+                        <label class="btn btn-default" id="callback_new_label">
+                            <input name="callback" type="radio" value="new" id="callback_new" class="radio-inline">
+                            Add an other transaction
+                        </label>
+                        <label class="btn btn-default" id="callback_clone_label">
+                            <input name="callback" type="radio" value="clone" id="callback_clone" class="radio-inline">
+                            Clone this transaction
+                        </label>
+                        <label class="btn btn-default" id="callback_returnToAccount_label">
+                            <input name="callback" type="radio" value="returnToAccount" id="callback_returnToAccount" class="radio-inline">
+                            Return to selected account
+                        </label>
+                        <label class="btn btn-default" id="callback_returnToDashboard_label">
+                            <input name="callback" type="radio" value="returnToDashboard" id="callback_returnToDashboard" class="radio-inline">
+                            Return to dashboard
+                        </label>
+                    </div>
+                </div>
+            <div class="box-tools col-sm-2">
+            <div class="pull-right">
+                <input type="submit" class="btn btn-sm btn-default" id="cancelButton" onclick="return clickCancel();" value="Cancel">
+                <input class="btn btn-primary" type="submit" value="Save">
+            </div>
+        </div>
+    </footer>
 
     </form>
 
