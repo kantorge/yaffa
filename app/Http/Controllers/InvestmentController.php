@@ -104,7 +104,8 @@ class InvestmentController extends Controller
         return redirect()->route('investments.index');
     }
 
-    public function show(Investment $investment) {
+    public function show(Investment $investment)
+    {
         return view('investments.show', compact('investment'));
     }
 
@@ -124,5 +125,20 @@ class InvestmentController extends Controller
         add_notification('Investment deleted', 'success');
 
         return redirect()->route('investments.index');
+    }
+
+    public function summary($withClosed = null)
+    {
+        //Show all investments from the database and return to view
+        $investments = $this
+            ->investment
+            ->get();
+
+        //pass data for DataTables
+        JavaScript::put([
+            'investments' => $investments,
+        ]);
+
+        return view('investments.summary');
     }
 }

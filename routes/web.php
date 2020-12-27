@@ -36,7 +36,10 @@ Route::resource('currencyrates', 'CurrencyRateController')
     ]);
 
 Route::resource('investmentgroups', 'InvestmentGroupController');
+Route::get('/investments/summary/{withClosed?}', 'InvestmentController@summary')->name('investments.summary');
 Route::resource('investments', 'InvestmentController');
+
+
 Route::resource('payees', 'PayeeController');
 Route::resource('tags', 'TagController');
 

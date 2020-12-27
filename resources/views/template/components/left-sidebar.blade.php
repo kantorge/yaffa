@@ -32,16 +32,27 @@
     <!-- Sidebar Menu -->
     <ul class="sidebar-menu" data-widget="tree">
         <li class="treeview">
+            <a href="#"><i class="fa fa-dashboard"></i> <span>Dashboards</span>
+                <span class="pull-right-container">
+                    <i class="fa fa-angle-left pull-right"></i>
+                </span>
+            </a>
+            <ul class="treeview-menu">
+                <li><a href="{{ route('accounts.summary') }}"><i class="fa fa-dashboard"></i> <span>Main page</span></a></li>
+                <li><a href="{{ route('investments.summary') }}"><i class="fa fa-line-chart"></i> <span>Investments</span></a></li>
+            </ul>
+        </li>
+        <li class="treeview">
             <a href="#"><i class="fa fa-database"></i> <span>Assets</span>
                 <span class="pull-right-container">
                     <i class="fa fa-angle-left pull-right"></i>
                 </span>
             </a>
             <ul class="treeview-menu">
-                <li><a href="{{ route('accountgroups.index') }}"><i class="fa fa-reorder "></i> <span>Account groups</span></a></li>
+                <li><a href="{{ route('accountgroups.index') }}"><i class="fa fa-reorder"></i> <span>Account groups</span></a></li>
                 <li><a href="{{ route('accounts.index') }}"><i class="fa fa-university"></i> <span>Accounts</span></a></li>
                 <li><a href="{{ route('payees.index') }}"><i class="fa fa-suitcase"></i> <span>Payees</span></a></li>
-                <li><a href="{{ route('investmentgroups.index') }}"><i class="fa fa-reorder "></i> <span>Investment groups</span></a></li>
+                <li><a href="{{ route('investmentgroups.index') }}"><i class="fa fa-reorder"></i> <span>Investment groups</span></a></li>
                 <li><a href="{{ route('investments.index') }}"><i class="fa fa-line-chart"></i> <span>Investments</span></a></li>
                 <li><a href="{{ route('tags.index') }}"><i class="fa fa-tags"></i> <span>Tags</span></a></li>
                 <li><a href="{{ route('categories.index') }}"><i class="fa fa-folder-open"></i> <span>Categories</span></a></li>
