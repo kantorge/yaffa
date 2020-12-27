@@ -62,7 +62,7 @@
             >
 
             <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('invesmtentgroups.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <a href="{{ route('investmentgroups.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>
         <!-- /.box-footer -->
     </div>
