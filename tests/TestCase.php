@@ -42,7 +42,7 @@ abstract class TestCase extends BaseTestCase
         //echo ("Seed start: ". static::$setUpHasRunOnce . "\r\n");
 
         if (!static::$setUpHasRunOnce) {
-            echo ("Seeding...\r\n");
+            //echo ("Seeding...\r\n");
             Artisan::call('migrate:fresh', ['--database' => env('DB_CONNECTION')]);
             Artisan::call('db:seed', ['--class' => 'TestSeeder']);
 
