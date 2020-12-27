@@ -45,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
 
         //load list of active accounts to all views
         //TODO: this fails during a clean migration
+        /*
         $accounts = \App\AccountEntity
             ::select('name', 'id')
             ->where('config_type', 'account')
@@ -54,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
             ->pluck('name', 'id');
 
         View::share('accountsForNavbar', $accounts);
+            */
 
         Blade::directive('NiceNumber', function ($expression) {
             return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";
