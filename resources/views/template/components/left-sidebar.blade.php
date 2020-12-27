@@ -16,7 +16,7 @@
     </form>
     <!-- /.search form -->
 
-    @if(count($accountsForNavbar) > 0)
+    @if(isset($accountsForNavbar) && count($accountsForNavbar) > 0)
     <form action="#" method="get" class="sidebar-form">
         <div class="input-group">
             <select name="jump_to_account" id="jump_to_account" class="form-control" >

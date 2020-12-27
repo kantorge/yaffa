@@ -35,14 +35,15 @@ class InvestmentTableSeeder extends Seeder
         //TODO
     }
 
-    private function seedFixed() {
+    private function seedFixed()
+    {
         $investment = Investment::create(
             [
                 'name' => 'Magyar Telekom',
                 'active' => 1,
                 'symbol' => 'MTEL',
-                'investment_group_id' => InvestmentGroup::where('name', 'Stock')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
+                'investment_group_id' => InvestmentGroup::where('name', 'Stock')->first()->id,
+                'currency_id' => Currency::where('iso_code', 'HUF')->first()->id,
             ]
         );
 

@@ -18,7 +18,10 @@ trait MigrateFreshSeedOnce
     */
     public function setUp() :void
     {
+        echo ("MigrateFreshSeedOnce setup before\r\n");
         parent::setUp();
+
+        echo ("MigrateFreshSeedOnce setup after\r\n");
 
         if (!static::$setUpHasRunOnce) {
             Artisan::call('migrate:fresh');

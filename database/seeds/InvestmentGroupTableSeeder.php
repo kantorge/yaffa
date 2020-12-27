@@ -33,10 +33,10 @@ class InvestmentGroupTableSeeder extends Seeder
 
     private function seedFixed() {
         InvestmentGroup::create([
-            'name' => 'Részvény'
+            'name' => 'Stock'
         ]);
         InvestmentGroup::create([
-            'name' => 'Befektetési alap'
+            'name' => 'Mutual fund'
         ]);
     }
 

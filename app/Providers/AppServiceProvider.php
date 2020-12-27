@@ -44,18 +44,21 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         //load list of active accounts to all views
-        //TODO: this fails during a clean migration
-        /*
-        $accounts = \App\AccountEntity
-            ::select('name', 'id')
-            ->where('config_type', 'account')
-            ->where('active', 1)
-            ->orderBy('name')
-            ->get()
-            ->pluck('name', 'id');
+        //TODO: this fails during a clean migration, should be solved without try-catch
+        try {
+            $accounts = \App\AccountEntity
+                ::select('name', 'id')
+                ->where('config_type', 'account')
+                ->where('active', 1)
+                ->orderBy('name')
+                ->get()
+                ->pluck('name', 'id');
 
-        View::share('accountsForNavbar', $accounts);
-            */
+            View::share('accountsForNavbar', $accounts);
+        } catch (Exception $e) {
+
+        }
+
 
         Blade::directive('NiceNumber', function ($expression) {
             return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";
