@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call(TransactionTypeSeeder::class, 'db');
         $this->call(AccountGroupTableSeeder::class, 'db');
         $this->call(CurrencyTableSeeder::class, 'db');
-        $this->call(CurrencyRateSeeder::class, 'random');
+        $this->call(CurrencyRateSeeder::class, 'db');
         $this->call(AccountSeeder::class, 'db');
         $this->call(CategoryTableSeeder::class, 'db');
         $this->call(PayeeSeeder::class, 'db');
