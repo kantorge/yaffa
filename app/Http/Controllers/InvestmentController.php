@@ -132,7 +132,32 @@ class InvestmentController extends Controller
         //Show all investments from the database and return to view
         $investments = $this
             ->investment
+            ->when(!$withClosed, function($query) {
+                $query->where('active', '1');
+            })
+            ->with([
+                'currency',
+                'investment_group',
+            ])
             ->get();
+
+        /*
+        //Show all currencies from the database and return to view
+        $currencies = Currency::all();
+
+        //support DataTables with action URLs
+        $currencies->map(function ($currency) {
+            $currency['latest_rate'] = $currency->rate();
+            return $currency;
+        });
+        */
+
+        $investments->map(function($investment) {
+            $investment['price'] = $investment->getLatestPrice();
+            $investment['quantity'] = $investment->getCurrentQuantity();
+
+            return $investment;
+        });
 
         //pass data for DataTables
         JavaScript::put([

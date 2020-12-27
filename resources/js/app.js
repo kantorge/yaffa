@@ -24,6 +24,9 @@ if (window.location.pathname === '/investmentgroups') {
 if (window.location.pathname === '/investments') {
     require('./investments/index');
 }
+if (/^\/investments\/summary(\/withClosed)?/.test(window.location.pathname)) {
+    require('./investments/summary');
+}
 if (window.location.pathname === '/payees') {
     require('./payees/index');
 }
