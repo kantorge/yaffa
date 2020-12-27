@@ -3,7 +3,7 @@
 namespace Tests;
 
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
+//use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -70,7 +70,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function destroy($model = '', $route = '')
     {
-        $this->withoutExceptionHandling();
+        //$this->withoutExceptionHandling();
 
         $route = $this->base_route ? "{$this->base_route}.destroy" : $route;
         $model = $this->base_model ?? $model;
