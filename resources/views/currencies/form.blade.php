@@ -27,7 +27,13 @@
 
     <div class="box box-primary">
         <div class="box-header">
-            <h3 class="box-title">Add new currency</h3>
+            <h3 class="box-title">
+                @if(isset($currency->id))
+                    Modify currency
+                @else
+                    Add currency
+                @endif
+            </h3>
         </div>
         <!-- /.box-header -->
         <div class="box-body form-horizontal">
