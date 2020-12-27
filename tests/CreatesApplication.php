@@ -10,7 +10,7 @@ trait CreatesApplication
     * If true, setup has run at least once.
     * @var boolean
     */
-    protected static $setUpHasRunOnce = false;
+    protected static $createApplicationHasRunOnce = false;
 
     /**
      * Creates the application.
@@ -25,7 +25,7 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
-        if (!static::$setUpHasRunOnce) {
+        if (!static::$createApplicationHasRunOnce) {
             $this->clearCache();
         }
 
@@ -48,6 +48,6 @@ trait CreatesApplication
 
         //echo ("Clear cache end\r\n");
 
-        static::$setUpHasRunOnce = true;
+        static::$createApplicationHasRunOnce = true;
     }
 }

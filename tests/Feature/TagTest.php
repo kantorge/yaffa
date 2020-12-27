@@ -83,6 +83,7 @@ class TagTest extends TestCase
                 'name' => 'aa', //TODO: make this dynamic $newItem->name,
             ]
         );
+
         $response->assertRedirect($this->base_route);
         //TODO: make this dynamic instead of fixed 1st element
         $response->assertSessionHas('notification_collection.0.type', 'success');
