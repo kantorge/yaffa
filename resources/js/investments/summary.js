@@ -16,6 +16,19 @@ $(function() {
             title: "Group",
         },
         {
+            data: "active",
+            title: "Active",
+            render: function ( data, type, row, meta ) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
+        },
+        {
             data: "quantity",
             title: "Quantity",
             render: function ( data, type, row, meta ) {
@@ -53,6 +66,22 @@ $(function() {
         stateSave:      true,
         processing:     true,
         paging:         false,
+        /*
+        initComplete: function () {
+            // Apply the search
+            this.api().columns().every( function () {
+                var that = this;
+
+                $( 'input', this.footer() ).on( 'keyup change clear', function () {
+                    if ( that.search() !== this.value ) {
+                        that
+                            .search( this.value )
+                            .draw();
+                    }
+                } );
+            } );
+        }
+        */
     });
 
 });
