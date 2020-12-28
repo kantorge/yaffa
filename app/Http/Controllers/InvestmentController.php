@@ -127,14 +127,11 @@ class InvestmentController extends Controller
         return redirect()->route('investments.index');
     }
 
-    public function summary($withClosed = null)
+    public function summary()
     {
         //Show all investments from the database and return to view
         $investments = $this
             ->investment
-            ->when(!$withClosed, function($query) {
-                $query->where('active', '1');
-            })
             ->with([
                 'currency',
                 'investment_group',
