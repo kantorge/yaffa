@@ -33,7 +33,8 @@ class MainController extends Controller
      * @param  mixed $withClosed Indicate, whether closed accounts should also be displayed
      * @return void
      */
-    public function index($withClosed = null) {
+    public function index($withClosed = null)
+    {
         $accounts = AccountEntity::where('config_type', 'account')
             ->when(!$withClosed, function($query) {
                 $query->where('active', '1');
@@ -165,7 +166,8 @@ class MainController extends Controller
             ]);
     }
 
-    public function account_details(Account $account, $withForecast = null) {
+    public function account_details(Account $account, $withForecast = null)
+    {
         //get account details
         $account->load('config');
 
@@ -272,7 +274,7 @@ class MainController extends Controller
                 return [
                         'id' => $transaction->id,
                         'schedule' => $transaction->transactionSchedule,
-                        'next_date' => $transaction->transactionSchedule->next_date,
+                        'next_date' => $transaction->transactionSchedule->next_date->format("Y-m-d"),
                         'transaction_name' => $transaction->transactionType->name,
                         'transaction_type' => $transaction->transactionType->type,
                         'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
@@ -407,7 +409,7 @@ class MainController extends Controller
             'urlCloneStandard' => route('transactions.cloneStandard', '#ID#'),
             'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
             'urlDelete' => action('TransactionController@destroy', '#ID#'),
-            'urlSkip' => '',
+            'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
             'urlEnterWithEdit' => '',
         ]);
 

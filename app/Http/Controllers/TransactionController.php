@@ -270,4 +270,11 @@ class TransactionController extends Controller
         $transaction->delete();
         return redirect()->back();
     }
+
+    public function skipScheduleInstance(Transaction $transaction)
+    {
+        $transaction->transactionSchedule->skipNextInstance();
+        add_notification('Transaction schedule instance skipped', 'success');
+        return redirect()->back();
+    }
 }

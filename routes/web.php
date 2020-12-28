@@ -36,7 +36,7 @@ Route::resource('currencyrates', 'CurrencyRateController')
     ]);
 
 Route::resource('investmentgroups', 'InvestmentGroupController');
-Route::get('/investments/summary/{withClosed?}', 'InvestmentController@summary')->name('investments.summary');
+Route::get('/investments/summary', 'InvestmentController@summary')->name('investments.summary');
 Route::resource('investments', 'InvestmentController');
 
 
@@ -53,6 +53,7 @@ Route::get('/transactions/{transaction}/clone/standard', 'TransactionController@
 Route::get('/transactions/{transaction}/clone/investment', 'TransactionController@cloneInvestment')->name('transactions.cloneInvestment');
 Route::patch('/transactions/{transaction}/standard', 'TransactionController@updateStandard')->name('transactions.updateStandard');
 Route::patch('/transactions/{transaction}/investment', 'TransactionController@updateInvestment')->name('transactions.updateInvestment');
+Route::patch('/transactions/{transaction}/skip', 'TransactionController@skipScheduleInstance')->name('transactions.skipScheduleInstance');
 Route::resource('transactions', 'TransactionController')
     ->only([
         'destroy'
