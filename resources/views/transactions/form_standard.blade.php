@@ -29,11 +29,20 @@
     <div class="box box-primary">
         <div class="box-header">
             <h3 class="box-title">
-                @if(isset($transaction->id))
-                    Modify transaction
-                @else
-                    Add transaction
-                @endif
+                @switch($action)
+                    @case('create')
+                        Add new transaction
+                        @break
+                    @case('edit')
+                        Modify existing transaction
+                        @break
+                    @case('clone')
+                        Clone existing transaction
+                        @break
+                    @case('enter')
+                        Enter scheduled transaction instance
+                        @break
+                @endswitch
             </h3>
         </div>
         <!-- /.box-header -->
@@ -59,39 +68,48 @@
                                     </label>
                                     <div class="col-sm-9">
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-primary" id="transaction_type_withdrawal_label">
+                                            <label
+                                                class="btn btn-primary
+                                                        {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'withdrawal' ? 'active': '') }}
+                                                        "
+                                                id="transaction_type_withdrawal_label"
+                                            >
                                                 <input
                                                     id="transaction_type_withdrawal"
                                                     name="transaction_type"
                                                     type="radio"
                                                     value="withdrawal"
-                                                    {{ (isset($transaction['transactionType'])
-                                                        ? ($transaction['transactionType']['name'] == 'withdrawal' ? 'checked="checked"': '')
-                                                        : '') }}
+                                                    {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'withdrawal' ? 'checked="checked"': '') }}
                                                 >
                                                 Withdrawal
                                             </label>
-                                            <label class="btn btn-primary" id="transaction_type_deposit_label">
+                                            <label
+                                                class="btn btn-primary
+                                                        {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'deposit' ? 'active': '') }}
+                                                        "
+                                                id="transaction_type_deposit_label"
+                                            >
                                                 <input
                                                     id="transaction_type_deposit"
                                                     name="transaction_type"
                                                     type="radio"
                                                     value="deposit"
-                                                    {{ (isset($transaction['transactionType'])
-                                                        ? ($transaction['transactionType']['name'] == 'deposit' ? 'checked="checked"': '')
-                                                        : '') }}
+                                                    {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'deposit' ? 'checked="checked"': '') }}
                                                 >
                                                 Deposit
                                             </label>
-                                            <label class="btn btn-primary" id="transaction_type_transfer_label">
+                                            <label
+                                                class="btn btn-primary
+                                                        {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'transfer' ? 'active': '') }}
+                                                        "
+                                                id="transaction_type_transfer_label"
+                                            >
                                                 <input
                                                     id="transaction_type_transfer"
                                                     name="transaction_type"
                                                     type="radio"
                                                     value="transfer"
-                                                    {{ (isset($transaction['transactionType'])
-                                                        ? ($transaction['transactionType']['name'] == 'transfer' ? 'checked="checked"': '')
-                                                        : '') }}
+                                                    {{ (isset($transaction['transactionType']) && $transaction['transactionType']['name'] == 'transfer' ? 'checked="checked"': '') }}
                                                 >
                                                 Transfer
                                             </label>
@@ -342,6 +360,11 @@
                 name="id"
                 type="hidden"
                 value="{{old('id', $transaction['id'])}}"
+            >
+            <input
+                name="action"
+                type="hidden"
+                value="{{old('action', $action)}}"
             >
             <input
                 name="config_type"

@@ -34,7 +34,9 @@ if (window.location.pathname === '/tags') {
     require('./tags/index');
 }
 if (   window.location.pathname === '/transactions/create/standard'
-    || /^\/transactions\/\d+\/edit\/standard/.test(window.location.pathname)) {
+    || /^\/transactions\/\d+\/edit\/standard/.test(window.location.pathname)
+    || /^\/transactions\/\d+\/clone\/standard/.test(window.location.pathname)
+    || /^\/transactions\/\d+\/enter\/standard/.test(window.location.pathname)) {
     require('./transactions/formCommon');
     require('./transactions/formSchedule');
     require('./transactions/formStandard');

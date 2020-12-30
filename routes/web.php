@@ -54,6 +54,7 @@ Route::get('/transactions/{transaction}/clone/investment', 'TransactionControlle
 Route::patch('/transactions/{transaction}/standard', 'TransactionController@updateStandard')->name('transactions.updateStandard');
 Route::patch('/transactions/{transaction}/investment', 'TransactionController@updateInvestment')->name('transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', 'TransactionController@skipScheduleInstance')->name('transactions.skipScheduleInstance');
+Route::get('/transactions/{transaction}/enter/standard', 'TransactionController@enterWithEditStandard')->name('transactions.enterWithEditStandard');
 Route::resource('transactions', 'TransactionController')
     ->only([
         'destroy'

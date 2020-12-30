@@ -137,7 +137,7 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_is_first) {
                             return  '' +
-                                    '<a href="' + urlEnterWithEdit.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                                    '<a href="' + urlEnterWithEditStandard.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                                     '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
                                     '<form id="form-skip-' + data + '" action="' + urlSkip.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                         }
@@ -288,7 +288,7 @@ $(function() {
                 title: "Actions",
                 render: function ( data, type, row, meta ) {
                     return  '' +
-                            '<a href="' + urlEnterWithEdit.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            '<a href="' + urlEnterWithEditStandard.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
                             '<form id="form-skip-' + data + '" action="' + urlSkip.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
                             '<a href="' + (row.transaction_type == 'Standard' ? urlEditStandard : urlEditInvestment).replace('#ID#', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +

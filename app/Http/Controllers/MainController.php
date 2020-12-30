@@ -410,7 +410,7 @@ class MainController extends Controller
             'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
             'urlDelete' => action('TransactionController@destroy', '#ID#'),
             'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
-            'urlEnterWithEdit' => '',
+            'urlEnterWithEditStandard' => route('transactions.enterWithEditStandard', '#ID#'),
         ]);
 
         return view('accounts.history',

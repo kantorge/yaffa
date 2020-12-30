@@ -20,6 +20,9 @@ class TransactionController extends Controller
 {
     public function createStandard()
     {
+        //set action for future usage
+        $action = 'create';
+
         //get all categories for reference
         $categories = Category::all();
         $categories->sortBy('full_name');
@@ -38,7 +41,10 @@ class TransactionController extends Controller
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
-        return view('transactions.form_standard', ['transaction' => $transaction]);
+        return view('transactions.form_standard', [
+            'transaction' => $transaction,
+            'action' => $action,
+        ]);
     }
 
     public function createInvestment()
@@ -158,6 +164,9 @@ class TransactionController extends Controller
      */
     public function editStandard($id)
     {
+        //set action for future usage
+        $action = 'edit';
+
         //get all categories for reference
         $categories = Category::all();
         $categories->sortBy('full_name');
@@ -186,7 +195,10 @@ class TransactionController extends Controller
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
-        return view('transactions.form_standard', ['transaction' => $transaction]);
+        return view('transactions.form_standard', [
+            'transaction' => $transaction,
+            'action' => $action,
+        ]);
     }
 
     public function editInvestment(Transaction $transaction)
@@ -276,5 +288,96 @@ class TransactionController extends Controller
         $transaction->transactionSchedule->skipNextInstance();
         add_notification('Transaction schedule instance skipped', 'success');
         return redirect()->back();
+    }
+
+    /**
+     * Show the form for cloning selected resource. (Load model, remove ID)
+     *
+     * @param  Transaction $transaction
+     * @return \Illuminate\Http\Response
+     */
+    public function cloneStandard(Transaction $transaction)
+    {
+        //set action for future usage
+        $action = 'clone';
+
+        //get all categories for reference
+        $categories = Category::all();
+        $categories->sortBy('full_name');
+
+        $transaction->load(
+            [
+                'config',
+                'config.accountFrom',
+                'config.accountTo',
+                'transactionSchedule',
+                'transactionType',
+                'transactionItems',
+                'transactionItems.tags',
+                'transactionItems.category',
+            ]);
+
+        //remove Id, so item is considered a new transaction
+        $transaction->id = null;
+
+        $baseTransactionData = [
+            'transactionType' => $transaction->transactionType->name,
+            'assets' => [
+                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
+            ]
+        ];
+
+        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
+
+        return view('transactions.form_standard', [
+            'transaction' => $transaction,
+            'action' => $action,
+        ]);
+    }
+
+    public function enterWithEditStandard(Transaction $transaction)
+    {
+        //set action for future usage
+        $action = 'enter';
+
+        //get all categories for reference
+        $categories = Category::all();
+        $categories->sortBy('full_name');
+
+        $transaction->load(
+            [
+                'config',
+                'config.accountFrom',
+                'config.accountTo',
+                'transactionSchedule',
+                'transactionType',
+                'transactionItems',
+                'transactionItems.tags',
+                'transactionItems.category',
+            ]);
+
+        //remove Id, so item is considered a new transaction
+        $transaction->id = null;
+
+        //reset schedule and budget flags
+        $transaction->schedule = 0;
+        $transaction->budget = 0;
+
+        //date is next date
+        $transaction->date = $transaction->transactionSchedule->next_date;
+
+        $baseTransactionData = [
+            'transactionType' => $transaction->transactionType->name,
+            'assets' => [
+                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
+            ]
+        ];
+
+        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
+
+        return view('transactions.form_standard', [
+            'transaction' => $transaction,
+            'action' => $action,
+        ]);
     }
 }
