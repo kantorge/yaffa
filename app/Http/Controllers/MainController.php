@@ -8,7 +8,7 @@ use App\Currency;
 use App\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
+//use Illuminate\Http\Request;
 //use Illuminate\Support\Facades\Log;
 use JavaScript;
 use Recurr\Rule;
@@ -166,23 +166,35 @@ class MainController extends Controller
             ]);
     }
 
+    private $allAccounts;
+    private $allTags;
+    private $allCategories;
+    private $currentAccount;
+
     public function account_details(Account $account, $withForecast = null)
     {
-        //get account details
-        $account->load('config');
+        //get account details and load to class variable
+        $this->currentAccount = $account->load('config');
 
         //get all accounts and payees so their name can be reused
-        $accounts = \App\AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = \App\AccountEntity::pluck('name', 'id')->all();
 
         //get all tags
-        $tags = \App\Tag::pluck('name','id')->all();
+        $this->allTags = \App\Tag::pluck('name','id')->all();
 
         //get all categories
-        $categories = \App\Category::all()->pluck('full_name','id');
+        $this->allCategories = \App\Category::all()->pluck('full_name','id');
 
         //get standard transactions related to selected account
         $standardTransactions = Transaction::
-            whereHasMorph(
+            where(function($query) {
+                $query->where('schedule', 1)
+                    ->orWhere(function($query) {
+                    $query->where('schedule', 0);
+                    $query->where('budget', 0);
+                });
+            })
+            ->whereHasMorph(
                 'config',
                 [\App\TransactionDetailStandard::class],
                 function (Builder $query) use ($account) {
@@ -199,16 +211,19 @@ class MainController extends Controller
                 'transactionItems.tags',
                 //'transactionItems.category',
             ])
-            ->where('schedule', 0)
-            ->where('budget', 0)
-            //->orderBy('date')
             ->get();
 
-        //dd($standardTransactions);
+        //get all investment transactions related to selected account
 
-        //get all investment transactions
         $investmentTransactions = Transaction::
-            whereHasMorph(
+            where(function($query) {
+                $query->where('schedule', 1)
+                    ->orWhere(function($query) {
+                    $query->where('schedule', 0);
+                    $query->where('budget', 0);
+                });
+            })
+            ->whereHasMorph(
                 'config',
                 [\App\TransactionDetailInvestment::class],
                 function (Builder $query) use ($account) {
@@ -218,83 +233,37 @@ class MainController extends Controller
             ->with(
                 [
                     'config',
+                    'config.investment',
                     'transactionType',
                 ])
-            ->where('schedule', 0)
-            ->where('budget', 0)
             ->get();
 
-        //get standard transactions with schedule
-        $schedules = Transaction::
-            whereHasMorph(
-                'config',
-                [\App\TransactionDetailStandard::class],
-                function (Builder $query) use ($account) {
-                    $query->Where('account_from_id', $account->id);
-                    $query->orWhere('account_to_id', $account->id);
-                }
-            )
-            ->whereHas('transactionSchedule', function($q){
-                $q->whereNotNull('next_date');
+        $transactions = $standardTransactions
+            ->map(function ($transaction) {
+                $commonData = $this->transformDataCommon($transaction);
+                $baseData = $this->transformDataStandard($transaction);
+                $dateData = $this->transformDate($transaction);
+
+                return array_merge($commonData, $baseData, $dateData);
             })
-            ->with(
-                [
-                    'config',
-                    //'config.accountFrom',
-                    //'config.accountTo',
-                    'transactionType',
-                    'transactionItems',
-                    'transactionItems.tags',
-                    //'transactionItems.category',
-                    'transactionSchedule',
-                ])
-            ->where('schedule', 1)
-            //->orderBy('date')
-            ->get();
+            ->merge($investmentTransactions
+                ->map(function ($transaction) {
+                    $commonData = $this->transformDataCommon($transaction);
+                    $baseData = $this->transformDataInvestment($transaction);
+                    $dateData = $this->transformDate($transaction);
 
-        //dd($schedules);
+                    return array_merge($commonData, $baseData, $dateData);
 
-        $scheduleData = $schedules
-            ->map(function ($transaction) use ($account, $accounts, $tags, $categories) {
-                $transactionArray = $transaction->toArray();
-
-                $itemTags = [];
-                $itemCategories = [];
-                foreach($transactionArray['transaction_items'] as $item) {
-                    if (isset($item['tags'])) {
-                        foreach($item['tags'] as $tag) {
-                            $itemTags[$tag['id']] = $tags[$tag['id']];
-                        };
-                    }
-                    if (isset($item['category_id'])) {
-                        $itemCategories[$item['category_id']] = $categories[$item['category_id']];
-                    }
-                };
-
-                return [
-                        'id' => $transaction->id,
-                        'schedule' => $transaction->transactionSchedule,
-                        'next_date' => $transaction->transactionSchedule->next_date->format("Y-m-d"),
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
-                        'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
-                        'account_from_id' => $transaction->config->account_from_id,
-                        'account_from_name' => $accounts[$transaction->config->account_from_id],
-                        'account_to_id' => $transaction->config->account_to_id,
-                        'account_to_name' => $accounts[$transaction->config->account_to_id],
-                        'amount_from' => $transaction->config->amount_from,
-                        'amount_to' => $transaction->config->amount_to,
-                        'tags' => array_values($itemTags), //array_values($transaction->tags()),
-                        'categories' => array_values($itemCategories), //array_values($transaction->categories()),
-                        'comment' => $transaction->comment,
-                    ];
-            })
-            ->sortBy('next_date');
+                })
+            );
 
         //add schedule to history items, if needeed
-        $scheduledItems = [];
         if ($withForecast) {
-            $scheduleData->each(function($transaction) use (&$scheduledItems) {
+            $transactions
+            ->filter(function ($transaction) {
+                    return $transaction['transaction_group'] == 'schedule';
+                })
+            ->each(function($transaction) use (&$transactions) {
                 //dd($transaction);
                 $rule = new Rule();
                 $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
@@ -335,10 +304,10 @@ class MainController extends Controller
                 foreach ($transformer->transform($rule,$constraint) as $instance) {
                     //dd($instance);
                     $transaction['date'] = $instance->getStart()->format('Y-m-d');
-                    $transaction['schedule'] = true;
+                    $transaction['transaction_group'] = 'forecast';
                     $transaction['schedule_is_first'] = $first;
 
-                    $scheduledItems[] = $transaction;
+                    $transactions->push($transaction);
 
                     $first = false;
 
@@ -347,51 +316,15 @@ class MainController extends Controller
             });
 
         }
-        //dd($scheduledItems);
+
 
         $subTotal = 0;
 
-        //adjust data, sort transactions, create running total
-        $transactionDataStandard = $standardTransactions
-            ->map(function ($transaction) use ($account, $accounts, $tags, $categories) {
-                $transactionArray = $transaction->toArray();
-
-                $itemTags = [];
-                $itemCategories = [];
-                foreach($transactionArray['transaction_items'] as $item) {
-                    if (isset($item['tags'])) {
-                        foreach($item['tags'] as $tag) {
-                            $itemTags[$tag['id']] = $tags[$tag['id']];
-                        };
-                    }
-                    if (isset($item['category_id'])) {
-                        $itemCategories[$item['category_id']] = $categories[$item['category_id']];
-                    }
-                };
-
-                return
-                    [
-                        'id' => $transaction->id,
-                        'date' => $transaction->date,
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
-                        'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus'),
-                        'account_from_id' => $transaction->config->account_from_id,
-                        'account_from_name' => $accounts[$transaction->config->account_from_id],
-                        'account_to_id' => $transaction->config->account_to_id,
-                        'account_to_name' => $accounts[$transaction->config->account_to_id],
-                        'amount_from' => $transaction->config->amount_from,
-                        'amount_to' => $transaction->config->amount_to,
-                        'tags' => array_values($itemTags), //array_values($transaction->tags()),
-                        'categories' => array_values($itemCategories), //array_values($transaction->categories()),
-                        'reconciled' => $transaction->reconciled,
-                        'comment' => $transaction->comment,
-                    ];
-            });
-
-        $merged = $transactionDataStandard->merge($scheduledItems);
-
-        $data = $merged->sortByDesc('transactionType')
+        $data = $transactions
+            ->filter(function($transaction) {
+                return $transaction['transaction_group'] == 'history' || $transaction['transaction_group'] == 'forecast';
+            })
+            ->sortByDesc('transactionType')
             ->sortBy('date')
             //add opening item to beginning of transaction list
             ->prepend($account->openingBalance())
@@ -403,7 +336,6 @@ class MainController extends Controller
 
         JavaScript::put([
             'transactionData' => $data,
-            'scheduleData' => array_values($scheduleData->toArray()),
             'urlEditStandard' => route('transactions.editStandard', '#ID#'),
             'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
             'urlCloneStandard' => route('transactions.cloneStandard', '#ID#'),
@@ -418,5 +350,86 @@ class MainController extends Controller
                 'account' => $account,
                 'withForecast' => $withForecast,
             ]);
+    }
+
+    private function transformDate(Transaction $transaction) {
+        if($transaction->schedule) {
+            return [
+                'schedule' => $transaction->transactionSchedule,
+                'transaction_group' => 'schedule',
+                //'next_date' => $transaction->transactionSchedule->next_date->format("Y-m-d"),
+            ];
+        } else {
+            return
+            [
+                'date' => $transaction->date,
+                'transaction_group' => 'history',
+            ];
+        }
+    }
+
+    private function transformDataCommon(Transaction $transaction) {
+        return
+            [
+                'id' => $transaction->id,
+                'transaction_name' => $transaction->transactionType->name,
+                'transaction_type' => $transaction->transactionType->type,
+
+                'reconciled' => $transaction->reconciled,
+                'comment' => $transaction->comment,
+            ];
+    }
+
+    private function transformDataStandard(Transaction $transaction) {
+        $transactionArray = $transaction->toArray();
+
+        $itemTags = [];
+        $itemCategories = [];
+        foreach($transactionArray['transaction_items'] as $item) {
+            if (isset($item['tags'])) {
+                foreach($item['tags'] as $tag) {
+                    $itemTags[$tag['id']] = $this->allTags[$tag['id']];
+                };
+            }
+            if (isset($item['category_id'])) {
+                $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
+            }
+        };
+
+        return
+            [
+                'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus'),
+                'account_from_id' => $transaction->config->account_from_id,
+                'account_from_name' => $this->allAccounts[$transaction->config->account_from_id],
+                'account_to_id' => $transaction->config->account_to_id,
+                'account_to_name' => $this->allAccounts[$transaction->config->account_to_id],
+                'amount_from' => $transaction->config->amount_from,
+                'amount_to' => $transaction->config->amount_to,
+
+                'tags' => array_values($itemTags), //array_values($transaction->tags()),
+
+                'categories' => array_values($itemCategories), //array_values($transaction->categories()),
+            ];
+    }
+
+    private function transformDataInvestment(Transaction $transaction) {
+        return
+        [
+            'transaction_operator' => $transaction->transactionType->amount_operator,
+            'quantity_operator' => $transaction->transactionType->quantity_operator,
+
+            'account_from_id' => $transaction->config->account_id,
+            'account_from_name' => $this->allAccounts[$transaction->config->account_id],
+            'account_to_id' => $transaction->config->investment_id,
+            'account_to_name' => $transaction->config->investment->name,
+            'amount_from' => $transaction->config->amount_from,
+            'amount_to' => $transaction->config->amount_to,
+
+            'tags' => [],
+
+            'investment_name' => $transaction->config->investment->name,
+            'quantity' => $transaction->config->quantity,
+            'price' => $transaction->config->price,
+        ];
     }
 }

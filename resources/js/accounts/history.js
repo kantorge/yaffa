@@ -1,3 +1,5 @@
+const { filter } = require('@amcharts/amcharts4/.internal/core/utils/Iterator');
+
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
@@ -7,8 +9,86 @@ $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
+    //define some settings, that are common for the two tables
+    var dtColumnSettingPayee = {
+        title: 'Payee',
+        render: function ( data, type, row, meta ) {
+            if (row.transaction_type == 'Standard') {
+                if (row.transaction_name == 'withdrawal') {
+                    return row.account_to_name;
+                }
+                if (row.transaction_name == 'deposit') {
+                    return row.account_from_name;
+                }
+                if (row.transaction_name == 'transfer') {
+                    if (row.transaction_operator == 'minus') {
+                        return 'Transfer to ' + row.account_to_name;
+                    } else {
+                        return 'Transfer from ' + row.account_from_name;
+                    }
+                }
+            } else if (row.transaction_type == 'Investment') {
+                return row.investment_name;
+            } else if (row.transaction_type == 'Opening balance') {
+                return 'Opening balance';
+            }
+            return null;
+        },
+    };
+    var dtColumnSettingCategories = {
+        title: "Category",
+        render: function ( data, type, row, meta ) {
+            //standard transaction
+            if (row.transaction_type == 'Standard') {
+                //empty
+                if (row.categories.length == 0) {
+                    return '';
+                }
+
+                if (row.categories.length > 1) {
+                    return 'Split transaction';
+                } else {
+                    return row.categories[0];
+                }
+            }
+            //investment transaction
+            if (row.transaction_type == 'Investment') {
+                if (!row.quantity_operator) {
+                    return row.transaction_name;
+                }
+                if (!row.transaction_operator) {
+                    return row.transaction_name + " " + row.quantity;
+                }
+
+                return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
+            }
+        },
+        orderable: false
+    };
+    var dtColumnSettingComment = {
+        data: "comment",
+        title: "Comment",
+        render: function(data, type, row, meta){
+            if(type === 'display'){
+               data = truncateString(data, 20);
+            }
+
+            return data;
+         },
+        createdCell: function (td, cellData, rowData, row, col) {
+            $(td).prop('title', cellData);
+        }
+    };
+    var dtColumnSettingTags = {
+        data: "tags",
+        title: "Tags",
+        render: function ( data, type, row, meta ) {
+            return data.join(', ');
+        }
+    }
+
     $('#historyTable').DataTable({
-        data: transactionData,
+        data: transactionData.filter(e => (e.transaction_group == 'history' || e.transaction_group == 'forecast')),
         columns: [
             {
                 data: "date",
@@ -40,48 +120,8 @@ $(function() {
                 },
                 orderable: false,
             },
-            {
-                title: 'Payee',
-                render: function ( data, type, row, meta ) {
-                    if (row.transaction_type == 'Standard') {
-                        if (row.transaction_name == 'withdrawal') {
-                            return row.account_to_name;
-                        }
-                        if (row.transaction_name == 'deposit') {
-                            return row.account_from_name;
-                        }
-                        if (row.transaction_name == 'transfer') {
-                            if (row.transaction_operator == 'minus') {
-                                return 'Transfer to ' + row.account_to_name;
-                            } else {
-                                return 'Transfer from ' + row.account_from_name;
-                            }
-                        }
-                    } else if (row.transaction_type == 'Investment') {
-
-                    } else if (row.transaction_type == 'Opening balance') {
-                        return 'Opening balance';
-                    }
-                    return null;
-                },
-            },
-            {
-                data: "categories",
-                title: "Category",
-                render: function ( data, type, row, meta ) {
-                    //empty
-                    if (data.length == 0) {
-                        return '';
-                    }
-
-                    if (data.length > 1) {
-                        return 'Split transaction';
-                    } else {
-                        return data[0];
-                    }
-                },
-                orderable: false
-            },
+            dtColumnSettingPayee,
+            dtColumnSettingCategories,
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
@@ -106,27 +146,8 @@ $(function() {
                     }
                 }
             },
-            {
-                data: "comment",
-                title: "Comment",
-                render: function(data, type, row, meta){
-                    if(type === 'display'){
-                       data = truncateString(data, 20);
-                    }
-
-                    return data;
-                 },
-                createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).prop('title', cellData);
-                }
-            },
-            {
-                data: "tags",
-                title: "Tags",
-                render: function ( data, type, row, meta ) {
-                    return data.join(', ');
-                }
-            },
+            dtColumnSettingComment,
+            dtColumnSettingTags,
             {
                 data: 'id',
                 title: "Actions",
@@ -202,54 +223,14 @@ $(function() {
     });
 
     $('#scheduleTable').DataTable({
-        data: scheduleData,
+        data: transactionData.filter(e => e.transaction_group == 'schedule'),
         columns: [
             {
                 data: "next_date",
                 title: "Next date"
             },
-            {
-                title: 'Payee',
-                render: function ( data, type, row, meta ) {
-                    if (row.transaction_type == 'Standard') {
-                        if (row.transaction_name == 'withdrawal') {
-                            return row.account_to_name;
-                        }
-                        if (row.transaction_name == 'deposit') {
-                            return row.account_from_name;
-                        }
-                        if (row.transaction_name == 'transfer') {
-                            if (row.transaction_operator == 'minus') {
-                                return 'Transfer to ' + row.account_to_name;
-                            } else {
-                                return 'Transfer from ' + row.account_from_name;
-                            }
-                        }
-                    } else if (row.transaction_type == 'Investment') {
-
-                    } else if (row.transaction_type == 'Opening balance') {
-                        return 'Opening balance';
-                    }
-                    return '';
-                },
-            },
-            {
-                data: "categories",
-                title: "Category",
-                render: function ( data, type, row, meta ) {
-                    //empty
-                    if (data.length == 0) {
-                        return '';
-                    }
-
-                    if (data.length > 1) {
-                        return 'Split transaction';
-                    } else {
-                        return data[0];
-                    }
-                },
-                orderable: false
-            },
+            dtColumnSettingPayee,
+            dtColumnSettingCategories,
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
@@ -262,27 +243,8 @@ $(function() {
                     return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
                 },
             },
-            {
-                data: "comment",
-                title: "Comment",
-                render: function(data, type, row, meta){
-                    if(type === 'display'){
-                       data = truncateString(data, 20);
-                    }
-
-                    return data;
-                 },
-                createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).prop('title', cellData);
-                }
-            },
-            {
-                data: "tags",
-                title: "Tags",
-                render: function ( data, type, row, meta ) {
-                    return data.join(', ');
-                }
-            },
+            dtColumnSettingComment,
+            dtColumnSettingTags,
             {
                 data: 'id',
                 title: "Actions",
