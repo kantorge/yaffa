@@ -255,7 +255,15 @@ class MainController extends Controller
                     return array_merge($commonData, $baseData, $dateData);
 
                 })
-            );
+            )/*
+            ->filter(function($transaction) {
+                //TODO: canc this be done earlier, at a more appropriate part of the code?
+                if ($transaction['transaction_group'] != 'schedule') {
+                    return true;
+                }
+
+                return !is_null($transaction['next_date']);
+            })*/;
 
         //add schedule to history items, if needeed
         if ($withForecast) {
@@ -303,11 +311,12 @@ class MainController extends Controller
 
                 foreach ($transformer->transform($rule,$constraint) as $instance) {
                     //dd($instance);
-                    $transaction['date'] = $instance->getStart()->format('Y-m-d');
-                    $transaction['transaction_group'] = 'forecast';
-                    $transaction['schedule_is_first'] = $first;
+                    $newTransaction = $transaction;
+                    $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
+                    $newTransaction['transaction_group'] = 'forecast';
+                    $newTransaction['schedule_is_first'] = $first;
 
-                    $transactions->push($transaction);
+                    $transactions->push($newTransaction);
 
                     $first = false;
 
@@ -316,7 +325,6 @@ class MainController extends Controller
             });
 
         }
-
 
         $subTotal = 0;
 
@@ -332,10 +340,15 @@ class MainController extends Controller
                 $subTotal += ($item['transaction_operator'] == 'plus' ? $item['amount_to']  : -$item['amount_from']);
                 $item['running_total'] = $subTotal;
                 return $item;
-            });
+            })
+            ->values();
 
-        JavaScript::put([
+            JavaScript::put([
             'transactionData' => $data,
+            'scheduleData' => $transactions
+                ->filter(function($transaction) {
+                    return $transaction['transaction_group'] == 'schedule';
+                })->values(),
             'urlEditStandard' => route('transactions.editStandard', '#ID#'),
             'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
             'urlCloneStandard' => route('transactions.cloneStandard', '#ID#'),
@@ -354,10 +367,14 @@ class MainController extends Controller
 
     private function transformDate(Transaction $transaction) {
         if($transaction->schedule) {
+            $transaction->load(['transactionSchedule']);
+
+            if (!$transaction->transactionSchedule) {dd($transaction);}
+
             return [
                 'schedule' => $transaction->transactionSchedule,
                 'transaction_group' => 'schedule',
-                //'next_date' => $transaction->transactionSchedule->next_date->format("Y-m-d"),
+                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format("Y-m-d") : null),
             ];
         } else {
             return

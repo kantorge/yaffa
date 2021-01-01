@@ -62,6 +62,8 @@ $(function() {
 
                 return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
             }
+
+            return '';
         },
         orderable: false
     };
@@ -88,7 +90,7 @@ $(function() {
     }
 
     $('#historyTable').DataTable({
-        data: transactionData.filter(e => (e.transaction_group == 'history' || e.transaction_group == 'forecast')),
+        data: transactionData,
         columns: [
             {
                 data: "date",
@@ -223,7 +225,7 @@ $(function() {
     });
 
     $('#scheduleTable').DataTable({
-        data: transactionData.filter(e => e.transaction_group == 'schedule'),
+        data: scheduleData,
         columns: [
             {
                 data: "next_date",

@@ -36,6 +36,11 @@ class TransactionSeeder extends Seeder
         }
     }
 
+    public function seedFixed()
+    {
+        //TODO
+    }
+
     public function seedRandom()
     {
         //create standard withdrawals
@@ -137,14 +142,6 @@ class TransactionSeeder extends Seeder
             ];
 
             if ($oldTransaction->is_schedule ||$oldTransaction->is_budget) {
-                //temporary debug
-
-                if(!property_exists ($oldTransaction, 'start_date')) {
-                    $this->command->getOutput()->writeln('');
-                    $this->command->getOutput()->writeln('Schedule start date missing');
-                    dd($oldTransaction);
-                }
-
 
                 $transaction['schedule_start'] = $oldTransaction->start_date;
                 $transaction['schedule_next'] = $oldTransaction->next_date;
@@ -215,18 +212,7 @@ class TransactionSeeder extends Seeder
             //could this be used from the main controller
             $validated = $transaction;
 
-            //dd($validated);
-
             DB::transaction(function () use ($validated) {
-                //temp debugger
-
-                if (!isset($validated['transaction_type_id'])) {
-                    $this->command->getOutput()->writeln('');
-                    $this->command->getOutput()->writeln('Transaction type missing');
-
-                    dd($validated);
-                }
-
 
                 $transaction = Transaction::create([
                     "transaction_type_id" => $validated['transaction_type_id'],
@@ -326,16 +312,14 @@ class TransactionSeeder extends Seeder
         $progressBar->start();
 
         foreach ($oldInvestments as $item) {
-            $transaction = new Transaction([
+            $transaction = Transaction::create([
                 "budget" => $item->is_budget,
                 "schedule" => $item->is_schedule,
                 "comment" => $item->comment,
                 "reconciled" => $item->reconciled,
                 "date" => $item->date,
                 "transaction_type_id" => $item->transaction_types_id,
-                //"transaction_type_id" => TransactionType::where('name', $item->name )->first()->id,
                 "config_type" => "transaction_detail_standard",
-                //"config_id" => $transactionDetails->id
             ]);
 
             $transactionDetails = TransactionDetailInvestment::create([
@@ -346,6 +330,22 @@ class TransactionSeeder extends Seeder
                 "commission" => $item->commission,
                 "dividend" => $item->dividend,
             ]);
+
+            if (   $item->is_schedule
+                || $item->is_budget) {
+                $transactionSchedule = TransactionSchedule::create(
+                        [
+                            'transaction_id' => $transaction->id,
+                            'start_date' => $item->start_date,
+                            'next_date' => $item->next_date,
+                            'end_date' => $item->end_date,
+                            'frequency' => $item->frequency,
+                            'interval' => $item->interval,
+                            'count' => $item->count,
+                        ]
+                );
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
 
             $transaction->config()->associate($transactionDetails);
             $transaction->push();
