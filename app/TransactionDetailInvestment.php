@@ -21,6 +21,7 @@ class TransactionDetailInvestment extends Transaction
         'price',
         'quantity',
         'commission',
+        'tax',
         'dividend',
     ];
 
@@ -30,6 +31,7 @@ class TransactionDetailInvestment extends Transaction
         'price' => 'float',
         'quantity' => 'float',
         'commission' => 'float',
+        'tax' => 'float',
         'dividend' => 'float',
     ];
 

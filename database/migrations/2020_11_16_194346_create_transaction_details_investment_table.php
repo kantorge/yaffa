@@ -22,6 +22,7 @@ class CreateTransactionDetailsInvestmentTable extends Migration
             $table->decimal('price', 10, 4)->nullable();
             $table->decimal('quantity', 14, 4)->nullable();
             $table->decimal('commission', 14, 4);
+            $table->decimal('tax', 14, 4)->nullable();
             $table->decimal('dividend', 12, 2)->nullable();
 
             $table->foreign('account_id')->references('id')->on('account_entities');
