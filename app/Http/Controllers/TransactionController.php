@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
+use App\AccountEntity;
 use App\Category;
 use App\Investment;
 use App\Tag;
@@ -10,6 +11,7 @@ use App\Transaction;
 use App\TransactionItem;
 use App\TransactionType;
 use App\TransactionDetailStandard;
+use App\TransactionDetailInvestment;
 use App\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 use JavaScript;
@@ -53,7 +55,13 @@ class TransactionController extends Controller
             'transaction_type_id' => TransactionType::where('name', 'buy')->first()->id
         ]);
 
-        return view('transactions.form_investment', ['transaction' => $transaction]);
+        //get all accounts
+        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
+
+        return view('transactions.form_investment', [
+            'allAccounts' => $allAccounts,
+            'transaction' => $transaction,
+        ]);
     }
 
     public function storeStandard (TransactionRequest $request)

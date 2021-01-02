@@ -68,6 +68,7 @@ $( function () {
 	transactionData.elements.quantity = $("#transaction_quantity");
 	transactionData.elements.price = $("#transaction_price");
 	transactionData.elements.commission = $("#transaction_commission");
+	transactionData.elements.tax = $("#transaction_tax");
 	transactionData.elements.dividend = $("#transaction_dividend");
 	transactionData.elements.investments = $("#transaction_investment");
 	transactionData.elements.accounts = $("#transaction_account");

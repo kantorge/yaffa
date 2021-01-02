@@ -126,7 +126,9 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.price' => 'required|numeric|gt:0',
                     'config.quantity' => 'required|numeric|gt:0',
+                    'config.amount' => 'nullable|numeric|gte:0',
                     'config.commission' => 'nullable|numeric|gte:0',
+                    'config.tax' => 'nullable|numeric|gte:0',
                 ]);
 
             }

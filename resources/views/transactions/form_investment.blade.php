@@ -66,7 +66,9 @@
                                     id="transaction_account"
                                     name="config[account_id]"
                                 >
-                                    @if(isset($transaction['config']['account']))
+                                    @if(old() && old('config.account_id'))
+                                        <option value="{{ old('config.account_id') }}" selected="selected">{{ $allAccounts[old('config.account_id')] }}</option>
+                                    @elseif(isset($transaction['config']['account']))
                                         <option value="{{ $transaction['config']['account']['id'] }}" selected="selected">{{ $transaction['config']['account']['name'] }}</option>
                                     @endif
                                 </select>
@@ -137,7 +139,7 @@
                                     maxlength="10"
                                     name="config[quantity]"
                                     type="text"
-                                    value="{{ old('config[quantity]', $transaction['config']['quantity'] ?? 0) }}"
+                                    value="{{ old('config.quantity', $transaction['config']['quantity'] ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -150,7 +152,7 @@
                                     maxlength="10"
                                     name="config[price]"
                                     type="text"
-                                    value="{{ old('config[price]', $transaction['config']['price'] ?? 0) }}"
+                                    value="{{ old('config.price', $transaction['config']['price'] ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -165,10 +167,25 @@
                                     maxlength="10"
                                     name="config[comission]"
                                     type="text"
-                                    value="{{ old('config[comission]', $transaction['config']['comission'] ?? 0) }}"
+                                    value="{{ old('config.comission', $transaction['config']['comission'] ?? 0) }}"
                                 >
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="transaction_tax" class="control-label">Tax</label>
+                                <input
+                                    class="form-control input-with-math"
+                                    id="transaction_tax"
+                                    maxlength="10"
+                                    name="config[tax]"
+                                    type="text"
+                                    value="{{ old('config.tax', $transaction['config']['tax'] ?? 0) }}"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="transaction_dividend" class="control-label">Amount</label>
@@ -178,17 +195,19 @@
                                     maxlength="10"
                                     name="config[divident]"
                                     type="text"
-                                    value="{{ old('config[divident]', $transaction['config']['divident'] ?? 0) }}"
+                                    value="{{ old('config.divident', $transaction['config']['divident'] ?? 0) }}"
                                 >
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="transaction_total" class="control-label">
-                            Total
-                            <span class="transaction_currency"></span>
-                        </label>
-                        <input type="text" name="total" value="" id="transaction_total" class="form-control" disabled="disabled">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="transaction_total" class="control-label">
+                                    Total
+                                    <span class="transaction_currency"></span>
+                                </label>
+                                <input type="text" name="total" value="" id="transaction_total" class="form-control" disabled="disabled">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
