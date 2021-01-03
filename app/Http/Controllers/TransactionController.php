@@ -221,7 +221,13 @@ class TransactionController extends Controller
             ]
         );
 
-        return view('transactions.form_investment', ['transaction' => $transaction]);
+        //get all accounts
+        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
+
+        return view('transactions.form_investment', [
+            'allAccounts' => $allAccounts,
+            'transaction' => $transaction,
+        ]);
     }
 
     public function updateStandard (TransactionRequest $request, Transaction $transaction)
@@ -271,6 +277,30 @@ class TransactionController extends Controller
 
         $transaction->transactionItems()->delete();
         $transaction->transactionItems()->saveMany($transactionItems);
+
+        $transaction->push();
+
+        add_notification('Transaction updated', 'success');
+
+        return redirect("/");
+    }
+
+    public function updateInvestment(TransactionRequest $request, Transaction $transaction)
+    {
+        $validated = $request->validated();
+
+        $transaction->fill($validated);
+        $transaction->config->fill($validated['config']);
+
+        if ($transaction->schedule) {
+
+                $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
+                $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
+                $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
+                $transaction->transactionSchedule()->frequency = $validated['frequency'];
+                $transaction->transactionSchedule()->interval = $validated['interval'];
+                $transaction->transactionSchedule()->count = $validated['count'];
+        }
 
         $transaction->push();
 

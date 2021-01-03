@@ -9,7 +9,10 @@ $(function() {
         columns: [
         {
             data: "name",
-            title: "Name"
+            title: "Name",
+            render: function(data, type, row, meta) {
+                return '<a href="' + urlDetails.replace('#ID#', row.id) + '" class="" title="View investment details">' + data +'</a>';
+            },
         },
         {
             data: "investment_group.name",
@@ -53,7 +56,8 @@ $(function() {
             data: "id",
             title: "Actions",
             render: function ( data, type, row, meta ) {
-                return '';
+                return '' +
+                       '<a href="' + urlDetails.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ';
             },
             orderable: false
         }

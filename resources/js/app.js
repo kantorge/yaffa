@@ -27,6 +27,10 @@ if (window.location.pathname === '/investments') {
 if (/^\/investments\/summary/.test(window.location.pathname)) {
     require('./investments/summary');
 }
+if (/^\/investments\/\d+/.test(window.location.pathname)) {
+    require('./investments/show');
+}
+
 if (window.location.pathname === '/payees') {
     require('./payees/index');
 }

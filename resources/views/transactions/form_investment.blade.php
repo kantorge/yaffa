@@ -47,13 +47,55 @@
                                 <label for="transaction_type" class="control-label">Transaction type</label>
                                 <!--TODO: make the list dynamic-->
                                 <select name="transaction_type" id="transaction_type" class="form-control" aria-invalid="false">
-                                    <option value="Buy" {{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "Buy" ? "selected":"") }}>Buy</option>
-                                    <option value="Sell"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "Sell" ? "selected":"") }}>Sell</option>
-                                    <option value="Add shares"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "Add shares" ? "selected":"") }}>Add shares</option>
-                                    <option value="Remove shares"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "Remove shares" ? "selected":"") }}>Remove shares</option>
-                                    <option value="Dividend"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "Dividend" ? "selected":"") }}>Dividend</option>
-                                    <option value="S-Term Cap Gains Dist"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "S-Term Cap Gains Dist" ? "selected":"") }}>S-Term Cap Gains Dist</option>
-                                    <option value="L-Term Cap Gains Dist"{{ (old("transaction_type", $transaction['transaction_type'] ?? '') == "L-Term Cap Gains Dist" ? "selected":"") }}>L-Term Cap Gains Dist</option>
+                                    <option
+                                        value="Buy"
+                                        @if (   (old() && old('transaction_type') == 'Buy')
+                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Buy')
+                                            selected="selected"
+                                        @endif
+                                    >Buy</option>
+                                    <option
+                                        value="Sell"
+                                        @if (   (old() && old('transaction_type') == 'Sell')
+                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Sell')
+                                            selected="selected"
+                                        @endif
+                                    >Sell</option>
+                                    <option
+                                        value="Add shares"
+                                        @if (   (old() && old('transaction_type') == 'Add shares')
+                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Add shares')
+                                            selected="selected"
+                                        @endif
+                                    >Add shares</option>
+                                    <option
+                                        value="Remove shares"
+                                        @if (   (old() && old('transaction_type') == 'Remove shares')
+                                            || isset($transaction->transactionType) && $transaction->transactionType->name == 'Remove shares')
+                                           selected="selected"
+                                       @endif
+                                       >Remove shares</option>
+                                    <option
+                                        value="Dividend"
+                                        @if (   (old() && old('transaction_type') == 'Dividend')
+                                        || isset($transaction->transactionType) && $transaction->transactionType->name == 'Dividend')
+                                        selected="selected"
+                                   @endif
+                                    >Dividend</option>
+                                    <option
+                                        value="S-Term Cap Gains Dist"
+                                        @if (   (old() && old('transaction_type') == 'S-Term Cap Gains Dist')
+                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'S-Term Cap Gains Dist')
+                                            selected="selected"
+                                        @endif
+                                    >S-Term Cap Gains Dist</option>
+                                    <option
+                                        value="L-Term Cap Gains Dist"
+                                        @if (   (old() && old('transaction_type') == 'L-Term Cap Gains Dist')
+                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'L-Term Cap Gains Dist')
+                                            selected="selected"
+                                        @endif
+                                    >L-Term Cap Gains Dist</option>
                                 </select>
                             </div>
                         </div>
@@ -139,7 +181,7 @@
                                     maxlength="10"
                                     name="config[quantity]"
                                     type="text"
-                                    value="{{ old('config.quantity', $transaction['config']['quantity'] ?? 0) }}"
+                                    value="{{ old('config.quantity', $transaction->config->quantity ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -152,7 +194,7 @@
                                     maxlength="10"
                                     name="config[price]"
                                     type="text"
-                                    value="{{ old('config.price', $transaction['config']['price'] ?? 0) }}"
+                                    value="{{ old('config.price', $transaction->config->price ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -163,11 +205,11 @@
                                 <label for="transaction_commission" class="control-label">Commission</label>
                                 <input
                                     class="form-control input-with-math"
-                                    id="transaction_comission"
+                                    id="transaction_commission"
                                     maxlength="10"
-                                    name="config[comission]"
+                                    name="config[commission]"
                                     type="text"
-                                    value="{{ old('config.comission', $transaction['config']['comission'] ?? 0) }}"
+                                    value="{{ old('config.commission', $transaction->config->commission ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -180,7 +222,7 @@
                                     maxlength="10"
                                     name="config[tax]"
                                     type="text"
-                                    value="{{ old('config.tax', $transaction['config']['tax'] ?? 0) }}"
+                                    value="{{ old('config.tax', $transaction->config->tax ?? 0) }}"
                                 >
                             </div>
                         </div>
@@ -193,9 +235,9 @@
                                     class="form-control input-with-math"
                                     id="transaction_dividend"
                                     maxlength="10"
-                                    name="config[divident]"
+                                    name="config[dividend]"
                                     type="text"
-                                    value="{{ old('config.divident', $transaction['config']['divident'] ?? 0) }}"
+                                    value="{{ old('config.dividend', $transaction->config->dividend ?? 0) }}"
                                 >
                             </div>
                         </div>

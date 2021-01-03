@@ -288,7 +288,7 @@ $(function() {
         $('#form-skip-' + $(this).data('form')).submit();
     });
 
-    $('.data-delete').on('click', function (e) {
+    $("#historyTable, #scheduleTable").on("click", ".data-delete", function(e) {
         if (!confirm('Are you sure to want to delete this item?')) return;
         e.preventDefault();
         $('#form-delete-' + $(this).data('form')).submit();

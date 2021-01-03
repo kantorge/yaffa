@@ -109,6 +109,7 @@ class MainController extends Controller
                                 return ($operator == 'minus'
                                         ? - $transaction->config->price * $transaction->config->quantity
                                         : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
+                                        - $transaction->config->tax
                                         - $transaction->config->commission;
                             }
 
@@ -214,7 +215,6 @@ class MainController extends Controller
             ->get();
 
         //get all investment transactions related to selected account
-
         $investmentTransactions = Transaction::
             where(function($query) {
                 $query->where('schedule', 1)
@@ -255,7 +255,7 @@ class MainController extends Controller
                     return array_merge($commonData, $baseData, $dateData);
 
                 })
-            )/*
+            )
             ->filter(function($transaction) {
                 //TODO: canc this be done earlier, at a more appropriate part of the code?
                 if ($transaction['transaction_group'] != 'schedule') {
@@ -263,7 +263,7 @@ class MainController extends Controller
                 }
 
                 return !is_null($transaction['next_date']);
-            })*/;
+            });
 
         //add schedule to history items, if needeed
         if ($withForecast) {
@@ -343,7 +343,7 @@ class MainController extends Controller
             })
             ->values();
 
-            JavaScript::put([
+        JavaScript::put([
             'transactionData' => $data,
             'scheduleData' => $transactions
                 ->filter(function($transaction) {
@@ -368,8 +368,6 @@ class MainController extends Controller
     private function transformDate(Transaction $transaction) {
         if($transaction->schedule) {
             $transaction->load(['transactionSchedule']);
-
-            if (!$transaction->transactionSchedule) {dd($transaction);}
 
             return [
                 'schedule' => $transaction->transactionSchedule,

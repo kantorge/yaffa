@@ -126,7 +126,26 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.price' => 'required|numeric|gt:0',
                     'config.quantity' => 'required|numeric|gt:0',
-                    'config.amount' => 'nullable|numeric|gte:0',
+                    'config.commission' => 'nullable|numeric|gte:0',
+                    'config.tax' => 'nullable|numeric|gte:0',
+                ]);
+
+            } else if (   $this->get('transaction_type_id') === 6
+                       || $this->get('transaction_type_id') === 7) {
+                //add OR remove shares
+                $rules = array_merge($rules, [
+                    'config.quantity' => 'required|numeric|gt:0',
+                    'config.commission' => 'nullable|numeric|gte:0',
+                    'config.tax' => 'nullable|numeric|gte:0',
+                ]);
+
+            }
+            else if (   $this->get('transaction_type_id') === 8
+                     || $this->get('transaction_type_id') === 9
+                     || $this->get('transaction_type_id') === 10) {
+                //dividend OR cap gainst
+                $rules = array_merge($rules, [
+                    'config.dividend' => 'required|numeric|gt:0',
                     'config.commission' => 'nullable|numeric|gte:0',
                     'config.tax' => 'nullable|numeric|gte:0',
                 ]);
@@ -172,7 +191,5 @@ class TransactionRequest extends FormRequest
             'schedule' => $this->schedule ?? 0,
             'budget' => $this->budget ?? 0,
         ]);
-
-        //dd($this);
     }
 }
