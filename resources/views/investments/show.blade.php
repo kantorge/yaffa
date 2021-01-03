@@ -14,7 +14,7 @@
     <div class="row">
         <div class="col-md-7">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <div class="box">
                         <div class="box-header with-border">
                             <h3 class="box-title">Investment details</h3>
@@ -78,7 +78,7 @@
                     </div>
                     <!-- /.box -->
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-7">
                     <div class="box box-default">
                         <div class="box-header with-border">
                             <h3 class="box-title">Results</h3>
@@ -90,38 +90,54 @@
                         <!-- /.box-header -->
                         <div class="box-body form-horizontal">
                             <div class="form-group">
-                                <label for="date_from" class="col-sm-2 control-label">From</label>
+                                <label for="date_from" class="col-sm-2 control-label">Date from</label>
                                 <div class="col-sm-4">
-                                    <input type="text" class="form-control hasDatepicker" id="date_from" placeholder="Select date">
+                                    <input type="text" class="form-control hasDatepicker" id="date_from">
                                 </div>
-                                <label for="date_to" class="col-sm-2 control-label">To</label>
+                                <label for="date_to" class="col-sm-2 control-label">Date to</label>
                                 <div class="col-sm-4">
-                                    <input type="text" class="form-control hasDatepicker" id="date_to" placeholder="Select date">
+                                    <div class="input-group margin">
+                                        <input type="text" class="form-control hasDatepicker" id="date_to">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-flat btn-info" id="date_to_today" title="Set to today"><i class="fa fa-calendar"></i></button>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <dl class="dl-horizontal">
-                                <dt>Buying cost</dt>
-                                <dd id="summaryBuying"></dd>
-                                <dt>Added quantity</dt>
-                                <dd id="summaryAdded"></dd>
-                                <dt>Removed quantity</dt>
-                                <dd id="summaryRemoved"></dd>
-                                <dt>Selling revenue</dt>
-                                <dd id="summarySelling"></dd>
-                                <dt>Dividend</dt>
-                                <dd id="summaryDividend"></dd>
-                                <dt>Commissions</dt>
-                                <dd id="summaryCommission"></dd>
-                                <dt>Taxes</dt>
-                                <dd id="summaryTaxes"></dd>
-                                <dt>Quantity</dt>
-                                <dd id="summaryQuantity"></dd>
-                                <dt>Value</dt>
-                                <dd id="summaryValue"></dd>
-                                <dt>Result</dt>
-                                <dd id="summaryResult"></dd>
-                            </dl>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <dl class="dl-horizontal">
+                                        <dt>Buying cost</dt>
+                                        <dd id="summaryBuying"></dd>
+                                        <dt>Added quantity</dt>
+                                        <dd id="summaryAdded"></dd>
+                                        <dt>Removed quantity</dt>
+                                        <dd id="summaryRemoved"></dd>
+                                        <dt>Selling revenue</dt>
+                                        <dd id="summarySelling"></dd>
+                                        <dt>Dividend</dt>
+                                        <dd id="summaryDividend"></dd>
+                                        <dt>Commissions</dt>
+                                        <dd id="summaryCommission"></dd>
+                                        <dt>Taxes</dt>
+                                        <dd id="summaryTaxes"></dd>
+                                        <dt>Quantity</dt>
+                                        <dd id="summaryQuantity"></dd>
+                                        <dt>Value</dt>
+                                        <dd id="summaryValue"></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-sm-6">
+                                    <dl class="dl-horizontal">
+                                        <dt>Result</dt>
+                                        <dd id="summaryResult"></dd>
+                                        <dt>ROI</dt>
+                                        <dd id="summaryROI"></dd>
+                                        <dt>Annualized ROI</dt>
+                                        <dd id="summaryAROI">TBD</dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -146,6 +162,10 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Price history</h3>
+                    <div class="box-tools pull-right hidden" id="priceChartNoData">
+                        <button class="btn btn-xs btn-danger">No data available</button>
+                    </div>
+                    <!-- /.box-tools -->
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
@@ -155,6 +175,10 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Quantity history</h3>
+                    <div class="box-tools pull-right hidden" id="quantityChartNoData">
+                        <button class="btn btn-xs btn-danger">No data available</button>
+                    </div>
+                    <!-- /.box-tools -->
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">

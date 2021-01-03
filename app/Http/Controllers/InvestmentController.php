@@ -172,15 +172,11 @@ class InvestmentController extends Controller
             'investment_price_provider',
         ]);
 
+        //TODO: how to calculate and display scheduled transactions?
+
         //get all investment transactions related to selected investment
         $investmentTransactions = Transaction::
-            where(function($query) {
-                $query->where('schedule', 1)
-                    ->orWhere(function($query) {
-                    $query->where('schedule', 0);
-                    $query->where('budget', 0);
-                });
-            })
+            where('schedule', 0)
             ->whereHasMorph(
                 'config',
                 [\App\TransactionDetailInvestment::class],
@@ -194,6 +190,7 @@ class InvestmentController extends Controller
                     'config.investment',
                     'transactionType',
                 ])
+            ->orderBy('date')
             ->get();
 
         //process historical data for table and chart

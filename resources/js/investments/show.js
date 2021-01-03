@@ -77,7 +77,13 @@ $(function () {
         },
         {
             data: "quantity",
-            title: "Quantity"
+            title: "Quantity",
+            render: function(data) {
+                if (data !== null) {
+                    return data.toLocaleString('hu-HU');
+                }
+                return null;
+            }
         },
         {
             data: "price",
@@ -221,30 +227,40 @@ $(function () {
         window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);
         window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
 
-        /* Kell ez még bármire?
-        var lastPrice = filtered
-        .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
-        .sort(function(a,b) {
-            return (  moment(a.date).isBefore(moment(b.date))
-                    ? 1
-                    : (moment(b.date).isBefore(moment(a.date))
-                       ? -1
-                       : 0
-                      )
-                   );
-        })[0].price;
-        console.log(lastPrice);
-        */
-
-        var lastPrice = prices.slice(-1)[0].price;
+        if (prices.length > 0) {
+            var lastPrice = prices.slice(-1)[0].price;
+        } else if (filtered.filter(trx => !!trx.price).length > 0) {  //TODO: remove filter duplicate
+            lastPrice = filtered
+            .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
+            .sort(function(a,b) {
+                return (  moment(a.date).isBefore(moment(b.date))
+                        ? 1
+                        : (moment(b.date).isBefore(moment(a.date))
+                           ? -1
+                           : 0
+                          )
+                       );
+            })[0].price;
+        } else {
+            lastPrice = 1;
+        }
 
         window.summary.Value.value = window.summary.Quantity.value * lastPrice;
+
+        //final result
         window.summary.Result.value =   window.summary.Selling.value
                                       + window.summary.Dividend.value
                                       + window.summary.Value.value
                                       - window.summary.Buying.value
                                       - window.summary.Commission.value
                                       - window.summary.Taxes.value;
+
+        //calculate ROI
+        var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
+        var years = $('#date_to').data('daterangepicker').startDate.diff($('#date_from').data('daterangepicker').startDate, 'years',true);
+        var AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
+        document.getElementById('summaryROI').innerHTML = (ROI * 100).toFixed(2) + '%';
+        document.getElementById('summaryAROI').innerHTML = (AROI * 100).toFixed(2) + '%';
 
         //assign calculated data to respective fields
         for (var prop in window.summary) {
@@ -272,7 +288,7 @@ $(function () {
     $.fn.dataTable.ext.search.push(
         function( settings, data, dataIndex ) {
             var min = $('#date_from').data('daterangepicker').startDate;
-            var max = $('#date_to').data('daterangepicker').endDate;
+            var max = $('#date_to').data('daterangepicker').startDate;
             var date = moment( data[0] );
 
             return ( date.isSameOrAfter(min) && date.isSameOrBefore(max));
@@ -280,47 +296,56 @@ $(function () {
     );
 
     //initialize charts
-    var chartPrice = am4core.create("chartPrice", am4charts.XYChart);
-    chartPrice.data = prices;
+    if (prices.length > 0) {
+        var chartPrice = am4core.create("chartPrice", am4charts.XYChart);
+        chartPrice.data = prices;
 
-    chartPrice.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+        chartPrice.dateFormatter.inputDateFormat = "yyyy-MM-dd";
 
-    var categoryAxis = chartPrice.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "date";
-    var valueAxis = chartPrice.yAxes.push(new am4charts.ValueAxis());
+        var categoryAxis = chartPrice.xAxes.push(new am4charts.DateAxis());
+        categoryAxis.dataFields.category = "date";
+        var valueAxis = chartPrice.yAxes.push(new am4charts.ValueAxis());
 
-    var series = chartPrice.series.push(new am4charts.LineSeries());
-    series.dataFields.valueY = "price";
-    series.dataFields.dateX = "date";
-    series.strokeWidth = 3;
+        var series = chartPrice.series.push(new am4charts.LineSeries());
+        series.dataFields.valueY = "price";
+        series.dataFields.dateX = "date";
+        series.strokeWidth = 3;
 
-    var bullet = series.bullets.push(new am4charts.Bullet());
-    var square = bullet.createChild(am4core.Rectangle);
-    square.width = 5;
-    square.height = 5;
-    square.horizontalCenter = "middle";
-    square.verticalCenter = "middle";
+        var bullet = series.bullets.push(new am4charts.Bullet());
+        var square = bullet.createChild(am4core.Rectangle);
+        square.width = 5;
+        square.height = 5;
+        square.horizontalCenter = "middle";
+        square.verticalCenter = "middle";
 
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(series);
-    chartPrice.scrollbarX = scrollbarX;
+        var scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(series);
+        chartPrice.scrollbarX = scrollbarX;
+    } else {
+        document.getElementById('chartPrice').remove();
+        document.getElementById('priceChartNoData').classList.remove('hidden');
+    }
 
+    if (quantities.length > 0) {
+        var chartQuantity = am4core.create("chartQuantity", am4charts.XYChart);
+        chartQuantity.data = quantities;
 
-    var chartQuantity = am4core.create("chartQuantity", am4charts.XYChart);
-    chartQuantity.data = quantities;
+        chartQuantity.dateFormatter.inputDateFormat = "yyyy-MM-dd";
 
-    chartQuantity.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+        var categoryAxis = chartQuantity.xAxes.push(new am4charts.DateAxis());
+        categoryAxis.dataFields.category = "date";
+        var valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
 
-    var categoryAxis = chartQuantity.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "date";
-    var valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
+        var series = chartQuantity.series.push(new am4charts.StepLineSeries());
+        series.dataFields.valueY = "quantity";
+        series.dataFields.dateX = "date";
+        series.strokeWidth = 3;
 
-    var series = chartQuantity.series.push(new am4charts.StepLineSeries());
-    series.dataFields.valueY = "quantity";
-    series.dataFields.dateX = "date";
-    series.strokeWidth = 3;
-
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(series);
-    chartQuantity.scrollbarX = scrollbarX;
+        var scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(series);
+        chartQuantity.scrollbarX = scrollbarX;
+    } else {
+        document.getElementById('chartQuantity').remove();
+        document.getElementById('quantityChartNoData').classList.remove('hidden');
+    }
 });
