@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class TransactionRequest extends FormRequest
         $rules = [
             'transaction_type_id' => "required|exists:transaction_types,id",
             'comment' => 'nullable|max:191',
-            'reconciled' => 'boolean',  //TODO: apply schedule and budget related rules
+            'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
@@ -33,10 +34,12 @@ class TransactionRequest extends FormRequest
             || $this->get('budget')) {
 
             $rules = array_merge($rules, [
+                'reconciled' => ['boolean', new IsFalsy],
+
                 'schedule_start' => 'required|date',
                 'schedule_next' => 'required|date',  //TODO: not earlier than schedule_start
                 'schedule_end' => 'nullable|date', //TODO: not earlier than schedule_start
-                'schedule_frequency' => 'required',
+                'schedule_frequency' => 'required', //TODO: validate values
                 'schedule_interval' => 'nullable|numeric|gte:1',
                 'schedule_count' => 'nullable|numeric|gte:1',
             ]);
