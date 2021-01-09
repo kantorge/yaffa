@@ -37,8 +37,8 @@ class TransactionRequest extends FormRequest
                 'reconciled' => ['boolean', new IsFalsy],
 
                 'schedule_start' => 'required|date',
-                'schedule_next' => 'required|date',  //TODO: not earlier than schedule_start
-                'schedule_end' => 'nullable|date', //TODO: not earlier than schedule_start
+                'schedule_next' => 'required|date|after_or_equal:schedule_start|before_or_equal:shedule_end',
+                'schedule_end' => 'nullable|date|after_or_equal:schedule_start',
                 'schedule_frequency' => 'required', //TODO: validate values
                 'schedule_interval' => 'nullable|numeric|gte:1',
                 'schedule_count' => 'nullable|numeric|gte:1',
