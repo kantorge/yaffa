@@ -63,7 +63,7 @@
                                     >
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="schedule_end" class="control-label">Next date</label>
+                                    <label for="schedule_end" class="control-label">End (last) date</label>
                                     <input
                                         class="form-control"
                                         id="schedule_end"
