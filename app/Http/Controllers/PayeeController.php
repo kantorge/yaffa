@@ -55,7 +55,7 @@ class PayeeController extends Controller
 
     public function edit($id)
     {
-        $payee = AccountEntity::with(['config', 'config.categories'])
+        $payee = AccountEntity::with(['config'])
             ->find($id);
 
         //get all categories

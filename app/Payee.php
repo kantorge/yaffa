@@ -38,7 +38,7 @@ class Payee extends AccountEntity
         return $this->morphOne(AccountEntity::class, 'config');
     }
 
-    public function categories()
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }

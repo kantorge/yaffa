@@ -55,12 +55,14 @@ class PayeeApiController extends Controller
 			return response("", Response::HTTP_OK);
         }
 
-        $payee = AccountEntity::with(['config', 'config.categories'])->find($request->get('payee_id'));
+        $payee = AccountEntity::
+            with(['config', 'config.category'])
+            ->find($request->get('payee_id'));
 
-        if(!$payee->config->categories) {
+        if(!$payee->config->category_id) {
             return response("", Response::HTTP_OK);
         }
 
-        return response($payee->config->categories->only(['id', 'full_name']), Response::HTTP_OK);
+        return response($payee->config->category->only(['id', 'full_name']), Response::HTTP_OK);
 	}
 }
