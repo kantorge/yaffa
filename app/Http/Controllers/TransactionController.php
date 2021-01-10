@@ -16,10 +16,58 @@ use App\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 use JavaScript;
 
+
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
+    private function redirectSelector($action, Transaction $transaction){
+
+        if ($action == 'newStandard') {
+            return redirect()
+                ->route('transactions.createStandard');
+        }
+
+        if ($action == 'newInvestment') {
+            return redirect()
+                ->route('transactions.createInvestment');
+        }
+
+        if ($action == 'cloneInvestment') {
+            return redirect()
+                ->route('transactions.cloneInvestment',
+                 ['transaction' => $transaction]);
+        }
+
+        if ($action == 'cloneStandard') {
+            return redirect()
+                ->route('transactions.cloneStandard',
+                 ['transaction' => $transaction]);
+        }
+
+        if ($action == 'returnToAccount') {
+            switch($transaction->transactionType->name) {
+                case 'withdrawal':
+                case 'transfer':
+                    $account = $transaction->config->account_from_id;
+                    break;
+                case 'deposit':
+                    $account = $transaction->config->account_to_id;
+                    break;
+                //investments
+                default:
+                    $account = $transaction->config->account_id;
+            }
+
+            return redirect()
+                ->route('accounts.history',
+                 ['account' => $account]);
+        }
+
+        //returnToDashboard
+        return redirect('/');
+    }
+
     public function createStandard()
     {
         //set action for future usage
@@ -70,7 +118,7 @@ class TransactionController extends Controller
 
         //dd($validated);
 
-        DB::transaction(function () use ($validated) {
+        $transaction = DB::transaction(function () use ($validated) {
             $transaction = Transaction::create($validated);
 
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
@@ -123,18 +171,19 @@ class TransactionController extends Controller
 
             $transaction->push();
 
+            return $transaction;
         });
 
         add_notification('Transaction added', 'success');
 
-        return redirect("/");
+        return $this->redirectSelector($request->get('callback'), $transaction);
     }
 
     public function storeInvestment(TransactionRequest $request)
     {
         $validated = $request->validated();
 
-        DB::transaction(function () use ($validated) {
+        $transaction = DB::transaction(function () use ($validated) {
             $transaction = Transaction::create($validated);
 
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
@@ -157,11 +206,12 @@ class TransactionController extends Controller
 
             $transaction->push();
 
+            return $transaction;
         });
 
         add_notification('Transaction added', 'success');
 
-        return redirect("/");
+        return $this->redirectSelector($request->get('callback'), $transaction);
     }
 
     /**
@@ -280,7 +330,7 @@ class TransactionController extends Controller
 
         add_notification('Transaction updated', 'success');
 
-        return redirect("/");
+        $this->redirectSelector($validated['callback'], $transaction);
     }
 
     public function updateInvestment(TransactionRequest $request, Transaction $transaction)
@@ -367,6 +417,39 @@ class TransactionController extends Controller
         return view('transactions.form_standard', [
             'transaction' => $transaction,
             'action' => $action,
+        ]);
+    }
+
+    /**
+     * Show the form for cloning selected resource. (Load model, remove ID)
+     *
+     * @param  Transaction $transaction
+     * @return \Illuminate\Http\Response
+     */
+    public function cloneInvestment(Transaction $transaction)
+    {
+        //set action for future usage
+        $action = 'clone';
+
+        $transaction->load(
+            [
+                'config',
+                'config.account',
+                'config.investment',
+                'transactionSchedule',
+                'transactionType',
+            ]
+        );
+
+        //remove Id, so item is considered a new transaction
+        $transaction->id = null;
+
+        //get all accounts
+        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
+
+        return view('transactions.form_investment', [
+            'allAccounts' => $allAccounts,
+            'transaction' => $transaction,
         ]);
     }
 

@@ -380,16 +380,16 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-2">
-                    <label for="callback" class="control-label">After saving</label>
+                    <label class="control-label">After saving</label>
                 </div>
                 <div class="col-sm-8">
                     <div class="btn-group btn-group-justified" data-toggle="buttons">
                         <label class="btn btn-default" id="callback_new_label">
-                            <input name="callback" type="radio" value="new" id="callback_new" class="radio-inline">
+                            <input name="callback" type="radio" value="newStandard" id="callback_new" class="radio-inline">
                             Add an other transaction
                         </label>
                         <label class="btn btn-default" id="callback_clone_label">
-                            <input name="callback" type="radio" value="clone" id="callback_clone" class="radio-inline">
+                            <input name="callback" type="radio" value="cloneStandard" id="callback_clone" class="radio-inline">
                             Clone this transaction
                         </label>
                         <label class="btn btn-default" id="callback_returnToAccount_label">

@@ -5,8 +5,6 @@ namespace App\Http\Requests;
 use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {

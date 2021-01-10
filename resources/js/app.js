@@ -47,7 +47,8 @@ if (   window.location.pathname === '/transactions/create/standard'
 }
 
 if (   window.location.pathname === '/transactions/create/investment'
-    || /^\/transactions\/\d+\/edit\/investment/.test(window.location.pathname)) {
+    || /^\/transactions\/\d+\/edit\/investment/.test(window.location.pathname)
+    || /^\/transactions\/\d+\/clone\/investment/.test(window.location.pathname)) {
     require('./transactions/formCommon');
     require('./transactions/formSchedule');
     require('./transactions/formInvestment');
