@@ -1,6 +1,7 @@
 require( 'daterangepicker');
 
 require('jquery-validation');
+//require("jquery-validation/dist/additional-methods.js");
 
 math = require("mathjs");
 
@@ -633,10 +634,12 @@ $( function () {
 	});
 
     //form validation
-	$("#formTransaction").validate({
-		debug: true,
+	window.validation = $("#formTransaction").validate({
 		ignore: '.ignore, :hidden',
 		rules: {
+            transaction_type: {
+                required: true
+            },
 			date: {
 				required: function() {
                         return (   $("#entry_type_schedule").is(':not(:checked)')
@@ -644,47 +647,43 @@ $( function () {
                     },
 				dateISO: true
 			},
-			account_from: {
+			"config[account_from_id]": {
+                //TODO: can it be, and should it be checked, if type is correct according to transaction type
                 required: true
 			},
-			account_to: {
+			"config[account_to_id]": {
+                //TODO: can it be, and should it be checked, if type is correct according to transaction type
                 required: true
 			},
-			amount_from: {
+			"config[amount_from]": {
 				required: true,
 				minStrict: 0,
 				number: true
 			},
-			amount_to: {
+			"config[amount_to]": {
 				required: true,
 				minStrict: 0,
 				number: true
-			},
-			remaining_payee_default: {
-				number: true,
-				min: 0,
-			},
-			remaining_not_allocated: {
-				number: true,
-				min: 0,
             },
+
+            //TODO: validate visible items
+
             //schedule
+            //requirement is handled by having them hidden, if not needed
             schedule_start: {
-				required: function() {
-					return (   $("#entry_type_schedule").is(':checked')
-					        || $("#entry_type_budget").is(':checked'));
-				},
-				dateISO: true
+                required: true,
+				dateISO: true,
             },
             schedule_next: {
-				required: function() {
-					return (   $("#entry_type_schedule").is(':checked')
-					        || $("#entry_type_budget").is(':checked'));
-				},
-				dateISO: true
+                //TODO: after or equal to start date
+                //TODO: before end date
+                required: true,
+				dateISO: true,
             },
             schedule_end: {
-				dateISO: true
+                required: true,
+                dateISO: true,
+                //TODO: after start date
             },
             schedule_interval: {
                 required: true,
@@ -696,19 +695,9 @@ $( function () {
                 minStrict: 0
             },
             schedule_frequency: {
-                required: function() {
-					return (   $("#entry_type_schedule").is(':checked')
-					        || $("#entry_type_budget").is(':checked'));
-				}
+                required: true,
+                //TODO: validate values
             }
-		},
-		messages: {
-			remaining_payee_default: {
-				min: 'Must be at least 0. Review amounts.',
-			},
-			remaining_not_allocated: {
-				min: 'Must be at least 0. Review amounts.',
-			}
 		},
         highlight: function(element, errorClass, validClass) {
             $(element).parent('div').addClass(errorClass).removeClass(validClass);
