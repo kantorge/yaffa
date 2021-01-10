@@ -22,6 +22,9 @@ class TransactionRequest extends FormRequest
             'schedule' => 'boolean',
             'budget' => 'boolean',
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
+
+            //technical fields
+            'remaining_payee_default_input' => "numeric|gte:0",
         ];
 
         //basic transaction has no schedule at all, or has schedule enabled

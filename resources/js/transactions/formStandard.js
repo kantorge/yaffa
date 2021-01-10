@@ -127,7 +127,6 @@ window.transactionData = {
 		$("#remaining_payee_default").html(this.remainingAmountToPayeeDefault);
 		$("#remaining_payee_default_input").val(this.remainingAmountToPayeeDefault);
 		$("#remaining_not_allocated").html(this.remainingAmountNotAllocated);
-		$("#remaining_not_allocated_input").val(this.remainingAmountNotAllocated);
 
         //update remaining copy buttons
         $(".transaction_item_row button.load_remainder").prop('disabled', this.remainingAmountNotAllocated <= 0 && this.remainingAmountToPayeeDefault <= 0);

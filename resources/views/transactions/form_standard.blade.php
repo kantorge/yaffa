@@ -322,12 +322,6 @@
                                                     <td class="text-right">
                                                         <span id="remaining_not_allocated">0</span>
                                                         <span class='transaction_currency_from_nowrap'></span>
-                                                        <input
-                                                            name="remaining_not_allocated"
-                                                            id="remaining_not_allocated_input"
-                                                            type="hidden"
-                                                            value=""
-                                                        >
                                                     </td>
                                                 </tr>
                                             </tbody>

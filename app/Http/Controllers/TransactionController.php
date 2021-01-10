@@ -164,6 +164,8 @@ class TransactionController extends Controller
                 $transactionItems[]= $newItem;
             }
 
+            //TODO: handle default payee amount
+
             $transaction->transactionItems()->saveMany($transactionItems);
 
             $transaction->push();
@@ -319,6 +321,8 @@ class TransactionController extends Controller
 
             $transactionItems[]= $newItem;
         }
+
+        //TODO: handle default payee amount
 
         $transaction->transactionItems()->delete();
         $transaction->transactionItems()->saveMany($transactionItems);
