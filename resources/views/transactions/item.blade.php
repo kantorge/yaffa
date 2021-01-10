@@ -16,7 +16,12 @@
                     Amount <span class='transaction_currency_from'></span>
                 </label>
                 <div class="input-group">
-                    <input class="form-control transaction_item_amount" name="transactionItems[{{ $counter }}][amount]" value="{{ $item['amount'] ?? '' }}" type="text">
+                    <input
+                        class="form-control transaction_item_amount"
+                        name="transactionItems[{{ $counter }}][amount]"
+                        type="text"
+                        value="{{old('transactionItems.{$item}.amount', $item['amount'] ?? '')}}"
+                    >
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-info load_remainder" title="Assign remaining amount to this item"><i class="fa fa-copy"></i></button>
                     </span>

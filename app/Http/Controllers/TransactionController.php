@@ -170,17 +170,13 @@ class TransactionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function editStandard($id)
+    public function editStandard(Transaction $transaction)
     {
         //set action for future usage
         $action = 'edit';
 
-        //get all categories for reference
-        $categories = Category::all();
-        $categories->sortBy('full_name');
-
-        $transaction = Transaction::with(
-            [
+        $transaction
+            ->load([
                 'config',
                 'config.accountFrom',
                 'config.accountTo',
@@ -189,16 +185,18 @@ class TransactionController extends Controller
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
-            ])
-            ->find($id);
+            ]);
 
-            //dd($transaction);
+        //dd($transaction);
 
         $baseTransactionData = [
+            'from' => [
+                'amount' => $transaction->config->amount_from,
+            ],
+            'to' => [
+                'amount' => $transaction->config->amount_to,
+            ],
             'transactionType' => $transaction->transactionType->name,
-            'assets' => [
-                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
-            ]
         ];
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);
@@ -339,10 +337,6 @@ class TransactionController extends Controller
         //set action for future usage
         $action = 'clone';
 
-        //get all categories for reference
-        $categories = Category::all();
-        $categories->sortBy('full_name');
-
         $transaction->load(
             [
                 'config',
@@ -359,10 +353,13 @@ class TransactionController extends Controller
         $transaction->id = null;
 
         $baseTransactionData = [
+            'from' => [
+                'amount' => $transaction->config->amount_from,
+            ],
+            'to' => [
+                'amount' => $transaction->config->amount_to,
+            ],
             'transactionType' => $transaction->transactionType->name,
-            'assets' => [
-                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
-            ]
         ];
 
         JavaScript::put(['baseTransactionData' => $baseTransactionData]);

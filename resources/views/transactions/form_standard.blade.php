@@ -271,7 +271,7 @@
                                                 maxlength="50"
                                                 name="config[amount_from]"
                                                 type="text"
-                                                value="{{old('config[amount_from]', $transaction['config']['amount_from'] ?? '')}}"
+                                                value="{{old('config.amount_from', $transaction['config']['amount_from'] ?? '')}}"
                                             >
                                         </div>
                                         <div class="col-sm-4" id="transfer_exchange_rate_group">
@@ -288,7 +288,7 @@
                                                 maxlength="50"
                                                 name="config[amount_to]"
                                                 type="text"
-                                                value="{{old('config[amount_to]', $transaction['config']['amount_to'] ?? '')}}"
+                                                value="{{old('config.amount_to', $transaction['config']['amount_to'] ?? '')}}"
                                             >
                                         </div>
                                     </div>

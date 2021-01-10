@@ -1,12 +1,6 @@
 // Fonts
 @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic');
 
-// AdminLTE, including Bootstrap
-@import '../../vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/css/bootstrap.min.css';
-@import '../../vendor/almasaeed2010/adminlte/bower_components/font-awesome/css/font-awesome.min.css';
-@import '../../vendor/almasaeed2010/adminlte/dist/css/AdminLTE.css';
-@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-blue.css';
-
 // Datatables
 @import "~datatables.net-bs/css/dataTables.bootstrap.css";
 
@@ -15,6 +9,12 @@
 
 //Select2
 @import 'select2/dist/css/select2';
+
+// AdminLTE, including Bootstrap
+@import '../../vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/css/bootstrap.min.css';
+@import '../../vendor/almasaeed2010/adminlte/bower_components/font-awesome/css/font-awesome.min.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/AdminLTE.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-blue.css';
 
 //sidebar select fix
 .skin-blue .sidebar-form select {

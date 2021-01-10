@@ -15,6 +15,8 @@ window.transactionData = {
     //counter to ensure that item rows always get a new id
 	itemRowCounter : document.getElementById("transaction_item_container").querySelectorAll(".transaction_item_row").length,
 
+    //storing all data and references about source account or payee
+    //set as withdrawal by default
     from: {
         type: 'account',
         account_id : 0,
@@ -23,6 +25,8 @@ window.transactionData = {
 
     },
 
+    //storing all data and references about target account or payee
+    //set as withdrawal by default
     to: {
         type: 'payee',
         account_id : 0,
@@ -30,17 +34,22 @@ window.transactionData = {
         account_currency : null,
     },
 
+    //default category if payee (either source or target), if exists
     payeeCategory : {
         id: null,
         text: null
     },
 
+    //get url to payee or account data, based on source or target type
     getApiUrl(type) {
         return (this[type].type == 'account' ? '/api/assets/account' : '/api/assets/payee' );
     },
+
+    //????
     getApiType: function(type) {
         return this[type].type;
     },
+
     resetAccount(type) {
         this[type].account_id = null;
         this[type].account_currency = null;
@@ -61,7 +70,10 @@ window.transactionData = {
         return null;
     },
 
-	itemTotal: 0,
+    //this will hold sum of all items
+    itemTotal: 0,
+
+    //indicate, whether remaining amount is not allocated, or will go to payee default, if exists
 	remainingAmountToPayeeDefault : 0,
     remainingAmountNotAllocated: 0,
 
@@ -209,7 +221,7 @@ window.transactionData = {
 
 $( function () {
     //merge existing data into data template
-    window.transactionData = Object.assign(window.baseTransactionData, window.transactionData);
+    Object.assign(window.transactionData, window.baseTransactionData);
 
 	//assign various key elements to transaction variable
     transactionData.elements.toAccountInput = $("#account_to");
@@ -621,7 +633,6 @@ $( function () {
 	});
 
     //form validation
-    /*
 	$("#formTransaction").validate({
 		debug: true,
 		ignore: '.ignore, :hidden',
@@ -707,7 +718,6 @@ $( function () {
         },
 		errorClass: 'has-error'
     });
-    */
 
     //on load initializations
 
