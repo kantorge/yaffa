@@ -2,8 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Requests\TransactionRequest;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes

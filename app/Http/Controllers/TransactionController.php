@@ -16,9 +16,6 @@ use App\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 use JavaScript;
 
-
-use Illuminate\Http\Request;
-
 class TransactionController extends Controller
 {
     private function redirectSelector($action, Transaction $transaction){
