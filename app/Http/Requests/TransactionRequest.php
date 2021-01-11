@@ -22,9 +22,6 @@ class TransactionRequest extends FormRequest
             'schedule' => 'boolean',
             'budget' => 'boolean',
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
-
-            //technical fields
-            'remaining_payee_default_input' => "numeric|gte:0",
         ];
 
         //basic transaction has no schedule at all, or has schedule enabled
@@ -79,6 +76,11 @@ class TransactionRequest extends FormRequest
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+
+                    //technical field, but required for standard transaction
+                    'remaining_payee_default_amount' => "nullable|numeric|gte:0",
+                    'remaining_payee_default_category_id' => "nullable|exists:categories,id",
+
                 ]);
             } else if ($this->get('transaction_type_id') === 2) {
                 //deposit
@@ -93,6 +95,11 @@ class TransactionRequest extends FormRequest
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
+
+                    //technical field, but required for standard transaction
+                    'remaining_payee_default_amount' => "nullable|numeric|gte:0",
+                    'remaining_payee_default_category_id' => "nullable|exists:categories,id",
+
                 ]);
             } else if ($this->get('transaction_type_id') === 3) {
                 //transfer

@@ -310,8 +310,14 @@
                                                         <span id="remaining_payee_default">0</span>
                                                         <span class='transaction_currency_from_nowrap'></span>
                                                         <input
-                                                            name="remaining_payee_default"
-                                                            id="remaining_payee_default_input"
+                                                            name="remaining_payee_default_amount"
+                                                            id="remaining_payee_default_amount"
+                                                            type="hidden"
+                                                            value=""
+                                                        >
+                                                        <input
+                                                            name="remaining_payee_default_category_id"
+                                                            id="remaining_payee_default_category_id"
                                                             type="hidden"
                                                             value=""
                                                         >

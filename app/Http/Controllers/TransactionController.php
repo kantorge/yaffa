@@ -139,6 +139,7 @@ class TransactionController extends Controller
 
             $transactionItems = [];
             foreach ($validated['transactionItems'] as $item) {
+                //ignore item, if amount is missing
                 if(is_null($item['amount'])) {
                     continue;
                 }
@@ -150,6 +151,7 @@ class TransactionController extends Controller
                     )
                 );
 
+                //create and attach tags
                 if (array_key_exists('tags', $item)) {
                     foreach($item['tags'] as $tag) {
                         $newTag = Tag::firstOrCreate(
@@ -164,7 +166,15 @@ class TransactionController extends Controller
                 $transactionItems[]= $newItem;
             }
 
-            //TODO: handle default payee amount
+            //handle default payee amount, if present, by adding amount as an item
+            if ($validated['remaining_payee_default_amount'] > 0) {
+                $newItem = TransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'amount' => $validated['remaining_payee_default_amount'],
+                        'category_id' => $validated['remaining_payee_default_category_id'],
+                    ]);
+                $transactionItems[]= $newItem;
+            }
 
             $transaction->transactionItems()->saveMany($transactionItems);
 
@@ -245,6 +255,11 @@ class TransactionController extends Controller
             'to' => [
                 'amount' => $transaction->config->amount_to,
             ],
+            /* TODO: should be loaded here or via ajax?
+            'payeeCategory' => [
+                'id' => ,
+                'text' => ,
+            ],*/
             'transactionType' => $transaction->transactionType->name,
         ];
 
@@ -322,7 +337,15 @@ class TransactionController extends Controller
             $transactionItems[]= $newItem;
         }
 
-        //TODO: handle default payee amount
+        //handle default payee amount, if present, by adding amount as an item
+        if ($validated['remaining_payee_default_amount'] > 0) {
+            $newItem = TransactionItem::create([
+                    'transaction_id' => $transaction->id,
+                    'amount' => $validated['remaining_payee_default_amount'],
+                    'category_id' => $validated['remaining_payee_default_category_id'],
+                ]);
+            $transactionItems[]= $newItem;
+        }
 
         $transaction->transactionItems()->delete();
         $transaction->transactionItems()->saveMany($transactionItems);

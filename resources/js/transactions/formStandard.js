@@ -88,6 +88,7 @@ window.transactionData = {
 		}
 
 		$("#payee_category_name").html((this.payeeCategory.id ? "</br>(" + this.payeeCategory.text + ")" : ""));
+		$("#remaining_payee_default_category_id").val((this.payeeCategory.id ? this.payeeCategory.id : ""));
 		this.updateTotals();
     },
 
@@ -125,7 +126,7 @@ window.transactionData = {
 		//display and distribute results
 		$("#transaction_item_total").html(this.itemTotal);
 		$("#remaining_payee_default").html(this.remainingAmountToPayeeDefault);
-		$("#remaining_payee_default_input").val(this.remainingAmountToPayeeDefault);
+		$("#remaining_payee_default_amount").val(this.remainingAmountToPayeeDefault);
 		$("#remaining_not_allocated").html(this.remainingAmountNotAllocated);
 
         //update remaining copy buttons
