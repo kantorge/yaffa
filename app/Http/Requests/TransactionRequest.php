@@ -24,15 +24,19 @@ class TransactionRequest extends FormRequest
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
         ];
 
-        //basic transaction has no schedule at all, or has schedule enabled
-        $isBasic = (!$this->get('schedule') && ! $this->get('budget')) || $this->get('schedule');
+        //basic transaction has no schedule at all, or has only schedule enabled
+        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
 
         //adjust date and schedule related rules
         if (   $this->get('schedule')
             || $this->get('budget')) {
 
             $rules = array_merge($rules, [
-                'reconciled' => ['boolean', new IsFalsy],
+                'reconciled' => [
+                    'boolean',
+                    //scheduled or budgeted items cannot be reconciled
+                    new IsFalsy,
+                ],
 
                 'schedule_start' => 'required|date',
                 'schedule_next' => 'required|date|after_or_equal:schedule_start|before_or_equal:shedule_end',
@@ -49,14 +53,24 @@ class TransactionRequest extends FormRequest
 
         //adjustment based on transaction type
         if ($this->get('config_type') === 'transaction_detail_standard') {
+            //any standard transactions have common rules for items
             $rules = array_merge($rules, [
                 'transactionItems' => 'array',
                 'transactionItems.*' => 'array',
-                'transactionItems.*.amount' => 'nullable|numeric|gt:0',
-                'transactionItems.*.category' => 'nullable|exists:categories,id',
+                'transactionItems.*.amount' => [
+                    'nullable',
+                    'required_with:transactionItems.*.category,transactionItems.*.comment,transactionItems.*.tags',
+                    'numeric',
+                    'gt:0',
+                ],
+                'transactionItems.*.category_id' => [
+                    'nullable',
+                    'required_with:transactionItems.*.amount',
+                    'exists:categories,id',
+                ],
                 'transactionItems.*.comment' => 'nullable|max:191',
                 'transactionItems.*.tags' => 'array',
-                //TODO: rule validation with option to create new
+                //TODO: rule validation with option to create new tag
                 //'transactionItems.*.tags.*' => 'nullable|exists:tags,id',
             ]);
 

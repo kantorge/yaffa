@@ -248,6 +248,25 @@ class TransactionController extends Controller
 
         //dd($transaction);
 
+        //check if payee data needs to be filled
+        if ($transaction->config->accountFrom->config_type == 'payee') {
+            $payee = \App\AccountEntity::
+                find($transaction->config->account_from_id)
+                ->load([
+                    'config',
+                    'config.category'
+                ]);
+        } else if ($transaction->config->accountTo->config_type == 'payee') {
+            $payee = \App\AccountEntity::
+                find($transaction->config->account_to_id)
+                ->load([
+                    'config',
+                    'config.category'
+                ]);
+        } else {
+            $payee = null;
+        }
+
         $baseTransactionData = [
             'from' => [
                 'amount' => $transaction->config->amount_from,
@@ -255,11 +274,10 @@ class TransactionController extends Controller
             'to' => [
                 'amount' => $transaction->config->amount_to,
             ],
-            /* TODO: should be loaded here or via ajax?
             'payeeCategory' => [
-                'id' => ,
-                'text' => ,
-            ],*/
+                'id' => ($payee ? $payee->id : null),
+                'text' => ($payee ? $payee->config->category->full_name : null),
+            ],
             'transactionType' => $transaction->transactionType->name,
         ];
 
@@ -426,12 +444,35 @@ class TransactionController extends Controller
         //remove Id, so item is considered a new transaction
         $transaction->id = null;
 
+        //check if payee data needs to be filled
+        if ($transaction->config->accountFrom->config_type == 'payee') {
+            $payee = \App\AccountEntity::
+                find($transaction->config->account_from_id)
+                ->load([
+                    'config',
+                    'config.category'
+                ]);
+        } else if ($transaction->config->accountTo->config_type == 'payee') {
+            $payee = \App\AccountEntity::
+                find($transaction->config->account_to_id)
+                ->load([
+                    'config',
+                    'config.category'
+                ]);
+        } else {
+            $payee = null;
+        }
+
         $baseTransactionData = [
             'from' => [
                 'amount' => $transaction->config->amount_from,
             ],
             'to' => [
                 'amount' => $transaction->config->amount_to,
+            ],
+            'payeeCategory' => [
+                'id' => ($payee ? $payee->id : null),
+                'text' => ($payee ? $payee->config->category->full_name : null),
             ],
             'transactionType' => $transaction->transactionType->name,
         ];

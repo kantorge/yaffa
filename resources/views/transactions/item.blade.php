@@ -3,7 +3,11 @@
         <div class="col-md-6">
             <div class="form-group">
                 <label>Category</label>
-                <select class="form-control category" style="width:100%" name="transactionItems[{{ $counter }}][category]">
+                <select
+                    class="form-control category"
+                    name="transactionItems[{{ $counter }}][category_id]"
+                    style="width:100%"
+                >
                     @if(isset($item['category']))
                         <option value="{{ $item['category']['id'] }}" selected="selected">{{ $item['category']['full_name'] }}</option>
                     @endif
