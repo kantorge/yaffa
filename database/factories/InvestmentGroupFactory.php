@@ -1,13 +1,29 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use App\InvestmentGroup;
-use App\Model;
-use Faker\Generator as Faker;
+use App\Models\InvestmentGroup;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(InvestmentGroup::class, function (Faker $faker) {
-    return [
-        'name' => $faker->unique()->text(mt_rand(10, 50)),
-    ];
-});
+class InvestmentGroupFactory extends Factory
+{
+
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = InvestmentGroup::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        return [
+            'name' => $this->faker->unique()->text(mt_rand(10, 50)),
+        ];
+    }
+}

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Currency;
-use App\CurrencyRate;
+use App\Models\Currency;
+use App\Models\CurrencyRate;
 use Illuminate\Http\Request;
 use JavaScript;
 

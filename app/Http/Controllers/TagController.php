@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Tag;
+use App\Models\Tag;
 use App\Http\Requests\TagRequest;
 use Illuminate\Http\Request;
 use JavaScript;

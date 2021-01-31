@@ -12,7 +12,7 @@ class CurrencyTest extends TestCase
         parent::setUp();
 
         $this->setBaseRoute('currencies');
-        $this->setBaseModel('App\Currency');
+        $this->setBaseModel('App\Models\Currency');
     }
 
     /** @test */

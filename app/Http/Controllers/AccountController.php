@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Account;
-use App\AccountEntity;
-use App\AccountGroup;
-use App\Currency;
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\AccountGroup;
+use App\Models\Currency;
 use App\Http\Requests\AccountEntityRequest;
 use Illuminate\Http\Request;
 use JavaScript;

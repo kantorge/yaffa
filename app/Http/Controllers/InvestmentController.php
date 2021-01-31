@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Investment;
-use App\InvestmentGroup;
-use App\InvestmentPriceProvider;
-use App\Currency;
-use App\Transaction;
+use App\Models\Investment;
+use App\Models\InvestmentGroup;
+use App\Models\InvestmentPriceProvider;
+use App\Models\Currency;
+use App\Models\Transaction;
 use App\Http\Requests\InvestmentRequest;
-use App\InvestmentPrice;
+use App\Models\InvestmentPrice;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use JavaScript;
@@ -179,7 +179,7 @@ class InvestmentController extends Controller
             where('schedule', 0)
             ->whereHasMorph(
                 'config',
-                [\App\TransactionDetailInvestment::class],
+                [\App\Models\TransactionDetailInvestment::class],
                 function (Builder $query) use ($investment) {
                     $query->Where('investment_id', $investment->id);
                 }

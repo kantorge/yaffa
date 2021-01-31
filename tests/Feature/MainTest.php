@@ -27,7 +27,7 @@ class MainTest extends TestCase
     /** @test */
     public function user_can_view_account_history()
     {
-        $response = $this->get(route("accounts.history", \App\Account::inRandomOrder()->first()->id));
+        $response = $this->get(route("accounts.history", \App\Models\Account::inRandomOrder()->first()->id));
         //$response = $this->get(route("accounts.history", 1));
 
         $response->assertStatus(200);

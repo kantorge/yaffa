@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\InvestmentGroup;
+use App\Models\InvestmentGroup;
 use App\Http\Requests\InvestmentGroupRequest;
 use Illuminate\Http\Request;
 use JavaScript;

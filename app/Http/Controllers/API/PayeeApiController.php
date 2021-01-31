@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Account;
-use App\AccountEntity;
+use App\Models\AccountEntity;
 use App\Http\Controllers\Controller;
-use App\Payee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 

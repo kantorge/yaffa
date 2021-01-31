@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\AccountGroup;
+use App\Models\AccountGroup;
 use App\Http\Requests\AccountGroupRequest;
 use Illuminate\Http\Request;
 use JavaScript;

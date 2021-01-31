@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Account;
-use App\Payee;
-use App\TransactionDetailStandard;
-use App\TransactionDetailInvestment;
+use App\Models\Account;
+use App\Models\Payee;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionDetailInvestment;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
         //load list of active accounts to all views
         //TODO: this fails during a clean migration, should be solved without try-catch
         try {
-            $accounts = \App\AccountEntity
+            $accounts = \App\Models\AccountEntity
                 ::select('name', 'id')
                 ->where('config_type', 'account')
                 ->where('active', 1)

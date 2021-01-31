@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
-use App\AccountEntity;
-use App\Category;
-use App\Investment;
-use App\Tag;
-use App\Transaction;
-use App\TransactionItem;
-use App\TransactionType;
-use App\TransactionDetailStandard;
-use App\TransactionDetailInvestment;
-use App\TransactionSchedule;
+use App\Models\AccountEntity;
+use App\Models\Category;
+use App\Models\Investment;
+use App\Models\Tag;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use App\Models\TransactionType;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 use JavaScript;
 
@@ -250,14 +250,14 @@ class TransactionController extends Controller
 
         //check if payee data needs to be filled
         if ($transaction->config->accountFrom->config_type == 'payee') {
-            $payee = \App\AccountEntity::
+            $payee = \App\Models\AccountEntity::
                 find($transaction->config->account_from_id)
                 ->load([
                     'config',
                     'config.category'
                 ]);
         } else if ($transaction->config->accountTo->config_type == 'payee') {
-            $payee = \App\AccountEntity::
+            $payee = \App\Models\AccountEntity::
                 find($transaction->config->account_to_id)
                 ->load([
                     'config',
@@ -446,14 +446,14 @@ class TransactionController extends Controller
 
         //check if payee data needs to be filled
         if ($transaction->config->accountFrom->config_type == 'payee') {
-            $payee = \App\AccountEntity::
+            $payee = \App\Models\AccountEntity::
                 find($transaction->config->account_from_id)
                 ->load([
                     'config',
                     'config.category'
                 ]);
         } else if ($transaction->config->accountTo->config_type == 'payee') {
-            $payee = \App\AccountEntity::
+            $payee = \App\Models\AccountEntity::
                 find($transaction->config->account_to_id)
                 ->load([
                     'config',

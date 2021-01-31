@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Category;
+use App\Models\Category;
 use App\Http\Requests\CategoryRequest;
 use Illuminate\Http\Request;
 use JavaScript;

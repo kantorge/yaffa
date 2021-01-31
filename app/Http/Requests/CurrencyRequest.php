@@ -29,7 +29,7 @@ class CurrencyRequest extends FormRequest
     {
         $currency = $this->route('currency');
 
-        return (new \App\Currency)->rules($currency);
+        return (new \App\Models\Currency)->rules($currency);
     }
 
     /**

@@ -1,41 +1,65 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use App\AccountEntity;
-use App\Investment;
-use App\Model;
-use App\TransactionDetailInvestment;
-use Faker\Generator as Faker;
+use App\Models\AccountEntity;
+use App\Models\Investment;
+use App\Models\TransactionDetailInvestment;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(TransactionDetailInvestment::class, function (Faker $faker) {
-    //TODO: investment és account egy currency-ből legyen, random választással
-    return [
-        //"account_id" => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
-        "account_id" => AccountEntity::where('config_type', 'account')
-            ->whereHasMorph(
-                'config',
-                [\App\Account::class],
-                function (Builder $query) {
-                    $query->where('currency_id', 1);
-                }
-            )
-            ->inRandomOrder()
-            ->first()
-            ->id,
-        "investment_id" => Investment::where('currency_id', 1)
-            ->inRandomOrder()
-            ->first()
-            ->id,
-    ];
-});
+class TransactionDetailInvestmentFactory extends Factory
+{
 
-$factory->state(TransactionDetailInvestment::class, 'buy', function(Faker $faker) {
-    return [
-        "price" => $faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),  //TODO: dynamic based on investment price
-        "quantity" => $faker->randomFloat($nbMaxDecimals = 4, $min = 1, $max = 100),
-        "commission" => $faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),
-        "dividend" => 0,
-    ];
-});
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = TransactionDetailInvestment::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        //TODO: investment és account egy currency-ből legyen, random választással
+        return [
+            //"account_id" => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
+            "account_id" => AccountEntity::where('config_type', 'account')
+                ->whereHasMorph(
+                    'config',
+                    [\App\Models\Account::class],
+                    function (Builder $query) {
+                        $query->where('currency_id', 1);
+                    }
+                )
+                ->inRandomOrder()
+                ->first()
+                ->id,
+            "investment_id" => Investment::where('currency_id', 1)
+                ->inRandomOrder()
+                ->first()
+                ->id,
+        ];
+    }
+
+    /**
+     * Transaction type is BUY
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function buy()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                "price" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),  //TODO: dynamic based on investment price
+                "quantity" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 1, $max = 100),
+                "commission" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),
+                "dividend" => 0,
+            ];
+        });
+    }
+}

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Account;
-use App\AccountEntity;
-use App\Currency;
-use App\Transaction;
+use App\Models\Account;
+use App\Models\AccountEntity;
+use App\Models\Currency;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 //use Illuminate\Http\Request;
@@ -67,7 +67,7 @@ class MainController extends Controller
                     ->where('budget', 0)
                     ->whereHasMorph(
                         'config',
-                        [\App\TransactionDetailStandard::class],
+                        [\App\Models\TransactionDetailStandard::class],
                         function (Builder $query) use ($account) {
                             $query->Where('account_from_id', $account->id);
                             $query->orWhere('account_to_id', $account->id);
@@ -85,7 +85,7 @@ class MainController extends Controller
                     ->where('budget', 0)
                     ->whereHasMorph(
                         'config',
-                        [\App\TransactionDetailInvestment::class],
+                        [\App\Models\TransactionDetailInvestment::class],
                         function (Builder $query) use ($account) {
                             $query->Where('account_id', $account->id);
                         }
@@ -123,7 +123,7 @@ class MainController extends Controller
                 $investments = $account->config->getAssociatedInvestmentsAndQuantity();
                 $account['sum'] += $investments->sum(function($item) {
 
-                    $investment = \App\Investment::find($item['investment']);
+                    $investment = \App\Models\Investment::find($item['investment']);
                     if ($item['quantity'] > 0) {
                         return $item['quantity'] * $investment->getLatestPrice();
                     }
@@ -178,13 +178,13 @@ class MainController extends Controller
         $this->currentAccount = $account->load('config');
 
         //get all accounts and payees so their name can be reused
-        $this->allAccounts = \App\AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = \App\Models\AccountEntity::pluck('name', 'id')->all();
 
         //get all tags
-        $this->allTags = \App\Tag::pluck('name','id')->all();
+        $this->allTags = \App\Models\Tag::pluck('name','id')->all();
 
         //get all categories
-        $this->allCategories = \App\Category::all()->pluck('full_name','id');
+        $this->allCategories = \App\Models\Category::all()->pluck('full_name','id');
 
         //get standard transactions related to selected account
         $standardTransactions = Transaction::
@@ -197,7 +197,7 @@ class MainController extends Controller
             })
             ->whereHasMorph(
                 'config',
-                [\App\TransactionDetailStandard::class],
+                [\App\Models\TransactionDetailStandard::class],
                 function (Builder $query) use ($account) {
                     $query->Where('account_from_id', $account->id);
                     $query->orWhere('account_to_id', $account->id);
@@ -225,7 +225,7 @@ class MainController extends Controller
             })
             ->whereHasMorph(
                 'config',
-                [\App\TransactionDetailInvestment::class],
+                [\App\Models\TransactionDetailInvestment::class],
                 function (Builder $query) use ($account) {
                     $query->Where('account_id', $account->id);
                 }

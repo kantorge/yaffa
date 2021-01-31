@@ -12,7 +12,7 @@ class TagTest extends TestCase
         parent::setUp();
 
         $this->setBaseRoute('tags');
-        $this->setBaseModel('App\Tag');
+        $this->setBaseModel('App\Models\Tag');
     }
 
     /** @test */

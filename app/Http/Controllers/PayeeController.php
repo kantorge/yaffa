@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\AccountEntity;
-use App\Category;
+use App\Models\AccountEntity;
+use App\Models\Category;
 use App\Http\Requests\AccountEntityRequest;
 use App\Payee;
 use Illuminate\Http\Request;

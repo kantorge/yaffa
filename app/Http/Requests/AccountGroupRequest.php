@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-
 class AccountGroupRequest extends FormRequest
 {
     /**
@@ -26,9 +25,9 @@ class AccountGroupRequest extends FormRequest
      */
     public function rules()
     {
-        $accountGroup = $this->route('accountgroup');
-
-        return (new \App\AccountGroup)->rules($accountGroup);
+        return [
+            'name' => 'required|min:2|max:191|unique:account_groups,name' . \Request::instance()->id,
+        ];
     }
 
     /**

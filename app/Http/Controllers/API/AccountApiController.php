@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Account;
-use App\AccountEntity;
+use App\Models\Account;
+use App\Models\AccountEntity;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -55,7 +55,7 @@ class AccountApiController extends Controller
 		}
 
         $account = Account::find($request->get('account_id'));
-        $currency = \App\Currency::find($account->currency_id);
+        $currency = \App\Models\Currency::find($account->currency_id);
 
 		echo $currency->suffix;
     }

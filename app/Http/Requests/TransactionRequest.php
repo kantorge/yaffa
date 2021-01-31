@@ -206,7 +206,7 @@ class TransactionRequest extends FormRequest
         //get transaction type ID by name
         if ($this->transaction_type) {
             $this->merge([
-                'transaction_type_id' => \App\TransactionType::where('name', $this->transaction_type)->first()->id
+                'transaction_type_id' => \App\Models\TransactionType::where('name', $this->transaction_type)->first()->id
             ]);
         }
 
