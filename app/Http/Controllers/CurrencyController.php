@@ -20,7 +20,11 @@ class CurrencyController extends Controller
         //Show all currencies from the database and return to view
         $currencies = Currency::all();
 
-        $baseCurrency = Currency::where('base', 1)->firstOrFail();
+        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
+            return Currency::orderBy('id')->firstOr(function () {
+                return null;
+            });
+        });
 
         //support DataTables with action URLs
         $currencies->map(function ($currency) {

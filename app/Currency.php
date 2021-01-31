@@ -42,7 +42,15 @@ class Currency extends Model
     }
 
     public function rate() {
-        $baseCurrency = Currency::where('base', 1)->firstOrFail();
+        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
+            return Currency::orderBy('id')->firstOr(function () {
+                return null;
+            });
+        });
+
+        if (is_null($baseCurrency)) {
+            return null;
+        }
 
         $rate = CurrencyRate::where('from_id', $this->id)
                                     ->where('to_id', $baseCurrency->id)

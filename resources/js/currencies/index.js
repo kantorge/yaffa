@@ -3,6 +3,7 @@ require( 'datatables.net-bs' );
 
 $(function () {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    window.baseCurrency = window.baseCurrency || {};
 
     $('#table').DataTable({
         data: currencies,
