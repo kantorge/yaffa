@@ -165,7 +165,7 @@
             <input
                 name="id"
                 type="hidden"
-                value="{{old('id', $account['id'] ?? '' )}}"
+                value="{{old('id', $account->id ?? '' )}}"
             >
             <input
                 name="config_type"

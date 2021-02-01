@@ -151,7 +151,7 @@
             <input
                 name="id"
                 type="hidden"
-                value="{{old('id', $currency['id'] ?? '' )}}"
+                value="{{old('id', $currency->id ?? '' )}}"
             >
 
             <input class="btn btn-primary" type="submit" value="Save">

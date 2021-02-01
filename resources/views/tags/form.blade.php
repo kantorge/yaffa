@@ -58,7 +58,7 @@
             <input
                 name="id"
                 type="hidden"
-                value="{{old('id', $tag['id'] ?? '' )}}"
+                value="{{old('id', $tag->id ?? '' )}}"
             >
 
             <input class="btn btn-primary" type="submit" value="Save">

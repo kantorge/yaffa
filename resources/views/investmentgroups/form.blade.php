@@ -58,7 +58,7 @@
             <input
                 name="id"
                 type="hidden"
-                value="{{old('id', $investmentGroup['id'] ?? '' )}}"
+                value="{{old('id', $investmentGroup->id ?? '' )}}"
             >
 
             <input class="btn btn-primary" type="submit" value="Save">
