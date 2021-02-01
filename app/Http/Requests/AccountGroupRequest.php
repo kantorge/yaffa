@@ -26,7 +26,7 @@ class AccountGroupRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:account_groups,name' . \Request::instance()->id,
+            'name' => 'required|min:2|max:191|unique:account_groups,name,' . \Request::instance()->id,
         ];
     }
 
