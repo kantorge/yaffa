@@ -92,6 +92,12 @@ class AccountGroupTest extends TestCase
     /** @test */
     public function user_can_delete_an_existing_account_group()
     {
-        $this->destroy();
+        //create an item
+        $this->create();
+        $model = $this->base_model;
+        //select a random item
+        $item = $model::inRandomOrder()->first()->id;
+        //remove it
+        $this->destroy($item);
     }
 }

@@ -80,15 +80,16 @@ class TransactionSeeder extends Seeder
         //$newTransactionItems = factory(TransactionItem::class, rand(1, 5))->create([
         $newTransactionItems = TransactionItem::factory()
                                     ->count(rand(1, 5))
+                                    /* TODO: this should be used, but new tags are created instead of using existing ones
                                     ->has(
                                         Tag::factory()
                                         ->count(rand(0, 2))
                                     )
+                                    */
                                     ->create([
                                         'transaction_id' => $transaction->id,
                                     ]);
 
-        /*
         //Grab all tags
         //TODO: can this be called only once per seeding?
         $tags = Tag::all();
@@ -99,7 +100,6 @@ class TransactionSeeder extends Seeder
                 $tags->random(rand(0, 2))->pluck('id')->toArray()
             );
         });
-        */
 
         //update totals
         $transaction->config->amount_from = $transaction->config->amount_to = $transaction->transactionItems->sum('amount');

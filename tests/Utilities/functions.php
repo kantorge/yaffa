@@ -4,13 +4,13 @@
 
 function create($class, $attributes = [], $times = null)
 {
-    return factory($class, $times)->create($attributes);
+    return $class::factory()->count($times)->create($attributes);
 }
 function make($class, $attributes = [], $times = null)
 {
-    return factory($class, $times)->make($attributes);
+    return $class::factory()->count($times)->make($attributes);
 }
 function raw($class, $attributes = [], $times = null)
 {
-    return factory($class, $times)->raw($attributes);
+    return $class::factory()->count($times)->raw($attributes);
 }

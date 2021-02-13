@@ -45,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
 
         //load list of active accounts to all views
         //TODO: this fails during a clean migration, should be solved without try-catch
+        /*
         try {
             $accounts = \App\Models\AccountEntity
                 ::select('name', 'id')
@@ -58,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
         } catch (Exception $e) {
 
         }
-
+        */
 
         Blade::directive('NiceNumber', function ($expression) {
             return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";
