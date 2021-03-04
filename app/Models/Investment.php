@@ -92,7 +92,7 @@ class Investment extends Model
             )
             ->get();
 
-        $quantity = $transactions->sum(function($transaction) {
+        return $transactions->sum(function($transaction) {
             $operator = $transaction->transactionType->quantity_operator;
             if (!$operator) {
                 return 0;
@@ -102,20 +102,16 @@ class Investment extends Model
                     ? - $transaction->config->quantity
                     : $transaction->config->quantity);
         });
-
-        return $quantity;
-
     }
 
-    public function getLatestPrice($type = 'combined') {
+    public function getLatestPrice($type = 'combined')
+    {
         $investmentId = $this->id;
 
         if ($type == 'stored' || $type == 'combined') {
             $price = InvestmentPrice::where('investment_id', $investmentId)
                                         ->latest('date')
                                         ->first();
-        } else {
-            $price = null;
         }
 
         if ($type == 'transaction' || $type == 'combined') {
@@ -137,8 +133,6 @@ class Investment extends Model
                 )
                 ->latest('date')
                 ->first();
-        } else {
-            $transaction = null;
         }
 
         if ($type == 'stored') {
@@ -170,5 +164,4 @@ class Investment extends Model
 
         return null;
     }
-
 }

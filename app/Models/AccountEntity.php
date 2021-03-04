@@ -22,8 +22,6 @@ class AccountEntity extends Model
 
     protected $hidden = ['config_id'];
 
-    //protected $with = ['config'];
-
     protected $casts = [
         'active' => 'boolean',
     ];

@@ -65,7 +65,7 @@ class Transaction extends Model
         $tags = [];
 
         $this->transactionItems()
-            ->each(function ($item, $key) use (&$tags) {
+            ->each(function ($item) use (&$tags) {
                 $item->tags->each(function($tag) use (&$tags) {
                     $tags[$tag->id] = $tag->name;
                 } );
@@ -80,7 +80,7 @@ class Transaction extends Model
         $categories = [];
 
         $this->transactionItems()
-            ->each(function ($item, $key) use (&$categories) {
+            ->each(function ($item) use (&$categories) {
                 if ($item->category) {
                     $categories[$item->category_id] = $item->category->full_name;
                 }
@@ -123,11 +123,4 @@ class Transaction extends Model
 
         parent::delete();
     }
-
-    /*
-    public function transactionDetailsStandard()
-    {
-        return $this->hasMany(TransactionDetailStandard::class);
-    }
-    */
 }

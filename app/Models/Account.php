@@ -99,22 +99,21 @@ class Account extends AccountEntity
             )
             ->get();
 
-        $investments = $transactions
+        return $transactions
             ->map(function ($transaction) {
                     $operator = $transaction->transactionType->quantity_operator;
                     if (!$operator) {
                         $quantity = 0;
                     } else {
                         $quantity = ($operator == 'minus'
-                                   ? - $transaction->config->quantity
-                                   : $transaction->config->quantity);
+                                    ? - $transaction->config->quantity
+                                    : $transaction->config->quantity);
                     }
 
                     return [
                         'investment' => $transaction->config->investment,
                         'quantity' => $quantity,
                     ];
-                //return $transaction->config->investment_id;
             })
             ->groupBy('investment.id')
             ->map(function ($investment, $key) {
@@ -123,9 +122,5 @@ class Account extends AccountEntity
                     'quantity' => $investment->sum('quantity'),
                 ];
             });
-
-        return $investments;
-
     }
-
 }

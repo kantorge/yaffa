@@ -11,16 +11,16 @@
     },
     "devDependencies": {
         "axios": "^0.19",
-        "cross-env": "^7.0",
-        "laravel-mix": "^5.0.7",
-        "lodash": "^4.17.13",
+        "cross-env": "^7.0.3",
+        "laravel-mix": "^5.0.9",
+        "lodash": "^4.17.21",
         "node-sass": "^4.14.1",
         "resolve-url-loader": "^3.1.2",
         "sass-loader": "^8.0.0",
         "vue-template-compiler": "^2.6.12"
     },
     "dependencies": {
-        "@amcharts/amcharts4": "^4.10.10",
+        "@amcharts/amcharts4": "^4.10.16",
         "currency.js": "^2.0.3",
         "datatables.net": "^1.10.23",
         "datatables.net-bs": "^1.10.23",
@@ -29,7 +29,7 @@
         "mathjs": "^7.5.1",
         "moment": "^2.29.1",
         "overlayscrollbars": "^1.13.0",
-        "rrule": "^2.6.6",
+        "rrule": "^2.6.8",
         "select2": "^4.0.13"
     }
 }

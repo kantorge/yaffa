@@ -45,13 +45,11 @@ class TagController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  Tag  $tag
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Tag $tag)
     {
-        $tag = Tag::find($id);
-
         return view('tags.form',['tag'=> $tag]);
     }
 
@@ -60,9 +58,7 @@ class TagController extends Controller
 
         $validated = $request->validated();
 
-        $tag = New Tag();
-        $tag->fill($validated);
-        $tag->save();
+        Tag::create($validated);
 
         add_notification('Tag added', 'success');
 
@@ -74,9 +70,9 @@ class TagController extends Controller
         // Retrieve the validated input data
         $validated = $request->validated();
 
-        $tag = Tag::find($request->input('id'));
-        $tag->fill($validated);
-        $tag->save();
+        Tag::find($request->input('id'))
+            ->fill($validated)
+            ->save();
 
         add_notification('Tag updated', 'success');
 
@@ -86,14 +82,11 @@ class TagController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  Tag  $tag
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Tag $tag)
     {
-        //Retrieve item
-        $tag = Tag::find($id);
-        //delete
         $tag->delete();
 
         add_notification('Tag deleted', 'success');
