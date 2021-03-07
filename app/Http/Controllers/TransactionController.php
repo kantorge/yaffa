@@ -18,51 +18,52 @@ use JavaScript;
 
 class TransactionController extends Controller
 {
-    private function redirectSelector($action, Transaction $transaction){
+    private function redirectSelector(string $action, Transaction $transaction)
+    {
+        switch ($action) {
+            case 'newStandard':
+                $route = redirect()
+                    ->route('transactions.createStandard');
+                break;
+            case 'newInvestment':
+                $route = redirect()
+                    ->route('transactions.createInvestment');
+                break;
+            case 'cloneInvestment':
+                $route = redirect()
+                    ->route('transactions.cloneInvestment',
+                        ['transaction' => $transaction]);
+                break;
+            case 'cloneStandard':
+                $route = redirect()
+                    ->route('transactions.cloneStandard',
+                        ['transaction' => $transaction]);
+                break;
+            case 'returnToAccount':
+                switch($transaction->transactionType->name) {
+                    case 'withdrawal':
+                    case 'transfer':
+                        $account = $transaction->config->account_from_id;
+                        break;
+                    case 'deposit':
+                        $account = $transaction->config->account_to_id;
+                        break;
+                    //investments
+                    default:
+                        $account = $transaction->config->account_id;
+                }
 
-        if ($action == 'newStandard') {
-            return redirect()
-                ->route('transactions.createStandard');
+                $route = redirect()
+                    ->route('accounts.history',
+                        ['account' => $account]);
+                break;
+
+            //returnToDashboard
+            default:
+                $route = redirect()->route('home');
         }
 
-        if ($action == 'newInvestment') {
-            return redirect()
-                ->route('transactions.createInvestment');
-        }
-
-        if ($action == 'cloneInvestment') {
-            return redirect()
-                ->route('transactions.cloneInvestment',
-                 ['transaction' => $transaction]);
-        }
-
-        if ($action == 'cloneStandard') {
-            return redirect()
-                ->route('transactions.cloneStandard',
-                 ['transaction' => $transaction]);
-        }
-
-        if ($action == 'returnToAccount') {
-            switch($transaction->transactionType->name) {
-                case 'withdrawal':
-                case 'transfer':
-                    $account = $transaction->config->account_from_id;
-                    break;
-                case 'deposit':
-                    $account = $transaction->config->account_to_id;
-                    break;
-                //investments
-                default:
-                    $account = $transaction->config->account_id;
-            }
-
-            return redirect()
-                ->route('accounts.history',
-                 ['account' => $account]);
-        }
-
-        //returnToDashboard
-        return redirect('/');
+        return $route;
     }
 
     public function createStandard()
@@ -113,26 +114,23 @@ class TransactionController extends Controller
     {
         $validated = $request->validated();
 
-        //dd($validated);
-
         $transaction = DB::transaction(function () use ($validated) {
             $transaction = Transaction::create($validated);
 
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
-            if (   $transaction->schedule
-               || $transaction->budget) {
+            if ($transaction->schedule || $transaction->budget) {
                 $transactionSchedule = TransactionSchedule::create(
-                        [
-                            'transaction_id' => $transaction->id,
-                            'start_date' => $validated['schedule_start'],
-                            'next_date' => $validated['schedule_next'],
-                            'end_date' => $validated['schedule_end'],
-                            'frequency' => $validated['schedule_frequency'],
-                            'interval' => $validated['schedule_interval'],
-                            'count' => $validated['schedule_count'],
-                        ]
+                    [
+                        'transaction_id' => $transaction->id,
+                        'start_date' => $validated['schedule_start'],
+                        'next_date' => $validated['schedule_next'],
+                        'end_date' => $validated['schedule_end'],
+                        'frequency' => $validated['schedule_frequency'],
+                        'interval' => $validated['schedule_interval'],
+                        'count' => $validated['schedule_count'],
+                    ]
                 );
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
@@ -419,7 +417,7 @@ class TransactionController extends Controller
     }
 
     /**
-     * Show the form for cloning selected resource. (Load model, remove ID)
+     * Show the form for cloning selected resource. (Load model, but remove ID)
      *
      * @param  Transaction $transaction
      * @return \Illuminate\Http\Response
@@ -486,7 +484,7 @@ class TransactionController extends Controller
     }
 
     /**
-     * Show the form for cloning selected resource. (Load model, remove ID)
+     * Show the form for cloning selected resource. (Load model, but remove ID)
      *
      * @param  Transaction $transaction
      * @return \Illuminate\Http\Response
@@ -515,6 +513,7 @@ class TransactionController extends Controller
         return view('transactions.form_investment', [
             'allAccounts' => $allAccounts,
             'transaction' => $transaction,
+            'action' => $action,
         ]);
     }
 
