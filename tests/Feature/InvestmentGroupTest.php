@@ -11,7 +11,7 @@ class InvestmentGroupTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('investmentgroups');
+        $this->setBaseRoute('investment-group');
         $this->setBaseModel('App\Models\InvestmentGroup');
     }
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Http\Requests\CategoryRequest;
-use Illuminate\Http\Request;
 use JavaScript;
 
 class CategoryController extends Controller
@@ -23,7 +22,7 @@ class CategoryController extends Controller
         JavaScript::put([
             'categories' => $categories,
             'editUrl' => route('categories.edit', '#ID#'),
-            'deleteUrl' => action('CategoryController@destroy', '#ID#'),
+            'deleteUrl' => route('categories.destroy', '#ID#'),
         ]);
 
         return view('categories.index');
@@ -42,11 +41,9 @@ class CategoryController extends Controller
 
         $validated = $request->validated();
 
-        $category = New Category();
-        $category->fill($validated);
-        $category->save();
+        Category::create($validated);
 
-        add_notification('Category added', 'success');
+        self::addSimpleSuccessMessage('Category added');
 
         return redirect()->route('categories.index');
     }
@@ -54,17 +51,23 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param Category $category
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Category $category)
     {
-        $category = Category::find($id);
-
         //get all possible parents
-        $parents = Category::whereNull('parent_id')->where('id', '!=',  $id)->pluck('name', 'id');
+        $parents = Category::
+            whereNull('parent_id')
+            ->where('id', '!=',  $category->id)
+            ->pluck('name', 'id');
 
-        return view('categories.form',['category'=> $category, 'parents' => $parents]);
+        return view('categories.form',
+            [
+                'category'=> $category,
+                'parents' => $parents,
+            ]
+        );
     }
 
     public function update(CategoryRequest $request)
@@ -72,11 +75,11 @@ class CategoryController extends Controller
         // Retrieve the validated input data
         $validated = $request->validated();
 
-        $category = Category::find($request->input('id'));
-        $category->fill($validated);
-        $category->save();
+        Category::find($request->input('id'))
+            ->fill($validated)
+            ->save();
 
-        add_notification('Category updated', 'success');
+            self::addSimpleSuccessMessage('Category updated');
 
         return redirect()->route('categories.index');
     }
@@ -84,18 +87,15 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param Category $category
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy( Category $category)
     {
-        //Retrieve item
-        $category = Category::find($id);
-
         //delete
         $category->delete();
 
-        add_notification('Category deleted', 'success');
+        self::addSimpleSuccessMessage('Category deleted');
 
         return redirect()->route('categories.index');
     }

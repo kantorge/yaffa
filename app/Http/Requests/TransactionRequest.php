@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Components\FlashMessages;
 use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TransactionRequest extends FormRequest
 {
+    use FlashMessages;
+
     public function authorize()
     {
         return true;
@@ -191,7 +194,7 @@ class TransactionRequest extends FormRequest
 
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
-                add_notification($message, 'danger');
+                self::addSimpleDangerMessage($message);
             }
         });
     }

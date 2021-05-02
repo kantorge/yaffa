@@ -10,7 +10,6 @@ use App\Models\Transaction;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\InvestmentPrice;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use JavaScript;
 
 class InvestmentController extends Controller
@@ -37,11 +36,11 @@ class InvestmentController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
-            'editUrl' => route('investments.edit', '#ID#'),
-            'deleteUrl' => action('InvestmentController@destroy', '#ID#'),
+            'editUrl' => route('investment.edit', '#ID#'),
+            'deleteUrl' => route('investment.destroy', '#ID#'),
         ]);
 
-        return view('investments.index');
+        return view('investment.index');
     }
 
     public function edit($id)
@@ -57,7 +56,7 @@ class InvestmentController extends Controller
         //get all price providers
         $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
 
-        return view('investments.form', [
+        return view('investment.form', [
             'investment'=> $investment,
             'allInvestmentGropus' => $allInvestmentGropus,
             'allCurrencies' => $allCurrencies,
@@ -72,9 +71,9 @@ class InvestmentController extends Controller
         $investment->fill($validated);
         $investment->save();
 
-        add_notification('Investment updated', 'success');
+        self::addSimpleSuccessMessage('Investment updated');
 
-        return redirect()->route('investments.index');
+        return redirect()->route('investment.index');
     }
 
     public function create()
@@ -88,7 +87,7 @@ class InvestmentController extends Controller
         //get all price providers
         $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
 
-        return view('investments.form', [
+        return view('investment.form', [
             'allInvestmentGropus' => $allInvestmentGropus,
             'allCurrencies' => $allCurrencies,
             'allInvestmentPriceProviders' => $allInvestmentPriceProviders,
@@ -102,9 +101,9 @@ class InvestmentController extends Controller
         $investment = Investment::create($validated);
         $investment->save();
 
-        add_notification('Investment added', 'success');
+        self::addSimpleSuccessMessage('Investment added');
 
-        return redirect()->route('investments.index');
+        return redirect()->route('investment.index');
     }
 
     /**
@@ -120,9 +119,9 @@ class InvestmentController extends Controller
         //delete
         $investment->delete();
 
-        add_notification('Investment deleted', 'success');
+        self::addSimpleSuccessMessage('Investment deleted');
 
-        return redirect()->route('investments.index');
+        return redirect()->route('investment.index');
     }
 
     public function summary()
@@ -157,10 +156,10 @@ class InvestmentController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
-            'urlDetails' => route('investments.show', '#ID#'),
+            'urlDetails' => route('investment.show', '#ID#'),
         ]);
 
-        return view('investments.summary');
+        return view('investment.summary');
     }
 
     public function show(Investment $investment)
@@ -269,12 +268,12 @@ class InvestmentController extends Controller
             'quantities' => $quantities,
             'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
             'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
-            'urlDelete' => action('TransactionController@destroy', '#ID#'),
+            'urlDelete' => route('transactions.destroy', '#ID#'),
             //'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
             //'urlEnterWithEditStandard' => route('transactions.enterWithEditStandard', '#ID#'),
         ]);
 
-        return view('investments.show', [
+        return view('investment.show', [
             'investment' => $investment,
         ]);
     }

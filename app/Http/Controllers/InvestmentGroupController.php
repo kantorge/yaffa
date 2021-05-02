@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\InvestmentGroup;
 use App\Http\Requests\InvestmentGroupRequest;
-use Illuminate\Http\Request;
 use JavaScript;
 
 class InvestmentGroupController extends Controller
@@ -20,7 +19,7 @@ class InvestmentGroupController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -30,43 +29,38 @@ class InvestmentGroupController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investmentGroups' => $investmentGroups,
-            'editUrl' => route('investmentgroups.edit', '#ID#'),
-            'deleteUrl' => action('InvestmentGroupController@destroy', '#ID#'),
+            'editUrl' => route('investment-group.edit', '#ID#'),
+            'deleteUrl' => route('investment-group.destroy', '#ID#'),
         ]);
 
-        return view('investmentgroups.index');
+        return view('investment-group.index');
     }
 
     public function create()
     {
-        return view('investmentgroups.form');
+        return view('investment-group.form');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param InvestmentGroup $investmentGroup
+     * @return \Illuminate\View\View
      */
-    public function edit($id)
+    public function edit(InvestmentGroup $investmentGroup)
     {
-        $investmentGroup = InvestmentGroup::find($id);
-
-        return view('investmentgroups.form',['investmentGroup'=> $investmentGroup]);
+        return view('investment-group.form', ['investmentGroup'=> $investmentGroup]);
     }
 
     public function store(InvestmentGroupRequest $request)
     {
-
         $validated = $request->validated();
 
-        $investmentGroup = New InvestmentGroup();
-        $investmentGroup->fill($validated);
-        $investmentGroup->save();
+        InvestmentGroup::create($validated);
 
-        add_notification('Investment group added', 'success');
+        self::addSimpleSuccessMessage('Investment group added');
 
-        return redirect()->route('investmentgroups.index');
+        return redirect()->route('investment-group.index');
     }
 
     public function update(InvestmentGroupRequest $request)
@@ -74,35 +68,32 @@ class InvestmentGroupController extends Controller
         // Retrieve the validated input data
         $validated = $request->validated();
 
-        $investmentGroup = InvestmentGroup::find($request->input('id'));
-        $investmentGroup->fill($validated);
-        $investmentGroup->save();
+        InvestmentGroup::find($request->input('id'))
+            ->fill($validated)
+            ->save();
 
-        add_notification('Investment group updated', 'success');
+        self::addSimpleSuccessMessage('Investment group updated');
 
-        return redirect()->route('investmentgroups.index');
+        return redirect()->route('investment-group.index');
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param InvestmentGroup $investmentGroup
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy( InvestmentGroup $investmentGroup)
     {
-        //Retrieve item
-        $investmentGroup = InvestmentGroup::find($id);
-        //delete
         try {
             $investmentGroup->delete();
-            add_notification('Investment group deleted', 'success');
-            return redirect()->route('investmentgroups.index');
+            self::addSimpleSuccessMessage('Investment group deleted');
+            return redirect()->route('investment-group.index');
         } catch(\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                add_notification('Investment group is in use, cannot be deleted', 'danger');
+                self::addSimpleDangerMessage('Investment group is in use, cannot be deleted');
             } else {
-                add_notification('Database error: ' . $e->errorInfo[2], 'danger');
+                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
             }
             return redirect()->back();
         }

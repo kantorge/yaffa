@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use App\Http\Requests\TagRequest;
-use Illuminate\Http\Request;
 use JavaScript;
 
 class TagController extends Controller
@@ -20,49 +19,48 @@ class TagController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        //Show all account groups from the database and return to view
+        //Show all tags from the database and return to view
         $tags = $this->tag->all();
 
         //pass data for DataTables
         JavaScript::put([
             'tags' => $tags,
-            'editUrl' => route('tags.edit', '#ID#'),
-            'deleteUrl' => action('TagController@destroy', '#ID#'),
+            'editUrl' => route('tag.edit', '#ID#'),
+            'deleteUrl' => route('tag.destroy', '#ID#'),
         ]);
 
-        return view('tags.index');
+        return view('tag.index');
     }
 
     public function create()
     {
-        return view('tags.form');
+        return view('tag.form');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  Tag  $tag
-     * @return \Illuminate\Http\Response
+     * @param Tag $tag
+     * @return \Illuminate\View\View
      */
     public function edit(Tag $tag)
     {
-        return view('tags.form',['tag'=> $tag]);
+        return view('tag.form', ['tag'=> $tag]);
     }
 
     public function store(TagRequest $request)
     {
-
         $validated = $request->validated();
 
         Tag::create($validated);
 
-        add_notification('Tag added', 'success');
+        self::addSimpleSuccessMessage('Tag added');
 
-        return redirect()->route('tags.index');
+        return redirect()->route('tag.index');
     }
 
     public function update(TagRequest $request)
@@ -74,9 +72,9 @@ class TagController extends Controller
             ->fill($validated)
             ->save();
 
-        add_notification('Tag updated', 'success');
+        self::addSimpleSuccessMessage('Tag updated');
 
-        return redirect()->route('tags.index');
+        return redirect()->route('tag.index');
     }
 
     /**
@@ -89,9 +87,9 @@ class TagController extends Controller
     {
         $tag->delete();
 
-        add_notification('Tag deleted', 'success');
+        self::addSimpleSuccessMessage('Tag deleted');
 
-        return redirect()->route('tags.index');
+        return redirect()->route('tag.index');
     }
 
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\View\Composers;
 
+use App\Models\AccountEntity;
 use Illuminate\View\View;
 
 class AccountListComposer
@@ -15,8 +16,8 @@ class AccountListComposer
      */
     public function compose(View $view)
     {
-        $accounts = \App\Models\AccountEntity
-            ::select('name', 'id')
+        $accounts = AccountEntity::
+              select('name', 'id')
             ->where('config_type', 'account')
             ->where('active', 1)
             ->orderBy('name')

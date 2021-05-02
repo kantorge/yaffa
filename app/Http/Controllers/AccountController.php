@@ -7,7 +7,6 @@ use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Http\Requests\AccountEntityRequest;
-use Illuminate\Http\Request;
 use JavaScript;
 //use Barryvdh\Debugbar\Facade as Debugbar;
 
@@ -35,11 +34,11 @@ class AccountController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'accounts' => $accounts,
-            'editUrl' => route('accounts.edit', '#ID#'),
-            'deleteUrl' => action('AccountController@destroy', '#ID#'),
+            'editUrl' => route('account.edit', '#ID#'),
+            'deleteUrl' => route('account.destroy', '#ID#'),
         ]);
 
-        return view('accounts.index');
+        return view('account.index');
     }
 
     public function edit($id)
@@ -53,7 +52,7 @@ class AccountController extends Controller
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('accounts.form',
+        return view('account.form',
             [
                 'account'=> $account,
                 'allAccountGroups' => $allAccountGroups,
@@ -72,26 +71,24 @@ class AccountController extends Controller
 
         $account->push();
 
-        add_notification('Account updated', 'success');
+        self::addSimpleSuccessMessage('Account updated');
 
-        return redirect()->route('accounts.index');
+        return redirect()->route('account.index');
     }
 
     public function create()
     {
-
         //get all account groups
         $allAccountGroups = AccountGroup::pluck('name', 'id')->all();
 
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('accounts.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
+        return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
 
     public function store(AccountEntityRequest $request)
     {
-
         $validated = $request->validated();
 
         $account = new AccountEntity($validated);
@@ -101,14 +98,14 @@ class AccountController extends Controller
 
         $account->push();
 
-        add_notification('Account added', 'success');
+        self::addSimpleSuccessMessage('Account added');
 
-        return redirect()->route('accounts.index');
+        return redirect()->route('account.index');
     }
 
     public function show(AccountEntity $account) {
         $account->load('config');
-        return view('accounts.show', compact('account'));
+        return view('account.show', compact('account'));
     }
 
     /**
@@ -124,8 +121,8 @@ class AccountController extends Controller
         //delete
         $account->delete();
 
-        add_notification('Account deleted', 'success');
+        self::addSimpleSuccessMessage('Account deleted');
 
-        return redirect()->route('accounts.index');
+        return redirect()->route('account.index');
     }
 }

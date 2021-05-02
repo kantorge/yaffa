@@ -45,7 +45,7 @@
         <!-- Main content -->
         <section class="content container-fluid">
 
-            @include('messages')
+            @include('notfications')
 
             @yield('content')
 

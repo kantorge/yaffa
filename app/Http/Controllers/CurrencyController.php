@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Currency;
-use App\Models\CurrencyRate;
 use App\Http\Requests\CurrencyRequest;
-use Illuminate\Http\Request;
 use JavaScript;
 
 class CurrencyController extends Controller
@@ -37,7 +35,7 @@ class CurrencyController extends Controller
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
             'editUrl' => route('currencies.edit', '#ID#'),
-            'deleteUrl' => action('CurrencyController@destroy', '#ID#'),
+            'deleteUrl' => route('currencies.destroy', '#ID#'),
         ]);
 
         return view('currencies.index');
@@ -57,7 +55,7 @@ class CurrencyController extends Controller
         $currency->fill($validated);
         $currency->save();
 
-        add_notification('Currency added', 'success');
+        self::addSimpleSuccessMessage('Currency added');
 
         return redirect()->route('currencies.index');
     }
@@ -84,7 +82,7 @@ class CurrencyController extends Controller
         $currency->fill($validated);
         $currency->save();
 
-        add_notification('Currency updated', 'success');
+        self::addSimpleSuccessMessage('Currency updated');
 
         return redirect()->route('currencies.index');
     }
@@ -102,20 +100,20 @@ class CurrencyController extends Controller
 
         //base currency cannot be deleted
         if ($currency->base) {
-            add_notification('Base currency cannot be deleted', 'danger');
+            self::addSimpleDangerMessage('Base currency cannot be deleted');
             return redirect()->back();
         }
 
         //delete
         try {
             $currency->delete();
-            add_notification('Currency deleted', 'success');
+            self::addSimpleSuccessMessage('Currency deleted');
             return redirect()->route('currencies.index');
         } catch(\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                add_notification('Currency is in use, cannot be deleted', 'danger');
+                self::addSimpleDangerMessage('Currency is in use, cannot be deleted');
             } else {
-                add_notification('Database error: ' . $e->errorInfo[2], 'danger');
+                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
             }
             return redirect()->back();
         }

@@ -15,76 +15,76 @@ class TransactionTypeSeeder extends Seeder
     public function run()
     {
         DB::table('transaction_types')->insert([
-            array(
+            [
                 'id' =>  "1",
                 'name' => "withdrawal",
                 'type' => "Standard",
                 "amount_operator" => "minus",
                 "quantity_operator" => null,
-            ),
-            array(
+            ],
+            [
                 'id' =>  "2",
                 'name' => "deposit",
                 'type' => "Standard",
                 "amount_operator" => "plus",
                 "quantity_operator" => null,
-            ),
-            array(
+            ],
+            [
                 'id' =>  "3",
                 'name' => "transfer",
                 'type' => "Standard",
                 "amount_operator" => null,
                 "quantity_operator" => null,
-            ),
-            array(
+            ],
+            [
                 'id' =>  "4",
                 'name' => "Buy",
                 'type' => "Investment",
                 "amount_operator" => "minus",
                 "quantity_operator" => "plus",
-            ),
-            array(
+            ],
+            [
                 'id' =>  "5",
                 'name' => "Sell",
                 'type' => "Investment",
                 "amount_operator" => "plus",
                 "quantity_operator" => "minus",
-            ),
-            array(
+            ],
+            [
                 'id' =>  "6",
                 'name' => "Add shares",
                 'type' => "Investment",
                 "amount_operator" => null,
                 "quantity_operator" => "plus",
-            ),
-            array(
+            ],
+            [
                 'id' =>  "7",
                 'name' => "Remove shares",
                 'type' => "Investment",
                 "amount_operator" => null,
                 "quantity_operator" => "minus",
-            ),
-            array(
+            ],
+            [
                 'id' =>  "8",
                 'name' => "Dividend",
                 'type' => "Investment",
                 "amount_operator" => "plus",
                 "quantity_operator" => null,
-            ),
-            array(
+            ],
+            [
                 'id' =>  "9",
                 'name' => "S-Term Cap Gains",
                 'type' => "Investment",
                 "amount_operator" => "plus",
                 "quantity_operator" => null,
-            ),
-            array(
+            ],
+            [
                 'id' =>  "10",
                 'name' => "L-Term Cap Gains",
                 'type' => "Investment",
                 "amount_operator" => "plus",
                 "quantity_operator" => null,
-            ),
+            ],
         ]);
     }
 }

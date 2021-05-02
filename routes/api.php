@@ -20,16 +20,16 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 */
 
-Route::get('/assets/account', 'API\AccountApiController@getList');
-Route::get('/assets/get_account_currency', 'API\AccountApiController@getAccountCurrencyLabel');
+Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
+Route::get('/assets/get_account_currency', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
 
-Route::get('/assets/category', 'API\CategoryApiController@getList');
+Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
 
-Route::get('/assets/investment', 'API\InvestmentApiController@getList');
+Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
 
-Route::get('/assets/payee', 'API\PayeeApiController@getList');
-Route::get('/assets/get_default_category_for_payee', 'API\PayeeApiController@getDefaultCategoryForPayee');
+Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
+Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');
 
-Route::get('/assets/tag', 'API\TagApiController@getList');
+Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 
-Route::put('/transaction/{transaction}/reconciled/{newState}', 'API\TransactionApiController@reconcile');
+Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');

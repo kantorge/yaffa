@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Components\FlashMessages;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
 class CategoryRequest extends FormRequest
 {
+    use FlashMessages;
+
     public function authorize()
     {
         return true;
@@ -15,13 +18,11 @@ class CategoryRequest extends FormRequest
 
     public function rules()
     {
-        $rules = [
+        return [
             'name' => 'required|min:2|max:191',
             'active' => 'boolean',
             'parent_id' => 'nullable|exists:categories,id',
         ];
-
-        return $rules;
     }
 
     /**
@@ -31,10 +32,9 @@ class CategoryRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
-
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
-                add_notification($message, 'danger');
+                self::addSimpleDangerMessage($message);
             }
         });
     }

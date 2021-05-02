@@ -54,7 +54,7 @@ class TransactionController extends Controller
                 }
 
                 $route = redirect()
-                    ->route('accounts.history',
+                    ->route('account.history',
                         ['account' => $account]);
                 break;
 
@@ -181,7 +181,7 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        add_notification('Transaction added', 'success');
+        self::addSimpleSuccessMessage('Transaction added');
 
         return $this->redirectSelector($request->get('callback'), $transaction);
     }
@@ -216,7 +216,7 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        add_notification('Transaction added', 'success');
+        self::addSimpleSuccessMessage('Transaction added');
 
         return $this->redirectSelector($request->get('callback'), $transaction);
     }
@@ -243,8 +243,6 @@ class TransactionController extends Controller
                 'transactionItems.tags',
                 'transactionItems.category',
             ]);
-
-        //dd($transaction);
 
         //check if payee data needs to be filled
         if ($transaction->config->accountFrom->config_type == 'payee') {
@@ -274,7 +272,7 @@ class TransactionController extends Controller
             ],
             'payeeCategory' => [
                 'id' => ($payee ? $payee->id : null),
-                'text' => ($payee ? $payee->config->category->full_name : null),
+                'text' => ($payee && $payee->config->category ? $payee->config->category->full_name : null),
             ],
             'transactionType' => $transaction->transactionType->name,
         ];
@@ -368,7 +366,7 @@ class TransactionController extends Controller
 
         $transaction->push();
 
-        add_notification('Transaction updated', 'success');
+        self::addSimpleSuccessMessage('Transaction updated');
 
         $this->redirectSelector($validated['callback'], $transaction);
     }
@@ -392,9 +390,9 @@ class TransactionController extends Controller
 
         $transaction->push();
 
-        add_notification('Transaction updated', 'success');
+        self::addSimpleSuccessMessage('Transaction updated');
 
-        return redirect("/");
+        return redirect("home");
     }
 
     /**
@@ -412,7 +410,7 @@ class TransactionController extends Controller
     public function skipScheduleInstance(Transaction $transaction)
     {
         $transaction->transactionSchedule->skipNextInstance();
-        add_notification('Transaction schedule instance skipped', 'success');
+        self::addSimpleSuccessMessage('Transaction schedule instance skipped');
         return redirect()->back();
     }
 

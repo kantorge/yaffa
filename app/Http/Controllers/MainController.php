@@ -157,9 +157,7 @@ class MainController extends Controller
 
         $total = $summary->sum('sum');
 
-        //dd($summary);
-
-        return view('accounts.summary',
+        return view('account.summary',
              [
                 'summary' => array_values($summary->toArray()),
                 'total' => $total,
@@ -353,12 +351,12 @@ class MainController extends Controller
             'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
             'urlCloneStandard' => route('transactions.cloneStandard', '#ID#'),
             'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
-            'urlDelete' => action('TransactionController@destroy', '#ID#'),
+            'urlDelete' => route('transactions.destroy', '#ID#'),
             'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
             'urlEnterWithEditStandard' => route('transactions.enterWithEditStandard', '#ID#'),
         ]);
 
-        return view('accounts.history',
+        return view('account.history',
             [
                 'account' => $account,
                 'withForecast' => $withForecast,

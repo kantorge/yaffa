@@ -1,13 +1,13 @@
 require('./bootstrap');
 
-if (window.location.pathname === '/accountgroups') {
-    require('./accountgroups/index');
+if (window.location.pathname === '/account-group') {
+    require('./account-group/index');
 }
-if (window.location.pathname === '/accounts') {
-    require('./accounts/index');
+if (window.location.pathname === '/account') {
+    require('./account/index');
 }
-if (  /^\/accounts\/history\/\d+/.test(window.location.pathname)) {
-    require('./accounts/history');
+if (  /^\/account\/history\/\d+/.test(window.location.pathname)) {
+    require('./account/history');
 }
 if (window.location.pathname === '/categories') {
     require('./categories/index');
@@ -18,23 +18,23 @@ if (window.location.pathname === '/currencies') {
 if (  /^\/currencyrates\/\d+\/\d+/.test(window.location.pathname)) {
     require('./currencyrates/index');
 }
-if (window.location.pathname === '/investmentgroups') {
-    require('./investmentgroups/index');
+if (window.location.pathname === '/investment-group') {
+    require('./investment-group/index');
 }
-if (window.location.pathname === '/investments') {
-    require('./investments/index');
+if (window.location.pathname === '/investment') {
+    require('./investment/index');
 }
-if (/^\/investments\/summary/.test(window.location.pathname)) {
-    require('./investments/summary');
+if (/^\/investment\/summary/.test(window.location.pathname)) {
+    require('./investment/summary');
 }
-if (/^\/investments\/\d+/.test(window.location.pathname)) {
-    require('./investments/show');
+if (/^\/investment\/\d+/.test(window.location.pathname)) {
+    require('./investment/show');
 }
 
 if (window.location.pathname === '/payees') {
     require('./payees/index');
 }
-if (window.location.pathname === '/tags') {
+if (window.location.pathname === '/tag') {
     require('./tags/index');
 }
 if (   window.location.pathname === '/transactions/create/standard'
@@ -58,7 +58,8 @@ document.getElementById('jump_to_account').addEventListener('change', function()
     if (this.value == '') {
         return false;
     }
-    window.location.href = "/accounts/history/" + this.value;
+    //TODO: get path from route
+    window.location.href = "/account/history/" + this.value;
 });
 
 $( function () {

@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Components\FlashMessages;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-
 class InvestmentGroupRequest extends FormRequest
 {
+    use FlashMessages;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -27,7 +29,12 @@ class InvestmentGroupRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:investment_groups,name,' . \Request::instance()->id,
+            'name' => [
+                'required',
+                'min:2',
+                'max:191',
+                'unique:investment_groups,name,' . \Request::instance()->id,
+            ]
         ];
     }
 
@@ -41,7 +48,7 @@ class InvestmentGroupRequest extends FormRequest
 
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
-                add_notification($message, 'danger');
+                self::addSimpleDangerMessage($message);
             }
         });
     }

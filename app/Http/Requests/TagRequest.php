@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Components\FlashMessages;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TagRequest extends FormRequest
 {
+    use FlashMessages;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -37,10 +40,9 @@ class TagRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
-
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
-                add_notification($message, 'danger');
+                self::addSimpleDangerMessage($message);
             }
         });
     }

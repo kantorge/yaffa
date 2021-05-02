@@ -11,7 +11,7 @@ class TagTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('tags');
+        $this->setBaseRoute('tag');
         $this->setBaseModel('App\Models\Tag');
     }
 

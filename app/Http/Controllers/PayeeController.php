@@ -47,7 +47,7 @@ class PayeeController extends Controller
         JavaScript::put([
             'payees' => $payees,
             'editUrl' => route('payees.edit', '#ID#'),
-            'deleteUrl' => action('PayeeController@destroy', '#ID#'),
+            'deleteUrl' => route('payees.destroy', '#ID#'),
         ]);
 
         return view('payees.index');
@@ -82,7 +82,7 @@ class PayeeController extends Controller
 
         $payee->push();
 
-        add_notification('Payee updated', 'success');
+        self::addSimpleSuccessMessage('Payee updated');
 
         return redirect()->route('payees.index');
     }
@@ -113,15 +113,14 @@ class PayeeController extends Controller
 
         $payee->push();
 
-        add_notification('Payee added', 'success');
+        self::addSimpleSuccessMessage('Payee added');
 
         return redirect()->route('payees.index');
     }
 
     public function show(AccountEntity $account) {
         $account->load('config');
-        //dd($account);
-        return view('accounts.show', compact('account'));
+        return view('account.show', compact('account'));
     }
 
     /**
@@ -134,10 +133,11 @@ class PayeeController extends Controller
     {
         //Retrieve item
         $payee = AccountEntity::find($id);
+
         //delete
         $payee->delete();
 
-        add_notification('Payee deleted', 'success');
+        self::addSimpleSuccessMessage('Payee deleted');
 
         return redirect()->route('payees.index');
     }

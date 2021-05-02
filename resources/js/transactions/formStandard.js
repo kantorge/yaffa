@@ -3,7 +3,7 @@ require( 'daterangepicker');
 require('jquery-validation');
 //require("jquery-validation/dist/additional-methods.js");
 
-math = require("mathjs");
+let math = require("mathjs");
 
 //RRule = require('rrule').RRule;
 
@@ -100,7 +100,7 @@ window.transactionData = {
 			try {
 				var current_amount = math.evaluate(this.value.replace(/\s/g,""));
 			} catch(err) {
-				var current_amount = 0;
+				current_amount = 0;
 			}
 			if (!isNaN(current_amount)) {
 				total_amount += current_amount;
@@ -143,7 +143,7 @@ window.transactionData = {
     isPayeePresent() {
         if (this.from.type !== 'payee' && this.to.type !== 'payee') {
             return false;
-        };
+        }
 
         return (this.payeeCategory.id !== null);
     },
@@ -587,9 +587,8 @@ $( function () {
 		*/
 		var amount = 0;
 		try {
-			var amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
-			//console.log('result: ' +amount);
-			if(amount <= 0) throw Error("Positive number expected");
+			amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
+			if (amount <= 0) throw Error("Positive number expected");
             $(this).val	(amount);
 		} catch (err) {
 
@@ -611,7 +610,7 @@ $( function () {
 		*/
 		var amount = 0;
 		try {
-			var amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
+			amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
 			//console.log('result: ' +amount);
 			if(amount <= 0) throw Error("Positive number expected");
 			$(this).val	(amount);
@@ -883,7 +882,7 @@ function create_transaction_item (itemData) {
 
     transactionItemTagSelectFunctionality( $("#transaction_item_row_" + currentItem + " select.tag"));
 
-};
+}
 
 //custom functions for validator
 $.validator.addMethod('minStrict', function (value, el, param) {

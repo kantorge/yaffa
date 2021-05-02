@@ -19,9 +19,9 @@ class CreateInvestmentPriceProvidersTable extends Migration
         });
 
         DB::table('investment_price_providers')->insert(
-            array(
+            [
                 'name' => 'Alpha Vantage',
-            )
+            ]
         );
     }
 

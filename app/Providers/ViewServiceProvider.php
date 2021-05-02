@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\View\Composers\NotificationMessageComposer;
 use App\Http\View\Composers\AccountListComposer;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,5 +27,6 @@ class ViewServiceProvider extends ServiceProvider
     public function boot()
     {
         View::composer('*', AccountListComposer::class);
+        View::composer('*', NotificationMessageComposer::class);
     }
 }

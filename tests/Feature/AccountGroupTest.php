@@ -11,7 +11,7 @@ class AccountGroupTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('accountgroups');
+        $this->setBaseRoute('account-group');
         $this->setBaseModel('App\Models\AccountGroup');
     }
 

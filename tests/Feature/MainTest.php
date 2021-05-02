@@ -15,11 +15,11 @@ class MainTest extends TestCase
     /** @test */
     public function user_can_view_main_page()
     {
-        $response = $this->get(route("accounts.summary"));
+        $response = $this->get(route("account.summary"));
 
         $response->assertStatus(200);
         //TODO: should this be a separate variable, e.g. base view
-        $response->assertViewIs("accounts.summary");
+        $response->assertViewIs("account.summary");
         $response->assertSeeText('Account summary');
         $response->assertSeeText('Total value');
     }
@@ -27,11 +27,10 @@ class MainTest extends TestCase
     /** @test */
     public function user_can_view_account_history()
     {
-        $response = $this->get(route("accounts.history", \App\Models\Account::inRandomOrder()->first()->id));
-        //$response = $this->get(route("accounts.history", 1));
+        $response = $this->get(route("account.history", \App\Models\Account::inRandomOrder()->first()->id));
 
         $response->assertStatus(200);
-        $response->assertViewIs("accounts.history");
+        $response->assertViewIs("account.history");
         $response->assertSeeText('Account history');
         $response->assertSeeText('Transaction history');
         $response->assertSeeText('Scheduled transactions');
