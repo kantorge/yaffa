@@ -1,4 +1,4 @@
-require( 'daterangepicker');
+require('daterangepicker');
 
 $( function () {
     $('#schedule_start').daterangepicker(datePickerStandardSettings);

@@ -147,7 +147,9 @@
                             <div class="form-group">
                                 <label for="transaction_investment" class="control-label">Investment</label>
                                 <select name="config[investment_id]" id="transaction_investment" class="form-control">
-                                    @if(isset($transaction['config']['investment']))
+                                    @if(old() && old('config.investment_id'))
+                                        <option value="{{ old('config.investment_id') }}" selected="selected">{{ $allInvestments[old('config.investment_id')] }}</option>
+                                    @elseif(isset($transaction['config']['investment']))
                                         <option value="{{ $transaction['config']['investment']['id'] }}" selected="selected">{{ $transaction['config']['investment']['name'] }}</option>
                                     @endif
                                 </select>

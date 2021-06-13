@@ -1,11 +1,9 @@
-require( 'daterangepicker');
+require('daterangepicker');
 
 require('jquery-validation');
 //require("jquery-validation/dist/additional-methods.js");
 
 let math = require("mathjs");
-
-//RRule = require('rrule').RRule;
 
 require('select2');
 
@@ -337,13 +335,11 @@ $( function () {
 			dataType: 'json',
             delay: 150,
             data: function (params) {
-                var queryParameters = {
+                return {
                   q: params.term,
                   transaction_type: transactionData.transactionType,
                   account_type: 'from'
-                }
-
-                return queryParameters;
+                };
             },
 			processResults: function (data) {
 				//exclude current selection from results
@@ -367,8 +363,7 @@ $( function () {
 
         if (transactionData.getApiType('from') == 'account') {
             $.ajax({
-                url:  '/api/assets/get_account_currency',
-                data: {account_id: e.params.data.id}
+                url:  '/api/assets/account/currency/' + e.params.data.id,
             })
             .done(function( data ) {
                 transactionData.from.currency = data;
@@ -426,13 +421,11 @@ $( function () {
             dataType: 'json',
             delay: 150,
             data: function (params) {
-                var queryParameters = {
+                return {
                     q: params.term,
                     transaction_type: transactionData.transactionType,
                     account_type: 'to'
-                }
-
-                return queryParameters;
+                };
             },
             processResults: function (data) {
                 //exclude current selection from result list
@@ -458,8 +451,7 @@ $( function () {
         if (transactionData.getApiType('to') == 'account') {
 
             $.ajax({
-                url:  '/api/assets/get_account_currency',
-                data: {account_id: e.params.data.id}
+                url:  '/api/assets/account/currency/' + e.params.data.id,
             })
             .done(function( data ) {
                 transactionData.to.currency = data;
@@ -528,7 +520,8 @@ $( function () {
     }
   });
 
-  $("#transaction_reconciled").change(function(){
+  //Handle usage of reconclied flage
+  $("#transaction_reconciled").on('change', function(){
       if (this.checked) {
           $("#entry_type_schedule").prop( "disabled", true ).prop("checked", false);
           $("#entry_type_budget").prop( "disabled", true ).prop("checked", false);
@@ -538,22 +531,21 @@ $( function () {
       }
   });
 
-    //transaction item copy function
-	$(".new_transaction_item").on("click",function() {
+    //Add a new, empty transaction row
+	$(".new_transaction_item").on("click", function() {
         create_transaction_item();
-        $(".remove_transaction_item").prop('disabled', document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype)").length <= 1);
+        update_remove_transaction_item_button_availability();
     });
 
-    //setup transaction item removal button functionality
+    //Setup transaction item removal button functionality
 	$(".remove_transaction_item").on("click", function() {
 		$(this).closest(".transaction_item_row").remove();
         transactionData.updateTotals();
 
-        $(".remove_transaction_item").prop('disabled', document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype)").length <= 1);
-
+        update_remove_transaction_item_button_availability();
     });
 
-    //setup remaining amount copy function
+    //Setup remaining amount copy function for transaction items
     $(".load_remainder").on('click', function() {
         try {
             var element = $(this).closest(".transaction_item_row").find("input.transaction_item_amount");
@@ -569,27 +561,25 @@ $( function () {
         }
     });
 
-	$(".transaction_item_amount").on('blur', function() {
-		/*
-			Handle changes to transaction item amount.
-
-			Parse input. Display error, if NaN. Update totals.
-        */
+	/*
+     * Handle changes to transaction item amount.
+	 * Parse input. Display error, if NaN. Update totals.
+     */
+    $(".transaction_item_amount").on('blur', function() {
         processNumericInput(this);
 		transactionData.updateTotals();
 	});
 
-	$("#transaction_amount_to").on('blur', function() {
-		/*
-			Handle changes to transaction total in to field
-
-			Parse input. Display error, if NaN. Update totals and udate slave.
-		*/
+	/*
+     * Handle changes to transaction total in to field
+     * Parse input. Display error, if NaN. Update totals and udate slave.
+	 */
+    $("#transaction_amount_to").on('blur', function() {
 		var amount = 0;
 		try {
 			amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
 			if (amount <= 0) throw Error("Positive number expected");
-            $(this).val	(amount);
+            $(this).val(amount);
 		} catch (err) {
 
         }
@@ -602,16 +592,14 @@ $( function () {
 		transactionData.updateExchangeRate();
 	});
 
-	$("#transaction_amount_from").on('blur', function() {
-		/*
-			Handle changes to transaction to in from field (which is actually the main field)
-
-			Parse input. Display error, if NaN. Update totals.
-		*/
+	/*
+     * Handle changes to transaction to in from field (which is actually the main field)
+     * Parse input. Display error, if NaN. Update totals.
+	 */
+    $("#transaction_amount_from").on('blur', function() {
 		var amount = 0;
 		try {
 			amount = math.evaluate(this.value.replace(/\s/g,"")) || amount;
-			//console.log('result: ' +amount);
 			if(amount <= 0) throw Error("Positive number expected");
 			$(this).val	(amount);
 		} catch (err) {
@@ -632,7 +620,7 @@ $( function () {
 		transactionData.updateExchangeRate();
 	});
 
-    //form validation
+    //Set up form validation
 	window.validation = $("#formTransaction").validate({
 		ignore: '.ignore, :hidden',
 		rules: {
@@ -723,20 +711,20 @@ $( function () {
         }
     }
 
-    //remove delete button from first instance of transaction items
-    $(".remove_transaction_item").prop('disabled', document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype)").length <= 1);
+    //Remove delete button if only one transaction item is present
+    update_remove_transaction_item_button_availability();
 
-    //add select 2 to all item categories
+    //Add select 2 to all item categories
     document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype) select.category").forEach(function(s) {
         transactionItemCategorySelectFunctionality($(s));
     });
 
-    //add select 2 to all item tags
+    //Add select 2 to all item tags
     document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype) select.tag").forEach(function(s) {
         transactionItemTagSelectFunctionality($(s));
     });
 
-    //setup toggle detail functionality
+    //Setup toggle detail functionality for transaction items
     $(".toggle_transaction_detail").on('click', function(){
         $(this).closest(".transaction_item_row").find(".transaction_detail_container").toggle();
     })
@@ -764,10 +752,10 @@ $( function () {
         $(".transaction_item_row").find(".transaction_detail_container").show();
     });
 
-    //click the selective show button once
+    //Click the selective show button once, to set up initial view
     document.getElementById('itemListShow').click();
 
-    //display fixed footer
+    //Display fixed footer
     setTimeout(function() {
         $("footer").removeClass("hidden");
     }, 1000);
@@ -780,13 +768,11 @@ function transactionItemCategorySelectFunctionality (element) {
             dataType: 'json',
             delay: 150,
             data: function (params) {
-                var queryParameters = {
+                return {
                   q: params.term,
                   active: 1,
                   payee: transactionData.getPayeeData()
-                }
-
-                return queryParameters;
+                };
             },
             processResults: function (data) {
                 return {
@@ -881,7 +867,10 @@ function create_transaction_item (itemData) {
     transactionItemCategorySelectFunctionality($("#transaction_item_row_" + currentItem + " select.category"));
 
     transactionItemTagSelectFunctionality( $("#transaction_item_row_" + currentItem + " select.tag"));
+}
 
+function update_remove_transaction_item_button_availability() {
+    $(".remove_transaction_item").prop('disabled', document.querySelectorAll(".transaction_item_row:not(#transaction_item_prototype)").length <= 1);
 }
 
 //custom functions for validator

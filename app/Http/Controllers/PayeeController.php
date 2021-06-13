@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Http\Requests\AccountEntityRequest;
-use App\Payee;
-use Illuminate\Http\Request;
+use App\Models\Payee;
 use JavaScript;
 
 class PayeeController extends Controller
@@ -34,7 +33,7 @@ class PayeeController extends Controller
         //get categories to display name
         $categories = Category::with(['parent'])->get();
 
-        $payees->map(function($payee) use ($categories) {
+        $payees->map(function ($payee) use ($categories) {
             if (is_null($payee->config->category_id)) {
                 $payee['config']['category_full_name'] = '';
             } else {

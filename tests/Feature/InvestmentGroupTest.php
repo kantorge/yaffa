@@ -12,7 +12,7 @@ class InvestmentGroupTest extends TestCase
         parent::setUp();
 
         $this->setBaseRoute('investment-group');
-        $this->setBaseModel('App\Models\InvestmentGroup');
+        $this->setBaseModel(\App\Models\InvestmentGroup::class);
     }
 
     /** @test */

@@ -18,8 +18,11 @@ class InvestmentApiController extends Controller
     {
 		$investments = $this->investment
             ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function($query) use ($request) {
+            ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+            })
+            ->when($request->get('currency_id'), function ($query) use ($request) {
+                $query->where('currency_id', '=', $request->get('currency_id'));
             })
             ->orderBy('name')
             ->take(10)
@@ -27,5 +30,16 @@ class InvestmentApiController extends Controller
 
         //return data
         return response()->json($investments, Response::HTTP_OK);
+    }
+
+    /**
+     * Read and return the currency suffix of the currency associated to the provided investment
+     *
+     * @param App\Models\Investment $investment
+     * @return string
+     */
+    public function getCurrencySuffix(Investment $investment)
+    {
+        return $investment->currency->suffix;
     }
 }

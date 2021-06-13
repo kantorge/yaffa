@@ -22,6 +22,7 @@
         "barryvdh/laravel-debugbar": "^3.5",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.13",
+        "imanghafoori/laravel-microscope": "^1.0",
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^5.0",

@@ -134,7 +134,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label class="col-sm-3 col-form-label" id="account_from_label">
+                                    <label class="control-label col-sm-3" id="account_from_label">
                                         Account from
                                     </label>
                                     <div class="col-sm-9">

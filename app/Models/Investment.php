@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -76,23 +78,24 @@ class Investment extends Model
             [
                 'config',
                 'transactionType',
-            ])
-            ->where('schedule', 0)
-            ->where('budget', 0)
-            ->where('config_type', 'transaction_detail_investment')
-            ->whereHasMorph(
-                'config',
-                [\App\Models\TransactionDetailInvestment::class],
-                function (Builder $query) use ($investmentId, $account) {
-                    $query->Where('investment_id', $investmentId);
-                    if (!is_null($account)) {
-                        $query->where('account_id', '=', $account->id);
-                    }
+            ]
+        )
+        ->where('schedule', 0)
+        ->where('budget', 0)
+        ->where('config_type', 'transaction_detail_investment')
+        ->whereHasMorph(
+            'config',
+            [\App\Models\TransactionDetailInvestment::class],
+            function (Builder $query) use ($investmentId, $account) {
+                $query->Where('investment_id', $investmentId);
+                if (!is_null($account)) {
+                    $query->where('account_id', '=', $account->id);
                 }
-            )
-            ->get();
+            }
+        )
+        ->get();
 
-        return $transactions->sum(function($transaction) {
+        return $transactions->sum(function ($transaction) {
             $operator = $transaction->transactionType->quantity_operator;
             if (!$operator) {
                 return 0;
@@ -115,24 +118,25 @@ class Investment extends Model
         }
 
         if ($type == 'transaction' || $type == 'combined') {
-            $transaction = \App\Models\Transaction::with(
+            $transaction = Transaction::with(
                 [
                     'config',
                     'transactionType',
-                ])
-                ->where('schedule', 0)
-                ->where('budget', 0)
-                ->whereHasMorph(
-                    'config',
-                    [\App\Models\TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investmentId) {
-                        $query
-                            ->Where('investment_id', $investmentId)
-                            ->WhereNotNull('price');
-                    }
-                )
-                ->latest('date')
-                ->first();
+                ]
+            )
+            ->where('schedule', 0)
+            ->where('budget', 0)
+            ->whereHasMorph(
+                'config',
+                [\App\Models\TransactionDetailInvestment::class],
+                function (Builder $query) use ($investmentId) {
+                    $query
+                        ->Where('investment_id', $investmentId)
+                        ->WhereNotNull('price');
+                }
+            )
+            ->latest('date')
+            ->first();
         }
 
         if ($type == 'stored') {

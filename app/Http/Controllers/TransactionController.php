@@ -31,16 +31,24 @@ class TransactionController extends Controller
                 break;
             case 'cloneInvestment':
                 $route = redirect()
-                    ->route('transactions.cloneInvestment',
-                        ['transaction' => $transaction]);
+                    ->route(
+                        'transactions.cloneInvestment',
+                        [
+                            'transaction' => $transaction
+                        ]
+                    );
                 break;
             case 'cloneStandard':
                 $route = redirect()
-                    ->route('transactions.cloneStandard',
-                        ['transaction' => $transaction]);
+                    ->route(
+                        'transactions.cloneStandard',
+                        [
+                            'transaction' => $transaction
+                        ]
+                    );
                 break;
             case 'returnToAccount':
-                switch($transaction->transactionType->name) {
+                switch ($transaction->transactionType->name) {
                     case 'withdrawal':
                     case 'transfer':
                         $account = $transaction->config->account_from_id;
@@ -54,8 +62,12 @@ class TransactionController extends Controller
                 }
 
                 $route = redirect()
-                    ->route('account.history',
-                        ['account' => $account]);
+                    ->route(
+                        'account.history',
+                        [
+                            'account' => $account
+                        ]
+                    );
                 break;
 
             //returnToDashboard
@@ -110,7 +122,7 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function storeStandard (TransactionRequest $request)
+    public function storeStandard(TransactionRequest $request)
     {
         $validated = $request->validated();
 
@@ -138,7 +150,7 @@ class TransactionController extends Controller
             $transactionItems = [];
             foreach ($validated['transactionItems'] as $item) {
                 //ignore item, if amount is missing
-                if(is_null($item['amount'])) {
+                if (is_null($item['amount'])) {
                     continue;
                 }
 
@@ -151,7 +163,7 @@ class TransactionController extends Controller
 
                 //create and attach tags
                 if (array_key_exists('tags', $item)) {
-                    foreach($item['tags'] as $tag) {
+                    foreach ($item['tags'] as $tag) {
                         $newTag = Tag::firstOrCreate(
                             ['id' => $tag],
                             ['name' => $tag]
@@ -196,17 +208,17 @@ class TransactionController extends Controller
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
-            if (   $transaction->schedule) {
+            if ($transaction->schedule) {
                 $transactionSchedule = TransactionSchedule::create(
-                        [
-                            'transaction_id' => $transaction->id,
-                            'start_date' => $validated['schedule_start'],
-                            'next_date' => $validated['schedule_next'],
-                            'end_date' => $validated['schedule_end'],
-                            'frequency' => $validated['schedule_frequency'],
-                            'interval' => $validated['schedule_interval'],
-                            'count' => $validated['schedule_count'],
-                        ]
+                    [
+                        'transaction_id' => $transaction->id,
+                        'start_date' => $validated['schedule_start'],
+                        'next_date' => $validated['schedule_next'],
+                        'end_date' => $validated['schedule_end'],
+                        'frequency' => $validated['schedule_frequency'],
+                        'interval' => $validated['schedule_interval'],
+                        'count' => $validated['schedule_count'],
+                    ]
                 );
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
@@ -224,8 +236,8 @@ class TransactionController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param App\Model\Transaction $transaction
+     * @return view
      */
     public function editStandard(Transaction $transaction)
     {
@@ -246,15 +258,13 @@ class TransactionController extends Controller
 
         //check if payee data needs to be filled
         if ($transaction->config->accountFrom->config_type == 'payee') {
-            $payee = \App\Models\AccountEntity::
-                find($transaction->config->account_from_id)
+            $payee = AccountEntity::find($transaction->config->account_from_id)
                 ->load([
                     'config',
                     'config.category'
                 ]);
-        } else if ($transaction->config->accountTo->config_type == 'payee') {
-            $payee = \App\Models\AccountEntity::
-                find($transaction->config->account_to_id)
+        } elseif ($transaction->config->accountTo->config_type == 'payee') {
+            $payee = AccountEntity::find($transaction->config->account_to_id)
                 ->load([
                     'config',
                     'config.category'
@@ -306,27 +316,25 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function updateStandard (TransactionRequest $request, Transaction $transaction)
+    public function updateStandard(TransactionRequest $request, Transaction $transaction)
     {
         $validated = $request->validated();
 
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
-        if (   $transaction->schedule
-            || $transaction->budget) {
-
-                $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
-                $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
-                $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-                $transaction->transactionSchedule()->frequency = $validated['frequency'];
-                $transaction->transactionSchedule()->interval = $validated['interval'];
-                $transaction->transactionSchedule()->count = $validated['count'];
+        if ($transaction->schedule || $transaction->budget) {
+            $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
+            $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
+            $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
+            $transaction->transactionSchedule()->frequency = $validated['frequency'];
+            $transaction->transactionSchedule()->interval = $validated['interval'];
+            $transaction->transactionSchedule()->count = $validated['count'];
         }
 
         $transactionItems = [];
         foreach ($validated['transactionItems'] as $item) {
-            if(is_null($item['amount'])) {
+            if (is_null($item['amount'])) {
                 continue;
             }
 
@@ -338,7 +346,7 @@ class TransactionController extends Controller
             );
 
             if (array_key_exists('tags', $item)) {
-                foreach($item['tags'] as $tag) {
+                foreach ($item['tags'] as $tag) {
                     $newTag = Tag::firstOrCreate(
                         ['id' => $tag],
                         ['name' => $tag]
@@ -379,13 +387,12 @@ class TransactionController extends Controller
         $transaction->config->fill($validated['config']);
 
         if ($transaction->schedule) {
-
-                $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
-                $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
-                $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-                $transaction->transactionSchedule()->frequency = $validated['frequency'];
-                $transaction->transactionSchedule()->interval = $validated['interval'];
-                $transaction->transactionSchedule()->count = $validated['count'];
+            $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
+            $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
+            $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
+            $transaction->transactionSchedule()->frequency = $validated['frequency'];
+            $transaction->transactionSchedule()->interval = $validated['interval'];
+            $transaction->transactionSchedule()->count = $validated['count'];
         }
 
         $transaction->push();
@@ -435,7 +442,8 @@ class TransactionController extends Controller
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
-            ]);
+            ]
+        );
 
         //remove Id, so item is considered a new transaction
         $transaction->id = null;
@@ -448,7 +456,7 @@ class TransactionController extends Controller
                     'config',
                     'config.category'
                 ]);
-        } else if ($transaction->config->accountTo->config_type == 'payee') {
+        } elseif ($transaction->config->accountTo->config_type == 'payee') {
             $payee = \App\Models\AccountEntity::
                 find($transaction->config->account_to_id)
                 ->load([
@@ -534,7 +542,8 @@ class TransactionController extends Controller
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
-            ]);
+            ]
+        );
 
         //remove Id, so item is considered a new transaction
         $transaction->id = null;

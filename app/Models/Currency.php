@@ -36,7 +36,8 @@ class Currency extends Model
         'auto_update' => 'boolean',
     ];
 
-    public static function rules ($id = 0) {
+    public static function rules($id = 0)
+    {
         return
             [
                 'name' => 'required|min:2|max:191|unique:currencies,name' . ($id ? ",$id" : ''),
@@ -48,7 +49,8 @@ class Currency extends Model
             ];
     }
 
-    public function rate() {
+    public function rate()
+    {
         $baseCurrency = Currency::where('base', 1)->firstOr(function () {
             return Currency::orderBy('id')->firstOr(function () {
                 return null;

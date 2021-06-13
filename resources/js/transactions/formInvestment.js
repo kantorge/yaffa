@@ -2,7 +2,7 @@ require( 'daterangepicker');
 
 require('jquery-validation');
 
-math = require("mathjs");
+let math = require("mathjs");
 
 //RRule = require('rrule').RRule;
 
@@ -76,6 +76,7 @@ $( function () {
     transactionData.elements.investments.select2({
 		ajax: {
 			url: '/api/assets/investment',
+            data: {currency_id: transactionData.elements.accounts.data('currency')},
 			dataType: 'json',
 			delay: 150,
 			processResults: function (data) {
@@ -92,8 +93,7 @@ $( function () {
 
 	transactionData.elements.investments.on('select2:select', function (e) {
 		$.ajax({
-			url: '/assets/investment',
-			data: {currency_id: e.params.data.id}
+			url: '/api/assets/investment/suffix/' + e.params.data.id,
 		})
 		.done(function( data ) {
 			transactionData.elements.investments.data('currency', data);
@@ -149,8 +149,7 @@ $( function () {
 
 	transactionData.elements.accounts.on('select2:select', function (e) {
 		$.ajax({
-			url: '/api/assets/get_account_currency',
-			data: {account_id: e.params.data.id}
+			url: '/api/assets/account/currency/' + e.params.data.id,
 		})
 		.done(function( data ) {
 			transactionData.elements.accounts.data('currency', data);

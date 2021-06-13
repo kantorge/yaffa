@@ -12,7 +12,7 @@ class AccountGroupTest extends TestCase
         parent::setUp();
 
         $this->setBaseRoute('account-group');
-        $this->setBaseModel('App\Models\AccountGroup');
+        $this->setBaseModel(\App\Models\AccountGroup::class);
     }
 
     /** @test */

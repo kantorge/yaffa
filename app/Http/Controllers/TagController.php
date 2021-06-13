@@ -91,5 +91,4 @@ class TagController extends Controller
 
         return redirect()->route('tag.index');
     }
-
 }
