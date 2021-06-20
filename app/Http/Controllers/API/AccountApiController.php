@@ -52,4 +52,15 @@ class AccountApiController extends Controller
     {
 		return $account->currency->suffix;
     }
+
+    public function getItem(AccountEntity $account)
+    {
+        $account->load(['config']);
+
+        return response()
+            ->json(
+                $account,
+                Response::HTTP_OK
+            );
+    }
 }

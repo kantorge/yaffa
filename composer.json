@@ -8,8 +8,8 @@
     ],
     "license": "TBD",
     "require": {
-        "almasaeed2010/adminlte":"~2.4",
         "php": "^7.3",
+        "almasaeed2010/adminlte": "~2.4",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",

@@ -4,6 +4,7 @@ mix.js([
         'resources/js/app.js',
         'vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/js/bootstrap.min.js',
     ], 'public/js')
+    .vue()
     .extract([
         'datatables.net',
         'datatables.net-bs',

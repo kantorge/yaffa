@@ -3,9 +3,11 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
+Route::get('/assets/account/{account}', 'App\Http\Controllers\API\AccountApiController@getItem');
 Route::get('/assets/account/currency/{account}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
+Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
 
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
 Route::get('/assets/investment/suffix/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getCurrencySuffix');

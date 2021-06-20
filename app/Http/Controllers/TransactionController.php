@@ -80,30 +80,9 @@ class TransactionController extends Controller
 
     public function createStandard()
     {
-        //set action for future usage
-        $action = 'create';
-
-        //get all categories for reference
-        $categories = Category::all();
-        $categories->sortBy('full_name');
-
-        $baseTransactionData = [
-            'transactionType' => 'withdrawal',
-            'assets' => [
-                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
-            ]
-        ];
-
-        $transaction = new Transaction([
-            'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id
-        ]);
-
-
-        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
-
         return view('transactions.form_standard', [
-            'transaction' => $transaction,
-            'action' => $action,
+            'transaction' => '',
+            'action' => 'create',
         ]);
     }
 
@@ -272,22 +251,6 @@ class TransactionController extends Controller
         } else {
             $payee = null;
         }
-
-        $baseTransactionData = [
-            'from' => [
-                'amount' => $transaction->config->amount_from,
-            ],
-            'to' => [
-                'amount' => $transaction->config->amount_to,
-            ],
-            'payeeCategory' => [
-                'id' => ($payee ? $payee->id : null),
-                'text' => ($payee && $payee->config->category ? $payee->config->category->full_name : null),
-            ],
-            'transactionType' => $transaction->transactionType->name,
-        ];
-
-        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
 
         return view('transactions.form_standard', [
             'transaction' => $transaction,

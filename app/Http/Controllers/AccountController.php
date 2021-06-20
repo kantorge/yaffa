@@ -8,7 +8,6 @@ use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Http\Requests\AccountEntityRequest;
 use JavaScript;
-//use Barryvdh\Debugbar\Facade as Debugbar;
 
 class AccountController extends Controller
 {
@@ -52,12 +51,14 @@ class AccountController extends Controller
         //get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
-        return view('account.form',
+        return view(
+            'account.form',
             [
                 'account'=> $account,
                 'allAccountGroups' => $allAccountGroups,
                 'allCurrencies' => $allCurrencies
-        ]);
+            ]
+        );
     }
 
     public function update(AccountEntityRequest $request, AccountEntity $account)
@@ -103,7 +104,8 @@ class AccountController extends Controller
         return redirect()->route('account.index');
     }
 
-    public function show(AccountEntity $account) {
+    public function show(AccountEntity $account)
+    {
         $account->load('config');
         return view('account.show', compact('account'));
     }

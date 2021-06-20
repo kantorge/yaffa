@@ -32,7 +32,8 @@ class Category extends Model
         'full_name'
     ];
 
-    public static function rules ($id = 0) {
+    public static function rules($id = 0)
+    {
         return
             [
                 'name' => 'required|min:2|max:191',
@@ -46,7 +47,8 @@ class Category extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function getFullNameAttribute() {
+    public function getFullNameAttribute()
+    {
         return (isset($this->parent->name) ? $this->parent->name . " > " : "") . $this['name'];
     }
 }

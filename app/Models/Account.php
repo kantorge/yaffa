@@ -86,18 +86,19 @@ class Account extends AccountEntity
                 'config',
                 'config.investment',
                 'transactionType',
-            ])
-            ->where('schedule', 0)
-            ->where('budget', 0)
-            ->where('config_type', 'transaction_detail_investment')
-            ->whereHasMorph(
-                'config',
-                [\App\Models\TransactionDetailInvestment::class],
-                function (Builder $query) use ($accountId) {
-                    $query->where('account_id', '=', $accountId);
-                }
-            )
-            ->get();
+            ]
+        )
+        ->where('schedule', 0)
+        ->where('budget', 0)
+        ->where('config_type', 'transaction_detail_investment')
+        ->whereHasMorph(
+            'config',
+            [\App\Models\TransactionDetailInvestment::class],
+            function (Builder $query) use ($accountId) {
+                $query->where('account_id', '=', $accountId);
+            }
+        )
+        ->get();
 
         return $transactions
             ->map(function ($transaction) {
