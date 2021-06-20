@@ -14,378 +14,320 @@
                 type="hidden"
                 value="PATCH">
 
-            <div class="box box-primary">
-                <div class="box-header">
-                    <h3 class="box-title">
-                        <span v-if="action=='create'">
-                            Add new transaction
-                        </span>
-                        <span v-if="action=='edit'">
-                            Modify existing transaction
-                        </span>
-                        <span v-if="action=='clone'">
-                            Clone existing transaction
-                        </span>
-                        <span v-if="action=='enter'">
-                            Enter scheduled transaction instance
-                        </span>
-                    </h3>
-                </div>
-                <!-- /.box-header -->
-
-                <div class="box-body">
-                    <div class="row">
-                        <!-- left column -->
-                        <div class="col-md-4">
-                            <!-- general form elements -->
-                            <div class="box ">
-                                <div class="box-header with-border">
-                                    <h3 class="box-title">
-                                        Transaction properties
-                                    </h3>
-                                </div>
-                                <!-- /.box-header -->
-
-                                <div class="box-body">
-                                    <div class="form-horizontal">
-                                        <div class="form-group row" id="transaction_type_container">
-                                            <label class="control-label col-sm-3">
-                                                Type
-                                            </label>
-                                            <div class="col-sm-3">
-                                                <input
-                                                    id="transaction_type_withdrawal"
-                                                    name="transaction_type"
-                                                    type="radio"
-                                                    value="withdrawal"
-                                                    v-model="transactionData.transaction_type.name"
-                                                    @change="changeTransactionType"
-                                                    :checked="transactionData.transaction_type.name == 'withdrawal'"
-                                                >
-                                                <label
-                                                    for="transaction_type_withdrawal"
-                                                    id="transaction_type_withdrawal_label"
-                                                >
-                                                    Withdrawal
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <input
-                                                    id="transaction_type_deposit"
-                                                    name="transaction_type"
-                                                    type="radio"
-                                                    value="deposit"
-                                                    v-model="transactionData.transaction_type.name"
-                                                    @change="changeTransactionType"
-                                                    :checked="transactionData.transaction_type.name == 'deposit'"
-                                                >
-                                                <label
-                                                    for="transaction_type_deposit"
-                                                    id="transaction_type_deposit_label"
-                                                >
-                                                    Deposit
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <input
-                                                    id="transaction_type_transfer"
-                                                    name="transaction_type"
-                                                    type="radio"
-                                                    value="transfer"
-                                                    :disabled="transactionData.budget"
-                                                    v-model="transactionData.transaction_type.name"
-                                                    @change="changeTransactionType"
-                                                    :checked="transactionData.transaction_type.name == 'transfer'"
-                                                >
-                                                <label
-                                                    for="transaction_type_transfer"
-                                                    id="transaction_type_transfer_label"
-                                                    :disabled="transactionData.budget"
-                                                >
-                                                    Transfer
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="transaction_date" class="control-label col-sm-3">
-                                                Date
-                                            </label>
-                                            <div class="col-sm-6">
-                                                <input
-                                                    class="form-control"
-                                                    id="transaction_date"
-                                                    maxlength="10"
-                                                    name="date"
-                                                    type="text"
-                                                    v-model="transactionData.date"
-                                                >
-                                            </div>
-                                            <div class="col-sm-3">
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label class="control-label col-sm-3" id="account_from_label">
-                                                <span v-if="transactionData.transaction_type.name == 'withdrawal' || transactionData.transaction_type.name == 'transfer'">
-                                                    Account from
-                                                </span>
-                                                <span v-else>
-                                                    Payee
-                                                </span>
-                                            </label>
-                                            <div class="col-sm-9">
-                                                <select
-                                                    class="form-control"
-                                                    id="account_from"
-                                                    name="config[account_from_id]"
-                                                    v-model="from.account_id">
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <label class="control-label col-sm-3" id="account_to_label">
-                                                <span v-if="transactionData.transaction_type.name == 'deposit' || transactionData.transaction_type.name == 'transfer'">
-                                                    Account to
-                                                </span>
-                                                <span v-else>
-                                                    Payee
-                                                </span>
-                                            </label>
-                                            <div class="col-sm-9">
-                                                <select
-                                                    class="form-control"
-                                                    id="account_to"
-                                                    name="config[account_to_id]"
-                                                    v-model="to.account_id">
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <label for="transaction_date" class="control-label col-sm-3">
-                                                Comment
-                                            </label>
-                                            <div class="col-sm-9">
-                                                <input
-                                                    class="form-control"
-                                                    id="transaction_comment"
-                                                    maxlength="255"
-                                                    name="comment"
-                                                    type="text"
-                                                    v-model="transactionData.comment"
-                                                >
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row" id="entry_type_container">
-                                            <div class="col-sm-4">
-                                                <input
-                                                    id="entry_type_schedule"
-                                                    class="checkbox-inline"
-                                                    :disabled="transactionData.reconciled"
-                                                    name="schedule"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="transactionData.schedule"
-                                                >
-                                                <label for="entry_type_schedule" class="control-label">
-                                                    Scheduled
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-4">
-                                                <input
-                                                    id="entry_type_budget"
-                                                    class="checkbox-inline"
-                                                    :disabled="transactionData.reconciled || transactionData.transaction_type.name == 'transfer'"
-                                                    name="budget"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="transactionData.budget"
-                                                >
-                                                <label for="entry_type_budget" class="control-label">
-                                                    Budget
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-4">
-                                                <input
-                                                    id="transaction_reconciled"
-                                                    class="checkbox-inline"
-                                                    :disabled="transactionData.schedule || transactionData.budget"
-                                                    name="reconciled"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="transactionData.reconciled"
-                                                >
-                                                <label for="transaction_reconciled" class="control-label">
-                                                    Reconciled
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- /.box-body -->
-
-                            </div>
-                            <!-- /.box -->
-
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-4">
+                    <!-- general form elements -->
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">
+                                Transaction properties
+                            </h3>
                         </div>
-                        <!--/.col (left) -->
+                        <!-- /.box-header -->
 
-                        <!-- right column -->
-                        <div class="col-md-8">
-                            <!-- general form elements -->
-                            <div class="box">
-                                <div class="box-header with-border">
-                                    <h3 class="box-title">Transaction items</h3>
-                                    <div class="box-tools">
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" id="itemListCollapse" title="Collapse all items"><i class="fa fa-compress"></i></button>
-                                            <button type="button" class="btn btn-sm btn-info" id="itemListShow" title="Expand items with data"><i class="fa fa-expand"></i></button>
-                                            <button type="button" class="btn btn-sm btn-info" id="itemListExpand" title="Expand all items"><i class="fa fa-arrows-alt"></i></button>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-success"
-                                            @click="addTransactionItem"
-                                            title="New transaction item"><i class="fa fa-plus"></i></button>
+                        <div class="box-body">
+                            <div class="form-horizontal">
+                                <div class="form-group row" id="transaction_type_container">
+                                    <label class="control-label col-sm-3">
+                                        Type
+                                    </label>
+                                    <div class="col-sm-3">
+                                        <input
+                                            id="transaction_type_withdrawal"
+                                            name="transaction_type"
+                                            type="radio"
+                                            value="withdrawal"
+                                            v-model="transactionData.transaction_type.name"
+                                            @change="changeTransactionType"
+                                            :checked="transactionData.transaction_type.name == 'withdrawal'"
+                                        >
+                                        <label
+                                            for="transaction_type_withdrawal"
+                                            id="transaction_type_withdrawal_label"
+                                        >
+                                            Withdrawal
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <input
+                                            id="transaction_type_deposit"
+                                            name="transaction_type"
+                                            type="radio"
+                                            value="deposit"
+                                            v-model="transactionData.transaction_type.name"
+                                            @change="changeTransactionType"
+                                            :checked="transactionData.transaction_type.name == 'deposit'"
+                                        >
+                                        <label
+                                            for="transaction_type_deposit"
+                                            id="transaction_type_deposit_label"
+                                        >
+                                            Deposit
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <input
+                                            id="transaction_type_transfer"
+                                            name="transaction_type"
+                                            type="radio"
+                                            value="transfer"
+                                            :disabled="transactionData.budget"
+                                            v-model="transactionData.transaction_type.name"
+                                            @change="changeTransactionType"
+                                            :checked="transactionData.transaction_type.name == 'transfer'"
+                                        >
+                                        <label
+                                            for="transaction_type_transfer"
+                                            id="transaction_type_transfer_label"
+                                            :disabled="transactionData.budget"
+                                        >
+                                            Transfer
+                                        </label>
                                     </div>
                                 </div>
-                                <!-- /.box-header -->
-                                <div class="box-body" id="transaction_item_container">
-                                    <div
-                                        class="list-group"
-                                        v-for="(item, index) in transactionData.transaction_items"
-                                        :key="item.id">
-
-                                        <transaction-form-item
-                                            @removeTransactionItem="removeTransactionItem(index)"
-                                            @updateItemAmount="updateItemAmount(index, $event)"
-                                            :index="index"
-                                            :amount="item.amount ? Number(item.amount) : null"
-                                            :category_id="item.category_id ? Number(item.category_id) : null"
-                                            :category="item.category"
-                                            :tags="item.tags"
-                                            :currency="from.account_currency">
-                                        </transaction-form-item>
+                                <div class="form-group row">
+                                    <label for="transaction_date" class="control-label col-sm-3">
+                                        Date
+                                    </label>
+                                    <div class="col-sm-6">
+                                        <input
+                                            class="form-control"
+                                            id="transaction_date"
+                                            maxlength="10"
+                                            name="date"
+                                            type="text"
+                                            v-model="transactionData.date"
+                                        >
+                                    </div>
+                                    <div class="col-sm-3">
                                     </div>
                                 </div>
-                                <!-- /.box-body -->
-
-                                <div class="box-footer">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="row">
-                                                <div class="form-group col-sm-4">
-                                                    <label for="transaction_amount_from" class="control-label">
-                                                        Amount from
-                                                        <span v-if="from.account_currency">({{from.account_currency}})</span>
-                                                    </label>
-                                                    <input
-                                                        class="form-control"
-                                                        id="transaction_amount_from"
-                                                        maxlength="50"
-                                                        name="config[amount_from]"
-                                                        type="text"
-                                                        @change="updateAmount"
-                                                        v-model.number="transactionData.config.amount_from"
-                                                    >
-                                                </div>
-                                                <div
-                                                    v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
-                                                    class="col-sm-4">
-                                                    <span>Exchange rate</span>
-                                                    {{ exchangeRate }}
-                                                </div>
-                                                <div
-                                                    v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
-                                                    class="form-group col-sm-4 pull-right">
-                                                    <label for="transaction_amount_slave" class="control-label">
-                                                        Amount to
-                                                        <span v-if="to.account_currency">({{to.account_currency}})</span>
-                                                    </label>
-                                                    <input
-                                                        class="form-control"
-                                                        id="transaction_amount_to"
-                                                        maxlength="50"
-                                                        name="config[amount_to]"
-                                                        type="text"
-                                                        @change="updateAmount"
-                                                        v-model="transactionData.config.amount_to"
-                                                    >
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-5">
-                                            <div class="table">
-                                                <table class="table">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th scope="row" style="border-top:none;">Total allocated:</th>
-                                                            <td style="border-top:none;" class="text-right">
-                                                                {{ allocatedAmount }}
-                                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr v-show="payeeCategory.id">
-                                                            <th scope="row">
-                                                                Remaining amount to payee default:
-                                                                <span class="notbold">{{ payeeCategory.text }}</span>
-                                                            </th>
-                                                            <td class="text-right">
-                                                                <span>{{ remainingAmountToPayeeDefault }}</span>
-                                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                                <input
-                                                                    name="remaining_payee_default_amount"
-                                                                    id="remaining_payee_default_amount"
-                                                                    type="hidden"
-                                                                    v-model="remainingAmountToPayeeDefault"
-                                                                >
-                                                                <input
-                                                                    name="remaining_payee_default_category_id"
-                                                                    id="remaining_payee_default_category_id"
-                                                                    type="hidden"
-                                                                    v-model="payeeCategory.id"
-                                                                >
-                                                            </td>
-                                                        </tr>
-                                                        <tr v-show="!payeeCategory.id">
-                                                            <th scope="row">Remaining amount not allocated:</th>
-                                                            <td class="text-right">
-                                                                <span>{{ remainingAmountNotAllocated }}</span>
-                                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-1">
-                                            <button
-                                                type="button"
-                                                class="btn btn-success pull-right"
-                                                @click="addTransactionItem"
-                                                title="New transaction item"><i class="fa fa-plus"></i></button>
-                                        </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-3" id="account_from_label">
+                                        <span v-if="transactionData.transaction_type.name == 'withdrawal' || transactionData.transaction_type.name == 'transfer'">
+                                            Account from
+                                        </span>
+                                        <span v-else>
+                                            Payee
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-9">
+                                        <select
+                                            class="form-control"
+                                            id="account_from"
+                                            name="config[account_from_id]"
+                                            v-model="from.account_id">
+                                        </select>
                                     </div>
                                 </div>
 
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-3" id="account_to_label">
+                                        <span v-if="transactionData.transaction_type.name == 'deposit' || transactionData.transaction_type.name == 'transfer'">
+                                            Account to
+                                        </span>
+                                        <span v-else>
+                                            Payee
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-9">
+                                        <select
+                                            class="form-control"
+                                            id="account_to"
+                                            name="config[account_to_id]"
+                                            v-model="to.account_id">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="transaction_date" class="control-label col-sm-3">
+                                        Comment
+                                    </label>
+                                    <div class="col-sm-9">
+                                        <input
+                                            class="form-control"
+                                            id="transaction_comment"
+                                            maxlength="255"
+                                            name="comment"
+                                            type="text"
+                                            v-model="transactionData.comment"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" id="entry_type_container">
+                                    <div class="col-sm-4">
+                                        <input
+                                            id="entry_type_schedule"
+                                            class="checkbox-inline"
+                                            :disabled="transactionData.reconciled"
+                                            name="schedule"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="transactionData.schedule"
+                                        >
+                                        <label for="entry_type_schedule" class="control-label">
+                                            Scheduled
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <input
+                                            id="entry_type_budget"
+                                            class="checkbox-inline"
+                                            :disabled="transactionData.reconciled || transactionData.transaction_type.name == 'transfer'"
+                                            name="budget"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="transactionData.budget"
+                                        >
+                                        <label for="entry_type_budget" class="control-label">
+                                            Budget
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <input
+                                            id="transaction_reconciled"
+                                            class="checkbox-inline"
+                                            :disabled="transactionData.schedule || transactionData.budget"
+                                            name="reconciled"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="transactionData.reconciled"
+                                        >
+                                        <label for="transaction_reconciled" class="control-label">
+                                            Reconciled
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
-                            <!-- /.box -->
-
-                            <transaction-schedule
-                                :isVisible="transactionData.schedule || transactionData.budget"
-                            ></transaction-schedule>
-
                         </div>
-                        <!--/.col (right) -->
+                        <!-- /.box-body -->
 
                     </div>
-                    <!-- /.row -->
+                    <!-- /.box -->
 
                 </div>
-                <!-- /.box-body -->
+                <!--/.col (left) -->
 
-        <div class="box-footer">
+                <!-- right column -->
+                <div class="col-md-8">
+                    <transaction-item-container
+                        @addTransactionItem="addTransactionItem"
+                        :transactionItems="transactionData.transaction_items"
+                        :currency="from.account_currency"
+                    ></transaction-item-container>
+
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Amounts</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="form-group col-sm-4">
+                                            <label for="transaction_amount_from" class="control-label">
+                                                Amount from
+                                                <span v-if="from.account_currency">({{from.account_currency}})</span>
+                                            </label>
+                                            <input
+                                                class="form-control"
+                                                id="transaction_amount_from"
+                                                maxlength="50"
+                                                name="config[amount_from]"
+                                                type="text"
+                                                @change="updateAmount"
+                                                v-model.number="transactionData.config.amount_from"
+                                            >
+                                        </div>
+                                        <div
+                                            v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
+                                            class="col-sm-4">
+                                            <span>Exchange rate</span>
+                                            {{ exchangeRate }}
+                                        </div>
+                                        <div
+                                            v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
+                                            class="form-group col-sm-4 pull-right">
+                                            <label for="transaction_amount_slave" class="control-label">
+                                                Amount to
+                                                <span v-if="to.account_currency">({{to.account_currency}})</span>
+                                            </label>
+                                            <input
+                                                class="form-control"
+                                                id="transaction_amount_to"
+                                                maxlength="50"
+                                                name="config[amount_to]"
+                                                type="text"
+                                                @change="updateAmount"
+                                                v-model="transactionData.config.amount_to"
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="table">
+                                        <table class="table">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="border-top:none;">Total allocated:</th>
+                                                    <td style="border-top:none;" class="text-right">
+                                                        {{ allocatedAmount }}
+                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                                    </td>
+                                                </tr>
+                                                <tr v-show="payeeCategory.id">
+                                                    <th scope="row">
+                                                        Remaining amount to payee default:
+                                                        <span class="notbold">{{ payeeCategory.text }}</span>
+                                                    </th>
+                                                    <td class="text-right">
+                                                        <span>{{ remainingAmountToPayeeDefault }}</span>
+                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                                        <input
+                                                            name="remaining_payee_default_amount"
+                                                            id="remaining_payee_default_amount"
+                                                            type="hidden"
+                                                            v-model="remainingAmountToPayeeDefault"
+                                                        >
+                                                        <input
+                                                            name="remaining_payee_default_category_id"
+                                                            id="remaining_payee_default_category_id"
+                                                            type="hidden"
+                                                            v-model="payeeCategory.id"
+                                                        >
+                                                    </td>
+                                                </tr>
+                                                <tr v-show="!payeeCategory.id">
+                                                    <th scope="row">Remaining amount not allocated:</th>
+                                                    <td class="text-right">
+                                                        <span>{{ remainingAmountNotAllocated }}</span>
+                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- /.box -->
+
+                    <transaction-schedule
+                        :isVisible="transactionData.schedule || transactionData.budget"
+                    ></transaction-schedule>
+
+                </div>
+                <!--/.col (right) -->
+
+            </div>
+            <!-- /.row -->
+
             <input
                 name="id"
                 type="hidden"
@@ -401,10 +343,6 @@
                 type="hidden"
                 value="transaction_detail_standard"
             >
-        </div>
-        <!-- /.box-footer -->
-    </div>
-    <!-- /.box -->
 
     <footer class="main-footer navbar-fixed-bottom hidden">
         <div class="container-fluid">
@@ -479,7 +417,7 @@
     let math = require("mathjs");
     require('select2');
 
-    import TransactionFormItem from './TransactionFormItem.vue'
+    import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
 
     const datePickerStandardSettings = {
@@ -493,7 +431,7 @@
 
     export default {
         components: {
-            'transaction-form-item': TransactionFormItem,
+            'transaction-item-container': TransactionItemContainer,
             'transaction-schedule': TransactionSchedule
         },
 
@@ -688,24 +626,6 @@
                 $(this).closest(".transaction_item_row").find(".transaction_detail_container").toggle();
             })
 
-            // Item list collapse and expand functionality
-            $("#itemListCollapse").on('click', function(){
-                $(".transaction_item_row").find(".transaction_detail_container").hide();
-            });
-            $("#itemListShow").on('click', function(){
-                $(".transaction_item_row:not(#transaction_item_prototype)").each(function() {
-                if(   $(this).find("div.transaction_detail_container input.transaction_item_comment").val() != ""
-                    || $(this).find("div.transaction_detail_container select").select2('data').length > 0) {
-                        $(this).find(".transaction_detail_container").show();
-                    } else {
-                        $(this).find(".transaction_detail_container").hide();
-                    }
-                });
-            });
-            $("#itemListExpand").on('click', function(){
-                $(".transaction_item_row").find(".transaction_detail_container").show();
-            });
-
             //Setup remaining amount copy function for transaction items
             $(".load_remainder").on('click', function() {
                 try {
@@ -721,9 +641,6 @@
 
                 }
             });
-
-            //Click the selective show button once, to set up initial view
-            document.getElementById('itemListShow').click();
 
             //Display fixed footer
             setTimeout(function() {
@@ -746,17 +663,10 @@
                 $("#account_to").select2(this.getAccountSelectConfig('to'));
 
             },
+
+            // Add a new empty item to list of transaction items
             addTransactionItem() {
                 this.transactionData.transaction_items.push({});
-            },
-
-            removeTransactionItem(index) {
-                this.transactionData.transaction_items.splice(index, 1);
-            },
-
-            // Update transaction item amount with value receeived from child component
-            updateItemAmount(index, value) {
-                this.transactionData.transaction_items[index].amount = value;
             },
 
             // Update TO or FROM amount with math calculation
