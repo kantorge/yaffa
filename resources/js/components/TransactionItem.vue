@@ -2,11 +2,12 @@
     <div class="list-group-item transaction_item_row">
         <div class="row">
             <div class="col-md-6">
-                <div class="form-group">
+                <div
+                    class="form-group"
+                >
                     <label>Category</label>
                     <select
                         class="form-control category"
-                        :name="'transactionItems[' + index + '][category_id]'"
                         style="width:100%"
                         v-model.number="category_id"
                     >
@@ -22,13 +23,17 @@
                     <div class="input-group">
                         <input
                             class="form-control transaction_item_amount"
-                            :name="'transactionItems[' + index + '][amount]'"
                             type="text"
                             v-model.number="amount"
                             @blur="updateAmount"
                         >
                         <span class="input-group-btn">
-                            <button type="button" class="btn btn-info load_remainder" title="Assign remaining amount to this item"><i class="fa fa-copy"></i></button>
+                            <button
+                                type="button"
+                                class="btn btn-info load_remainder"
+                                title="Assign remaining amount to this item"
+                                @click="loadRemainder"
+                            ><i class="fa fa-copy"></i></button>
                         </span>
                     </div>
                 </div>
@@ -36,7 +41,14 @@
             <div class="col-md-1">
                 <div class="form-group">
                     <label>&nbsp;</label>
-                    <button type="button" class="btn btn-info toggle_transaction_detail" title="Show item details"><i class="fa fa-edit"></i></button>
+                    <button
+                        type="button"
+                        class="btn btn-info"
+                        title="Show item details"
+                        @click="toggleItemDetails"
+                    >
+                        <i class="fa fa-edit"></i>
+                    </button>
                 </div>
             </div>
             <div class="col-md-1">
@@ -56,8 +68,8 @@
                     <label class="control-label">Comment</label>
                     <input
                         class="form-control transaction_item_comment"
-                        :name="'transactionItems[' + index + '][comment]'"
                         v-model="comment"
+                        @blur="updateComment"
                         type="text">
                 </div>
             </div>
@@ -68,7 +80,7 @@
                         style="width: 100%"
                         class="form-control tag"
                         multiple="multiple"
-                        :name="'transactionItems[' + index + '][tags][]'">
+                        v-model="tags">
                     </select>
                 </div>
             </div>
@@ -78,6 +90,7 @@
 
 <script>
     let math = require("mathjs");
+    require('select2');
 
     export default {
         props: {
@@ -88,6 +101,7 @@
             currency: String,
             comment: String,
             tags: Array,
+            remainingAmount: Number,
         },
 
         data() {
@@ -95,8 +109,11 @@
         },
 
         mounted() {
+            let $vm = this;
+
             // Add select2 functionality to category
-            let elementCategory = $("select[name='transactionItems[" + this.index + "][category_id]']");
+            let elementCategory = $(this.$el).find('select.category');
+
             elementCategory.select2({
                 ajax: {
                     url: '/api/assets/category',
@@ -111,7 +128,7 @@
                     },
                     processResults: function (data) {
                         return {
-                            results: data
+                            results: data,
                         };
                     },
                     cache: true
@@ -119,6 +136,12 @@
                 selectOnClose: true,
                 placeholder: "Select category",
                 allowClear: true
+            })
+            .on('select2:select', function (e) {
+                const event = new Event("change", { bubbles: true, cancelable: true });
+                e.target.dispatchEvent(event);
+
+                $vm.$emit('updateItemCategory', event.target.value);
             });
 
             // Load selected item for category select2
@@ -138,7 +161,7 @@
             }
 
             // Add select2 functionality to tag
-            let elementTags = $("select[name='transactionItems[" + this.index + "][tags][]']");
+            let elementTags = $(this.$el).find('select.tag');
             elementTags.select2({
                 tags: true,
                 createTag: function (params) {
@@ -177,6 +200,12 @@
                 //selectOnClose: true,
                 placeholder: "Select tag(s)",
                 allowClear: true
+            })
+            .on('select2:select', function (e) {
+                const event = new Event("change", { bubbles: true, cancelable: true });
+                e.target.dispatchEvent(event);
+
+                $vm.$emit('updateItemTag', $(e.target).select2('val'));
             });
 
         },
@@ -190,8 +219,29 @@
                 event.target.value = amount;
                 this.$emit('updateItemAmount', amount);
             },
+
+            // Emmit an event to have the parent container update the value
+            updateComment: function (event) {
+                this.$emit('updateItemComment', event.target.value);
+            },
+
+            // Emmit an event to instruct items container to remove this item
             removeTransactionItem() {
                 this.$emit('removeTransactionItem')
+            },
+
+            // Toggle the visibility of event details (comment / tags)
+            toggleItemDetails() {
+                $(this.$el).find(".transaction_detail_container").toggle();
+            },
+
+            // Add the currently available remainder amount to this item
+            loadRemainder() {
+                var element = $(this.$el).find("input.transaction_item_amount");
+                var amount = this.amount + this.remainingAmount;
+
+                element.val(amount);
+                this.$emit('updateItemAmount', amount);
             }
         }
     }

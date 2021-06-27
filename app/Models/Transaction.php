@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\TransactionItem;
+use App\Models\TransactionSchedule;
+use App\Models\TransactionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -66,10 +69,9 @@ class Transaction extends Model
 
         $this->transactionItems()
             ->each(function ($item) use (&$tags) {
-                $item->tags->each(function($tag) use (&$tags) {
+                $item->tags->each(function ($tag) use (&$tags) {
                     $tags[$tag->id] = $tag->name;
-                } );
-
+                });
             });
 
         return $tags;
@@ -94,11 +96,11 @@ class Transaction extends Model
     {
         $transactionArray = $this->toArray();
         $tags = [];
-        foreach($transactionArray['transaction_items'] as $item) {
-            foreach($item['tags'] as $tag) {
+        foreach ($transactionArray['transaction_items'] as $item) {
+            foreach ($item['tags'] as $tag) {
                 $tags[$tag['id']] = $tag['name'];
-            };
-        };
+            }
+        }
 
         return $tags;
     }
@@ -108,16 +110,16 @@ class Transaction extends Model
     {
         $transactionArray = $this->toArray();
         $categories = [];
-        foreach($transactionArray['transaction_items'] as $item) {
+        foreach ($transactionArray['transaction_items'] as $item) {
             if ($item['category']) {
                 $categories[$item['category_id']] = $item['category']['full_name'];
             }
-        };
+        }
 
         return $categories;
     }
 
-    function delete()
+    public function delete()
     {
         $this->config()->delete();
 

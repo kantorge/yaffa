@@ -29,18 +29,12 @@
 @endsection
 
 @section('content')
-
     <div id="app">
-
         <transaction-form-standard
             action = "{{ $action }}"
             callback = "{{ $callback ?? 'newStandard'}}"
-            form-url = "{{ $transaction ? route('transactions.updateStandard', ['transaction' => $transaction->id]) : route('transactions.storeStandard') }}"
+            form-url = "{{ $transaction && $transaction->id ? route('transactions.updateStandard', ['transaction' => $transaction->id]) : route('transactions.storeStandard') }}"
             :transaction = "{{ $transaction }}"
         ></transaction-form-standard>
-
     </div>
-
-
-
 @endsection

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
 use App\Models\AccountEntity;
-use App\Models\Category;
 use App\Models\Investment;
 use App\Models\Tag;
 use App\Models\Transaction;
@@ -14,10 +13,22 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
 
 class TransactionController extends Controller
 {
+    private const STANDARD_VIEW = "transactions.form_standard";
+
+    private const STANDARD_RELATIONS = [
+        'config',
+        'config.accountFrom',
+        'config.accountTo',
+        'transactionSchedule',
+        'transactionType',
+        'transactionItems',
+        'transactionItems.tags',
+        'transactionItems.category',
+    ];
+
     private function redirectSelector(string $action, Transaction $transaction)
     {
         switch ($action) {
@@ -80,8 +91,8 @@ class TransactionController extends Controller
 
     public function createStandard()
     {
-        return view('transactions.form_standard', [
-            'transaction' => '',
+        return view(self::STANDARD_VIEW, [
+            'transaction' => null,
             'action' => 'create',
         ]);
     }
@@ -126,36 +137,9 @@ class TransactionController extends Controller
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
-            $transactionItems = [];
-            foreach ($validated['transactionItems'] as $item) {
-                //ignore item, if amount is missing
-                if (is_null($item['amount'])) {
-                    continue;
-                }
+            $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
-                $newItem = TransactionItem::create(
-                    array_merge(
-                        $item,
-                        ['transaction_id' => $transaction->id]
-                    )
-                );
-
-                //create and attach tags
-                if (array_key_exists('tags', $item)) {
-                    foreach ($item['tags'] as $tag) {
-                        $newTag = Tag::firstOrCreate(
-                            ['id' => $tag],
-                            ['name' => $tag]
-                        );
-
-                        $newItem->tags()->attach($newTag);
-                    }
-                }
-
-                $transactionItems[]= $newItem;
-            }
-
-            //handle default payee amount, if present, by adding amount as an item
+            // Handle default payee amount, if present, by adding amount as an item
             if ($validated['remaining_payee_default_amount'] > 0) {
                 $newItem = TransactionItem::create([
                         'transaction_id' => $transaction->id,
@@ -172,9 +156,13 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        self::addSimpleSuccessMessage('Transaction added');
+        self::addMessage('Transaction added (#'. $transaction->id .')', 'success', '', '', true);
 
-        return $this->redirectSelector($request->get('callback'), $transaction);
+        return response()->json(
+            [
+                'transaction_id' => $transaction->id,
+            ]
+        );
     }
 
     public function storeInvestment(TransactionRequest $request)
@@ -220,41 +208,12 @@ class TransactionController extends Controller
      */
     public function editStandard(Transaction $transaction)
     {
-        //set action for future usage
-        $action = 'edit';
+        // Load all relevant relations
+        $transaction->load(self::STANDARD_RELATIONS);
 
-        $transaction
-            ->load([
-                'config',
-                'config.accountFrom',
-                'config.accountTo',
-                'transactionSchedule',
-                'transactionType',
-                'transactionItems',
-                'transactionItems.tags',
-                'transactionItems.category',
-            ]);
-
-        //check if payee data needs to be filled
-        if ($transaction->config->accountFrom->config_type == 'payee') {
-            $payee = AccountEntity::find($transaction->config->account_from_id)
-                ->load([
-                    'config',
-                    'config.category'
-                ]);
-        } elseif ($transaction->config->accountTo->config_type == 'payee') {
-            $payee = AccountEntity::find($transaction->config->account_to_id)
-                ->load([
-                    'config',
-                    'config.category'
-                ]);
-        } else {
-            $payee = null;
-        }
-
-        return view('transactions.form_standard', [
+        return view(self::STANDARD_VIEW, [
             'transaction' => $transaction,
-            'action' => $action,
+            'action' => 'edit',
         ]);
     }
 
@@ -295,32 +254,7 @@ class TransactionController extends Controller
             $transaction->transactionSchedule()->count = $validated['count'];
         }
 
-        $transactionItems = [];
-        foreach ($validated['transactionItems'] as $item) {
-            if (is_null($item['amount'])) {
-                continue;
-            }
-
-            $newItem = TransactionItem::create(
-                array_merge(
-                    $item,
-                    ['transaction_id' => $transaction->id]
-                )
-            );
-
-            if (array_key_exists('tags', $item)) {
-                foreach ($item['tags'] as $tag) {
-                    $newTag = Tag::firstOrCreate(
-                        ['id' => $tag],
-                        ['name' => $tag]
-                    );
-
-                    $newItem->tags()->attach($newTag);
-                }
-            }
-
-            $transactionItems[]= $newItem;
-        }
+        $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
         //handle default payee amount, if present, by adding amount as an item
         if ($validated['remaining_payee_default_amount'] > 0) {
@@ -332,14 +266,20 @@ class TransactionController extends Controller
             $transactionItems[]= $newItem;
         }
 
+        // Replace exising transaction items with new array
         $transaction->transactionItems()->delete();
         $transaction->transactionItems()->saveMany($transactionItems);
 
+        // Save entire transaction
         $transaction->push();
 
-        self::addSimpleSuccessMessage('Transaction updated');
+        self::addMessage('Transaction updated (#'. $transaction->id .')', 'success', '', '', true);
 
-        $this->redirectSelector($validated['callback'], $transaction);
+        return response()->json(
+            [
+                'transaction_id' => $transaction->id,
+            ]
+        );
     }
 
     public function updateInvestment(TransactionRequest $request, Transaction $transaction)
@@ -385,75 +325,29 @@ class TransactionController extends Controller
     }
 
     /**
-     * Show the form for cloning selected resource. (Load model, but remove ID)
+     * Show the form for cloning selected resource.
+     * (Load model, but remove ID)
      *
      * @param  Transaction $transaction
      * @return \Illuminate\Http\Response
      */
     public function cloneStandard(Transaction $transaction)
     {
-        //set action for future usage
-        $action = 'clone';
+        // Load all relevant relations
+        $transaction->load(self::STANDARD_RELATIONS);
 
-        $transaction->load(
-            [
-                'config',
-                'config.accountFrom',
-                'config.accountTo',
-                'transactionSchedule',
-                'transactionType',
-                'transactionItems',
-                'transactionItems.tags',
-                'transactionItems.category',
-            ]
-        );
-
-        //remove Id, so item is considered a new transaction
+        // Remove Id, so transaction is considered a new transaction
         $transaction->id = null;
 
-        //check if payee data needs to be filled
-        if ($transaction->config->accountFrom->config_type == 'payee') {
-            $payee = \App\Models\AccountEntity::
-                find($transaction->config->account_from_id)
-                ->load([
-                    'config',
-                    'config.category'
-                ]);
-        } elseif ($transaction->config->accountTo->config_type == 'payee') {
-            $payee = \App\Models\AccountEntity::
-                find($transaction->config->account_to_id)
-                ->load([
-                    'config',
-                    'config.category'
-                ]);
-        } else {
-            $payee = null;
-        }
-
-        $baseTransactionData = [
-            'from' => [
-                'amount' => $transaction->config->amount_from,
-            ],
-            'to' => [
-                'amount' => $transaction->config->amount_to,
-            ],
-            'payeeCategory' => [
-                'id' => ($payee ? $payee->id : null),
-                'text' => ($payee ? $payee->config->category->full_name : null),
-            ],
-            'transactionType' => $transaction->transactionType->name,
-        ];
-
-        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
-
-        return view('transactions.form_standard', [
+        return view(self::STANDARD_VIEW, [
             'transaction' => $transaction,
-            'action' => $action,
+            'action' => 'clone',
         ]);
     }
 
     /**
-     * Show the form for cloning selected resource. (Load model, but remove ID)
+     * Show the form for saving selected resource.
+     * (Load model, but remove ID and set date based on schedule)
      *
      * @param  Transaction $transaction
      * @return \Illuminate\Http\Response
@@ -488,48 +382,61 @@ class TransactionController extends Controller
 
     public function enterWithEditStandard(Transaction $transaction)
     {
-        //set action for future usage
-        $action = 'enter';
+        // Load all relevant relations
+        $transaction->load(self::STANDARD_RELATIONS);
 
-        //get all categories for reference
-        $categories = Category::all();
-        $categories->sortBy('full_name');
-
-        $transaction->load(
-            [
-                'config',
-                'config.accountFrom',
-                'config.accountTo',
-                'transactionSchedule',
-                'transactionType',
-                'transactionItems',
-                'transactionItems.tags',
-                'transactionItems.category',
-            ]
-        );
-
-        //remove Id, so item is considered a new transaction
+        // Rremove Id, so transaction is considered a new transaction
         $transaction->id = null;
 
-        //reset schedule and budget flags
-        $transaction->schedule = 0;
-        $transaction->budget = 0;
+        // Reset schedule and budget flags
+        $transaction->schedule = false;
+        $transaction->budget = false;
 
-        //date is next date
+        // Date is next schedule date
         $transaction->date = $transaction->transactionSchedule->next_date;
 
-        $baseTransactionData = [
-            'transactionType' => $transaction->transactionType->name,
-            'assets' => [
-                'categories' => $categories->keyBy('id')->pluck('full_name','id')->toArray(),
-            ]
-        ];
-
-        JavaScript::put(['baseTransactionData' => $baseTransactionData]);
-
-        return view('transactions.form_standard', [
+        return view(self::STANDARD_VIEW, [
             'transaction' => $transaction,
-            'action' => $action,
+            'action' => 'enter',
         ]);
+    }
+
+    private function processTransactionItem($transactionItems, $transactionId)
+    {
+        $processedTransactionItems = [];
+        foreach ($transactionItems as $item) {
+            // Ignore item, if amount is missing
+            if (is_null($item['amount'])) {
+                continue;
+            }
+
+            $newItem = TransactionItem::create(
+                array_merge(
+                    $item,
+                    ['transaction_id' => $transactionId]
+                )
+            );
+
+            // Create new tags and attach any tags
+            if (array_key_exists('tags', $item)) {
+                foreach ($item['tags'] as $tag) {
+                    $newTag = Tag::firstOrCreate(
+                        ['id' => $tag],
+                        ['name' => $tag]
+                    );
+
+                    // Confirm to user if item was currently created
+                    if ($newTag->wasRecentlyCreated) {
+                        self::addMessage('Tag added ('. $newTag->name .')', 'success', '', '', true);
+                    }
+
+                    $newItem->tags()->attach($newTag);
+                }
+            }
+
+            $processedTransactionItems[]= $newItem;
+        }
+
+        return $processedTransactionItems;
     }
 }

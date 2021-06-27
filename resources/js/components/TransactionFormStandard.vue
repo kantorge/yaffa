@@ -1,19 +1,13 @@
 <template>
     <div>
+        <AlertErrors :form="form" message="There were some problems with your input." />
+
         <!-- form start -->
         <form
             accept-charset="UTF-8"
-            :action="formUrl"
+            @submit.prevent="onSubmit"
             autocomplete="off"
-            id="formTransaction"
-            method="POST"
         >
-            <input
-                v-if="transactionData.id"
-                name="_method"
-                type="hidden"
-                value="PATCH">
-
             <div class="row">
                 <!-- left column -->
                 <div class="col-md-4">
@@ -38,10 +32,10 @@
                                             name="transaction_type"
                                             type="radio"
                                             value="withdrawal"
-                                            v-model="transactionData.transaction_type.name"
+                                            v-model="form.transaction_type"
                                             @change="changeTransactionType"
-                                            :checked="transactionData.transaction_type.name == 'withdrawal'"
-                                        >
+                                            :checked="form.transaction_type == 'withdrawal'"
+                                        />
                                         <label
                                             for="transaction_type_withdrawal"
                                             id="transaction_type_withdrawal_label"
@@ -55,9 +49,9 @@
                                             name="transaction_type"
                                             type="radio"
                                             value="deposit"
-                                            v-model="transactionData.transaction_type.name"
+                                            v-model="form.transaction_type"
                                             @change="changeTransactionType"
-                                            :checked="transactionData.transaction_type.name == 'deposit'"
+                                            :checked="form.transaction_type == 'deposit'"
                                         >
                                         <label
                                             for="transaction_type_deposit"
@@ -72,76 +66,76 @@
                                             name="transaction_type"
                                             type="radio"
                                             value="transfer"
-                                            :disabled="transactionData.budget"
-                                            v-model="transactionData.transaction_type.name"
+                                            :disabled="form.budget"
+                                            v-model="form.transaction_type"
                                             @change="changeTransactionType"
-                                            :checked="transactionData.transaction_type.name == 'transfer'"
+                                            :checked="form.transaction_type == 'transfer'"
                                         >
                                         <label
                                             for="transaction_type_transfer"
                                             id="transaction_type_transfer_label"
-                                            :disabled="transactionData.budget"
+                                            :disabled="form.budget"
                                         >
                                             Transfer
                                         </label>
                                     </div>
                                 </div>
-                                <div class="form-group row">
+                                <div
+                                    class="form-group row"
+                                    :class="form.errors.has('date') ? 'has-error' : ''"
+                                >
                                     <label for="transaction_date" class="control-label col-sm-3">
                                         Date
                                     </label>
                                     <div class="col-sm-6">
-                                        <input
-                                            class="form-control"
+                                        <date-picker
                                             id="transaction_date"
-                                            maxlength="10"
-                                            name="date"
-                                            type="text"
-                                            v-model="transactionData.date"
-                                        >
+                                            v-model="form.date"
+                                            value-type="format"
+                                            format="YYYY-MM-DD"
+                                            type="date"
+                                            :disabled="form.schedule || form.budget"
+                                        ></date-picker>
                                     </div>
                                     <div class="col-sm-3">
                                     </div>
                                 </div>
-                                <div class="form-group row">
+                                <div
+                                    class="form-group row"
+                                    :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
+                                >
                                     <label class="control-label col-sm-3" id="account_from_label">
-                                        <span v-if="transactionData.transaction_type.name == 'withdrawal' || transactionData.transaction_type.name == 'transfer'">
-                                            Account from
-                                        </span>
-                                        <span v-else>
-                                            Payee
-                                        </span>
+                                        {{ accountFromFieldLabel }}
                                     </label>
                                     <div class="col-sm-9">
                                         <select
                                             class="form-control"
                                             id="account_from"
-                                            name="config[account_from_id]"
-                                            v-model="from.account_id">
+                                            v-model="form.config.account_from_id">
                                         </select>
                                     </div>
                                 </div>
 
-                                <div class="form-group row">
+                                <div
+                                    class="form-group row"
+                                    :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
+                                >
                                     <label class="control-label col-sm-3" id="account_to_label">
-                                        <span v-if="transactionData.transaction_type.name == 'deposit' || transactionData.transaction_type.name == 'transfer'">
-                                            Account to
-                                        </span>
-                                        <span v-else>
-                                            Payee
-                                        </span>
+                                        {{ accountToFieldLabel }}
                                     </label>
                                     <div class="col-sm-9">
                                         <select
                                             class="form-control"
                                             id="account_to"
-                                            name="config[account_to_id]"
-                                            v-model="to.account_id">
+                                            v-model="form.config.account_to_id">
                                         </select>
                                     </div>
                                 </div>
 
-                                <div class="form-group row">
+                                <div
+                                    class="form-group row"
+                                    :class="form.errors.has('comment') ? 'has-error' : ''"
+                                >
                                     <label for="transaction_date" class="control-label col-sm-3">
                                         Comment
                                     </label>
@@ -150,10 +144,9 @@
                                             class="form-control"
                                             id="transaction_comment"
                                             maxlength="255"
-                                            name="comment"
                                             type="text"
-                                            v-model="transactionData.comment"
-                                        >
+                                            v-model="form.comment"
+                                        />
                                     </div>
                                 </div>
 
@@ -162,11 +155,10 @@
                                         <input
                                             id="entry_type_schedule"
                                             class="checkbox-inline"
-                                            :disabled="transactionData.reconciled"
-                                            name="schedule"
+                                            :disabled="form.reconciled"
                                             type="checkbox"
                                             value="1"
-                                            v-model="transactionData.schedule"
+                                            v-model="form.schedule"
                                         >
                                         <label for="entry_type_schedule" class="control-label">
                                             Scheduled
@@ -176,11 +168,10 @@
                                         <input
                                             id="entry_type_budget"
                                             class="checkbox-inline"
-                                            :disabled="transactionData.reconciled || transactionData.transaction_type.name == 'transfer'"
-                                            name="budget"
+                                            :disabled="form.reconciled || form.transaction_type == 'transfer'"
                                             type="checkbox"
                                             value="1"
-                                            v-model="transactionData.budget"
+                                            v-model="form.budget"
                                         >
                                         <label for="entry_type_budget" class="control-label">
                                             Budget
@@ -190,11 +181,10 @@
                                         <input
                                             id="transaction_reconciled"
                                             class="checkbox-inline"
-                                            :disabled="transactionData.schedule || transactionData.budget"
-                                            name="reconciled"
+                                            :disabled="form.schedule || form.budget"
                                             type="checkbox"
                                             value="1"
-                                            v-model="transactionData.reconciled"
+                                            v-model="form.reconciled"
                                         >
                                         <label for="transaction_reconciled" class="control-label">
                                             Reconciled
@@ -215,8 +205,9 @@
                 <div class="col-md-8">
                     <transaction-item-container
                         @addTransactionItem="addTransactionItem"
-                        :transactionItems="transactionData.transaction_items"
+                        :transactionItems="form.items"
                         :currency="from.account_currency"
+                        :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
                     ></transaction-item-container>
 
                     <div class="box box-primary">
@@ -228,19 +219,21 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="row">
-                                        <div class="form-group col-sm-4">
+                                        <div
+                                            class="form-group col-sm-4"
+                                            :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
+                                        >
                                             <label for="transaction_amount_from" class="control-label">
-                                                Amount from
+                                                {{ ammountFromFieldLabel }}
                                                 <span v-if="from.account_currency">({{from.account_currency}})</span>
                                             </label>
                                             <input
                                                 class="form-control"
                                                 id="transaction_amount_from"
                                                 maxlength="50"
-                                                name="config[amount_from]"
                                                 type="text"
                                                 @change="updateAmount"
-                                                v-model.number="transactionData.config.amount_from"
+                                                v-model.number="form.config.amount_from"
                                             >
                                         </div>
                                         <div
@@ -251,7 +244,9 @@
                                         </div>
                                         <div
                                             v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
-                                            class="form-group col-sm-4 pull-right">
+                                            class="form-group col-sm-4 pull-right"
+                                            :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
+                                        >
                                             <label for="transaction_amount_slave" class="control-label">
                                                 Amount to
                                                 <span v-if="to.account_currency">({{to.account_currency}})</span>
@@ -260,10 +255,9 @@
                                                 class="form-control"
                                                 id="transaction_amount_to"
                                                 maxlength="50"
-                                                name="config[amount_to]"
                                                 type="text"
                                                 @change="updateAmount"
-                                                v-model="transactionData.config.amount_to"
+                                                v-model="form.config.amount_to"
                                             >
                                         </div>
                                     </div>
@@ -287,18 +281,6 @@
                                                     <td class="text-right">
                                                         <span>{{ remainingAmountToPayeeDefault }}</span>
                                                         <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                        <input
-                                                            name="remaining_payee_default_amount"
-                                                            id="remaining_payee_default_amount"
-                                                            type="hidden"
-                                                            v-model="remainingAmountToPayeeDefault"
-                                                        >
-                                                        <input
-                                                            name="remaining_payee_default_category_id"
-                                                            id="remaining_payee_default_category_id"
-                                                            type="hidden"
-                                                            v-model="payeeCategory.id"
-                                                        >
                                                     </td>
                                                 </tr>
                                                 <tr v-show="!payeeCategory.id">
@@ -319,7 +301,9 @@
                     <!-- /.box -->
 
                     <transaction-schedule
-                        :isVisible="transactionData.schedule || transactionData.budget"
+                        :isVisible="form.schedule || form.budget"
+                        :schedule="form.schedule_config"
+                        :form="form"
                     ></transaction-schedule>
 
                 </div>
@@ -331,7 +315,7 @@
             <input
                 name="id"
                 type="hidden"
-                v-model="transactionData.id"
+                v-model="form.id"
             >
             <input
                 name="action"
@@ -351,57 +335,51 @@
                     <label class="control-label">After saving</label>
                 </div>
                 <div class="col-sm-8">
-                    <div class="btn-group btn-group-justified" data-toggle="buttons">
-                        <label
+                    <div class="btn-group">
+                        <button
                             class="btn btn-default"
-                            :class="callback == 'newStandard' ? 'active' : ''">
-                            <input
-                                :checked="callback == 'newStandard'"
-                                name="callback"
-                                type="radio"
-                                value="newStandard"
-                                class="radio-inline">
+                            :class="callback == 'newStandard' ? 'active' : ''"
+                            type="button"
+                            value="newStandard"
+                            @click="callback = $event.currentTarget.getAttribute('value')"
+                        >
                             Add an other transaction
-                        </label>
-                        <label
+                        </button>
+                        <button
                             class="btn btn-default"
-                            :class="callback == 'cloneStandard' ? 'active' : ''">
-                            <input
-                                :checked="callback == 'cloneStandard'"
-                                name="callback"
-                                type="radio"
-                                value="cloneStandard"
-                                class="radio-inline">
+                            :class="callback == 'cloneStandard' ? 'active' : ''"
+                            type="button"
+                            value="cloneStandard"
+                            @click="callback = $event.currentTarget.getAttribute('value')"
+                        >
                             Clone this transaction
-                        </label>
-                        <label
+                        </button>
+                        <button
                             class="btn btn-default"
-                            :class="callback == 'returnToAccount' ? 'active' : ''">
-                            <input
-                                :checked="callback == 'returnToAccount'"
-                                name="callback"
-                                type="radio"
-                                value="returnToAccount"
-                                class="radio-inline">
+                            :class="callback == 'returnToAccount' ? 'active' : ''"
+                            type="button"
+                            value="returnToAccount"
+                            @click="callback = $event.currentTarget.getAttribute('value')"
+                        >
                             Return to selected account
-                        </label>
-                        <label
+                        </button>
+                        <button
                             class="btn btn-default"
-                            :class="callback == 'returnToDashboard' ? 'active' : ''">
-                            <input
-                                :checked="callback == 'returnToDashboard'"
-                                name="callback"
-                                type="radio"
-                                value="returnToDashboard"
-                                class="radio-inline">
+                            :class="callback == 'returnToDashboard' ? 'active' : ''"
+                            type="button"
+                            value="returnToDashboard"
+                            @click="callback = $event.currentTarget.getAttribute('value')"
+                        >
                             Return to dashboard
-                        </label>
+                        </button>
                     </div>
                 </div>
                 <div class="box-tools col-sm-2">
                     <div class="pull-right">
-                        <input type="submit" class="btn btn-sm btn-default" id="cancelButton" onclick="return clickCancel();" value="Cancel">
-                        <input class="btn btn-primary" type="submit" value="Save">
+                        <button class="btn btn-sm btn-default" type="button" @click="onCancel">
+                            Cancel
+                        </button>
+                        <Button class="btn btn-primary" :form="form">Save</Button>
                     </div>
                 </div>
             </div>
@@ -413,123 +391,180 @@
 </template>
 
 <script>
-    require('daterangepicker');
     let math = require("mathjs");
     require('select2');
+
+    import Form from 'vform'
+    import {Button, AlertErrors} from 'vform/src/components/bootstrap5'
+
+    import DatePicker from 'vue2-datepicker';
+    import 'vue2-datepicker/index.css';
 
     import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
 
-    const datePickerStandardSettings = {
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
-    };
-
     export default {
         components: {
             'transaction-item-container': TransactionItemContainer,
-            'transaction-schedule': TransactionSchedule
+            'transaction-schedule': TransactionSchedule,
+            DatePicker,
+            Button, AlertErrors
         },
 
-        props: [
-            'action',
-            'formUrl',
-            'transaction',
-            'callback',
-        ],
+        props: {
+            action: String,
+            formUrl: String,
+            transaction: Object,
+            callback: String,
+        },
 
         data() {
             let data = {};
 
-            data.transactionData = {
-                    transaction_type: {
-                        name: 'withdrawal'
-                    },
-                    transaction_items: [],
-                    config: {},
-                };
-
-            //storing all data and references about source account or payee
-            //set as withdrawal by default
+            // Storing all data and references about source account or payee
+            // Set as withdrawal by default
             data.from = {
                 type: 'account',
                 account_id : null,
                 account_currency : null,
             };
 
-            //storing all data and references about target account or payee
-            //set as withdrawal by default
+            // Storing all data and references about target account or payee
+            // Set as withdrawal by default
             data.to = {
                 type: 'payee',
                 account_id : null,
                 account_currency : null,
             };
 
+            // Additional data about payee, if present
             data.payeeCategory = {
                 id: null,
                 text: null,
             };
 
+            // Main form data
+            data.form = new Form({
+                transaction_type: 'withdrawal',
+                config_type: 'transaction_detail_standard',
+                date: '',
+                comment: null,
+                schdedule: false,
+                budget: false,
+                reconciled: false,
+                config: {},
+                items: [],
+                schedule_config: {
+                    frequency: 'DAILY',
+                    interval: 1,
+                },
+                remaining_payee_default_amount: 0,
+                remaining_payee_default_category_id: null,
+            });
+
+            // Adjust initial callback
+            data.callback = this.callback;
+
             return data;
         },
 
         computed: {
+            formErrors() {
+                return this.form.errors;
+            },
+
+            // Account TO and FROM labels based on transaction type
+            accountFromFieldLabel() {
+                return (this.form.transaction_type == 'withdrawal' || this.form.transaction_type == 'transfer' ? 'Account from' : 'Payee')
+            },
+
+            accountToFieldLabel() {
+                return (this.form.transaction_type == 'deposit' || this.form.transaction_type == 'transfer' ? 'Account to' : 'Payee')
+            },
+
+            // Amount from label is different for transfer
+            ammountFromFieldLabel() {
+                return (this.form.transaction_type == 'transfer' ? 'Amount from' : 'Amount')
+            },
+
             // Calculate the summary of all existing items and their values
             allocatedAmount() {
-                return this.transactionData.transaction_items
-                    .map(item => Number(item.amount))
+                return this.form.items
+                    .map(item => Number(item.amount) || 0)
                     .reduce((amount, currentValue) => amount + currentValue, 0 );
             },
 
             remainingAmountToPayeeDefault() {
-                if (this.payeeCategory.id && !isNaN(this.transactionData.config.amount_from)) {
-                    return this.transactionData.config.amount_from - this.allocatedAmount;
+                if (this.payeeCategory.id && !isNaN(this.form.config.amount_from)) {
+                    return this.form.config.amount_from - this.allocatedAmount;
                 }
                 return 0;
             },
 
             remainingAmountNotAllocated() {
-                if (!this.payeeCategory.id && !isNaN(this.transactionData.config.amount_from)) {
-                    return this.transactionData.config.amount_from - this.allocatedAmount;
+                if (!this.payeeCategory.id && !isNaN(this.form.config.amount_from)) {
+                    return this.form.config.amount_from - this.allocatedAmount;
                 }
 
                 return 0;
             },
 
+            payeeDefaultCategory() {
+                return this.payeeCategory.id;
+            },
+
             exchangeRate() {
-                const from = this.transactionData.config.amount_from;
-                const to = this.transactionData.config.amount_to;
+                const from = this.form.config.amount_from;
+                const to = this.form.config.amount_to;
 
                 if (from && to) {
                     return (Number(to) / Number(from)).toFixed(4);
                 }
 
                 return 0;
-            }
+            },
         },
 
         created() {
-            // Copy values of existing transaction into component data
+            // Copy values of existing transaction into component form data
             if (this.transaction) {
-                this.transactionData = this.transaction;
 
-                this.from.account_id = this.transaction.config.account_from_id;
-                this.to.account_id = this.transaction.config.account_to_id;
+                this.form.config.account_from_id = this.transaction.config.account_from_id;
+                this.form.config.account_to_id = this.transaction.config.account_to_id;
 
-                // Ensure that item amounts are numbers
-                this.transactionData.transaction_items.map(item => item.amount = Number(item.amount));
+                // Populate form data
+                this.form.id = this.transaction.id
+                this.form.transaction_type = this.transaction.transaction_type.name;
+                this.form.date = this.transaction.date;
+                this.form.comment = this.transaction.comment;
+                this.form.schdedule = this.transaction.schdedule;
+                this.form.budget = this.transaction.budget;
+                this.form.reconciled = this.transaction.reconciled;
+
+                // Copy configuration
+                this.form.config.amount_from = this.transaction.config.amount_from;
+                this.form.config.amount_to = this.transaction.config.amount_to;
+
+                this.form.config.acount_from_id = this.transaction.config.account_from_id;
+                this.form.config.acount_to_id = this.transaction.config.account_to_id;
+
+                // Copy items, and ensure that amount is number
+                if (this.transaction.transaction_items.length > 0) {
+                    this.transaction.transaction_items
+                        .map((item) => {
+                            item.amount = Number(item.amount);
+                            return item;
+                        })
+                        .forEach(item => this.form.items.push(item));
+                }
+
+                // Copy schedule config
+
             }
         },
 
         mounted() {
             let $vm = this;
-
-            // Initilize date field
-            $('#transaction_date').daterangepicker(datePickerStandardSettings);
 
             // Account FROM dropdown functionality
             $("#account_from")
@@ -561,11 +596,13 @@
                 });
 
             // Load default value for account FROM
-            if (this.from.account_id !== null) {
-                const data = this.transactionData.config.account_from;
+            if (this.form.config.acount_from_id) {
+                const data = this.transaction.config.account_from;
+
                 // Create the option and append to Select2
-                var option = new Option(data.name, data.id, true, true);
-                $("#account_from").append(option).trigger('change');
+                $("#account_from")
+                    .append(new Option(data.name, data.id, true, true))
+                    .trigger('change');
 
                 // Manually trigger the `select2:select` event
                 $("#account_from").trigger({
@@ -606,11 +643,13 @@
                 });
 
             // Load default value for account TO
-            if (this.to.account_id !== null) {
-                const data = this.transactionData.config.account_to;
+            if (this.form.config.acount_to_id) {
+                const data = this.transaction.config.account_to;
+
                 // Create the option and append to Select2
-                var option = new Option(data.name, data.id, true, true);
-                $("#account_to").append(option).trigger('change');
+                $("#account_to")
+                    .append(new Option(data.name, data.id, true, true))
+                    .trigger('change');
 
                 // Manually trigger the `select2:select` event
                 $("#account_to").trigger({
@@ -620,27 +659,6 @@
                     }
                 });
             }
-
-            // Setup toggle detail functionality for transaction items
-            $(".toggle_transaction_detail").on('click', function(){
-                $(this).closest(".transaction_item_row").find(".transaction_detail_container").toggle();
-            })
-
-            //Setup remaining amount copy function for transaction items
-            $(".load_remainder").on('click', function() {
-                try {
-                    var element = $(this).closest(".transaction_item_row").find("input.transaction_item_amount");
-                    var remainingAmount = transactionData.remainingAmountNotAllocated || transactionData.remainingAmountToPayeeDefault;
-
-                    var amount = math.evaluate(element.val() + "+" + remainingAmount);
-
-                    element.val(amount);
-                    transactionData.updateTotals();
-
-                } catch (err) {
-
-                }
-            });
 
             //Display fixed footer
             setTimeout(function() {
@@ -666,7 +684,7 @@
 
             // Add a new empty item to list of transaction items
             addTransactionItem() {
-                this.transactionData.transaction_items.push({});
+                this.form.items.push({});
             },
 
             // Update TO or FROM amount with math calculation
@@ -679,14 +697,22 @@
 
                 // Emit event to update v-model
                 event.target.dispatchEvent(new Event('input'));
+
+                // If FROM value is updated, check if TO needs to by synced
+                // TODO: compute if exchange rate is present
+                // TODO: update on other relevant changes (e.g. currency needed)
+                if (event.target.id === 'transaction_amount_from'
+                    && !(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
+                    this.form.config.amount_to = amount || '';
+                }
             },
 
             // Check if TO or FROM is account or payee
             getAccountType(type) {
-                if (this.transactionData.transaction_type.name == 'withdrawal') {
+                if (this.form.transaction_type == 'withdrawal') {
                     return type == 'from' ? 'account' : 'payee';
                 }
-                if (this.transactionData.transaction_type.name == 'deposit') {
+                if (this.form.transaction_type == 'deposit') {
                     return type == 'from' ? 'payee' : 'account';
                 }
 
@@ -719,13 +745,13 @@
                         data: function (params) {
                             return {
                                 q: params.term,
-                                transaction_type: $vm.transactionData.transaction_type.name,
+                                transaction_type: $vm.form.transaction_type,
                                 account_type: type
                             };
                         },
                         processResults: function (data) {
                             //TODO: exclude current selection from results
-                            //var other = transactionData.elements.toAccountInput.get(0);
+                            //var other = toAccountInput.get(0);
                             //var other_id = (other.selectedIndex === -1 ? -1 : other.options[other.selectedIndex].value);
                             var other_id = null;
                             return {
@@ -739,6 +765,59 @@
                     placeholder: "Select account to debit",
                     allowClear: true
                 };
+            },
+
+            getCallbackUrl(transactionId) {
+                if (this.callback == 'returnToDashboard') {
+                    return '/';
+                }
+
+                if (this.callback == 'newStandard') {
+                    return window.location.href;
+                }
+
+                if (this.callback == 'cloneStandard') {
+                    //TODO: should this come from route function
+                    return '/transaction/clone/' + transactionId;
+                }
+
+                if(this.callback == 'returnToAccount') {
+                    //TODO: should this come from route function
+                    return '/account/history/' + this.form.config.account_from_id;
+                }
+            },
+
+            onCancel() {
+                if(confirm('Are you sure you want to discard any changes?')) {
+                    window.history.back();
+                }
+                return false;
+            },
+
+            onSubmit() {
+                if (!this.transaction) {
+                    this.form.post(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                    })
+
+                    return;
+                }
+
+                this.form.post(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                    })
+            },
+        },
+
+        watch: {
+            remainingAmountToPayeeDefault (newAmount) {
+                this.form.remaining_payee_default_amount = newAmount;
+            },
+
+            payeeDefaultCategory (newId) {
+                this.form.remaining_payee_default_category_id = newId;
             }
         }
     }

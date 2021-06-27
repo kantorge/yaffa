@@ -9,7 +9,6 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 //use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Log;
 use JavaScript;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;

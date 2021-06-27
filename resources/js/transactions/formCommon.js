@@ -1,19 +1,3 @@
-window.datePickerStandardSettings = {
-    singleDatePicker: true,
-    showDropdowns: true,
-    locale: {
-        format: 'YYYY-MM-DD'
-    },
-    autoApply: true
-};
-
-window.clickCancel = function() {
-    if(confirm('Are you sure you want to discard any changes?')) {
-        window.history.back();
-    }
-    return false;
-}
-
 window.processNumericInput = function (element) {
 
     var amount = 0;

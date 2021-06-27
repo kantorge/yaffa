@@ -1,6 +1,6 @@
 require( 'daterangepicker');
 
-require('jquery-validation');
+//require('jquery-validation');
 
 let math = require("mathjs");
 

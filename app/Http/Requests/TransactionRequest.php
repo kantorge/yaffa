@@ -2,15 +2,14 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
+use \App\Models\TransactionType;
 use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
-    use FlashMessages;
-
     public function authorize()
     {
         return true;
@@ -27,26 +26,30 @@ class TransactionRequest extends FormRequest
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
         ];
 
-        //basic transaction has no schedule at all, or has only schedule enabled
+        // Basic transaction has no schedule at all, or has only schedule enabled
         $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
 
-        //adjust date and schedule related rules
-        if (   $this->get('schedule')
-            || $this->get('budget')) {
-
+        // Set date and schedule related rules
+        if ($this->get('schedule') || $this->get('budget')) {
             $rules = array_merge($rules, [
                 'reconciled' => [
                     'boolean',
-                    //scheduled or budgeted items cannot be reconciled
-                    new IsFalsy,
+                    new IsFalsy, // Scheduled or budgeted items cannot be reconciled
                 ],
 
-                'schedule_start' => 'required|date',
-                'schedule_next' => 'required|date|after_or_equal:schedule_start|before_or_equal:shedule_end',
-                'schedule_end' => 'nullable|date|after_or_equal:schedule_start',
-                'schedule_frequency' => 'required', //TODO: validate values
-                'schedule_interval' => 'nullable|numeric|gte:1',
-                'schedule_count' => 'nullable|numeric|gte:1',
+                'schedule_config.start_date' => 'required|date',
+                'schedule_config.next_date' => [
+                    'required',
+                    'date',
+                    'after_or_equal:schedule_config.start_date',
+                ],
+                'schedule_config.end_date' => 'nullable|date|after_or_equal:schedule_start',
+                'schedule_config.frequency' => [
+                    'required',
+                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+                ],
+                'schedule_config.interval' => 'nullable|numeric|gte:1',
+                'schedule_config.count' => 'nullable|numeric|gte:1',
             ]);
         } else {
             $rules = array_merge($rules, [
@@ -54,25 +57,25 @@ class TransactionRequest extends FormRequest
             ]);
         }
 
-        //adjustment based on transaction type
+        // Adjustments based on transaction type
         if ($this->get('config_type') === 'transaction_detail_standard') {
             //any standard transactions have common rules for items
             $rules = array_merge($rules, [
-                'transactionItems' => 'array',
-                'transactionItems.*' => 'array',
-                'transactionItems.*.amount' => [
+                'items' => 'array',
+                'items.*' => 'array',
+                'items.*.amount' => [
                     'nullable',
-                    'required_with:transactionItems.*.category,transactionItems.*.comment,transactionItems.*.tags',
+                    'required_with:items.*.category,items.*.comment,items.*.tags',
                     'numeric',
                     'gt:0',
                 ],
-                'transactionItems.*.category_id' => [
+                'items.*.category_id' => [
                     'nullable',
-                    'required_with:transactionItems.*.amount',
+                    'required_with:items.*.amount',
                     'exists:categories,id',
                 ],
-                'transactionItems.*.comment' => 'nullable|max:191',
-                'transactionItems.*.tags' => 'array',
+                'items.*.comment' => 'nullable|max:191',
+                'items.*.tags' => 'array',
                 //TODO: rule validation with option to create new tag
                 //'transactionItems.*.tags.*' => 'nullable|exists:tags,id',
             ]);
@@ -80,8 +83,7 @@ class TransactionRequest extends FormRequest
             //adjust detail related rules, based on transaction type
             //accounts are only needed for basic setup (not budget only)
             //TODO: make it more dynamic instead of fixed IDs
-            if ($this->get('transaction_type_id') === 1) {
-                //withdrawal
+            if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
@@ -99,8 +101,7 @@ class TransactionRequest extends FormRequest
                     'remaining_payee_default_category_id' => "nullable|exists:categories,id",
 
                 ]);
-            } else if ($this->get('transaction_type_id') === 2) {
-                //deposit
+            } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
@@ -111,15 +112,14 @@ class TransactionRequest extends FormRequest
                         'exists:account_entities,id,config_type,account'
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0',
+                    'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
                     //technical field, but required for standard transaction
                     'remaining_payee_default_amount' => "nullable|numeric|gte:0",
                     'remaining_payee_default_category_id' => "nullable|exists:categories,id",
 
                 ]);
-            } else if ($this->get('transaction_type_id') === 3) {
-                //transfer
+            } elseif ($this->get('transaction_type') === 'transfer') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
@@ -148,8 +148,7 @@ class TransactionRequest extends FormRequest
 
 
             //TODO: make it more dynamic instead of fixed IDs
-            if (   $this->get('transaction_type_id') === 4
-                || $this->get('transaction_type_id') === 5) {
+            if ($this->get('transaction_type_id') === 4 || $this->get('transaction_type_id') === 5) {
                 //buy OR sell
                 $rules = array_merge($rules, [
                     'config.price' => 'required|numeric|gt:0',
@@ -157,27 +156,20 @@ class TransactionRequest extends FormRequest
                     'config.commission' => 'nullable|numeric|gte:0',
                     'config.tax' => 'nullable|numeric|gte:0',
                 ]);
-
-            } else if (   $this->get('transaction_type_id') === 6
-                       || $this->get('transaction_type_id') === 7) {
+            } elseif ($this->get('transaction_type_id') === 6 || $this->get('transaction_type_id') === 7) {
                 //add OR remove shares
                 $rules = array_merge($rules, [
                     'config.quantity' => 'required|numeric|gt:0',
                     'config.commission' => 'nullable|numeric|gte:0',
                     'config.tax' => 'nullable|numeric|gte:0',
                 ]);
-
-            }
-            else if (   $this->get('transaction_type_id') === 8
-                     || $this->get('transaction_type_id') === 9
-                     || $this->get('transaction_type_id') === 10) {
+            } elseif ($this->get('transaction_type_id') === 8 || $this->get('transaction_type_id') === 9 || $this->get('transaction_type_id') === 10) {
                 //dividend OR cap gainst
                 $rules = array_merge($rules, [
                     'config.dividend' => 'required|numeric|gt:0',
                     'config.commission' => 'nullable|numeric|gte:0',
                     'config.tax' => 'nullable|numeric|gte:0',
                 ]);
-
             }
         }
 
@@ -185,18 +177,20 @@ class TransactionRequest extends FormRequest
     }
 
     /**
-     * Load validator error messages to standard notifications array
+     * Configure conditional rules for some items
      *
      * @return void
      */
     public function withValidator(Validator $validator): void
     {
-
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
+        // Schedule start/next date rule is needed if schedule AND/OR budget is used, AND end_date is provided
+        $validator->sometimes(
+            ['schedule_config.next_date', 'schedule_config.start_date'],
+            'before_or_equal:schedule_config.end_date',
+            function ($input) {
+                return ($input->schedule || $input->budget) && array_key_exists('end_date', $input->schedule_config) && $input->schedule_config['end_date'];
             }
-        });
+        );
     }
 
     /**
@@ -206,18 +200,11 @@ class TransactionRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        //get transaction type ID by name
+        // Get transaction type ID by name
         if ($this->transaction_type) {
             $this->merge([
-                'transaction_type_id' => \App\Models\TransactionType::where('name', $this->transaction_type)->first()->id
+                'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id
             ]);
         }
-
-        //check for checkbox-es
-        $this->merge([
-            'reconciled' => $this->reconciled ?? 0,
-            'schedule' => $this->schedule ?? 0,
-            'budget' => $this->budget ?? 0,
-        ]);
     }
 }
