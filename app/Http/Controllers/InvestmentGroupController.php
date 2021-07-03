@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InvestmentGroup;
 use App\Http\Requests\InvestmentGroupRequest;
+use App\Models\InvestmentGroup;
 use JavaScript;
 
 class InvestmentGroupController extends Controller
@@ -83,13 +83,13 @@ class InvestmentGroupController extends Controller
      * @param InvestmentGroup $investmentGroup
      * @return \Illuminate\Http\Response
      */
-    public function destroy( InvestmentGroup $investmentGroup)
+    public function destroy(InvestmentGroup $investmentGroup)
     {
         try {
             $investmentGroup->delete();
             self::addSimpleSuccessMessage('Investment group deleted');
             return redirect()->route('investment-group.index');
-        } catch(\Illuminate\Database\QueryException $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Investment group is in use, cannot be deleted');
             } else {

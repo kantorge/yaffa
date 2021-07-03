@@ -5,8 +5,8 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
-use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\PayeeController;
 use App\Http\Controllers\TagController;
@@ -57,18 +57,34 @@ Route::resource('investment', InvestmentController::class);
 Route::resource('payees', PayeeController::class);
 Route::resource('tag', TagController::class);
 
-Route::get('/transactions/create/standard', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
-Route::get('/transactions/create/investment', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
+Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
+Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
 Route::post('/transactions/standard', [TransactionController::class, 'storeStandard'])->name('transactions.storeStandard');
 Route::post('/transactions/investment', [TransactionController::class, 'storeInvestment'])->name('transactions.storeInvestment');
-Route::get('/transactions/{transaction}/edit/standard', [TransactionController::class, 'editStandard'])->name('transactions.editStandard');
-Route::get('/transactions/{transaction}/edit/investment', [TransactionController::class, 'editInvestment'])->name('transactions.editInvestment');
-Route::get('/transactions/{transaction}/clone/standard', [TransactionController::class, 'cloneStandard'])->name('transactions.cloneStandard');
-Route::get('/transactions/{transaction}/clone/investment', [TransactionController::class, 'cloneInvestment'])->name('transactions.cloneInvestment');
-Route::patch('/transactions/{transaction}/standard', [TransactionController::class, 'updateStandard'])->name('transactions.updateStandard');
-Route::patch('/transactions/{transaction}/investment', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
+
+Route::get(
+    '/transactions/standard/{transaction}/{action}',
+    [
+        TransactionController::class,
+        'openStandard'
+    ]
+)
+->where('action', 'edit|clone|enter')
+->name('transactions.openStandard');
+
+Route::get(
+    '/transactions/investment/{transaction}/{action}',
+    [
+        TransactionController::class,
+        'openInvestment'
+    ]
+)
+->where('action', 'edit|clone|enter')
+->name('transactions.openInvestment');
+
+Route::patch('/transactions/standard/{transaction}', [TransactionController::class, 'updateStandard'])->name('transactions.updateStandard');
+Route::patch('/transactions/investment/{transaction}', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])->name('transactions.skipScheduleInstance');
-Route::get('/transactions/{transaction}/enter/standard', [TransactionController::class, 'enterWithEditStandard'])->name('transactions.enterWithEditStandard');
 Route::resource(
     'transactions',
     TransactionController::class

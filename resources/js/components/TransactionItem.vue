@@ -21,12 +21,11 @@
                         <span v-if="currency">({{currency}})</span>
                     </label>
                     <div class="input-group">
-                        <input
+                        <MathInput
                             class="form-control transaction_item_amount"
-                            type="text"
-                            v-model.number="amount"
-                            @blur="updateAmount"
-                        >
+                            v-model="amount"
+                        ></MathInput>
+
                         <span class="input-group-btn">
                             <button
                                 type="button"
@@ -89,13 +88,18 @@
 </template>
 
 <script>
-    let math = require("mathjs");
     require('select2');
 
+    import MathInput from './MathInput.vue'
+
     export default {
+        components: {
+            MathInput
+        },
+
         props: {
             index: Number,
-            amount: Number,
+            amount: [Number, String],
             category_id: Number,
             category: Object,
             currency: String,
@@ -103,6 +107,8 @@
             tags: Array,
             remainingAmount: Number,
         },
+
+        emits: ['amountChanged'],
 
         data() {
             return {};
@@ -212,12 +218,8 @@
 
         methods: {
             updateAmount: function (event) {
-                let amount = math.evaluate(event.target.value.replace(/\s/g,""));
-
-                if(amount <= 0) throw Error("Positive number expected");
-
-                event.target.value = amount;
-                this.$emit('updateItemAmount', amount);
+                console.log('item amount update:', event);
+                this.$emit('amountChanged', event.target.value);
             },
 
             // Emmit an event to have the parent container update the value
@@ -242,6 +244,12 @@
 
                 element.val(amount);
                 this.$emit('updateItemAmount', amount);
+            }
+        },
+
+        watch: {
+            amount (newAmount) {
+                this.$emit('amountChanged', newAmount);
             }
         }
     }

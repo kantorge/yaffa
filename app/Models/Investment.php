@@ -101,9 +101,9 @@ class Investment extends Model
                 return 0;
             }
 
-            return ($operator == 'minus'
+            return $operator == 'minus'
                     ? - $transaction->config->quantity
-                    : $transaction->config->quantity);
+                    : $transaction->config->quantity;
         });
     }
 
@@ -140,20 +140,20 @@ class Investment extends Model
         }
 
         if ($type == 'stored') {
-            return ($price instanceof InvestmentPrice ? $price->price : null);
+            return $price instanceof InvestmentPrice ? $price->price : null;
         }
 
         if ($type == 'transaction') {
-            return ($transaction instanceof Transaction ? $transaction->config->price : null);
+            return $transaction instanceof Transaction ? $transaction->config->price : null;
         }
 
         //combined is needed and we have both data: get latest
         if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
             if ($price->date > $transaction->date) {
                 return $price->price;
-            } else {
-                return $transaction->config->price;
             }
+
+            return $transaction->config->price;
         }
 
         //we have only stored data

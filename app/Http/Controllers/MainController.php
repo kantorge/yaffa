@@ -8,7 +8,6 @@ use App\Models\Currency;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-//use Illuminate\Http\Request;
 use JavaScript;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
@@ -35,7 +34,7 @@ class MainController extends Controller
     public function index($withClosed = null)
     {
         $accounts = AccountEntity::where('config_type', 'account')
-            ->when(!$withClosed, function($query) {
+            ->when(!$withClosed, function ($query) {
                 $query->where('active', '1');
             })
             ->with([
@@ -52,7 +51,7 @@ class MainController extends Controller
         $currencies = Currency::all();
 
         $accounts
-            ->map(function($account) use ($currencies, $baseCurrency) {
+            ->map(function ($account) use ($currencies, $baseCurrency) {
                 //get account group name for later grouping
                 $account['account_group'] = $account->config->account_group->name;
 
@@ -61,66 +60,68 @@ class MainController extends Controller
                     [
                         'config',
                         'transactionType',
-                    ])
-                    ->where('schedule', 0)
-                    ->where('budget', 0)
-                    ->whereHasMorph(
-                        'config',
-                        [\App\Models\TransactionDetailStandard::class],
-                        function (Builder $query) use ($account) {
-                            $query->Where('account_from_id', $account->id);
-                            $query->orWhere('account_to_id', $account->id);
-                        }
-                    )
-                    ->get();
+                    ]
+                )
+                ->where('schedule', 0)
+                ->where('budget', 0)
+                ->whereHasMorph(
+                    'config',
+                    [\App\Models\TransactionDetailStandard::class],
+                    function (Builder $query) use ($account) {
+                        $query->Where('account_from_id', $account->id);
+                        $query->orWhere('account_to_id', $account->id);
+                    }
+                )
+                ->get();
 
                 //get all investment transactions
                 $investmentTransactions = Transaction::with(
                     [
                         'config',
                         'transactionType',
-                    ])
-                    ->where('schedule', 0)
-                    ->where('budget', 0)
-                    ->whereHasMorph(
-                        'config',
-                        [\App\Models\TransactionDetailInvestment::class],
-                        function (Builder $query) use ($account) {
-                            $query->Where('account_id', $account->id);
-                        }
-                    )
-                    ->get();
+                    ]
+                )
+                ->where('schedule', 0)
+                ->where('budget', 0)
+                ->whereHasMorph(
+                    'config',
+                    [\App\Models\TransactionDetailInvestment::class],
+                    function (Builder $query) use ($account) {
+                        $query->Where('account_id', $account->id);
+                    }
+                )
+                ->get();
 
                 $transactions = $standardTransactions->merge($investmentTransactions);
 
                 //get summary of transactions
                 $account['sum'] = $transactions
                     ->sum(function ($transaction) use ($account) {
-                            if ($transaction->config_type == 'transaction_detail_standard') {
-                                $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
-                                return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
+                        if ($transaction->config_type == 'transaction_detail_standard') {
+                            $operator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $account->id ? 'minus' : 'plus');
+                            return ($operator == 'minus' ? -$transaction->config->amount_from : $transaction->config->amount_to);
+                        }
+                        if ($transaction->config_type == 'transaction_detail_investment') {
+                            $operator = $transaction->transactionType->amount_operator;
+                            if (!$operator) {
+                                return 0;
                             }
-                            if ($transaction->config_type == 'transaction_detail_investment') {
-                                $operator = $transaction->transactionType->amount_operator;
-                                if (!$operator) {
-                                    return 0;
-                                }
-                                return ($operator == 'minus'
-                                        ? - $transaction->config->price * $transaction->config->quantity
-                                        : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
-                                        - $transaction->config->tax
-                                        - $transaction->config->commission;
-                            }
+                            return ($operator == 'minus'
+                                    ? - $transaction->config->price * $transaction->config->quantity
+                                    : $transaction->config->dividend + $transaction->config->price * $transaction->config->quantity )
+                                    - $transaction->config->tax
+                                    - $transaction->config->commission;
+                        }
 
-                            return 0;
-                        });
+                        return 0;
+                    });
 
                 //add opening balance
                 $account['sum'] += $account->config->openingBalance()['amount_to'];
 
                 //add value of investments
                 $investments = $account->config->getAssociatedInvestmentsAndQuantity();
-                $account['sum'] += $investments->sum(function($item) {
+                $account['sum'] += $investments->sum(function ($item) {
 
                     $investment = \App\Models\Investment::find($item['investment']);
                     if ($item['quantity'] > 0) {
@@ -156,12 +157,14 @@ class MainController extends Controller
 
         $total = $summary->sum('sum');
 
-        return view('account.summary',
-             [
+        return view(
+            'account.summary',
+            [
                 'summary' => array_values($summary->toArray()),
                 'total' => $total,
                 'baseCurrency' => $baseCurrency,
-            ]);
+            ]
+        );
     }
 
     private $allAccounts;
@@ -178,62 +181,61 @@ class MainController extends Controller
         $this->allAccounts = \App\Models\AccountEntity::pluck('name', 'id')->all();
 
         //get all tags
-        $this->allTags = \App\Models\Tag::pluck('name','id')->all();
+        $this->allTags = \App\Models\Tag::pluck('name', 'id')->all();
 
         //get all categories
-        $this->allCategories = \App\Models\Category::all()->pluck('full_name','id');
+        $this->allCategories = \App\Models\Category::all()->pluck('full_name', 'id');
 
         //get standard transactions related to selected account
-        $standardTransactions = Transaction::
-            where(function($query) {
-                $query->where('schedule', 1)
-                    ->orWhere(function($query) {
+        $standardTransactions = Transaction::where(function ($query) {
+            $query->where('schedule', 1)
+                ->orWhere(function ($query) {
                     $query->where('schedule', 0);
                     $query->where('budget', 0);
                 });
-            })
-            ->whereHasMorph(
-                'config',
-                [\App\Models\TransactionDetailStandard::class],
-                function (Builder $query) use ($account) {
-                    $query->Where('account_from_id', $account->id);
-                    $query->orWhere('account_to_id', $account->id);
-                }
-            )
-            ->with([
-                'config',
-                //'config.accountFrom',
-                //'config.accountTo',
-                'transactionType',
-                'transactionItems',
-                'transactionItems.tags',
-                //'transactionItems.category',
-            ])
-            ->get();
+        })
+        ->whereHasMorph(
+            'config',
+            [\App\Models\TransactionDetailStandard::class],
+            function (Builder $query) use ($account) {
+                $query->Where('account_from_id', $account->id);
+                $query->orWhere('account_to_id', $account->id);
+            }
+        )
+        ->with([
+            'config',
+            //'config.accountFrom',
+            //'config.accountTo',
+            'transactionType',
+            'transactionItems',
+            'transactionItems.tags',
+            //'transactionItems.category',
+        ])
+        ->get();
 
         //get all investment transactions related to selected account
-        $investmentTransactions = Transaction::
-            where(function($query) {
-                $query->where('schedule', 1)
-                    ->orWhere(function($query) {
+        $investmentTransactions = Transaction::where(function ($query) {
+            $query->where('schedule', 1)
+                ->orWhere(function ($query) {
                     $query->where('schedule', 0);
                     $query->where('budget', 0);
                 });
-            })
-            ->whereHasMorph(
+        })
+        ->whereHasMorph(
+            'config',
+            [\App\Models\TransactionDetailInvestment::class],
+            function (Builder $query) use ($account) {
+                $query->Where('account_id', $account->id);
+            }
+        )
+        ->with(
+            [
                 'config',
-                [\App\Models\TransactionDetailInvestment::class],
-                function (Builder $query) use ($account) {
-                    $query->Where('account_id', $account->id);
-                }
-            )
-            ->with(
-                [
-                    'config',
-                    'config.investment',
-                    'transactionType',
-                ])
-            ->get();
+                'config.investment',
+                'transactionType',
+            ]
+        )
+        ->get();
 
         $transactions = $standardTransactions
             ->map(function ($transaction) {
@@ -250,10 +252,8 @@ class MainController extends Controller
                     $dateData = $this->transformDate($transaction);
 
                     return array_merge($commonData, $baseData, $dateData);
-
-                })
-            )
-            ->filter(function($transaction) {
+                }))
+            ->filter(function ($transaction) {
                 //TODO: canc this be done earlier, at a more appropriate part of the code?
                 if ($transaction['transaction_group'] != 'schedule') {
                     return true;
@@ -267,9 +267,8 @@ class MainController extends Controller
             $transactions
             ->filter(function ($transaction) {
                     return $transaction['transaction_group'] == 'schedule';
-                })
-            ->each(function($transaction) use (&$transactions) {
-                //dd($transaction);
+            })
+            ->each(function ($transaction) use (&$transactions) {
                 $rule = new Rule();
                 $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
 
@@ -306,8 +305,7 @@ class MainController extends Controller
 
                 $first = true;
 
-                foreach ($transformer->transform($rule,$constraint) as $instance) {
-                    //dd($instance);
+                foreach ($transformer->transform($rule, $constraint) as $instance) {
                     $newTransaction = $transaction;
                     $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
                     $newTransaction['transaction_group'] = 'forecast';
@@ -316,25 +314,22 @@ class MainController extends Controller
                     $transactions->push($newTransaction);
 
                     $first = false;
-
                 }
-
             });
-
         }
 
         $subTotal = 0;
 
         $data = $transactions
-            ->filter(function($transaction) {
+            ->filter(function ($transaction) {
                 return $transaction['transaction_group'] == 'history' || $transaction['transaction_group'] == 'forecast';
             })
             ->sortByDesc('transactionType')
             ->sortBy('date')
             //add opening item to beginning of transaction list
             ->prepend($account->openingBalance())
-            ->map(function($item, $key) use (&$subTotal) {
-                $subTotal += ($item['transaction_operator'] == 'plus' ? $item['amount_to']  : -$item['amount_from']);
+            ->map(function ($item) use (&$subTotal) {
+                $subTotal += ($item['transaction_operator'] == 'plus' ? $item['amount_to'] : -$item['amount_from']);
                 $item['running_total'] = $subTotal;
                 return $item;
             })
@@ -343,27 +338,30 @@ class MainController extends Controller
         JavaScript::put([
             'transactionData' => $data,
             'scheduleData' => $transactions
-                ->filter(function($transaction) {
+                ->filter(function ($transaction) {
                     return $transaction['transaction_group'] == 'schedule';
                 })->values(),
-            'urlEditStandard' => route('transactions.editStandard', '#ID#'),
-            'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
-            'urlCloneStandard' => route('transactions.cloneStandard', '#ID#'),
-            'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
+            'urlEditStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'edit']),
+            'urlEditInvestment' => route('transactions.openInvestment', ['transaction' => '#ID#', 'action' => 'edit']),
+            'urlCloneStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'clone']),
+            'urlCloneInvestment' => route('transactions.openInvestment', ['transaction' => '#ID#', 'action' => 'clone']),
             'urlDelete' => route('transactions.destroy', '#ID#'),
             'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
-            'urlEnterWithEditStandard' => route('transactions.enterWithEditStandard', '#ID#'),
+            'urlEnterWithEditStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'enter']),
         ]);
 
-        return view('account.history',
+        return view(
+            'account.history',
             [
                 'account' => $account,
                 'withForecast' => $withForecast,
-            ]);
+            ]
+        );
     }
 
-    private function transformDate(Transaction $transaction) {
-        if($transaction->schedule) {
+    private function transformDate(Transaction $transaction)
+    {
+        if ($transaction->schedule) {
             $transaction->load(['transactionSchedule']);
 
             return [
@@ -380,7 +378,8 @@ class MainController extends Controller
         }
     }
 
-    private function transformDataCommon(Transaction $transaction) {
+    private function transformDataCommon(Transaction $transaction)
+    {
         return
             [
                 'id' => $transaction->id,
@@ -392,21 +391,22 @@ class MainController extends Controller
             ];
     }
 
-    private function transformDataStandard(Transaction $transaction) {
+    private function transformDataStandard(Transaction $transaction)
+    {
         $transactionArray = $transaction->toArray();
 
         $itemTags = [];
         $itemCategories = [];
-        foreach($transactionArray['transaction_items'] as $item) {
+        foreach ($transactionArray['transaction_items'] as $item) {
             if (isset($item['tags'])) {
-                foreach($item['tags'] as $tag) {
+                foreach ($item['tags'] as $tag) {
                     $itemTags[$tag['id']] = $this->allTags[$tag['id']];
-                };
+                }
             }
             if (isset($item['category_id'])) {
                 $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
             }
-        };
+        }
 
         return
             [
@@ -424,7 +424,8 @@ class MainController extends Controller
             ];
     }
 
-    private function transformDataInvestment(Transaction $transaction) {
+    private function transformDataInvestment(Transaction $transaction)
+    {
         return
         [
             'transaction_operator' => $transaction->transactionType->amount_operator,

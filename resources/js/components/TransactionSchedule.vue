@@ -28,24 +28,22 @@
                     :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
                 >
                     <label for="schedule_count" class="control-label">Count</label>
-                    <input
+                    <MathInput
                         class="form-control"
                         id="schedule_count"
-                        type="number"
                         v-model="schedule.count"
-                    >
+                    ></MathInput>
                 </div>
                 <div
                     class="col-md-4 form-group"
                     :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
                     <label for="schedule_interval" class="control-label">Interval</label>
-                    <input
+                    <MathInput
                         class="form-control"
                         id="schedule_interval"
-                        type="number"
                         v-model="schedule.interval"
-                    >
+                    ></MathInput>
                 </div>
             </div>
 
@@ -100,10 +98,12 @@
 <script>
     import DatePicker from 'vue2-datepicker';
     import 'vue2-datepicker/index.css';
+    import MathInput from './MathInput.vue'
 
     export default {
         components: {
             DatePicker,
+            MathInput,
         },
 
         props: {

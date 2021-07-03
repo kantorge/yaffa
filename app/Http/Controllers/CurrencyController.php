@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Currency;
 use App\Http\Requests\CurrencyRequest;
+use App\Models\Currency;
 use JavaScript;
 
 class CurrencyController extends Controller
@@ -70,7 +70,7 @@ class CurrencyController extends Controller
     {
         $currency = Currency::find($id);
 
-        return view('currencies.form',['currency'=> $currency]);
+        return view('currencies.form', ['currency'=> $currency]);
     }
 
     public function update(CurrencyRequest $request)
@@ -109,7 +109,7 @@ class CurrencyController extends Controller
             $currency->delete();
             self::addSimpleSuccessMessage('Currency deleted');
             return redirect()->route('currencies.index');
-        } catch(\Illuminate\Database\QueryException $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Currency is in use, cannot be deleted');
             } else {
@@ -118,5 +118,4 @@ class CurrencyController extends Controller
             return redirect()->back();
         }
     }
-
 }

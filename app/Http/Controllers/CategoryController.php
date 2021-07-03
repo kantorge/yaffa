@@ -59,10 +59,11 @@ class CategoryController extends Controller
         //get all possible parents
         $parents = Category::
             whereNull('parent_id')
-            ->where('id', '!=',  $category->id)
+            ->where('id', '!=', $category->id)
             ->pluck('name', 'id');
 
-        return view('categories.form',
+        return view(
+            'categories.form',
             [
                 'category'=> $category,
                 'parents' => $parents,
@@ -90,7 +91,7 @@ class CategoryController extends Controller
      * @param Category $category
      * @return \Illuminate\Http\Response
      */
-    public function destroy( Category $category)
+    public function destroy(Category $category)
     {
         //delete
         $category->delete();
@@ -99,5 +100,4 @@ class CategoryController extends Controller
 
         return redirect()->route('categories.index');
     }
-
 }

@@ -25,12 +25,12 @@
 
                 <transaction-item
                     @removeTransactionItem="removeTransactionItem(index)"
-                    @updateItemAmount="updateItemAmount(index, $event)"
+                    @amountChanged="updateItemAmount(index, $event)"
                     @updateItemCategory="updateItemCategory(index, $event)"
                     @updateItemTag="updateItemTag(index, $event)"
                     @updateItemComment="updateItemComment(index, $event)"
                     :index="index"
-                    :amount="item.amount ? Number(item.amount) : null"
+                    :amount="item.amount"
                     :category_id="item.category_id ? Number(item.category_id) : null"
                     :category="item.category"
                     :tags="item.tags || []"

@@ -9,11 +9,10 @@ trait FlashMessages
 
     public static function addMessage($message, $type = "info", $title = "", $icon = "", $dismissable = false) :void
     {
-        $existingData = session()->get('notification_collection');
-
-        if (empty($existingData)) {
-            // If notification_collection is either not set or not a collection, initialize it
-            $existingData = new Collection;
+        if (session()->has('notification_collection')) {
+            $existingData = session()->get('notification_collection');
+        } else {
+            $existingData = new Collection();
         }
 
         //add new item
@@ -30,7 +29,7 @@ trait FlashMessages
 
     public static function getMessages()
     {
-        return self::hasMessages() ? session()->get('notification_collection') : new Collection;
+        return self::hasMessages() ? session()->get('notification_collection') : new Collection();
     }
 
     public static function hasMessages()
@@ -40,21 +39,21 @@ trait FlashMessages
 
     public static function addSimpleSuccessMessage($message)
     {
-        self::addMessage($message,'success');
+        self::addMessage($message, 'success');
     }
 
     public static function addSimpleInfoMessage($message)
     {
-        self::addMessage($message,'info');
+        self::addMessage($message, 'info');
     }
 
     public static function addSimpleWarningMessage($message)
     {
-        self::addMessage($message,'warning');
+        self::addMessage($message, 'warning');
     }
 
     public static function addSimpleDangerMessage($message)
     {
-        self::addMessage($message,'danger');
+        self::addMessage($message, 'danger');
     }
 }

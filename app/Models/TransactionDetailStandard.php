@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TransactionDetailStandard extends Transaction
@@ -48,5 +50,4 @@ class TransactionDetailStandard extends Transaction
     {
         return $this->belongsTo(AccountEntity::class, 'account_to_id');
     }
-
 }

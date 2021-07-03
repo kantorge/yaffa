@@ -34,7 +34,7 @@ class TransactionRequest extends FormRequest
             $rules = array_merge($rules, [
                 'reconciled' => [
                     'boolean',
-                    new IsFalsy, // Scheduled or budgeted items cannot be reconciled
+                    new IsFalsy(), // Scheduled or budgeted items cannot be reconciled
                 ],
 
                 'schedule_config.start_date' => 'required|date',

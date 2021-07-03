@@ -32,10 +32,9 @@ class Category extends Model
         'full_name'
     ];
 
-    public static function rules($id = 0)
+    public static function rules()
     {
-        return
-            [
+        return [
                 'name' => 'required|min:2|max:191',
                 'active' => 'boolean',
                 'parent_id' => 'in:category,id',

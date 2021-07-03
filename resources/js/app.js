@@ -37,23 +37,16 @@ if (window.location.pathname === '/payees') {
 if (window.location.pathname === '/tag') {
     require('./tags/index');
 }
-if (   window.location.pathname === '/transactions/create/standard'
-    || /^\/transactions\/\d+\/edit\/standard/.test(window.location.pathname)
-    || /^\/transactions\/\d+\/clone\/standard/.test(window.location.pathname)
-    || /^\/transactions\/\d+\/enter\/standard/.test(window.location.pathname)) {
+if (   window.location.pathname === '/transactions/standard/create'
+    || /^\/transactions\/standard\/\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
 
-    require('./transactions/vue'); //TODO: rename this file
-
-    //require('./transactions/formCommon');
-    //require('./transactions/formSchedule');
+    require('./transactions/standard');
 }
 
-if (   window.location.pathname === '/transactions/create/investment'
-    || /^\/transactions\/\d+\/edit\/investment/.test(window.location.pathname)
-    || /^\/transactions\/\d+\/clone\/investment/.test(window.location.pathname)) {
-    require('./transactions/formCommon');
-    require('./transactions/formSchedule');
-    require('./transactions/formInvestment');
+if (   window.location.pathname === '/transactions/investment/create'
+    || /^\/transactions\/investment\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
+
+    require('./transactions/investment');
 }
 
 document.getElementById('jump_to_account').addEventListener('change', function() {

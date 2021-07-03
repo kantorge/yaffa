@@ -1,317 +1,39 @@
 @extends('template.page')
 
+@section('meta_tags')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@stop
+
 @section('classes_body', "layout-footer-fixed")
 
 @section('title', 'Transaction')
 
+@section('content_header')
+    @switch($action)
+        @case('create')
+            Add new transaction
+            @break
+
+        @case('edit')
+            Modify existing transaction
+            @break
+
+        @case('clone')
+            Clone existing transaction
+            @break
+
+        @case('enter')
+            Enter scheduled transaction instance
+            @break
+    @endswitch
+@endsection
+
 @section('content')
-
-    <!-- form start -->
-    @if(isset($transaction->id))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('transactions.updateInvestment', ['transaction' => $transaction->id]) }}"
-            autocomplete="off"
-            id="formTransaction"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
-    @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('transactions.storeInvestment') }}"
-            autocomplete="off"
-            id="formTransaction"
-            method="POST"
-        >
-    @endif
-
-    <div class="box box-primary">
-        <div class="box-header with-border">
-            <h3 class="box-title">
-                @if(isset($transaction->id))
-                    Modify transaction
-                @else
-                    Add transaction
-                @endif
-            </h3>
-        </div>
-        <!-- /.box-header -->
-
-        <div class="box-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group valid">
-                                <label for="transaction_type" class="control-label">Transaction type</label>
-                                <!--TODO: make the list dynamic-->
-                                <select name="transaction_type" id="transaction_type" class="form-control" aria-invalid="false">
-                                    <option
-                                        value="Buy"
-                                        @if (   (old() && old('transaction_type') == 'Buy')
-                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Buy')
-                                            selected="selected"
-                                        @endif
-                                    >Buy</option>
-                                    <option
-                                        value="Sell"
-                                        @if (   (old() && old('transaction_type') == 'Sell')
-                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Sell')
-                                            selected="selected"
-                                        @endif
-                                    >Sell</option>
-                                    <option
-                                        value="Add shares"
-                                        @if (   (old() && old('transaction_type') == 'Add shares')
-                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'Add shares')
-                                            selected="selected"
-                                        @endif
-                                    >Add shares</option>
-                                    <option
-                                        value="Remove shares"
-                                        @if (   (old() && old('transaction_type') == 'Remove shares')
-                                            || isset($transaction->transactionType) && $transaction->transactionType->name == 'Remove shares')
-                                           selected="selected"
-                                       @endif
-                                       >Remove shares</option>
-                                    <option
-                                        value="Dividend"
-                                        @if (   (old() && old('transaction_type') == 'Dividend')
-                                        || isset($transaction->transactionType) && $transaction->transactionType->name == 'Dividend')
-                                        selected="selected"
-                                   @endif
-                                    >Dividend</option>
-                                    <option
-                                        value="S-Term Cap Gains Dist"
-                                        @if (   (old() && old('transaction_type') == 'S-Term Cap Gains Dist')
-                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'S-Term Cap Gains Dist')
-                                            selected="selected"
-                                        @endif
-                                    >S-Term Cap Gains Dist</option>
-                                    <option
-                                        value="L-Term Cap Gains Dist"
-                                        @if (   (old() && old('transaction_type') == 'L-Term Cap Gains Dist')
-                                             || isset($transaction->transactionType) && $transaction->transactionType->name == 'L-Term Cap Gains Dist')
-                                            selected="selected"
-                                        @endif
-                                    >L-Term Cap Gains Dist</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="control-label">Account</label>
-                                <select
-                                    class="form-control"
-                                    data-currency=""
-                                    id="transaction_account"
-                                    name="config[account_id]"
-                                >
-                                    @if(old() && old('config.account_id'))
-                                        <option value="{{ old('config.account_id') }}" selected="selected">{{ $allAccounts[old('config.account_id')] }}</option>
-                                    @elseif(isset($transaction['config']['account']))
-                                        <option value="{{ $transaction['config']['account']['id'] }}" selected="selected">{{ $transaction['config']['account']['name'] }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="transaction_date" class="control-label">Date</label>
-                                <input
-                                    class="form-control"
-                                    id="transaction_date"
-                                    name="date"
-                                    type="text"
-                                    value="{{old('date', $transaction['date'])}}"
-                                >
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <input
-                                    class="checkbox-inline"
-                                    id="entry_type_schedule"
-                                    name="entry_type_schedule"
-                                    type="checkbox"
-                                    value="1"
-                                    {{ ((old('schedule', $transaction['schedule'])) ? 'checked' : '') }}
-                                >
-                                <label for="entry_type_schedule" class="control-label">Scheduled</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_investment" class="control-label">Investment</label>
-                                <select name="config[investment_id]" id="transaction_investment" class="form-control">
-                                    @if(old() && old('config.investment_id'))
-                                        <option value="{{ old('config.investment_id') }}" selected="selected">{{ $allInvestments[old('config.investment_id')] }}</option>
-                                    @elseif(isset($transaction['config']['investment']))
-                                        <option value="{{ $transaction['config']['investment']['id'] }}" selected="selected">{{ $transaction['config']['investment']['name'] }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="transaction_comment" class="control-label">Comment</label>
-                                <input
-                                    class="form-control"
-                                    id="transaction_comment"
-                                    maxlength="191"
-                                    name="comment"
-                                    type="text"
-                                    value="{{old('comment', $transaction['comment'])}}"
-                                >
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_quantity" class="control-label">Quantity</label>
-                                <input
-                                    class="form-control input-with-math"
-                                    id="transaction_quantity"
-                                    maxlength="10"
-                                    name="config[quantity]"
-                                    type="text"
-                                    value="{{ old('config.quantity', $transaction->config->quantity ?? 0) }}"
-                                >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_price" class="control-label">Price</label>
-                                <input
-                                    class="form-control input-with-math"
-                                    id="transaction_price"
-                                    maxlength="10"
-                                    name="config[price]"
-                                    type="text"
-                                    value="{{ old('config.price', $transaction->config->price ?? 0) }}"
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_commission" class="control-label">Commission</label>
-                                <input
-                                    class="form-control input-with-math"
-                                    id="transaction_commission"
-                                    maxlength="10"
-                                    name="config[commission]"
-                                    type="text"
-                                    value="{{ old('config.commission', $transaction->config->commission ?? 0) }}"
-                                >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_tax" class="control-label">Tax</label>
-                                <input
-                                    class="form-control input-with-math"
-                                    id="transaction_tax"
-                                    maxlength="10"
-                                    name="config[tax]"
-                                    type="text"
-                                    value="{{ old('config.tax', $transaction->config->tax ?? 0) }}"
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_dividend" class="control-label">Amount</label>
-                                <input
-                                    class="form-control input-with-math"
-                                    id="transaction_dividend"
-                                    maxlength="10"
-                                    name="config[dividend]"
-                                    type="text"
-                                    value="{{ old('config.dividend', $transaction->config->dividend ?? 0) }}"
-                                >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="transaction_total" class="control-label">
-                                    Total
-                                    <span class="transaction_currency"></span>
-                                </label>
-                                <input type="text" name="total" value="" id="transaction_total" class="form-control" disabled="disabled">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <!-- /.box-body -->
-
-        <div class="box-footer">
-            @csrf
-            <input
-                name="id"
-                type="hidden"
-                value="{{old('id', $transaction['id'])}}"
-            >
-            <input
-                name="config_type"
-                type="hidden"
-                value="transaction_detail_investment"
-            >
-        </div>
-        <!-- /.box-footer -->
+    <div id="app">
+        <transaction-form-investment
+            action = "{{ $action }}"
+            form-url = "{{ $transaction && $transaction->id ? route('transactions.updateInvestment', ['transaction' => $transaction->id]) : route('transactions.storeInvestment') }}"
+            :transaction = "{{ $transaction }}"
+        ></transaction-form-investment>
     </div>
-    <!-- /.box -->
-
-    @include('transactions.schedule')
-
-    <footer class="main-footer navbar-fixed-bottom hidden">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-sm-2">
-                    <label class="control-label">After saving</label>
-                </div>
-                <div class="col-sm-8">
-                    <div class="btn-group btn-group-justified" data-toggle="buttons">
-                        <label class="btn btn-default" id="callback_new_label">
-                            <input name="callback" type="radio" value="newInvestment" id="callback_new" class="radio-inline">
-                            Add an other transaction
-                        </label>
-                        <label class="btn btn-default" id="callback_clone_label">
-                            <input name="callback" type="radio" value="cloneInvestment" id="callback_clone" class="radio-inline">
-                            Clone this transaction
-                        </label>
-                        <label class="btn btn-default" id="callback_returnToAccount_label">
-                            <input name="callback" type="radio" value="returnToAccount" id="callback_returnToAccount" class="radio-inline">
-                            Return to selected account
-                        </label>
-                        <label class="btn btn-default" id="callback_returnToDashboard_label">
-                            <input name="callback" type="radio" value="returnToDashboard" id="callback_returnToDashboard" class="radio-inline">
-                            Return to dashboard
-                        </label>
-                    </div>
-                </div>
-            <div class="box-tools col-sm-2">
-            <div class="pull-right">
-                <input type="submit" class="btn btn-sm btn-default" id="cancelButton" onclick="return clickCancel();" value="Cancel">
-                <input class="btn btn-primary" type="submit" value="Save">
-            </div>
-        </div>
-    </footer>
-
-</form>
-
 @endsection

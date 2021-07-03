@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,13 +40,15 @@ class TransactionSchedule extends Model
         'end_date' => 'date',
     ];
 
-    public function transaction(){
+    public function transaction()
+    {
         return $this->belongsTo(Transaction::class);
     }
 
-    public function getNextInstance() {
+    public function getNextInstance()
+    {
 
-        $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new \DateTime ($this->next_date), false);
+        $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new \DateTime($this->next_date), false);
         $rule = new \Recurr\Rule();
 
         $rule->setStartDate(new \DateTime($this->start_date));
@@ -70,7 +73,7 @@ class TransactionSchedule extends Model
         $transformerConfig->enableLastDayOfMonthFix();
         $transformer->setConfig($transformerConfig);
 
-        $recurrence = $transformer->transform($rule,$constraint);
+        $recurrence = $transformer->transform($rule, $constraint);
 
         if (empty($recurrence)) {
             return null;

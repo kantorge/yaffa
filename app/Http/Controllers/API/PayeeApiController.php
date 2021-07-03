@@ -20,7 +20,7 @@ class PayeeApiController extends Controller
     {
         $payees = $this->payee
             ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function($query) use ($request) {
+            ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
             })
             ->where('active', 1)
@@ -48,8 +48,9 @@ class PayeeApiController extends Controller
             */
 
 
-    public function getDefaultCategoryForPayee(Request $request) {
-        if (empty($request->get('payee_id'))) {
+    public function getDefaultCategoryForPayee(Request $request)
+    {
+        if ($request->missing('payee_id')) {
 			return response("", Response::HTTP_OK);
         }
 
@@ -57,7 +58,7 @@ class PayeeApiController extends Controller
             with(['config', 'config.category'])
             ->find($request->get('payee_id'));
 
-        if(!$payee->config->category_id) {
+        if (!$payee->config->category_id) {
             return response("", Response::HTTP_OK);
         }
 

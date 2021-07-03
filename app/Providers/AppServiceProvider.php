@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Models\Account;
 use App\Models\Payee;
-use App\Models\TransactionDetailStandard;
 use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;

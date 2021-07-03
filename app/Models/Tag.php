@@ -31,6 +31,7 @@ class Tag extends Model
             TransactionItem::class,
             'transaction_items_tags',
             'tag_id',
-            'transaction_item_id');
+            'transaction_item_id'
+        );
     }
 }

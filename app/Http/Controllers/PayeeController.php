@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Http\Requests\AccountEntityRequest;
 use App\Models\Payee;
 use JavaScript;
 
@@ -62,12 +62,13 @@ class PayeeController extends Controller
         $categories = Category::all();
         $categories->sortBy('full_name');
 
-        return view('payees.form',
-                    [
-                        'payee' => $payee,
-                        'categories' => $categories->pluck('full_name','id')
-                    ]
-                );
+        return view(
+            'payees.form',
+            [
+                'payee' => $payee,
+                'categories' => $categories->pluck('full_name', 'id')
+            ]
+        );
     }
 
     public function update(AccountEntityRequest $request, AccountEntity $payee)
@@ -93,11 +94,12 @@ class PayeeController extends Controller
         $categories = Category::all();
         $categories->sortBy('full_name');
 
-        return view('payees.form',
-                    [
-                        'categories' => $categories->pluck('full_name','id')
-                    ]
-                );
+        return view(
+            'payees.form',
+            [
+                'categories' => $categories->pluck('full_name', 'id')
+            ]
+        );
     }
 
     public function store(AccountEntityRequest $request)
@@ -117,7 +119,8 @@ class PayeeController extends Controller
         return redirect()->route('payees.index');
     }
 
-    public function show(AccountEntity $account) {
+    public function show(AccountEntity $account)
+    {
         $account->load('config');
         return view('account.show', compact('account'));
     }

@@ -3,20 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
-use App\Models\AccountEntity;
-use App\Models\Investment;
 use App\Models\Tag;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
-use App\Models\TransactionType;
-use App\Models\TransactionDetailStandard;
 use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
     private const STANDARD_VIEW = "transactions.form_standard";
+    private const INVESTMENT_VIEW = "transactions.form_investment";
 
     private const STANDARD_RELATIONS = [
         'config',
@@ -29,65 +27,13 @@ class TransactionController extends Controller
         'transactionItems.category',
     ];
 
-    private function redirectSelector(string $action, Transaction $transaction)
-    {
-        switch ($action) {
-            case 'newStandard':
-                $route = redirect()
-                    ->route('transactions.createStandard');
-                break;
-            case 'newInvestment':
-                $route = redirect()
-                    ->route('transactions.createInvestment');
-                break;
-            case 'cloneInvestment':
-                $route = redirect()
-                    ->route(
-                        'transactions.cloneInvestment',
-                        [
-                            'transaction' => $transaction
-                        ]
-                    );
-                break;
-            case 'cloneStandard':
-                $route = redirect()
-                    ->route(
-                        'transactions.cloneStandard',
-                        [
-                            'transaction' => $transaction
-                        ]
-                    );
-                break;
-            case 'returnToAccount':
-                switch ($transaction->transactionType->name) {
-                    case 'withdrawal':
-                    case 'transfer':
-                        $account = $transaction->config->account_from_id;
-                        break;
-                    case 'deposit':
-                        $account = $transaction->config->account_to_id;
-                        break;
-                    //investments
-                    default:
-                        $account = $transaction->config->account_id;
-                }
-
-                $route = redirect()
-                    ->route(
-                        'account.history',
-                        [
-                            'account' => $account
-                        ]
-                    );
-                break;
-
-            //returnToDashboard
-            default:
-                $route = redirect()->route('home');
-        }
-
-        return $route;
-    }
+    private const INVESTMENT_RELATIONS = [
+        'config',
+        'config.account',
+        'config.investment',
+        'transactionSchedule',
+        'transactionType',
+    ];
 
     public function createStandard()
     {
@@ -99,16 +45,9 @@ class TransactionController extends Controller
 
     public function createInvestment()
     {
-        $transaction = new Transaction([
-            'transaction_type_id' => TransactionType::where('name', 'buy')->first()->id
-        ]);
-
-        //get all accounts
-        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
-
-        return view('transactions.form_investment', [
-            'allAccounts' => $allAccounts,
-            'transaction' => $transaction,
+        return view(self::INVESTMENT_VIEW, [
+            'transaction' => null,
+            'action' => 'create',
         ]);
     }
 
@@ -195,46 +134,61 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        self::addSimpleSuccessMessage('Transaction added');
+        self::addMessage('Transaction added (#'. $transaction->id .')', 'success', '', '', true);
 
-        return $this->redirectSelector($request->get('callback'), $transaction);
+        return response()->json(
+            [
+                'transaction_id' => $transaction->id,
+            ]
+        );
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form with data of selected transaction
+     * Actual behavior is controlled by action
      *
      * @param App\Model\Transaction $transaction
+     * @param String $action
      * @return view
      */
-    public function editStandard(Transaction $transaction)
+    public function openStandard(Transaction $transaction, String $action)
     {
         // Load all relevant relations
         $transaction->load(self::STANDARD_RELATIONS);
 
+        // Adjust date and schedule settings, if entering a recurring item
+        if ($action == 'enter') {
+            // Reset schedule and budget flags
+            $transaction->schedule = false;
+            $transaction->budget = false;
+
+            // Date is next schedule date
+            $transaction->date = $transaction->transactionSchedule->next_date->format('Y-m-d');
+        }
+
         return view(self::STANDARD_VIEW, [
             'transaction' => $transaction,
-            'action' => 'edit',
+            'action' => $action,
         ]);
     }
 
-    public function editInvestment(Transaction $transaction)
+    public function openInvestment(Transaction $transaction, String $action)
     {
-        $transaction->load(
-            [
-                'config',
-                'config.account',
-                'config.investment',
-                'transactionSchedule',
-                'transactionType',
-            ]
-        );
+        $transaction->load(self::INVESTMENT_RELATIONS);
 
-        //get all accounts
-        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
+        // Adjust date and schedule settings, if entering a recurring item
+        if ($action == 'enter') {
+            // Reset schedule and budget flags
+            $transaction->schedule = false;
+            $transaction->budget = false;
 
-        return view('transactions.form_investment', [
-            'allAccounts' => $allAccounts,
+            // Date is next schedule date
+            $transaction->date = $transaction->transactionSchedule->next_date->format('Y-m-d');
+        }
+
+        return view(self::INVESTMENT_VIEW, [
             'transaction' => $transaction,
+            'action' => $action,
         ]);
     }
 
@@ -258,11 +212,13 @@ class TransactionController extends Controller
 
         //handle default payee amount, if present, by adding amount as an item
         if ($validated['remaining_payee_default_amount'] > 0) {
-            $newItem = TransactionItem::create([
+            $newItem = TransactionItem::create(
+                [
                     'transaction_id' => $transaction->id,
                     'amount' => $validated['remaining_payee_default_amount'],
                     'category_id' => $validated['remaining_payee_default_category_id'],
-                ]);
+                ]
+            );
             $transactionItems[]= $newItem;
         }
 
@@ -300,9 +256,13 @@ class TransactionController extends Controller
 
         $transaction->push();
 
-        self::addSimpleSuccessMessage('Transaction updated');
+        self::addMessage('Transaction updated (#'. $transaction->id .')', 'success', '', '', true);
 
-        return redirect("home");
+        return response()->json(
+            [
+                'transaction_id' => $transaction->id,
+            ]
+        );
     }
 
     /**
@@ -322,83 +282,6 @@ class TransactionController extends Controller
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage('Transaction schedule instance skipped');
         return redirect()->back();
-    }
-
-    /**
-     * Show the form for cloning selected resource.
-     * (Load model, but remove ID)
-     *
-     * @param  Transaction $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function cloneStandard(Transaction $transaction)
-    {
-        // Load all relevant relations
-        $transaction->load(self::STANDARD_RELATIONS);
-
-        // Remove Id, so transaction is considered a new transaction
-        $transaction->id = null;
-
-        return view(self::STANDARD_VIEW, [
-            'transaction' => $transaction,
-            'action' => 'clone',
-        ]);
-    }
-
-    /**
-     * Show the form for saving selected resource.
-     * (Load model, but remove ID and set date based on schedule)
-     *
-     * @param  Transaction $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function cloneInvestment(Transaction $transaction)
-    {
-        //set action for future usage
-        $action = 'clone';
-
-        $transaction->load(
-            [
-                'config',
-                'config.account',
-                'config.investment',
-                'transactionSchedule',
-                'transactionType',
-            ]
-        );
-
-        //remove Id, so item is considered a new transaction
-        $transaction->id = null;
-
-        //get all accounts
-        $allAccounts = AccountEntity::where('config_type', 'account')->pluck('name', 'id')->all();
-
-        return view('transactions.form_investment', [
-            'allAccounts' => $allAccounts,
-            'transaction' => $transaction,
-            'action' => $action,
-        ]);
-    }
-
-    public function enterWithEditStandard(Transaction $transaction)
-    {
-        // Load all relevant relations
-        $transaction->load(self::STANDARD_RELATIONS);
-
-        // Rremove Id, so transaction is considered a new transaction
-        $transaction->id = null;
-
-        // Reset schedule and budget flags
-        $transaction->schedule = false;
-        $transaction->budget = false;
-
-        // Date is next schedule date
-        $transaction->date = $transaction->transactionSchedule->next_date;
-
-        return view(self::STANDARD_VIEW, [
-            'transaction' => $transaction,
-            'action' => 'enter',
-        ]);
     }
 
     private function processTransactionItem($transactionItems, $transactionId)

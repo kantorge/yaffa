@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\InvestmentRequest;
+use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\InvestmentPriceProvider;
-use App\Models\Currency;
-use App\Models\Transaction;
-use App\Http\Requests\InvestmentRequest;
 use App\Models\InvestmentPrice;
+use App\Models\InvestmentPriceProvider;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
 use JavaScript;
 
@@ -146,7 +146,7 @@ class InvestmentController extends Controller
         });
         */
 
-        $investments->map(function($investment) {
+        $investments->map(function ($investment) {
             $investment['price'] = $investment->getLatestPrice();
             $investment['quantity'] = $investment->getCurrentQuantity();
 
@@ -188,7 +188,8 @@ class InvestmentController extends Controller
                     'config',
                     'config.investment',
                     'transactionType',
-                ])
+                ]
+            )
             ->orderBy('date')
             ->get();
 
@@ -215,7 +216,7 @@ class InvestmentController extends Controller
                     'tax' => $transaction->config->tax,
                 ];
 
-                if($transaction->schedule) {
+                if ($transaction->schedule) {
                     $transaction->load(['transactionSchedule']);
 
                     $dateData = [
@@ -231,7 +232,6 @@ class InvestmentController extends Controller
                 }
 
                 return array_merge($commonData, $baseData, $dateData);
-
             });
 
         //get all stored price points
@@ -243,7 +243,7 @@ class InvestmentController extends Controller
         //calculate historical quantity changes
         $runningTotal = 0;
         $quantities = $investmentTransactions
-            ->map(function($transaction) use (&$runningTotal) {
+            ->map(function ($transaction) use (&$runningTotal) {
                 $operator = $transaction->transactionType->quantity_operator;
                     if (!$operator) {
                         $quantity = 0;

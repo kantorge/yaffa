@@ -22,62 +22,40 @@
 
                         <div class="box-body">
                             <div class="form-horizontal">
-                                <div class="form-group row" id="transaction_type_container">
+                                <div class="form-group row">
                                     <label class="control-label col-sm-3">
                                         Type
                                     </label>
-                                    <div class="col-sm-3">
-                                        <input
-                                            id="transaction_type_withdrawal"
-                                            name="transaction_type"
-                                            type="radio"
-                                            value="withdrawal"
-                                            v-model="form.transaction_type"
-                                            @change="changeTransactionType"
-                                            :checked="form.transaction_type == 'withdrawal'"
-                                        />
-                                        <label
-                                            for="transaction_type_withdrawal"
-                                            id="transaction_type_withdrawal_label"
-                                        >
-                                            Withdrawal
-                                        </label>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <input
-                                            id="transaction_type_deposit"
-                                            name="transaction_type"
-                                            type="radio"
-                                            value="deposit"
-                                            v-model="form.transaction_type"
-                                            @change="changeTransactionType"
-                                            :checked="form.transaction_type == 'deposit'"
-                                        >
-                                        <label
-                                            for="transaction_type_deposit"
-                                            id="transaction_type_deposit_label"
-                                        >
-                                            Deposit
-                                        </label>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <input
-                                            id="transaction_type_transfer"
-                                            name="transaction_type"
-                                            type="radio"
-                                            value="transfer"
-                                            :disabled="form.budget"
-                                            v-model="form.transaction_type"
-                                            @change="changeTransactionType"
-                                            :checked="form.transaction_type == 'transfer'"
-                                        >
-                                        <label
-                                            for="transaction_type_transfer"
-                                            id="transaction_type_transfer_label"
-                                            :disabled="form.budget"
-                                        >
-                                            Transfer
-                                        </label>
+                                    <div class="col-sm-9">
+                                        <div class="btn-group">
+                                            <button
+                                                class="btn btn-primary"
+                                                :class="form.transaction_type == 'withdrawal' ? 'active' : ''"
+                                                type="button"
+                                                value="withdrawal"
+                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                            >
+                                                Withdrawal
+                                            </button>
+                                            <button
+                                                class="btn btn-primary"
+                                                :class="form.transaction_type == 'deposit' ? 'active' : ''"
+                                                type="button"
+                                                value="deposit"
+                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                            >
+                                                Deposit
+                                            </button>
+                                            <button
+                                                class="btn btn-primary"
+                                                :class="form.transaction_type == 'transfer' ? 'active' : ''"
+                                                type="button"
+                                                value="transfer"
+                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                            >
+                                                Transfer
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div
@@ -227,14 +205,12 @@
                                                 {{ ammountFromFieldLabel }}
                                                 <span v-if="from.account_currency">({{from.account_currency}})</span>
                                             </label>
-                                            <input
+                                            <MathInput
                                                 class="form-control"
                                                 id="transaction_amount_from"
-                                                maxlength="50"
-                                                type="text"
-                                                @change="updateAmount"
-                                                v-model.number="form.config.amount_from"
-                                            >
+                                                v-model="form.config.amount_from"
+                                                @change="updateAmountTo"
+                                            ></MathInput>
                                         </div>
                                         <div
                                             v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
@@ -251,48 +227,37 @@
                                                 Amount to
                                                 <span v-if="to.account_currency">({{to.account_currency}})</span>
                                             </label>
-                                            <input
+                                            <MathInput
                                                 class="form-control"
                                                 id="transaction_amount_to"
-                                                maxlength="50"
-                                                type="text"
-                                                @change="updateAmount"
                                                 v-model="form.config.amount_to"
-                                            >
+                                            ></MathInput>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="table">
-                                        <table class="table">
-                                            <tbody>
-                                                <tr>
-                                                    <th scope="row" style="border-top:none;">Total allocated:</th>
-                                                    <td style="border-top:none;" class="text-right">
-                                                        {{ allocatedAmount }}
-                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                    </td>
-                                                </tr>
-                                                <tr v-show="payeeCategory.id">
-                                                    <th scope="row">
-                                                        Remaining amount to payee default:
-                                                        <span class="notbold">{{ payeeCategory.text }}</span>
-                                                    </th>
-                                                    <td class="text-right">
-                                                        <span>{{ remainingAmountToPayeeDefault }}</span>
-                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                    </td>
-                                                </tr>
-                                                <tr v-show="!payeeCategory.id">
-                                                    <th scope="row">Remaining amount not allocated:</th>
-                                                    <td class="text-right">
-                                                        <span>{{ remainingAmountNotAllocated }}</span>
-                                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <dl class="dl-horizontal">
+                                        <dt>Total allocated:</dt>
+                                        <dd>
+                                            {{ allocatedAmount }}
+                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                        </dd>
+                                        <dt v-show="payeeCategory.id">
+                                            Remaining amount to
+                                            <span class="notbold"><br>{{ payeeCategory.text }}</span>:
+                                        </dt>
+                                        <dd v-show="payeeCategory.id">
+                                            {{ remainingAmountToPayeeDefault }}
+                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                        </dd>
+                                        <dt v-show="!payeeCategory.id">
+                                            Not allocated:
+                                        </dt>
+                                        <dd v-show="!payeeCategory.id">
+                                            {{ remainingAmountNotAllocated }}
+                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                        </dd>
+                                    </dl>
                                 </div>
                             </div>
                         </div>
@@ -312,22 +277,6 @@
             </div>
             <!-- /.row -->
 
-            <input
-                name="id"
-                type="hidden"
-                v-model="form.id"
-            >
-            <input
-                name="action"
-                type="hidden"
-                v-model="action"
-            >
-            <input
-                name="config_type"
-                type="hidden"
-                value="transaction_detail_standard"
-            >
-
     <footer class="main-footer navbar-fixed-bottom hidden">
         <div class="container-fluid">
             <div class="row">
@@ -338,18 +287,18 @@
                     <div class="btn-group">
                         <button
                             class="btn btn-default"
-                            :class="callback == 'newStandard' ? 'active' : ''"
+                            :class="callback == 'new' ? 'active' : ''"
                             type="button"
-                            value="newStandard"
+                            value="new"
                             @click="callback = $event.currentTarget.getAttribute('value')"
                         >
                             Add an other transaction
                         </button>
                         <button
                             class="btn btn-default"
-                            :class="callback == 'cloneStandard' ? 'active' : ''"
+                            :class="callback == 'clone' ? 'active' : ''"
                             type="button"
-                            value="cloneStandard"
+                            value="clone"
                             @click="callback = $event.currentTarget.getAttribute('value')"
                         >
                             Clone this transaction
@@ -379,7 +328,7 @@
                         <button class="btn btn-sm btn-default" type="button" @click="onCancel">
                             Cancel
                         </button>
-                        <Button class="btn btn-primary" :form="form">Save</Button>
+                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
                     </div>
                 </div>
             </div>
@@ -391,7 +340,6 @@
 </template>
 
 <script>
-    let math = require("mathjs");
     require('select2');
 
     import Form from 'vform'
@@ -399,6 +347,8 @@
 
     import DatePicker from 'vue2-datepicker';
     import 'vue2-datepicker/index.css';
+
+    import MathInput from './MathInput.vue'
 
     import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
@@ -408,14 +358,14 @@
             'transaction-item-container': TransactionItemContainer,
             'transaction-schedule': TransactionSchedule,
             DatePicker,
-            Button, AlertErrors
+            Button, AlertErrors,
+            MathInput,
         },
 
         props: {
             action: String,
             formUrl: String,
             transaction: Object,
-            callback: String,
         },
 
         data() {
@@ -449,7 +399,7 @@
                 config_type: 'transaction_detail_standard',
                 date: '',
                 comment: null,
-                schdedule: false,
+                schedule: false,
                 budget: false,
                 reconciled: false,
                 config: {},
@@ -462,8 +412,8 @@
                 remaining_payee_default_category_id: null,
             });
 
-            // Adjust initial callback
-            data.callback = this.callback;
+            // TODO: adjust initial callback based on action
+            data.callback = 'new';
 
             return data;
         },
@@ -527,17 +477,16 @@
 
         created() {
             // Copy values of existing transaction into component form data
-            if (this.transaction) {
-
+            if (Object.keys(this.transaction) > 0) {
                 this.form.config.account_from_id = this.transaction.config.account_from_id;
                 this.form.config.account_to_id = this.transaction.config.account_to_id;
 
-                // Populate form data
+                // Populate form data with already known values
                 this.form.id = this.transaction.id
                 this.form.transaction_type = this.transaction.transaction_type.name;
                 this.form.date = this.transaction.date;
                 this.form.comment = this.transaction.comment;
-                this.form.schdedule = this.transaction.schdedule;
+                this.form.schedule = this.transaction.schedule;
                 this.form.budget = this.transaction.budget;
                 this.form.reconciled = this.transaction.reconciled;
 
@@ -559,8 +508,10 @@
                 }
 
                 // Copy schedule config
-
             }
+
+            // Set form action
+            this.form.action = this.action;
         },
 
         mounted() {
@@ -679,7 +630,6 @@
                 // TODO: do this if actual change is needed (e.g. not from withdrawal -> transfer change)
                 $("#account_to").select2('destroy');
                 $("#account_to").select2(this.getAccountSelectConfig('to'));
-
             },
 
             // Add a new empty item to list of transaction items
@@ -687,23 +637,12 @@
                 this.form.items.push({});
             },
 
-            // Update TO or FROM amount with math calculation
-            updateAmount: function (event) {
-                let amount = math.evaluate(event.target.value.replace(/\s/g,""));
-                if(amount <= 0) throw Error("Positive number expected");
-
-                // Update field with calculated value
-                event.target.value = amount || '';
-
-                // Emit event to update v-model
-                event.target.dispatchEvent(new Event('input'));
-
-                // If FROM value is updated, check if TO needs to by synced
+            // Update TO amount with FROM value, if needed
+            updateAmountTo: function (event) {
                 // TODO: compute if exchange rate is present
                 // TODO: update on other relevant changes (e.g. currency needed)
-                if (event.target.id === 'transaction_amount_from'
-                    && !(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
-                    this.form.config.amount_to = amount || '';
+                if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
+                    this.form.config.amount_to = event.target.value;
                 }
             },
 
@@ -772,13 +711,13 @@
                     return '/';
                 }
 
-                if (this.callback == 'newStandard') {
+                if (this.callback == 'new') {
                     return window.location.href;
                 }
 
-                if (this.callback == 'cloneStandard') {
+                if (this.callback == 'clone') {
                     //TODO: should this come from route function
-                    return '/transaction/clone/' + transactionId;
+                    return '/transactions/' + transactionId + '/clone/standard';
                 }
 
                 if(this.callback == 'returnToAccount') {
@@ -795,19 +734,11 @@
             },
 
             onSubmit() {
-                if (!this.transaction) {
-                    this.form.post(this.formUrl, this.form)
-                        .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
-                    })
-
-                    return;
-                }
-
                 this.form.post(this.formUrl, this.form)
-                        .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
-                    })
+                    .then(( response ) => {
+                        this.form.busy = true;
+                        location.href = this.getCallbackUrl(response.data.transaction_id);
+                })
             },
         },
 

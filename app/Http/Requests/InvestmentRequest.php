@@ -17,7 +17,7 @@ class InvestmentRequest extends FormRequest
 
     public function rules()
     {
-        $rules = [
+        return [
             'name' => 'required|min:2|max:191|unique:investments,name,' . \Request::instance()->id,
             'symbol' => 'required|min:2|max:191|unique:investments,symbol,' . \Request::instance()->id,
             'comment' => 'nullable|max:191',
@@ -27,8 +27,6 @@ class InvestmentRequest extends FormRequest
             'currency_id' => "required|exists:currencies,id",
             'investment_price_provider_id' => 'nullable|exists:investment_price_providers,id',
         ];
-
-        return $rules;
     }
 
     /**

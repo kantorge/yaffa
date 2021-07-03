@@ -7,7 +7,6 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 
-
 class CurrencyRequest extends FormRequest
 {
     use FlashMessages;
@@ -32,7 +31,7 @@ class CurrencyRequest extends FormRequest
     {
         $currency = $this->route('currency');
 
-        return (new \App\Models\Currency)->rules($currency);
+        return (new \App\Models\Currency())->rules($currency);
     }
 
     /**
