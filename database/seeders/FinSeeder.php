@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 class FinSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database from legacy version
      *
      * @return void
      */

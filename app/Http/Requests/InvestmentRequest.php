@@ -23,8 +23,8 @@ class InvestmentRequest extends FormRequest
             'comment' => 'nullable|max:191',
             'active' => 'boolean',
             'auto_update' => 'boolean',
-            'investment_group_id' => "required|exists:account_groups,id",
-            'currency_id' => "required|exists:currencies,id",
+            'investment_group_id' => 'required|exists:account_groups,id',
+            'currency_id' => 'required|exists:currencies,id',
             'investment_price_provider_id' => 'nullable|exists:investment_price_providers,id',
         ];
     }

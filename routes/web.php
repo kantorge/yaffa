@@ -34,11 +34,8 @@ Route::resource('currencies', CurrencyController::class);
 
 Route::get(
     '/currencyrates/{from}/{to}',
-    [
-        'as' => 'currencyrates.index',
-        'uses' => [CurrencyRateController::class, 'index']
-    ]
-);
+    [CurrencyRateController::class, 'index']
+)->name('currencyrates.index');
 
 Route::resource(
     'currencyrates',

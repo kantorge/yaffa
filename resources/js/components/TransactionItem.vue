@@ -32,7 +32,7 @@
                                 class="btn btn-info load_remainder"
                                 title="Assign remaining amount to this item"
                                 @click="loadRemainder"
-                            ><i class="fa fa-copy"></i></button>
+                            ><span class="fa fa-copy"></span></button>
                         </span>
                     </div>
                 </div>
@@ -45,9 +45,7 @@
                         class="btn btn-info"
                         title="Show item details"
                         @click="toggleItemDetails"
-                    >
-                        <i class="fa fa-edit"></i>
-                    </button>
+                    ><span class="fa fa-edit"></span></button>
                 </div>
             </div>
             <div class="col-md-1">
@@ -57,7 +55,8 @@
                         type="button"
                         class="btn btn-danger"
                         @click='removeTransactionItem'
-                        title="Remove transaction item"><i class="fa fa-minus"></i></button>
+                        title="Remove transaction item"
+                    ><span class="fa fa-minus"></span></button>
                 </div>
             </div>
         </div>
@@ -106,9 +105,13 @@
             comment: String,
             tags: Array,
             remainingAmount: Number,
+            payee: [Number, String],
         },
 
-        emits: ['amountChanged'],
+        emits: [
+            'amountChanged',
+            'updateItemCategory',
+        ],
 
         data() {
             return {};
@@ -128,8 +131,7 @@
                     data: function (params) {
                         return {
                         q: params.term,
-                        active: 1,
-                        payee: null //TODO: apply payee (from parent) if present
+                        payee: $vm.payee,
                         };
                     },
                     processResults: function (data) {

@@ -8,7 +8,6 @@
             @submit.prevent="onSubmit"
             autocomplete="off"
         >
-
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">
@@ -24,7 +23,6 @@
                                 <div class="col-md-6">
                                     <div class="form-group valid">
                                         <label for="transaction_type" class="control-label">Transaction type</label>
-                                        <!--TODO: make the list dynamic-->
                                         <select id="transaction_type" class="form-control" v-model="form.transaction_type">
                                             <option
                                                 v-for="item in transactionTypes"
@@ -36,7 +34,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="control-label">Account</label>
+                                        <label for="account" class="control-label">Account</label>
                                         <select
                                             class="form-control"
                                             id="account"
@@ -48,9 +46,9 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="transaction_date" class="control-label">Date</label>
+                                        <label for="date" class="control-label">Date</label>
                                         <date-picker
-                                            id="transaction_date"
+                                            id="date"
                                             v-model="form.date"
                                             value-type="format"
                                             format="YYYY-MM-DD"
@@ -74,10 +72,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_investment" class="control-label">Investment</label>
+                                        <label for="investment" class="control-label">Investment</label>
                                         <select
                                             class="form-control"
-                                            id="transaction_investment"
+                                            id="investment"
                                             v-model="form.config.investment_id">
                                         </select>
                                     </div>
@@ -86,10 +84,10 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="transaction_comment" class="control-label">Comment</label>
+                                        <label for="comment" class="control-label">Comment</label>
                                         <input
                                             class="form-control"
-                                            id="transaction_comment"
+                                            id="comment"
                                             maxlength="255"
                                             type="text"
                                             v-model="form.comment"
@@ -114,14 +112,12 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_price" class="control-label">Price</label>
-                                        <input
+                                        <MathInput
                                             class="form-control"
                                             id="transaction_price"
-                                            maxlength="50"
-                                            type="number"
                                             v-model="form.config.price"
                                             :disabled="!transactionTypeSettings.price"
-                                        >
+                                        ></MathInput>
                                     </div>
                                 </div>
                             </div>
@@ -129,25 +125,21 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_commission" class="control-label">Commission</label>
-                                        <input
+                                        <MathInput
                                             class="form-control"
                                             id="transaction_commission"
-                                            maxlength="50"
-                                            type="number"
                                             v-model="form.config.commission"
-                                        >
+                                        ></MathInput>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_tax" class="control-label">Tax</label>
-                                        <input
+                                        <MathInput
                                             class="form-control"
                                             id="transaction_tax"
-                                            maxlength="50"
-                                            type="number"
                                             v-model="form.config.tax"
-                                        >
+                                        ></MathInput>
                                     </div>
                                 </div>
                             </div>
@@ -155,21 +147,19 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_amount" class="control-label">Amount</label>
-                                        <input
+                                        <MathInput
                                             class="form-control"
                                             id="transaction_amount"
-                                            maxlength="50"
-                                            type="number"
                                             v-model="form.config.amount"
                                             :disabled="!transactionTypeSettings.amount"
-                                        >
+                                        ></MathInput>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_total" class="control-label">
                                             Total
-                                            <span v-if="account_currency">({{account_currency}})</span>
+                                            <span v-if="currency">({{currency}})</span>
                                         </label>
                                         <input type="text" :value="total" class="form-control" disabled="disabled">
                                     </div>
@@ -184,8 +174,6 @@
         <!-- /.box-footer -->
     </div>
     <!-- /.box -->
-
-        </form>
 
         <transaction-schedule
             :isVisible="form.schedule"
@@ -251,6 +239,7 @@
             </div>
         </footer>
 
+        </form>
     </div>
 </template>
 
@@ -277,7 +266,6 @@
 
         props: {
             action: String,
-            formUrl: String,
             transaction: Object,
         },
 
@@ -300,6 +288,12 @@
                 },
             });
 
+            // Other values
+            data.account_currency = null;
+            data.account_currency_id = null;
+            data.investment_currency = null;
+            data.investment_currency_id = null;
+
             // TODO: adjust initial callback based on action
             data.callback = 'new';
 
@@ -307,77 +301,278 @@
         },
 
         computed: {
+            formUrl() {
+                if (this.action === 'edit') {
+                    return route('transactions.updateInvestment', {transaction: this.form.id});
+                }
+
+                return route('transactions.storeInvestment');
+            },
+
             total() {
-                return this.form.config.quantity * this.form.config.price;
+                return    (this.form.config.quantity || 0) * (this.form.config.price || 0)
+                        + this.transactionTypeSettings.amount_multiplier * (this.form.config.amount || 0)
+                        - (this.form.config.commission || 0)
+                        - (this.form.config.tax || 0);
             },
 
             transactionTypeSettings() {
                 return this.transactionTypes.filter(item => item.name == this.form.transaction_type)[0];
             },
+
+            currency() {
+                return this.account_currency || this.investment_currency;
+            }
         },
 
         created() {
+            // Copy values of existing transaction into component form data
+            if (Object.keys(this.transaction).length > 0) {
+                // Populate form data with already known values
+                this.form.id = this.transaction.id
+                this.form.transaction_type = this.transaction.transaction_type.name;
+                this.form.date = this.transaction.date;
+                this.form.comment = this.transaction.comment;
+                this.form.schedule = this.transaction.schedule;
+
+                //TODO: add reconciled support
+                //this.form.reconciled = this.transaction.reconciled;
+
+                // Copy configuration
+                this.form.config.account_id = this.transaction.config.account_id;
+                this.form.config.investment_id = this.transaction.config.investment_id;
+
+                this.form.config.quantity = this.transaction.config.quantity;
+                this.form.config.price = this.transaction.config.price;
+                this.form.config.amount = this.transaction.config.amount;
+                this.form.config.commission = this.transaction.config.commission;
+                this.form.config.tax = this.transaction.config.tax;
+
+                // Copy schedule config
+                this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
+                this.form.schedule_config.count = this.transaction.transaction_schedule.count;
+                this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
+                this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
+                this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
+                this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
+            }
+
+            // TODO: make the list dynamic based on database settings
             this.transactionTypes = [
                 {
                     name: 'Buy',
-                    commission_multiplier: -1,
+                    amount_multiplier: -1,
                     quantity: true,
                     price: true,
                     amount: false,
                 },
                 {
                     name: 'Sell',
-                    commission_multiplier: -1,
+                    amount_multiplier: 1,
                     quantity: true,
                     price: true,
                     amount: false,
                     },
                 {
                     name: 'Add shares',
-                    commission_multiplier: -1,
+                    amount_multiplier: 1,
                     quantity: true,
                     price: false,
                     amount: false,
                     },
                 {
                     name: 'Remove shares',
-                    commission_multiplier: -1,
+                    amount_multiplier: -1,
                     quantity: true,
                     price: false,
                     amount: false,
                     },
                 {
                     name: 'Dividend',
-                    commission_multiplier: -1,
+                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
                     amount: true,
                 },
                 {
                     name: 'S-Term Cap Gains Dist',
-                    commission_multiplier: -1,
+                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
                     amount: true,
                 },
                 {
                     name: 'L-Term Cap Gains Dist',
-                    commission_multiplier: -1,
+                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
                     amount: true,
                 },
             ];
+
+            // Set form action
+            this.form.action = this.action;
         },
 
         mounted() {
-            //Display fixed footer
+            let $vm = this;
+
+            // Account dropdown functionality
+            $("#account")
+                .select2({
+                    ajax: {
+                        url: '/api/assets/account/investment',
+                        dataType: 'json',
+                        delay: 150,
+                        data: function (params) {
+                            return {
+                                q: params.term,
+                                transaction_type: $vm.form.transaction_type,
+                                currency_id: $vm.investment_currency_id,
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data
+                            };
+                        },
+                        cache: true
+                    },
+                    selectOnClose: true,
+                    placeholder: "Select account",
+                    allowClear: true
+                })
+                .on('select2:select', function (e) {
+                    const event = new Event("change", { bubbles: true, cancelable: true });
+                    e.target.dispatchEvent(event);
+
+                    $.ajax({
+                        url:  '/api/assets/account/' + e.params.data.id,
+                    })
+                    .done(data => {
+                        $vm.account_currency = data.config.currency.suffix;
+                        $vm.account_currency_id = data.config.currency.id;
+                    });
+                })
+                .on('select2:unselect', function (e) {
+                    $vm.account_id  = null;
+                    $vm.account_currency  = null;
+                });
+
+            // Load default value for account
+            if (this.form.config.account_id) {
+                const data = this.transaction.config.account;
+
+                // Create the option and append to Select2
+                $("#account")
+                    .append(new Option(data.name, data.id, true, true))
+                    .trigger('change');
+
+                // Manually trigger the `select2:select` event
+                $("#account").trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+            }
+
+            // Investment dropdown functionality
+            $('#investment').select2({
+                ajax: {
+                    url: '/api/assets/investment',
+                    data: function (params) {
+                            return {
+                                q: params.term,
+                                currency_id: $vm.account_currency_id
+                            };
+                    },
+                    dataType: 'json',
+                    delay: 150,
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                },
+                selectOnClose: true,
+                placeholder: "Select investment",
+                allowClear: true
+            })
+            .on('select2:select', function (e) {
+                const event = new Event("change", { bubbles: true, cancelable: true });
+                e.target.dispatchEvent(event);
+
+                $.ajax({
+                    url: route('investment.getDetails', {'investment': e.params.data.id}),
+                })
+                .done(function( data ) {
+                    $vm.investment_currency_id = data.currency.id;
+                    $vm.investment_currency = data.currency.suffix;
+                });
+            }).on('select2:unselect', function (e) {
+                $vm.investment_id = null;
+                $vm.investment_currency_id = null;
+                $vm.investment_currency = null;
+            });
+
+            // Load default value for investment
+            if (this.form.config.investment_id) {
+                const data = this.transaction.config.investment;
+
+                // Create the option and append to Select2
+                $("#investment")
+                    .append(new Option(data.name, data.id, true, true))
+                    .trigger('change');
+
+                // Manually trigger the `select2:select` event
+                $("#investment").trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+            }
+
+            // Display fixed footer
             setTimeout(function() {
                 $("footer").removeClass("hidden");
             }, 1000);
         },
 
         methods: {
+            getCallbackUrl(transactionId) {
+                if (this.callback == 'returnToDashboard') {
+                    return route('home');
+                }
+
+                if (this.callback == 'new') {
+                    return window.location.href;
+                }
+
+                if (this.callback == 'clone') {
+                    return route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
+                }
+
+                if (this.callback == 'returnToAccount') {
+                    return route('account.history', { account: this.form.config.account_id });
+                }
+            },
+
+            onSubmit() {
+                if (this.action !== 'edit') {
+                    this.form.post(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                        });
+                } else {
+                    this.form.patch(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                        });
+                }
+            },
 
         }
     }

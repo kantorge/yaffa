@@ -25,9 +25,8 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function definition()
     {
-        //TODO: investment és account egy currency-ből legyen, random választással
+        //TODO: random account and investment with same currency
         return [
-            //"account_id" => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
             "account_id" => AccountEntity::where('config_type', 'account')
                 ->whereHasMorph(
                     'config',
@@ -55,9 +54,9 @@ class TransactionDetailInvestmentFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                "price" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),  //TODO: dynamic based on investment price
-                "quantity" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 1, $max = 100),
-                "commission" => $this->faker->randomFloat($nbMaxDecimals = 4, $min = 0.0001, $max = 100),
+                "price" => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price
+                "quantity" => $this->faker->randomFloat(4, 1, 100),
+                "commission" => $this->faker->randomFloat(4, 0.0001, 100),
                 "dividend" => 0,
             ];
         });

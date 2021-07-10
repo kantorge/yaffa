@@ -101,9 +101,7 @@ class Investment extends Model
                 return 0;
             }
 
-            return $operator == 'minus'
-                    ? - $transaction->config->quantity
-                    : $transaction->config->quantity;
+            return $transaction->config->quantity * ($operator === 'minus' ? -1 : 1);
         });
     }
 
@@ -111,13 +109,13 @@ class Investment extends Model
     {
         $investmentId = $this->id;
 
-        if ($type == 'stored' || $type == 'combined') {
+        if ($type === 'stored' || $type === 'combined') {
             $price = InvestmentPrice::where('investment_id', $investmentId)
                                         ->latest('date')
                                         ->first();
         }
 
-        if ($type == 'transaction' || $type == 'combined') {
+        if ($type === 'transaction' || $type === 'combined') {
             $transaction = Transaction::with(
                 [
                     'config',
@@ -139,11 +137,11 @@ class Investment extends Model
             ->first();
         }
 
-        if ($type == 'stored') {
+        if ($type === 'stored') {
             return $price instanceof InvestmentPrice ? $price->price : null;
         }
 
-        if ($type == 'transaction') {
+        if ($type === 'transaction') {
             return $transaction instanceof Transaction ? $transaction->config->price : null;
         }
 

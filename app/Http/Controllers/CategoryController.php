@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Http\Requests\CategoryRequest;
+use App\Models\Category;
 use JavaScript;
 
 class CategoryController extends Controller

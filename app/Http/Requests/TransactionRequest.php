@@ -18,7 +18,9 @@ class TransactionRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'transaction_type_id' => "required|exists:transaction_types,id",
+            'id' => 'nullable|exists:transactions,id',
+            'action' => 'required|in:create,edit,clone,enter',
+            'transaction_type_id' => 'required|exists:transaction_types,id',
             'comment' => 'nullable|max:191',
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
@@ -82,7 +84,6 @@ class TransactionRequest extends FormRequest
 
             //adjust detail related rules, based on transaction type
             //accounts are only needed for basic setup (not budget only)
-            //TODO: make it more dynamic instead of fixed IDs
             if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
@@ -97,15 +98,15 @@ class TransactionRequest extends FormRequest
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
                     //technical field, but required for standard transaction
-                    'remaining_payee_default_amount' => "nullable|numeric|gte:0",
-                    'remaining_payee_default_category_id' => "nullable|exists:categories,id",
+                    'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
+                    'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 
                 ]);
             } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payeee'
+                        'exists:account_entities,id,config_type,payee'
                     ],
                     'config.account_to_id' => [
                         ($isBasic ? 'required' : 'nullable'),
@@ -115,8 +116,8 @@ class TransactionRequest extends FormRequest
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
                     //technical field, but required for standard transaction
-                    'remaining_payee_default_amount' => "nullable|numeric|gte:0",
-                    'remaining_payee_default_category_id' => "nullable|exists:categories,id",
+                    'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
+                    'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 
                 ]);
             } elseif ($this->get('transaction_type') === 'transfer') {
@@ -128,7 +129,7 @@ class TransactionRequest extends FormRequest
                     'config.account_to_id' => [
                         'required',
                         'exists:account_entities,id,config_type,account'
-                    ],
+                ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
                 ]);
@@ -144,36 +145,44 @@ class TransactionRequest extends FormRequest
                     'required',
                     'exists:investments,id'
                 ],
+                'config.commission' => 'nullable|numeric|gte:0',
+                'config.tax' => 'nullable|numeric|gte:0',
             ]);
 
+            //TODO: validate currency of account and investment
 
-            //TODO: make it more dynamic instead of fixed IDs
-            if ($this->get('transaction_type_id') === 4 || $this->get('transaction_type_id') === 5) {
-                //buy OR sell
-                $rules = array_merge($rules, [
-                    'config.price' => 'required|numeric|gt:0',
-                    'config.quantity' => 'required|numeric|gt:0',
-                    'config.commission' => 'nullable|numeric|gte:0',
-                    'config.tax' => 'nullable|numeric|gte:0',
-                ]);
-            } elseif ($this->get('transaction_type_id') === 6 || $this->get('transaction_type_id') === 7) {
-                //add OR remove shares
-                $rules = array_merge($rules, [
-                    'config.quantity' => 'required|numeric|gt:0',
-                    'config.commission' => 'nullable|numeric|gte:0',
-                    'config.tax' => 'nullable|numeric|gte:0',
-                ]);
-            } elseif ($this->get('transaction_type_id') === 8 || $this->get('transaction_type_id') === 9 || $this->get('transaction_type_id') === 10) {
-                //dividend OR cap gainst
-                $rules = array_merge($rules, [
-                    'config.dividend' => 'required|numeric|gt:0',
-                    'config.commission' => 'nullable|numeric|gte:0',
-                    'config.tax' => 'nullable|numeric|gte:0',
-                ]);
-            }
+            $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type_id));
         }
 
         return $rules;
+    }
+
+    private function getInvestmentAmountRules($transactionTypeId)
+    {
+        // Buy OR Sell
+        if ($transactionTypeId === 4 || $transactionTypeId === 5) {
+            return [
+                'config.price' => 'required|numeric|gt:0',
+                'config.quantity' => 'required|numeric|gt:0',
+            ];
+        }
+
+        // Add shares OR Remove shares
+        if ($transactionTypeId === 6 || $transactionTypeId === 7) {
+            return [
+                'config.quantity' => 'required|numeric|gt:0',
+            ];
+        }
+
+        // Dividend OR Cap gains
+        if ($transactionTypeId === 8 || $transactionTypeId === 9 || $transactionTypeId === 10) {
+            return [
+                'config.dividend' => 'required|numeric|gt:0',
+            ];
+        }
+
+        // Fallback
+        return [];
     }
 
     /**
@@ -203,7 +212,7 @@ class TransactionRequest extends FormRequest
         // Get transaction type ID by name
         if ($this->transaction_type) {
             $this->merge([
-                'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id
+                'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id,
             ]);
         }
     }

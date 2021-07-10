@@ -1,6 +1,5 @@
 <template>
-    <!-- schedule settings -->
-    <div class="box" id="schedule_container" v-show="isVisible">
+    <div class="box" v-show="isVisible">
         <div class="box-header with-border">
             <h3 class="box-title">Schedule</h3>
         </div>
@@ -54,11 +53,12 @@
                 >
                     <label for="schedule_start" class="control-label">Start date</label>
                     <date-picker
-                        id="schedule_start"
-                        v-model="schedule.start_date"
-                        value-type="format"
                         format="YYYY-MM-DD"
+                        id="schedule_start"
+                        style="width: 100%;"
                         type="date"
+                        value-type="format"
+                        v-model="schedule.start_date"
                     ></date-picker>
                 </div>
                 <div
@@ -67,11 +67,12 @@
                 >
                     <label for="schedule_next" class="control-label">Next date</label>
                     <date-picker
-                        id="schedule_next"
-                        v-model="schedule.next_date"
-                        value-type="format"
                         format="YYYY-MM-DD"
+                        id="schedule_next"
+                        style="width: 100%;"
                         type="date"
+                        value-type="format"
+                        v-model="schedule.next_date"
                     ></date-picker>
                 </div>
                 <div
@@ -80,19 +81,18 @@
                 >
                     <label for="schedule_end" class="control-label">End (last) date</label>
                     <date-picker
-                        id="schedule_end"
-                        v-model="schedule.end_date"
-                        value-type="format"
                         format="YYYY-MM-DD"
+                        id="schedule_end"
+                        style="width: 100%;"
                         type="date"
+                        value-type="format"
+                        v-model="schedule.end_date"
                     ></date-picker>
                 </div>
             </div>
         </div>
         <!-- /.box-body -->
-
     </div>
-    <!-- /.box -->
 </template>
 
 <script>

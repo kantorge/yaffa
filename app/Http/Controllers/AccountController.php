@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AccountEntityRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use App\Http\Requests\AccountEntityRequest;
 use JavaScript;
 
 class AccountController extends Controller

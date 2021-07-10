@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
+use App\Models\Investment;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TransactionDetailInvestment extends Transaction
@@ -56,5 +59,4 @@ class TransactionDetailInvestment extends Transaction
     {
         return $this->belongsTo(Investment::class, 'investment_id');
     }
-
 }

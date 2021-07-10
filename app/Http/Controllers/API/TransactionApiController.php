@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Models\Transaction;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Transaction;
 use Illuminate\Http\Response;
 
 class TransactionApiController extends Controller
 {
-    public function reconcile(Transaction $transaction, $newState) {
+    public function reconcile(Transaction $transaction, $newState)
+    {
         $transaction->reconciled = $newState;
         $transaction->save();
 

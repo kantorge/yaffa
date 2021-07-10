@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 class TestSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database with test data
      *
      * @return void
      */

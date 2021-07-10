@@ -44,7 +44,7 @@ if (   window.location.pathname === '/transactions/standard/create'
 }
 
 if (   window.location.pathname === '/transactions/investment/create'
-    || /^\/transactions\/investment\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
+    || /^\/transactions\/investment\/\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
 
     require('./transactions/investment');
 }
@@ -53,8 +53,7 @@ document.getElementById('jump_to_account').addEventListener('change', function()
     if (this.value == '') {
         return false;
     }
-    //TODO: get path from route
-    window.location.href = "/account/history/" + this.value;
+    window.location.href = route('account.history', { account: this.value });
 });
 
 $( function () {

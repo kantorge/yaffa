@@ -48,6 +48,6 @@ class Category extends Model
 
     public function getFullNameAttribute()
     {
-        return (isset($this->parent->name) ? $this->parent->name . " > " : "") . $this['name'];
+        return (isset($this->parent->name) ? $this->parent->name . ' > ' : '') . $this['name'];
     }
 }

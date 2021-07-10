@@ -136,7 +136,7 @@ class MainController extends Controller
                 //apply currency exchange, if necesary
                 if ($account->config->currency_id != $baseCurrency->id) {
                     $account['sum_foreign'] = $account['sum'];
-                    $account['sum'] = $account['sum'] * $currencies->find($account->config->currency_id)->rate();
+                    $account['sum'] *= $currencies->find($account->config->currency_id)->rate();
                 }
                 $account['currency'] = $account->config->currency;
 
@@ -340,15 +340,8 @@ class MainController extends Controller
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
                     return $transaction['transaction_group'] == 'schedule';
-                })->values(),
-            'urlEditStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'edit']),
-            'urlEditInvestment' => route('transactions.openInvestment', ['transaction' => '#ID#', 'action' => 'edit']),
-            'urlCloneStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'clone']),
-            'urlCloneInvestment' => route('transactions.openInvestment', ['transaction' => '#ID#', 'action' => 'clone']),
-            'urlDelete' => route('transactions.destroy', '#ID#'),
-            'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
-            'urlEnterWithEditStandard' => route('transactions.openStandard', ['transaction' => '#ID#', 'action' => 'enter']),
-        ]);
+                })->values()
+            ]);
 
         return view(
             'account.history',
@@ -369,13 +362,12 @@ class MainController extends Controller
                 'transaction_group' => 'schedule',
                 'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format("Y-m-d") : null),
             ];
-        } else {
-            return
-            [
-                'date' => $transaction->date,
-                'transaction_group' => 'history',
-            ];
         }
+
+        return [
+            'date' => $transaction->date,
+            'transaction_group' => 'history',
+        ];
     }
 
     private function transformDataCommon(Transaction $transaction)

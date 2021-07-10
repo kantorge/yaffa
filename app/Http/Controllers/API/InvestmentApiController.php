@@ -42,4 +42,17 @@ class InvestmentApiController extends Controller
     {
         return $investment->currency->suffix;
     }
+
+    /**
+     * Read and return the details of a selected investment
+     *
+     * @param App\Models\Investment $investment
+     * @return App\Models\Investment
+     */
+    public function getInvestmentDetails(Investment $investment)
+    {
+        $investment->load(['currency']);
+
+        return $investment;
+    }
 }

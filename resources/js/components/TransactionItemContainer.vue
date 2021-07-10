@@ -36,6 +36,7 @@
                     :tags="item.tags || []"
                     :currency="currency"
                     :remainingAmount="remainingAmount"
+                    :payee="payee"
                 ></transaction-item>
             </div>
         </div>
@@ -52,7 +53,7 @@
                     type="button"
                     class="btn btn-sm btn-success"
                     @click="this.$emit('addTransactionItem')"
-                    title="New transaction item"><i class="fa fa-plus"></i></button>
+                    title="New transaction item"><span class="fa fa-plus"></span></button>
             </div>
         </div>
     </div>
@@ -70,6 +71,7 @@
             transactionItems: Array,
             currency: String,
             remainingAmount: Number,
+            payee: [Number, String],
         },
         data() {
             return {}

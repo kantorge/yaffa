@@ -1,1 +1,3 @@
-Yet Another Fancy Financial Application
+# Yet Another Free Financial Application
+
+Work in progress

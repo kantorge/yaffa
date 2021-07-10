@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    private const STANDARD_VIEW = "transactions.form_standard";
-    private const INVESTMENT_VIEW = "transactions.form_investment";
+    private const STANDARD_VIEW = 'transactions.form_standard';
+    private const INVESTMENT_VIEW = 'transactions.form_investment';
 
     private const STANDARD_RELATIONS = [
         'config',
@@ -79,7 +79,7 @@ class TransactionController extends Controller
             $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
             // Handle default payee amount, if present, by adding amount as an item
-            if ($validated['remaining_payee_default_amount'] > 0) {
+            if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
                 $newItem = TransactionItem::create([
                         'transaction_id' => $transaction->id,
                         'amount' => $validated['remaining_payee_default_amount'],
@@ -94,6 +94,13 @@ class TransactionController extends Controller
 
             return $transaction;
         });
+
+        // Adjust source transaction schedule, if needed
+        if ($validated['action'] === 'enter') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+            $sourceTransaction->transactionSchedule->skipNextInstance();
+        }
 
         self::addMessage('Transaction added (#'. $transaction->id .')', 'success', '', '', true);
 
@@ -196,6 +203,9 @@ class TransactionController extends Controller
     {
         $validated = $request->validated();
 
+        // Load all relevant relations
+        $transaction->load(['transactionItems']);
+
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
@@ -203,15 +213,18 @@ class TransactionController extends Controller
             $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
             $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
             $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-            $transaction->transactionSchedule()->frequency = $validated['frequency'];
-            $transaction->transactionSchedule()->interval = $validated['interval'];
-            $transaction->transactionSchedule()->count = $validated['count'];
+            $transaction->transactionSchedule()->frequency = $validated['schedule_frequency'];
+            $transaction->transactionSchedule()->interval = $validated['schedule_interval'];
+            $transaction->transactionSchedule()->count = $validated['schedule_count'];
         }
+
+        // Replace exising transaction items with new array
+        $transaction->transactionItems()->delete();
 
         $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
-        //handle default payee amount, if present, by adding amount as an item
-        if ($validated['remaining_payee_default_amount'] > 0) {
+        // Handle default payee amount, if present, by adding amount as an item
+        if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
             $newItem = TransactionItem::create(
                 [
                     'transaction_id' => $transaction->id,
@@ -222,8 +235,6 @@ class TransactionController extends Controller
             $transactionItems[]= $newItem;
         }
 
-        // Replace exising transaction items with new array
-        $transaction->transactionItems()->delete();
         $transaction->transactionItems()->saveMany($transactionItems);
 
         // Save entire transaction
@@ -249,9 +260,9 @@ class TransactionController extends Controller
             $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
             $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
             $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-            $transaction->transactionSchedule()->frequency = $validated['frequency'];
-            $transaction->transactionSchedule()->interval = $validated['interval'];
-            $transaction->transactionSchedule()->count = $validated['count'];
+            $transaction->transactionSchedule()->frequency = $validated['schedule_frequency'];
+            $transaction->transactionSchedule()->interval = $validated['schedule_interval'];
+            $transaction->transactionSchedule()->count = $validated['schedule_count'];
         }
 
         $transaction->push();
@@ -289,7 +300,7 @@ class TransactionController extends Controller
         $processedTransactionItems = [];
         foreach ($transactionItems as $item) {
             // Ignore item, if amount is missing
-            if (is_null($item['amount'])) {
+            if (!array_key_exists('amount', $item) || is_null($item['amount'])) {
                 continue;
             }
 

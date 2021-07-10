@@ -33,7 +33,7 @@
                                                 :class="form.transaction_type == 'withdrawal' ? 'active' : ''"
                                                 type="button"
                                                 value="withdrawal"
-                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                                @click="changeTransactionType"
                                             >
                                                 Withdrawal
                                             </button>
@@ -42,7 +42,7 @@
                                                 :class="form.transaction_type == 'deposit' ? 'active' : ''"
                                                 type="button"
                                                 value="deposit"
-                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                                @click="changeTransactionType"
                                             >
                                                 Deposit
                                             </button>
@@ -51,7 +51,7 @@
                                                 :class="form.transaction_type == 'transfer' ? 'active' : ''"
                                                 type="button"
                                                 value="transfer"
-                                                @click="form.transaction_type = $event.currentTarget.getAttribute('value')"
+                                                @click="changeTransactionType"
                                             >
                                                 Transfer
                                             </button>
@@ -62,12 +62,12 @@
                                     class="form-group row"
                                     :class="form.errors.has('date') ? 'has-error' : ''"
                                 >
-                                    <label for="transaction_date" class="control-label col-sm-3">
+                                    <label for="date" class="control-label col-sm-3">
                                         Date
                                     </label>
                                     <div class="col-sm-6">
                                         <date-picker
-                                            id="transaction_date"
+                                            id="date"
                                             v-model="form.date"
                                             value-type="format"
                                             format="YYYY-MM-DD"
@@ -114,13 +114,13 @@
                                     class="form-group row"
                                     :class="form.errors.has('comment') ? 'has-error' : ''"
                                 >
-                                    <label for="transaction_date" class="control-label col-sm-3">
+                                    <label for="comment" class="control-label col-sm-3">
                                         Comment
                                     </label>
                                     <div class="col-sm-9">
                                         <input
                                             class="form-control"
-                                            id="transaction_comment"
+                                            id="comment"
                                             maxlength="255"
                                             type="text"
                                             v-model="form.comment"
@@ -185,6 +185,7 @@
                         @addTransactionItem="addTransactionItem"
                         :transactionItems="form.items"
                         :currency="from.account_currency"
+                        :payee="payeeId"
                         :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
                     ></transaction-item-container>
 
@@ -209,7 +210,6 @@
                                                 class="form-control"
                                                 id="transaction_amount_from"
                                                 v-model="form.config.amount_from"
-                                                @change="updateAmountTo"
                                             ></MathInput>
                                         </div>
                                         <div
@@ -342,13 +342,13 @@
 <script>
     require('select2');
 
+    import MathInput from './MathInput.vue'
+
     import Form from 'vform'
     import {Button, AlertErrors} from 'vform/src/components/bootstrap5'
 
     import DatePicker from 'vue2-datepicker';
     import 'vue2-datepicker/index.css';
-
-    import MathInput from './MathInput.vue'
 
     import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
@@ -364,7 +364,6 @@
 
         props: {
             action: String,
-            formUrl: String,
             transaction: Object,
         },
 
@@ -375,7 +374,6 @@
             // Set as withdrawal by default
             data.from = {
                 type: 'account',
-                account_id : null,
                 account_currency : null,
             };
 
@@ -383,7 +381,6 @@
             // Set as withdrawal by default
             data.to = {
                 type: 'payee',
-                account_id : null,
                 account_currency : null,
             };
 
@@ -419,8 +416,12 @@
         },
 
         computed: {
-            formErrors() {
-                return this.form.errors;
+            formUrl() {
+                if (this.action === 'edit') {
+                    return route('transactions.updateStandard', {transaction: this.form.id});
+                }
+
+                return route('transactions.storeStandard');
             },
 
             // Account TO and FROM labels based on transaction type
@@ -463,6 +464,19 @@
                 return this.payeeCategory.id;
             },
 
+            // Return ID of payee, if present in any of fields
+            payeeId() {
+                if (this.form.transaction_type === 'withdrawal') {
+                    return this.form.config.account_to_id;
+                }
+
+                if (this.form.transaction_type === 'deposit') {
+                    return this.form.config.account_from_id;
+                }
+
+                return undefined;
+            },
+
             exchangeRate() {
                 const from = this.form.config.amount_from;
                 const to = this.form.config.amount_to;
@@ -477,10 +491,7 @@
 
         created() {
             // Copy values of existing transaction into component form data
-            if (Object.keys(this.transaction) > 0) {
-                this.form.config.account_from_id = this.transaction.config.account_from_id;
-                this.form.config.account_to_id = this.transaction.config.account_to_id;
-
+            if (Object.keys(this.transaction).length > 0) {
                 // Populate form data with already known values
                 this.form.id = this.transaction.id
                 this.form.transaction_type = this.transaction.transaction_type.name;
@@ -494,8 +505,8 @@
                 this.form.config.amount_from = this.transaction.config.amount_from;
                 this.form.config.amount_to = this.transaction.config.amount_to;
 
-                this.form.config.acount_from_id = this.transaction.config.account_from_id;
-                this.form.config.acount_to_id = this.transaction.config.account_to_id;
+                this.form.config.account_from_id = this.transaction.config.account_from_id;
+                this.form.config.account_to_id = this.transaction.config.account_to_id;
 
                 // Copy items, and ensure that amount is number
                 if (this.transaction.transaction_items.length > 0) {
@@ -508,6 +519,12 @@
                 }
 
                 // Copy schedule config
+                this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
+                this.form.schedule_config.count = this.transaction.transaction_schedule.count;
+                this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
+                this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
+                this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
+                this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
             }
 
             // Set form action
@@ -542,12 +559,15 @@
                         });
                     }
                 })
-                .on('select2:unselect', function (e) {
+                .on('select2:unselect', function () {
                     $vm.resetAccount('from');
+                    if ($vm.getAccountType('from') === 'payee') {
+                        $vm.resetPayee();
+                    }
                 });
 
             // Load default value for account FROM
-            if (this.form.config.acount_from_id) {
+            if (this.form.config.account_from_id) {
                 const data = this.transaction.config.account_from;
 
                 // Create the option and append to Select2
@@ -589,12 +609,15 @@
                         });
                     }
                 })
-                .on('select2:unselect', function (e) {
+                .on('select2:unselect', function () {
                     $vm.resetAccount('to');
+                    if ($vm.getAccountType('to') === 'payee') {
+                        $vm.resetPayee();
+                    }
                 });
 
             // Load default value for account TO
-            if (this.form.config.acount_to_id) {
+            if (this.form.config.account_to_id) {
                 const data = this.transaction.config.account_to;
 
                 // Create the option and append to Select2
@@ -619,31 +642,55 @@
 
         methods: {
             changeTransactionType: function (event) {
-                // TODO: get user confirmation before actual change
+                const newState = event.currentTarget.getAttribute('value');
+                const oldState = this.form.transaction_type;
 
-                // Reassign account FROM functionality
-                // TODO: do this if actual change is needed (e.g. not from withdrawal -> transfer change)
-                $("#account_from").select2('destroy');
-                $("#account_from").select2(this.getAccountSelectConfig('from'));
+                if (newState === oldState) {
+                    return false;
+                }
 
-                // Reassign account FROM functionality
-                // TODO: do this if actual change is needed (e.g. not from withdrawal -> transfer change)
-                $("#account_to").select2('destroy');
-                $("#account_to").select2(this.getAccountSelectConfig('to'));
+                if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+                    event.currentTarget.blur();
+                    return false;
+                }
+
+                const oldTypeFrom = this.getAccountType('from');
+                const oldTypeTo = this.getAccountType('to');
+
+                this.form.transaction_type = newState;
+
+                // Reassign account FROM functionality, if changed
+                if (oldTypeFrom !== this.getAccountType('from')) {
+                    if (this.getAccountType('from') === 'account') {
+                        this.resetAccount('from');
+                    } else {
+                        this.resetPayee();
+                    }
+
+                    $("#account_from")
+                        .val(null).trigger('change')
+                        .select2('destroy')
+                        .select2(this.getAccountSelectConfig('from'));
+                }
+
+                // Reassign account FROM functionality, if changed
+                if (oldTypeTo !== this.getAccountType('to')) {
+                    if (this.getAccountType('to') === 'account') {
+                        this.resetAccount('to');
+                    } else {
+                        this.resetPayee();
+                    }
+
+                    $("#account_to")
+                        .val(null).trigger('change')
+                        .select2('destroy')
+                        .select2(this.getAccountSelectConfig('to'));
+                }
             },
 
             // Add a new empty item to list of transaction items
             addTransactionItem() {
                 this.form.items.push({});
-            },
-
-            // Update TO amount with FROM value, if needed
-            updateAmountTo: function (event) {
-                // TODO: compute if exchange rate is present
-                // TODO: update on other relevant changes (e.g. currency needed)
-                if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
-                    this.form.config.amount_to = event.target.value;
-                }
             },
 
             // Check if TO or FROM is account or payee
@@ -661,7 +708,7 @@
 
             // Get url to payee or account list, based on source or target type
             getAccountApiUrl(type) {
-                const accountUrl = '/api/assets/account';
+                const accountUrl = '/api/assets/account/standard';
                 const payeeUrl = '/api/assets/payee';
 
                 return this.getAccountType(type) == 'account' ? accountUrl : payeeUrl;
@@ -669,8 +716,14 @@
 
             // Account has been removed, its properties need to be removed
             resetAccount(type) {
-                this[type].account_id = null;
+                this.form.config['account_' + type + '_id'] = null;
                 this[type].account_currency = null;
+            },
+
+            // Payee has been removed, its properties need to be removed
+            resetPayee() {
+                this.payeeCategory.id = null;
+                this.payeeCategory.text = null;
             },
 
             getAccountSelectConfig (type) {
@@ -708,7 +761,7 @@
 
             getCallbackUrl(transactionId) {
                 if (this.callback == 'returnToDashboard') {
-                    return '/';
+                    return route('home');
                 }
 
                 if (this.callback == 'new') {
@@ -716,13 +769,11 @@
                 }
 
                 if (this.callback == 'clone') {
-                    //TODO: should this come from route function
-                    return '/transactions/' + transactionId + '/clone/standard';
+                    return route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
                 }
 
-                if(this.callback == 'returnToAccount') {
-                    //TODO: should this come from route function
-                    return '/account/history/' + this.form.config.account_from_id;
+                if (this.callback == 'returnToAccount') {
+                    return route('account.history', { account: this.form.config.account_from_id });
                 }
             },
 
@@ -734,11 +785,17 @@
             },
 
             onSubmit() {
-                this.form.post(this.formUrl, this.form)
-                    .then(( response ) => {
-                        this.form.busy = true;
-                        location.href = this.getCallbackUrl(response.data.transaction_id);
-                })
+                if (this.action !== 'edit') {
+                    this.form.post(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                        });
+                } else {
+                    this.form.patch(this.formUrl, this.form)
+                        .then(( response ) => {
+                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                        });
+                }
             },
         },
 
@@ -749,7 +806,17 @@
 
             payeeDefaultCategory (newId) {
                 this.form.remaining_payee_default_category_id = newId;
-            }
+            },
+
+            // Update TO amount with FROM value, if needed
+            "form.config.amount_from": {
+                immediate: true,
+                handler(value) {
+                    if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
+                        this.form.config.amount_to = value;
+                    }
+                },
+            },
         }
     }
 </script>

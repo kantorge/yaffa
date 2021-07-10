@@ -30,5 +30,4 @@ class AccountEntity extends Model
     {
         return $this->morphTo();
     }
-
 }

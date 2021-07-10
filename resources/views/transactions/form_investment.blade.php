@@ -32,8 +32,7 @@
     <div id="app">
         <transaction-form-investment
             action = "{{ $action }}"
-            form-url = "{{ $transaction && $transaction->id ? route('transactions.updateInvestment', ['transaction' => $transaction->id]) : route('transactions.storeInvestment') }}"
-            :transaction = "{{ $transaction }}"
+            :transaction = "{{ $transaction ?? '{}' }}"
         ></transaction-form-investment>
     </div>
 @endsection

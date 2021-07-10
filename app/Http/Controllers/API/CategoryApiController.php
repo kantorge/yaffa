@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Models\Category;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class CategoryApiController extends Controller
 {
@@ -25,27 +26,65 @@ class CategoryApiController extends Controller
                 ->get()
                 ->filter(function ($category) use ($query) {
                     return stripos($category->full_name, $query) !== false;
-                });
+                })
+                ->sortBy('full_name')
+                ->take(10)
+                ->map(function ($category) {
+                    $category->text = $category->full_name;
+                    return $category->only(['id', 'text']);
+                })
+                ->values();
 		} else {
-            //TODO: sort by payee relevance
-            $categories = $this->category
-                ->where('active', 1)
-                ->get();
-        }
+            $results = DB::table('transaction_items')
+                ->join(
+                    'transactions',
+                    'transactions.id',
+                    '=',
+                    'transaction_items.transaction_id'
+                )
+                ->join(
+                    'transaction_details_standard',
+                    'transaction_details_standard.id',
+                    '=',
+                    'transactions.config_id'
+                )
+                ->join(
+                    'categories',
+                    'categories.id',
+                    '=',
+                    "transaction_items.category_id"
+                )
+                ->select(
+                    'categories.id',
+                )
+                ->where('categories.active', true)
+                ->when($request->has('payee'), function ($query) use ($request) {
+                    $query->whereRaw(
+                        "(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)",
+                        [$request->get('payee'), $request->get('payee')],
+                    );
+                })
+                ->groupBy('categories.id')
+                ->orderByRaw('count(*) DESC')
+                ->limit(10)
+                ->pluck('id')
+                ->toArray();
 
-        $subset = $categories
-            ->sortBy('full_name')
-            ->take(10)
+            $categories = Category::findMany($results)
+            ->sortBy(function ($category) use ($results) {
+                return array_search($category->getKey(), $results);
+            })
             ->map(function ($category) {
                 $category->text = $category->full_name;
                 return $category->only(['id', 'text']);
             })
             ->values();
+        }
 
         //return data
         return response()
             ->json(
-                $subset,
+                $categories,
                 Response::HTTP_OK
             );
     }
@@ -59,21 +98,3 @@ class CategoryApiController extends Controller
             );
     }
 }
-
-
-/*
-    $query = "SELECT    `ti`.`categories_id` AS `id`,
-                        `c`.`text`
-                FROM `transaction_items` AS `ti`
-                LEFT JOIN `category_full_list` AS `c` ON `c`.`id` = `ti`.`categories_id`
-                WHERE `ti`.`transaction_headers_id` IN (
-                    SELECT `id`
-                    FROM `standard_transaction_headers`
-                    WHERE `payees_id` = ".$this->db->escape($this->input->get('payee'))."
-                )
-                ".($this->input->get("active") == "1" ? " AND `c`.`active` = 1 " : "")."
-                GROUP BY `ti`.`categories_id`,
-                        `c`.`text`
-                ORDER BY count(`ti`.`id`)  DESC
-                LIMIT 5";
-*/
