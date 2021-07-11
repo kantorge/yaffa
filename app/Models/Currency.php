@@ -56,10 +56,6 @@ class Currency extends Model
             });
         });
 
-        if (is_null($baseCurrency)) {
-            return null;
-        }
-
         $rate = CurrencyRate::where('from_id', $this->id)
                                     ->where('to_id', $baseCurrency->id)
                                     ->latest('date')

@@ -8,12 +8,14 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Currency rate values</h3>
                     <div class="pull-right box-tools">
-                        <a href="/currencies/create" class="btn btn-success" title="New currency rate"><i class="fa fa-plus"></i></a>
+                        <a href="{{ route('currencyrate.retreiveMissing', ['currency' =>  $from->id ]) }}" class="btn btn-success" title="Load new currency rates">
+                            <span class="fa fa-cloud-download"></span>
+                        </a>
                     </div>
                     <!-- /.box-tools -->
                 </div>
@@ -25,7 +27,7 @@
             </div>
             <!-- /.box -->
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="box">
                 <div class="box-body">
                     <div id="chartdiv" style="width: 100%; height: 500px"></div>

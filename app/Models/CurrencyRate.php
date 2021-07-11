@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class CurrencyRate extends Model
@@ -23,4 +24,18 @@ class CurrencyRate extends Model
         'rate',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'date' => 'datetime:Y-m-d',
+    ];
+
+    /*
+    protected $dates = [
+        'date',
+    ];
+    */
 }

@@ -33,12 +33,22 @@ Route::resource('categories', CategoryController::class);
 Route::resource('currencies', CurrencyController::class);
 
 Route::get(
+    '/currencyrates/missing/{currency}',
+    [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase']
+)->name('currencyrate.retreiveMissing');
+
+Route::get(
+    '/currencyrates/get/{currency}/{from?}',
+    [CurrencyRateController::class, 'retreiveCurrencyRateToBase']
+)->name('currencyrate.retreiveRate');
+
+Route::get(
     '/currencyrates/{from}/{to}',
     [CurrencyRateController::class, 'index']
-)->name('currencyrates.index');
+)->name('currency-rate.index');
 
 Route::resource(
-    'currencyrates',
+    'currency-rate',
     CurrencyRateController::class
 )
 ->except(
