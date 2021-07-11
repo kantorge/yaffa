@@ -29,8 +29,6 @@ class AccountGroupController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'accountGroups' => $accountGroups,
-            'editUrl' => route('account-group.edit', '#ID#'),
-            'deleteUrl' => route('account-group.destroy', '#ID#'),
         ]);
 
         return view('account-group.index');

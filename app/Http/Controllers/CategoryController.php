@@ -21,8 +21,6 @@ class CategoryController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'categories' => $categories,
-            'editUrl' => route('categories.edit', '#ID#'),
-            'deleteUrl' => route('categories.destroy', '#ID#'),
         ]);
 
         return view('categories.index');

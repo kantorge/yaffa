@@ -33,8 +33,6 @@ class AccountController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'accounts' => $accounts,
-            'editUrl' => route('account.edit', '#ID#'),
-            'deleteUrl' => route('account.destroy', '#ID#'),
         ]);
 
         return view('account.index');
@@ -45,10 +43,10 @@ class AccountController extends Controller
         $account = AccountEntity::with(['config', 'config.account_group', 'config.currency'])
             ->find($id);
 
-        //get all account groups
+        // Get all account groups
         $allAccountGroups = AccountGroup::pluck('name', 'id')->all();
 
-        //get all currencies
+        // Get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
 
         return view(

@@ -29,8 +29,6 @@ class TagController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'tags' => $tags,
-            'editUrl' => route('tag.edit', '#ID#'),
-            'deleteUrl' => route('tag.destroy', '#ID#'),
         ]);
 
         return view('tag.index');

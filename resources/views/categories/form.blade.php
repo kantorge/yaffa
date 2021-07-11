@@ -121,6 +121,7 @@
             >
 
             <input class="btn btn-primary" type="submit" value="Save">
+            <a href="{{ route('categories.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>
         <!-- /.box-footer -->
     </div>

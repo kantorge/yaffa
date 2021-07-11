@@ -156,9 +156,9 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_is_first) {
                             return  '' +
-                                    '<a href="' + urlEnterWithEditStandard.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                                    '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                                     '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                                    '<form id="form-skip-' + data + '" action="' + urlSkip.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                                    '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                         }
                         return null;
                     }

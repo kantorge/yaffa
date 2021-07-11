@@ -36,8 +36,6 @@ class InvestmentController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
-            'editUrl' => route('investment.edit', '#ID#'),
-            'deleteUrl' => route('investment.destroy', '#ID#'),
         ]);
 
         return view('investment.index');
@@ -135,17 +133,6 @@ class InvestmentController extends Controller
             ])
             ->get();
 
-        /*
-        //Show all currencies from the database and return to view
-        $currencies = Currency::all();
-
-        //support DataTables with action URLs
-        $currencies->map(function ($currency) {
-            $currency['latest_rate'] = $currency->rate();
-            return $currency;
-        });
-        */
-
         $investments->map(function ($investment) {
             $investment['price'] = $investment->getLatestPrice();
             $investment['quantity'] = $investment->getCurrentQuantity();
@@ -156,7 +143,6 @@ class InvestmentController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
-            'urlDetails' => route('investment.show', '#ID#'),
         ]);
 
         return view('investment.summary');
@@ -266,11 +252,6 @@ class InvestmentController extends Controller
             'transactions' => $transactions,
             'prices' => $prices,
             'quantities' => $quantities,
-            'urlEditInvestment' => route('transactions.editInvestment', '#ID#'),
-            'urlCloneInvestment' => route('transactions.cloneInvestment', '#ID#'),
-            'urlDelete' => route('transactions.destroy', '#ID#'),
-            //'urlSkip' => route('transactions.skipScheduleInstance', '#ID#'),
-            //'urlEnterWithEditStandard' => route('transactions.enterWithEditStandard', '#ID#'),
         ]);
 
         return view('investment.show', [

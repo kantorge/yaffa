@@ -29,8 +29,6 @@ class InvestmentGroupController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'investmentGroups' => $investmentGroups,
-            'editUrl' => route('investment-group.edit', '#ID#'),
-            'deleteUrl' => route('investment-group.destroy', '#ID#'),
         ]);
 
         return view('investment-group.index');

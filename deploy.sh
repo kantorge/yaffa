@@ -4,7 +4,7 @@ php artisan down || true
 # Pull the latest changes from the git repository
 # git reset --hard
 # git clean -df
-git pull origin https://github.com/kantorge/yaffa.git
+git pull origin git@github.com:kantorge/yaffa.git
 
 # Install/update composer dependecies
 composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
@@ -16,7 +16,7 @@ php artisan migrate --force
 php artisan cache:clear
 
 # Clear expired password reset tokens
-php artisan auth:clear-resets
+#php artisan auth:clear-resets
 
 # Clear and cache routes
 php artisan route:cache

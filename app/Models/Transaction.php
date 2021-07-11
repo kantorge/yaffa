@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\TransactionType;
@@ -124,5 +125,34 @@ class Transaction extends Model
         $this->config()->delete();
 
         parent::delete();
+    }
+
+
+    /**
+     * Get a numeric value representing the net financial result of the current transaction.
+     * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
+     *
+     * @param App\Models\AccountEntity $account
+     * @return Numeric
+     */
+    public function cashflowValue(?AccountEntity $account)
+    {
+        if ($this->config_type == 'transaction_detail_standard') {
+            $operator = $this->transactionType->amount_operator ?? ( $this->config->account_from_id == $account->id ? 'minus' : 'plus');
+            return ($operator == 'minus' ? -$this->config->amount_from : $this->config->amount_to);
+        }
+
+        if ($this->config_type == 'transaction_detail_investment') {
+            $operator = $this->transactionType->amount_operator;
+            if ($operator) {
+                return ($operator == 'minus'
+                    ? - $this->config->price * $this->config->quantity
+                    : $this->config->dividend + $this->config->price * $this->config->quantity )
+                    - $this->config->tax
+                    - $this->config->commission;
+            }
+        }
+
+        return 0;
     }
 }

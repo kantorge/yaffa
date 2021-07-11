@@ -1,9 +1,5 @@
 @extends('template.page')
 
-@section('meta_tags')
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-@stop
-
 @section('classes_body', "layout-footer-fixed")
 
 @section('title', 'Transaction')

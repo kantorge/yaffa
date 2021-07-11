@@ -152,10 +152,10 @@ $(function () {
                 return '' +
                        '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="Make this the start date"></i></button> ' +
                        '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ' +
-                       '<a href="' + urlEditInvestment.replace('#ID#', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                       '<a href="' + urlCloneInvestment.replace('#ID#', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                       '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                       '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
                        '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                       '<form id="form-delete-' + data + '" action="' + urlDelete.replace('#ID#', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                       '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
             },
             orderable: false
         }

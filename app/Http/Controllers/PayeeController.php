@@ -45,8 +45,6 @@ class PayeeController extends Controller
         //pass data for DataTables
         JavaScript::put([
             'payees' => $payees,
-            'editUrl' => route('payees.edit', '#ID#'),
-            'deleteUrl' => route('payees.destroy', '#ID#'),
         ]);
 
         return view('payees.index');

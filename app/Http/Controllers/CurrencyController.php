@@ -34,8 +34,6 @@ class CurrencyController extends Controller
         JavaScript::put([
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
-            'editUrl' => route('currencies.edit', '#ID#'),
-            'deleteUrl' => route('currencies.destroy', '#ID#'),
         ]);
 
         return view('currencies.index');

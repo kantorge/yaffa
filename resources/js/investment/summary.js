@@ -11,7 +11,7 @@ $(function() {
             data: "name",
             title: "Name",
             render: function(data, type, row, meta) {
-                return '<a href="' + urlDetails.replace('#ID#', row.id) + '" class="" title="View investment details">' + data +'</a>';
+                return '<a href="' + route('investment.show', row.id) + '" class="" title="View investment details">' + data +'</a>';
             },
         },
         {
@@ -57,7 +57,7 @@ $(function() {
             title: "Actions",
             render: function ( data, type, row, meta ) {
                 return '' +
-                       '<a href="' + urlDetails.replace('#ID#', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ';
+                       '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ';
             },
             orderable: false
         }
