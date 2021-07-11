@@ -124,7 +124,7 @@ class InvestmentController extends Controller
 
     public function summary()
     {
-        //Show all investments from the database and return to view
+        // Show all investments from the database and return to view
         $investments = $this
             ->investment
             ->with([
@@ -140,7 +140,7 @@ class InvestmentController extends Controller
             return $investment;
         });
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
         ]);

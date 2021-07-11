@@ -7,6 +7,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
+use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\PayeeController;
 use App\Http\Controllers\TagController;
@@ -60,6 +61,11 @@ Route::resource(
 Route::resource('investment-group', InvestmentGroupController::class);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
 Route::resource('investment', InvestmentController::class);
+
+Route::get(
+    '/investmentprices/get/{investment}/{from?}',
+    [InvestmentPriceController::class, 'retreiveInvestmentPriceAlphaVantage']
+)->name('investment-price.retreive');
 
 Route::resource('payees', PayeeController::class);
 Route::resource('tag', TagController::class);

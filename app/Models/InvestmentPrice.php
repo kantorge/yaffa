@@ -6,9 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class InvestmentPrice extends Model
 {
-    public $timestamps = false;
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'investment_prices';
 
-    public $casts = [
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'date',
+        'investment_id',
+        'price',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'date' => 'datetime:Y-m-d',
         'price' => 'float',
     ];
 }

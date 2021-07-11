@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "56b803d48bc879939d6e57e692b8b28f",
+    "content-hash": "bcd1ac139a3884e438f8f55eb7b73cad",
     "packages": [
         {
             "name": "almasaeed2010/adminlte",
@@ -1253,6 +1253,54 @@
                 "source": "https://github.com/guzzle/psr7/tree/2.0.0"
             },
             "time": "2021-06-30T20:03:07+00:00"
+        },
+        {
+            "name": "kokspflanze/alpha-vantage-api",
+            "version": "0.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kokspflanze/alpha-vantage-api.git",
+                "reference": "cbe09cc994001363786aacfa6f2a6532f5075ab9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kokspflanze/alpha-vantage-api/zipball/cbe09cc994001363786aacfa6f2a6532f5075ab9",
+                "reference": "cbe09cc994001363786aacfa6f2a6532f5075ab9",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.5 || ^7.2",
+                "php": "^7.3 || ^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.5.8",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "suggest": {
+                "psr/container": "If you want use factories for PSR-11 Containers"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AlphaVantage\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Alpha Vantage API client",
+            "homepage": "https://github.com/kokspflanze/alpha-vantage-api",
+            "keywords": [
+                "alpha-vantage",
+                "alphavantage",
+                "api"
+            ],
+            "support": {
+                "issues": "https://github.com/kokspflanze/alpha-vantage-api/issues",
+                "source": "https://github.com/kokspflanze/alpha-vantage-api/tree/0.10"
+            },
+            "time": "2021-03-04T18:49:52+00:00"
         },
         {
             "name": "laracasts/utilities",

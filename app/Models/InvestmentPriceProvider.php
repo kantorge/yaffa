@@ -12,5 +12,4 @@ class InvestmentPriceProvider extends Model
      * @var string
      */
     protected $table = 'investment_price_providers';
-
 }

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class CurrencyRate extends Model
 {
-
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'currency_rates';
 
     public $timestamps = false;
@@ -32,10 +35,4 @@ class CurrencyRate extends Model
     protected $casts = [
         'date' => 'datetime:Y-m-d',
     ];
-
-    /*
-    protected $dates = [
-        'date',
-    ];
-    */
 }

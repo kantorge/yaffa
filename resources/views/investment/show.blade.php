@@ -158,6 +158,11 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Price history</h3>
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-success" title="Load new currency rates">
+                            <span class="fa fa-cloud-download"></span>
+                        </a>
+                    </div>
                     <div class="box-tools pull-right hidden" id="priceChartNoData">
                         <button class="btn btn-xs btn-danger">No data available</button>
                     </div>
