@@ -15,7 +15,7 @@
         </div>
         <!-- /.box-header -->
         <div class="box-body">
-            <table class="table table-bordered table-hover dataTable" role="grid" id="table"></table>
+            <table class="table table-bordered table-hover dataTable" role="grid" id="investmentSummary"></table>
         </div>
         <!-- /.box-body -->
     </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Investment;
+use App\Models\InvestmentPrice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -28,7 +29,7 @@ class InvestmentApiController extends Controller
             ->take(10)
             ->get();
 
-        //return data
+        // Return data
         return response()->json($investments, Response::HTTP_OK);
     }
 
@@ -54,5 +55,16 @@ class InvestmentApiController extends Controller
         $investment->load(['currency']);
 
         return $investment;
+    }
+
+    public function getPriceHistory(Investment $investment)
+    {
+        $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
+            ->select(['id', 'date', 'price'])
+            ->orderBy('date')
+            ->get();
+
+        // Return data
+        return response()->json($prices, Response::HTTP_OK);
     }
 }

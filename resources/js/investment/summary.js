@@ -4,7 +4,7 @@ require( 'datatables.net-bs' );
 $(function() {
     var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
-    $('#table').DataTable({
+    $('#investmentSummary').DataTable({
         data: investments,
         columns: [
         {
@@ -87,6 +87,64 @@ $(function() {
             } );
         }
         */
+    });
+
+    $("#investmentSummary").on("click", ".showPriceModal", function() {
+        if ($(".showPriceModal i").hasClass("fa-spinner")) {
+            return false;
+        }
+
+        $(this).find("i").removeClass().addClass('fa fa-spinner fa-spin');
+
+        $.ajax ({
+            type: 'GET',
+            url: '/api/assets/investment/price/' + $(this).data("id"),
+            dataType: "json",
+            context: this,
+            data: {},
+            success: function (data) {
+                data.forEach(function(e){
+                    e.action = "<button type='button' data-id='" + e.id + "' class='btn btn-xs btn-danger deleteItem'><i class='fa fa-trash' title='Delete item'></i></button>";
+                })
+                if (typeof window.pricesTable === 'undefined') {
+                    window.pricesTable = $("#priceTable").DataTable({
+                        data:           data,
+                        columns:        [
+                            {
+                                data:   'date',
+                                "orderable": false
+                            },
+                            {
+                                data:   'price',
+                                "orderable": false
+                            },
+                            {
+                                data:   'action',
+                                "orderable": false
+                            }
+                        ],
+                        searching:      false,
+                        //ordering:       false,
+                        bInfo:          false,
+                        //deferRender:    true,
+                        scrollY:        200,
+                        scrollCollapse: true,
+                        scroller:       true,
+
+                    });
+                } else {
+                    window.pricesTable.clear();
+                    window.pricesTable.rows.add(data);
+                    window.pricesTable.draw();
+                }
+
+                $("#investment_id").val($(this).data("id"));
+                $('#modal-prices').modal('show');
+
+                $(this).find("i").removeClass().addClass('fa fa-line-chart');
+            }
+        });
+
     });
 
 });

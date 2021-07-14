@@ -13,6 +13,7 @@ Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiC
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
 Route::get('/assets/investment/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getInvestmentDetails')->name('investment.getDetails');
 Route::get('/assets/investment/suffix/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getCurrencySuffix');
+Route::get('/assets/investment/price/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getPriceHistory');
 
 Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
 Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');
