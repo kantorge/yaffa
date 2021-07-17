@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
+use App\Models\TransactionType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class PayeeApiController extends Controller
 {
@@ -18,35 +20,59 @@ class PayeeApiController extends Controller
 
     public function getList(Request $request)
     {
-        $payees = $this->payee
-            ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
-            })
-            ->where('active', 1)
-            ->orderBy('name')
-            ->take(10)
-            ->get();
+        if ($request->get('q')) {
+            $payees = $this->payee
+                ->select(['id', 'name AS text'])
+                ->when($request->get('q'), function ($query) use ($request) {
+                    $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+                })
+                ->where('active', 1)
+                ->orderBy('name')
+                ->take(10)
+                ->get();
+        } else {
+            $accountId = $request->get('account_id');
+            $accountDirection = ($request->get('type') === 'to' ? 'to' : 'from');
+            // Reverse selection for main selection
+            $payeeDirection = ($request->get('type') === 'to' ? 'from' : 'to');
+
+            $payees = DB::table('transactions')
+                ->join(
+                    'transaction_details_standard',
+                    'transaction_details_standard.id',
+                    '=',
+                    'transactions.config_id'
+                )
+                ->join(
+                    'account_entities',
+                    'account_entities.id',
+                    '=',
+                    "transaction_details_standard.account_{$payeeDirection}_id"
+                )
+                ->select('account_entities.id', 'account_entities.name AS text')
+                ->where('account_entities.active', true)
+                ->where(
+                    // TODO: fallback to query without this, if no results are found
+                    'transaction_type_id',
+                    '=',
+                    TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
+                )
+                ->when($accountId, function ($query) use ($accountDirection, $accountId) {
+                    return $query->where(
+                        "transaction_details_standard.account_{$accountDirection}_id",
+                        '=',
+                        $accountId
+                    );
+                })
+                ->groupBy("transaction_details_standard.account_{$payeeDirection}_id")
+                ->orderByRaw('count(*) DESC')
+                ->limit(10)
+                ->get();
+        }
 
         //return data
         return response()->json($payees, Response::HTTP_OK);
     }
-            //get top active payees, considering selected account as well
-            /*
-            $accountField = ($this->input->get('transaction_type') == 'deposit' ? 'accounts_to_id' : 'accounts_from_id');
-            $query = "SELECT    `head`.`payees_id` AS `id`,
-                                `p`.`name` AS `text`
-                        FROM `standard_transaction_headers` AS `head`
-                        LEFT JOIN `payees` AS `p` ON `p`.`id` = `head`.`payees_id`
-                        WHERE   `transaction_types_id` = (SELECT `id` FROM `transaction_types` WHERE `name` = ". $this->db->escape($this->input->get('transaction_type')) .")
-                                AND `p`.`active`= 1
-                                AND `head`.`$accountField` = ".$this->db->escape($this->input->get('account'))."
-                        GROUP BY `id`, `text`
-                        ORDER BY count(`head`.`id`) DESC
-                        LIMIT 5";
-            $json = $this->db->query($query)->result();
-            */
-
 
     public function getDefaultCategoryForPayee(Request $request)
     {
