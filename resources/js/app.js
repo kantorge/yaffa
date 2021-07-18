@@ -1,5 +1,9 @@
 require('./bootstrap');
 
+if (window.location.pathname === '/account/summary') {
+    require('./account/summary');
+}
+
 if (window.location.pathname === '/account-group') {
     require('./account-group/index');
 }

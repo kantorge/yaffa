@@ -89,39 +89,13 @@
                 <!-- /.box-body -->
             </div>
 
-            <div class="box">
-                <div class="box-header with-border">
-                    <h3 class="box-title">Upcoming transactions</h3>
-
-                    <div class="box-tools pull-right">
-                        <button type="button" class="btn btn-box-tool" data-box-widget="collapse">
-                            <i class="fa fa-minus"></i>
-                        </button>
-                    </div>
-                    <!-- /.box-tools -->
-                </div>
-                <!-- /.box-header -->
-                <div class="box-body">
-                    <ul class="todo-list" id="upcomingTransactionsContainer">
-                        <li class="hidden" id="upcomingTransactionsPrototype">
-                            <small class="label" style="margin-left: 0px;"></small>
-                            <span class="text"></span>
-                            <div class="tools">
-                                <a class="upcomingTransactionsActionsAdd" href="#" style="padding: 0 5px;"><i class="fa fa-pencil" title="Edit and insert instance"></i></a>
-                                <a class="upcomingTransactionsActionsSkip" href="#"><i class="fa fa-forward" title="Skip current schedule"></i></a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <!-- /.box-body -->
-                <div class="overlay">
-                    <i class="fa fa-refresh fa-spin"></i>
-                </div>
+            <div id="PayeeCategoryRecommendationContainer">
+                <payee-category-recommendation-box></payee-category-recommendation-box>
             </div>
 
 		</div>
 		<!-- /.col -->
-      </div>
-	  <!-- /.row -->
+    </div>
+    <!-- /.row -->
 
 @stop
