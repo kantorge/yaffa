@@ -39,13 +39,13 @@ class Currency extends Model
     public static function rules($id = 0)
     {
         return [
-                'name' => 'required|min:2|max:191|unique:currencies,name' . ($id ? ",{$id}" : ''),
-                'iso_code' => 'required|string|size:3|unique:currencies,iso_code' . ($id ? ",{$id}" : ''),
-                'num_digits' => 'required|numeric|between:0,4',
-                'suffix' => 'string|nullable|max:5',
-                'base' => 'boolean|nullable|unique:currencies,base' . ($id ? ",{$id}" : ''),
-                'auto_update' => 'boolean'
-            ];
+            'name' => 'required|min:2|max:191|unique:currencies,name' . ($id ? ",{$id}" : ''),
+            'iso_code' => 'required|string|size:3|unique:currencies,iso_code' . ($id ? ",{$id}" : ''),
+            'num_digits' => 'required|numeric|between:0,4',
+            'suffix' => 'string|nullable|max:5',
+            'base' => 'boolean|nullable|unique:currencies,base' . ($id ? ",{$id}" : ''),
+            'auto_update' => 'boolean'
+        ];
     }
 
     public function rate()
