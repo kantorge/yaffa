@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
+use App\Models\Category;
+
 class Payee extends AccountEntity
 {
     protected $guarded = [];
@@ -27,6 +30,16 @@ class Payee extends AccountEntity
      */
     protected $fillable = [
         'category_id',
+        'category_suggestion_dismissed'
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'category_suggestion_dismissed' => 'datetime',
     ];
 
     public function config()

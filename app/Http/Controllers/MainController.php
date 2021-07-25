@@ -338,7 +338,7 @@ class MainController extends Controller
             return [
                 'schedule' => $transaction->transactionSchedule,
                 'transaction_group' => 'schedule',
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format("Y-m-d") : null),
+                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
             ];
         }
 
@@ -350,15 +350,14 @@ class MainController extends Controller
 
     private function transformDataCommon(Transaction $transaction)
     {
-        return
-            [
-                'id' => $transaction->id,
-                'transaction_name' => $transaction->transactionType->name,
-                'transaction_type' => $transaction->transactionType->type,
+        return [
+            'id' => $transaction->id,
+            'transaction_name' => $transaction->transactionType->name,
+            'transaction_type' => $transaction->transactionType->type,
 
-                'reconciled' => $transaction->reconciled,
-                'comment' => $transaction->comment,
-            ];
+            'reconciled' => $transaction->reconciled,
+            'comment' => $transaction->comment,
+        ];
     }
 
     private function transformDataStandard(Transaction $transaction)
@@ -378,28 +377,26 @@ class MainController extends Controller
             }
         }
 
-        return
-            [
-                'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus'),
-                'account_from_id' => $transaction->config->account_from_id,
-                'account_from_name' => $this->allAccounts[$transaction->config->account_from_id],
-                'account_to_id' => $transaction->config->account_to_id,
-                'account_to_name' => $this->allAccounts[$transaction->config->account_to_id],
-                'amount_from' => $transaction->config->amount_from,
-                'amount_to' => $transaction->config->amount_to,
+        return [
+            'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus'),
+            'account_from_id' => $transaction->config->account_from_id,
+            'account_from_name' => $this->allAccounts[$transaction->config->account_from_id],
+            'account_to_id' => $transaction->config->account_to_id,
+            'account_to_name' => $this->allAccounts[$transaction->config->account_to_id],
+            'amount_from' => $transaction->config->amount_from,
+            'amount_to' => $transaction->config->amount_to,
 
-                'tags' => array_values($itemTags),
+            'tags' => array_values($itemTags),
 
-                'categories' => array_values($itemCategories),
-            ];
+            'categories' => array_values($itemCategories),
+        ];
     }
 
     private function transformDataInvestment(Transaction $transaction)
     {
         $amount = $transaction->cashflowValue(null);
 
-        return
-        [
+        return [
             'transaction_operator' => $transaction->transactionType->amount_operator,
             'quantity_operator' => $transaction->transactionType->quantity_operator,
 

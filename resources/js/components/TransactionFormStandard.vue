@@ -477,6 +477,15 @@
                 return undefined;
             },
 
+            // Return ID of account, if present any of fields (using account from in transfer)
+            accountId() {
+                if (this.form.transaction_type === 'deposit') {
+                    return this.form.config.account_to_id;
+                }
+
+                return this.form.config.account_from_id;
+            },
+
             exchangeRate() {
                 const from = this.form.config.amount_from;
                 const to = this.form.config.amount_to;
@@ -738,7 +747,8 @@
                             return {
                                 q: params.term,
                                 transaction_type: $vm.form.transaction_type,
-                                account_type: type
+                                account_type: type,
+                                account_id: $vm.accountId,
                             };
                         },
                         processResults: function (data) {

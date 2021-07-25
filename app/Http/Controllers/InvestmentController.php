@@ -208,7 +208,7 @@ class InvestmentController extends Controller
                     $dateData = [
                         'schedule' => $transaction->transactionSchedule,
                         'transaction_group' => 'schedule',
-                        'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format("Y-m-d") : null),
+                        'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
                     ];
                 } else {
                     $dateData = [
