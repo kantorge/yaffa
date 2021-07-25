@@ -1,6 +1,7 @@
 require('./bootstrap');
 
-if (window.location.pathname === '/account/summary') {
+if (   window.location.pathname === '/account/summary'
+    || window.location.pathname === '/') {
     require('./account/summary');
 }
 
@@ -10,7 +11,7 @@ if (window.location.pathname === '/account-group') {
 if (window.location.pathname === '/account') {
     require('./account/index');
 }
-if (  /^\/account\/history\/\d+/.test(window.location.pathname)) {
+if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
     require('./account/history');
 }
 if (window.location.pathname === '/categories') {
@@ -19,7 +20,7 @@ if (window.location.pathname === '/categories') {
 if (window.location.pathname === '/currencies') {
     require('./currencies/index');
 }
-if (  /^\/currencyrates\/\d+\/\d+/.test(window.location.pathname)) {
+if (/^\/currencyrates\/\d+\/\d+/.test(window.location.pathname)) {
     require('./currencyrates/index');
 }
 if (window.location.pathname === '/investment-group') {
