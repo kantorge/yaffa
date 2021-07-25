@@ -41,11 +41,15 @@ class TransactionRequest extends FormRequest
 
                 'schedule_config.start_date' => 'required|date',
                 'schedule_config.next_date' => [
-                    'required',
+                    'nullable',
                     'date',
                     'after_or_equal:schedule_config.start_date',
                 ],
-                'schedule_config.end_date' => 'nullable|date|after_or_equal:schedule_start',
+                'schedule_config.end_date' => [
+                    'nullable',
+                    'date',
+                    'after_or_equal:schedule_config.start_date',
+                ],
                 'schedule_config.frequency' => [
                     'required',
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
