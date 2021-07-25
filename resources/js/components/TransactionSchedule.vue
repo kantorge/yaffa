@@ -65,7 +65,13 @@
                     class="col-md-4 form-group"
                     :class="form.errors.has('schedule_config.next_date') ? 'has-error' : ''"
                 >
-                    <label for="schedule_next" class="control-label">Next date</label>
+                    <label for="schedule_next" class="control-label">
+                            Next date
+                            <span
+                                class="fa"
+                                :class="!schedule.next_date ? 'fa-warning text-warning' : 'fa-info-circle text-info'"
+                                title="If next date is empty, then this schedule is considered to be finished"></span>
+                    </label>
                     <date-picker
                         format="YYYY-MM-DD"
                         id="schedule_next"

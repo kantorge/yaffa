@@ -62,17 +62,12 @@ class TransactionController extends Controller
             $transaction->config()->associate($transactionDetails);
 
             if ($transaction->schedule || $transaction->budget) {
-                $transactionSchedule = TransactionSchedule::create(
+                $transactionSchedule = new TransactionSchedule(
                     [
                         'transaction_id' => $transaction->id,
-                        'start_date' => $validated['schedule_start'],
-                        'next_date' => $validated['schedule_next'],
-                        'end_date' => $validated['schedule_end'],
-                        'frequency' => $validated['schedule_frequency'],
-                        'interval' => $validated['schedule_interval'],
-                        'count' => $validated['schedule_count'],
                     ]
                 );
+                $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
@@ -122,17 +117,12 @@ class TransactionController extends Controller
             $transaction->config()->associate($transactionDetails);
 
             if ($transaction->schedule) {
-                $transactionSchedule = TransactionSchedule::create(
+                $transactionSchedule = new TransactionSchedule(
                     [
                         'transaction_id' => $transaction->id,
-                        'start_date' => $validated['schedule_start'],
-                        'next_date' => $validated['schedule_next'],
-                        'end_date' => $validated['schedule_end'],
-                        'frequency' => $validated['schedule_frequency'],
-                        'interval' => $validated['schedule_interval'],
-                        'count' => $validated['schedule_count'],
                     ]
                 );
+                $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
 
@@ -210,12 +200,7 @@ class TransactionController extends Controller
         $transaction->config->fill($validated['config']);
 
         if ($transaction->schedule || $transaction->budget) {
-            $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
-            $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
-            $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-            $transaction->transactionSchedule()->frequency = $validated['schedule_frequency'];
-            $transaction->transactionSchedule()->interval = $validated['schedule_interval'];
-            $transaction->transactionSchedule()->count = $validated['schedule_count'];
+            $transaction->transactionSchedule->fill($validated['schedule_config']);
         }
 
         // Replace exising transaction items with new array
@@ -257,12 +242,7 @@ class TransactionController extends Controller
         $transaction->config->fill($validated['config']);
 
         if ($transaction->schedule) {
-            $transaction->transactionSchedule()->start_date = $validated['schedule_start'];
-            $transaction->transactionSchedule()->next_date = $validated['schedule_next'];
-            $transaction->transactionSchedule()->end_date = $validated['schedule_end'];
-            $transaction->transactionSchedule()->frequency = $validated['schedule_frequency'];
-            $transaction->transactionSchedule()->interval = $validated['schedule_interval'];
-            $transaction->transactionSchedule()->count = $validated['schedule_count'];
+            $transaction->transactionSchedule->fill($validated['schedule_config']);
         }
 
         $transaction->push();
