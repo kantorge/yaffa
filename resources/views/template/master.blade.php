@@ -30,7 +30,7 @@
 
 </head>
 
-<body class="hold-transition skin-blue sidebar-mini @yield('classes_body')">
+<body class="hold-transition {{ env('APP_ENV') =='production' ? 'skin-blue' : 'skin-red' }} sidebar-mini @yield('classes_body')">
 <div class="wrapper">
 
   <!-- Main Header -->
