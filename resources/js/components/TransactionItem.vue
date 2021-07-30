@@ -242,7 +242,7 @@
             // Add the currently available remainder amount to this item
             loadRemainder() {
                 var element = $(this.$el).find("input.transaction_item_amount");
-                var amount = this.amount + this.remainingAmount;
+                var amount = (this.amount || 0) + this.remainingAmount;
 
                 element.val(amount);
                 this.$emit('updateItemAmount', amount);
