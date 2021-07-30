@@ -101,10 +101,12 @@ table.dataTable thead .sorting:after {
   /* sort */
 }
 table.dataTable thead .sorting_asc:after {
+  opacity: 0.5;
   content: "";
   /* sort-by-attributes */
 }
 table.dataTable thead .sorting_desc:after {
+  opacity: 0.5;
   content: "";
   /* sort-by-attributes-alt */
 }
