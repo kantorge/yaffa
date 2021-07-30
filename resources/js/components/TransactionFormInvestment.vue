@@ -349,12 +349,14 @@
                 this.form.config.tax = this.transaction.config.tax;
 
                 // Copy schedule config
-                this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
-                this.form.schedule_config.count = this.transaction.transaction_schedule.count;
-                this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
-                this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
-                this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
-                this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
+                if (this.transaction.transaction_schedule) {
+                    this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
+                    this.form.schedule_config.count = this.transaction.transaction_schedule.count;
+                    this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
+                    this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
+                    this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
+                    this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
+                }
             }
 
             // TODO: make the list dynamic based on database settings
@@ -548,7 +550,7 @@
                 }
 
                 if (this.callback == 'new') {
-                    return window.location.href;
+                    return route('transactions.createInvestment');
                 }
 
                 if (this.callback == 'clone') {
