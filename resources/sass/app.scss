@@ -14,7 +14,10 @@
 @import '../../vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/css/bootstrap.min.css';
 @import '../../vendor/almasaeed2010/adminlte/bower_components/font-awesome/css/font-awesome.min.css';
 @import '../../vendor/almasaeed2010/adminlte/dist/css/AdminLTE.css';
+// TODO: make selection dynamic based on environment
 @import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-blue.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-red.css';
+
 
 //sidebar select fix
 .skin-blue .sidebar-form select {

@@ -54,15 +54,20 @@ if (   window.location.pathname === '/transactions/investment/create'
     require('./transactions/investment');
 }
 
-document.getElementById('jump_to_account').addEventListener('change', function() {
-    if (this.value == '') {
-        return false;
-    }
-    window.location.href = route('account.history', { account: this.value });
-});
+if (window.location.pathname === '/schedule') {
+    require('./schedule/index');
+}
 
 $( function () {
-    //generally available cancel button with confirmation
+    // Generally available account selector
+    document.getElementById('jump_to_account').addEventListener('change', function() {
+        if (this.value == '') {
+            return false;
+        }
+        window.location.href = route('account.history', { account: this.value });
+    });
+
+    // Generally available cancel button with confirmation
     $(".cancel.confirm-needed").on("click", function(e) {
         return confirm('Are you sure to abandon this form?');
     });

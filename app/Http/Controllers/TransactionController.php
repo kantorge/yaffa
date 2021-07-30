@@ -145,10 +145,10 @@ class TransactionController extends Controller
      * Actual behavior is controlled by action
      *
      * @param App\Model\Transaction $transaction
-     * @param String $action
+     * @param string $action
      * @return view
      */
-    public function openStandard(Transaction $transaction, String $action)
+    public function openStandard(Transaction $transaction, string $action)
     {
         // Load all relevant relations
         $transaction->load(self::STANDARD_RELATIONS);
@@ -169,7 +169,7 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function openInvestment(Transaction $transaction, String $action)
+    public function openInvestment(Transaction $transaction, string $action)
     {
         $transaction->load(self::INVESTMENT_RELATIONS);
 
