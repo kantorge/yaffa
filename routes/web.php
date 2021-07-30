@@ -10,6 +10,7 @@ use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\PayeeController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,8 @@ Route::get(
     ]
 )
 ->name('account.history');
+
+Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
 Route::get('/account/summary/{withClosed?}', [MainController::class, 'index'])->name('account.summary');
 Route::resource('account', AccountController::class);
