@@ -795,7 +795,7 @@
                 }
 
                 if (this.callback == 'returnToAccount') {
-                    return route('account.history', { account: this.getReturnAccount });
+                    return route('account.history', { account: this.getReturnAccount() });
                 }
             },
 
