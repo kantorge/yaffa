@@ -20,7 +20,7 @@ class CreateTransactionSchedulesTable extends Migration
             $table->date('next_date')->nullable();
             $table->date('end_date')->nullable();
             $table->string('frequency');
-            $table->integer('interval')->nullable();
+            $table->integer('interval')->default(1);
             $table->integer('count')->nullable();
             $table->timestamps();
 
