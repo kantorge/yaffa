@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Payee;
 use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -236,5 +238,19 @@ class PayeeApiController extends Controller
         $payee->config->save();
 
         return(Response::HTTP_OK);
+    }
+
+    public function storePayee(AccountEntityRequest $request)
+    {
+        $validated = $request->validated();
+
+        $newPayee = new AccountEntity($validated);
+
+        $payeeConfig = Payee::create($validated['config']);
+        $newPayee->config()->associate($payeeConfig);
+
+        $newPayee->push();
+
+        return $newPayee;
     }
 }

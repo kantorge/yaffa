@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use Illuminate\Database\Eloquent\Builder;
 
 class Payee extends AccountEntity
 {
@@ -50,5 +53,37 @@ class Payee extends AccountEntity
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function transactions()
+    {
+        $account = $this;
+
+        return Transaction::where('schedule', 0)
+        ->where('budget', 0)
+        ->whereHasMorph(
+            'config',
+            [TransactionDetailStandard::class],
+            function (Builder $query) use ($account) {
+                $query->Where('account_from_id', $account->id);
+                $query->orWhere('account_to_id', $account->id);
+            }
+        )
+        ->get();
+    }
+
+    public function getLatestTransactionDateAttribute()
+    {
+        return $this->transactions()->pluck('date')->max();
+    }
+
+    public function getFirstTransactionDateAttribute()
+    {
+        return $this->transactions()->pluck('date')->min();
+    }
+
+    public function getTransactionCountAttribute()
+    {
+        return $this->transactions()->count();
     }
 }

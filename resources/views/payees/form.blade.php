@@ -52,7 +52,7 @@
                 </div>
             </div>
 
-           <div class="form-group">
+            <div class="form-group">
                 <label for="active" class="control-label col-sm-3">
                     Active
                 </label>
@@ -88,7 +88,7 @@
                         id="category_id"
                         name="config[category_id]"
                     >
-                        <option value=''> < No default category></option>
+                        <option value=''>< No default category ></option>
                         @forelse($categories as $id => $name)
                             <option
                                 value="{{ $id }}"

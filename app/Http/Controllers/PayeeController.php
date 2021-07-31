@@ -25,20 +25,26 @@ class PayeeController extends Controller
      */
     public function index()
     {
-        //Show all payees from the database and return to view
+        // Get all payees
         $payees = $this->payee
             ->with(['config'])
             ->get();
 
-        //get categories to display name
+        // Get categories to display name
         $categories = Category::with(['parent'])->get();
 
+        // Load additional data
         $payees->map(function ($payee) use ($categories) {
+            // Full category name
             if (is_null($payee->config->category_id)) {
                 $payee['config']['category_full_name'] = '';
             } else {
                 $payee['config']['category_full_name'] = $categories->find($payee->config->category_id)->full_name;
             }
+
+            // TODO: First date of usage in transactions
+            //$payee['config']['firstTransactionDate'] = $payee->config->firstTransactionDate;
+
             return $payee;
         });
 

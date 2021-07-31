@@ -39,6 +39,7 @@ class Transaction extends Model
     protected $hidden = ['config_id'];
 
     protected $casts = [
+        'date' => 'datetime',
         'reconciled' => 'boolean',
         'schedule' => 'boolean',
         'budget' => 'boolean',

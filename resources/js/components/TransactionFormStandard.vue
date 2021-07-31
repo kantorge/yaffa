@@ -2,6 +2,13 @@
     <div>
         <AlertErrors :form="form" message="There were some problems with your input." />
 
+        <payee-form
+            action = "new"
+            :payee = "{}"
+            ref="payeeModal"
+            @newPayeeAdded="setPayee"
+        ></payee-form>
+
         <!-- form start -->
         <form
             accept-charset="UTF-8"
@@ -85,12 +92,20 @@
                                     <label class="control-label col-sm-3" id="account_from_label">
                                         {{ accountFromFieldLabel }}
                                     </label>
-                                    <div class="col-sm-9">
+                                    <div class="col-sm-8">
                                         <select
                                             class="form-control"
                                             id="account_from"
                                             v-model="form.config.account_from_id">
                                         </select>
+                                    </div>
+                                    <div class="col-sm-1" v-show="form.transaction_type == 'deposit'">
+                                        <button
+                                            class="btn btn-xs btn-success"
+                                            @click="this.$refs.payeeModal.show()"
+                                            title="Add a new payee"
+                                            type="button"
+                                        ><span class="fa fa-plus"></span></button>
                                     </div>
                                 </div>
 
@@ -101,12 +116,20 @@
                                     <label class="control-label col-sm-3" id="account_to_label">
                                         {{ accountToFieldLabel }}
                                     </label>
-                                    <div class="col-sm-9">
+                                    <div class="col-sm-8">
                                         <select
                                             class="form-control"
                                             id="account_to"
                                             v-model="form.config.account_to_id">
                                         </select>
+                                    </div>
+                                    <div class="col-sm-1" v-show="form.transaction_type == 'withdrawal'">
+                                        <button
+                                            class="btn btn-xs btn-success"
+                                            @click="this.$refs.payeeModal.show()"
+                                            title="Add a new payee"
+                                            type="button"
+                                        ><span class="fa fa-plus"></span></button>
                                     </div>
                                 </div>
 
@@ -353,10 +376,13 @@
     import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
 
+    import PayeeForm from './../components/PayeeForm.vue'
+
     export default {
         components: {
             'transaction-item-container': TransactionItemContainer,
             'transaction-schedule': TransactionSchedule,
+            'payee-form': PayeeForm,
             DatePicker,
             Button, AlertErrors,
             MathInput,
@@ -819,6 +845,27 @@
                         });
                 }
             },
+
+            setPayee(payee) {
+                // Determine which of the accounts need update
+                if (this.form.transaction_type == 'withdrawal') {
+                    var accountSelector = '#account_to';
+                } else if (this.form.transaction_type == 'deposit') {
+                    var accountSelector = '#account_from';
+                } else {
+                    return;
+                }
+
+                $(accountSelector)
+                    .append(new Option(payee.name, payee.id, true, true))
+                    .trigger('change')
+                    .trigger({
+                        type: 'select2:select',
+                        params: {
+                            data: payee
+                        }
+                    });
+            }
         },
 
         watch: {
