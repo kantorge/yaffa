@@ -11,6 +11,7 @@
                 <button
                     type="button"
                     class="btn btn-sm btn-success"
+                    style="margin-left: 10px;"
                     @click="this.$emit('addTransactionItem')"
                     title="New transaction item"><i class="fa fa-plus"></i></button>
             </div>
@@ -39,10 +40,11 @@
                     :payee="payee"
                 ></transaction-item>
             </div>
+            <div v-if="transactionItems.length === 0">No items added</div>
         </div>
         <!-- /.box-body -->
 
-        <div class="box-footer">
+        <div class="box-footer"  v-if="transactionItems.length > 0">
             <div class="box-tools pull-right">
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
@@ -52,6 +54,7 @@
                 <button
                     type="button"
                     class="btn btn-sm btn-success"
+                    style="margin-left: 10px;"
                     @click="this.$emit('addTransactionItem')"
                     title="New transaction item"><span class="fa fa-plus"></span></button>
             </div>

@@ -31,7 +31,7 @@ $(document).ready( function () {
         },
         {
             data: "config.category_full_name",
-            title: "Category"
+            title: "Default category"
         },
         {
             data: "id",

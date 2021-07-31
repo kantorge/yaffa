@@ -130,8 +130,8 @@
                     delay: 150,
                     data: function (params) {
                         return {
-                        q: params.term,
-                        payee: $vm.payee,
+                            q: params.term,
+                            payee: $vm.payee,
                         };
                     },
                     processResults: function (data) {
@@ -174,9 +174,9 @@
                 tags: true,
                 createTag: function (params) {
                     return {
-                    id: params.term,
-                    text: params.term,
-                    newOption: true
+                        id: params.term,
+                        text: params.term,
+                        newOption: true
                     }
                 },
                 insertTag: function (data, tag) {
@@ -189,7 +189,7 @@
                     $result.text(data.text);
 
                     if (data.newOption) {
-                    $result.append(" <em>(new)</em>");
+                        $result.append(" <em>(new)</em>");
                     }
 
                     return $result;

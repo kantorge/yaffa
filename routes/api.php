@@ -16,6 +16,7 @@ Route::get('/assets/investment/suffix/{investment}', 'App\Http\Controllers\API\I
 Route::get('/assets/investment/price/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getPriceHistory');
 
 Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
+Route::post('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@storePayee')->name('api.payee.store');
 Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');
 Route::get('/assets/get_default_category_suggestion', 'App\Http\Controllers\API\PayeeApiController@getPayeeDefaultSuggestion');
 Route::get('/assets/dismiss_default_category_suggestion/{payee}', 'App\Http\Controllers\API\PayeeApiController@dismissPayeeDefaultCategorySuggestion');
