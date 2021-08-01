@@ -58,6 +58,10 @@ if (window.location.pathname === '/schedule') {
     require('./schedule/index');
 }
 
+if (window.location.pathname === '/reports/cashflow') {
+    require('./reports/cashflow');
+}
+
 $( function () {
     // Generally available account selector
     document.getElementById('jump_to_account').addEventListener('change', function() {

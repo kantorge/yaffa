@@ -70,6 +70,16 @@
             </ul>
         </li>
         <li class="treeview">
+            <a href="#"><i class="fa fa-table"></i> <span>Reports</span>
+                <span class="pull-right-container">
+                    <i class="fa fa-angle-left pull-right"></i>
+                </span>
+            </a>
+            <ul class="treeview-menu">
+                <li><a href="{{ route('reports.cashflow') }}"><i class="fa fa-line-chart"></i> <span>Cash flow</span></a></li>
+            </ul>
+        </li>
+        <li class="treeview">
             <a href="#"><i class="fa fa-bolt"></i> <span>Quick actions</span>
                 <span class="pull-right-container">
                     <i class="fa fa-angle-left pull-right"></i>

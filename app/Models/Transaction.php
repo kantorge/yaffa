@@ -156,4 +156,33 @@ class Transaction extends Model
 
         return 0;
     }
+
+    public function transactionCurrency()
+    {
+        if ($this->config_type === 'transaction_detail_standard') {
+            if ($this->transaction_type === 'deposit') {
+                $this->load([
+                    'config',
+                    'config.accountTo.config.currency'
+                ]);
+                return $this->config->accountTo->currency;
+            }
+
+            /*$this->load([
+                'config',
+                'config.accountFrom.config.currency'
+            ]);*/
+            return $this->config->accountFrom->currency;
+        }
+
+        if ($this->config_type === 'transaction_detail_investment') {
+            $this->load([
+                'config',
+                'config.account.currency'
+            ]);
+            return $this->config->account->currency;
+        }
+
+        return null;
+    }
 }
