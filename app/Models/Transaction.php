@@ -139,7 +139,7 @@ class Transaction extends Model
     public function cashflowValue(?AccountEntity $account)
     {
         if ($this->config_type === 'transaction_detail_standard') {
-            $operator = $this->transactionType->amount_operator ?? ( $this->config->account_from_id == $account->id ? 'minus' : 'plus');
+            $operator = $this->transactionType->amount_operator ?? ( $this->config->account_from_id === $account->id ? 'minus' : 'plus');
             return $operator === 'minus' ? -$this->config->amount_from : $this->config->amount_to;
         }
 

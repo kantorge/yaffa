@@ -35,10 +35,10 @@ class Category extends Model
     public static function rules()
     {
         return [
-                'name' => 'required|min:2|max:191',
-                'active' => 'boolean',
-                'parent_id' => 'in:category,id',
-            ];
+            'name' => 'required|min:2|max:191',
+            'active' => 'boolean',
+            'parent_id' => 'in:category,id',
+        ];
     }
 
     public function parent()

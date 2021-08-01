@@ -106,7 +106,7 @@ class Account extends AccountEntity
                     if (!$operator) {
                         $quantity = 0;
                     } else {
-                        $quantity = ($operator == 'minus'
+                        $quantity = ($operator === 'minus'
                                     ? - $transaction->config->quantity
                                     : $transaction->config->quantity);
                     }

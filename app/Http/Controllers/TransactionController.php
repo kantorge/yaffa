@@ -174,7 +174,7 @@ class TransactionController extends Controller
         $transaction->load(self::INVESTMENT_RELATIONS);
 
         // Adjust date and schedule settings, if entering a recurring item
-        if ($action == 'enter') {
+        if ($action === 'enter') {
             // Reset schedule and budget flags
             $transaction->schedule = false;
             $transaction->budget = false;

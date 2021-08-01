@@ -228,7 +228,7 @@ class PayeeApiController extends Controller
         $payee->config->category_id = $category->id;
         $payee->config->save();
 
-        return(Response::HTTP_OK);
+        return Response::HTTP_OK;
     }
 
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $payee)
@@ -237,7 +237,7 @@ class PayeeApiController extends Controller
         $payee->config->category_suggestion_dismissed = Carbon::now();
         $payee->config->save();
 
-        return(Response::HTTP_OK);
+        return Response::HTTP_OK;
     }
 
     public function storePayee(AccountEntityRequest $request)
