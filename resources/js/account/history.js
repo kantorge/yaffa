@@ -2,6 +2,15 @@ require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
 $(function() {
+    // Table data transformation
+    window.transactionData = window.transactionData.map(function(transaction) {
+        if (transaction.date) {
+            transaction.date = new Date(Date.parse(transaction.date));
+        }
+
+        return transaction;
+    });
+
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
@@ -90,7 +99,13 @@ $(function() {
         columns: [
             {
                 data: "date",
-                title: "Date"
+                title: "Date",
+                render: function ( data, type, row, meta ) {
+                    if (!data) {
+                        return data;
+                    }
+                    return data.toLocaleDateString('Hu-hu').replace(/\s/g, '&nbsp;');
+                }
             },
             {
                 data: "reconciled",
