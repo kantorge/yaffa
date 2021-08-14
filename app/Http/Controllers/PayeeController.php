@@ -48,7 +48,7 @@ class PayeeController extends Controller
             return $payee;
         });
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'payees' => $payees,
         ]);
@@ -56,15 +56,13 @@ class PayeeController extends Controller
         return view('payees.index');
     }
 
-    public function edit($id)
+    public function edit(AccountEntity $payee)
     {
-        $payee = AccountEntity::with(['config'])
-            ->find($id);
+        $payee->load(['config']);
 
-        //get all categories
+        // Get all categories
         //TODO: ezt érdemes AJAX-ból hívni?
-        $categories = Category::all();
-        $categories->sortBy('full_name');
+        $categories = Category::all()->sortBy('full_name');
 
         return view(
             'payees.form',
@@ -93,10 +91,8 @@ class PayeeController extends Controller
 
     public function create()
     {
-
-        //get all categories
-        $categories = Category::all();
-        $categories->sortBy('full_name');
+        // Get all categories
+        $categories = Category::all()->sortBy('full_name');
 
         return view(
             'payees.form',
@@ -108,7 +104,6 @@ class PayeeController extends Controller
 
     public function store(AccountEntityRequest $request)
     {
-
         $validated = $request->validated();
 
         $payee = new AccountEntity($validated);
@@ -123,10 +118,10 @@ class PayeeController extends Controller
         return redirect()->route('payees.index');
     }
 
-    public function show(AccountEntity $account)
+    public function show(AccountEntity $payee)
     {
-        $account->load('config');
-        return view('account.show', compact('account'));
+        $payee->load('config');
+        return view('account.show', compact('payee'));
     }
 
     /**
@@ -135,16 +130,19 @@ class PayeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(AccountEntity $payee)
     {
-        //Retrieve item
-        $payee = AccountEntity::find($id);
-
-        //delete
-        $payee->delete();
-
-        self::addSimpleSuccessMessage('Payee deleted');
-
-        return redirect()->route('payees.index');
+        try {
+            $payee->delete();
+            self::addSimpleSuccessMessage('Payee deleted');
+            return redirect()->route('payees.index');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->errorInfo[1] == 1451) {
+                self::addSimpleDangerMessage('Payee is in use, cannot be deleted');
+            } else {
+                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
+            }
+            return redirect()->back();
+        }
     }
 }
