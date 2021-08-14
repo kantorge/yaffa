@@ -564,6 +564,12 @@
                 }
             }
 
+            // Check for various default values in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('account_from')) {
+                this.form.config.account_from_id = urlParams.get('account_from');
+            }
+
             // Set form action
             this.form.action = this.action;
         },
@@ -605,19 +611,22 @@
 
             // Load default value for account FROM
             if (this.form.config.account_from_id) {
-                const data = this.transaction.config.account_from;
+                $.ajax({
+                    url:  '/api/assets/account/' + this.form.config.account_from_id,
+                })
+                .done(data => {
+                    // Create the option and append to Select2
+                    $("#account_from")
+                        .append(new Option(data.name, data.id, true, true))
+                        .trigger('change');
 
-                // Create the option and append to Select2
-                $("#account_from")
-                    .append(new Option(data.name, data.id, true, true))
-                    .trigger('change');
-
-                // Manually trigger the `select2:select` event
-                $("#account_from").trigger({
-                    type: 'select2:select',
-                    params: {
-                        data: data
-                    }
+                    // Manually trigger the `select2:select` event
+                    $("#account_from").trigger({
+                        type: 'select2:select',
+                        params: {
+                            data: data
+                        }
+                    });
                 });
             }
 

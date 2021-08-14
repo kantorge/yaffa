@@ -20,8 +20,8 @@
                     title="{{($withForecast ? 'Without forecast' : 'With forecast') }}">
                     <i class="fa fa-calendar"></i>
                 </a>
-                <a href="{{ route('transactions.createStandard') }}" class="btn btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
-                <a href="{{ route('transactions.createInvestment') }}" class="btn btn-success" title="New investment transaction"><i class="fa fa-line-chart"></i></a>
+                <a href="{{ route('transactions.createStandard', ['account_from' => $account->id ]) }}" class="btn btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('transactions.createInvestment', ['account' => $account->id ]) }}" class="btn btn-success" title="New investment transaction"><i class="fa fa-line-chart"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>
