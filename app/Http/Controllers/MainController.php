@@ -240,7 +240,7 @@ class MainController extends Controller
                 return !is_null($transaction['next_date']);
             });
 
-        //add schedule to history items, if needeed
+        // Add schedule to history items, if needeed
         if ($withForecast) {
             $transactions
             ->filter(function ($transaction) {
@@ -273,7 +273,7 @@ class MainController extends Controller
                 $startDate = new Carbon($transaction['schedule']->next_date);
                 $startDate->startOfDay();
                 if (is_null($transaction['schedule']->end_date)) {
-                    $endDate = new Carbon('next year');
+                    $endDate = (new Carbon())->addYears(1); //TODO: get end date from settings, and/or display default setting
                 } else {
                     $endDate = new Carbon($transaction['schedule']->end_date);
                 }
