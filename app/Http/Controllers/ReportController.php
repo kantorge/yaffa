@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionType;
@@ -24,6 +25,34 @@ class ReportController extends Controller
         $allRates = $this->allCurrencyRatesByMonth()
             ->filter(function ($rate) use ($baseCurrency) {
                 return $rate->to_id == $baseCurrency->id;
+            });
+
+        $firstRates = $allRates->groupBy('from_id')
+            ->map(function ($group) {
+                return $group->firstWhere('month', $group->min('month'));
+            });
+
+        // Get opening balance for all accounts
+        $accounts = AccountEntity::where('config_type', 'account')
+            ->with([
+                'config',
+                'config.currency',
+            ])
+            ->get()
+            ->map(function ($account) use ($firstRates, $baseCurrency) {
+                $account['sum'] += $account->config->opening_balance;
+
+                // Apply currency exchange, if necesary
+                if ($account->config->currency_id != $baseCurrency->id) {
+                    // Get first exchange rate for given currency
+                    $rate = $firstRates
+                        ->where('from_id', $account->config->currency_id)
+                        ->first();
+
+                    $account['sum'] *= $rate->rate;
+                }
+
+                return $account;
             });
 
         // Get all standard transactions (one-time AND scheduled)
@@ -79,8 +108,6 @@ class ReportController extends Controller
         //->limit(10)
         ->get();
 
-        //dd($investmentTransactions);
-
         // Group standard transactions by month, and get all relevant details
         $standardCompact = [];
         $standardTransactions->filter(function ($transaction) {
@@ -104,8 +131,6 @@ class ReportController extends Controller
 
             $investmentCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
         });
-
-        //dd($investmentCompact);
 
         // Summarize standard and investment items, applying currency rate
         $monthlyData = [];
@@ -144,7 +169,7 @@ class ReportController extends Controller
 
         // Convert monthly data into dataTables format
         $final = [];
-        $runningTotal = 0;
+        $runningTotal = $accounts->sum('sum');
         foreach ($monthlyData as $month => $data) {
             $runningTotal += $data;
             $final[] = [

@@ -108,7 +108,7 @@ class MainController extends Controller
                     });
 
                 // Add opening balance
-                $account['sum'] += $account->config->openingBalance()['amount_to'];
+                $account['sum'] += $account->config->opening_balance;
 
                 // Add value of investments
                 $investments = $account->config->getAssociatedInvestmentsAndQuantity();
