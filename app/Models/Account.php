@@ -55,15 +55,19 @@ class Account extends AccountEntity
 
     public function openingBalance()
     {
-        return [
+        return (object)[
             'id' => null,
             'date' => null,
-            'transaction_name' => 'Opening balance',
-            'transaction_type' => 'Opening balance',
-            'transaction_operator' => 'plus',
-            'account_from_id' => null,
+            'transaction_type' => [
+                'name' => 'Opening balance',
+                'type' => 'Opening balance',
+            ],
+            'transactionOperator' => 'plus',
+            'config' => [
+                'account_from_id' => null,
+                'account_to_id' => null,
+            ],
             'account_from_name' => null,
-            'account_to_id' => null,
             'account_to_name' => null,
             'amount_from' => 0,
             'amount_to' => $this->opening_balance,
@@ -106,7 +110,7 @@ class Account extends AccountEntity
                     if (!$operator) {
                         $quantity = 0;
                     } else {
-                        $quantity = ($operator == 'minus'
+                        $quantity = ($operator === 'minus'
                                     ? - $transaction->config->quantity
                                     : $transaction->config->quantity);
                     }

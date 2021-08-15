@@ -1,13 +1,13 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
-import { RRule, RRuleSet, rrulestr } from 'rrule'
+import { RRule } from 'rrule';
 
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
     // Parse dates in transactionData, and initialize RRule
-    let data = transactionData.map(function(transaction) {
+    let tableData = transactionData.map(function(transaction) {
         transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
         if (transaction.schedule_config.next_date) {
             transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
@@ -29,8 +29,8 @@ $(function() {
         return transaction;
     });
 
-    $('#table').DataTable({
-        data: data,
+    window.table = $('#table').DataTable({
+        data: tableData,
         columns: [
             {
                 data: "schedule_config.start_date",
@@ -202,12 +202,15 @@ $(function() {
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
                             '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
+                            '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
+                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
                 orderable: false
             }
         ],
-        createdRow: function( row, data, dataIndex ) {
+        createdRow: function( row, data) {
             if (!data.schedule_config.next_date) {
                 return;
             }
@@ -225,59 +228,7 @@ $(function() {
         scrollY:        '400px',
         scrollCollapse: true,
         scroller:       true,
-        stateSave:      true,
-        processing:     true,
-        paging:         false,
-    });
-
-    $('#scheduleTable').DataTable({
-        data: {},
-        columns: [
-            {
-                title: "Withdrawal",
-                render: function (data, type, row, meta ) {
-                    return (row.transaction_operator == 'minus' ? numberRenderer(row.amount_from) : null);
-                },
-            },
-            {
-                title: "Deposit",
-                render: function (data, type, row, meta ) {
-                    return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
-                },
-            },
-
-            {
-                data: 'id',
-                title: "Actions",
-                render: function (data, type, row, meta ) {
-                    return  '' +
-                            '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
-                            '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'edit'}) : route('transactions.openInvestment', {transaction: data, action: 'edit'})) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
-                },
-                orderable: false
-            }
-        ],
-
-        createdRow: function( row, data, dataIndex ) {
-            var nextDate = new Date(data.next_date.replace( /(\d{4})-(\d{2})-(\d{2})/, "$2/$3/$1"));
-            if ( nextDate  < new Date(new Date().setHours(0,0,0,0)) ) {
-                $(row).addClass('danger');
-            } else if ( nextDate  < new Date(new Date().setHours(24,0,0,0)) ) {
-                $(row).addClass('warning');
-            }
-        },
-        order: [
-            [ 0, "asc" ]
-        ],
-        deferRender:    true,
-        scrollY:        '400px',
-        scrollCollapse: true,
-        scroller:       true,
-        stateSave:      true,
+        stateSave:      false,
         processing:     true,
         paging:         false,
     });
@@ -292,10 +243,18 @@ $(function() {
         e.preventDefault();
         $('#form-delete-' + $(this).data('form')).submit();
     });
+
+    $('input[name=schedule]').on("change", function() {
+        table.column(3).search(this.value).draw();
+    });
+
+    $('input[name=budget]').on("change", function() {
+        table.column(4).search(this.value).draw();
+    });
 });
 
 // DataTables helper: truncate a string
-function truncateString(str, max, add){
+function truncateString(str, max, add) {
     add = add || '...';
     return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
- }
+}

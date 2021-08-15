@@ -159,12 +159,12 @@
                 <div class="box-header">
                     <h3 class="box-title">Price history</h3>
                     <div class="box-tools pull-right">
-                        <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-success" title="Load new currency rates">
-                            <span class="fa fa-cloud-download"></span>
-                        </a>
-                    </div>
-                    <div class="box-tools pull-right hidden" id="priceChartNoData">
-                        <button class="btn btn-xs btn-danger">No data available</button>
+                        <span class="label label-danger hidden" id="priceChartNoData">No data available</span>
+                        @if($investment->investment_price_provider_id)
+                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-success" title="Load new price data">
+                                <span class="fa fa-cloud-download"></span>
+                            </a>
+                        @endif
                     </div>
                     <!-- /.box-tools -->
                 </div>
@@ -176,8 +176,8 @@
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Quantity history</h3>
-                    <div class="box-tools pull-right hidden" id="quantityChartNoData">
-                        <button class="btn btn-xs btn-danger">No data available</button>
+                    <div class="box-tools pull-right">
+                        <span class="label label-danger hidden" id="quantityChartNoData">No data available</span>
                     </div>
                     <!-- /.box-tools -->
                 </div>

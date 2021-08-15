@@ -9,8 +9,13 @@ use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
 use App\Models\InvestmentPriceProvider;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use JavaScript;
+use Recurr\Rule;
+use Recurr\Transformer\ArrayTransformer;
+use Recurr\Transformer\ArrayTransformerConfig;
+use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class InvestmentController extends Controller
 {
@@ -150,18 +155,25 @@ class InvestmentController extends Controller
 
     public function show(Investment $investment)
     {
-        //eager load investment details to be displayed
+        // Get all stored price points
+        $prices = InvestmentPrice::where('investment_id', $investment->id)
+            ->orderBy('date')
+            ->get();
+
+        // Eager load investment details to be displayed
         $investment->load([
             'investment_group',
             'currency',
             'investment_price_provider',
         ]);
 
-        //TODO: how to calculate and display scheduled transactions?
-
-        //get all investment transactions related to selected investment
-        $investmentTransactions = Transaction::
-            where('schedule', 0)
+        // Get all transactions related to selected investment
+        $rawTransactions =
+            Transaction::with([
+                'config',
+                'config.investment',
+                'transactionType',
+            ])
             ->whereHasMorph(
                 'config',
                 [\App\Models\TransactionDetailInvestment::class],
@@ -169,19 +181,12 @@ class InvestmentController extends Controller
                     $query->Where('investment_id', $investment->id);
                 }
             )
-            ->with(
-                [
-                    'config',
-                    'config.investment',
-                    'transactionType',
-                ]
-            )
             ->orderBy('date')
             ->get();
 
-        //process historical data for table and chart
-        $transactions = $investmentTransactions
-            ->map(function ($transaction) {
+        // Process data for table and chart
+        $rawTransactions
+            ->transform(function ($transaction) {
                 $commonData =
                     [
                         'id' => $transaction->id,
@@ -208,7 +213,6 @@ class InvestmentController extends Controller
                     $dateData = [
                         'schedule' => $transaction->transactionSchedule,
                         'transaction_group' => 'schedule',
-                        'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
                     ];
                 } else {
                     $dateData = [
@@ -220,38 +224,90 @@ class InvestmentController extends Controller
                 return array_merge($commonData, $baseData, $dateData);
             });
 
-        //get all stored price points
-        $prices = InvestmentPrice::
-            where('investment_id', $investment->id)
-            ->orderBy('date')
-            ->get();
+        // Get all historical transactions
+        $transactions = $rawTransactions->where('transaction_group', 'history');
 
-        //calculate historical quantity changes
+        // Add all scheduled items to list of transactions
+        $rawTransactions
+            ->where('transaction_group', 'schedule')
+            ->each(function ($transaction) use (&$transactions) {
+                $rule = new Rule();
+                $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
+
+                if ($transaction['schedule']->end_date) {
+                    $rule->setUntil(new Carbon($transaction['schedule']->end_date));
+                }
+
+                $rule->setFreq($transaction['schedule']->frequency);
+
+                if ($transaction['schedule']->count) {
+                    $rule->setCount($transaction['schedule']->count);
+                }
+                if ($transaction['schedule']->interval) {
+                    $rule->setInterval($transaction['schedule']->interval);
+                }
+
+                $transformer = new ArrayTransformer();
+
+                $transformerConfig = new ArrayTransformerConfig();
+                $transformerConfig->setVirtualLimit(100);
+                $transformerConfig->enableLastDayOfMonthFix();
+                $transformer->setConfig($transformerConfig);
+
+                $startDate = new Carbon($transaction['schedule']->next_date);
+                $startDate->startOfDay();
+                if (is_null($transaction['schedule']->end_date)) {
+                    $endDate = (new Carbon())->addYears(25); //TODO: get end date from settings, and/or display default setting
+                } else {
+                    $endDate = new Carbon($transaction['schedule']->end_date);
+                }
+                $endDate->startOfDay();
+
+                $constraint = new BetweenConstraint($startDate, $endDate, true);
+
+                $first = true;
+
+                foreach ($transformer->transform($rule, $constraint) as $instance) {
+                    $newTransaction = $transaction;
+                    $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
+                    $newTransaction['transaction_group'] = 'forecast';
+                    $newTransaction['schedule_is_first'] = $first;
+
+                    $transactions->push($newTransaction);
+
+                    $first = false;
+                }
+            });
+
+        // Calculate historical and scheduled quantity changes for chart
         $runningTotal = 0;
-        $quantities = $investmentTransactions
-            ->map(function ($transaction) use (&$runningTotal) {
-                $operator = $transaction->transactionType->quantity_operator;
+        $runningSchedule = 0;
+        $quantities = $transactions
+            ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
+                $operator = $transaction['quantity_operator'];
                     if (!$operator) {
                         $quantity = 0;
                     } else {
-                        $quantity = ($operator == 'minus'
-                                   ? - $transaction->config->quantity
-                                   : $transaction->config->quantity);
+                        $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
                     }
 
-                    $runningTotal += $quantity;
+                    $runningSchedule += $quantity;
+                    if ($transaction['transaction_group'] == 'history') {
+                        $runningTotal += $quantity;
+                    }
 
                     return [
-                        'date' => $transaction->date,
+                        'date' => $transaction['date'],
                         'quantity' => $runningTotal,
+                        'schedule' => $runningSchedule,
                     ];
             });
 
         JavaScript::put([
             'investment' => $investment,
-            'transactions' => $transactions,
+            'transactions' => array_values($transactions->toArray()),
             'prices' => $prices,
-            'quantities' => $quantities,
+            'quantities' => array_values($quantities->toArray()),
         ]);
 
         return view('investment.show', [

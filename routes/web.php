@@ -10,6 +10,7 @@ use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\PayeeController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
@@ -110,3 +111,6 @@ Route::resource(
         'destroy'
     ]
 );
+
+Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
+Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');

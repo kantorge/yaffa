@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         Blade::directive('NiceNumber', function ($expression) {
-            return "<?php echo str_replace(' ', '&nbsp;', number_format(intval($expression), 0, ',', ' ')); ?>";
+            return "<?php echo str_replace(' ', '&nbsp;', number_format(intval(${expression}), 0, ',', ' ')); ?>";
         });
     }
 }

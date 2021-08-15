@@ -58,6 +58,14 @@ if (window.location.pathname === '/schedule') {
     require('./schedule/index');
 }
 
+if (window.location.pathname === '/reports/cashflow') {
+    require('./reports/cashflow');
+}
+
+if (window.location.pathname === '/reports/budgetchart') {
+    require('./reports/budgetchart');
+}
+
 $( function () {
     // Generally available account selector
     document.getElementById('jump_to_account').addEventListener('change', function() {
@@ -72,3 +80,49 @@ $( function () {
         return confirm('Are you sure to abandon this form?');
     });
 });
+
+
+// Helper functions
+// TODO: find appropriate place for these
+Number.prototype.toLocalCurreny = function(currency, nonBreakingSpaces) {
+    if (nonBreakingSpaces !== false) {
+        nonBreakingSpaces = true;
+    }
+
+    var result = this.toLocaleString(
+        'hu-HU',
+        {
+            style: 'currency',
+            currency: currency.iso_code,
+            minimumFractionDigits: currency.num_digits,
+            maximumFractionDigits: currency.num_digits
+        }
+    );
+
+    if (nonBreakingSpaces) {
+        result = result.replace(/\s/g, '&nbsp;');
+    }
+
+    return result;
+};
+
+Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSpaces) {
+    if (nonBreakingSpaces !== false) {
+        nonBreakingSpaces = true;
+    }
+
+    maximumFractionDigits = maximumFractionDigits || 4;
+
+    var result = this.toLocaleString('hu-HU',
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maximumFractionDigits
+        }
+    );
+
+    if (nonBreakingSpaces) {
+        result = result.replace(/\s/g, '&nbsp;');
+    }
+
+    return result;
+};
