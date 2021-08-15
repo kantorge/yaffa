@@ -6,8 +6,14 @@ use App\Models\AccountEntity;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\TransactionType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Recurr\Rule;
+use Recurr\Transformer\ArrayTransformer;
+use Recurr\Transformer\ArrayTransformerConfig;
+use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class Transaction extends Model
 {
@@ -168,10 +174,6 @@ class Transaction extends Model
                 return $this->config->accountTo->currency;
             }
 
-            /*$this->load([
-                'config',
-                'config.accountFrom.config.currency'
-            ]);*/
             return $this->config->accountFrom->currency;
         }
 
@@ -184,5 +186,68 @@ class Transaction extends Model
         }
 
         return null;
+    }
+
+    public function scheduleInstances(?Carbon $constraintStart = null, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500)
+    {
+        $scheduleInstances = new Collection();
+
+        if (is_null($maxLookAhead)) {
+            $maxLookAhead = (new Carbon())->addYears(1); //TODO: get end date from settings, and/or display default setting
+        }
+
+        if (is_null($constraintStart)) {
+            $constraintStart = new Carbon($this->transactionSchedule->next_date);
+        }
+        $constraintStart->startOfDay();
+
+        $rule = new Rule();
+        $rule->setStartDate(new Carbon($this->transactionSchedule->start_date));
+
+        if ($this->transactionSchedule->end_date) {
+            $rule->setUntil(new Carbon($this->transactionSchedule->end_date));
+        }
+
+        $rule->setFreq($this->transactionSchedule->frequency);
+
+        if ($this->transactionSchedule->count) {
+            $rule->setCount($this->transactionSchedule->count);
+        }
+        if ($this->transactionSchedule->interval) {
+            $rule->setInterval($this->transactionSchedule->interval);
+        }
+
+        $transformer = new ArrayTransformer();
+
+        $transformerConfig = new ArrayTransformerConfig();
+        $transformerConfig->setVirtualLimit($virtualLimit);
+        $transformerConfig->enableLastDayOfMonthFix();
+        $transformer->setConfig($transformerConfig);
+
+        if (is_null($this->transactionSchedule->end_date)) {
+            $endDate = $maxLookAhead;
+        } else {
+            $endDate = new Carbon($this->transactionSchedule->end_date);
+        }
+        $endDate->startOfDay();
+
+        $constraint = new BetweenConstraint($constraintStart, $endDate, true);
+
+        $first = true;
+
+        foreach ($transformer->transform($rule, $constraint) as $instance) {
+            $newTransaction = $this->replicate();
+
+            $newTransaction->originalId = $this->id;
+            $newTransaction->date = $instance->getStart();
+            $newTransaction->transactionGroup = 'forecast';
+            $newTransaction->schedule_first_instance = $first;
+
+            $scheduleInstances->push($newTransaction);
+
+            $first = false;
+        }
+
+        return $scheduleInstances;
     }
 }

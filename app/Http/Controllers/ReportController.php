@@ -2,30 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\CurrencyTrait;
 use App\Models\AccountEntity;
+use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionType;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use JavaScript;
 
 class ReportController extends Controller
 {
+    use CurrencyTrait;
+
     public function cashFlow()
     {
         // Get monthly average currency rate for all currencies
-        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
-            return Currency::orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
-
-        $allRates = $this->allCurrencyRatesByMonth()
-            ->filter(function ($rate) use ($baseCurrency) {
-                return $rate->to_id == $baseCurrency->id;
-            });
+        $baseCurrency = $this->getBaseCurrency();
+        $allRates = $this->allCurrencyRatesByMonth(true);
 
         $firstRates = $allRates->groupBy('from_id')
             ->map(function ($group) {
@@ -165,8 +158,6 @@ class ReportController extends Controller
             }
         }
 
-        //dd($monthlyData);
-
         // Convert monthly data into dataTables format
         $final = [];
         $runningTotal = $accounts->sum('sum');
@@ -179,7 +170,7 @@ class ReportController extends Controller
             ];
         }
 
-        // Add schedule to history items, if needeed
+        // TODO: Add schedule to history items, if needeed
         if (false) {
             $transactions
             ->filter(function ($transaction) {
@@ -244,6 +235,24 @@ class ReportController extends Controller
         );
     }
 
+    public function budgetChart()
+    {
+        // Get all categories
+        $categories = Category::all()->sortBy('full_name');
+
+        // Pass currency related data for amCharts
+        JavaScript::put([
+            'currency' => $this->getBaseCurrency(),
+        ]);
+
+        return view(
+            'reports.budgetchart',
+            [
+                'categories' => $categories->pluck('full_name', 'id')
+            ]
+        );
+    }
+
     private function transformDate(Transaction $transaction)
     {
         if ($transaction->schedule) {
@@ -260,25 +269,5 @@ class ReportController extends Controller
             'date' => $transaction->date,
             'transaction_group' => 'history',
         ];
-    }
-
-     /**
-     * Load a collection for all currencies, with an average rate by month
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function allCurrencyRatesByMonth()
-    {
-        return DB::table('currency_rates')
-            ->select(
-                DB::raw('SUBDATE(`date`, (day(`date`)-1)) AS `month`'),
-                'from_id',
-                'to_id',
-                DB::raw('avg(rate) as rate')
-            )
-            ->groupBy(DB::raw('SUBDATE(`date`, (day(`date`)-1))'))
-            ->groupBy('from_id')
-            ->groupBy('to_id')
-            ->get();
     }
 }

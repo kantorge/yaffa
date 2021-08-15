@@ -11,16 +11,14 @@ use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use JavaScript;
-use Recurr\Rule;
-use Recurr\Transformer\ArrayTransformer;
-use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\BetweenConstraint;
+use App\Http\Traits\ScheduleTrait;
 
 class MainController extends Controller
 {
+    use ScheduleTrait;
+
     private $allAccounts;
     private $allTags;
     private $allCategories;
@@ -216,100 +214,92 @@ class MainController extends Controller
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
-            ->map(function ($transaction) {
-                $commonData = $this->transformDataCommon($transaction);
-                $baseData = $this->transformDataStandard($transaction);
-                $dateData = $this->transformDate($transaction);
+        ->merge($investmentTransactions)
+        // Add custom and pre-calculated attributes
+        ->map(function ($transaction) {
+            if ($transaction->schedule) {
+                $transaction->load(['transactionSchedule']);
 
-                return array_merge($commonData, $baseData, $dateData);
-            })
-            ->merge($investmentTransactions
-                ->map(function ($transaction) {
-                    $commonData = $this->transformDataCommon($transaction);
-                    $baseData = $this->transformDataInvestment($transaction);
-                    $dateData = $this->transformDate($transaction);
+                $transaction->transactionGroup = 'schedule';
+            } else {
+                $transaction->transactionGroup = 'history';
+            }
 
-                    return array_merge($commonData, $baseData, $dateData);
-                }))
-            ->filter(function ($transaction) {
-                //TODO: can this be done earlier, at a more appropriate part of the code?
-                if ($transaction['transaction_group'] != 'schedule') {
-                    return true;
+            if ($transaction->config_type === 'transaction_detail_standard') {
+                $itemTags = [];
+                $itemCategories = [];
+                foreach ($transaction->transactionItems as $item) {
+                    if (isset($item['tags'])) {
+                        foreach ($item['tags'] as $tag) {
+                            $itemTags[$tag['id']] = $this->allTags[$tag['id']];
+                        }
+                    }
+                    if (isset($item['category_id'])) {
+                        $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
+                    }
                 }
 
-                return !is_null($transaction['next_date']);
-            });
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
+                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
+                $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
+                $transaction->amount_from = $transaction->config->amount_from;
+                $transaction->amount_to = $transaction->config->amount_to;
+                $transaction->tags = array_values($itemTags);
+                $transaction->categories = array_values($itemCategories);
+            } elseif ($transaction->config_type === 'transaction_detail_investment') {
+                $amount = $transaction->cashflowValue(null);
+
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator;
+                $transaction->quantityOperator = $transaction->transactionType->quantity_operator;
+                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
+                $transaction->account_to_name = $transaction->config->investment->name;
+                $transaction->amount_from = ($amount < 0 ? -$amount : null);
+                $transaction->amount_to = ($amount > 0 ? $amount : null);
+                $transaction->tags = [];
+                $transaction->categories = [];
+                $transaction->quantity = $transaction->config->quantity;
+                $transaction->price = $transaction->config->price;
+            }
+
+            return $transaction;
+        })
+        // Drop scheduled transactions, which are not active (next date is empty)
+        ->filter(function ($transaction) {
+            if (!$transaction->schedule) {
+                return true;
+            }
+
+            return !is_null($transaction->transactionSchedule->next_date);
+        });
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
-            $transactions
-            ->filter(function ($transaction) {
-                    return $transaction['transaction_group'] == 'schedule';
-            })
-            ->each(function ($transaction) use (&$transactions) {
-                $rule = new Rule();
-                $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
-
-                if ($transaction['schedule']->end_date) {
-                    $rule->setUntil(new Carbon($transaction['schedule']->end_date));
-                }
-
-                $rule->setFreq($transaction['schedule']->frequency);
-
-                if ($transaction['schedule']->count) {
-                    $rule->setCount($transaction['schedule']->count);
-                }
-                if ($transaction['schedule']->interval) {
-                    $rule->setInterval($transaction['schedule']->interval);
-                }
-
-                $transformer = new ArrayTransformer();
-
-                $transformerConfig = new ArrayTransformerConfig();
-                $transformerConfig->setVirtualLimit(100);
-                $transformerConfig->enableLastDayOfMonthFix();
-                $transformer->setConfig($transformerConfig);
-
-                $startDate = new Carbon($transaction['schedule']->next_date);
-                $startDate->startOfDay();
-                if (is_null($transaction['schedule']->end_date)) {
-                    $endDate = (new Carbon())->addYears(1); //TODO: get end date from settings, and/or display default setting
-                } else {
-                    $endDate = new Carbon($transaction['schedule']->end_date);
-                }
-                $endDate->startOfDay();
-
-                $constraint = new BetweenConstraint($startDate, $endDate, true);
-
-                $first = true;
-
-                foreach ($transformer->transform($rule, $constraint) as $instance) {
-                    $newTransaction = $transaction;
-                    $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
-                    $newTransaction['transaction_group'] = 'forecast';
-                    $newTransaction['schedule_is_first'] = $first;
-
-                    $transactions->push($newTransaction);
-
-                    $first = false;
-                }
-            });
+            $transactions = $transactions->concat(
+                $this->getScheduleInstances(
+                    $transactions
+                    ->filter(function ($transaction) {
+                            return $transaction->schedule;
+                    }),
+                    'next',
+                )
+            );
         }
 
+        // Final ordering and running total calculation
         $subTotal = 0;
 
         $data = $transactions
             ->filter(function ($transaction) {
-                return $transaction['transaction_group'] == 'history' || $transaction['transaction_group'] == 'forecast';
+                return $transaction->transactionGroup == 'history' || $transaction->transactionGroup == 'forecast';
             })
             ->sortByDesc('transactionType')
             ->sortBy('date')
             // Add opening item to beginning of transaction list
             ->prepend($account->openingBalance())
-            ->map(function ($item) use (&$subTotal) {
-                $subTotal += ($item['transaction_operator'] == 'plus' ? $item['amount_to'] : -$item['amount_from']);
-                $item['running_total'] = $subTotal;
-                return $item;
+            ->map(function ($transaction) use (&$subTotal) {
+                $subTotal += ($transaction->transactionOperator == 'plus' ? $transaction->amount_to : -$transaction->amount_from);
+                $transaction->running_total = $subTotal;
+                return $transaction;
             })
             ->values();
 
@@ -317,7 +307,7 @@ class MainController extends Controller
             'transactionData' => $data,
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
-                    return $transaction['transaction_group'] == 'schedule';
+                    return $transaction->transactionGroup == 'schedule';
                 })->values()
             ]);
 
@@ -328,90 +318,5 @@ class MainController extends Controller
                 'withForecast' => $withForecast,
             ]
         );
-    }
-
-    private function transformDate(Transaction $transaction)
-    {
-        if ($transaction->schedule) {
-            $transaction->load(['transactionSchedule']);
-
-            return [
-                'schedule' => $transaction->transactionSchedule,
-                'transaction_group' => 'schedule',
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
-            ];
-        }
-
-        return [
-            'date' => $transaction->date,
-            'transaction_group' => 'history',
-        ];
-    }
-
-    private function transformDataCommon(Transaction $transaction)
-    {
-        return [
-            'id' => $transaction->id,
-            'transaction_name' => $transaction->transactionType->name,
-            'transaction_type' => $transaction->transactionType->type,
-
-            'reconciled' => $transaction->reconciled,
-            'comment' => $transaction->comment,
-        ];
-    }
-
-    private function transformDataStandard(Transaction $transaction)
-    {
-        $transactionArray = $transaction->toArray();
-
-        $itemTags = [];
-        $itemCategories = [];
-        foreach ($transactionArray['transaction_items'] as $item) {
-            if (isset($item['tags'])) {
-                foreach ($item['tags'] as $tag) {
-                    $itemTags[$tag['id']] = $this->allTags[$tag['id']];
-                }
-            }
-            if (isset($item['category_id'])) {
-                $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
-            }
-        }
-
-        return [
-            'transaction_operator' => $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus'),
-            'account_from_id' => $transaction->config->account_from_id,
-            'account_from_name' => $this->allAccounts[$transaction->config->account_from_id],
-            'account_to_id' => $transaction->config->account_to_id,
-            'account_to_name' => $this->allAccounts[$transaction->config->account_to_id],
-            'amount_from' => $transaction->config->amount_from,
-            'amount_to' => $transaction->config->amount_to,
-
-            'tags' => array_values($itemTags),
-
-            'categories' => array_values($itemCategories),
-        ];
-    }
-
-    private function transformDataInvestment(Transaction $transaction)
-    {
-        $amount = $transaction->cashflowValue(null);
-
-        return [
-            'transaction_operator' => $transaction->transactionType->amount_operator,
-            'quantity_operator' => $transaction->transactionType->quantity_operator,
-
-            'account_from_id' => $transaction->config->account_id,
-            'account_from_name' => $this->allAccounts[$transaction->config->account_id],
-            'account_to_id' => $transaction->config->investment_id,
-            'account_to_name' => $transaction->config->investment->name,
-            'amount_from' => ($amount < 0 ? -$amount : null),
-            'amount_to' => ($amount > 0 ? $amount : null),
-
-            'tags' => [],
-
-            'investment_name' => $transaction->config->investment->name,
-            'quantity' => $transaction->config->quantity,
-            'price' => $transaction->config->price,
-        ];
     }
 }

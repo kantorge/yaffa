@@ -24,4 +24,6 @@ Route::get('/assets/accept_default_category_suggestion/{payee}/{category}', 'App
 
 Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 
+Route::Get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChart');
+
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');

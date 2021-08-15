@@ -11,6 +11,14 @@ $(function() {
         return transaction;
     });
 
+    window.scheduleData = window.scheduleData.map(function(transaction) {
+        if (transaction.transaction_schedule.next_date) {
+            transaction.transaction_schedule.next_date = new Date(Date.parse(transaction.transaction_schedule.next_date));
+        }
+
+        return transaction;
+    });
+
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
@@ -18,23 +26,23 @@ $(function() {
     var dtColumnSettingPayee = {
         title: 'Payee',
         render: function ( data, type, row, meta ) {
-            if (row.transaction_type == 'Standard') {
-                if (row.transaction_name == 'withdrawal') {
+            if (row.transaction_type.type == 'Standard') {
+                if (row.transaction_type.name == 'withdrawal') {
                     return row.account_to_name;
                 }
-                if (row.transaction_name == 'deposit') {
+                if (row.transaction_type.name == 'deposit') {
                     return row.account_from_name;
                 }
-                if (row.transaction_name == 'transfer') {
-                    if (row.transaction_operator == 'minus') {
+                if (row.transaction_type.name == 'transfer') {
+                    if (row.transactionOperator == 'minus') {
                         return 'Transfer to ' + row.account_to_name;
                     } else {
                         return 'Transfer from ' + row.account_from_name;
                     }
                 }
-            } else if (row.transaction_type == 'Investment') {
-                return row.investment_name;
-            } else if (row.transaction_type == 'Opening balance') {
+            } else if (row.transaction_type.type == 'Investment') {
+                return row.account_to_name;
+            } else if (row.transaction_type.type == 'Opening balance') {
                 return 'Opening balance';
             }
             return null;
@@ -44,7 +52,7 @@ $(function() {
         title: "Category",
         render: function ( data, type, row, meta ) {
             //standard transaction
-            if (row.transaction_type == 'Standard') {
+            if (row.transaction_type.type == 'Standard') {
                 //empty
                 if (row.categories.length == 0) {
                     return '';
@@ -57,15 +65,15 @@ $(function() {
                 }
             }
             //investment transaction
-            if (row.transaction_type == 'Investment') {
-                if (!row.quantity_operator) {
-                    return row.transaction_name;
+            if (row.transaction_type.type == 'Investment') {
+                if (!row.quantityOperator) {
+                    return row.transaction_type.name;
                 }
-                if (!row.transaction_operator) {
-                    return row.transaction_name + " " + row.quantity;
+                if (!row.transactionOperator) {
+                    return row.transaction_type.name + " " + row.quantity;
                 }
 
-                return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
             }
 
             return '';
@@ -114,7 +122,7 @@ $(function() {
                 render: function ( data, type, row, meta ) {
                     if (type == 'filter') {
                         return  (   !row.schedule
-                                 && (row.transaction_type == 'Standard' || row.transaction_type == 'Investment')
+                                 && (row.transaction_type.type == 'Standard' || row.transaction_type.type == 'Investment')
                                 ?   (row.reconciled == 1
                                         ? 'Reconciled'
                                         : 'Uncleared'
@@ -123,7 +131,7 @@ $(function() {
                             );
                     }
                     return  (   !row.schedule
-                             && (row.transaction_type == 'Standard' || row.transaction_type == 'Investment')
+                             && (row.transaction_type.type == 'Standard' || row.transaction_type.type == 'Investment')
                                 ?   (row.reconciled == 1
                                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -138,13 +146,13 @@ $(function() {
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'minus' ? numberRenderer(row.amount_from) : null);
+                    return (row.transactionOperator == 'minus' ? numberRenderer(row.amount_from) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
+                    return (row.transactionOperator == 'plus' ? numberRenderer(row.amount_to) : null);
                 },
             },
             {
@@ -165,11 +173,12 @@ $(function() {
                 data: 'id',
                 title: "Actions",
                 render: function ( data, type, row, meta ) {
-                    if (row.transaction_type == 'Opening balance') {
+                    if (row.transaction_type.type == 'Opening balance') {
                         return null;
                     }
                     if (row.schedule) {
-                        if (row.schedule_is_first) {
+                        if (row.schedule_first_instance) {
+                            data = row.originalId;
                             return  '' +
                                     '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                                     '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
@@ -179,7 +188,7 @@ $(function() {
                     }
 
                     return  '' +
-                            (row.transaction_type == 'Standard'
+                            (row.transaction_type.type == 'Standard'
                              ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
@@ -239,21 +248,27 @@ $(function() {
         data: scheduleData,
         columns: [
             {
-                data: "next_date",
-                title: "Next date"
+                data: "transaction_schedule.next_date",
+                title: "Next date",
+                render: function (data) {
+                    if (!data) {
+                        return data;
+                    }
+                    return data.toLocaleDateString('Hu-hu').replace(/\s/g, '&nbsp;');
+                }
             },
             dtColumnSettingPayee,
             dtColumnSettingCategories,
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'minus' ? numberRenderer(row.amount_from) : null);
+                    return (row.transactionOperator == 'minus' ? numberRenderer(row.amount_from) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transaction_operator == 'plus' ? numberRenderer(row.amount_to) : null);
+                    return (row.transactionOperator == 'plus' ? numberRenderer(row.amount_to) : null);
                 },
             },
             dtColumnSettingComment,
@@ -263,10 +278,9 @@ $(function() {
                 title: "Actions",
                 render: function ( data, type, row, meta ) {
                     return  '' +
-                            '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
-                            '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'edit'}) : route('transactions.openInvestment', {transaction: data, action: 'edit'})) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'edit'}) : route('transactions.openInvestment', {transaction: data, action: 'edit'})) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                             '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
                             '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
@@ -275,7 +289,7 @@ $(function() {
         ],
 
         createdRow: function( row, data, dataIndex ) {
-            var nextDate = new Date(data.next_date.replace( /(\d{4})-(\d{2})-(\d{2})/, "$2/$3/$1"));
+            var nextDate = new Date(data.transaction_schedule.next_date);
             if ( nextDate  < new Date(new Date().setHours(0,0,0,0)) ) {
                 $(row).addClass('danger');
             } else if ( nextDate  < new Date(new Date().setHours(24,0,0,0)) ) {

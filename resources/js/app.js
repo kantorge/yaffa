@@ -62,6 +62,10 @@ if (window.location.pathname === '/reports/cashflow') {
     require('./reports/cashflow');
 }
 
+if (window.location.pathname === '/reports/budgetchart') {
+    require('./reports/budgetchart');
+}
+
 $( function () {
     // Generally available account selector
     document.getElementById('jump_to_account').addEventListener('change', function() {
