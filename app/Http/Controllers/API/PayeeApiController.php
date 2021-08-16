@@ -253,18 +253,4 @@ class PayeeApiController extends Controller
 
         return $newPayee;
     }
-
-    public function storePayee(AccountEntityRequest $request)
-    {
-        $validated = $request->validated();
-
-        $newPayee = new AccountEntity($validated);
-
-        $payeeConfig = Payee::create($validated['config']);
-        $newPayee->config()->associate($payeeConfig);
-
-        $newPayee->push();
-
-        return $newPayee;
-    }
 }
