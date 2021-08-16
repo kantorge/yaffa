@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use JavaScript;
@@ -171,60 +170,6 @@ class ReportController extends Controller
         }
 
         // TODO: Add schedule to history items, if needeed
-        if (false) {
-            $transactions
-            ->filter(function ($transaction) {
-                    return $transaction['transaction_group'] == 'schedule';
-            })
-            ->each(function ($transaction) use (&$transactions) {
-                $rule = new Rule();
-                $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
-
-                if ($transaction['schedule']->end_date) {
-                    $rule->setUntil(new Carbon($transaction['schedule']->end_date));
-                }
-
-                $rule->setFreq($transaction['schedule']->frequency);
-
-                if ($transaction['schedule']->count) {
-                    $rule->setCount($transaction['schedule']->count);
-                }
-                if ($transaction['schedule']->interval) {
-                    $rule->setInterval($transaction['schedule']->interval);
-                }
-
-                $transformer = new ArrayTransformer();
-
-                $transformerConfig = new ArrayTransformerConfig();
-                $transformerConfig->setVirtualLimit(100);
-                $transformerConfig->enableLastDayOfMonthFix();
-                $transformer->setConfig($transformerConfig);
-
-                $startDate = new Carbon($transaction['schedule']->next_date);
-                $startDate->startOfDay();
-                if (is_null($transaction['schedule']->end_date)) {
-                    $endDate = new Carbon('next year');
-                } else {
-                    $endDate = new Carbon($transaction['schedule']->end_date);
-                }
-                $endDate->startOfDay();
-
-                $constraint = new BetweenConstraint($startDate, $endDate, true);
-
-                $first = true;
-
-                foreach ($transformer->transform($rule, $constraint) as $instance) {
-                    $newTransaction = $transaction;
-                    $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
-                    $newTransaction['transaction_group'] = 'forecast';
-                    $newTransaction['schedule_is_first'] = $first;
-
-                    $transactions->push($newTransaction);
-
-                    $first = false;
-                }
-            });
-        }
 
         JavaScript::put([
             'transactionDataHistory' => $final,
@@ -251,23 +196,5 @@ class ReportController extends Controller
                 'categories' => $categories->pluck('full_name', 'id')
             ]
         );
-    }
-
-    private function transformDate(Transaction $transaction)
-    {
-        if ($transaction->schedule) {
-            $transaction->load(['transactionSchedule']);
-
-            return [
-                'schedule' => $transaction->transactionSchedule,
-                'transaction_group' => 'schedule',
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
-            ];
-        }
-
-        return [
-            'date' => $transaction->date,
-            'transaction_group' => 'history',
-        ];
     }
 }
