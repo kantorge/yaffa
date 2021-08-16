@@ -6,7 +6,6 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
-use Illuminate\Http\Request;
 
 class InvestmentPriceController extends Controller
 {
@@ -26,7 +25,7 @@ class InvestmentPriceController extends Controller
                 'function' => 'TIME_SERIES_DAILY',
                 'datatype' => 'json',
                 'symbol' => $investment->symbol,
-                'apikey' => env('ALPHA_VANTAGE_KEY'),
+                'apikey' => config('yaffa.alpha_vantage_key'),
                 'outputsize' => ($refill ? 'full' : 'compact'),
             ]
         ]);
