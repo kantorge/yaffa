@@ -5,18 +5,25 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
+
+    private $allAccounts;
+    private $allTags;
+    private $allCategories;
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
@@ -27,20 +34,8 @@ class ReportController extends Controller
     public function budgetChart(Request $request)
     {
         // Get list of requested categories
-        $requestedCategories = Category::findOrFail($request->get('categories'));
-
         // Ensure, that child categories are loaded for all parents
-        $categories = collect();
-        $requestedCategories->each(function ($category) use (&$categories) {
-            if (is_null($category->parent_id)) {
-                $children = Category::where('parent_id', '=', $category->id)->get();
-                $categories = $categories->merge($children);
-            }
-
-            $categories->push($category);
-        });
-
-        $categories = $categories->unique('id');
+        $categories = $this->getChildCategories($request);
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
@@ -82,7 +77,7 @@ class ReportController extends Controller
             foreach ($monthData as $currency => $items) {
                 if (!array_key_exists($month, $monthlyData)) {
                     $monthlyData[$month] = [
-                        'actual' => 0,
+                        'actual' => null,
                         'budget' => 0,
                     ];
                 }
@@ -153,7 +148,7 @@ class ReportController extends Controller
             foreach ($monthData as $currency => $items) {
                 if (!array_key_exists($month, $monthlyData)) {
                     $monthlyData[$month] = [
-                        'actual' => 0,
+                        'actual' => null,
                         'budget' => 0,
                     ];
                 }
@@ -171,13 +166,109 @@ class ReportController extends Controller
         $result = [];
         foreach ($monthlyData as $key => $value) {
             $result[] = [
-                'month' => $key,
+                'month' => new Carbon($key),
                 'actual' => $value['actual'],
                 'budget' => $value['budget'],
             ];
         }
 
+        usort($result, function ($a, $b) {
+            return $a['month'] <=> $b['month'];
+        });
+
         // Return fetched and prepared data
         return response()->json($result, Response::HTTP_OK);
+    }
+
+    public function scheduledTransactions(Request $request)
+    {
+        // Get all accounts and payees so their name can be reused
+        $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
+
+        // Get all tags
+        $this->allTags = Tag::pluck('name', 'id')->all();
+
+        // Get all categories
+        $this->allCategories = Category::all()->pluck('full_name', 'id');
+
+        // Get list of requested categories
+        // Ensure, that child categories are loaded for all parents
+        $categories = $this->getChildCategories($request);
+
+        // Get all standard transactions
+        $standardTransactions = Transaction::with(
+            [
+                'config',
+                'transactionType',
+                'transactionSchedule',
+                'transactionItems',
+                'transactionItems.tags',
+            ]
+        )
+        ->where(function ($query) {
+            return $query->where('schedule', 1)
+                ->orWhere('budget', 1);
+        })
+        ->where(
+            'config_type',
+            '=',
+            'transaction_detail_standard'
+        )
+        ->whereHas('transactionItems', function ($query) use ($categories) {
+            $query->whereIn('category_id', $categories->pluck('id'));
+        })
+        ->get();
+
+        // Prepare data for datatables
+        $transactions = $standardTransactions
+            ->map(function ($transaction) {
+                $itemTags = [];
+                $itemCategories = [];
+                foreach ($transaction->transactionItems as $item) {
+                    if (isset($item['tags'])) {
+                        foreach ($item['tags'] as $tag) {
+                            $itemTags[$tag['id']] = $this->allTags[$tag['id']];
+                        }
+                    }
+                    if (isset($item['category_id'])) {
+                        $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
+                    }
+                }
+
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
+                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id] ?? null;
+                $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id] ?? null;
+                $transaction->amount_from = $transaction->config->amount_from;
+                $transaction->amount_to = $transaction->config->amount_to;
+                $transaction->tags = array_values($itemTags);
+                $transaction->categories = array_values($itemCategories);
+
+                return $transaction;
+            });
+
+        // Return fetched and prepared data
+        return response()->json($transactions, Response::HTTP_OK);
+    }
+
+    private function getChildCategories(Request $request)
+    {
+        $categories = collect();
+
+        if ($request->missing('categories')) {
+            return $categories;
+        }
+
+        $requestedCategories = Category::whereIn('id', $request->get('categories'))->get();
+
+        $requestedCategories->each(function ($category) use (&$categories) {
+            if (is_null($category->parent_id)) {
+                $children = Category::where('parent_id', '=', $category->id)->get();
+                $categories = $categories->merge($children);
+            }
+
+            $categories->push($category);
+        });
+
+        return $categories->unique('id');
     }
 }

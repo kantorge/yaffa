@@ -45,4 +45,22 @@
     </div>
 </div>
 
+<div class="row">
+    <div class="col-lg-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">
+                    Scheduled and budgeted transactions for selected categories
+                </h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+                <table class="table table-bordered table-hover no-footer" id="table"></table>
+            </div>
+            <!-- /.box-body -->
+        </div>
+        <!-- /.box -->
+    </div>
+</div>
+
 @stop
