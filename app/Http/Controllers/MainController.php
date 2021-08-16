@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ScheduleTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
@@ -13,7 +14,6 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
 use JavaScript;
-use App\Http\Traits\ScheduleTrait;
 
 class MainController extends Controller
 {
@@ -290,14 +290,14 @@ class MainController extends Controller
 
         $data = $transactions
             ->filter(function ($transaction) {
-                return $transaction->transactionGroup == 'history' || $transaction->transactionGroup == 'forecast';
+                return $transaction->transactionGroup === 'history' || $transaction->transactionGroup === 'forecast';
             })
             ->sortByDesc('transactionType')
             ->sortBy('date')
             // Add opening item to beginning of transaction list
             ->prepend($account->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
-                $subTotal += ($transaction->transactionOperator == 'plus' ? $transaction->amount_to : -$transaction->amount_from);
+                $subTotal += ($transaction->transactionOperator === 'plus' ? $transaction->amount_to : -$transaction->amount_from);
                 $transaction->running_total = $subTotal;
                 return $transaction;
             })
@@ -307,7 +307,7 @@ class MainController extends Controller
             'transactionData' => $data,
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
-                    return $transaction->transactionGroup == 'schedule';
+                    return $transaction->transactionGroup === 'schedule';
                 })->values()
             ]);
 

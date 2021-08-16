@@ -30,6 +30,7 @@ class TagRequest extends FormRequest
     {
         return [
             'name' => 'required|min:2|max:191|unique:tags,name,' . \Request::instance()->id,
+            'active' => 'boolean',
         ];
     }
 
@@ -45,5 +46,18 @@ class TagRequest extends FormRequest
                 self::addSimpleDangerMessage($message);
             }
         });
+    }
+
+    /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    protected function prepareForValidation()
+    {
+        //check for checkbox-es
+        $this->merge([
+            'active' => $this->active ?? 0,
+        ]);
     }
 }

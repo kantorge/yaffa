@@ -40,7 +40,7 @@ class AccountController extends Controller
 
     public function edit($id)
     {
-        $account = AccountEntity::with(['config', 'config.account_group', 'config.currency'])
+        $accountEntity = AccountEntity::with(['config', 'config.account_group', 'config.currency'])
             ->find($id);
 
         // Get all account groups
@@ -52,7 +52,7 @@ class AccountController extends Controller
         return view(
             'account.form',
             [
-                'account'=> $account,
+                'account'=> $accountEntity,
                 'allAccountGroups' => $allAccountGroups,
                 'allCurrencies' => $allCurrencies
             ]
@@ -90,12 +90,12 @@ class AccountController extends Controller
     {
         $validated = $request->validated();
 
-        $account = new AccountEntity($validated);
+        $accountEntity = new AccountEntity($validated);
 
         $accountConfig = Account::create($validated['config']);
-        $account->config()->associate($accountConfig);
+        $accountEntity->config()->associate($accountConfig);
 
-        $account->push();
+        $accountEntity->push();
 
         self::addSimpleSuccessMessage('Account added');
 
@@ -117,9 +117,9 @@ class AccountController extends Controller
     public function destroy($id)
     {
         //Retrieve item
-        $account = AccountEntity::find($id);
-        //delete
-        $account->delete();
+        $accountEntity = AccountEntity::find($id);
+
+        $accountEntity->delete();
 
         self::addSimpleSuccessMessage('Account deleted');
 

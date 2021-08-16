@@ -16,6 +16,19 @@ $(document).ready( function () {
             title: "Name"
         },
         {
+            data: "active",
+            title: "Active",
+            render: function (data, type) {
+                if (type == 'filter') {
+                    return  (data ? 'Yes' : 'No');
+                }
+                return (  data
+                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                        : '<i class="fa fa-square text-danger" title="No"></i>');
+            },
+            className: "text-center",
+        },
+        {
             data: "id",
             title: "Actions",
             render: function ( data, type, row, meta ) {

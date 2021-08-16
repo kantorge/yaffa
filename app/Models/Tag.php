@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\TransactionItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,6 +24,16 @@ class Tag extends Model
      */
     protected $fillable = [
         'name',
+        'active',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'active' => 'boolean'
     ];
 
     public function transactionItems()
