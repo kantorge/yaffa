@@ -24,7 +24,7 @@ trait CurrencyTrait
                 DB::raw('avg(rate) as rate')
             )
             ->when($onlyToBaseCurrency, function ($query) {
-                $query->where('to_id', '=', $this->getBaseCurrency());
+                $query->where('to_id', '=', $this->getBaseCurrency()->id);
             })
             ->groupBy(DB::raw('SUBDATE(`date`, (day(`date`)-1))'))
             ->groupBy('from_id')
