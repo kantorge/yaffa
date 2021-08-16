@@ -51,6 +51,31 @@
                     >
                 </div>
             </div>
+            <div class="form-group">
+                <label for="active" class="control-label col-sm-3">
+                    Active
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        id="active"
+                        class="checkbox-inline"
+                        name="active"
+                        type="checkbox"
+                        value="1"
+                        @if (old())
+                            @if (old('active') == '1')
+                                checked="checked"
+                            @endif
+                        @elseif(isset($tag))
+                            @if ($tag['active'] == '1')
+                                checked="checked"
+                            @endif
+                        @else
+                            checked="checked"
+                        @endif
+                    >
+                </div>
+            </div>
         </div>
         <!-- /.box-body -->
         <div class="box-footer">
