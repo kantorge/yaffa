@@ -28,7 +28,7 @@ class AccountApiController extends Controller
                 ->take(10)
                 ->get();
         } else {
-            $type = ($request->get('type') === 'to' ? 'to' : 'from');
+            $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
 
             $accounts = DB::table('transactions')
                 ->join(

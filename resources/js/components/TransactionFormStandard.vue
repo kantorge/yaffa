@@ -227,7 +227,7 @@
                                         >
                                             <label for="transaction_amount_from" class="control-label">
                                                 {{ ammountFromFieldLabel }}
-                                                <span v-if="from.account_currency">({{from.account_currency}})</span>
+                                                <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
                                             </label>
                                             <MathInput
                                                 class="form-control"
@@ -236,13 +236,13 @@
                                             ></MathInput>
                                         </div>
                                         <div
-                                            v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
+                                            v-show="exchangeRatePresent"
                                             class="col-sm-4">
                                             <span>Exchange rate</span>
                                             {{ exchangeRate }}
                                         </div>
                                         <div
-                                            v-show="from.account_currency && to.account_currency && from.account_currency != to.account_currency"
+                                            v-show="exchangeRatePresent"
                                             class="form-group col-sm-4 pull-right"
                                             :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
                                         >
@@ -461,7 +461,20 @@
 
             // Amount from label is different for transfer
             ammountFromFieldLabel() {
-                return (this.form.transaction_type == 'transfer' ? 'Amount from' : 'Amount')
+                return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
+            },
+
+            // Amound from currency is dependent on many other data
+            ammountFromCurrencyLabel() {
+                if (this.form.transaction_type === 'withdrawal' || this.form.transaction_type === 'transfer') {
+                    return this.from.account_currency;
+                }
+
+                if (this.form.transaction_type === 'deposit') {
+                    return this.to.account_currency;
+                }
+
+                return '';
             },
 
             // Calculate the summary of all existing items and their values
@@ -510,6 +523,11 @@
                 }
 
                 return this.form.config.account_from_id;
+            },
+
+            // Indicates if transaction type is transfer, and currencies of accounts are different
+            exchangeRatePresent() {
+                return this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency;
             },
 
             exchangeRate() {
@@ -609,25 +627,21 @@
                     }
                 });
 
-            // Load default value for account FROM
+            // Load default value for account FROM, based on transaction type
             if (this.form.config.account_from_id) {
-                $.ajax({
-                    url:  '/api/assets/account/' + this.form.config.account_from_id,
-                })
-                .done(data => {
-                    // Create the option and append to Select2
-                    $("#account_from")
-                        .append(new Option(data.name, data.id, true, true))
-                        .trigger('change');
-
-                    // Manually trigger the `select2:select` event
-                    $("#account_from").trigger({
-                        type: 'select2:select',
-                        params: {
-                            data: data
-                        }
+                if (this.getAccountType('from') == 'account') {
+                    $.ajax({
+                        url:  '/api/assets/account/' + this.form.config.account_from_id,
+                    })
+                    .done(data => {
+                        // Create the option and append to Select2
+                        $vm.addNewItemToSelect('#account_from', data.id, data.name);
                     });
-                });
+                } else if (this.getAccountType('from') == 'payee') {
+                    const data = this.transaction.config.account_from;
+                    // Create the option and append to Select2
+                    $vm.addNewItemToSelect('#account_from', data.id, data.name);
+                }
             }
 
             // Account TO dropdown functionality
@@ -637,14 +651,14 @@
                     const event = new Event("change", { bubbles: true, cancelable: true });
                     e.target.dispatchEvent(event);
 
-                    if ($vm.getAccountType('to') == 'account') {
+                    if ($vm.getAccountType('to') === 'account') {
                         $.ajax({
                             url:  '/api/assets/account/currency/' + e.params.data.id,
                         })
                         .done(data => {
                             $vm.to.account_currency = data;
                         });
-                    } else {
+                    } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({
                             url:  '/api/assets/get_default_category_for_payee',
                             data: {payee_id: e.params.data.id}
@@ -664,20 +678,19 @@
 
             // Load default value for account TO
             if (this.form.config.account_to_id) {
-                const data = this.transaction.config.account_to;
-
-                // Create the option and append to Select2
-                $("#account_to")
-                    .append(new Option(data.name, data.id, true, true))
-                    .trigger('change');
-
-                // Manually trigger the `select2:select` event
-                $("#account_to").trigger({
-                    type: 'select2:select',
-                    params: {
-                        data: data
-                    }
-                });
+                if (this.getAccountType('to') == 'account') {
+                    $.ajax({
+                        url:  '/api/assets/account/' + this.form.config.account_to_id,
+                    })
+                    .done(data => {
+                        // Create the option and append to Select2
+                        $vm.addNewItemToSelect('#account_to', data.id, data.name);
+                    });
+                } else if (this.getAccountType('to') == 'payee') {
+                    const data = this.transaction.config.account_to;
+                    // Create the option and append to Select2
+                    $vm.addNewItemToSelect('#account_to', data.id, data.name);
+                }
             }
 
             //Display fixed footer
@@ -708,8 +721,10 @@
                 // Reassign account FROM functionality, if changed
                 if (oldTypeFrom !== this.getAccountType('from')) {
                     if (this.getAccountType('from') === 'account') {
+                        this.from.type = 'account';
                         this.resetAccount('from');
                     } else {
+                        this.from.type = 'payee';
                         this.resetPayee();
                     }
 
@@ -722,8 +737,10 @@
                 // Reassign account FROM functionality, if changed
                 if (oldTypeTo !== this.getAccountType('to')) {
                     if (this.getAccountType('to') === 'account') {
+                        this.to.type = 'account';
                         this.resetAccount('to');
                     } else {
+                        this.to.type = 'payee';
                         this.resetPayee();
                     }
 
@@ -741,14 +758,14 @@
 
             // Check if TO or FROM is account or payee
             getAccountType(type) {
-                if (this.form.transaction_type == 'withdrawal') {
+                if (this.form.transaction_type === 'withdrawal') {
                     return type == 'from' ? 'account' : 'payee';
                 }
-                if (this.form.transaction_type == 'deposit') {
+                if (this.form.transaction_type === 'deposit') {
                     return type == 'from' ? 'payee' : 'account';
                 }
 
-                // transfer
+                // Transfer
                 return 'account';
             },
 
@@ -801,7 +818,7 @@
                     },
                     selectOnClose: true,
                     //TODO: make placeholder dynamic to transaction type
-                    placeholder: "Select account to debit",
+                    //placeholder: "Select account to debit",
                     allowClear: true
                 };
             },
@@ -857,24 +874,29 @@
 
             setPayee(payee) {
                 // Determine which of the accounts need update
-                if (this.form.transaction_type == 'withdrawal') {
-                    var accountSelector = '#account_to';
-                } else if (this.form.transaction_type == 'deposit') {
-                    var accountSelector = '#account_from';
-                } else {
+                if (!['withdrawal', 'deposit'].includes(this.form.transaction_type)) {
                     return;
                 }
 
-                $(accountSelector)
-                    .append(new Option(payee.name, payee.id, true, true))
+                var accountSelector = (this.form.transaction_type == 'withdrawal' ? '#account_to' : '#account_from');
+
+                this.addNewItemToSelect(accountSelector, payee.id, payee.name);
+            },
+
+            addNewItemToSelect(selector, id, name) {
+                $(selector)
+                    .append(new Option(name, id, true, true))
                     .trigger('change')
                     .trigger({
                         type: 'select2:select',
                         params: {
-                            data: payee
+                            data: {
+                                id: id,
+                                name: name,
+                            }
                         }
                     });
-            }
+            },
         },
 
         watch: {

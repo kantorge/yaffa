@@ -35,10 +35,11 @@ class PayeeApiController extends Controller
                 ->take(10)
                 ->get();
         } else {
+            // Account and transaction type is expected to be present
             $accountId = $request->get('account_id');
-            $accountDirection = ($request->get('type') === 'to' ? 'to' : 'from');
-            // Reverse selection for main selection
-            $payeeDirection = ($request->get('type') === 'to' ? 'from' : 'to');
+
+            $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
+            $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
 
             $payees = DB::table('transactions')
                 ->join(
