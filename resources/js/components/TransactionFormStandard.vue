@@ -15,25 +15,25 @@
             @submit.prevent="onSubmit"
             autocomplete="off"
         >
-            <div class="row">
-                <!-- left column -->
-                <div class="col-md-4">
-                    <!-- general form elements -->
-                    <div class="box box-primary">
-                        <div class="box-header with-border">
-                            <h3 class="box-title">
-                                Transaction properties
-                            </h3>
-                        </div>
-                        <!-- /.box-header -->
+            <div>
+                <div class="row">
+                    <!-- left column -->
+                    <div class="col-md-4">
+                        <!-- general form elements -->
+                        <div class="box box-primary">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">
+                                    Properties
+                                </h3>
+                            </div>
+                            <!-- /.box-header -->
 
-                        <div class="box-body">
-                            <div class="form-horizontal">
-                                <div class="form-group row">
-                                    <label class="control-label col-sm-3">
-                                        Type
-                                    </label>
-                                    <div class="col-sm-9">
+                            <div class="box-body">
+                                <div class="row">
+                                    <div class="form-group col-xs-12 col-sm-6">
+                                        <label class="block-label">
+                                            Type
+                                        </label>
                                         <div class="btn-group">
                                             <button
                                                 class="btn btn-primary"
@@ -64,15 +64,13 @@
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                                <div
-                                    class="form-group row"
-                                    :class="form.errors.has('date') ? 'has-error' : ''"
-                                >
-                                    <label for="date" class="control-label col-sm-3">
-                                        Date
-                                    </label>
-                                    <div class="col-sm-6">
+                                    <div
+                                        class="form-group col-xs-12 col-sm-6"
+                                        :class="form.errors.has('date') ? 'has-error' : ''"
+                                    >
+                                        <label class="block-label" for="date">
+                                            Date
+                                        </label>
                                         <date-picker
                                             id="date"
                                             v-model="form.date"
@@ -82,65 +80,62 @@
                                             :disabled="form.schedule || form.budget"
                                         ></date-picker>
                                     </div>
-                                    <div class="col-sm-3">
-                                    </div>
                                 </div>
-                                <div
-                                    class="form-group row"
-                                    :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
-                                >
-                                    <label class="control-label col-sm-3" id="account_from_label">
-                                        {{ accountFromFieldLabel }}
-                                    </label>
-                                    <div class="col-sm-8">
+                                <div class="row">
+                                    <div
+                                        class="form-group col-xs-12 col-sm-6"
+                                        :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
+                                    >
+                                        <label class="control-label block-label">
+                                            {{ accountFromFieldLabel }}
+                                        </label>
                                         <select
                                             class="form-control"
                                             id="account_from"
+                                            style="width: 85%;"
                                             v-model="form.config.account_from_id">
                                         </select>
-                                    </div>
-                                    <div class="col-sm-1" v-show="form.transaction_type == 'deposit'">
                                         <button
                                             class="btn btn-xs btn-success"
                                             @click="this.$refs.payeeModal.show()"
+                                            style="margin-left: 10px;"
                                             title="Add a new payee"
                                             type="button"
+                                            v-show="form.transaction_type == 'deposit'"
                                         ><span class="fa fa-plus"></span></button>
                                     </div>
-                                </div>
 
-                                <div
-                                    class="form-group row"
-                                    :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
-                                >
-                                    <label class="control-label col-sm-3" id="account_to_label">
-                                        {{ accountToFieldLabel }}
-                                    </label>
-                                    <div class="col-sm-8">
+                                    <div
+                                        class="form-group col-xs-12 col-sm-6"
+                                        :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
+                                    >
+                                        <label class="control-label block-label">
+                                            {{ accountToFieldLabel }}
+                                        </label>
                                         <select
                                             class="form-control"
                                             id="account_to"
+                                            style="width: 85%;"
                                             v-model="form.config.account_to_id">
                                         </select>
-                                    </div>
-                                    <div class="col-sm-1" v-show="form.transaction_type == 'withdrawal'">
                                         <button
                                             class="btn btn-xs btn-success"
                                             @click="this.$refs.payeeModal.show()"
+                                            style="margin-left: 10px;"
                                             title="Add a new payee"
                                             type="button"
+                                            v-show="form.transaction_type == 'withdrawal'"
                                         ><span class="fa fa-plus"></span></button>
                                     </div>
                                 </div>
-
-                                <div
-                                    class="form-group row"
-                                    :class="form.errors.has('comment') ? 'has-error' : ''"
-                                >
-                                    <label for="comment" class="control-label col-sm-3">
-                                        Comment
-                                    </label>
-                                    <div class="col-sm-9">
+                                <div class="row">
+                                    <div
+                                        class="form-group col-xs-12"
+                                        :class="form.errors.has('comment') ? 'has-error' : ''"
+                                    >
+                                        <label for="comment" class="control-label block-label">
+                                            Comment
+                                        </label>
                                         <input
                                             class="form-control"
                                             id="comment"
@@ -151,213 +146,228 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group row" id="entry_type_container">
-                                    <div class="col-sm-4">
-                                        <input
-                                            id="entry_type_schedule"
-                                            class="checkbox-inline"
-                                            :disabled="form.reconciled"
-                                            type="checkbox"
-                                            value="1"
-                                            v-model="form.schedule"
-                                        >
-                                        <label for="entry_type_schedule" class="control-label">
-                                            Scheduled
-                                        </label>
+                                    <div class="form-group form-horizontal row">
+                                        <div class="col-xs-4 checkbox">
+                                            <label>
+                                                <input
+                                                    :disabled="form.reconciled"
+                                                    type="checkbox"
+                                                    value="1"
+                                                    v-model="form.schedule"
+                                                >
+                                                Scheduled
+                                            </label>
+                                        </div>
+                                        <div class="col-xs-4 checkbox">
+                                            <label>
+                                                <input
+                                                    :disabled="form.reconciled || form.transaction_type == 'transfer'"
+                                                    type="checkbox"
+                                                    value="1"
+                                                    v-model="form.budget"
+                                                >
+                                                Budget
+                                            </label>
+                                        </div>
+                                        <div class="col-xs-4 checkbox">
+                                            <label>
+                                                <input
+                                                    :disabled="form.schedule || form.budget"
+                                                    type="checkbox"
+                                                    value="1"
+                                                    v-model="form.reconciled"
+                                                >
+                                                Reconciled
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-4">
-                                        <input
-                                            id="entry_type_budget"
-                                            class="checkbox-inline"
-                                            :disabled="form.reconciled || form.transaction_type == 'transfer'"
-                                            type="checkbox"
-                                            value="1"
-                                            v-model="form.budget"
-                                        >
-                                        <label for="entry_type_budget" class="control-label">
-                                            Budget
+
+                            </div>
+                            <!-- /.box-body -->
+
+                        </div>
+                        <!-- /.box -->
+
+                        <div class="box box-primary">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">Amounts</h3>
+                            </div>
+                            <!-- /.box-header -->
+                            <div class="box-body">
+                                <div class="row">
+                                    <div
+                                        class="form-group col-xs-4"
+                                        :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
+                                    >
+                                        <label for="transaction_amount_from" class="control-label">
+                                            {{ ammountFromFieldLabel }}
+                                            <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
                                         </label>
+                                        <MathInput
+                                            class="form-control"
+                                            id="transaction_amount_from"
+                                            v-model="form.config.amount_from"
+                                        ></MathInput>
                                     </div>
-                                    <div class="col-sm-4">
-                                        <input
-                                            id="transaction_reconciled"
-                                            class="checkbox-inline"
-                                            :disabled="form.schedule || form.budget"
-                                            type="checkbox"
-                                            value="1"
-                                            v-model="form.reconciled"
-                                        >
-                                        <label for="transaction_reconciled" class="control-label">
-                                            Reconciled
+                                    <div
+                                        v-show="exchangeRatePresent"
+                                        class="col-xs-4">
+                                        <span class="block-label">Exchange rate</span>
+                                        {{ exchangeRate }}
+                                    </div>
+                                    <div
+                                        v-show="exchangeRatePresent"
+                                        class="form-group col-xs-4"
+                                        :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
+                                    >
+                                        <label for="transaction_amount_slave" class="control-label">
+                                            Amount to
+                                            <span v-if="to.account_currency">({{to.account_currency}})</span>
                                         </label>
+                                        <MathInput
+                                            class="form-control"
+                                            id="transaction_amount_to"
+                                            v-model="form.config.amount_to"
+                                        ></MathInput>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- /.box-body -->
+                        <!-- /.box -->
+
+                        <transaction-schedule
+                            :isVisible="form.schedule || form.budget"
+                            :schedule="form.schedule_config"
+                            :form="form"
+                        ></transaction-schedule>
 
                     </div>
-                    <!-- /.box -->
+                    <!--/.col (left) -->
+
+                    <!-- right column -->
+                    <div class="col-md-8">
+                        <transaction-item-container
+                            @addTransactionItem="addTransactionItem"
+                            :transactionItems="form.items"
+                            :currency="from.account_currency"
+                            :payee="payeeId"
+                            :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
+                        ></transaction-item-container>
+                    </div>
+                    <!--/.col (right) -->
 
                 </div>
-                <!--/.col (left) -->
+                <!-- /.row -->
 
-                <!-- right column -->
-                <div class="col-md-8">
-                    <transaction-item-container
-                        @addTransactionItem="addTransactionItem"
-                        :transactionItems="form.items"
-                        :currency="from.account_currency"
-                        :payee="payeeId"
-                        :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
-                    ></transaction-item-container>
-
-                    <div class="box box-primary">
-                        <div class="box-header with-border">
-                            <h3 class="box-title">Amounts</h3>
-                        </div>
-                        <!-- /.box-header -->
-                        <div class="box-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="row">
-                                        <div
-                                            class="form-group col-sm-4"
-                                            :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
-                                        >
-                                            <label for="transaction_amount_from" class="control-label">
-                                                {{ ammountFromFieldLabel }}
-                                                <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
-                                            </label>
-                                            <MathInput
-                                                class="form-control"
-                                                id="transaction_amount_from"
-                                                v-model="form.config.amount_from"
-                                            ></MathInput>
-                                        </div>
-                                        <div
-                                            v-show="exchangeRatePresent"
-                                            class="col-sm-4">
-                                            <span>Exchange rate</span>
-                                            {{ exchangeRate }}
-                                        </div>
-                                        <div
-                                            v-show="exchangeRatePresent"
-                                            class="form-group col-sm-4 pull-right"
-                                            :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
-                                        >
-                                            <label for="transaction_amount_slave" class="control-label">
-                                                Amount to
-                                                <span v-if="to.account_currency">({{to.account_currency}})</span>
-                                            </label>
-                                            <MathInput
-                                                class="form-control"
-                                                id="transaction_amount_to"
-                                                v-model="form.config.amount_to"
-                                            ></MathInput>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <dl class="dl-horizontal">
-                                        <dt>Total allocated:</dt>
-                                        <dd>
-                                            {{ allocatedAmount }}
-                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                        </dd>
-                                        <dt v-show="payeeCategory.id">
-                                            Remaining amount to
-                                            <span class="notbold"><br>{{ payeeCategory.text }}</span>:
-                                        </dt>
-                                        <dd v-show="payeeCategory.id">
-                                            {{ remainingAmountToPayeeDefault }}
-                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                        </dd>
-                                        <dt v-show="!payeeCategory.id">
-                                            Not allocated:
-                                        </dt>
-                                        <dd v-show="!payeeCategory.id">
-                                            {{ remainingAmountNotAllocated }}
-                                            <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                        </dd>
-                                    </dl>
+                <div class="box box-primary">
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-xs-8 col-sm-3">
+                                <dl class="dl-horizontal">
+                                    <dt>Total amount:</dt>
+                                    <dd>
+                                        {{ form.config.amount_from || 0 }}
+                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                    </dd>
+                                    <dt>Total allocated:</dt>
+                                    <dd>
+                                        {{ allocatedAmount }}
+                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                    </dd>
+                                    <dt v-show="payeeCategory.id">
+                                        Remaining amount to
+                                        <span class="notbold"><br>{{ payeeCategory.text }}</span>:
+                                    </dt>
+                                    <dd v-show="payeeCategory.id">
+                                        {{ remainingAmountToPayeeDefault }}
+                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                    </dd>
+                                    <dt v-show="!payeeCategory.id">
+                                        Not allocated:
+                                    </dt>
+                                    <dd v-show="!payeeCategory.id">
+                                        {{ remainingAmountNotAllocated }}
+                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="hidden-xs col-sm-7">
+                                <label class="control-label block-label">After saving</label>
+                                <div class="btn-group">
+                                    <button
+                                        class="btn btn-default"
+                                        :class="callback == 'new' ? 'active' : ''"
+                                        type="button"
+                                        value="new"
+                                        @click="callback = $event.currentTarget.getAttribute('value')"
+                                    >
+                                        Add an other transaction
+                                    </button>
+                                    <button
+                                        class="btn btn-default"
+                                        :class="callback == 'clone' ? 'active' : ''"
+                                        type="button"
+                                        value="clone"
+                                        @click="callback = $event.currentTarget.getAttribute('value')"
+                                    >
+                                        Clone this transaction
+                                    </button>
+                                    <button
+                                        class="btn btn-default"
+                                        :class="callback == 'returnToAccount' ? 'active' : ''"
+                                        type="button"
+                                        value="returnToAccount"
+                                        @click="callback = $event.currentTarget.getAttribute('value')"
+                                    >
+                                        Return to selected account
+                                    </button>
+                                    <button
+                                        class="btn btn-default"
+                                        :class="callback == 'returnToDashboard' ? 'active' : ''"
+                                        type="button"
+                                        value="returnToDashboard"
+                                        @click="callback = $event.currentTarget.getAttribute('value')"
+                                    >
+                                        Return to dashboard
+                                    </button>
                                 </div>
                             </div>
+                            <div class="col-xs-4 col-sm-2">
+                                <div class="pull-right">
+                                    <button
+                                        class="btn btn-sm btn-default"
+                                        @click="onCancel"
+                                        style="margin-left: 10px; margin-bottom: 5px;"
+                                        type="button"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <Button
+                                        class="btn btn-primary"
+                                        :disabled="form.busy"
+                                        :form="form"
+                                        style="margin-left: 10px; margin-bottom: 5px;"
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 d-sm-none">
+                                <label class="control-label block-label">After saving</label>
+                                <select
+                                    class="form-control"
+                                    v-model="callback"
+                                >
+                                    <option value="new">Add an other transaction</option>
+                                    <option value="clone">Clone this transaction</option>
+                                    <option value="returnToAccount">Return to selected account</option>
+                                    <option value="returnToDashboard">Return to dashboard</option>
+                                </select>
+                            </div>
                         </div>
-
-                    </div>
-                    <!-- /.box -->
-
-                    <transaction-schedule
-                        :isVisible="form.schedule || form.budget"
-                        :schedule="form.schedule_config"
-                        :form="form"
-                    ></transaction-schedule>
-
-                </div>
-                <!--/.col (right) -->
-
-            </div>
-            <!-- /.row -->
-
-    <footer class="main-footer navbar-fixed-bottom hidden">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-sm-2">
-                    <label class="control-label">After saving</label>
-                </div>
-                <div class="col-sm-8">
-                    <div class="btn-group">
-                        <button
-                            class="btn btn-default"
-                            :class="callback == 'new' ? 'active' : ''"
-                            type="button"
-                            value="new"
-                            @click="callback = $event.currentTarget.getAttribute('value')"
-                        >
-                            Add an other transaction
-                        </button>
-                        <button
-                            class="btn btn-default"
-                            :class="callback == 'clone' ? 'active' : ''"
-                            type="button"
-                            value="clone"
-                            @click="callback = $event.currentTarget.getAttribute('value')"
-                        >
-                            Clone this transaction
-                        </button>
-                        <button
-                            class="btn btn-default"
-                            :class="callback == 'returnToAccount' ? 'active' : ''"
-                            type="button"
-                            value="returnToAccount"
-                            @click="callback = $event.currentTarget.getAttribute('value')"
-                        >
-                            Return to selected account
-                        </button>
-                        <button
-                            class="btn btn-default"
-                            :class="callback == 'returnToDashboard' ? 'active' : ''"
-                            type="button"
-                            value="returnToDashboard"
-                            @click="callback = $event.currentTarget.getAttribute('value')"
-                        >
-                            Return to dashboard
-                        </button>
-                    </div>
-                </div>
-                <div class="box-tools col-sm-2">
-                    <div class="pull-right">
-                        <button class="btn btn-sm btn-default" type="button" @click="onCancel">
-                            Cancel
-                        </button>
-                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
                     </div>
                 </div>
             </div>
-        </div>
-    </footer>
-
         </form>
     </div>
 </template>
@@ -434,6 +444,9 @@
                 remaining_payee_default_amount: 0,
                 remaining_payee_default_category_id: null,
             });
+
+            // Id counter for items
+            data.itemCounter = 0;
 
             // TODO: adjust initial callback based on action
             data.callback = 'new';
@@ -543,6 +556,8 @@
         },
 
         created() {
+            var $vm = this;
+
             // Copy values of existing transaction into component form data
             if (Object.keys(this.transaction).length > 0) {
                 // Populate form data with already known values
@@ -565,6 +580,7 @@
                 if (this.transaction.transaction_items.length > 0) {
                     this.transaction.transaction_items
                         .map((item) => {
+                            item.id = $vm.itemCounter++;
                             item.amount = Number(item.amount);
                             return item;
                         })
@@ -692,11 +708,6 @@
                     $vm.addNewItemToSelect('#account_to', data.id, data.name);
                 }
             }
-
-            //Display fixed footer
-            setTimeout(function() {
-                $("footer").removeClass("hidden");
-            }, 1000);
         },
 
         methods: {
@@ -753,7 +764,9 @@
 
             // Add a new empty item to list of transaction items
             addTransactionItem() {
-                this.form.items.push({});
+                this.form.items.push({
+                    id: this.itemCounter++,
+                });
             },
 
             // Check if TO or FROM is account or payee
@@ -816,10 +829,11 @@
                         },
                         cache: true
                     },
-                    selectOnClose: true,
+                    selectOnClose: false,
                     //TODO: make placeholder dynamic to transaction type
                     //placeholder: "Select account to debit",
-                    allowClear: true
+                    allowClear: true,
+                    width: 'resolve',
                 };
             },
 
@@ -920,3 +934,33 @@
         }
     }
 </script>
+
+<style scoped>
+    @media (min-width: 576px) {
+        .block-label {
+            display: block;
+        }
+
+        .d-sm-none {
+            display: none;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .block-label {
+            margin-right: 10px;
+        }
+
+        .dl-horizontal dt {
+            float: left;
+            width: 100px;
+            overflow: hidden;
+            clear: left;
+            text-align: right;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .dl-horizontal dd {
+            margin-left: 110px;
+        }
+    }
+</style>

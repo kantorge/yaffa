@@ -3,7 +3,7 @@
         <div class="box-header with-border">
             <h3 class="box-title">Transaction items</h3>
             <div class="box-tools">
-                <div class="btn-group">
+                <div class="btn-group d-sm-none">
                     <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
                     <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
                     <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
@@ -25,12 +25,12 @@
                 :key="item.id">
 
                 <transaction-item
-                    @removeTransactionItem="removeTransactionItem(index)"
-                    @amountChanged="updateItemAmount(index, $event)"
+                    @removeItem="removeItem(index)"
+                    @updateItemAmount="updateItemAmount(index, $event)"
                     @updateItemCategory="updateItemCategory(index, $event)"
                     @updateItemTag="updateItemTag(index, $event)"
                     @updateItemComment="updateItemComment(index, $event)"
-                    :index="index"
+                    :id="item.id"
                     :amount="item.amount"
                     :category_id="item.category_id ? Number(item.category_id) : null"
                     :category="item.category"
@@ -46,7 +46,7 @@
 
         <div class="box-footer"  v-if="transactionItems.length > 0">
             <div class="box-tools pull-right">
-                <div class="btn-group">
+                <div class="btn-group d-sm-none">
                     <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
                     <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
                     <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
@@ -60,7 +60,6 @@
             </div>
         </div>
     </div>
-    <!-- /.box -->
 </template>
 
 <script>
@@ -76,6 +75,11 @@
             remainingAmount: Number,
             payee: [Number, String],
         },
+
+        emits: [
+            'addTransactionItem',
+        ],
+
         data() {
             return {}
         },
@@ -87,7 +91,7 @@
 
         methods: {
             // Remove the provided item from transaction items
-            removeTransactionItem(index) {
+            removeItem(index) {
                 this.transactionItems.splice(index, 1);
             },
 
@@ -113,23 +117,31 @@
 
             // Item list collapse and expand functionality
             itemListCollapse() {
-                $(".transaction_item_row").find(".transaction_detail_container").hide();
+                $(".transaction_item_row").find(".transaction_detail_container").addClass('d-xs-none');
             },
 
             itemListShow() {
                 $(".transaction_item_row:not(#transaction_item_prototype)").each(function() {
-                if(   $(this).find("div.transaction_detail_container input.transaction_item_comment").val() != ""
-                    || $(this).find("div.transaction_detail_container select").select2('data').length > 0) {
-                        $(this).find(".transaction_detail_container").show();
+                    if(   $(this).find("div.transaction_detail_container input.transaction_item_comment").val() != ""
+                        || $(this).find("div.transaction_detail_container select").select2('data').length > 0) {
+                        $(this).find(".transaction_detail_container").removeClass('d-xs-none');
                     } else {
-                        $(this).find(".transaction_detail_container").hide();
+                        $(this).find(".transaction_detail_container").addClass('d-xs-none');
                     }
                 });
             },
 
             itemListExpand() {
-                $(".transaction_item_row").find(".transaction_detail_container").show();
+                $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-xs-none');
             }
         }
     }
 </script>
+
+<style scoped>
+    @media (min-width: 576px) {
+        .d-sm-none {
+            display: none;
+        }
+    }
+</style>
