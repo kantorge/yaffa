@@ -7,7 +7,7 @@
         <div class="box-body" id="">
             <div class="row">
                 <div
-                    class="col-md-4 form-group"
+                    class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
                     <label for="schedule_frequency" class="control-label">Frequency</label>
@@ -20,21 +20,10 @@
                         <option value="WEEKLY">Weekly</option>
                         <option value="MONTHLY">Monthly</option>
                         <option value="YEARLY">Yearly</option>
-                </select>
+                    </select>
                 </div>
                 <div
-                    class="col-md-4 form-group"
-                    :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
-                >
-                    <label for="schedule_count" class="control-label">Count</label>
-                    <MathInput
-                        class="form-control"
-                        id="schedule_count"
-                        v-model="schedule.count"
-                    ></MathInput>
-                </div>
-                <div
-                    class="col-md-4 form-group"
+                    class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
                     <label for="schedule_interval" class="control-label">Interval</label>
@@ -44,11 +33,8 @@
                         v-model="schedule.interval"
                     ></MathInput>
                 </div>
-            </div>
-
-            <div class="row">
                 <div
-                    class="col-md-4 form-group"
+                    class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.start_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_start" class="control-label">Start date</label>
@@ -62,7 +48,7 @@
                     ></date-picker>
                 </div>
                 <div
-                    class="col-md-4 form-group"
+                    class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.next_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_next" class="control-label">
@@ -82,7 +68,18 @@
                     ></date-picker>
                 </div>
                 <div
-                    class="col-md-4 form-group"
+                    class="col-xs-6 col-sm-4 form-group"
+                    :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
+                >
+                    <label for="schedule_count" class="control-label">Count</label>
+                    <MathInput
+                        class="form-control"
+                        id="schedule_count"
+                        v-model="schedule.count"
+                    ></MathInput>
+                </div>
+                <div
+                    class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_end" class="control-label">End (last) date</label>

@@ -1,86 +1,72 @@
 <template>
-    <div class="list-group-item transaction_item_row">
+    <div
+        class="list-group-item transaction_item_row"
+        :id="'transaction_item_' + id"
+    >
         <div class="row">
-            <div class="col-md-6">
-                <div
-                    class="form-group"
+            <div
+                class="col-xs-12 col-sm-4 form-group"
+            >
+                <label>Category</label>
+                <select
+                    class="form-control category"
+                    style="width:100%"
+                    v-model.number="category_id"
                 >
-                    <label>Category</label>
-                    <select
-                        class="form-control category"
-                        style="width:100%"
-                        v-model.number="category_id"
-                    >
-                    </select>
-                </div>
+                </select>
             </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label class="control-label">
-                        Amount
-                        <span v-if="currency">({{currency}})</span>
-                    </label>
-                    <div class="input-group">
-                        <MathInput
-                            class="form-control transaction_item_amount"
-                            v-model="amount"
-                        ></MathInput>
+            <div class="col-xs-12 col-sm-2 form-group">
+                <label class="control-label">
+                    Amount
+                    <span v-if="currency">({{currency}})</span>
+                </label>
+                <div class="input-group">
+                    <MathInput
+                        class="form-control transaction_item_amount"
+                        v-model="amount"
+                    ></MathInput>
 
-                        <span class="input-group-btn">
-                            <button
-                                type="button"
-                                class="btn btn-info load_remainder"
-                                title="Assign remaining amount to this item"
-                                @click="loadRemainder"
-                            ><span class="fa fa-copy"></span></button>
-                        </span>
-                    </div>
+                    <span class="input-group-btn">
+                        <button
+                            type="button"
+                            class="btn btn-info load_remainder"
+                            title="Assign remaining amount to this item"
+                            @click="loadRemainder"
+                        ><span class="fa fa-copy"></span></button>
+                    </span>
                 </div>
             </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button
-                        type="button"
-                        class="btn btn-info"
-                        title="Show item details"
-                        @click="toggleItemDetails"
-                    ><span class="fa fa-edit"></span></button>
-                </div>
+            <div class="col-xs-12 col-sm-3 form-group transaction_detail_container d-xs-none">
+                <label class="control-label">Tags</label>
+                <select
+                    style="width: 100%"
+                    class="form-control tag"
+                    multiple="multiple"
+                    v-model="tags">
+                </select>
             </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button
-                        type="button"
-                        class="btn btn-danger"
-                        @click='removeTransactionItem'
-                        title="Remove transaction item"
-                    ><span class="fa fa-minus"></span></button>
-                </div>
+            <div class="col-xs-12 col-sm-2 form-group transaction_detail_container d-xs-none">
+                <label class="control-label">Comment</label>
+                <input
+                    class="form-control transaction_item_comment"
+                    v-model="comment"
+                    @blur="updateComment"
+                    type="text">
             </div>
-        </div>
-        <div class="row transaction_detail_container" style="display:none;">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Comment</label>
-                    <input
-                        class="form-control transaction_item_comment"
-                        v-model="comment"
-                        @blur="updateComment"
-                        type="text">
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Tags</label>
-                    <select
-                        style="width: 100%"
-                        class="form-control tag"
-                        multiple="multiple"
-                        v-model="tags">
-                    </select>
-                </div>
+            <div class="col-xs-12 col-sm-1">
+                <button
+                type="button"
+                class="btn btn-sm btn-info d-sm-none"
+                title="Show item details"
+                @click="toggleItemDetails"
+            ><span class="fa fa-edit"></span></button>
+            <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                @click='removeItem'
+                style="margin-left: 10px;"
+                title="Remove transaction item"
+            ><span class="fa fa-minus"></span></button>
             </div>
         </div>
     </div>
@@ -97,7 +83,7 @@
         },
 
         props: {
-            index: Number,
+            id: Number,
             amount: [Number, String],
             category_id: Number,
             category: Object,
@@ -109,8 +95,11 @@
         },
 
         emits: [
-            'amountChanged',
+            'updateItemAmount',
             'updateItemCategory',
+            'updateItemComment',
+            'updateItemTag',
+            'removeItem',
         ],
 
         data() {
@@ -121,7 +110,7 @@
             let $vm = this;
 
             // Add select2 functionality to category
-            let elementCategory = $(this.$el).find('select.category');
+            let elementCategory = $('#transaction_item_' + this.id + ' select.category');
 
             elementCategory.select2({
                 ajax: {
@@ -169,7 +158,7 @@
             }
 
             // Add select2 functionality to tag
-            let elementTags = $(this.$el).find('select.tag');
+            let elementTags = $('#transaction_item_' + this.id + ' select.tag');
             elementTags.select2({
                 tags: true,
                 createTag: function (params) {
@@ -219,9 +208,8 @@
         },
 
         methods: {
-            updateAmount: function (event) {
-                console.log('item amount update:', event);
-                this.$emit('amountChanged', event.target.value);
+            updateItemAmount: function (event) {
+                this.$emit('updateItemAmount', event.target.value);
             },
 
             // Emmit an event to have the parent container update the value
@@ -230,13 +218,13 @@
             },
 
             // Emmit an event to instruct items container to remove this item
-            removeTransactionItem() {
-                this.$emit('removeTransactionItem')
+            removeItem() {
+                this.$emit('removeItem')
             },
 
             // Toggle the visibility of event details (comment / tags)
             toggleItemDetails() {
-                $(this.$el).find(".transaction_detail_container").toggle();
+                $(this.$el).find(".transaction_detail_container").toggleClass('d-xs-none');
             },
 
             // Add the currently available remainder amount to this item
@@ -251,8 +239,28 @@
 
         watch: {
             amount (newAmount) {
-                this.$emit('amountChanged', newAmount);
+                this.$emit('updateItemAmount', newAmount);
             }
         }
     }
 </script>
+
+<style scoped>
+    /* TODO: decide on highlighting */
+    TBD.input.transaction_item_amount:focus {
+        width: 200%;
+        left: -100%;
+        box-shadow: -4px 3px 4px;
+    }
+
+    @media (min-width: 576px) {
+        .d-sm-none {
+            display: none;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .d-xs-none {
+            display: none;
+        }
+    }
+</style>
