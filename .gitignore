@@ -5,7 +5,6 @@
 /storage/*.key
 /storage/code_coverage_results
 /storage/debugbar
-/storage/fin_migrations
 /vendor
 .env
 .env.backup

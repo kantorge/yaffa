@@ -14,7 +14,6 @@ use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
@@ -33,6 +32,10 @@ class ReportController extends Controller
      */
     public function budgetChart(Request $request)
     {
+        // Get requested aggregation period
+        $byYears = $request->get('byYears') ?? false;
+        $periodFormat = $byYears ? 'Y-01-01' : 'Y-m-01';
+
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
         $categories = $this->getChildCategories($request);
@@ -61,33 +64,33 @@ class ReportController extends Controller
         })
         ->get();
 
-        // Group standard transactions by month, and get all relevant details
+        // Group standard transactions by selected perio, and get all relevant details
         $standardCompact = [];
-        $standardTransactions->each(function ($item) use (&$standardCompact) {
-            $month = $item->transaction->date->format('Y-m-01');
+        $standardTransactions->each(function ($item) use (&$standardCompact, $periodFormat) {
+            $period = $item->transaction->date->format($periodFormat);
             $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
 
-            $standardCompact[$month][$currency_id][] = ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount;
+            $standardCompact[$period][$currency_id][] = ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount;
         });
 
         // Summarize items, applying currency rate
-        $monthlyData = [];
+        $dataByPeriod = [];
 
-        foreach ($standardCompact as $month => $monthData) {
-            foreach ($monthData as $currency => $items) {
-                if (!array_key_exists($month, $monthlyData)) {
-                    $monthlyData[$month] = [
+        foreach ($standardCompact as $period => $periodData) {
+            foreach ($periodData as $currency => $items) {
+                if (!array_key_exists($period, $dataByPeriod)) {
+                    $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => 0,
                     ];
                 }
 
                 $rate = $allRates
-                    ->where('month', $month)
+                    ->where('month', $period)
                     ->where('from_id', $currency)
                     ->first();
 
-                $monthlyData[$month]['actual'] += array_sum($items) * ($rate ? $rate->rate : 1);
+                $dataByPeriod[$period]['actual'] += array_sum($items) * ($rate ? $rate->rate : 1);
             }
         }
 
@@ -125,8 +128,8 @@ class ReportController extends Controller
         );
 
         $budgetCompact = [];
-        $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency) {
-            $month = $transaction->date->format('Y-m-01');
+        $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency, $periodFormat) {
+            $period = $transaction->date->format($periodFormat);
             if ($transaction->transactionType->name === 'withdrawal') {
                 if ($transaction->config->accountFrom) {
                     $currency_id = $transaction->config->accountFrom->config->currency_id;
@@ -141,39 +144,39 @@ class ReportController extends Controller
                 }
             }
 
-            $budgetCompact[$month][$currency_id][] = ($transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $transaction->sum;
+            $budgetCompact[$period][$currency_id][] = ($transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $transaction->sum;
         });
 
-        foreach ($budgetCompact as $month => $monthData) {
-            foreach ($monthData as $currency => $items) {
-                if (!array_key_exists($month, $monthlyData)) {
-                    $monthlyData[$month] = [
+        foreach ($budgetCompact as $period => $periodData) {
+            foreach ($periodData as $currency => $items) {
+                if (!array_key_exists($period, $dataByPeriod)) {
+                    $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => 0,
                     ];
                 }
 
                 $rate = $allRates
-                    ->where('month', $month)
+                    ->where('month', $period)
                     ->where('from_id', $currency)
                     ->first();
 
-                $monthlyData[$month]['budget'] += array_sum($items) * ($rate ? $rate->rate : 1);
+                $dataByPeriod[$period]['budget'] += array_sum($items) * ($rate ? $rate->rate : 1);
             }
         }
 
         // Transform standard data into amCharts format
         $result = [];
-        foreach ($monthlyData as $key => $value) {
+        foreach ($dataByPeriod as $key => $value) {
             $result[] = [
-                'month' => new Carbon($key),
+                'period' => new Carbon($key),
                 'actual' => $value['actual'],
                 'budget' => $value['budget'],
             ];
         }
 
         usort($result, function ($a, $b) {
-            return $a['month'] <=> $b['month'];
+            return $a['period'] <=> $b['period'];
         });
 
         // Return fetched and prepared data

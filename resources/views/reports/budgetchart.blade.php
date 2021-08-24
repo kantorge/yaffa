@@ -11,6 +11,18 @@
 <div class="row">
     <div class="col-lg-8">
         <div class="box">
+            <div class="box-header">
+                <div class="pull-right box-tools">
+                    <a
+                        class="btn {{($byYears ? 'btn-primary' : 'btn-info') }}"
+                        href="{{ route('reports.budgetchart', ['byYears' => ($byYears ? '' : 'byYears')]) }}"
+                        title="{{($byYears ? 'Switch to monthly view' : 'Switch to yearly view') }}">
+                        <i class="fa fa-calendar"></i>
+                    </a>
+                </div>
+                <!-- /.box-tools -->
+            </div>
+            <!-- /.box-header -->
             <div class="box-body">
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
             </div>
