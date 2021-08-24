@@ -49,7 +49,6 @@ window.tableData = [];
 $(function () {
     window.chart = am4core.create("chartdiv", am4charts.XYChart);
 
-    chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
     chart.numberFormatter.intlLocales = "hu-HU";
     chart.numberFormatter.numberFormat = {
         style: 'currency',
@@ -59,7 +58,7 @@ $(function () {
     };
 
     var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "month";
+    categoryAxis.dataFields.category = "period";
 
     var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
@@ -96,19 +95,20 @@ $(function () {
         $.ajax({
             url: '/api/budgetchart',
             data: {
-                categories: $("#category_id").val()
+                categories: $("#category_id").val(),
+                byYears: (byYears ? 1 : 0),
             }
         })
         .done(function(data) {
             // Convert date
             data = data.map(function(item) {
-                item.date = new Date(item.month);
+                item.date = new Date(item.period);
                 return item;
             });
 
             // Add moving average (assuming data is ordered)
             if (data.length > 0) {
-                data = computeMovingAverage(data, 12);
+                data = computeMovingAverage(data, 12 * (byYears ? 5 : 1));
             }
             chart.data = data;
             chart.invalidateData();

@@ -7,6 +7,7 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionType;
+use Illuminate\Http\Request;
 use JavaScript;
 
 class ReportController extends Controller
@@ -180,20 +181,25 @@ class ReportController extends Controller
         );
     }
 
-    public function budgetChart()
+    public function budgetChart(Request $request)
     {
+        // Get requested aggregation period
+        $byYears = $request->get('byYears') ?? false;
+
         // Get all categories
         $categories = Category::all()->sortBy('full_name');
 
         // Pass currency related data for amCharts
         JavaScript::put([
             'currency' => $this->getBaseCurrency(),
+            'byYears' => $byYears,
         ]);
 
         return view(
             'reports.budgetchart',
             [
-                'categories' => $categories->pluck('full_name', 'id')
+                'categories' => $categories->pluck('full_name', 'id'),
+                'byYears' => $byYears,
             ]
         );
     }
