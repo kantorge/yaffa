@@ -78,16 +78,6 @@ return [
             'engine' => null,
         ],
 
-        //required only for legacy import
-        'mysql_fin_migration' => [
-            'driver'    => env('DB_CONNECTION_FIN'),
-            'host'      => env('DB_HOST_FIN'),
-            'port'      => env('DB_PORT_FIN'),
-            'database'  => env('DB_DATABASE_FIN'),
-            'username'  => env('DB_USERNAME_FIN'),
-            'password'  => env('DB_PASSWORD_FIN'),
-        ],
-
         //remote DB test
         'mysql_nas' => [
             'driver' => env('DB_CONNECTION_NAS'),
