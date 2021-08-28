@@ -3,6 +3,7 @@
 namespace App\Http\Traits;
 
 use App\Models\Currency;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -14,9 +15,9 @@ trait CurrencyTrait
      * @param  bool $onlyToBaseCurrency
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function allCurrencyRatesByMonth(bool $onlyToBaseCurrency = true): Collection
+    public function allCurrencyRatesByMonth(bool $withCarbonDates = true, bool $onlyToBaseCurrency = true): Collection
     {
-        return DB::table('currency_rates')
+        $rates = DB::table('currency_rates')
             ->select(
                 DB::raw('SUBDATE(`date`, (day(`date`)-1)) AS `month`'),
                 'from_id',
@@ -30,6 +31,15 @@ trait CurrencyTrait
             ->groupBy('from_id')
             ->groupBy('to_id')
             ->get();
+
+        if ($withCarbonDates) {
+            $rates->transform(function ($rate) {
+                $rate->date_from = Carbon::parse($rate->month);
+                return $rate;
+            });
+        }
+
+        return $rates;
     }
 
     /**

@@ -42,7 +42,7 @@ class ReportController extends Controller
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
-        $allRates = $this->allCurrencyRatesByMonth(true);
+        $allRates = $this->allCurrencyRatesByMonth(true, true);
 
         // Get all standard transactions with related categories
         $standardTransactions = TransactionItem::with([

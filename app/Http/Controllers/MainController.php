@@ -42,7 +42,7 @@ class MainController extends Controller
     {
         $accounts = AccountEntity::where('config_type', 'account')
             ->when(!$withClosed, function ($query) {
-                $query->where('active', '1');
+                return $query->where('active', '1');
             })
             ->with([
                 'config',

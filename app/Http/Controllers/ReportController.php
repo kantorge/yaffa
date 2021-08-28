@@ -3,22 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\CurrencyTrait;
+use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use JavaScript;
 
 class ReportController extends Controller
 {
     use CurrencyTrait;
+    use ScheduleTrait;
 
-    public function cashFlow()
+    public function cashFlow(Request $request)
     {
+        // Check if forecast is required
+        $withForecast = $request->get('withForecast') ?? false;
+
+        // Get axes setting
+        $singleAxes = $request->get('singleAxes') ?? false;
+
         // Get monthly average currency rate for all currencies
         $baseCurrency = $this->getBaseCurrency();
-        $allRates = $this->allCurrencyRatesByMonth(true);
+        $allRates = $this->allCurrencyRatesByMonth(true, true);
 
         $firstRates = $allRates->groupBy('from_id')
             ->map(function ($group) {
@@ -42,23 +51,14 @@ class ReportController extends Controller
                         ->where('from_id', $account->config->currency_id)
                         ->first();
 
-                    $account['sum'] *= $rate->rate;
+                    $account['sum'] *= ($rate ? $rate->rate : 1);
                 }
 
                 return $account;
             });
 
-        // Get all standard transactions (one-time AND scheduled)
-        $standardTransactions = Transaction::where(
-            function ($query) {
-                $query->where('schedule', 1)
-                    ->orWhere(function ($query) {
-                        $query->where('schedule', 0);
-                        $query->where('budget', 0);
-                    });
-            }
-        )
-        ->where(
+        // Get all standard transactions (one-time AND scheduled/budget)
+        $standardTransactionsAll = Transaction::where(
             'config_type',
             'transaction_detail_standard'
         )
@@ -72,23 +72,16 @@ class ReportController extends Controller
         ->with([
             'config',
             'transactionType',
+            'transactionSchedule',
             'config.accountFrom.config',
             'config.accountTo.config',
         ])
+        //->orderBy('id', 'desc')
         //->limit(10)
         ->get();
 
         // Get all investment transactions
-        $investmentTransactions = Transaction::where(
-            function ($query) {
-                $query->where('schedule', 1)
-                    ->orWhere(function ($query) {
-                        $query->where('schedule', 0);
-                        $query->where('budget', 0);
-                    });
-            }
-        )
-        ->where(
+        $investmentTransactionsAll = Transaction::where(
             'config_type',
             'transaction_detail_investment'
         )
@@ -96,17 +89,22 @@ class ReportController extends Controller
         ->with([
             'config',
             'transactionType',
+            'transactionSchedule',
             'config.account.config',
         ])
-        //->limit(10)
         ->get();
+
+        [$standardTransactionsHistory, $standardTransactionSchedule] = $standardTransactionsAll->partition(function ($transaction) {
+            return !$transaction->schedule && !$transaction->budget;
+        });
+
+        [$investmentTransactionsHistory, $investmentTransactionSchedule] = $investmentTransactionsAll->partition(function ($transaction) {
+            return !$transaction->schedule && !$transaction->budget;
+        });
 
         // Group standard transactions by month, and get all relevant details
         $standardCompact = [];
-        $standardTransactions->filter(function ($transaction) {
-            return !$transaction->schedule;
-        })
-        ->each(function ($transaction) use (&$standardCompact) {
+        $standardTransactionsHistory->each(function ($transaction) use (&$standardCompact) {
             $month = $transaction->date->format('Y-m-01');
             $currency_id = ($transaction->transactionType->name === 'withdrawal' ? $transaction->config->accountFrom->config->currency_id : $transaction->config->accountTo->config->currency_id);
 
@@ -115,15 +113,45 @@ class ReportController extends Controller
 
         // Group investment transactions
         $investmentCompact = [];
-        $investmentTransactions->filter(function ($transaction) {
-            return !$transaction->schedule;
-        })
-        ->each(function ($transaction) use (&$investmentCompact) {
+        $investmentTransactionsHistory->each(function ($transaction) use (&$investmentCompact) {
             $month = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->config->account->config->currency_id;
 
             $investmentCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
         });
+
+        if ($withForecast) {
+            // Get standard transaction schedule and/or budget instances
+            $this->getScheduleInstances(
+                $standardTransactionSchedule,
+                'start',
+                (new Carbon())->addYears(50)
+            )->each(function ($transaction) use (&$standardCompact, $baseCurrency) {
+                $month = $transaction->date->format('Y-m-01');
+
+                // Set currency to base currency, and check if any adjustments are necessary
+                $currency_id = $baseCurrency->id;
+                if ($transaction->transactionType->name === 'withdrawal' && $transaction->config->accountFrom) {
+                    $currency_id = $transaction->config->accountFrom->config->currency_id;
+                } elseif ($transaction->config->accountTo) {
+                    $currency_id = $transaction->config->accountTo->config->currency_id;
+                }
+
+                $standardCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
+            });
+
+            // Get investment transaction schedule and/or budget instances
+            $this->getScheduleInstances(
+                $investmentTransactionSchedule,
+                'start',
+                (new Carbon())->addYears(50)
+            )->each(function ($transaction) use (&$investmentCompact) {
+                $month = $transaction->date->format('Y-m-01');
+                $currency_id = $transaction->config->account->config->currency_id;
+
+                $investmentCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
+            });
+        }
 
         // Summarize standard and investment items, applying currency rate
         $monthlyData = [];
@@ -134,12 +162,19 @@ class ReportController extends Controller
                     $monthlyData[$month] = 0;
                 }
 
-                $rate = $allRates
-                    ->where('month', $month)
-                    ->where('from_id', $currency)
-                    ->first();
+                if ($baseCurrency->id != $currency) {
+                    $rate = $allRates
+                        ->where('from_id', $currency)
+                        ->where('date_from', '<', new Carbon($month))
+                        ->sortByDesc('date_from')
+                        ->first();
 
-                $monthlyData[$month] += array_sum($items) * ($rate ? $rate->rate : 1);
+                    $rate = ($rate ? $rate->rate : 1);
+                } else {
+                    $rate = 1;
+                }
+
+                $monthlyData[$month] += array_sum($items) * $rate;
             }
         }
 
@@ -149,12 +184,19 @@ class ReportController extends Controller
                     $monthlyData[$month] = 0;
                 }
 
-                $rate = $allRates
-                    ->where('month', $month)
-                    ->where('from_id', $currency)
-                    ->first();
+                if ($baseCurrency->id != $currency) {
+                    $rate = $allRates
+                        ->where('from_id', $currency)
+                        ->where('date_from', '<', new Carbon($month))
+                        ->sortByDesc('date_from')
+                        ->first();
 
-                $monthlyData[$month] += array_sum($items) * ($rate ? $rate->rate : 1);
+                    $rate = ($rate ? $rate->rate : 1);
+                } else {
+                    $rate = 1;
+                }
+
+                $monthlyData[$month] += array_sum($items) * $rate;
             }
         }
 
@@ -164,20 +206,27 @@ class ReportController extends Controller
         foreach ($monthlyData as $month => $data) {
             $runningTotal += $data;
             $final[] = [
-                'month' => $month,
+                'month' => new Carbon($month),
                 'value' => $data,
                 'runningTotal' => $runningTotal,
             ];
         }
 
-        // TODO: Add schedule to history items, if needeed
+        usort($final, function ($a, $b) {
+            return $a['month'] <=> $b['month'];
+        });
 
         JavaScript::put([
             'transactionDataHistory' => $final,
+            'singleAxes' => (bool) $singleAxes,
         ]);
 
         return view(
-            'reports.cashflow'
+            'reports.cashflow',
+            [
+                'withForecast' => $withForecast,
+                'singleAxes' => $singleAxes,
+            ]
         );
     }
 

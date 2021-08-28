@@ -7,15 +7,16 @@ $(function () {
     var chart = am4core.create("chartdiv", am4charts.XYChart);
     chart.data = transactionDataHistory;
 
-    chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+    //chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
 
     var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
     categoryAxis.dataFields.category = "month";
-    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+    var valueAxisMonthly = chart.yAxes.push(new am4charts.ValueAxis());
 
     // Monthly bars
     var seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
     seriesMonhtly.dataFields.valueY = "value";
+    seriesMonhtly.yAxis = valueAxisMonthly;
     seriesMonhtly.dataFields.dateX = "month";
     seriesMonhtly.name = 'Monthly change';
     seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
@@ -27,6 +28,13 @@ $(function () {
     seriesTotal.strokeWidth = 2;
     seriesTotal.name = 'Running total';
     seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
+
+    if (!singleAxes) {
+        var valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
+        valueAxisTotal.renderer.opposite = true;
+
+        seriesTotal.yAxis = valueAxisTotal;
+    }
 
     /*
     var bullet = seriesTotal.bullets.push(new am4charts.CircleBullet());
