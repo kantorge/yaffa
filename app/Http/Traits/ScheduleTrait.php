@@ -16,19 +16,25 @@ trait ScheduleTrait
      * @param  int $virtualLimit
      * @return Illuminate\Support\Collection
      */
-    public function getScheduleInstances(Collection $transactions, string $startType, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500): Collection
+    public function getScheduleInstances(Collection $transactions, string $startType, ?Carbon $customStart = null, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500): Collection
     {
         $scheduleInstances = new Collection();
 
-        if (!in_array($startType, ['start', 'next'])) {
+        if (!in_array($startType, ['start', 'next', 'custom'])) {
             return $scheduleInstances;
         }
 
-        $transactions->each(function ($transaction) use (&$scheduleInstances, $startType, $maxLookAhead, $virtualLimit) {
-            if ($startType == 'start') {
+        $transactions->each(function ($transaction) use (&$scheduleInstances, $startType, $customStart, $maxLookAhead, $virtualLimit) {
+            if ($startType === 'start') {
                 $constraintStart = $transaction->transactionSchedule->start_date;
-            } elseif ($startType == 'next') {
+            } elseif ($startType === 'next') {
                 $constraintStart = $transaction->transactionSchedule->next_date;
+            } elseif ($startType === 'custom') {
+                if ($customStart && Carbon::checkDate($customStart)) {
+                    $constraintStart = Carbon::parse($customStart);
+                } else {
+                    $constraintStart = Carbon::now()->startOfDay();
+                }
             }
 
             $scheduleInstances = $scheduleInstances->merge($transaction->scheduleInstances($constraintStart, $maxLookAhead, $virtualLimit));

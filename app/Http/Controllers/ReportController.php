@@ -124,7 +124,8 @@ class ReportController extends Controller
             // Get standard transaction schedule and/or budget instances
             $this->getScheduleInstances(
                 $standardTransactionSchedule,
-                'start',
+                'custom',
+                null,
                 (new Carbon())->addYears(50)
             )->each(function ($transaction) use (&$standardCompact, $baseCurrency) {
                 $month = $transaction->date->format('Y-m-01');
@@ -144,6 +145,7 @@ class ReportController extends Controller
             $this->getScheduleInstances(
                 $investmentTransactionSchedule,
                 'start',
+                null,
                 (new Carbon())->addYears(50)
             )->each(function ($transaction) use (&$investmentCompact) {
                 $month = $transaction->date->format('Y-m-01');

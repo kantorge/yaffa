@@ -124,6 +124,7 @@ class ReportController extends Controller
         $budgetInstances = $this->getScheduleInstances(
             $budgetTransactions,
             'start',
+            null,
             (new Carbon())->addYears(50)
         );
 
