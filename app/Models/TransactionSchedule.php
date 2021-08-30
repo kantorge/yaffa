@@ -30,6 +30,7 @@ class TransactionSchedule extends Model
         'frequency',
         'count',
         'interval',
+        'inflation',
     ];
 
     protected $hidden = ['transaction_id'];

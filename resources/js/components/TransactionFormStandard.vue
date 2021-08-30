@@ -237,6 +237,8 @@
 
                         <transaction-schedule
                             :isVisible="form.schedule || form.budget"
+                            :isSchedule="form.schedule"
+                            :isBudget="form.budget"
                             :schedule="form.schedule_config"
                             :form="form"
                         ></transaction-schedule>
@@ -595,6 +597,7 @@
                     this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
                     this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
                     this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
+                    this.form.schedule_config.inflation = this.transaction.transaction_schedule.inflation;
                 }
             }
 

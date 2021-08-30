@@ -50,6 +50,7 @@
                 <div
                     class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.next_date') ? 'has-error' : ''"
+                    v-if="isSchedule"
                 >
                     <label for="schedule_next" class="control-label">
                             Next date
@@ -92,6 +93,20 @@
                         v-model="schedule.end_date"
                     ></date-picker>
                 </div>
+                <div
+                    class="col-xs-6 col-sm-4 form-group"
+                    :class="form.errors.has('schedule_config.inflation') ? 'has-error' : ''"
+                    v-if="isBudget"
+                >
+                    <label for="schedule_inflation" class="control-label">Budget inflation, %</label>
+                    <input
+                        class="form-control"
+                        id="schedule_inflation"
+                        v-model="schedule.inflation"
+                        type="number"
+                        step=".01"
+                    >
+                </div>
             </div>
         </div>
         <!-- /.box-body -->
@@ -111,6 +126,8 @@
 
         props: {
             isVisible: Boolean,
+            isSchedule: Boolean,
+            isBudget: Boolean,
             schedule: Object,
             form: Object,
         },
