@@ -146,20 +146,20 @@ $(function() {
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transactionOperator == 'minus' ? numberRenderer(row.amount_from) : null);
+                    return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transactionOperator == 'plus' ? numberRenderer(row.amount_to) : null);
+                    return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 data: 'running_total',
                 title: 'Running total',
-                render: function ( data, type, row, meta ) {
-                    return numberRenderer(data);
+                render: function (data) {
+                    return data.toLocalCurrency(currency, true);
                 },
                 createdCell: function (td, cellData, rowData, row, col) {
                     if (cellData < 0) {
@@ -262,13 +262,13 @@ $(function() {
             {
                 title: "Withdrawal",
                 render: function ( data, type, row, meta ) {
-                    return (row.transactionOperator == 'minus' ? numberRenderer(row.amount_from) : null);
+                    return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 title: "Deposit",
                 render: function ( data, type, row, meta ) {
-                    return (row.transactionOperator == 'plus' ? numberRenderer(row.amount_to) : null);
+                    return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
                 },
             },
             dtColumnSettingComment,

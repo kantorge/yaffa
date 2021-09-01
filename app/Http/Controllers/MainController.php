@@ -152,10 +152,13 @@ class MainController extends Controller
         );
     }
 
-    public function account_details(Account $account, $withForecast = null)
+    public function account_details(AccountEntity $account, $withForecast = null)
     {
         // Get account details and load to class variable
-        $this->currentAccount = $account->load('config');
+        $this->currentAccount = $account->load([
+            'config',
+            'config.currency'
+        ]);
 
         // Get all accounts and payees so their name can be reused
         $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
@@ -295,7 +298,7 @@ class MainController extends Controller
             ->sortByDesc('transactionType')
             ->sortBy('date')
             // Add opening item to beginning of transaction list
-            ->prepend($account->openingBalance())
+            ->prepend($account->config->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
                 $subTotal += ($transaction->transactionOperator === 'plus' ? $transaction->amount_to : -$transaction->amount_from);
                 $transaction->running_total = $subTotal;
@@ -304,6 +307,7 @@ class MainController extends Controller
             ->values();
 
         JavaScript::put([
+            'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {

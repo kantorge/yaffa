@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CurrencyRequest;
+use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use JavaScript;
 
 class CurrencyController extends Controller
 {
+    use CurrencyTrait;
+
     /**
      * Display a listing of the resource.
      *
@@ -64,10 +67,8 @@ class CurrencyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Currency $currency)
     {
-        $currency = Currency::find($id);
-
         return view('currencies.form', ['currency'=> $currency]);
     }
 
@@ -91,11 +92,8 @@ class CurrencyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Currency $currency)
     {
-        //Retrieve item
-        $currency = Currency::find($id);
-
         //base currency cannot be deleted
         if ($currency->base) {
             self::addSimpleDangerMessage('Base currency cannot be deleted');
@@ -115,5 +113,22 @@ class CurrencyController extends Controller
             }
             return redirect()->back();
         }
+    }
+
+    public function setDefault(Currency $currency)
+    {
+        $baseCurrency = $this->getBaseCurrency();
+
+        if ($currency == $baseCurrency) {
+            return redirect()->back();
+        }
+
+        $baseCurrency->base = null;
+        $baseCurrency->save();
+        $currency->base = true;
+        $currency->save();
+
+        self::addSimpleSuccessMessage('Base currency changed');
+        return redirect()->back();
     }
 }

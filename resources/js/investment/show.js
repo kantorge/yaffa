@@ -99,7 +99,7 @@ $(function () {
                         return data;
                     }
 
-                    return data.toLocalCurreny(investment.currency);
+                    return data.toLocalCurrency(investment.currency);
                 },
             },
             {
@@ -110,7 +110,7 @@ $(function () {
                         return data;
                     }
 
-                    return data.toLocalCurreny(investment.currency);
+                    return data.toLocalCurrency(investment.currency);
                 },
             },
             {
@@ -121,7 +121,7 @@ $(function () {
                         return data;
                     }
 
-                    return data.toLocalCurreny(investment.currency);
+                    return data.toLocalCurrency(investment.currency);
                 },
             },
             {
@@ -132,7 +132,7 @@ $(function () {
                         return data;
                     }
 
-                    return data.toLocalCurreny(investment.currency);
+                    return data.toLocalCurrency(investment.currency);
                 },
             },
             {
@@ -148,7 +148,7 @@ $(function () {
                             - row.tax
                             - row.commission;
 
-                    return result.toLocalCurreny(investment.currency);
+                    return result.toLocalCurrency(investment.currency);
                 }
             },
             {
@@ -281,7 +281,7 @@ $(function () {
         //assign calculated data to respective fields
         for (var prop in window.summary) {
             if (Object.prototype.hasOwnProperty.call(window.summary, prop)) {
-                document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency ? window.summary[prop].value.toLocalCurreny(investment.currency) : window.summary[prop].value.toLocaleString('hu-HU'));
+                document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency ? window.summary[prop].value.toLocalCurrency(investment.currency) : window.summary[prop].value.toLocaleString('hu-HU'));
             }
         }
     };

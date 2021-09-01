@@ -84,7 +84,7 @@ $( function () {
 
 // Helper functions
 // TODO: find appropriate place for these
-Number.prototype.toLocalCurreny = function(currency, nonBreakingSpaces) {
+Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
     if (nonBreakingSpaces !== false) {
         nonBreakingSpaces = true;
     }
@@ -94,6 +94,7 @@ Number.prototype.toLocalCurreny = function(currency, nonBreakingSpaces) {
         {
             style: 'currency',
             currency: currency.iso_code,
+            currencyDisplay: 'narrowSymbol',
             minimumFractionDigits: currency.num_digits,
             maximumFractionDigits: currency.num_digits
         }
