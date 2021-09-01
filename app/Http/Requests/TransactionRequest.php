@@ -54,8 +54,9 @@ class TransactionRequest extends FormRequest
                     'required',
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
                 ],
-                'schedule_config.interval' => 'nullable|numeric|gte:1',
-                'schedule_config.count' => 'nullable|numeric|gte:1',
+                'schedule_config.interval' => 'nullable|integer|gte:1',
+                'schedule_config.count' => 'nullable|integer|gte:1',
+                'schedule_config.inflation' => 'nullable|numeric',
             ]);
         } else {
             $rules = array_merge($rules, [

@@ -36,6 +36,7 @@ Route::resource('account', AccountController::class);
 
 Route::resource('categories', CategoryController::class);
 Route::resource('currencies', CurrencyController::class);
+Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])->name('currencies.setDefault');
 
 Route::get(
     '/currencyrates/missing/{currency}',

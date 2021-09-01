@@ -177,6 +177,8 @@
 
         <transaction-schedule
             :isVisible="form.schedule"
+            :isSchedule="form.schedule"
+            :isBudget="false"
             :schedule="form.schedule_config"
             :form="form"
         ></transaction-schedule>
