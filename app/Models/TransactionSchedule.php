@@ -76,7 +76,7 @@ class TransactionSchedule extends Model
 
         $recurrence = $transformer->transform($rule, $constraint);
 
-        if (empty($recurrence)) {
+        if ($recurrence->count() === 0) {
             return null;
         }
 
