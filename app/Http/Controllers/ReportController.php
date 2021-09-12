@@ -221,6 +221,7 @@ class ReportController extends Controller
         JavaScript::put([
             'transactionDataHistory' => $final,
             'singleAxes' => (bool) $singleAxes,
+            'currency' => $baseCurrency,
         ]);
 
         return view(
