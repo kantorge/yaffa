@@ -25,7 +25,7 @@ $(function() {
     //define some settings, that are common for the two tables
     var dtColumnSettingPayee = {
         title: 'Payee',
-        render: function ( data, type, row, meta ) {
+        render: function (data, type, row) {
             if (row.transaction_type.type == 'Standard') {
                 if (row.transaction_type.name == 'withdrawal') {
                     return row.account_to_name;
@@ -50,7 +50,7 @@ $(function() {
     };
     var dtColumnSettingCategories = {
         title: "Category",
-        render: function ( data, type, row, meta ) {
+        render: function (data, type, row) {
             //standard transaction
             if (row.transaction_type.type == 'Standard') {
                 //empty
@@ -83,21 +83,21 @@ $(function() {
     var dtColumnSettingComment = {
         data: "comment",
         title: "Comment",
-        render: function(data, type, row, meta){
+        render: function(data, type) {
             if(type === 'display'){
                data = truncateString(data, 20);
             }
 
             return data;
          },
-        createdCell: function (td, cellData, rowData, row, col) {
+        createdCell: function(td, cellData) {
             $(td).prop('title', cellData);
         }
     };
     var dtColumnSettingTags = {
         data: "tags",
         title: "Tags",
-        render: function ( data, type, row, meta ) {
+        render: function(data) {
             return data.join(', ');
         }
     }
@@ -108,7 +108,7 @@ $(function() {
             {
                 data: "date",
                 title: "Date",
-                render: function ( data, type, row, meta ) {
+                render: function(data) {
                     if (!data) {
                         return data;
                     }
@@ -119,7 +119,7 @@ $(function() {
                 data: "reconciled",
                 title: '<span title="Reconciled">R</span>',
                 className: "text-center",
-                render: function ( data, type, row, meta ) {
+                render: function( data, type, row) {
                     if (type == 'filter') {
                         return  (   !row.schedule
                                  && (row.transaction_type.type == 'Standard' || row.transaction_type.type == 'Investment')
@@ -145,13 +145,13 @@ $(function() {
             dtColumnSettingCategories,
             {
                 title: "Withdrawal",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 title: "Deposit",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
                 },
             },
