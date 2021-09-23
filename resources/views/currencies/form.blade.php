@@ -8,6 +8,17 @@
 
 @section('content')
 
+    @if ($noDefaultCurrency)
+        <div class="alert alert-info">
+            <h4>
+                <i class='icon fa fa-info-circle'></i>
+                No currencies found
+            </h4>
+            Please add at least one currency, that you'll ues. You can set it as the default currency, which will be used in reports and summaries.
+        </div>
+        <!-- /.alert -->
+    @endif
+
     @if(isset($currency))
         <form
             accept-charset="UTF-8"
@@ -68,7 +79,7 @@
             </div>
             <div class="form-group">
                 <label for="num_digits" class="control-label col-sm-3">
-                    Number of digits
+                    Number of decimal digits to handle
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -138,8 +149,6 @@
                             @if ($currency->auto_update == '1')
                                 checked="checked"
                             @endif
-                        @else
-                            checked="checked"
                         @endif
                     >
                 </div>

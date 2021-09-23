@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
+use Illuminate\Http\Request;
 use JavaScript;
 
 class CurrencyController extends Controller
@@ -42,9 +43,14 @@ class CurrencyController extends Controller
         return view('currencies.index');
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('currencies.form');
+        return view(
+            'currencies.form',
+            [
+                'noDefaultCurrency' => $request->get('noDefaultCurrency')
+            ]
+        );
     }
 
     public function store(CurrencyRequest $request)
