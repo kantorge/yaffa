@@ -44,7 +44,7 @@ class MainController extends Controller
             $baseCurrency = Currency::where('base', 1)->firstOrFail();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             $this->addMessage(
-                "Please add at least one currency, that you'll ues. You can set it as the default currency, which will be used in reports and summaries.",
+                "Please add at least one currency, that you'll use. You can set it as the default currency, which will be used in reports and summaries.",
                 "info",
                 "No currencies found",
                 "info-circle"

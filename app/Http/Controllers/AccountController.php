@@ -77,11 +77,33 @@ class AccountController extends Controller
 
     public function create()
     {
-        //get all account groups
+        // Get all account groups
         $allAccountGroups = AccountGroup::pluck('name', 'id')->all();
 
-        //get all currencies
+        // Redirect to account group form, if empty
+        if (sizeof($allAccountGroups) === 0) {
+            $this->addMessage(
+                "Before creating an account, please add at least one account group. E.g. cash, bank accounts, savings, etc. Account groups help to organize your accounts.",
+                "info",
+                "No account groups found",
+                "info-circle"
+            );
+            return redirect()->route('account-group.create');
+        }
+
+        // Get all currencies
         $allCurrencies = Currency::pluck('name', 'id')->all();
+
+        // Redirect to currency form, if empty
+        if (sizeof($allCurrencies) === 0) {
+            $this->addMessage(
+                "Before creating an account, please add at least one currency. Accounts must have a currency assigned.",
+                "info",
+                "No currencies found",
+                "info-circle"
+            );
+            return redirect()->route('currencies.create');
+        }
 
         return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
