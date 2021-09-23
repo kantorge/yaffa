@@ -43,14 +43,9 @@ class CurrencyController extends Controller
         return view('currencies.index');
     }
 
-    public function create(Request $request)
+    public function create()
     {
-        return view(
-            'currencies.form',
-            [
-                'noDefaultCurrency' => $request->get('noDefaultCurrency')
-            ]
-        );
+        return view('currencies.form');
     }
 
     public function store(CurrencyRequest $request)

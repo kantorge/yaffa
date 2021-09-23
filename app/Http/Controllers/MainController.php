@@ -43,12 +43,13 @@ class MainController extends Controller
         try {
             $baseCurrency = Currency::where('base', 1)->firstOrFail();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->route(
-                'currencies.create',
-                [
-                    'noDefaultCurrency' => true
-                ]
+            $this->addMessage(
+                "Please add at least one currency, that you'll ues. You can set it as the default currency, which will be used in reports and summaries.",
+                "info",
+                "No currencies found",
+                "info-circle"
             );
+            return redirect()->route('currencies.create');
         }
 
         // Get all currencies for rate calculation
