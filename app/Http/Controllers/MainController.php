@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\ScheduleTrait;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Currency;
@@ -40,6 +39,23 @@ class MainController extends Controller
      */
     public function index($withClosed = null)
     {
+        // Try to get base currency. Get user to define it, if no currencies exist.
+        try {
+            $baseCurrency = Currency::where('base', 1)->firstOrFail();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->addMessage(
+                "Please add at least one currency, that you'll use. You can set it as the default currency, which will be used in reports and summaries.",
+                "info",
+                "No currencies found",
+                "info-circle"
+            );
+            return redirect()->route('currencies.create');
+        }
+
+        // Get all currencies for rate calculation
+        $currencies = Currency::all();
+
+        // Load all accounts to get current value
         $accounts = AccountEntity::where('config_type', 'account')
             ->when(!$withClosed, function ($query) {
                 return $query->where('active', '1');
@@ -50,10 +66,6 @@ class MainController extends Controller
                 'config.currency',
             ])
             ->get();
-
-        // Get all currencies for rate calculation
-        $baseCurrency = Currency::where('base', 1)->firstOrFail();
-        $currencies = Currency::all();
 
         $accounts
             ->map(function ($account) use ($currencies, $baseCurrency) {

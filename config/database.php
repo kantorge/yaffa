@@ -78,26 +78,6 @@ return [
             'engine' => null,
         ],
 
-        //remote DB test
-        'mysql_nas' => [
-            'driver' => env('DB_CONNECTION_NAS'),
-            //'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST_NAS'),
-            'port' => env('DB_PORT_NAS'),
-            'database' => env('DB_DATABASE_NAS'),
-            'username' => env('DB_USERNAME_NAS'),
-            'password' => env('DB_PASSWORD_NAS'),
-             'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

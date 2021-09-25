@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
+use Illuminate\Http\Request;
 use JavaScript;
 
 class CurrencyController extends Controller

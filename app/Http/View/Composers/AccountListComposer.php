@@ -18,7 +18,7 @@ class AccountListComposer
     {
         $accounts = AccountEntity::select('name', 'id')
             ->where('config_type', 'account')
-            ->where('active', 1)
+            ->active()
             ->orderBy('name')
             ->get()
             ->pluck('name', 'id');

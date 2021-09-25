@@ -25,7 +25,7 @@ $(function() {
     //define some settings, that are common for the two tables
     var dtColumnSettingPayee = {
         title: 'Payee',
-        render: function ( data, type, row, meta ) {
+        render: function (data, type, row) {
             if (row.transaction_type.type == 'Standard') {
                 if (row.transaction_type.name == 'withdrawal') {
                     return row.account_to_name;
@@ -50,7 +50,7 @@ $(function() {
     };
     var dtColumnSettingCategories = {
         title: "Category",
-        render: function ( data, type, row, meta ) {
+        render: function (data, type, row) {
             //standard transaction
             if (row.transaction_type.type == 'Standard') {
                 //empty
@@ -83,21 +83,21 @@ $(function() {
     var dtColumnSettingComment = {
         data: "comment",
         title: "Comment",
-        render: function(data, type, row, meta){
+        render: function(data, type) {
             if(type === 'display'){
                data = truncateString(data, 20);
             }
 
             return data;
          },
-        createdCell: function (td, cellData, rowData, row, col) {
+        createdCell: function(td, cellData) {
             $(td).prop('title', cellData);
         }
     };
     var dtColumnSettingTags = {
         data: "tags",
         title: "Tags",
-        render: function ( data, type, row, meta ) {
+        render: function(data) {
             return data.join(', ');
         }
     }
@@ -108,7 +108,7 @@ $(function() {
             {
                 data: "date",
                 title: "Date",
-                render: function ( data, type, row, meta ) {
+                render: function(data) {
                     if (!data) {
                         return data;
                     }
@@ -119,7 +119,7 @@ $(function() {
                 data: "reconciled",
                 title: '<span title="Reconciled">R</span>',
                 className: "text-center",
-                render: function ( data, type, row, meta ) {
+                render: function( data, type, row) {
                     if (type == 'filter') {
                         return  (   !row.schedule
                                  && (row.transaction_type.type == 'Standard' || row.transaction_type.type == 'Investment')
@@ -145,13 +145,13 @@ $(function() {
             dtColumnSettingCategories,
             {
                 title: "Withdrawal",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 title: "Deposit",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
                 },
             },
@@ -161,7 +161,7 @@ $(function() {
                 render: function (data) {
                     return data.toLocalCurrency(currency, true);
                 },
-                createdCell: function (td, cellData, rowData, row, col) {
+                createdCell: function(td, cellData) {
                     if (cellData < 0) {
                         $(td).addClass('text-danger');
                     }
@@ -172,7 +172,7 @@ $(function() {
             {
                 data: 'id',
                 title: "Actions",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     if (row.transaction_type.type == 'Opening balance') {
                         return null;
                     }
@@ -199,7 +199,7 @@ $(function() {
                 orderable: false
             }
         ],
-        createdRow: function( row, data, dataIndex ) {
+        createdRow: function(row, data) {
             if (data.schedule) {
                 $(row).addClass('text-muted text-italic');
             }
@@ -261,13 +261,13 @@ $(function() {
             dtColumnSettingCategories,
             {
                 title: "Withdrawal",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
             {
                 title: "Deposit",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
                 },
             },
@@ -276,7 +276,7 @@ $(function() {
             {
                 data: 'id',
                 title: "Actions",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type, row) {
                     return  '' +
                             '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
@@ -289,7 +289,7 @@ $(function() {
             }
         ],
 
-        createdRow: function( row, data, dataIndex ) {
+        createdRow: function(row, data) {
             var nextDate = new Date(data.transaction_schedule.next_date);
             if ( nextDate  < new Date(new Date().setHours(0,0,0,0)) ) {
                 $(row).addClass('danger');

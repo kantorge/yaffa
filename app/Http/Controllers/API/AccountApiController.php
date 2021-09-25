@@ -23,7 +23,7 @@ class AccountApiController extends Controller
             $accounts = $this->account
                 ->select(['id', 'name AS text'])
                 ->where('name', 'LIKE', '%' . $request->get('q') . '%')
-                ->where('active', true)
+                ->active()
                 ->orderBy('name')
                 ->take(10)
                 ->get();
@@ -46,7 +46,6 @@ class AccountApiController extends Controller
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
                 ->where(
-                    // TODO: fallback to query without this, if no results are found
                     'transaction_type_id',
                     '=',
                     TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
@@ -55,9 +54,19 @@ class AccountApiController extends Controller
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get();
+
+            // If no results were found, fallback to blank query
+            if ($accounts->count() === 0) {
+                $accounts = $this->account
+                    ->select(['id', 'name AS text'])
+                    ->active()
+                    ->orderBy('name')
+                    ->take(10)
+                    ->get();
+            }
         }
 
-        //return data
+        // Return data
         return response()->json($accounts, Response::HTTP_OK);
     }
 

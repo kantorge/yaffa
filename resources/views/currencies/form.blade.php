@@ -68,7 +68,7 @@
             </div>
             <div class="form-group">
                 <label for="num_digits" class="control-label col-sm-3">
-                    Number of digits
+                    Number of decimal digits to handle
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -138,8 +138,6 @@
                             @if ($currency->auto_update == '1')
                                 checked="checked"
                             @endif
-                        @else
-                            checked="checked"
                         @endif
                     >
                 </div>

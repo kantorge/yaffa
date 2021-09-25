@@ -4,19 +4,40 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 $(function () {
+    var localeString = "hu-HU";
+
     var chart = am4core.create("chartdiv", am4charts.XYChart);
     chart.data = transactionDataHistory;
 
-    //chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+    chart.numberFormatter.intlLocales = localeString;
+    chart.dateFormatter.intlLocales = localeString;
 
-    var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "month";
-    var valueAxisMonthly = chart.yAxes.push(new am4charts.ValueAxis());
+    chart.numberFormatter.numberFormat = {
+        style: 'currency',
+        currency: currency.iso_code,
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: currency.num_digits,
+        maximumFractionDigits: currency.num_digits
+    };
+
+    chart.dateFormatter.dateFormat = {
+        "year": "numeric",
+        "month": "long",
+    };
+
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.dataFields.category = "month";
+
+    dateAxis.dateFormatter.intlLocales = localeString;
+    dateAxis.dateFormats.setKey("year", { "year": "numeric" });
+    dateAxis.dateFormats.setKey("month", { "year": "numeric", "month": "short" });
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
     // Monthly bars
     var seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
     seriesMonhtly.dataFields.valueY = "value";
-    seriesMonhtly.yAxis = valueAxisMonthly;
+    seriesMonhtly.yAxis = valueAxis;
     seriesMonhtly.dataFields.dateX = "month";
     seriesMonhtly.name = 'Monthly change';
     seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
@@ -35,13 +56,6 @@ $(function () {
 
         seriesTotal.yAxis = valueAxisTotal;
     }
-
-    /*
-    var bullet = seriesTotal.bullets.push(new am4charts.CircleBullet());
-    bullet.circle.stroke = am4core.color("#fff");
-    bullet.circle.strokeWidth = 1;
-    bullet.circle.radius = 3;
-    */
 
     var scrollbarX = new am4charts.XYChartScrollbar();
     scrollbarX.series.push(seriesMonhtly);
