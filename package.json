@@ -32,7 +32,7 @@
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.22",
         "currency.js": "^2.0.4",
-        "datatables.net": "^1.11.2",
+        "datatables.net": "^1.11.3",
         "datatables.net-bs": "^1.11.2",
         "daterangepicker": "^3.1.0",
         "mathjs": "^9.4.4",
