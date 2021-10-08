@@ -11,7 +11,7 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -26,6 +26,11 @@ class CategoryController extends Controller
         return view('categories.index');
     }
 
+    /**
+     * Display a form for adding new resource.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         //get all possible parents
@@ -50,7 +55,7 @@ class CategoryController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param Category $category
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function edit(Category $category)
     {
