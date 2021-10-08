@@ -45,9 +45,9 @@ class MainController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             $this->addMessage(
                 "Please add at least one currency, that you'll use. You can set it as the default currency, which will be used in reports and summaries.",
-                "info",
-                "No currencies found",
-                "info-circle"
+                'info',
+                'No currencies found',
+                'info-circle'
             );
             return redirect()->route('currencies.create');
         }

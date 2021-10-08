@@ -19,7 +19,7 @@ class AccountSeeder extends Seeder
     {
         $account = new AccountEntity(
             [
-                'name' => 'Pénztárca',
+                'name' => 'Wallet',
                 'active' => 1,
                 'config_type' => 'account',
             ]
@@ -28,8 +28,8 @@ class AccountSeeder extends Seeder
         $accountConfig = new Account(
             [
                 'opening_balance' => 1000,
-                'account_group_id' => AccountGroup::where('name', 'Készpénz')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'HUF')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Cash')->pluck('id')->first(),
+                'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );
         $accountConfig->save();
@@ -41,7 +41,7 @@ class AccountSeeder extends Seeder
 
         $account = new AccountEntity(
             [
-                'name' => 'Bankszámla',
+                'name' => 'Bank account',
                 'active' => 1,
                 'config_type' => 'account',
             ]
@@ -50,7 +50,7 @@ class AccountSeeder extends Seeder
         $accountConfig = new Account(
             [
                 'opening_balance' => 1000,
-                'account_group_id' => AccountGroup::where('name', 'Bankszámla')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Bank accounts')->pluck('id')->first(),
                 'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );

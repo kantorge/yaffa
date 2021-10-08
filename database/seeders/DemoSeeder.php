@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 class DemoSeeder extends Seeder
 {
     /**
-     * Seed the application's database with general purpose sample data
+     * Seed the application's database with data for demonstrative purpose
      *
      * @return void
      */
@@ -15,7 +15,7 @@ class DemoSeeder extends Seeder
     {
         $this->call(\Database\Seeders\Fixed\AccountGroupSeeder::class);
         $this->call(\Database\Seeders\Fixed\CurrencySeeder::class);
-        $this->call(\Database\Seeders\Random\CurrencyRateSeeder::class); //TODO: fixed is missing, but might not be necessary to add
+        $this->call(\Database\Seeders\Random\CurrencyRateSeeder::class);
         $this->call(\Database\Seeders\Fixed\AccountSeeder::class);
         $this->call(\Database\Seeders\Fixed\CategorySeeder::class);
         $this->call(\Database\Seeders\Fixed\PayeeSeeder::class);
@@ -23,6 +23,6 @@ class DemoSeeder extends Seeder
         $this->call(\Database\Seeders\Fixed\InvestmentSeeder::class);
         //$this->call(InvestmentPriceSeeder::class, 'db'); TODO: create fixed values
         $this->call(\Database\Seeders\Fixed\TagSeeder::class);
-        $this->call(\Database\Seeders\Random\TransactionSeeder::class); //TODO: fixed is missing, but might not be necessary to add
+        $this->call(\Database\Seeders\Random\TransactionSeeder::class);
     }
 }

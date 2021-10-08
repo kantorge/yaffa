@@ -15,11 +15,11 @@ class CurrencySeeder extends Seeder
     public function run()
     {
         Currency::create([
-            'name' => 'Forint',
+            'name' => 'Hungarian Forint',
             'iso_code' => 'HUF',
             'num_digits' => 0,
             'suffix' => 'Ft',
-            'base' => true,
+            'base' => null,
             'auto_update' => false,
         ]);
         Currency::create([
@@ -35,7 +35,7 @@ class CurrencySeeder extends Seeder
             'iso_code' => 'EUR',
             'num_digits' => 2,
             'suffix' => '€',
-            'base' => null,
+            'base' => true,
             'auto_update' => true,
         ]);
     }

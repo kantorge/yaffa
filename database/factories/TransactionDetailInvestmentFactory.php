@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\TransactionDetailInvestment;
@@ -25,20 +26,23 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function definition()
     {
-        //TODO: random account and investment with same currency
+        $accountCurrencies = Account::query()->distinct()->pluck('currency_id');
+        $investmentCurrencies = Investment::query()->distinct()->pluck('currency_id');
+        $currency = $accountCurrencies->intersect($investmentCurrencies)->random();
+
         return [
-            "account_id" => AccountEntity::where('config_type', 'account')
+            'account_id' => AccountEntity::where('config_type', 'account')
                 ->whereHasMorph(
                     'config',
-                    [\App\Models\Account::class],
-                    function (Builder $query) {
-                        $query->where('currency_id', 1);
+                    [Account::class],
+                    function (Builder $query) use ($currency) {
+                        $query->where('currency_id', $currency);
                     }
                 )
                 ->inRandomOrder()
                 ->first()
                 ->id,
-            "investment_id" => Investment::where('currency_id', 1)
+            'investment_id' => Investment::where('currency_id', $currency)
                 ->inRandomOrder()
                 ->first()
                 ->id,
@@ -54,10 +58,10 @@ class TransactionDetailInvestmentFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                "price" => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price
-                "quantity" => $this->faker->randomFloat(4, 1, 100),
-                "commission" => $this->faker->randomFloat(4, 0.0001, 100),
-                "dividend" => 0,
+                'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => 0,
             ];
         });
     }

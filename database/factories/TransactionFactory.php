@@ -28,9 +28,9 @@ class TransactionFactory extends Factory
         return [
             "budget" => 0,
             "schedule" => 0,
-            "comment" => $this->faker->boolean(50) ? $this->faker->text($maxNbChars = 191)  : null,
+            "comment" => $this->faker->boolean(50) ? $this->faker->text(191)  : null,
             "reconciled" => $this->faker->boolean(50) ? 1  : 0,
-            "date" => $this->faker->dateTimeBetween($startDate = '-1 year', $endDate = 'now'),
+            "date" => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 

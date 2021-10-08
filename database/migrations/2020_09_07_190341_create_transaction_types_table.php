@@ -20,6 +20,107 @@ class CreateTransactionTypesTable extends Migration
             $table->string('amount_operator')->nullable();
             $table->string('quantity_operator')->nullable();
         });
+
+        // Add transaction types
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 1,
+                'name' => 'withdrawal',
+                'type' => 'Standard',
+                'amount_operator' => 'minus',
+                'quantity_operator' => null,
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 2,
+                'name' => 'deposit',
+                'type' => 'Standard',
+                'amount_operator' => 'plus',
+                'quantity_operator' => null,
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 3,
+                'name' => 'transfer',
+                'type' => 'Standard',
+                'amount_operator' => null,
+                'quantity_operator' => null,
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 4,
+                'name' => 'Buy',
+                'type' => 'Investment',
+                'amount_operator' => 'minus',
+                'quantity_operator' => 'plus',
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 5,
+                'name' => 'Sell',
+                'type' => 'Investment',
+                'amount_operator' => 'plus',
+                'quantity_operator' => 'minus',
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 6,
+                'name' => 'Add shares',
+                'type' => 'Investment',
+                'amount_operator' => null,
+                'quantity_operator' => 'plus',
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 7,
+                'name' => 'Remove shares',
+                'type' => 'Investment',
+                'amount_operator' => null,
+                'quantity_operator' => 'minus',
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 8,
+                'name' => 'Dividend',
+                'type' => 'Investment',
+                'amount_operator' => 'plus',
+                'quantity_operator' => null,
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 9,
+                'name' => 'S-Term Cap Gains Dist',
+                'type' => 'Investment',
+                'amount_operator' => 'plus',
+                'quantity_operator' => null,
+            )
+        );
+
+        DB::table('transaction_types')->insert(
+            array(
+                'id' => 10,
+                'name' => 'L-Term Cap Gains Dist',
+                'type' => 'Investment',
+                'amount_operator' => 'plus',
+                'quantity_operator' => null,
+            )
+        );
     }
 
     /**

@@ -2,19 +2,20 @@
 
 namespace Database\Seeders\Random;
 
-use App\Models\AccountEntity;
 use App\Models\Tag;
 use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
-use App\Models\TransactionType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class TransactionSeeder extends Seeder
 {
+    private $tags;
+
+    public function __construct()
+    {
+        $this->tags = Tag::all();
+    }
     /**
      * Run the database seeds by creating random values with factory
      *
@@ -22,48 +23,45 @@ class TransactionSeeder extends Seeder
      */
     public function run()
     {
-        //create standard withdrawals
-        $withdrawals = Transaction::factory()
-                            ->count(rand(50, 100))
-                            ->withdrawal()
-                            ->create();
+        // Create standard withdrawals
+        Transaction::factory()
+            ->count(rand(50, 100))
+            ->withdrawal()
+            ->create()
+            ->each(function($transaction) {
+                $this->createTransactionProperties($transaction);
+            });
 
-        $withdrawals->each(function($transaction) {
-            $this->createTransactionProperties($transaction);
-        });
+        // Create deposits
+        Transaction::factory()
+            ->count(rand(50, 100))
+            ->deposit()
+            ->create()
+            ->each(function($transaction) {
+                $this->createTransactionProperties($transaction);
+            });
 
-        //create deposits
-        $deposits = Transaction::factory()
-                            ->count(rand(50, 100))
-                            ->deposit()
-                            ->create();
+        // Create transfers
+        Transaction::factory()
+            ->count(rand(20, 50))
+            ->transfer()
+            ->create();
 
-        $deposits->each(function($transaction) {
-            $this->createTransactionProperties($transaction);
-        });
+        // Create standard withdrawals with schedule
+        Transaction::factory()
+            ->count(rand(5, 10))
+            ->withdrawal_schedule()
+            ->create()
+            ->each(function($transaction) {
+                $this->createTransactionSchedule($transaction);
+                $this->createTransactionProperties($transaction);
+            });
 
-        //create transfers
-        $trasfers = Transaction::factory()
-                            ->count(rand(20, 50))
-                            ->transfer()
-                            ->create();
-
-        //create standard withdrawals with schedule
-        $withdrawals_with_schedule = Transaction::factory()
-                                        ->count(rand(5, 10))
-                                        ->withdrawal_schedule()
-                                        ->create();
-
-        $withdrawals_with_schedule->each(function($transaction) {
-            $this->createTransactionSchedule($transaction);
-            $this->createTransactionProperties($transaction);
-        });
-
-        //investment buy
-        $buys = Transaction::factory()
-                    ->count(rand(10, 50))
-                    ->buy()
-                    ->create();
+        // Investments - buy
+        Transaction::factory()
+                ->count(rand(10, 50))
+                ->buy()
+                ->create();
     }
 
     private function createTransactionSchedule(Transaction $transaction)
@@ -72,12 +70,10 @@ class TransactionSeeder extends Seeder
             ->create([
                 'transaction_id' => $transaction->id,
             ]);
-        //$transaction->push();
     }
 
     private function createTransactionProperties(Transaction $transaction)
     {
-        //$newTransactionItems = factory(TransactionItem::class, rand(1, 5))->create([
         $newTransactionItems = TransactionItem::factory()
                                     ->count(rand(1, 5))
                                     /* TODO: this should be used, but new tags are created instead of using existing ones
@@ -90,14 +86,9 @@ class TransactionSeeder extends Seeder
                                         'transaction_id' => $transaction->id,
                                     ]);
 
-        //Grab all tags
-        //TODO: can this be called only once per seeding?
-        $tags = Tag::all();
-
-        $newTransactionItems->each(function ($item) use ($tags) {
-
+        $newTransactionItems->each(function ($item) {
             $item->tags()->attach(
-                $tags->random(rand(0, 2))->pluck('id')->toArray()
+                $this->tags->random(rand(0, 2))->pluck('id')->toArray()
             );
         });
 
