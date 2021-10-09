@@ -34,13 +34,13 @@ class InvestmentSeeder extends Seeder
                 'symbol' => 'DIS',
                 'investment_group_id' => InvestmentGroup::where('name', 'Stock')->pluck('id')->first(),
                 'currency_id' => Currency::where('iso_code', 'USD')->pluck('id')->first(),
-                'investment_price_provider_id' => 1, //TODO: kell dinamikusnak lennie?
+                'investment_price_provider_id' => 1,
             ]
         );
 
         Investment::create(
             [
-                'name' => 'Euro befektetés',
+                'name' => 'Euro investment',
                 'active' => 1,
                 'symbol' => 'E',
                 'investment_group_id' => InvestmentGroup::where('name', 'Mutual fund')->pluck('id')->first(),

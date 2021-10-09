@@ -22,9 +22,8 @@ class CurrencyRateSeeder extends Seeder
 
         $currencies->except($baseCurrency->id)->each(function($currency) use ($baseCurrency) {
             $newValue  = rand(1,300);
-            //$period = CarbonPeriod::create('-1 year', '1 day', 'yesterday');
-            $period = CarbonPeriod::create('-1 month', '1 day', 'yesterday');
-            foreach ($period as $key => $date) {
+            $period = CarbonPeriod::create('-1 year', '1 day', 'yesterday');
+            foreach ($period as $date) {
                 $newValue = $newValue * (rand(900 , 1100) / 1000);
                 CurrencyRate::create([
                     'date' => $date,

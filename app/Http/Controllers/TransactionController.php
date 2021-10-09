@@ -38,12 +38,12 @@ class TransactionController extends Controller
     public function createStandard()
     {
         // Sanity check for necessary assets
-        if (\App\Models\AccountEntity::active()->where('config_type' , '=', 'account')->count() === 0) {
+        if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
             $this->addMessage(
-                "Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.",
-                "info",
-                "No accounts found",
-                "info-circle"
+                'Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.',
+                'info',
+                'No accounts found',
+                'info-circle'
             );
             return redirect()->route('account.create');
         }
