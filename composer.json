@@ -13,6 +13,7 @@
         "almasaeed2010/adminlte": "~2.4",
         "amrshawky/laravel-currency": "^4.0",
         "enlightn/enlightn": "^1.22",
+        "fakerphp/faker": "^1.13",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
@@ -25,7 +26,6 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
         "facade/ignition": "^2.5",
-        "fakerphp/faker": "^1.13",
         "imanghafoori/laravel-microscope": "^1.0",
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
