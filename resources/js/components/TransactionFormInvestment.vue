@@ -23,7 +23,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group valid">
                                         <label for="transaction_type" class="control-label">Transaction type</label>
-                                        <select id="transaction_type" class="form-control" v-model="form.transaction_type">
+                                        <select id="transaction_type" class="form-control" v-model="form.transaction_type" @change="transactionTypeChanged($event)">
                                             <option
                                                 v-for="item in transactionTypes"
                                                 :key="item.name"
@@ -146,12 +146,12 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_amount" class="control-label">Amount</label>
+                                        <label for="transaction_dividend" class="control-label">Dividend</label>
                                         <MathInput
                                             class="form-control"
-                                            id="transaction_amount"
-                                            v-model="form.config.amount"
-                                            :disabled="!transactionTypeSettings.amount"
+                                            id="transaction_dividend"
+                                            v-model="form.config.dividend"
+                                            :disabled="!transactionTypeSettings.dividend"
                                         ></MathInput>
                                     </div>
                                 </div>
@@ -313,7 +313,7 @@
 
             total() {
                 return    (this.form.config.quantity || 0) * (this.form.config.price || 0)
-                        + this.transactionTypeSettings.amount_multiplier * (this.form.config.amount || 0)
+                        + (this.form.config.dividend || 0)
                         - (this.form.config.commission || 0)
                         - (this.form.config.tax || 0);
             },
@@ -346,7 +346,7 @@
 
                 this.form.config.quantity = this.transaction.config.quantity;
                 this.form.config.price = this.transaction.config.price;
-                this.form.config.amount = this.transaction.config.amount;
+                this.form.config.dividend = this.transaction.config.dividend;
                 this.form.config.commission = this.transaction.config.commission;
                 this.form.config.tax = this.transaction.config.tax;
 
@@ -365,52 +365,45 @@
             this.transactionTypes = [
                 {
                     name: 'Buy',
-                    amount_multiplier: -1,
                     quantity: true,
                     price: true,
-                    amount: false,
+                    dividend: false,
                 },
                 {
                     name: 'Sell',
-                    amount_multiplier: 1,
                     quantity: true,
                     price: true,
-                    amount: false,
+                    dividend: false,
                     },
                 {
                     name: 'Add shares',
-                    amount_multiplier: 1,
                     quantity: true,
                     price: false,
-                    amount: false,
+                    dividend: false,
                     },
                 {
                     name: 'Remove shares',
-                    amount_multiplier: -1,
                     quantity: true,
                     price: false,
-                    amount: false,
+                    dividend: false,
                     },
                 {
                     name: 'Dividend',
-                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
-                    amount: true,
+                    dividend: true,
                 },
                 {
                     name: 'S-Term Cap Gains Dist',
-                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
-                    amount: true,
+                    dividend: true,
                 },
                 {
                     name: 'L-Term Cap Gains Dist',
-                    amount_multiplier: 1,
                     quantity: false,
                     price: false,
-                    amount: true,
+                    dividend: true,
                 },
             ];
 
@@ -555,6 +548,18 @@
         },
 
         methods: {
+            transactionTypeChanged() {
+                const settings = this.transactionTypeSettings;
+                if (!settings.quantity) {
+                    this.form.config.quantity = null;
+                }
+                if (!settings.price) {
+                    this.form.config.price = null;
+                }
+                if (!settings.dividend) {
+                    this.form.config.dividend = null;
+                }
+            },
             getCallbackUrl(transactionId) {
                 if (this.callback == 'returnToDashboard') {
                     return route('home');
