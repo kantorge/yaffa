@@ -11,23 +11,23 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
-        "@vue/compiler-sfc": "^3.2.19",
+        "@vue/compiler-sfc": "^3.2.20",
         "axios": "^0.21.4",
         "bootstrap": "^4.6.0",
         "cross-env": "^7.0.3",
-        "css-loader": "^6.3.0",
+        "css-loader": "^6.4.0",
         "file-loader": "^6.2.0",
         "jquery": "^3.6",
-        "laravel-mix": "^6.0.31",
+        "laravel-mix": "^6.0.34",
         "lodash": "^4.17.21",
-        "mini-css-extract-plugin": "^2.3.0",
+        "mini-css-extract-plugin": "^2.4.2",
         "node-sass": "^6.0.1",
         "popper.js": "^1.16.1",
-        "postcss": "^8.3.8",
+        "postcss": "^8.3.9",
         "resolve-url-loader": "^4.0.0",
-        "sass": "^1.42.1",
-        "sass-loader": "^12.1.0",
-        "vue": "^3.2.19"
+        "sass": "^1.43.2",
+        "sass-loader": "^12.2.0",
+        "vue": "^3.2.20"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.22",
@@ -35,7 +35,7 @@
         "datatables.net": "^1.11.3",
         "datatables.net-bs": "^1.11.3",
         "daterangepicker": "^3.1.0",
-        "mathjs": "^9.5.0",
+        "mathjs": "^9.5.1",
         "moment": "^2.29.1",
         "overlayscrollbars": "^1.13.1",
         "rrule": "^2.6.8",
@@ -43,6 +43,6 @@
         "vform": "^2.1.1",
         "vue-loader": "^16.8.1",
         "vue2-datepicker": "^4.0.0-beta.2",
-        "xlsx": "^0.17.2"
+        "xlsx": "^0.17.3"
     }
 }
