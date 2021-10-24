@@ -31,6 +31,7 @@ class CurrencyController extends Controller
         //support DataTables with action URLs
         $currencies->map(function ($currency) {
             $currency['latest_rate'] = $currency->rate();
+
             return $currency;
         });
 
@@ -50,10 +51,9 @@ class CurrencyController extends Controller
 
     public function store(CurrencyRequest $request)
     {
-
         $validated = $request->validated();
 
-        $currency = New Currency();
+        $currency = new Currency();
         $currency->fill($validated);
         $currency->save();
 
@@ -98,6 +98,7 @@ class CurrencyController extends Controller
         //base currency cannot be deleted
         if ($currency->base) {
             self::addSimpleDangerMessage('Base currency cannot be deleted');
+
             return redirect()->back();
         }
 
@@ -105,13 +106,15 @@ class CurrencyController extends Controller
         try {
             $currency->delete();
             self::addSimpleSuccessMessage('Currency deleted');
+
             return redirect()->route('currencies.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Currency is in use, cannot be deleted');
             } else {
-                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
+                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
             }
+
             return redirect()->back();
         }
     }
@@ -130,6 +133,7 @@ class CurrencyController extends Controller
         $currency->save();
 
         self::addSimpleSuccessMessage('Base currency changed');
+
         return redirect()->back();
     }
 }

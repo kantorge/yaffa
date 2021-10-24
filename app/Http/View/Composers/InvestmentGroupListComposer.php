@@ -7,7 +7,6 @@ use Illuminate\View\View;
 
 class InvestmentGroupListComposer
 {
-
     /**
      * Bind list of all investment groups to the view.
      *

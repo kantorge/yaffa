@@ -8,7 +8,6 @@ use JavaScript;
 
 class AccountGroupController extends Controller
 {
-
     protected $accountGroup;
 
     public function __construct(AccountGroup $accountGroup)
@@ -86,13 +85,15 @@ class AccountGroupController extends Controller
         try {
             $accountGroup->delete();
             self::addSimpleSuccessMessage('Account group deleted');
+
             return redirect()->route('account-group.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Account group is in use, cannot be deleted');
             } else {
-                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
+                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
             }
+
             return redirect()->back();
         }
     }

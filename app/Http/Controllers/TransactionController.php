@@ -45,6 +45,7 @@ class TransactionController extends Controller
                 'No accounts found',
                 'info-circle'
             );
+
             return redirect()->route('account.create');
         }
 
@@ -91,7 +92,7 @@ class TransactionController extends Controller
                         'amount' => $validated['remaining_payee_default_amount'],
                         'category_id' => $validated['remaining_payee_default_category_id'],
                     ]);
-                $transactionItems[]= $newItem;
+                $transactionItems[] = $newItem;
             }
 
             $transaction->transactionItems()->saveMany($transactionItems);
@@ -108,7 +109,7 @@ class TransactionController extends Controller
             $sourceTransaction->transactionSchedule->skipNextInstance();
         }
 
-        self::addMessage('Transaction added (#'. $transaction->id .')', 'success', '', '', true);
+        self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -142,7 +143,7 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        self::addMessage('Transaction added (#'. $transaction->id .')', 'success', '', '', true);
+        self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -228,7 +229,7 @@ class TransactionController extends Controller
                     'category_id' => $validated['remaining_payee_default_category_id'],
                 ]
             );
-            $transactionItems[]= $newItem;
+            $transactionItems[] = $newItem;
         }
 
         $transaction->transactionItems()->saveMany($transactionItems);
@@ -236,7 +237,7 @@ class TransactionController extends Controller
         // Save entire transaction
         $transaction->push();
 
-        self::addMessage('Transaction updated (#'. $transaction->id .')', 'success', '', '', true);
+        self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -258,7 +259,7 @@ class TransactionController extends Controller
 
         $transaction->push();
 
-        self::addMessage('Transaction updated (#'. $transaction->id .')', 'success', '', '', true);
+        self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -276,6 +277,7 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction)
     {
         $transaction->delete();
+
         return redirect()->back();
     }
 
@@ -283,6 +285,7 @@ class TransactionController extends Controller
     {
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage('Transaction schedule instance skipped');
+
         return redirect()->back();
     }
 
@@ -291,7 +294,7 @@ class TransactionController extends Controller
         $processedTransactionItems = [];
         foreach ($transactionItems as $item) {
             // Ignore item, if amount is missing
-            if (!array_key_exists('amount', $item) || is_null($item['amount'])) {
+            if (! array_key_exists('amount', $item) || is_null($item['amount'])) {
                 continue;
             }
 
@@ -312,14 +315,14 @@ class TransactionController extends Controller
 
                     // Confirm to user if item was currently created
                     if ($newTag->wasRecentlyCreated) {
-                        self::addMessage('Tag added ('. $newTag->name .')', 'success', '', '', true);
+                        self::addMessage('Tag added ('.$newTag->name.')', 'success', '', '', true);
                     }
 
                     $newItem->tags()->attach($newTag);
                 }
             }
 
-            $processedTransactionItems[]= $newItem;
+            $processedTransactionItems[] = $newItem;
         }
 
         return $processedTransactionItems;

@@ -33,8 +33,8 @@ class InvestmentGroupRequest extends FormRequest
                 'required',
                 'min:2',
                 'max:191',
-                'unique:investment_groups,name,' . \Request::instance()->id,
-            ]
+                'unique:investment_groups,name,'.\Request::instance()->id,
+            ],
         ];
     }
 
@@ -45,7 +45,6 @@ class InvestmentGroupRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
-
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
                 self::addSimpleDangerMessage($message);

@@ -18,7 +18,7 @@ class AccountEntityRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'name' => 'required|min:2|max:191|unique:account_entities,name,' . \Request::instance()->id,
+            'name' => 'required|min:2|max:191|unique:account_entities,name,'.\Request::instance()->id,
             'config_type' => 'required|in:account,payee',
             'active' => 'boolean',
         ];

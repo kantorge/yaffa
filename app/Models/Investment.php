@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Investment extends Model
 {
-
     protected $guarded = [];
 
     /**
@@ -51,7 +50,7 @@ class Investment extends Model
     protected $with = [
         'investment_group',
         'currency',
-        'investment_price_provider'
+        'investment_price_provider',
     ];
 
     public function investment_group()
@@ -88,7 +87,7 @@ class Investment extends Model
             [\App\Models\TransactionDetailInvestment::class],
             function (Builder $query) use ($investmentId, $account) {
                 $query->Where('investment_id', $investmentId);
-                if (!is_null($account)) {
+                if (! is_null($account)) {
                     $query->where('account_id', '=', $account->id);
                 }
             }
@@ -97,7 +96,7 @@ class Investment extends Model
 
         return $transactions->sum(function ($transaction) {
             $operator = $transaction->transactionType->quantity_operator;
-            if (!$operator) {
+            if (! $operator) {
                 return 0;
             }
 

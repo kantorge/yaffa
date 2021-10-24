@@ -2,13 +2,12 @@
 
 namespace Database\Factories;
 
-use User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use User;
 
 class UserFactory extends Factory
 {
-
     /**
      * The name of the factory's corresponding model.
      *

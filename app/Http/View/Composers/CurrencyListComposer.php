@@ -7,7 +7,6 @@ use Illuminate\View\View;
 
 class CurrencyListComposer
 {
-
     /**
      * Bind list of all currencies to the view.
      *

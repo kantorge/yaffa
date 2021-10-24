@@ -24,7 +24,7 @@ Route::get(
     '/account/history/{account}/{withForecast?}',
     [
         MainController::class,
-        'account_details'
+        'account_details',
     ]
 )
 ->name('account.history');
@@ -59,7 +59,7 @@ Route::resource(
 )
 ->except(
     [
-        'index'
+        'index',
     ]
 );
 
@@ -84,7 +84,7 @@ Route::get(
     '/transactions/standard/{transaction}/{action}',
     [
         TransactionController::class,
-        'openStandard'
+        'openStandard',
     ]
 )
 ->where('action', 'edit|clone|enter')
@@ -94,7 +94,7 @@ Route::get(
     '/transactions/investment/{transaction}/{action}',
     [
         TransactionController::class,
-        'openInvestment'
+        'openInvestment',
     ]
 )
 ->where('action', 'edit|clone|enter')
@@ -109,7 +109,7 @@ Route::resource(
 )
 ->only(
     [
-        'destroy'
+        'destroy',
     ]
 );
 

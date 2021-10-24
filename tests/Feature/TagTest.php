@@ -6,7 +6,6 @@ use Tests\TestCase;
 
 class TagTest extends TestCase
 {
-
     public function setUp(): void
     {
         parent::setUp();
@@ -62,7 +61,7 @@ class TagTest extends TestCase
         $response = $this->patchJson(route("{$this->base_route}.update", $item),
             [
                 'id' => $item,
-                'name' => '' ,
+                'name' => '',
             ]
         );
         $response->assertStatus(422);
@@ -89,7 +88,6 @@ class TagTest extends TestCase
         $response->assertSessionHas('notification_collection.0.type', 'success');
         //TODO: is actual message need to be tested?
         $response->assertSessionHas('notification_collection.0.message', 'Tag updated');
-
     }
 
     /** @test */

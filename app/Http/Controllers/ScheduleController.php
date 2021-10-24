@@ -52,7 +52,7 @@ class ScheduleController extends Controller
                 'config',
                 'config.investment',
                 'transactionType',
-                'transactionSchedule'
+                'transactionSchedule',
             ]
         )
         ->where(function ($query) {

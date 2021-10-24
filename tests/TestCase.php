@@ -2,8 +2,8 @@
 
 namespace Tests;
 
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Artisan;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -23,16 +23,16 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-    * If true, setup has run at least once.
-    * @var boolean
-    */
+     * If true, setup has run at least once.
+     * @var bool
+     */
     protected static $setUpHasRunOnce = false;
 
     public function setUp() :void
     {
         parent::setUp();
 
-        if (!static::$setUpHasRunOnce) {
+        if (! static::$setUpHasRunOnce) {
             Artisan::call('migrate:fresh', ['--database' => env('DB_CONNECTION')]);
             Artisan::call('db:seed', ['--class' => 'TestSeeder']);
 

@@ -15,16 +15,16 @@ class AccountGroupSeeder extends Seeder
     public function run()
     {
         AccountGroup::create([
-            'name' => 'Cash'
+            'name' => 'Cash',
         ]);
         AccountGroup::create([
-            'name' => 'Bank accounts'
+            'name' => 'Bank accounts',
         ]);
         AccountGroup::create([
-            'name' => 'Credits and loans'
+            'name' => 'Credits and loans',
         ]);
         AccountGroup::create([
-            'name' => 'Investments'
+            'name' => 'Investments',
         ]);
     }
 }
