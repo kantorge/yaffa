@@ -17,10 +17,10 @@ class InvestmentApiController extends Controller
 
     public function getList(Request $request)
     {
-		$investments = $this->investment
+        $investments = $this->investment
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+                $query->where('name', 'LIKE', '%'.$request->get('q').'%');
             })
             ->when($request->get('currency_id'), function ($query) use ($request) {
                 $query->where('currency_id', '=', $request->get('currency_id'));

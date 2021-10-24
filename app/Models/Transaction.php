@@ -39,7 +39,7 @@ class Transaction extends Model
         'budget',
         'comment',
         'config_type',
-        'config_id'
+        'config_id',
     ];
 
     protected $hidden = ['config_id'];
@@ -134,7 +134,6 @@ class Transaction extends Model
         parent::delete();
     }
 
-
     /**
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
@@ -145,7 +144,8 @@ class Transaction extends Model
     public function cashflowValue(?AccountEntity $account)
     {
         if ($this->config_type === 'transaction_detail_standard') {
-            $operator = $this->transactionType->amount_operator ?? ( $this->config->account_from_id === $account->id ? 'minus' : 'plus');
+            $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');
+
             return $operator === 'minus' ? -$this->config->amount_from : $this->config->amount_to;
         }
 
@@ -153,8 +153,8 @@ class Transaction extends Model
             $operator = $this->transactionType->amount_operator;
             if ($operator) {
                 return ($operator === 'minus'
-                    ? - $this->config->price * $this->config->quantity
-                    : $this->config->dividend + $this->config->price * $this->config->quantity )
+                    ? -$this->config->price * $this->config->quantity
+                    : $this->config->dividend + $this->config->price * $this->config->quantity)
                     - $this->config->tax
                     - $this->config->commission;
             }
@@ -169,8 +169,9 @@ class Transaction extends Model
             if ($this->transaction_type === 'deposit') {
                 $this->load([
                     'config',
-                    'config.accountTo.config.currency'
+                    'config.accountTo.config.currency',
                 ]);
+
                 return $this->config->accountTo->currency;
             }
 
@@ -180,8 +181,9 @@ class Transaction extends Model
         if ($this->config_type === 'transaction_detail_investment') {
             $this->load([
                 'config',
-                'config.account.currency'
+                'config.account.currency',
             ]);
+
             return $this->config->account->currency;
         }
 

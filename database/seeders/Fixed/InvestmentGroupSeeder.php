@@ -15,10 +15,10 @@ class InvestmentGroupSeeder extends Seeder
     public function run()
     {
         InvestmentGroup::create([
-            'name' => 'Stock'
+            'name' => 'Stock',
         ]);
         InvestmentGroup::create([
-            'name' => 'Mutual fund'
+            'name' => 'Mutual fund',
         ]);
     }
 }

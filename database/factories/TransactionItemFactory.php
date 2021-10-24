@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionItemFactory extends Factory
 {
-
     /**
      * The name of the factory's corresponding model.
      *
@@ -26,7 +25,7 @@ class TransactionItemFactory extends Factory
         return [
             'category_id'   => Category::whereNotNull('parent_id')->inRandomOrder()->first()->id,
             'amount'        => $this->faker->numberBetween($min = 1, $max = 100),
-            'comment'       => $this->faker->boolean(50) ? $this->faker->text($maxNbChars = 191)  : null,
+            'comment'       => $this->faker->boolean(50) ? $this->faker->text($maxNbChars = 191) : null,
         ];
     }
 }

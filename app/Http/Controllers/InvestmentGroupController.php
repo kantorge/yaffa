@@ -8,7 +8,6 @@ use JavaScript;
 
 class InvestmentGroupController extends Controller
 {
-
     protected $investmentGroup;
 
     public function __construct(InvestmentGroup $investmentGroup)
@@ -86,13 +85,15 @@ class InvestmentGroupController extends Controller
         try {
             $investmentGroup->delete();
             self::addSimpleSuccessMessage('Investment group deleted');
+
             return redirect()->route('investment-group.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Investment group is in use, cannot be deleted');
             } else {
-                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
+                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
             }
+
             return redirect()->back();
         }
     }

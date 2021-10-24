@@ -7,7 +7,6 @@ use Illuminate\View\View;
 
 class NotificationMessageComposer
 {
-
     /**
      * Bind data to the view.
      *

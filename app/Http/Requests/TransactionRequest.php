@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use \App\Models\TransactionType;
+use App\Models\TransactionType;
 use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +29,7 @@ class TransactionRequest extends FormRequest
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled
-        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
+        $isBasic = (! $this->get('schedule') && ! $this->get('budget')) || $this->get('schedule');
 
         // Set date and schedule related rules
         if ($this->get('schedule') || $this->get('budget')) {
@@ -60,7 +60,7 @@ class TransactionRequest extends FormRequest
             ]);
         } else {
             $rules = array_merge($rules, [
-                'date' => 'required|date'
+                'date' => 'required|date',
             ]);
         }
 
@@ -93,11 +93,11 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account'
+                        'exists:account_entities,id,config_type,account',
                     ],
                     'config.account_to_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee'
+                        'exists:account_entities,id,config_type,payee',
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
@@ -111,11 +111,11 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee'
+                        'exists:account_entities,id,config_type,payee',
                     ],
                     'config.account_to_id' => [
                         ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account'
+                        'exists:account_entities,id,config_type,account',
                     ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
@@ -129,11 +129,11 @@ class TransactionRequest extends FormRequest
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
                         'required',
-                        'exists:account_entities,id,config_type,account'
+                        'exists:account_entities,id,config_type,account',
                     ],
                     'config.account_to_id' => [
                         'required',
-                        'exists:account_entities,id,config_type,account'
+                        'exists:account_entities,id,config_type,account',
                 ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
@@ -144,11 +144,11 @@ class TransactionRequest extends FormRequest
             $rules = array_merge($rules, [
                 'config.account_id' => [
                     'required',
-                    'exists:account_entities,id,config_type,account'
+                    'exists:account_entities,id,config_type,account',
                 ],
                 'config.investment_id' => [
                     'required',
-                    'exists:investments,id'
+                    'exists:investments,id',
                 ],
                 'config.commission' => 'nullable|numeric|gte:0',
                 'config.tax' => 'nullable|numeric|gte:0',

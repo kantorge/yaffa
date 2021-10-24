@@ -18,8 +18,8 @@ class InvestmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:investments,name,' . \Request::instance()->id,
-            'symbol' => 'required|min:2|max:191|unique:investments,symbol,' . \Request::instance()->id,
+            'name' => 'required|min:2|max:191|unique:investments,name,'.\Request::instance()->id,
+            'symbol' => 'required|min:2|max:191|unique:investments,symbol,'.\Request::instance()->id,
             'comment' => 'nullable|max:191',
             'active' => 'boolean',
             'auto_update' => 'boolean',

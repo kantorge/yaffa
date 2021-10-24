@@ -8,7 +8,6 @@ use JavaScript;
 
 class TagController extends Controller
 {
-
     protected $tag;
 
     public function __construct(Tag $tag)

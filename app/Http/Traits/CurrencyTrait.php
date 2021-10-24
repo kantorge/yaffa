@@ -35,6 +35,7 @@ trait CurrencyTrait
         if ($withCarbonDates) {
             $rates->transform(function ($rate) {
                 $rate->date_from = Carbon::parse($rate->month);
+
                 return $rate;
             });
         }

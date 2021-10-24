@@ -248,18 +248,18 @@ class InvestmentController extends Controller
         $quantities = $transactions
             ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
                 $operator = $transaction['quantity_operator'];
-                    if (!$operator) {
-                        $quantity = 0;
-                    } else {
-                        $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
-                    }
+                if (! $operator) {
+                    $quantity = 0;
+                } else {
+                    $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
+                }
 
-                    $runningSchedule += $quantity;
-                    if ($transaction['transaction_group'] == 'history') {
-                        $runningTotal += $quantity;
-                    }
+                $runningSchedule += $quantity;
+                if ($transaction['transaction_group'] == 'history') {
+                    $runningTotal += $quantity;
+                }
 
-                    return [
+                return [
                         'date' => $transaction['date'],
                         'quantity' => $runningTotal,
                         'schedule' => $runningSchedule,

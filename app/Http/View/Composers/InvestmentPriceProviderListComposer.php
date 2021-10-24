@@ -7,7 +7,6 @@ use Illuminate\View\View;
 
 class InvestmentPriceProviderListComposer
 {
-
     /**
      * Bind list of all investment price providers to the view.
      *

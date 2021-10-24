@@ -27,7 +27,6 @@ class CreateInvestmentsTable extends Migration
 
             $table->foreign('investment_group_id')->references('id')->on('investment_groups');
             $table->foreign('currency_id')->references('id')->on('currencies');
-
         });
     }
 

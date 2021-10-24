@@ -6,7 +6,6 @@ use Tests\TestCase;
 
 class TransactionStandardTest extends TestCase
 {
-
     public function setUp(): void
     {
         parent::setUp();
@@ -20,5 +19,4 @@ class TransactionStandardTest extends TestCase
             'id' => $withdrawal->id,
         ]);
     }
-
 }

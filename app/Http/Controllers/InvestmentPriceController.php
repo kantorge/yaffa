@@ -14,7 +14,7 @@ class InvestmentPriceController extends Controller
         $refill = false;
 
         $date = Carbon::create('yesterday');
-        if (!$from) {
+        if (! $from) {
             $from = Carbon::create('yesterday');
         }
 
@@ -27,7 +27,7 @@ class InvestmentPriceController extends Controller
                 'symbol' => $investment->symbol,
                 'apikey' => config('yaffa.alpha_vantage_key'),
                 'outputsize' => ($refill ? 'full' : 'compact'),
-            ]
+            ],
         ]);
 
         $obj = json_decode($res->getBody());
