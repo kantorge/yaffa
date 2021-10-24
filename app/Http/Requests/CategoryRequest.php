@@ -19,9 +19,18 @@ class CategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191',
-            'active' => 'boolean',
-            'parent_id' => 'nullable|exists:categories,id',
+            'name' => [
+                'required',
+                'min:2',
+                'max:191',
+            ],
+            'active' => [
+                'boolean',
+            ],
+            'parent_id' => [
+                'nullable',
+                'exists:categories,id',
+            ],
         ];
     }
 
