@@ -29,8 +29,15 @@ class TagRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:tags,name,'.\Request::instance()->id,
-            'active' => 'boolean',
+            'name' => [
+                'required',
+                'min:2',
+                'max:191',
+                'unique:tags,name,'.\Request::instance()->id,
+            ],
+            'active' => [
+                'boolean',
+            ],
         ];
     }
 

@@ -18,14 +18,40 @@ class InvestmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:investments,name,'.\Request::instance()->id,
-            'symbol' => 'required|min:2|max:191|unique:investments,symbol,'.\Request::instance()->id,
-            'comment' => 'nullable|max:191',
-            'active' => 'boolean',
-            'auto_update' => 'boolean',
-            'investment_group_id' => 'required|exists:account_groups,id',
-            'currency_id' => 'required|exists:currencies,id',
-            'investment_price_provider_id' => 'nullable|exists:investment_price_providers,id',
+            'name' => [
+                'required',
+                'min:2',
+                'max:191',
+                'unique:investments,name,'.\Request::instance()->id,
+            ],
+            'symbol' => [
+                'required',
+                'min:2',
+                'max:191',
+                'unique:investments,symbol,'.\Request::instance()->id,
+            ],
+            'comment' => [
+                'nullable',
+                'max:191',
+            ],
+            'active' => [
+                'boolean',
+            ],
+            'auto_update' => [
+                'boolean',
+            ],
+            'investment_group_id' => [
+                'required',
+                'exists:account_groups,id',
+            ],
+            'currency_id' => [
+                'required',
+                'exists:currencies,id',
+            ],
+            'investment_price_provider_id' => [
+                'nullable',
+                'exists:investment_price_providers,id',
+            ],
         ];
     }
 
