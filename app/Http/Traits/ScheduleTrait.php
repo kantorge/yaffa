@@ -20,7 +20,7 @@ trait ScheduleTrait
     {
         $scheduleInstances = new Collection();
 
-        if (!in_array($startType, ['start', 'next', 'custom'])) {
+        if (! in_array($startType, ['start', 'next', 'custom'])) {
             return $scheduleInstances;
         }
 

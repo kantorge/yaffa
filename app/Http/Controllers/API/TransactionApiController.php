@@ -14,7 +14,7 @@ class TransactionApiController extends Controller
         $transaction->save();
 
         return response()->json([
-                "success" => true
+                'success' => true,
             ], Response::HTTP_OK);
     }
 }

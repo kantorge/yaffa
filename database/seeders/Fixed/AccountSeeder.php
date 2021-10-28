@@ -38,7 +38,6 @@ class AccountSeeder extends Seeder
 
         $account->save();
 
-
         $account = new AccountEntity(
             [
                 'name' => 'Bank account',

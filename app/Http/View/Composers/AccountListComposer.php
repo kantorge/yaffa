@@ -7,7 +7,6 @@ use Illuminate\View\View;
 
 class AccountListComposer
 {
-
     /**
      * Bind list of all accounts to the view.
      *

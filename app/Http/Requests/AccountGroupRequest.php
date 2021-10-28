@@ -29,7 +29,7 @@ class AccountGroupRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:account_groups,name,' . \Request::instance()->id,
+            'name' => 'required|min:2|max:191|unique:account_groups,name,'.\Request::instance()->id,
         ];
     }
 
@@ -40,7 +40,6 @@ class AccountGroupRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
-
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
                 self::addSimpleDangerMessage($message);

@@ -78,7 +78,7 @@ class ReportController extends Controller
 
         foreach ($standardCompact as $period => $periodData) {
             foreach ($periodData as $currency => $items) {
-                if (!array_key_exists($period, $dataByPeriod)) {
+                if (! array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => 0,
@@ -150,7 +150,7 @@ class ReportController extends Controller
 
         foreach ($budgetCompact as $period => $periodData) {
             foreach ($periodData as $currency => $items) {
-                if (!array_key_exists($period, $dataByPeriod)) {
+                if (! array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
                         'budget' => 0,
@@ -239,7 +239,7 @@ class ReportController extends Controller
                     }
                 }
 
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id] ?? null;
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id] ?? null;
                 $transaction->amount_from = $transaction->config->amount_from;

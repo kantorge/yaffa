@@ -49,6 +49,7 @@ class MainController extends Controller
                 'No currencies found',
                 'info-circle'
             );
+
             return redirect()->route('currencies.create');
         }
 
@@ -57,7 +58,7 @@ class MainController extends Controller
 
         // Load all accounts to get current value
         $accounts = AccountEntity::where('config_type', 'account')
-            ->when(!$withClosed, function ($query) {
+            ->when(! $withClosed, function ($query) {
                 return $query->where('active', '1');
             })
             ->with([
@@ -127,6 +128,7 @@ class MainController extends Controller
                     if ($item['quantity'] > 0) {
                         return $item['quantity'] * $investment->getLatestPrice();
                     }
+
                     return 0;
                 });
 
@@ -169,7 +171,7 @@ class MainController extends Controller
         // Get account details and load to class variable
         $this->currentAccount = $account->load([
             'config',
-            'config.currency'
+            'config.currency',
         ]);
 
         // Get all accounts and payees so their name can be reused
@@ -254,7 +256,7 @@ class MainController extends Controller
                     }
                 }
 
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ( $transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
                 $transaction->amount_from = $transaction->config->amount_from;
@@ -280,11 +282,11 @@ class MainController extends Controller
         })
         // Drop scheduled transactions, which are not active (next date is empty)
         ->filter(function ($transaction) {
-            if (!$transaction->schedule) {
+            if (! $transaction->schedule) {
                 return true;
             }
 
-            return !is_null($transaction->transactionSchedule->next_date);
+            return ! is_null($transaction->transactionSchedule->next_date);
         });
 
         // Add schedule to history items, if needeed
@@ -293,7 +295,7 @@ class MainController extends Controller
                 $this->getScheduleInstances(
                     $transactions
                     ->filter(function ($transaction) {
-                            return $transaction->schedule;
+                        return $transaction->schedule;
                     }),
                     'next',
                 )
@@ -314,6 +316,7 @@ class MainController extends Controller
             ->map(function ($transaction) use (&$subTotal) {
                 $subTotal += ($transaction->transactionOperator === 'plus' ? $transaction->amount_to : -$transaction->amount_from);
                 $transaction->running_total = $subTotal;
+
                 return $transaction;
             })
             ->values();
@@ -324,7 +327,7 @@ class MainController extends Controller
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
                     return $transaction->transactionGroup === 'schedule';
-                })->values()
+                })->values(),
             ]);
 
         return view(

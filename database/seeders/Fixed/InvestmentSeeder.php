@@ -2,10 +2,9 @@
 
 namespace Database\Seeders\Fixed;
 
+use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
-use App\Models\Currency;
-
 use Illuminate\Database\Seeder;
 
 class InvestmentSeeder extends Seeder

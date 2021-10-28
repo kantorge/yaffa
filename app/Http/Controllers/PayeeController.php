@@ -10,7 +10,6 @@ use JavaScript;
 
 class PayeeController extends Controller
 {
-
     protected $payee;
 
     public function __construct(AccountEntity $payee)
@@ -68,7 +67,7 @@ class PayeeController extends Controller
             'payees.form',
             [
                 'payee' => $payee,
-                'categories' => $categories->pluck('full_name', 'id')
+                'categories' => $categories->pluck('full_name', 'id'),
             ]
         );
     }
@@ -97,7 +96,7 @@ class PayeeController extends Controller
         return view(
             'payees.form',
             [
-                'categories' => $categories->pluck('full_name', 'id')
+                'categories' => $categories->pluck('full_name', 'id'),
             ]
         );
     }
@@ -121,6 +120,7 @@ class PayeeController extends Controller
     public function show(AccountEntity $payee)
     {
         $payee->load('config');
+
         return view('account.show', compact('payee'));
     }
 
@@ -135,13 +135,15 @@ class PayeeController extends Controller
         try {
             $payee->delete();
             self::addSimpleSuccessMessage('Payee deleted');
+
             return redirect()->route('payees.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
                 self::addSimpleDangerMessage('Payee is in use, cannot be deleted');
             } else {
-                self::addSimpleDangerMessage('Database error: ' . $e->errorInfo[2]);
+                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
             }
+
             return redirect()->back();
         }
     }

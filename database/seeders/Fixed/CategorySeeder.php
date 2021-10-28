@@ -16,7 +16,7 @@ class CategorySeeder extends Seeder
     {
         Category::create([
             'name' => 'Élelmiszer',
-            'parent_id' => null
+            'parent_id' => null,
         ]);
         Category::create([
             'name' => 'Alapanyag, fűszer, konzerv',

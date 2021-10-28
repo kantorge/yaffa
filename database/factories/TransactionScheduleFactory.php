@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionScheduleFactory extends Factory
 {
-
     /**
      * The name of the factory's corresponding model.
      *
@@ -31,7 +30,7 @@ class TransactionScheduleFactory extends Factory
             'end_date' => $end,
             'frequency' => $this->faker->randomElement(['DAILY', 'WEEKLY', 'MOHTHLY', 'YEARLY']),
             'interval' => $this->faker->numberBetween($min = 1, $max = 5),
-            'count' => $this->faker->boolean(50) ? null  : $this->faker->numberBetween($min = 1, $max = 5),
+            'count' => $this->faker->boolean(50) ? null : $this->faker->numberBetween($min = 1, $max = 5),
             'interval' => 1,
         ];
     }

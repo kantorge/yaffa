@@ -7,9 +7,9 @@ use Illuminate\Contracts\Console\Kernel;
 trait CreatesApplication
 {
     /**
-    * If true, setup has run at least once.
-    * @var boolean
-    */
+     * If true, setup has run at least once.
+     * @var bool
+     */
     protected static $createApplicationHasRunOnce = false;
 
     /**
@@ -23,7 +23,7 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
-        if (!static::$createApplicationHasRunOnce) {
+        if (! static::$createApplicationHasRunOnce) {
             $this->clearCache();
         }
 

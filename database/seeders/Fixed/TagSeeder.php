@@ -15,10 +15,10 @@ class TagSeeder extends Seeder
     public function run()
     {
         Tag::create([
-            'name' => 'Kids'
+            'name' => 'Kids',
         ]);
         Tag::create([
-            'name' => 'Holiday 2021'
+            'name' => 'Holiday 2021',
         ]);
     }
 }

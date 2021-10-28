@@ -28,7 +28,7 @@ class PayeeApiController extends Controller
             $payees = $this->payee
                 ->select(['id', 'name AS text'])
                 ->when($request->get('q'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
+                    $query->where('name', 'LIKE', '%'.$request->get('q').'%');
                 })
                 ->where('active', 1)
                 ->orderBy('name')
@@ -82,19 +82,19 @@ class PayeeApiController extends Controller
     public function getDefaultCategoryForPayee(Request $request)
     {
         if ($request->missing('payee_id')) {
-			return response("", Response::HTTP_OK);
+            return response('', Response::HTTP_OK);
         }
 
         $payee = AccountEntity::
             with(['config', 'config.category'])
             ->find($request->get('payee_id'));
 
-        if (!$payee->config->category_id) {
-            return response("", Response::HTTP_OK);
+        if (! $payee->config->category_id) {
+            return response('', Response::HTTP_OK);
         }
 
         return response($payee->config->category->only(['id', 'full_name']), Response::HTTP_OK);
-	}
+    }
 
     public function getPayeeDefaultSuggestion()
     {
@@ -189,7 +189,7 @@ class PayeeApiController extends Controller
             ])
             ->selectRaw('count(*) as transactions')
             ->groupBy([
-                'payee_id', 'category_id'
+                'payee_id', 'category_id',
             ])
             ->get();
 
