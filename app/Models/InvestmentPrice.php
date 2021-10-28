@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Investment;
 use Illuminate\Database\Eloquent\Model;
 
 class InvestmentPrice extends Model
@@ -33,4 +34,9 @@ class InvestmentPrice extends Model
         'date' => 'datetime:Y-m-d',
         'price' => 'float',
     ];
+
+    public function investment()
+    {
+        return $this->belongsTo(Investment::class);
+    }
 }

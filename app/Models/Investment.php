@@ -54,6 +54,11 @@ class Investment extends Model
         'investment_price_provider'
     ];
 
+    public function investmentPrices()
+    {
+        return $this->hasMany(InvestmentPrice::class);
+    }
+
     public function investment_group()
     {
         return $this->belongsTo(InvestmentGroup::class);

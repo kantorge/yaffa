@@ -40,7 +40,7 @@ class CurrencyRateController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  CurrencyRate  $tag
+     * @param  CurrencyRate  $currencyRate
      * @return \Illuminate\Http\Response
      */
     public function destroy(CurrencyRate $currencyRate)

@@ -56,7 +56,8 @@ $(function() {
                 data: "id",
                 title: "Actions",
                 render: function(data) {
-                    return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ';
+                    return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ' +
+                           '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="View investment price list"></i></a> ';
                 },
                 orderable: false
             }

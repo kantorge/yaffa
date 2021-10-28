@@ -13,8 +13,6 @@ class TestSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(\Database\Seeders\Base\TransactionTypeSeeder::class);
-
         $this->call(\Database\Seeders\Fixed\AccountGroupSeeder::class);  //random exists, but random account creation is TODO
         $this->call(\Database\Seeders\Fixed\CurrencySeeder::class);  //random exists, but random account creation is TODO
         $this->call(\Database\Seeders\Random\CurrencyRateSeeder::class);  //TODO: fixed is missing, but might not be necessary to add

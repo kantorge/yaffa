@@ -161,10 +161,13 @@
                     <div class="box-tools pull-right">
                         <span class="label label-danger hidden" id="priceChartNoData">No data available</span>
                         @if($investment->investment_price_provider_id)
-                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-success" title="Load new price data">
+                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-success" title="Load new price data">
                                 <span class="fa fa-cloud-download"></span>
                             </a>
                         @endif
+                        <a href="{{ route('investment-price.list', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-primary">
+                            <span class="fa fa-search" title="List prices"></span>
+                        </a>
                     </div>
                     <!-- /.box-tools -->
                 </div>
