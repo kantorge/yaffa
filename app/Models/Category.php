@@ -6,11 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
-
     protected $table = 'categories';
 
     protected $with = [
-        'parent'
+        'parent',
     ];
 
     /**
@@ -29,7 +28,7 @@ class Category extends Model
     ];
 
     protected $appends = [
-        'full_name'
+        'full_name',
     ];
 
     public static function rules()
@@ -43,11 +42,11 @@ class Category extends Model
 
     public function parent()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(self::class);
     }
 
     public function getFullNameAttribute()
     {
-        return (isset($this->parent->name) ? $this->parent->name . ' > ' : '') . $this['name'];
+        return (isset($this->parent->name) ? $this->parent->name.' > ' : '').$this['name'];
     }
 }

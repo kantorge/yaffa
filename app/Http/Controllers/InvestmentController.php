@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\InvestmentRequest;
-use App\Models\Currency;
 use App\Models\Investment;
-use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
-use App\Models\InvestmentPriceProvider;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,12 +30,11 @@ class InvestmentController extends Controller
      */
     public function index()
     {
-        //Show all investments from the database and return to view
         $investments = $this
             ->investment
             ->get();
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'investments' => $investments,
         ]);
@@ -46,24 +42,10 @@ class InvestmentController extends Controller
         return view('investment.index');
     }
 
-    public function edit($id)
+    public function edit(Investment $investment)
     {
-        $investment = $this->investment->find($id);
-
-        //get all investment groups
-        $allInvestmentGropus = InvestmentGroup::pluck('name', 'id')->all();
-
-        //get all currencies
-        $allCurrencies = Currency::pluck('name', 'id')->all();
-
-        //get all price providers
-        $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
-
         return view('investment.form', [
             'investment'=> $investment,
-            'allInvestmentGropus' => $allInvestmentGropus,
-            'allCurrencies' => $allCurrencies,
-            'allInvestmentPriceProviders' => $allInvestmentPriceProviders,
         ]);
     }
 
@@ -81,28 +63,12 @@ class InvestmentController extends Controller
 
     public function create()
     {
-        //get all investment groups
-        $allInvestmentGropus = InvestmentGroup::pluck('name', 'id')->all();
-
-        //get all currencies
-        $allCurrencies = Currency::pluck('name', 'id')->all();
-
-        //get all price providers
-        $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
-
-        return view('investment.form', [
-            'allInvestmentGropus' => $allInvestmentGropus,
-            'allCurrencies' => $allCurrencies,
-            'allInvestmentPriceProviders' => $allInvestmentPriceProviders,
-        ]);
+        return view('investment.form');
     }
 
     public function store(InvestmentRequest $request)
     {
-
-        $validated = $request->validated();
-        $investment = Investment::create($validated);
-        $investment->save();
+        Investment::create($request->validated());
 
         self::addSimpleSuccessMessage('Investment added');
 
@@ -112,14 +78,11 @@ class InvestmentController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param \App\Models\Investment
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Investment $investment)
     {
-        //Retrieve item
-        $investment = Investment::find($id);
-        //delete
         $investment->delete();
 
         self::addSimpleSuccessMessage('Investment deleted');
@@ -285,18 +248,18 @@ class InvestmentController extends Controller
         $quantities = $transactions
             ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
                 $operator = $transaction['quantity_operator'];
-                    if (!$operator) {
-                        $quantity = 0;
-                    } else {
-                        $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
-                    }
+                if (! $operator) {
+                    $quantity = 0;
+                } else {
+                    $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
+                }
 
-                    $runningSchedule += $quantity;
-                    if ($transaction['transaction_group'] == 'history') {
-                        $runningTotal += $quantity;
-                    }
+                $runningSchedule += $quantity;
+                if ($transaction['transaction_group'] == 'history') {
+                    $runningTotal += $quantity;
+                }
 
-                    return [
+                return [
                         'date' => $transaction['date'],
                         'quantity' => $runningTotal,
                         'schedule' => $runningSchedule,

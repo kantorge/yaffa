@@ -35,7 +35,13 @@ if (/^\/investment\/summary/.test(window.location.pathname)) {
 if (/^\/investment\/\d+/.test(window.location.pathname)) {
     require('./investment/show');
 }
-
+if (   window.location.pathname === '/investment-price/create'
+    || /^\/investment-price\/\d+\/edit/.test(window.location.pathname)) {
+    require('./investment-price/form');
+}
+if (/^\/investment-price\/list\/\d+/.test(window.location.pathname)) {
+    require('./investment-price/list');
+}
 if (window.location.pathname === '/payees') {
     require('./payees/index');
 }

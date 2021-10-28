@@ -95,11 +95,11 @@ class ReportController extends Controller
         ->get();
 
         [$standardTransactionsHistory, $standardTransactionSchedule] = $standardTransactionsAll->partition(function ($transaction) {
-            return !$transaction->schedule && !$transaction->budget;
+            return ! $transaction->schedule && ! $transaction->budget;
         });
 
         [$investmentTransactionsHistory, $investmentTransactionSchedule] = $investmentTransactionsAll->partition(function ($transaction) {
-            return !$transaction->schedule && !$transaction->budget;
+            return ! $transaction->schedule && ! $transaction->budget;
         });
 
         // Group standard transactions by month, and get all relevant details
@@ -160,7 +160,7 @@ class ReportController extends Controller
 
         foreach ($standardCompact as $month => $monthData) {
             foreach ($monthData as $currency => $items) {
-                if (!array_key_exists($month, $monthlyData)) {
+                if (! array_key_exists($month, $monthlyData)) {
                     $monthlyData[$month] = 0;
                 }
 
@@ -182,7 +182,7 @@ class ReportController extends Controller
 
         foreach ($investmentCompact as $month => $monthData) {
             foreach ($monthData as $currency => $items) {
-                if (!array_key_exists($month, $monthlyData)) {
+                if (! array_key_exists($month, $monthlyData)) {
                     $monthlyData[$month] = 0;
                 }
 

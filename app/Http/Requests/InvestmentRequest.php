@@ -18,8 +18,8 @@ class InvestmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:investments,name,' . \Request::instance()->id,
-            'symbol' => 'required|min:2|max:191|unique:investments,symbol,' . \Request::instance()->id,
+            'name' => 'required|min:2|max:191|unique:investments,name,'.\Request::instance()->id,
+            'symbol' => 'required|min:2|max:191|unique:investments,symbol,'.\Request::instance()->id,
             'comment' => 'nullable|max:191',
             'active' => 'boolean',
             'auto_update' => 'boolean',
@@ -50,11 +50,11 @@ class InvestmentRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        //check for checkbox-es
+        // Check for checkboxes and dropdown empty values
         $this->merge([
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
-            'investment_price_provider_id' => $this->parent_id ?? null,
+            'investment_price_provider_id' => $this->investment_price_provider_id ?? null,
         ]);
     }
 }

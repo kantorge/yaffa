@@ -19,7 +19,7 @@ class CategoryApiController extends Controller
 
     public function getList(Request $request)
     {
-		$query = $request->get('q');
+        $query = $request->get('q');
         if ($query) {
             $categories = $this->category
                 ->where('active', 1)
@@ -31,10 +31,11 @@ class CategoryApiController extends Controller
                 ->take(10)
                 ->map(function ($category) {
                     $category->text = $category->full_name;
+
                     return $category->only(['id', 'text']);
                 })
                 ->values();
-		} else {
+        } else {
             $results = DB::table('transaction_items')
                 ->join(
                     'transactions',
@@ -52,7 +53,7 @@ class CategoryApiController extends Controller
                     'categories',
                     'categories.id',
                     '=',
-                    "transaction_items.category_id"
+                    'transaction_items.category_id'
                 )
                 ->select(
                     'categories.id',
@@ -60,7 +61,7 @@ class CategoryApiController extends Controller
                 ->where('categories.active', true)
                 ->when($request->has('payee'), function ($query) use ($request) {
                     $query->whereRaw(
-                        "(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)",
+                        '(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)',
                         [$request->get('payee'), $request->get('payee')],
                     );
                 })
@@ -76,6 +77,7 @@ class CategoryApiController extends Controller
             })
             ->map(function ($category) {
                 $category->text = $category->full_name;
+
                 return $category->only(['id', 'text']);
             })
             ->values();

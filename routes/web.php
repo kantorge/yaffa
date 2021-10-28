@@ -22,12 +22,8 @@ Route::resource('account-group', AccountGroupController::class);
 
 Route::get(
     '/account/history/{account}/{withForecast?}',
-    [
-        MainController::class,
-        'account_details'
-    ]
-)
-->name('account.history');
+    [MainController::class, 'account_details']
+)->name('account.history');
 
 Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
@@ -56,21 +52,26 @@ Route::get(
 Route::resource(
     'currency-rate',
     CurrencyRateController::class
-)
-->except(
-    [
-        'index'
-    ]
-);
+)->except(['index']);
 
 Route::resource('investment-group', InvestmentGroupController::class);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
 Route::resource('investment', InvestmentController::class);
 
 Route::get(
-    '/investmentprices/get/{investment}/{from?}',
+    '/investment-price/list/{investment}',
+    [InvestmentPriceController::class, 'list']
+)->name('investment-price.list');
+
+Route::get(
+    '/investment-price/get/{investment}/{from?}',
     [InvestmentPriceController::class, 'retreiveInvestmentPriceAlphaVantage']
 )->name('investment-price.retreive');
+
+Route::resource(
+    'investment-price',
+    InvestmentPriceController::class
+)->except(['index']);
 
 Route::resource('payees', PayeeController::class);
 Route::resource('tag', TagController::class);
@@ -82,20 +83,14 @@ Route::post('/transactions/investment', [TransactionController::class, 'storeInv
 
 Route::get(
     '/transactions/standard/{transaction}/{action}',
-    [
-        TransactionController::class,
-        'openStandard'
-    ]
+    [TransactionController::class, 'openStandard']
 )
 ->where('action', 'edit|clone|enter')
 ->name('transactions.openStandard');
 
 Route::get(
     '/transactions/investment/{transaction}/{action}',
-    [
-        TransactionController::class,
-        'openInvestment'
-    ]
+    [TransactionController::class, 'openInvestment']
 )
 ->where('action', 'edit|clone|enter')
 ->name('transactions.openInvestment');
@@ -107,11 +102,7 @@ Route::resource(
     'transactions',
     TransactionController::class
 )
-->only(
-    [
-        'destroy'
-    ]
-);
+->only(['destroy']);
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');

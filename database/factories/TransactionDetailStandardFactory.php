@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionDetailStandardFactory extends Factory
 {
-
     /**
      * The name of the factory's corresponding model.
      *
@@ -35,10 +34,10 @@ class TransactionDetailStandardFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                "amount_from" => 0, //TODO: make dynamic
-                "amount_to" => 0, //TODO: make dynamic
-                "account_from_id" => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
-                "account_to_id" => AccountEntity::where('config_type', 'payee')->inRandomOrder()->first()->id,
+                'amount_from' => 0, //TODO: make dynamic
+                'amount_to' => 0, //TODO: make dynamic
+                'account_from_id' => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
+                'account_to_id' => AccountEntity::where('config_type', 'payee')->inRandomOrder()->first()->id,
             ];
         });
     }
@@ -52,10 +51,10 @@ class TransactionDetailStandardFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                "amount_from" => 0, //TODO: make dynamic
-                "amount_to" => 0, //TODO: make dynamic
-                "account_from_id" => AccountEntity::where('config_type', 'payee')->inRandomOrder()->first()->id,
-                "account_to_id" => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
+                'amount_from' => 0, //TODO: make dynamic
+                'amount_to' => 0, //TODO: make dynamic
+                'account_from_id' => AccountEntity::where('config_type', 'payee')->inRandomOrder()->first()->id,
+                'account_to_id' => AccountEntity::where('config_type', 'account')->inRandomOrder()->first()->id,
             ];
         });
     }
@@ -72,10 +71,10 @@ class TransactionDetailStandardFactory extends Factory
             $amount = $this->faker->numberBetween($min = 1, $max = 100);
 
             return [
-                "amount_from" => $amount,
-                "amount_to" => $amount, //TODO: account for currency differencies
-                "account_from_id" => $accounts->slice(0, 1)->first()->id,
-                "account_to_id" => $accounts->slice(1, 1)->first()->id,
+                'amount_from' => $amount,
+                'amount_to' => $amount, //TODO: account for currency differencies
+                'account_from_id' => $accounts->slice(0, 1)->first()->id,
+                'account_to_id' => $accounts->slice(1, 1)->first()->id,
             ];
         });
     }

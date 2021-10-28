@@ -41,7 +41,6 @@ class CategoryController extends Controller
 
     public function store(CategoryRequest $request)
     {
-
         $validated = $request->validated();
 
         Category::create($validated);
@@ -83,7 +82,7 @@ class CategoryController extends Controller
             ->fill($validated)
             ->save();
 
-            self::addSimpleSuccessMessage('Category updated');
+        self::addSimpleSuccessMessage('Category updated');
 
         return redirect()->route('categories.index');
     }

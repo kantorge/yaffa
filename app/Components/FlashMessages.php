@@ -6,8 +6,7 @@ use Illuminate\Support\Collection;
 
 trait FlashMessages
 {
-
-    public static function addMessage($message, $type = "info", $title = "", $icon = "", $dismissable = false) :void
+    public static function addMessage($message, $type = 'info', $title = '', $icon = '', $dismissable = false) :void
     {
         if (session()->has('notification_collection')) {
             $existingData = session()->get('notification_collection');

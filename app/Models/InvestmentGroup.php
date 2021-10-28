@@ -24,5 +24,4 @@ class InvestmentGroup extends Model
     protected $fillable = [
         'name',
     ];
-
 }

@@ -6,7 +6,6 @@ use Tests\TestCase;
 
 class InvestmentGroupTest extends TestCase
 {
-
     public function setUp(): void
     {
         parent::setUp();
@@ -62,7 +61,7 @@ class InvestmentGroupTest extends TestCase
         $response = $this->patchJson(route("{$this->base_route}.update", $item),
             [
                 'id' => $item,
-                'name' => '' ,
+                'name' => '',
             ]
         );
         $response->assertStatus(422);
@@ -86,7 +85,6 @@ class InvestmentGroupTest extends TestCase
         $response->assertSessionHas('notification_collection.0.type', 'success');
         //TODO: is actual message need to be tested?
         $response->assertSessionHas('notification_collection.0.message', 'Investment group updated');
-
     }
 
     /** @test */

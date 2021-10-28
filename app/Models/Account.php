@@ -55,7 +55,7 @@ class Account extends AccountEntity
 
     public function openingBalance()
     {
-        return (object)[
+        return (object) [
             'id' => null,
             'date' => null,
             'transaction_type' => [
@@ -106,16 +106,16 @@ class Account extends AccountEntity
 
         return $transactions
             ->map(function ($transaction) {
-                    $operator = $transaction->transactionType->quantity_operator;
-                    if (!$operator) {
-                        $quantity = 0;
-                    } else {
-                        $quantity = ($operator === 'minus'
-                                    ? - $transaction->config->quantity
+                $operator = $transaction->transactionType->quantity_operator;
+                if (! $operator) {
+                    $quantity = 0;
+                } else {
+                    $quantity = ($operator === 'minus'
+                                    ? -$transaction->config->quantity
                                     : $transaction->config->quantity);
-                    }
+                }
 
-                    return [
+                return [
                         'investment' => $transaction->config->investment,
                         'quantity' => $quantity,
                     ];

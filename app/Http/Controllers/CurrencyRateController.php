@@ -10,7 +10,6 @@ use JavaScript;
 
 class CurrencyRateController extends Controller
 {
-
     protected $currencyRate;
 
     public function __construct(CurrencyRate $currencyRate)
@@ -32,7 +31,7 @@ class CurrencyRateController extends Controller
             'currencyrates.index',
             with([
                 'from' => $from,
-                'to'=> $to
+                'to'=> $to,
             ])
         );
     }
@@ -40,7 +39,7 @@ class CurrencyRateController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  CurrencyRate  $tag
+     * @param  CurrencyRate  $currencyRate
      * @return \Illuminate\Http\Response
      */
     public function destroy(CurrencyRate $currencyRate)
@@ -65,7 +64,7 @@ class CurrencyRateController extends Controller
         }
 
         $date = Carbon::create('yesterday');
-        if (!$from) {
+        if (! $from) {
             $from = Carbon::create('yesterday');
         }
 
@@ -105,7 +104,7 @@ class CurrencyRateController extends Controller
                                     ->first();
 
         // Fallback to last 30 days
-        if (!$rate) {
+        if (! $rate) {
             $rate = new CurrencyRate([
                 'from_id' => $currency->id,
                 'to_id' => $baseCurrency->id,

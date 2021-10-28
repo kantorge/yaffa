@@ -48,7 +48,6 @@ class TransactionSchedule extends Model
 
     public function getNextInstance()
     {
-
         $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new \DateTime($this->next_date), false);
         $rule = new \Recurr\Rule();
 
@@ -86,6 +85,7 @@ class TransactionSchedule extends Model
     public function skipNextInstance()
     {
         $this->next_date = $this->getNextInstance();
+
         return $this->save();
     }
 }

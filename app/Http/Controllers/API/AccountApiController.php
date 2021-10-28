@@ -22,7 +22,7 @@ class AccountApiController extends Controller
         if ($request->get('q')) {
             $accounts = $this->account
                 ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', '%' . $request->get('q') . '%')
+                ->where('name', 'LIKE', '%'.$request->get('q').'%')
                 ->active()
                 ->orderBy('name')
                 ->take(10)
@@ -75,7 +75,7 @@ class AccountApiController extends Controller
         if ($request->get('q')) {
             $accounts = $this->account
                 ->select(['id', 'name AS text'])
-                ->where('name', 'LIKE', '%' . $request->get('q') . '%')
+                ->where('name', 'LIKE', '%'.$request->get('q').'%')
                 ->where('active', true)
                 ->orderBy('name')
                 ->take(10)
@@ -92,7 +92,7 @@ class AccountApiController extends Controller
                     'account_entities',
                     'account_entities.id',
                     '=',
-                    "transaction_details_investment.account_id"
+                    'transaction_details_investment.account_id'
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
@@ -102,7 +102,7 @@ class AccountApiController extends Controller
                             'accounts',
                             'accounts.id',
                             '=',
-                            "account_entities.config_id"
+                            'account_entities.config_id'
                         )->where(
                             'accounts.currency_id',
                             '=',
@@ -116,7 +116,7 @@ class AccountApiController extends Controller
                     '=',
                     TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
                 )
-                ->groupBy("transaction_details_investment.account_id")
+                ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get();
@@ -128,7 +128,7 @@ class AccountApiController extends Controller
 
     public function getAccountCurrencyLabel(Account $account)
     {
-		return $account->currency->suffix;
+        return $account->currency->suffix;
     }
 
     public function getItem(AccountEntity $account)

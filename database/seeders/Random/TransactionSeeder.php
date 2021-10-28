@@ -16,6 +16,7 @@ class TransactionSeeder extends Seeder
     {
         $this->tags = Tag::all();
     }
+
     /**
      * Run the database seeds by creating random values with factory
      *
@@ -28,7 +29,7 @@ class TransactionSeeder extends Seeder
             ->count(rand(50, 100))
             ->withdrawal()
             ->create()
-            ->each(function($transaction) {
+            ->each(function ($transaction) {
                 $this->createTransactionProperties($transaction);
             });
 
@@ -37,7 +38,7 @@ class TransactionSeeder extends Seeder
             ->count(rand(50, 100))
             ->deposit()
             ->create()
-            ->each(function($transaction) {
+            ->each(function ($transaction) {
                 $this->createTransactionProperties($transaction);
             });
 
@@ -52,7 +53,7 @@ class TransactionSeeder extends Seeder
             ->count(rand(5, 10))
             ->withdrawal_schedule()
             ->create()
-            ->each(function($transaction) {
+            ->each(function ($transaction) {
                 $this->createTransactionSchedule($transaction);
                 $this->createTransactionProperties($transaction);
             });

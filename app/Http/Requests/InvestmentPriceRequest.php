@@ -6,7 +6,7 @@ use App\Components\FlashMessages;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
-class AccountGroupRequest extends FormRequest
+class InvestmentPriceRequest extends FormRequest
 {
     use FlashMessages;
 
@@ -29,7 +29,20 @@ class AccountGroupRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|min:2|max:191|unique:account_groups,name,'.\Request::instance()->id,
+            'date' => 'required|date',
+            'price' => [
+                'required',
+                'numeric',
+                /* TODO: validate for unique date / investment combinations
+                https://stackoverflow.com/questions/50349775/laravel-unique-validation-on-multiple-columns
+                https://www.itsolutionstuff.com/post/laravel-unique-validation-on-multiple-columns-exampleexample.html
+                Rule::unique('servers')->where(function ($query) use($ip,$hostname) {
+                    return $query->where('ip', $ip)
+                    ->where('hostname', $hostname);
+                }),
+                */
+            ],
+            'investment_id' => 'required|exists:investments,id'
         ];
     }
 
@@ -40,6 +53,7 @@ class AccountGroupRequest extends FormRequest
      */
     public function withValidator(Validator $validator): void
     {
+
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
                 self::addSimpleDangerMessage($message);
