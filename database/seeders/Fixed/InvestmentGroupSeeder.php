@@ -3,6 +3,7 @@
 namespace Database\Seeders\Fixed;
 
 use App\Models\InvestmentGroup;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class InvestmentGroupSeeder extends Seeder
@@ -12,13 +13,15 @@ class InvestmentGroupSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        InvestmentGroup::create([
+        InvestmentGroup::factory()->create([
             'name' => 'Stock',
+            'user_id' => $user->id,
         ]);
-        InvestmentGroup::create([
+        InvestmentGroup::factory()->create([
             'name' => 'Mutual fund',
+            'user_id' => $user->id,
         ]);
     }
 }

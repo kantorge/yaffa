@@ -35,6 +35,11 @@ class TransactionController extends Controller
         'transactionType',
     ];
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function createStandard()
     {
         // Sanity check for necessary assets
@@ -46,7 +51,7 @@ class TransactionController extends Controller
                 'info-circle'
             );
 
-            return redirect()->route('account.create');
+            return redirect()->route('account-entity.create', ['type' => 'account']);
         }
 
         return view(self::STANDARD_VIEW, [

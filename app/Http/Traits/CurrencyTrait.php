@@ -5,6 +5,7 @@ namespace App\Http\Traits;
 use App\Models\Currency;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 trait CurrencyTrait
@@ -50,9 +51,8 @@ trait CurrencyTrait
      */
     public function getBaseCurrency(): Currency
     {
-        return Currency::where('base', 1)->firstOr(function () {
-            return Currency::orderBy('id')->firstOr(function () {
-                //TODO: better handling of missing currencies. E.g., should there be a default currency with migration?
+        return  Auth::user()->currencies()->where('base', 1)->firstOr(function () {
+            return Auth::user()->currencies()->orderBy('id')->firstOr(function () {
                 return null;
             });
         });

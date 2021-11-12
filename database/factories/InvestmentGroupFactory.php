@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\InvestmentGroup;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class InvestmentGroupFactory extends Factory
@@ -22,7 +23,8 @@ class InvestmentGroupFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->unique()->text(mt_rand(10, 50)),
+            'name' => $this->faker->unique()->text(mt_rand(5, 25)),
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 }

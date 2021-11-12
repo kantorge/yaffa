@@ -50,8 +50,8 @@
             </a>
             <ul class="treeview-menu">
                 <li><a href="{{ route('account-group.index') }}"><i class="fa fa-reorder"></i> <span>Account groups</span></a></li>
-                <li><a href="{{ route('account.index') }}"><i class="fa fa-university"></i> <span>Accounts</span></a></li>
-                <li><a href="{{ route('payees.index') }}"><i class="fa fa-suitcase"></i> <span>Payees</span></a></li>
+                <li><a href="{{ route('account-entity.index', ['type' => 'account']) }}"><i class="fa fa-university"></i> <span>Accounts</span></a></li>
+                <li><a href="{{ route('account-entity.index', ['type' => 'payee']) }}"><i class="fa fa-suitcase"></i> <span>Payees</span></a></li>
                 <li><a href="{{ route('investment-group.index') }}"><i class="fa fa-reorder"></i> <span>Investment groups</span></a></li>
                 <li><a href="{{ route('investment.index') }}"><i class="fa fa-line-chart"></i> <span>Investments</span></a></li>
                 <li><a href="{{ route('tag.index') }}"><i class="fa fa-tags"></i> <span>Tags</span></a></li>

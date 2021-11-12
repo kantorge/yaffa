@@ -2,21 +2,32 @@
 
 namespace Database\Seeders\Random;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountGroup;
-use App\Models\Currency;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 
 class AccountSeeder extends Seeder
 {
     /**
-     * Run the database seeds by creating random values with factory
+     * Run the database seeds by creating random values
      *
      * @return void
      */
-    public function run()
+    public function run(User $user, int $count = 5)
     {
-        //TODO
+        if ($user) {
+            $users = new Collection([$user]);
+        } else {
+            $users = User::all();
+        }
+
+        $users->each(function ($user) use ($count) {
+            AccountEntity::factory()
+                ->count($count)
+                ->for($user)
+                ->account($user)
+                ->create();
+        });
     }
 }

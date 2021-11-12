@@ -1,4 +1,4 @@
-@if(count($notifications))
+@if(isset($notifications) && count($notifications) > 0)
     @foreach ($notifications as $notification)
         <div class="alert alert-{{ $notification['type'] }} {{ ($notification['dismissable'] ? 'alert-dismissable' : '') }}">
             @if($notification['dismissable'])
@@ -7,7 +7,7 @@
             @if($notification['title'] || $notification['icon'])
                 <h4>
                     @if($notification['icon'])
-                        <i class='icon fa fa-{{ $notification['icon'] }}'></i>
+                        <span class='icon fa fa-{{ $notification['icon'] }}'></span>
                     @endif
                     {{ $notification['title'] }}
                 </h4>

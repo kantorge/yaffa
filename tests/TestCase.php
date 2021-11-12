@@ -2,8 +2,8 @@
 
 namespace Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Artisan;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -22,32 +22,36 @@ abstract class TestCase extends BaseTestCase
         $this->base_model = $model;
     }
 
-    /**
-     * If true, setup has run at least once.
-     * @var bool
-     */
-    protected static $setUpHasRunOnce = false;
-
-    public function setUp() :void
+    protected function raw($class, $attributes = [], $times = null)
     {
-        parent::setUp();
-
-        if (! static::$setUpHasRunOnce) {
-            Artisan::call('migrate:fresh', ['--database' => env('DB_CONNECTION')]);
-            Artisan::call('db:seed', ['--class' => 'TestSeeder']);
-
-            static::$setUpHasRunOnce = true;
-        }
+        return $class::factory()->count($times)->raw($attributes);
     }
 
-    protected function create($attributes = [], $model = '', $route = '')
+    protected function rawForUser(User $user, $class, $attributes = [], $times = null)
+    {
+        $attributes['user_id'] = $user->id;
+
+        return $class::factory()->count($times)->raw($attributes);
+    }
+
+    protected function create($class, $attributes = [], $times = null)
+    {
+        return $class::factory()->count($times)->create($attributes);
+    }
+
+    protected function createForUser(User $user, $class, $attributes = [], $times = null)
+    {
+        return $class::factory()->for($user)->count($times)->create($attributes);
+    }
+
+    protected function assertCreateForUser(User $user, $attributes = [], $model = '', $route = '')
     {
         $route = $this->base_route ? "{$this->base_route}.store" : $route;
         $model = $this->base_model ?? $model;
 
-        $attributes = raw($model, $attributes);
+        $attributes = $this->rawForUser($user, $model, $attributes);
 
-        $response = $this->postJson(route($route), $attributes);
+        $response = $this->actingAs($user)->postJson(route($route), $attributes);
         $response->assertRedirect($this->base_route ? "{$this->base_route}" : $route);
 
         $model = new $model;
@@ -57,16 +61,16 @@ abstract class TestCase extends BaseTestCase
         return $response;
     }
 
-    protected function destroy($model = '', $route = '')
+    protected function assertDestroyWithUser(User $user, $model = '', $route = '')
     {
         $route = $this->base_route ? "{$this->base_route}.destroy" : $route;
         $model = $this->base_model ?? $model;
 
-        $model = create($model);
+        $model = $this->createForUser($user, $model);
 
-        $response = $this->deleteJson(route($route, $model->id));
+        $response = $this->actingAs($user)->deleteJson(route($route, $model->id));
 
-        $this->assertDatabaseMissing($model->getTable(), $model->toArray());
+        $this->assertDatabaseMissing($model->getTable(), ['id' => $model->id]);
 
         return $response;
     }

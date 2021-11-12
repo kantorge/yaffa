@@ -1,6 +1,9 @@
-@extends('template.page')
+@extends('template.layouts.page')
 
-@section('classes_body', "layout-footer-fixed")
+@section('classes_body')
+    @parent
+    layout-footer-fixed
+@endsection
 
 @section('title', 'Transaction')
 

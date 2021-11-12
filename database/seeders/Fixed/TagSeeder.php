@@ -3,6 +3,7 @@
 namespace Database\Seeders\Fixed;
 
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class TagSeeder extends Seeder
@@ -12,13 +13,15 @@ class TagSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        Tag::create([
+        Tag::factory()->create([
             'name' => 'Kids',
+            'user_id' => $user->id,
         ]);
-        Tag::create([
+        Tag::factory()->create([
             'name' => 'Holiday 2021',
+            'user_id' => $user->id,
         ]);
     }
 }

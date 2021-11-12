@@ -2,24 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\FormRequest;
+use Illuminate\Validation\Rule;
 
 class InvestmentGroupRequest extends FormRequest
 {
-    use FlashMessages;
-
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
-    {
-        return true;
-    }
-
     /**
      * Get the validation rules that apply to the request.
      * Pass ID to unique check, if it exists in request
@@ -33,22 +20,14 @@ class InvestmentGroupRequest extends FormRequest
                 'required',
                 'min:2',
                 'max:191',
-                'unique:investment_groups,name,'.\Request::instance()->id,
+                Rule::unique('investment_groups')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->investment_group, function ($query) {
+                            return $query->where('id', '!=', $this->investment_group->id);
+                        });
+                }),
             ],
         ];
-    }
-
-    /**
-     * Load validator error messages to standard notifications array
-     *
-     * @return void
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
-            }
-        });
     }
 }

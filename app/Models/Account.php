@@ -6,9 +6,12 @@ use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Account extends AccountEntity
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     public $timestamps = false;

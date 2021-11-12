@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Http\View\Composers\AccountListComposer;
+use App\Http\View\Composers\CategoryListComposer;
+use App\Http\View\Composers\CategoryParentListComposer;
 use App\Http\View\Composers\CurrencyListComposer;
 use App\Http\View\Composers\InvestmentGroupListComposer;
 use App\Http\View\Composers\InvestmentPriceProviderListComposer;
@@ -20,10 +22,11 @@ class ViewServiceProvider extends ServiceProvider
     public function boot()
     {
         // Account list for quick jump
-        View::composer('*', AccountListComposer::class);
+        View::composer('template.layouts.page', AccountListComposer::class);
 
         // General notification helper content
-        View::composer('*', NotificationMessageComposer::class);
+        View::composer('template.layouts.page', NotificationMessageComposer::class);
+        View::composer('template.layouts.auth', NotificationMessageComposer::class);
 
         // Investment form - all investment groups
         View::composer('investment.form', InvestmentGroupListComposer::class);
@@ -33,5 +36,11 @@ class ViewServiceProvider extends ServiceProvider
 
         // Investment form - all price providers
         View::composer('investment.form', InvestmentPriceProviderListComposer::class);
+
+        // Category parent list for category forms
+        View::composer('categories.form', CategoryParentListComposer::class);
+
+        // All categories for payee form
+        View::composer('payee.form', CategoryListComposer::class);
     }
 }

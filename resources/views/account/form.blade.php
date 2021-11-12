@@ -1,4 +1,4 @@
-@extends('template.page')
+@extends('template.layouts.page')
 
 @section('title', 'Accounts')
 
@@ -11,7 +11,7 @@
     @if(isset($account))
         <form
             accept-charset="UTF-8"
-            action="{{ route('account.update', $account->id) }}"
+            action="{{ route('account-entity.update', ['type' => 'account', 'account_entity' => $account->id]) }}"
             autocomplete="off"
             method="POST"
         >
@@ -19,7 +19,7 @@
     @else
         <form
             accept-charset="UTF-8"
-            action="{{ route('account.store') }}"
+            action="{{ route('account-entity.store', ['type' => 'account']) }}"
             autocomplete="off"
             method="POST"
         >
@@ -163,18 +163,13 @@
         <div class="box-footer">
             @csrf
             <input
-                name="id"
-                type="hidden"
-                value="{{old('id', $account->id ?? '' )}}"
-            >
-            <input
                 name="config_type"
                 type="hidden"
                 value="{{old('config_type', 'account' )}}"
             >
 
             <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('account.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <a href="{{ route('account-entity.index', ['type' => 'account']) }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>
         <!-- /.box-footer -->
     </div>

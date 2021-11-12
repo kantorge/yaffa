@@ -1,4 +1,4 @@
-@extends('template.page')
+@extends('template.layouts.page')
 
 @section('title', 'Account groups')
 
@@ -55,11 +55,6 @@
         <!-- /.box-body -->
         <div class="box-footer">
             @csrf
-            <input
-                name="id"
-                type="hidden"
-                value="{{old('id', $accountGroup->id ?? '' )}}"
-            >
 
             <input class="btn btn-primary" type="submit" value="Save">
             <a href="{{ route('account-group.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>

@@ -1,4 +1,4 @@
-@extends('template.page')
+@extends('template.layouts.page')
 
 @section('title', 'Currencies')
 
@@ -146,12 +146,6 @@
         <!-- /.box-body -->
         <div class="box-footer">
             @csrf
-            <input
-                name="id"
-                type="hidden"
-                value="{{old('id', $currency->id ?? '' )}}"
-            >
-
             <input class="btn btn-primary" type="submit" value="Save">
             <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
         </div>

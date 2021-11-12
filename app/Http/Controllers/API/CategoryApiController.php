@@ -6,23 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CategoryApiController extends Controller
 {
-    protected $category;
-
-    public function __construct(Category $category)
+    public function __construct()
     {
-        $this->category = $category;
+        $this->middleware('auth:sanctum');
     }
 
     public function getList(Request $request)
     {
         $query = $request->get('q');
         if ($query) {
-            $categories = $this->category
-                ->where('active', 1)
+            $categories = Auth::user()
+                ->categories()
+                ->active()
                 ->get()
                 ->filter(function ($category) use ($query) {
                     return stripos($category->full_name, $query) !== false;
@@ -59,6 +59,7 @@ class CategoryApiController extends Controller
                     'categories.id',
                 )
                 ->where('categories.active', true)
+                ->where('categories.user_id', Auth::user()->id)
                 ->when($request->has('payee'), function ($query) use ($request) {
                     $query->whereRaw(
                         '(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)',
@@ -83,7 +84,6 @@ class CategoryApiController extends Controller
             ->values();
         }
 
-        //return data
         return response()
             ->json(
                 $categories,

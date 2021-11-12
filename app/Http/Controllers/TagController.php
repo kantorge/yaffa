@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class TagController extends Controller
 {
-    protected $tag;
-
-    public function __construct(Tag $tag)
+    public function __construct()
     {
-        $this->tag = $tag;
+        $this->middleware('auth');
+        $this->authorizeResource(Tag::class);
     }
 
     /**
@@ -22,10 +22,13 @@ class TagController extends Controller
      */
     public function index()
     {
-        //Show all tags from the database and return to view
-        $tags = $this->tag->all();
+        // Get all tags of the user from the database and return to view
+        $tags = Auth::user()
+            ->tags()
+            ->select('id', 'name', 'active')
+            ->get();
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'tags' => $tags,
         ]);
@@ -53,20 +56,21 @@ class TagController extends Controller
     {
         $validated = $request->validated();
 
-        Tag::create($validated);
+        $tag = Tag::make($validated);
+        $tag->user_id = Auth::user()->id;
+        $tag->save();
 
         self::addSimpleSuccessMessage('Tag added');
 
         return redirect()->route('tag.index');
     }
 
-    public function update(TagRequest $request)
+    public function update(TagRequest $request, Tag $tag)
     {
         // Retrieve the validated input data
         $validated = $request->validated();
 
-        Tag::find($request->input('id'))
-            ->fill($validated)
+        $tag->fill($validated)
             ->save();
 
         self::addSimpleSuccessMessage('Tag updated');

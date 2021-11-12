@@ -3,7 +3,9 @@
 namespace Database\Seeders\Random;
 
 use App\Models\Currency;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 class CurrencySeeder extends Seeder
 {
@@ -12,8 +14,41 @@ class CurrencySeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(?User $user, $count = 5)
     {
-        Currency::factory()->count(5)->create();
+        if ($user) {
+            $users = new Collection([$user]);
+        } else {
+            $users = User::all();
+        }
+
+        $users->each(function ($user) use ($count) {
+            // TODO: use Faker unique instead of replicating its functionality
+            $maxRetries = 10000;
+            $uniques = [];
+
+            for ($j = 0; $j < $count; $j++) {
+                $i = 0;
+
+                do {
+                    $res = Currency::factory()
+                        ->for($user)
+                        ->make();
+
+                    ++$i;
+
+                    if ($i > $maxRetries) {
+                        throw new \OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
+                    }
+                } while (array_key_exists(serialize($res), $uniques));
+                $uniques[serialize($res)] = null;
+                $res->save();
+            }
+
+            // Set a random currency to be default
+            $currency = $user->currencies()->inRandomOrder()->first();
+            $currency->base = true;
+            $currency->save();
+        });
     }
 }

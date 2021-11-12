@@ -111,17 +111,17 @@ return [
         'db'              => true,  // Show database (PDO) queries and bindings
         'views'           => true,  // Views with their data
         'route'           => true,  // Current route information
-        'auth'            => false, // Display Laravel authentication status
-        'gate'            => false,  // Display Laravel Gate checks
+        'auth'            => true,  // Display Laravel authentication status
+        'gate'            => true,  // Display Laravel Gate checks
         'session'         => true,  // Display session data
         'symfony_request' => true,  // Only one can be enabled..
-        'mail'            => false,  // Catch mail messages
-        'laravel'         => false, // Laravel version and environment
+        'mail'            => true,  // Catch mail messages
+        'laravel'         => true,  // Laravel version and environment
         'events'          => false, // All events fired
         'default_request' => false, // Regular or special Symfony request logger
-        'logs'            => false, // Add the latest log messages
+        'logs'            => true,  // Add the latest log messages
         'files'           => false, // Show the included files
-        'config'          => false, // Display config settings
+        'config'          => true,  // Display config settings
         'cache'           => false, // Display cache events
         'models'          => true,  // Display models
         'livewire'        => true,  // Display Livewire (when available)
@@ -144,13 +144,13 @@ return [
             'with_params'       => true,   // Render SQL with the parameters substituted
             'backtrace'         => true,   // Use a backtrace to find the origin of the query in your files.
             'backtrace_exclude_paths' => [],   // Paths to exclude from backtrace. (in addition to defaults)
-            'timeline'          => false,  // Add the queries to the timeline
+            'timeline'          => true,  // Add the queries to the timeline
             'explain' => [                 // Show EXPLAIN output on queries
                 'enabled' => false,
                 'types' => ['SELECT'],     // Deprecated setting, is always only SELECT
             ],
-            'hints'             => false,    // Show hints for common mistakes
-            'show_copy'         => false,    // Show copy button next to the query
+            'hints'             => true,    // Show hints for common mistakes
+            'show_copy'         => true,    // Show copy button next to the query
         ],
         'mail' => [
             'full_log' => false,

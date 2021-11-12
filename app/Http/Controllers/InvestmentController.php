@@ -8,6 +8,7 @@ use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
@@ -16,13 +17,11 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class InvestmentController extends Controller
 {
-    protected $investment;
-
-    public function __construct(Investment $investment)
+    public function __construct()
     {
-        $this->investment = $investment;
+        $this->middleware('auth');
+        $this->authorizeResource(Investment::class);
     }
-
     /**
      * Display a listing of the resource.
      *
@@ -30,8 +29,9 @@ class InvestmentController extends Controller
      */
     public function index()
     {
-        $investments = $this
-            ->investment
+        // Get all investments of the user from the database and return to view
+        $investments = Auth::user()
+            ->investments()
             ->get();
 
         // Pass data for DataTables
@@ -68,7 +68,11 @@ class InvestmentController extends Controller
 
     public function store(InvestmentRequest $request)
     {
-        Investment::create($request->validated());
+        $validated = $request->validated();
+
+        $investment = Investment::make($validated);
+        $investment->user_id = Auth::user()->id;
+        $investment->save();
 
         self::addSimpleSuccessMessage('Investment added');
 

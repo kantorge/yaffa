@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AccountGroup;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AccountGroupFactory extends Factory
@@ -23,6 +24,7 @@ class AccountGroupFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->text(mt_rand(10, 50)),
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 }

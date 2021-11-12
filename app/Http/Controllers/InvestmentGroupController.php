@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class InvestmentGroupController extends Controller
 {
-    protected $investmentGroup;
-
-    public function __construct(InvestmentGroup $investmentGroup)
+    public function __construct()
     {
-        $this->investmentGroup = $investmentGroup;
+        $this->middleware('auth');
+        $this->authorizeResource(InvestmentGroup::class);
     }
 
     /**
@@ -22,10 +22,13 @@ class InvestmentGroupController extends Controller
      */
     public function index()
     {
-        //Show all investment groups from the database and return to view
-        $investmentGroups = $this->investmentGroup->all();
+        // Get all investment groups of the user from the database and return to view
+        $investmentGroups = Auth::user()
+            ->investmentGroups()
+            ->select('id', 'name')
+            ->get();
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'investmentGroups' => $investmentGroups,
         ]);
@@ -53,19 +56,20 @@ class InvestmentGroupController extends Controller
     {
         $validated = $request->validated();
 
-        InvestmentGroup::create($validated);
+        $investmentGroup = InvestmentGroup::make($validated);
+        $investmentGroup->user_id = Auth::user()->id;
+        $investmentGroup->save();
 
         self::addSimpleSuccessMessage('Investment group added');
 
         return redirect()->route('investment-group.index');
     }
 
-    public function update(InvestmentGroupRequest $request)
+    public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup)
     {
-        // Retrieve the validated input data
         $validated = $request->validated();
 
-        InvestmentGroup::find($request->input('id'))
+        $investmentGroup
             ->fill($validated)
             ->save();
 

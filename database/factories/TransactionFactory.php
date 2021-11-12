@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionFactory extends Factory
@@ -30,6 +31,7 @@ class TransactionFactory extends Factory
             'comment' => $this->faker->boolean(50) ? $this->faker->text(191) : null,
             'reconciled' => $this->faker->boolean(50) ? 1 : 0,
             'date' => $this->faker->dateTimeBetween('-1 year', 'now'),
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 

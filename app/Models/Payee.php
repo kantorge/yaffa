@@ -7,9 +7,12 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Payee extends AccountEntity
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     /**

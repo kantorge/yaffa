@@ -45,9 +45,9 @@ $(function() {
             title: "Actions",
             render: function ( data, type, row, meta ) {
                 return '' +
-                       '<a href="' + route('account.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                       '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                        '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                       '<form id="form-delete-' + data + '" action="' + route('account.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                       '<form id="form-delete-' + data + '" action="' + route('account-entity.destroy', {type: 'account', account_entity: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
             },
             orderable: false
         }

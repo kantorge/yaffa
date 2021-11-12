@@ -20,8 +20,8 @@ $(document).ready( function () {
             title: "Actions",
             render: function ( data, type, row, meta ) {
                 return '' +
-                    '<a href="' + route('investment-group.edit', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                    '<a href="' + route('investment-group.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
                     '<form id="form-delete-' + data + '" action="' + route('investment-group.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
             },
             orderable: false

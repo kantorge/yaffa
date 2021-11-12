@@ -3,6 +3,8 @@
 namespace Database\Seeders\Random;
 
 use App\Models\InvestmentGroup;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 
 class InvestmentGroupSeeder extends Seeder
@@ -12,8 +14,19 @@ class InvestmentGroupSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(?User $user, $count = 5)
     {
-        InvestmentGroup::factory()->count(5)->create();
+        if ($user) {
+            $users = new Collection([$user]);
+        } else {
+            $users = User::all();
+        }
+
+        $users->each(function ($user) use ($count) {
+            InvestmentGroup::factory()
+                ->count($count)
+                ->for($user)
+                ->create();
+        });
     }
 }

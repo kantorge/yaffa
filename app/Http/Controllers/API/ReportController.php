@@ -14,6 +14,7 @@ use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -23,6 +24,11 @@ class ReportController extends Controller
     private $allAccounts;
     private $allTags;
     private $allCategories;
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum');
+    }
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
@@ -262,11 +268,17 @@ class ReportController extends Controller
             return $categories;
         }
 
-        $requestedCategories = Category::whereIn('id', $request->get('categories'))->get();
+        $requestedCategories = Auth::user()
+            ->categories()
+            ->whereIn('id', $request->get('categories'))
+            ->get();
 
         $requestedCategories->each(function ($category) use (&$categories) {
             if (is_null($category->parent_id)) {
-                $children = Category::where('parent_id', '=', $category->id)->get();
+                $children = Auth::user()
+                    ->categories()
+                    ->where('parent_id', '=', $category->id)
+                    ->get();
                 $categories = $categories->merge($children);
             }
 

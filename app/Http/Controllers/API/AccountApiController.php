@@ -8,22 +8,25 @@ use App\Models\AccountEntity;
 use App\Models\TransactionType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountApiController extends Controller
 {
     public function __construct(AccountEntity $account)
     {
+        $this->middleware('auth:sanctum');
         $this->account = $account->where('config_type', 'account');
     }
 
     public function getStandardList(Request $request)
     {
         if ($request->get('q')) {
-            $accounts = $this->account
+            $accounts = Auth::user()
+                ->accounts()
+                ->active()
                 ->select(['id', 'name AS text'])
                 ->where('name', 'LIKE', '%'.$request->get('q').'%')
-                ->active()
                 ->orderBy('name')
                 ->take(10)
                 ->get();
@@ -45,6 +48,8 @@ class AccountApiController extends Controller
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
+                ->where('transactions.user_id', Auth::user()->id)
+                ->where('account_entities.user_id', Auth::user()->id)
                 ->where(
                     'transaction_type_id',
                     '=',
@@ -73,7 +78,9 @@ class AccountApiController extends Controller
     public function getInvestmentList(Request $request)
     {
         if ($request->get('q')) {
-            $accounts = $this->account
+            $accounts = Auth::user()
+                ->investments()
+                ->active()
                 ->select(['id', 'name AS text'])
                 ->where('name', 'LIKE', '%'.$request->get('q').'%')
                 ->where('active', true)
@@ -96,6 +103,8 @@ class AccountApiController extends Controller
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
+                ->where('transactions.user_id', Auth::user()->id)
+                ->where('account_entities.user_id', Auth::user()->id)
                 ->when($request->get('currency_id'), function ($query) use ($request) {
                     return $query
                         ->join(

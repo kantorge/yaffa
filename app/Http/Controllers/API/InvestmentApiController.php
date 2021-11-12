@@ -7,17 +7,20 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class InvestmentApiController extends Controller
 {
-    public function __construct(Investment $investment)
+    public function __construct()
     {
-        $this->investment = $investment;
+        $this->middleware('auth:sanctum');
     }
 
     public function getList(Request $request)
     {
-        $investments = $this->investment
+        $investments = Auth::user()
+            ->investments()
+            ->active()
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%'.$request->get('q').'%');

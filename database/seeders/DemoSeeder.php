@@ -13,16 +13,20 @@ class DemoSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(\Database\Seeders\Fixed\AccountGroupSeeder::class);
-        $this->call(\Database\Seeders\Fixed\CurrencySeeder::class);
-        $this->call(\Database\Seeders\Random\CurrencyRateSeeder::class);
-        $this->call(\Database\Seeders\Fixed\AccountSeeder::class);
-        $this->call(\Database\Seeders\Fixed\CategorySeeder::class);
-        $this->call(\Database\Seeders\Fixed\PayeeSeeder::class);
-        $this->call(\Database\Seeders\Fixed\InvestmentGroupSeeder::class);
-        $this->call(\Database\Seeders\Fixed\InvestmentSeeder::class);
-        //$this->call(InvestmentPriceSeeder::class, 'db'); TODO: create fixed values
-        $this->call(\Database\Seeders\Fixed\TagSeeder::class);
-        $this->call(\Database\Seeders\Random\TransactionSeeder::class);
+        $this->callWith(\Database\Seeders\Fixed\UserSeeder::class, ['aliases' => ['demo']]);
+
+        // Main user
+        $alias = 'demo';
+        $this->callWith(\Database\Seeders\Fixed\AccountGroupSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\CurrencySeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Random\CurrencyRateSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\AccountSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\CategorySeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\PayeeSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\InvestmentGroupSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\InvestmentSeeder::class, ['alias' => $alias]);
+        // TODO: seed investment prices
+        $this->callWith(\Database\Seeders\Fixed\TagSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Random\TransactionSeeder::class, ['alias' => $alias]);
     }
 }

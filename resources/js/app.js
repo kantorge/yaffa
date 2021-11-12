@@ -8,9 +8,15 @@ if (   window.location.pathname === '/account/summary'
 if (window.location.pathname === '/account-group') {
     require('./account-group/index');
 }
-if (window.location.pathname === '/account') {
+if (   window.location.pathname === '/account-entity'
+    && /type=account/.test(window.location.search)) {
     require('./account/index');
 }
+if (   window.location.pathname === '/account-entity'
+    && /type=payee/.test(window.location.search)) {
+    require('./payees/index');
+}
+
 if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
     require('./account/history');
 }
@@ -41,9 +47,6 @@ if (   window.location.pathname === '/investment-price/create'
 }
 if (/^\/investment-price\/list\/\d+/.test(window.location.pathname)) {
     require('./investment-price/list');
-}
-if (window.location.pathname === '/payees') {
-    require('./payees/index');
 }
 if (window.location.pathname === '/tag') {
     require('./tags/index');

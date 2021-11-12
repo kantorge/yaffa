@@ -2,26 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class MainController extends Controller
 {
+    use CurrencyTrait;
     use ScheduleTrait;
 
     private $allAccounts;
     private $allTags;
     private $allCategories;
     private $currentAccount;
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     /**
      * Get the current value of all accounts.
@@ -40,9 +47,8 @@ class MainController extends Controller
     public function index($withClosed = null)
     {
         // Try to get base currency. Get user to define it, if no currencies exist.
-        try {
-            $baseCurrency = Currency::where('base', 1)->firstOrFail();
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        $baseCurrency =  $this->getBaseCurrency();
+        if (! $baseCurrency) {
             $this->addMessage(
                 "Please add at least one currency, that you'll use. You can set it as the default currency, which will be used in reports and summaries.",
                 'info',
@@ -54,18 +60,17 @@ class MainController extends Controller
         }
 
         // Get all currencies for rate calculation
-        $currencies = Currency::all();
+        $currencies = Auth::user()
+            ->currencies()
+            ->get();
 
         // Load all accounts to get current value
-        $accounts = AccountEntity::where('config_type', 'account')
+        $accounts = Auth::user()
+            ->accounts()
             ->when(! $withClosed, function ($query) {
-                return $query->where('active', '1');
+                return $query->active();
             })
-            ->with([
-                'config',
-                'config.account_group',
-                'config.currency',
-            ])
+            ->with(['config', 'config.account_group', 'config.currency'])
             ->get();
 
         $accounts

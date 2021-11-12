@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TagFactory extends Factory
@@ -23,6 +24,8 @@ class TagFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->text(mt_rand(5, 15)),
+            'active' => 1,
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 }

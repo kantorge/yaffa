@@ -2,19 +2,12 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class InvestmentRequest extends FormRequest
 {
-    use FlashMessages;
-
-    public function authorize()
-    {
-        return true;
-    }
-
     public function rules()
     {
         return [
@@ -22,13 +15,25 @@ class InvestmentRequest extends FormRequest
                 'required',
                 'min:2',
                 'max:191',
-                'unique:investments,name,'.\Request::instance()->id,
+                Rule::unique('investments')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->investment, function ($query) {
+                            return $query->where('id', '!=', $this->investment->id);
+                        });
+                }),
             ],
             'symbol' => [
                 'required',
                 'min:2',
                 'max:191',
-                'unique:investments,symbol,'.\Request::instance()->id,
+                Rule::unique('investments')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->investment, function ($query) {
+                            return $query->where('id', '!=', $this->investment->id);
+                        });
+                }),
             ],
             'comment' => [
                 'nullable',
@@ -42,31 +47,21 @@ class InvestmentRequest extends FormRequest
             ],
             'investment_group_id' => [
                 'required',
-                'exists:account_groups,id',
+                Rule::exists('investment_groups', 'id')->where(function ($query) {
+                    return $query->where('user_id', Auth::user()->id);
+                }),
             ],
             'currency_id' => [
                 'required',
-                'exists:currencies,id',
+                Rule::exists('currencies', 'id')->where(function ($query) {
+                    return $query->where('user_id', Auth::user()->id);
+                }),
             ],
             'investment_price_provider_id' => [
                 'nullable',
                 'exists:investment_price_providers,id',
             ],
         ];
-    }
-
-    /**
-     * Load validator error messages to standard notifications array
-     *
-     * @return void
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
-            }
-        });
     }
 
     /**

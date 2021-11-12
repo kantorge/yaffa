@@ -3,22 +3,23 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class TagApiController extends Controller
 {
-    public function __construct(Tag $tag)
+    public function __construct()
     {
-        $this->tag = $tag;
+        $this->middleware('auth:sanctum');
     }
 
     public function getList(Request $request)
     {
-        $tags = $this->tag
+        $tags = Auth::user()
+            ->tags()
+            ->active()
             ->select(['id', 'name AS text'])
-            ->where('active', 1)
             ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%'.$request->get('q').'%');
             })

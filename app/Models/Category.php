@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Category extends Model
 {
+    use HasFactory;
+
     protected $table = 'categories';
 
     protected $with = [
@@ -21,6 +25,7 @@ class Category extends Model
         'name',
         'active',
         'parent_id',
+        'user_id',
     ];
 
     protected $casts = [
@@ -48,5 +53,21 @@ class Category extends Model
     public function getFullNameAttribute()
     {
         return (isset($this->parent->name) ? $this->parent->name.' > ' : '').$this['name'];
+    }
+
+    /**
+     * Scope a query to only include active entities.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

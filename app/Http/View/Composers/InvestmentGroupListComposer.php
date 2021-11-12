@@ -2,7 +2,7 @@
 
 namespace App\Http\View\Composers;
 
-use App\Models\InvestmentGroup;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class InvestmentGroupListComposer
@@ -15,7 +15,11 @@ class InvestmentGroupListComposer
      */
     public function compose(View $view)
     {
-        $allInvestmentGropus = InvestmentGroup::pluck('name', 'id')->all();
+        $allInvestmentGropus = Auth::user()
+            ->investmentGroups()
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->pluck('name', 'id');
 
         $view->with('allInvestmentGropus', $allInvestmentGropus);
     }

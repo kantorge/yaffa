@@ -5,6 +5,7 @@ namespace Database\Seeders\Fixed;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class PayeeSeeder extends Seeder
@@ -14,42 +15,32 @@ class PayeeSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        /* specific values */
-        $payee = new AccountEntity(
+        $payeeConfig = Payee::create(
+            [
+                'category_id' => Category::where('name', 'Groceries')->pluck('id')->first(),
+            ]
+        );
+        AccountEntity::create(
             [
                 'name' => 'Auchan',
                 'active' => 1,
                 'config_type' => 'payee',
+                'config_id' => $payeeConfig->id,
+                'user_id' => $user->id,
             ]
         );
 
-        $payeeConfig = new Payee(
-            [
-                'category_id' => Category::where('name', 'Alapanyag, fűszer, konzerv')->pluck('id')->first(),
-            ]
-        );
-        $payeeConfig->save();
-
-        $payee->config()->associate($payeeConfig);
-
-        $payee->save();
-
-        /* specific values */
-        $payee = new AccountEntity(
+        $payeeConfig = Payee::create();
+        AccountEntity::create(
             [
                 'name' => 'CBA',
                 'active' => 1,
                 'config_type' => 'payee',
+                'config_id' => $payeeConfig->id,
+                'user_id' => $user->id,
             ]
         );
-
-        $payeeConfig = new Payee();
-        $payeeConfig->save();
-
-        $payee->config()->associate($payeeConfig);
-
-        $payee->save();
     }
 }

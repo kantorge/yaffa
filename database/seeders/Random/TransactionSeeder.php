@@ -6,6 +6,7 @@ use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class TransactionSeeder extends Seeder
@@ -22,13 +23,15 @@ class TransactionSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
         // Create standard withdrawals
         Transaction::factory()
             ->count(rand(50, 100))
             ->withdrawal()
-            ->create()
+            ->create([
+                'user_id' => $user->id,
+            ])
             ->each(function ($transaction) {
                 $this->createTransactionProperties($transaction);
             });
@@ -37,7 +40,9 @@ class TransactionSeeder extends Seeder
         Transaction::factory()
             ->count(rand(50, 100))
             ->deposit()
-            ->create()
+            ->create([
+                'user_id' => $user->id,
+            ])
             ->each(function ($transaction) {
                 $this->createTransactionProperties($transaction);
             });
@@ -46,13 +51,17 @@ class TransactionSeeder extends Seeder
         Transaction::factory()
             ->count(rand(20, 50))
             ->transfer()
-            ->create();
+            ->create([
+                'user_id' => $user->id,
+            ]);
 
         // Create standard withdrawals with schedule
         Transaction::factory()
             ->count(rand(5, 10))
             ->withdrawal_schedule()
-            ->create()
+            ->create([
+                'user_id' => $user->id,
+            ])
             ->each(function ($transaction) {
                 $this->createTransactionSchedule($transaction);
                 $this->createTransactionProperties($transaction);
@@ -62,7 +71,9 @@ class TransactionSeeder extends Seeder
         Transaction::factory()
                 ->count(rand(10, 50))
                 ->buy()
-                ->create();
+                ->create([
+                    'user_id' => $user->id,
+                ]);
     }
 
     private function createTransactionSchedule(Transaction $transaction)

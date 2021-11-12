@@ -15,7 +15,7 @@ class InvestmentPriceController extends Controller
 
     public function list(Investment $investment)
     {
-        // pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'prices' => $investment->investmentPrices,
         ]);

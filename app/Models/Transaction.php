@@ -40,6 +40,7 @@ class Transaction extends Model
         'comment',
         'config_type',
         'config_id',
+        'user_id',
     ];
 
     protected $hidden = ['config_id'];
