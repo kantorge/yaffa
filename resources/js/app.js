@@ -77,7 +77,7 @@ if (window.location.pathname === '/reports/budgetchart') {
 
 $( function () {
     // Generally available account selector
-    document.getElementById('jump_to_account').addEventListener('change', function() {
+    $('#jump_to_account').on('change', function() {
         if (this.value == '') {
             return false;
         }
