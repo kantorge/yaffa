@@ -9,6 +9,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
@@ -73,7 +74,9 @@ class TransactionController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::create($validated);
+            $transaction = Transaction::make($validated);
+            $transaction->user_id = Auth::user()->id;
+            $transaction->save();
 
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
@@ -128,7 +131,8 @@ class TransactionController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::create($validated);
+            $transaction = Transaction::make($validated);
+            $transaction->user_id = Auth::user()->id;
 
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
             $transaction->config()->associate($transactionDetails);

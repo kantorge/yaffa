@@ -296,6 +296,8 @@
             data.investment_currency = null;
             data.investment_currency_id = null;
 
+            data.csrfToken = $('meta[name="csrf-token"]').attr('content');
+
             // TODO: adjust initial callback based on action
             data.callback = 'new';
 
@@ -432,6 +434,7 @@
                                 q: params.term,
                                 transaction_type: $vm.form.transaction_type,
                                 currency_id: $vm.investment_currency_id,
+                                _token: $vm.csrfToken,
                             };
                         },
                         processResults: function (data) {
@@ -451,6 +454,9 @@
 
                     $.ajax({
                         url:  '/api/assets/account/' + e.params.data.id,
+                        data: {
+                            _token: $vm.csrfToken,
+                        },
                     })
                     .done(data => {
                         $vm.account_currency = data.config.currency.suffix;
@@ -466,6 +472,9 @@
             if (this.form.config.account_id) {
                 $.ajax({
                     url:  '/api/assets/account/' + this.form.config.account_id,
+                    data: {
+                        _token: $vm.csrfToken,
+                    },
                 })
                 .done(data => {
                     // Create the option and append to Select2
@@ -490,7 +499,8 @@
                     data: function (params) {
                             return {
                                 q: params.term,
-                                currency_id: $vm.account_currency_id
+                                currency_id: $vm.account_currency_id,
+                                _token: $vm.csrfToken,
                             };
                     },
                     dataType: 'json',
@@ -512,6 +522,9 @@
 
                 $.ajax({
                     url: route('investment.getDetails', {'investment': e.params.data.id}),
+                    data: {
+                        _token: $vm.csrfToken,
+                    },
                 })
                 .done(function( data ) {
                     $vm.investment_currency_id = data.currency.id;

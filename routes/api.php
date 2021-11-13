@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiController@getStandardList');
 Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiController@getInvestmentList');
-Route::get('/assets/account/{account}', 'App\Http\Controllers\API\AccountApiController@getItem');
+Route::get('/assets/account/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getItem');
 Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');

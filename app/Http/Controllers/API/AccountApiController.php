@@ -16,7 +16,6 @@ class AccountApiController extends Controller
     public function __construct(AccountEntity $account)
     {
         $this->middleware('auth:sanctum');
-        $this->account = $account->where('config_type', 'account');
     }
 
     public function getStandardList(Request $request)

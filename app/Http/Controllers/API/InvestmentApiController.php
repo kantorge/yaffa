@@ -20,7 +20,7 @@ class InvestmentApiController extends Controller
     {
         $investments = Auth::user()
             ->investments()
-            ->active()
+            ->where('active', true)
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%'.$request->get('q').'%');

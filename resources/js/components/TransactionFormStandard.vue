@@ -624,6 +624,9 @@
                     if ($vm.getAccountType('from') == 'account') {
                         $.ajax({
                             url:  '/api/assets/account/currency/' + e.params.data.id,
+                            data: {
+                                _token: $vm.csrfToken,
+                            }
                         })
                         .done(data => {
                             $vm.from.account_currency = data;
@@ -631,7 +634,10 @@
                     } else {
                         $.ajax({
                             url:  '/api/assets/get_default_category_for_payee',
-                            data: {payee_id: e.params.data.id}
+                            data: {
+                                payee_id: e.params.data.id,
+                                _token: $vm.csrfToken,
+                            }
                         })
                         .done(function( data ) {
                             $vm.payeeCategory.id = data.id;
@@ -651,6 +657,9 @@
                 if (this.getAccountType('from') == 'account') {
                     $.ajax({
                         url:  '/api/assets/account/' + this.form.config.account_from_id,
+                        data: {
+                            _token: $vm.csrfToken,
+                        }
                     })
                     .done(data => {
                         // Create the option and append to Select2
@@ -673,6 +682,9 @@
                     if ($vm.getAccountType('to') === 'account') {
                         $.ajax({
                             url:  '/api/assets/account/currency/' + e.params.data.id,
+                            data: {
+                                _token: $vm.csrfToken,
+                            }
                         })
                         .done(data => {
                             $vm.to.account_currency = data;
@@ -680,7 +692,10 @@
                     } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({
                             url:  '/api/assets/get_default_category_for_payee',
-                            data: {payee_id: e.params.data.id}
+                            data: {
+                                payee_id: e.params.data.id,
+                                _token: $vm.csrfToken,
+                            }
                         })
                         .done(function( data ) {
                             $vm.payeeCategory.id = data.id;
@@ -700,6 +715,9 @@
                 if (this.getAccountType('to') == 'account') {
                     $.ajax({
                         url:  '/api/assets/account/' + this.form.config.account_to_id,
+                        data: {
+                            _token: $vm.csrfToken,
+                        }
                     })
                     .done(data => {
                         // Create the option and append to Select2
@@ -815,6 +833,7 @@
                         delay: 150,
                         data: function (params) {
                             return {
+                                _token: $vm.csrfToken,
                                 q: params.term,
                                 transaction_type: $vm.form.transaction_type,
                                 account_type: type,
