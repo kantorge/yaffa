@@ -105,4 +105,4 @@ Route::resource(
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
 
-Auth::routes();
+Auth::routes(['reset' => false, 'register' => false, 'confirm' => false, 'verify' => false]);

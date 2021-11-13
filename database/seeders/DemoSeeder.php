@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DemoSeeder extends Seeder
@@ -15,18 +16,18 @@ class DemoSeeder extends Seeder
     {
         $this->callWith(\Database\Seeders\Fixed\UserSeeder::class, ['aliases' => ['demo']]);
 
-        // Main user
-        $alias = 'demo';
-        $this->callWith(\Database\Seeders\Fixed\AccountGroupSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\CurrencySeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Random\CurrencyRateSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\AccountSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\CategorySeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\PayeeSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\InvestmentGroupSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Fixed\InvestmentSeeder::class, ['alias' => $alias]);
+        $demoUser = User::where('email', 'demo@yaffa.cc')->first();
+
+        $this->callWith(\Database\Seeders\Fixed\AccountGroupSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\CurrencySeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Random\CurrencyRateSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\AccountSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\CategorySeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\PayeeSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\InvestmentGroupSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Fixed\InvestmentSeeder::class, ['user' => $demoUser]);
         // TODO: seed investment prices
-        $this->callWith(\Database\Seeders\Fixed\TagSeeder::class, ['alias' => $alias]);
-        $this->callWith(\Database\Seeders\Random\TransactionSeeder::class, ['alias' => $alias]);
+        $this->callWith(\Database\Seeders\Fixed\TagSeeder::class, ['user' => $demoUser]);
+        $this->callWith(\Database\Seeders\Random\TransactionSeeder::class, ['user' => $demoUser]);
     }
 }

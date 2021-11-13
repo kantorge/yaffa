@@ -9,6 +9,8 @@
     <div class="login-box-body">
         <p class="login-box-msg">Sign in to start your session</p>
 
+        <p class="login-box-msg">For the demo site you can sign in with user <strong>demo@yaffa.cc</strong> and password <strong>demo</strong>.</p>
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
