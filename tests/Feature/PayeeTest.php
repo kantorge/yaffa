@@ -66,6 +66,19 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
+    public function user_can_access_create_form()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create", ['type' => 'payee']));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewIs("payee.form");
+    }
+
+    /** @test */
     public function user_cannot_create_a_payee_with_missing_data()
     {
         $user = User::factory()->create();

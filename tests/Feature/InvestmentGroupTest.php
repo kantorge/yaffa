@@ -61,6 +61,19 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
+    public function user_can_access_create_form()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create"));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewIs("{$this->base_route}.form");
+    }
+
+    /** @test */
     public function user_cannot_create_an_investment_group_with_missing_data()
     {
         $user = User::factory()->create();

@@ -70,6 +70,21 @@ class AccountTest extends TestCase
     }
 
     /** @test */
+    public function user_can_access_create_form()
+    {
+        $user = User::factory()->create();
+        $this->createForUser($user, AccountGroup::class);
+        $this->createForUser($user, Currency::class);
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create", ['type' => 'account']));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewIs("account.form");
+    }
+
+    /** @test */
     public function user_cannot_create_an_account_with_missing_data()
     {
         $user = User::factory()->create();
