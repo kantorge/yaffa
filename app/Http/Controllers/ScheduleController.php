@@ -14,6 +14,11 @@ class ScheduleController extends Controller
     private $allTags;
     private $allCategories;
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         // Get all accounts and payees so their name can be reused
@@ -37,6 +42,7 @@ class ScheduleController extends Controller
                 'transactionItems.tags',
             ]
         )
+        ->where('user_id', Auth::user()->id)
         ->where(function ($query) {
             return $query->where('schedule', 1)
                 ->orWhere('budget', 1);
@@ -57,6 +63,7 @@ class ScheduleController extends Controller
                 'transactionSchedule',
             ]
         )
+        ->where('user_id', Auth::user()->id)
         ->where(function ($query) {
             return $query->where('schedule', 1)
                 ->orWhere('budget', 1);
