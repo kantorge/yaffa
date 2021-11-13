@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
-use App\Models\Category;
-use App\Models\Tag;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class ScheduleController extends Controller
@@ -17,13 +17,15 @@ class ScheduleController extends Controller
     public function index()
     {
         // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all tags
-        $this->allTags = Tag::pluck('name', 'id')->all();
+        $this->allTags = Auth::user()->tags->pluck('name', 'id')->all();
 
         // Get all categories
-        $this->allCategories = Category::all()->pluck('full_name', 'id');
+        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
 
         // Get all standard transactions
         $standardTransactions = Transaction::with(

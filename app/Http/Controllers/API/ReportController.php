@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
-use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -205,9 +204,7 @@ class ReportController extends Controller
             ->all();
 
         // Get all categories
-        $this->allCategories = Category::where('user_id', Auth::user()->id)
-            ->get()
-            ->pluck('full_name', 'id');
+        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents

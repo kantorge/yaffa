@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
-use App\Models\Category;
 use App\Models\Investment;
-use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
@@ -173,6 +172,8 @@ class MainController extends Controller
 
     public function account_details(AccountEntity $account, $withForecast = null)
     {
+        $user = Auth::user();
+
         // Get account details and load to class variable
         $this->currentAccount = $account->load([
             'config',
@@ -180,13 +181,15 @@ class MainController extends Controller
         ]);
 
         // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = AccountEntity::where('user_id', $user->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all tags
-        $this->allTags = Tag::pluck('name', 'id')->all();
+        $this->allTags = $user->tags->pluck('name', 'id')->all();
 
         // Get all categories
-        $this->allCategories = Category::all()->pluck('full_name', 'id');
+        $this->allCategories = $user->categories->pluck('full_name', 'id')->all();
 
         // Get standard transactions related to selected account (one-time AND scheduled)
         $standardTransactions = Transaction::where(function ($query) {
@@ -196,6 +199,7 @@ class MainController extends Controller
                     $query->where('budget', 0);
                 });
         })
+        ->where('user_id', $user->id)
         ->whereHasMorph(
             'config',
             [TransactionDetailStandard::class],
@@ -220,6 +224,7 @@ class MainController extends Controller
                     $query->where('budget', 0);
                 });
         })
+        ->where('user_id', $user->id)
         ->whereHasMorph(
             'config',
             [TransactionDetailInvestment::class],
