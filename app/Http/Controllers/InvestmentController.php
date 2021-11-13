@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -22,6 +23,7 @@ class InvestmentController extends Controller
         $this->middleware('auth');
         $this->authorizeResource(Investment::class);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -97,8 +99,8 @@ class InvestmentController extends Controller
     public function summary()
     {
         // Show all investments from the database and return to view
-        $investments = $this
-            ->investment
+        $investments = Auth::user()
+            ->investments()
             ->with([
                 'currency',
                 'investment_group',
