@@ -13,11 +13,6 @@ class TransactionSeeder extends Seeder
 {
     private $tags;
 
-    public function __construct()
-    {
-        $this->tags = Tag::all();
-    }
-
     /**
      * Run the database seeds by creating random values with factory
      *
@@ -25,6 +20,8 @@ class TransactionSeeder extends Seeder
      */
     public function run(User $user)
     {
+        $this->tags = $user->tags;
+
         // Create standard withdrawals
         Transaction::factory()
             ->count(rand(50, 100))

@@ -59,6 +59,7 @@ class ReportController extends Controller
         ])
         ->whereIn('category_id', $categories->pluck('id'))
         ->whereHas('transaction', function ($query) {
+            $query->where('user_id', Auth::user()->id);
             $query->where('schedule', 0);
             $query->where('budget', 0);
             $query->where('config_type', 'transaction_detail_standard');
@@ -111,6 +112,7 @@ class ReportController extends Controller
         ->whereHas('transactionItems', function ($query) use ($categories) {
             $query->whereIn('category_id', $categories->pluck('id'));
         })
+        ->where('user_id', Auth::user()->id)
         ->where('budget', 1)
         ->where('config_type', 'transaction_detail_standard')
         ->get();
@@ -193,13 +195,19 @@ class ReportController extends Controller
     public function scheduledTransactions(Request $request)
     {
         // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all tags
-        $this->allTags = Tag::pluck('name', 'id')->all();
+        $this->allTags = Tag::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all categories
-        $this->allCategories = Category::all()->pluck('full_name', 'id');
+        $this->allCategories = Category::where('user_id', Auth::user()->id)
+            ->get()
+            ->pluck('full_name', 'id');
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
@@ -215,6 +223,7 @@ class ReportController extends Controller
                 'transactionItems.tags',
             ]
         )
+        ->where('user_id', Auth::user()->id)
         ->where(function ($query) {
             return $query->where('schedule', 1)
                 ->orWhere('budget', 1);

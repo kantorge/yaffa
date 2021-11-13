@@ -233,26 +233,32 @@ class PayeeApiController extends Controller
         return response($payee, Response::HTTP_OK);
     }
 
-    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $payee, Category $category)
+    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
     {
-        $payee->load(['config']);
-        $payee->config->category_id = $category->id;
-        $payee->config->save();
+        $this->authorize('update', $accountEntity);
+
+        $accountEntity->load(['config']);
+        $accountEntity->config->category_id = $category->id;
+        $accountEntity->config->save();
 
         return Response::HTTP_OK;
     }
 
-    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $payee)
+    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
     {
-        $payee->load(['config']);
-        $payee->config->category_suggestion_dismissed = Carbon::now();
-        $payee->config->save();
+        $this->authorize('update', $accountEntity);
+
+        $accountEntity->load(['config']);
+        $accountEntity->config->category_suggestion_dismissed = Carbon::now();
+        $accountEntity->config->save();
 
         return Response::HTTP_OK;
     }
 
     public function storePayee(AccountEntityRequest $request)
     {
+        $this->authorize('create', AccountEntity::class);
+
         $validated = $request->validated();
         $validated['user_id'] = Auth::user()->id;
 

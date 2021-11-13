@@ -93,6 +93,8 @@ class CategoryApiController extends Controller
 
     public function getItem(Category $category)
     {
+        $this->authorize('view', $category);
+
         return response()
             ->json(
                 $category,

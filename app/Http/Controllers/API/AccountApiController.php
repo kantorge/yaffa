@@ -62,7 +62,8 @@ class AccountApiController extends Controller
 
             // If no results were found, fallback to blank query
             if ($accounts->count() === 0) {
-                $accounts = $this->account
+                $accounts = Auth::user()
+                    ->accounts()
                     ->select(['id', 'name AS text'])
                     ->active()
                     ->orderBy('name')
@@ -135,18 +136,22 @@ class AccountApiController extends Controller
         return response()->json($accounts, Response::HTTP_OK);
     }
 
-    public function getAccountCurrencyLabel(Account $account)
+    public function getAccountCurrencyLabel(AccountEntity $accountEntity)
     {
-        return $account->currency->suffix;
+        $this->authorize('view', $accountEntity);
+
+        return $accountEntity->config->currency->suffix;
     }
 
-    public function getItem(AccountEntity $account)
+    public function getItem(AccountEntity $accountEntity)
     {
-        $account->load(['config', 'config.currency']);
+        $this->authorize('view', $accountEntity);
+
+        $accountEntity->load(['config', 'config.currency']);
 
         return response()
             ->json(
-                $account,
+                $accountEntity,
                 Response::HTTP_OK
             );
     }

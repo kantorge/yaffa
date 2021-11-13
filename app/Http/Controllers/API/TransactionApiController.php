@@ -15,6 +15,8 @@ class TransactionApiController extends Controller
 
     public function reconcile(Transaction $transaction, $newState)
     {
+        $this->authorize('update', $transaction);
+
         $transaction->reconciled = $newState;
         $transaction->save();
 

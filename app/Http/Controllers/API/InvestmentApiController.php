@@ -44,6 +44,8 @@ class InvestmentApiController extends Controller
      */
     public function getCurrencySuffix(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         return $investment->currency->suffix;
     }
 
@@ -55,6 +57,8 @@ class InvestmentApiController extends Controller
      */
     public function getInvestmentDetails(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         $investment->load(['currency']);
 
         return $investment;
@@ -62,6 +66,8 @@ class InvestmentApiController extends Controller
 
     public function getPriceHistory(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
             ->select(['id', 'date', 'price'])
             ->orderBy('date')
