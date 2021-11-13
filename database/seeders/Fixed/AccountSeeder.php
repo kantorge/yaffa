@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class AccountSeeder extends Seeder
@@ -15,48 +16,40 @@ class AccountSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        $account = new AccountEntity(
-            [
-                'name' => 'Wallet',
-                'active' => 1,
-                'config_type' => 'account',
-            ]
-        );
-
-        $accountConfig = new Account(
+        $accountConfig = Account::create(
             [
                 'opening_balance' => 1000,
                 'account_group_id' => AccountGroup::where('name', 'Cash')->pluck('id')->first(),
                 'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );
-        $accountConfig->save();
-
-        $account->config()->associate($accountConfig);
-
-        $account->save();
-
-        $account = new AccountEntity(
+        AccountEntity::create(
             [
-                'name' => 'Bank account',
+                'name' => 'Wallet',
                 'active' => 1,
                 'config_type' => 'account',
+                'config_id' => $accountConfig->id,
+                'user_id' => $user->id,
             ]
         );
 
-        $accountConfig = new Account(
+        $accountConfig = Account::create(
             [
                 'opening_balance' => 1000,
                 'account_group_id' => AccountGroup::where('name', 'Bank accounts')->pluck('id')->first(),
                 'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
             ]
         );
-        $accountConfig->save();
-
-        $account->config()->associate($accountConfig);
-
-        $account->save();
+        AccountEntity::create(
+            [
+                'name' => 'Bank account',
+                'active' => 1,
+                'config_type' => 'account',
+                'config_id' => $accountConfig->id,
+                'user_id' => $user->id,
+            ]
+        );
     }
 }

@@ -7,17 +7,20 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class InvestmentApiController extends Controller
 {
-    public function __construct(Investment $investment)
+    public function __construct()
     {
-        $this->investment = $investment;
+        $this->middleware('auth:sanctum');
     }
 
     public function getList(Request $request)
     {
-        $investments = $this->investment
+        $investments = Auth::user()
+            ->investments()
+            ->where('active', true)
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%'.$request->get('q').'%');
@@ -41,6 +44,8 @@ class InvestmentApiController extends Controller
      */
     public function getCurrencySuffix(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         return $investment->currency->suffix;
     }
 
@@ -52,6 +57,8 @@ class InvestmentApiController extends Controller
      */
     public function getInvestmentDetails(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         $investment->load(['currency']);
 
         return $investment;
@@ -59,6 +66,8 @@ class InvestmentApiController extends Controller
 
     public function getPriceHistory(Investment $investment)
     {
+        $this->authorize('view', $investment);
+
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
             ->select(['id', 'date', 'price'])
             ->orderBy('date')

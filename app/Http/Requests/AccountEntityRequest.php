@@ -2,56 +2,66 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AccountEntityRequest extends FormRequest
 {
-    use FlashMessages;
-
-    public function authorize()
-    {
-        return true;
-    }
-
     public function rules()
     {
         $rules = [
-            'name' => 'required|min:2|max:191|unique:account_entities,name,'.\Request::instance()->id,
+            'name' => [
+                'required',
+                'min:2',
+                'max:191',
+                Rule::unique('account_entities')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->account_entity, function ($query) {
+                            return $query
+                                ->where('config_type', $this->account_entity->config_type)
+                                ->where('id', '!=', $this->account_entity->id);
+                        });
+                }),
+            ],
             'config_type' => 'required|in:account,payee',
             'active' => 'boolean',
         ];
 
         if ($this->config_type === 'account') {
             $rules = array_merge($rules, [
-                'config.opening_balance'  => 'required|numeric',
-                'config.account_group_id' => 'required|exists:account_groups,id',
-                'config.currency_id' => 'required|exists:currencies,id',
+                'config.opening_balance'  => [
+                    'required',
+                    'numeric',
+                ],
+                'config.account_group_id' => [
+                    'required',
+                    Rule::exists('account_groups', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                ],
+                'config.currency_id' => [
+                    'required',
+                    Rule::exists('currencies', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                ],
             ]);
         }
 
         if ($this->config_type === 'payee') {
             $rules = array_merge($rules, [
-                'config.category_id' => 'nullable|exists:categories,id',
+                'config.category_id' => [
+                    'nullable',
+                    Rule::exists('categories', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                ],
             ]);
         }
 
         return $rules;
-    }
-
-    /**
-     * Load validator error messages to standard notifications array
-     *
-     * @return void
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
-            }
-        });
     }
 
     /**
@@ -61,7 +71,7 @@ class AccountEntityRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        //check for checkbox-es
+        // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
             'config.category_id' => $this->config->category_id ?? null,

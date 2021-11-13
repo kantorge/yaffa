@@ -2,33 +2,89 @@
 
 namespace Tests\Feature;
 
+use App\Models\InvestmentGroup;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Tests\TestCase;
 
 class InvestmentGroupTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function setUp(): void
     {
         parent::setUp();
 
         $this->setBaseRoute('investment-group');
-        $this->setBaseModel(\App\Models\InvestmentGroup::class);
+        $this->setBaseModel(InvestmentGroup::class);
     }
+
+    /** @test */
+    public function guest_cannot_access_resource()
+    {
+        $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
+        $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
+
+        $investmentGroup = $this->create($this->base_model);
+
+        $this->get(route("{$this->base_route}.edit", $investmentGroup))->assertRedirect(route('login'));
+        $this->patch(route("{$this->base_route}.update", $investmentGroup))->assertRedirect(route('login'));
+        $this->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertRedirect(route('login'));
+    }
+
+    /** @test */
+    public function user_cannot_access_other_users_resource()
+    {
+        $user1 = User::factory()->create();
+        $investmentGroup = $this->createForUser($user1, $this->base_model);
+
+        $user2 = User::factory()->create();
+
+        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
 
     /** @test */
     public function user_can_view_list_of_investment_groups()
     {
-        $response = $this->get(route("{$this->base_route}.index"));
+        $user = User::factory()->create();
+        $this->createForUser($user, $this->base_model, [], 5);
+
+        $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
 
         $response->assertStatus(200);
-        //TODO: should this be a separate variable, e.g. base view
         $response->assertViewIs("{$this->base_route}.index");
-        $response->assertSeeText('List of investment groups');
+    }
+
+    /** @test */
+    public function user_can_access_create_form()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create"));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertViewIs("{$this->base_route}.form");
     }
 
     /** @test */
     public function user_cannot_create_an_investment_group_with_missing_data()
     {
-        $response = $this->postJson(route("{$this->base_route}.store"), ['name' => '']);
+        $user = User::factory()->create();
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => ''
+                ]
+            );
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name']);
     }
@@ -36,34 +92,38 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_can_create_an_investment_group()
     {
-        $this->create();
+        $user = User::factory()->create();
+        $this->assertCreateForUser($user);
     }
 
     /** @test */
     public function user_can_edit_an_existing_investment_group()
     {
-        $model = $this->base_model;
-        $response = $this->get(route("{$this->base_route}.edit", $model::inRandomOrder()->first()->id));
+        $user = User::factory()->create();
+        $investmentGroup = $this->createForUser($user, $this->base_model);
+
+        $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $investmentGroup));
 
         $response->assertStatus(200);
-        //TODO: should this be a separate variable, e.g. base view
         $response->assertViewIs("{$this->base_route}.form");
-        //TODO: is actual message need to be tested?
-        $response->assertSeeText('Modify investment group');
     }
 
     /** @test */
     public function user_cannot_update_an_investment_group_with_missing_data()
     {
-        $model = $this->base_model;
-        $item = $model::inRandomOrder()->first()->id;
+        $user = User::factory()->create();
+        $investmentGroup = $this->createForUser($user, $this->base_model);
 
-        $response = $this->patchJson(route("{$this->base_route}.update", $item),
-            [
-                'id' => $item,
-                'name' => '',
-            ]
-        );
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route("{$this->base_route}.update", $investmentGroup),
+                [
+                    'id' => $investmentGroup->id,
+                    'name' => '',
+                ]
+            );
+
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name']);
     }
@@ -71,25 +131,29 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_can_update_an_investment_group_with_proper_data()
     {
-        $model = $this->base_model;
-        $item = $model::inRandomOrder()->first()->id;
+        $user = User::factory()->create();
+        $investmentGroup = $this->createForUser($user, $this->base_model);
+        $investmentGroup2 = $this->rawForUser($user, $this->base_model);
 
-        $response = $this->patchJson(route("{$this->base_route}.update", $item),
-            [
-                'id' => $item,
-                'name' => 'aa', //TODO: make this dynamic
-            ]
-        );
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route("{$this->base_route}.update", $investmentGroup),
+                [
+                    'id' => $investmentGroup->id,
+                    'name' => $investmentGroup2['name'],
+                ]
+            );
+
         $response->assertRedirect($this->base_route);
         //TODO: make this dynamic instead of fixed 1st element
         $response->assertSessionHas('notification_collection.0.type', 'success');
-        //TODO: is actual message need to be tested?
-        $response->assertSessionHas('notification_collection.0.message', 'Investment group updated');
     }
 
     /** @test */
     public function user_can_delete_an_existing_investment_group()
     {
-        $this->destroy();
+        $user = User::factory()->create();
+        $this->assertDestroyWithUser($user);
     }
 }

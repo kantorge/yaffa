@@ -19,10 +19,9 @@ $(function() {
             data: "id",
             title: "Actions",
             render: function ( data, type, row, meta ) {
-                return '' +
-                    '<a href="' + route('account-group.edit', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                    '<form id="form-delete-' + data + '" action="' + route('account-group.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                return '<a href="' + route('account-group.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                       '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
+                       '<form id="form-delete-' + data + '" action="' + route('account-group.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
             },
             orderable: false
         }

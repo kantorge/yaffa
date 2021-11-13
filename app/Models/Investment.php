@@ -2,14 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
+use App\Models\Currency;
 use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
+use App\Models\InvestmentPriceProvider;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Investment extends Model
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     /**
@@ -40,6 +48,7 @@ class Investment extends Model
         'investment_group_id',
         'currency_id',
         'investment_price_provider_id',
+        'user_id',
     ];
 
     protected $casts = [
@@ -63,12 +72,12 @@ class Investment extends Model
         return $this->belongsTo(InvestmentGroup::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function investment_price_provider()
+    public function investment_price_provider(): BelongsTo
     {
         return $this->belongsTo(InvestmentPriceProvider::class);
     }
@@ -169,5 +178,10 @@ class Investment extends Model
         }
 
         return null;
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

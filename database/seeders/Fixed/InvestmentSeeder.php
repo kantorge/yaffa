@@ -2,9 +2,8 @@
 
 namespace Database\Seeders\Fixed;
 
-use App\Models\Currency;
 use App\Models\Investment;
-use App\Models\InvestmentGroup;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class InvestmentSeeder extends Seeder
@@ -14,15 +13,16 @@ class InvestmentSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
         Investment::create(
             [
                 'name' => 'Magyar Telekom',
                 'active' => 1,
                 'symbol' => 'MTEL',
-                'investment_group_id' => InvestmentGroup::where('name', 'Stock')->first()->id,
-                'currency_id' => Currency::where('iso_code', 'HUF')->first()->id,
+                'investment_group_id' => $user->investmentGroups()->where('name', 'Stock')->first()->id,
+                'currency_id' => $user->currencies()->where('iso_code', 'HUF')->first()->id,
+                'user_id' => $user->id,
             ]
         );
 
@@ -31,9 +31,10 @@ class InvestmentSeeder extends Seeder
                 'name' => 'Disney',
                 'active' => 1,
                 'symbol' => 'DIS',
-                'investment_group_id' => InvestmentGroup::where('name', 'Stock')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'USD')->pluck('id')->first(),
+                'investment_group_id' => $user->investmentGroups()->where('name', 'Stock')->pluck('id')->first(),
+                'currency_id' => $user->currencies()->where('iso_code', 'USD')->pluck('id')->first(),
                 'investment_price_provider_id' => 1,
+                'user_id' => $user->id,
             ]
         );
 
@@ -42,8 +43,9 @@ class InvestmentSeeder extends Seeder
                 'name' => 'Euro investment',
                 'active' => 1,
                 'symbol' => 'E',
-                'investment_group_id' => InvestmentGroup::where('name', 'Mutual fund')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
+                'investment_group_id' => $user->investmentGroups()->where('name', 'Mutual fund')->pluck('id')->first(),
+                'currency_id' => $user->currencies()->where('iso_code', 'EUR')->pluck('id')->first(),
+                'user_id' => $user->id,
             ]
         );
     }

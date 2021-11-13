@@ -18,7 +18,7 @@ $(function () {
             {
                 data: "active",
                 title: "Active",
-                render: function ( data, type, row, meta ) {
+                render: function(data, type) {
                     if (type == 'filter') {
                         return  (data ? 'Yes' : 'No');
                     }
@@ -31,18 +31,18 @@ $(function () {
             {
                 data: "config.category_full_name",
                 title: "Default category",
-                render: function (data) {
+                render: function(data) {
                     return (data ? data : 'Not set');
                 }
             },
             {
                 data: "id",
                 title: "Actions",
-                render: function ( data, type, row, meta ) {
+                render: function(data) {
                     return '' +
-                        '<a href="' + route('payees.edit', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                        '<a href="' + route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                         '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                        '<form id="form-delete-' + data + '" action="' + route('payees.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                        '<form id="form-delete-' + data + '" action="' + route('account-entity.destroy', {type: 'payee', account_entity: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
                 },
                 orderable: false
             }

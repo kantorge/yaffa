@@ -3,6 +3,8 @@
 namespace Database\Seeders\Fixed;
 
 use App\Models\AccountGroup;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Database\Seeder;
 
 class AccountGroupSeeder extends Seeder
@@ -12,19 +14,17 @@ class AccountGroupSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        AccountGroup::create([
-            'name' => 'Cash',
-        ]);
-        AccountGroup::create([
-            'name' => 'Bank accounts',
-        ]);
-        AccountGroup::create([
-            'name' => 'Credits and loans',
-        ]);
-        AccountGroup::create([
-            'name' => 'Investments',
-        ]);
+        AccountGroup::factory()
+            ->count(4)
+            ->for($user)
+            ->state(new Sequence(
+                ['name' => 'Cash'],
+                ['name' => 'Bank accounts'],
+                ['name' => 'Credits and loans'],
+                ['name' => 'Investments'],
+            ))
+            ->create();
     }
 }

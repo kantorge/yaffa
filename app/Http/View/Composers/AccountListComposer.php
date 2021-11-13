@@ -2,7 +2,7 @@
 
 namespace App\Http\View\Composers;
 
-use App\Models\AccountEntity;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AccountListComposer
@@ -15,11 +15,11 @@ class AccountListComposer
      */
     public function compose(View $view)
     {
-        $accounts = AccountEntity::select('name', 'id')
-            ->where('config_type', 'account')
+        $accounts = Auth::user()
+            ->accounts()
+            ->select('name', 'id')
             ->active()
             ->orderBy('name')
-            ->get()
             ->pluck('name', 'id');
 
         $view->with('accountsForNavbar', $accounts);

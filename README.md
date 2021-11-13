@@ -18,7 +18,7 @@ Yaffa is a personal finance web application, focusing on the support of long ter
 * Automatic stock price updates from external sources.
 * Further charts, reports and dashboards.
 * Account reconciliation view.
-* User handling, password protection. Possibly handling multiple teams/families in one app instance.
+* Handling multiple teams/families in one app instance.
 * Onboarding support or wizard
 
 Several features are not likely to be introduced, which you might expect from such applications. If you are looking to have these, then Yaffa might not be the right choice for you.

@@ -3,6 +3,7 @@
 namespace Database\Seeders\Fixed;
 
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
@@ -12,19 +13,22 @@ class CategorySeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
         Category::create([
-            'name' => 'Élelmiszer',
+            'name' => 'Food',
             'parent_id' => null,
+            'user_id' => $user->id,
         ]);
         Category::create([
-            'name' => 'Alapanyag, fűszer, konzerv',
-            'parent_id' => Category::where('name', 'Élelmiszer')->pluck('id')->first(),
+            'name' => 'Groceries',
+            'parent_id' => Category::where('name', 'Food')->pluck('id')->first(),
+            'user_id' => $user->id,
         ]);
         Category::create([
-            'name' => 'Étterem',
-            'parent_id' => Category::where('name', 'Élelmiszer')->pluck('id')->first(),
+            'name' => 'Restaurants, eating out',
+            'parent_id' => Category::where('name', 'Food')->pluck('id')->first(),
+            'user_id' => $user->id,
         ]);
     }
 }

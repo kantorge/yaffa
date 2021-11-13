@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -12,10 +13,16 @@ use JavaScript;
 
 class InvestmentPriceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function list(Investment $investment)
     {
-        // pass data for DataTables
+        $this->authorize('view', $investment);
+
+        // Pass data for DataTables
         JavaScript::put([
             'prices' => $investment->investmentPrices,
         ]);
@@ -32,6 +39,7 @@ class InvestmentPriceController extends Controller
     public function create(Request $request)
     {
         $investment = Investment::find($request->get('investment'));
+        $this->authorize('view', $investment);
 
         return view(
             'investment-prices.form',
@@ -43,13 +51,16 @@ class InvestmentPriceController extends Controller
 
     public function store(InvestmentPriceRequest $request)
     {
+        $investment = Investment::find($request->investment_id);
+        $this->authorize('view', $investment);
+
         $validated = $request->validated();
 
         InvestmentPrice::create($validated);
 
         self::addSimpleSuccessMessage('Investment price added');
 
-        return redirect()->route('investment-price.list', $request->investment_id);
+        return redirect()->route('investment-price.list', $investment);
     }
 
     /**

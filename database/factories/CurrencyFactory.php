@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Currency;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CurrencyFactory extends Factory
@@ -21,11 +22,14 @@ class CurrencyFactory extends Factory
      */
     public function definition()
     {
+        $currency = $this->faker->currencyArray();
+
         return [
-            'name' => $this->faker->unique()->text(mt_rand(10, 50)),
-            'iso_code' => $this->faker->unique()->currencyCode(),
-            'num_digits' => $this->faker->numberBetween(0, 2),
-            'suffix' => $this->faker->unique()->text(5),
+            'name' => $currency['name'],
+            'iso_code' => $currency['isoCode'],
+            'num_digits' => $currency['minorUnits'],
+            'suffix' => $currency['symbol'],
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 }

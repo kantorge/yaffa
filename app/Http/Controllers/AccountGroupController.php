@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class AccountGroupController extends Controller
 {
-    protected $accountGroup;
-
-    public function __construct(AccountGroup $accountGroup)
+    public function __construct()
     {
-        $this->accountGroup = $accountGroup;
+        $this->middleware('auth');
+        $this->authorizeResource(AccountGroup::class);
     }
 
     /**
@@ -22,10 +22,13 @@ class AccountGroupController extends Controller
      */
     public function index()
     {
-        //Show all account groups from the database and return to view
-        $accountGroups = $this->accountGroup->all();
+        // Get all account groups of the user from the database and return to view
+        $accountGroups = Auth::user()
+            ->accountGroups()
+            ->select('id', 'name')
+            ->get();
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'accountGroups' => $accountGroups,
         ]);
@@ -53,20 +56,20 @@ class AccountGroupController extends Controller
     {
         $validated = $request->validated();
 
-        AccountGroup::create($validated);
+        $accountGroup = AccountGroup::make($validated);
+        $accountGroup->user_id = Auth::user()->id;
+        $accountGroup->save();
 
         self::addSimpleSuccessMessage('Account group added');
 
         return redirect()->route('account-group.index');
     }
 
-    public function update(AccountGroupRequest $request)
+    public function update(AccountGroupRequest $request, AccountGroup $accountGroup)
     {
-        // Retrieve the validated input data
         $validated = $request->validated();
 
-        AccountGroup::find($request->input('id'))
-            ->fill($validated)
+        $accountGroup->fill($validated)
             ->save();
 
         self::addSimpleSuccessMessage('Account group updated');

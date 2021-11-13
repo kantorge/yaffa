@@ -1,4 +1,4 @@
-@extends('template.page')
+@extends('template.layouts.page')
 
 @section('title', 'Accounts')
 
@@ -12,7 +12,7 @@
         <div class="box-header">
             <h3 class="box-title">List of accounts</h3>
             <div class="pull-right box-tools">
-                <a href="{{ route('account.create') }}" class="btn btn-success" title="New account"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('account-entity.create', ['type' => 'account']) }}" class="btn btn-success" title="New account"><i class="fa fa-plus"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

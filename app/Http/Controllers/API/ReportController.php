@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
-use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -14,6 +13,7 @@ use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -23,6 +23,11 @@ class ReportController extends Controller
     private $allAccounts;
     private $allTags;
     private $allCategories;
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum');
+    }
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
@@ -53,6 +58,7 @@ class ReportController extends Controller
         ])
         ->whereIn('category_id', $categories->pluck('id'))
         ->whereHas('transaction', function ($query) {
+            $query->where('user_id', Auth::user()->id);
             $query->where('schedule', 0);
             $query->where('budget', 0);
             $query->where('config_type', 'transaction_detail_standard');
@@ -105,6 +111,7 @@ class ReportController extends Controller
         ->whereHas('transactionItems', function ($query) use ($categories) {
             $query->whereIn('category_id', $categories->pluck('id'));
         })
+        ->where('user_id', Auth::user()->id)
         ->where('budget', 1)
         ->where('config_type', 'transaction_detail_standard')
         ->get();
@@ -187,13 +194,17 @@ class ReportController extends Controller
     public function scheduledTransactions(Request $request)
     {
         // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::pluck('name', 'id')->all();
+        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all tags
-        $this->allTags = Tag::pluck('name', 'id')->all();
+        $this->allTags = Tag::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
 
         // Get all categories
-        $this->allCategories = Category::all()->pluck('full_name', 'id');
+        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
@@ -209,6 +220,7 @@ class ReportController extends Controller
                 'transactionItems.tags',
             ]
         )
+        ->where('user_id', Auth::user()->id)
         ->where(function ($query) {
             return $query->where('schedule', 1)
                 ->orWhere('budget', 1);
@@ -262,11 +274,17 @@ class ReportController extends Controller
             return $categories;
         }
 
-        $requestedCategories = Category::whereIn('id', $request->get('categories'))->get();
+        $requestedCategories = Auth::user()
+            ->categories()
+            ->whereIn('id', $request->get('categories'))
+            ->get();
 
         $requestedCategories->each(function ($category) use (&$categories) {
             if (is_null($category->parent_id)) {
-                $children = Category::where('parent_id', '=', $category->id)->get();
+                $children = Auth::user()
+                    ->categories()
+                    ->where('parent_id', '=', $category->id)
+                    ->get();
                 $categories = $categories->merge($children);
             }
 

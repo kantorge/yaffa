@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use AmrShawky\LaravelCurrency\Facade\Currency as CurrencyApi;
+use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use Carbon\Carbon;
@@ -10,6 +11,8 @@ use JavaScript;
 
 class CurrencyRateController extends Controller
 {
+    use CurrencyTrait;
+
     protected $currencyRate;
 
     public function __construct(CurrencyRate $currencyRate)
@@ -53,11 +56,7 @@ class CurrencyRateController extends Controller
 
     public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null)
     {
-        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
-            return Currency::orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
+        $baseCurrency =  $this->getBaseCurrency();
 
         if ($baseCurrency->id === $currency->id) {
             return 1;
@@ -92,11 +91,7 @@ class CurrencyRateController extends Controller
 
     public function retreiveMissingCurrencyRateToBase(Currency $currency)
     {
-        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
-            return Currency::orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
+        $baseCurrency =  $this->getBaseCurrency();
 
         $rate = CurrencyRate::where('from_id', $currency->id)
                                     ->where('to_id', $baseCurrency->id)

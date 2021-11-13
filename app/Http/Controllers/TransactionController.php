@@ -9,6 +9,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
@@ -35,6 +36,11 @@ class TransactionController extends Controller
         'transactionType',
     ];
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function createStandard()
     {
         // Sanity check for necessary assets
@@ -46,7 +52,7 @@ class TransactionController extends Controller
                 'info-circle'
             );
 
-            return redirect()->route('account.create');
+            return redirect()->route('account-entity.create', ['type' => 'account']);
         }
 
         return view(self::STANDARD_VIEW, [
@@ -68,7 +74,9 @@ class TransactionController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::create($validated);
+            $transaction = Transaction::make($validated);
+            $transaction->user_id = Auth::user()->id;
+            $transaction->save();
 
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
@@ -123,7 +131,8 @@ class TransactionController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::create($validated);
+            $transaction = Transaction::make($validated);
+            $transaction->user_id = Auth::user()->id;
 
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
             $transaction->config()->associate($transactionDetails);

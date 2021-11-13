@@ -26,7 +26,6 @@ class CreateTransactionHeadersTable extends Migration
             $table->unsignedInteger('config_id')->nullable();
 
             $table->timestamps();
-            //$table->softDeletes();
 
             $table->foreign('transaction_type_id')->references('id')->on('transaction_types');
         });

@@ -227,6 +227,9 @@ $(function() {
                 $.ajax ({
                     type: 'PUT',
                     url: '/api/transaction/' + $(this).data("id") + '/reconciled/' + (!currentState ? 1 : 0),
+                    data: {
+                        "_token": csrfToken,
+                    },
                     dataType: "json",
                     context: this,
                     success: function (data) {

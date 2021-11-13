@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountEntityController;
 use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
@@ -9,7 +9,6 @@ use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
-use App\Http\Controllers\PayeeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
@@ -18,7 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [MainController::class, 'index'])->name('home');
 
-Route::resource('account-group', AccountGroupController::class);
+Route::resource('account-group', AccountGroupController::class)->except(['show']);
+Route::resource('account-entity', AccountEntityController::class)->except(['show']);
 
 Route::get(
     '/account/history/{account}/{withForecast?}',
@@ -28,10 +28,9 @@ Route::get(
 Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
 Route::get('/account/summary/{withClosed?}', [MainController::class, 'index'])->name('account.summary');
-Route::resource('account', AccountController::class);
 
-Route::resource('categories', CategoryController::class);
-Route::resource('currencies', CurrencyController::class);
+Route::resource('categories', CategoryController::class)->except(['show']);
+Route::resource('currencies', CurrencyController::class)->except(['show']);
 Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])->name('currencies.setDefault');
 
 Route::get(
@@ -52,9 +51,9 @@ Route::get(
 Route::resource(
     'currency-rate',
     CurrencyRateController::class
-)->except(['index']);
+)->except(['index', 'show']);
 
-Route::resource('investment-group', InvestmentGroupController::class);
+Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
 Route::resource('investment', InvestmentController::class);
 
@@ -71,10 +70,9 @@ Route::get(
 Route::resource(
     'investment-price',
     InvestmentPriceController::class
-)->except(['index']);
+)->except(['index', 'show']);
 
-Route::resource('payees', PayeeController::class);
-Route::resource('tag', TagController::class);
+Route::resource('tag', TagController::class)->except(['show']);
 
 Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
 Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
@@ -106,3 +104,5 @@ Route::resource(
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
+
+Auth::routes();

@@ -21,8 +21,6 @@ class CreateInvestmentPricesTable extends Migration
             $table->timestamps();
 
             $table->foreign('investment_id')->references('id')->on('investments');
-
-            $table->unique('date', 'investment_id');
         });
     }
 

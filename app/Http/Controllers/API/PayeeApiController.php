@@ -11,26 +11,26 @@ use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PayeeApiController extends Controller
 {
-    protected $payee;
-
-    public function __construct(AccountEntity $payee)
+    public function __construct()
     {
-        $this->payee = $payee->where('config_type', 'payee');
+        $this->middleware('auth:sanctum');
     }
 
     public function getList(Request $request)
     {
         if ($request->get('q')) {
-            $payees = $this->payee
+            $payees = Auth::user()
+                ->payees()
+                ->active()
                 ->select(['id', 'name AS text'])
                 ->when($request->get('q'), function ($query) use ($request) {
                     $query->where('name', 'LIKE', '%'.$request->get('q').'%');
                 })
-                ->where('active', 1)
                 ->orderBy('name')
                 ->take(10)
                 ->get();
@@ -56,6 +56,8 @@ class PayeeApiController extends Controller
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
+                ->where('transactions.user_id', Auth::user()->id)
+                ->where('account_entities.user_id', Auth::user()->id)
                 ->where(
                     // TODO: fallback to query without this, if no results are found
                     'transaction_type_id',
@@ -75,7 +77,6 @@ class PayeeApiController extends Controller
                 ->get();
         }
 
-        //return data
         return response()->json($payees, Response::HTTP_OK);
     }
 
@@ -85,8 +86,9 @@ class PayeeApiController extends Controller
             return response('', Response::HTTP_OK);
         }
 
-        $payee = AccountEntity::
-            with(['config', 'config.category'])
+        $payee = Auth::user()
+            ->payees()
+            ->with(['config', 'config.category'])
             ->find($request->get('payee_id'));
 
         if (! $payee->config->category_id) {
@@ -129,6 +131,9 @@ class PayeeApiController extends Controller
                 '=',
                 'account_entities.config_id'
             )
+            ->where('categories.user_id', Auth::user()->id)
+            ->where('transactions.user_id', Auth::user()->id)
+            ->where('account_entities.user_id', Auth::user()->id)
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -170,6 +175,7 @@ class PayeeApiController extends Controller
                 '=',
                 'account_entities.config_id'
             )
+            ->where('categories.user_id', Auth::user()->id) // Only for authenticated user
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -215,6 +221,10 @@ class PayeeApiController extends Controller
                 return $value['max'] / $value['sum'] > .5;
             });
 
+        if ($payees->count() === 0) {
+            return response('', Response::HTTP_OK);
+        }
+
         $payee = $payees->random();
 
         $payee['payee'] = AccountEntity::find($payee['payee_id'])->name;
@@ -223,27 +233,34 @@ class PayeeApiController extends Controller
         return response($payee, Response::HTTP_OK);
     }
 
-    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $payee, Category $category)
+    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
     {
-        $payee->load(['config']);
-        $payee->config->category_id = $category->id;
-        $payee->config->save();
+        $this->authorize('update', $accountEntity);
+
+        $accountEntity->load(['config']);
+        $accountEntity->config->category_id = $category->id;
+        $accountEntity->config->save();
 
         return Response::HTTP_OK;
     }
 
-    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $payee)
+    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
     {
-        $payee->load(['config']);
-        $payee->config->category_suggestion_dismissed = Carbon::now();
-        $payee->config->save();
+        $this->authorize('update', $accountEntity);
+
+        $accountEntity->load(['config']);
+        $accountEntity->config->category_suggestion_dismissed = Carbon::now();
+        $accountEntity->config->save();
 
         return Response::HTTP_OK;
     }
 
     public function storePayee(AccountEntityRequest $request)
     {
+        $this->authorize('create', AccountEntity::class);
+
         $validated = $request->validated();
+        $validated['user_id'] = Auth::user()->id;
 
         $newPayee = new AccountEntity($validated);
 

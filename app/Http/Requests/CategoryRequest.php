@@ -2,20 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Request;
+use App\Http\Requests\FormRequest;
 
 class CategoryRequest extends FormRequest
 {
-    use FlashMessages;
-
-    public function authorize()
-    {
-        return true;
-    }
-
     public function rules()
     {
         return [
@@ -35,27 +25,13 @@ class CategoryRequest extends FormRequest
     }
 
     /**
-     * Load validator error messages to standard notifications array
-     *
-     * @return void
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
-            }
-        });
-    }
-
-    /**
      * Prepare the data for validation.
      *
      * @return void
      */
     protected function prepareForValidation()
     {
-        //check for checkbox-es
+        // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
             'parent_id' => $this->parent_id ?? null,

@@ -3,6 +3,8 @@
 namespace Database\Seeders\Random;
 
 use App\Models\Tag;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 
 class TagSeeder extends Seeder
@@ -12,8 +14,19 @@ class TagSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(?User $user, $count = 5)
     {
-        Tag::factory()->count(5)->create();
+        if ($user) {
+            $users = new Collection([$user]);
+        } else {
+            $users = User::all();
+        }
+
+        $users->each(function ($user) use ($count) {
+            Tag::factory()
+                ->count($count)
+                ->for($user)
+                ->create();
+        });
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Random;
 
-use App\Models\Currency;
 use App\Models\CurrencyRate;
+use App\Models\User;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Seeder;
 
@@ -14,9 +14,9 @@ class CurrencyRateSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        $currencies = Currency::all();
+        $currencies = $user->currencies()->get();
 
         $baseCurrency = $currencies->where('base', 1)->first();
 

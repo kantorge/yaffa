@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->authorizeResource(Category::class);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -15,10 +22,13 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        //Show all categories from the database and return to view
-        $categories = Category::with(['parent'])->get();
+        // Show all categories of user from the database and return to view
+        $categories = Auth::user()
+            ->categories()
+            ->with(['parent'])
+            ->get();
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'categories' => $categories,
         ]);
@@ -33,17 +43,16 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        //get all possible parents
-        $parents = Category::whereNull('parent_id')->pluck('name', 'id');
-
-        return view('categories.form', ['parents' => $parents]);
+        return view('categories.form');
     }
 
     public function store(CategoryRequest $request)
     {
         $validated = $request->validated();
 
-        Category::create($validated);
+        $category = Category::make($validated);
+        $category->user_id = Auth::user()->id;
+        $category->save();
 
         self::addSimpleSuccessMessage('Category added');
 
@@ -58,28 +67,20 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
-        //get all possible parents
-        $parents = Category::
-            whereNull('parent_id')
-            ->where('id', '!=', $category->id)
-            ->pluck('name', 'id');
-
         return view(
             'categories.form',
             [
                 'category'=> $category,
-                'parents' => $parents,
             ]
         );
     }
 
-    public function update(CategoryRequest $request)
+    public function update(CategoryRequest $request, Category $category)
     {
         // Retrieve the validated input data
         $validated = $request->validated();
 
-        Category::find($request->input('id'))
-            ->fill($validated)
+        $category->fill($validated)
             ->save();
 
         self::addSimpleSuccessMessage('Category updated');
@@ -95,11 +96,19 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        //delete
-        $category->delete();
+        try {
+            $category->delete();
+            self::addSimpleSuccessMessage('Category deleted');
 
-        self::addSimpleSuccessMessage('Category deleted');
+            return redirect()->route('categories.index');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->errorInfo[1] == 1451) {
+                self::addSimpleDangerMessage('Category is in use, cannot be deleted');
+            } else {
+                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+            }
 
-        return redirect()->route('categories.index');
+            return redirect()->back();
+        }
     }
 }

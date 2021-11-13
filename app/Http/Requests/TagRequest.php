@@ -2,24 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Components\FlashMessages;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TagRequest extends FormRequest
 {
-    use FlashMessages;
-
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
-    {
-        return true;
-    }
-
     /**
      * Get the validation rules that apply to the request.
      * Pass ID to unique check, if it exists in request
@@ -33,26 +20,18 @@ class TagRequest extends FormRequest
                 'required',
                 'min:2',
                 'max:191',
-                'unique:tags,name,'.\Request::instance()->id,
+                Rule::unique('tags')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->tag, function ($query) {
+                            return $query->where('id', '!=', $this->tag->id);
+                        });
+                }),
             ],
             'active' => [
                 'boolean',
             ],
         ];
-    }
-
-    /**
-     * Load validator error messages to standard notifications array
-     *
-     * @return void
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
-            }
-        });
     }
 
     /**
@@ -62,7 +41,7 @@ class TagRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        //check for checkbox-es
+        // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
         ]);

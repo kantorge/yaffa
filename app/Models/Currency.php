@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Models\CurrencyRate;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Currency extends Model
 {
@@ -29,24 +31,13 @@ class Currency extends Model
         'suffix',
         'base',
         'auto_update',
+        'user_id',
     ];
 
     protected $casts = [
         'base' => 'boolean',
         'auto_update' => 'boolean',
     ];
-
-    public static function rules($id = 0)
-    {
-        return [
-            'name' => 'required|min:2|max:191|unique:currencies,name'.($id ? ",{$id}" : ''),
-            'iso_code' => 'required|string|size:3|unique:currencies,iso_code'.($id ? ",{$id}" : ''),
-            'num_digits' => 'required|numeric|between:0,4',
-            'suffix' => 'string|nullable|max:5',
-            'base' => 'boolean|nullable|unique:currencies,base'.($id ? ",{$id}" : ''),
-            'auto_update' => 'boolean',
-        ];
-    }
 
     public function rate()
     {
@@ -62,5 +53,10 @@ class Currency extends Model
                                     ->first();
 
         return $rate instanceof CurrencyRate ? $rate->rate : null;
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

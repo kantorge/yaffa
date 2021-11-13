@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use JavaScript;
 
 class CurrencyController extends Controller
 {
     use CurrencyTrait;
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->authorizeResource(Currency::class);
+    }
 
     /**
      * Display a listing of the resource.
@@ -19,23 +25,20 @@ class CurrencyController extends Controller
      */
     public function index()
     {
-        //Show all currencies from the database and return to view
-        $currencies = Currency::all();
+        // Show all currencies of user from the database and return to view
+        $currencies = Auth::user()
+            ->currencies()
+            ->get();
 
-        $baseCurrency = Currency::where('base', 1)->firstOr(function () {
-            return Currency::orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
+        $baseCurrency =  $this->getBaseCurrency();
 
-        //support DataTables with action URLs
         $currencies->map(function ($currency) {
             $currency['latest_rate'] = $currency->rate();
 
             return $currency;
         });
 
-        //pass data for DataTables
+        // Pass data for DataTables
         JavaScript::put([
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
@@ -53,8 +56,8 @@ class CurrencyController extends Controller
     {
         $validated = $request->validated();
 
-        $currency = new Currency();
-        $currency->fill($validated);
+        $currency = Currency::make($validated);
+        $currency->user_id = Auth::user()->id;
         $currency->save();
 
         self::addSimpleSuccessMessage('Currency added');
@@ -73,14 +76,12 @@ class CurrencyController extends Controller
         return view('currencies.form', ['currency'=> $currency]);
     }
 
-    public function update(CurrencyRequest $request)
+    public function update(CurrencyRequest $request, Currency $currency)
     {
-        // Retrieve the validated input data
         $validated = $request->validated();
 
-        $currency = Currency::find($request->input('id'));
-        $currency->fill($validated);
-        $currency->save();
+        $currency->fill($validated)
+            ->save();
 
         self::addSimpleSuccessMessage('Currency updated');
 
@@ -95,7 +96,7 @@ class CurrencyController extends Controller
      */
     public function destroy(Currency $currency)
     {
-        //base currency cannot be deleted
+        // Base currency cannot be deleted
         if ($currency->base) {
             self::addSimpleDangerMessage('Base currency cannot be deleted');
 

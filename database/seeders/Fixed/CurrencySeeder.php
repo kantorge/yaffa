@@ -3,6 +3,7 @@
 namespace Database\Seeders\Fixed;
 
 use App\Models\Currency;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class CurrencySeeder extends Seeder
@@ -12,31 +13,36 @@ class CurrencySeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(User $user)
     {
-        Currency::create([
+        Currency::factory()->create([
             'name' => 'Hungarian Forint',
             'iso_code' => 'HUF',
             'num_digits' => 0,
             'suffix' => 'Ft',
             'base' => null,
             'auto_update' => false,
+            'user_id' => $user->id,
         ]);
-        Currency::create([
+
+        Currency::factory()->create([
             'name' => 'US Dollar',
             'iso_code' => 'USD',
             'num_digits' => 2,
             'suffix' => '$',
             'base' => null,
             'auto_update' => true,
+            'user_id' => $user->id,
         ]);
-        Currency::create([
+
+        Currency::factory()->create([
             'name' => 'Euro',
             'iso_code' => 'EUR',
             'num_digits' => 2,
             'suffix' => '€',
             'base' => true,
             'auto_update' => true,
+            'user_id' => $user->id,
         ]);
     }
 }

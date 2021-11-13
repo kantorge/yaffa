@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Models\TransactionItem;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Tag extends Model
 {
@@ -25,6 +28,7 @@ class Tag extends Model
     protected $fillable = [
         'name',
         'active',
+        'user_id',
     ];
 
     /**
@@ -36,7 +40,7 @@ class Tag extends Model
         'active' => 'boolean',
     ];
 
-    public function transactionItems()
+    public function transactionItems(): BelongsToMany
     {
         return $this->belongsToMany(
             TransactionItem::class,
@@ -44,5 +48,21 @@ class Tag extends Model
             'tag_id',
             'transaction_item_id'
         );
+    }
+
+    /**
+     * Scope a query to only include active entities.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
