@@ -1,17 +1,18 @@
 @extends('template.layouts.auth')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+<div class="login-box">
+    <div class="login-logo">
+        <a href="/"><b>Y</b>affa</a>
+    </div>
+    <!-- /.login-logo -->
+    <div class="login-box-body">
+        <div class="card-header">{{ __('Reset Password') }}</div>
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('password.update') }}">
-                        @csrf
+            <form method="POST" action="{{ route('password.update') }}">
+                @csrf
 
-                        <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="token" value="{{ $token }}">
 
                         <div class="form-group row">
                             <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
@@ -56,9 +57,7 @@
                                 </button>
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
