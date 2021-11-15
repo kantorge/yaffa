@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\AccountEntityRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
@@ -10,8 +11,6 @@ use App\Models\Currency;
 use App\Models\Payee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use JavaScript;
