@@ -22,7 +22,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('telescope:prune')->daily();
+        if ($this->app->environment('local')) {
+            $schedule->command('telescope:prune')->daily();
+        }
     }
 
     /**
