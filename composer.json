@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3",
+        "php": "^7.4",
         "almasaeed2010/adminlte": "~2.4",
         "amrshawky/laravel-currency": "^4.0",
         "enlightn/enlightn": "^1.22",
@@ -27,7 +27,6 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
-        "barryvdh/laravel-ide-helper": "^2.10",
         "facade/ignition": "^2.5",
         "imanghafoori/laravel-microscope": "^1.0",
         "laravel/telescope": "^4.6",
@@ -77,9 +76,7 @@
             "@php artisan key:generate --ansi"
         ],
         "post-update-cmd": [
-            "Illuminate\\Foundation\\ComposerScripts::postUpdate",
-            "php artisan ide-helper:generate",
-            "php artisan ide-helper:meta"
+            "Illuminate\\Foundation\\ComposerScripts::postUpdate"
         ]
     }
 }
