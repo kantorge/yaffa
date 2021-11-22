@@ -29,4 +29,12 @@ jobs:
       run: ln -f -s .env.ci .env
 
     - name: Run Testsuite
-      run: vendor/bin/phpunit --colors=never --verbose tests/
+      run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml tests/
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        name: codecov-umbrella
+        fail_ci_if_error: true
