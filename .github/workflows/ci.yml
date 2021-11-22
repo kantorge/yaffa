@@ -20,6 +20,13 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
+    - name: Setup PHP Action
+      uses: shivammathur/setup-php
+      with:
+        extensions: intl
+        php-version: "${{ matrix.php-versions }}"
+        coverage: pcov
+
     - uses: actions/checkout@v2
 
     - name: Install composer dependencies
