@@ -11,7 +11,7 @@ jobs:
         image: mysql:8
         env:
           MYSQL_DATABASE: testing
-          MYSQL_USER: user
+          MYSQL_USER: yaffa
           MYSQL_PASSWORD: secret
           MYSQL_ROOT_PASSWORD: secretroot
 
@@ -20,17 +20,13 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    - uses: actions/checkout@v1
-      with:
-        fetch-depth: 1
+    - uses: actions/checkout@v2
 
     - name: Install composer dependencies
-      run: |
-        composer install --no-scripts
+      run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
     - name: Prepare Laravel Application
-      run: |
-        cp .env.ci .env
+      run: ln -f -s .env.ci .env
 
     - name: Run Testsuite
-      run: vendor/bin/phpunit tests/
+      run: vendor/bin/phpunit --colors=never --verbose
