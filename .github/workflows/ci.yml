@@ -60,6 +60,9 @@ jobs:
 
     - name: Run Testsuite
       run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml tests/
+      env:
+          DB_PORT_TEST: ${{ job.services.mysql.ports['3306'] }}
+
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
