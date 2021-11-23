@@ -54,6 +54,8 @@ jobs:
 
     - name: Run Migration
       run: php artisan migrate -v
+      env:
+          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
     - name: Run Testsuite
       run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml tests/
@@ -65,3 +67,5 @@ jobs:
         files: ./coverage.xml
         name: codecov-umbrella
         fail_ci_if_error: true
+      env:
+          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
