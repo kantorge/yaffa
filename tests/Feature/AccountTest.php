@@ -24,6 +24,30 @@ class AccountTest extends TestCase
     }
 
     /** @test */
+    public function user_cannot_create_new_account_without_an_account_group()
+    {
+        $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
+        $this->createForUser($user, Currency::class);
+
+        $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
+        $response->assertRedirect(route('account-group.create'));
+    }
+
+    /** @test */
+    public function user_cannot_create_new_account_without_a_currency()
+    {
+        $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
+        $this->createForUser($user, AccountGroup::class);
+
+        $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
+        $response->assertRedirect(route('currencies.create'));
+    }
+
+    /** @test */
     public function guest_cannot_access_resource()
     {
         $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirect(route('login'));
