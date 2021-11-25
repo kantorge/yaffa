@@ -58,6 +58,7 @@ class TransactionSeeder extends Seeder
             ->withdrawal_schedule()
             ->create([
                 'user_id' => $user->id,
+                'reconciled' => false,
             ])
             ->each(function ($transaction) {
                 $this->createTransactionSchedule($transaction);
