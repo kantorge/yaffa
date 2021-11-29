@@ -19,7 +19,7 @@ class AddUserIdToModels extends Migration
             DB::table('users')->insert(
                 [
                     'name' => 'Default user',
-                    'email' => env('ADMIN_EMAIL', 'demo@yaffa.cc'),
+                    'email' => env('ADMIN_EMAIL', 'dummy@yaffa.cc'),
                     'password' => Hash::make('password'),
                 ]
             );
