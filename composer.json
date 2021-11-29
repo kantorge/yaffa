@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3",
+        "php": "^7.4",
         "almasaeed2010/adminlte": "~2.4",
         "amrshawky/laravel-currency": "^4.0",
         "enlightn/enlightn": "^1.22",

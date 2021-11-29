@@ -1,5 +1,7 @@
 # Yet Another Free Financial Application (YAFFA)
 
+[![Actions Status](https://github.com/kantorge/yaffa/workflows/CI/badge.svg)](https://github.com/kantorge/yaffa/actions)
+
 ## About Yaffa
 
 Yaffa is a personal finance web application, focusing on the support of long term financial planning. By hosting your own app instance, your financial data is not uploaded to the cloud, and shared with any third parties.
