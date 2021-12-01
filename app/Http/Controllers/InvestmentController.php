@@ -34,6 +34,11 @@ class InvestmentController extends Controller
         // Get all investments of the user from the database and return to view
         $investments = Auth::user()
             ->investments()
+            ->with([
+                'currency',
+                'investment_group',
+                'investment_price_provider'
+            ])
             ->get();
 
         // Pass data for DataTables
