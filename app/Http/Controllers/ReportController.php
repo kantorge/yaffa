@@ -66,7 +66,6 @@ class ReportController extends Controller
         // Get all standard transactions (one-time AND scheduled/budget)
         $transactionTypeWithdrawal = TransactionType::where('name', 'withdrawal')->first();
         $transactionTypeDeposit = TransactionType::where('name', 'deposit')->first();
-        $transactionTypeInvestments = TransactionType::where('type', 'Investment')->whereNotNull('amount_operator')->get();
 
         $standardTransactionsList = DB::table('transactions')
         ->select(
@@ -108,9 +107,14 @@ class ReportController extends Controller
         ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
         ->leftJoin('transaction_schedules', 'transactions.id', '=', 'transaction_schedules.transaction_id')
         ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
-        ->where('transactions.user_id', '=', Auth::user()->id)
-        ->where('transactions.config_type', '=', 'transaction_detail_investment')
-        ->whereIn('transactions.transaction_type_id', $transactionTypeInvestments->pluck('id')->toArray())
+        ->where('transactions.user_id', Auth::user()->id)
+        ->where('transactions.config_type', 'transaction_detail_investment')
+        ->whereIn('transactions.transaction_type_id', function ($query) {
+            $query->from('transaction_types')
+            ->select('id')
+            ->where('type', 'Investment')
+            ->whereNotNull('amount_operator');
+        })
         ->get();
 
         $transactionList = $standardTransactionsList->merge($investmentTransactionsList);

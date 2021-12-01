@@ -5,8 +5,9 @@ namespace App\Models;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Account extends AccountEntity
 {
@@ -85,50 +86,27 @@ class Account extends AccountEntity
 
     public function getAssociatedInvestmentsAndQuantity()
     {
-        $accountId = $this->id;
-
-        //get all investment transactions for current investment
-        $transactions = Transaction::with(
-            [
-                'config',
-                'config.investment',
-                'transactionType',
-            ]
-        )
-        ->where('schedule', 0)
-        ->where('budget', 0)
-        ->where('config_type', 'transaction_detail_investment')
-        ->whereHasMorph(
-            'config',
-            [\App\Models\TransactionDetailInvestment::class],
-            function (Builder $query) use ($accountId) {
-                $query->where('account_id', '=', $accountId);
-            }
-        )
-        ->get();
-
-        return $transactions
-            ->map(function ($transaction) {
-                $operator = $transaction->transactionType->quantity_operator;
-                if (! $operator) {
-                    $quantity = 0;
-                } else {
-                    $quantity = ($operator === 'minus'
-                                    ? -$transaction->config->quantity
-                                    : $transaction->config->quantity);
-                }
-
-                return [
-                        'investment' => $transaction->config->investment,
-                        'quantity' => $quantity,
-                    ];
+        return DB::table('transactions')
+            ->select(
+                'transaction_details_investment.investment_id',
+                DB::raw('sum(CASE WHEN transaction_types.quantity_operator = "plus" THEN 1 ELSE -1 END * IFNULL(transaction_details_investment.quantity, 0)) AS quantity')
+            )
+            ->groupBy(
+                'transaction_details_investment.investment_id',
+            )
+            ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
+            ->where('transactions.user_id', Auth::user()->id)
+            ->where('transactions.schedule', 0)
+            ->where('transactions.budget', 0)
+            ->where('transactions.config_type', 'transaction_detail_investment')
+            ->whereIn('transactions.transaction_type_id', function ($query) {
+                $query->from('transaction_types')
+                ->select('id')
+                ->where('type', 'Investment')
+                ->whereNotNull('quantity_operator');
             })
-            ->groupBy('investment.id')
-            ->map(function ($investment, $key) {
-                return [
-                    'investment' => $key,
-                    'quantity' => $investment->sum('quantity'),
-                ];
-            });
+            ->where('transaction_details_investment.account_id', $this->id)
+            ->get();
     }
 }

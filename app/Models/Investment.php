@@ -56,12 +56,6 @@ class Investment extends Model
         'auto_update' => 'boolean',
     ];
 
-    protected $with = [
-        'investment_group',
-        'currency',
-        'investment_price_provider',
-    ];
-
     public function investmentPrices()
     {
         return $this->hasMany(InvestmentPrice::class);
@@ -132,7 +126,6 @@ class Investment extends Model
             $transaction = Transaction::with(
                 [
                     'config',
-                    'transactionType',
                 ]
             )
             ->where('schedule', 0)
