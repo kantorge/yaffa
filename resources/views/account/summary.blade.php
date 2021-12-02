@@ -3,7 +3,15 @@
 @section('title', 'Account  summary')
 
 @section('content_header')
-    <h1>Account summary</h1>
+    <h1>
+        Account summary
+        -
+        @if ($withClosed)
+            All accounts
+        @else
+            Active accounts
+        @endif
+    </h1>
 @stop
 
 @section('content')
@@ -60,39 +68,21 @@
                     </div>
                 </div>
                 <!-- /.box-body -->
+                <div class="box-footer">
+                    <div class="pull-right box-tools">
+                        <a href="{{ route('account.summary') }}" title="Show active accounts only" class="btn btn-sm btn-info"><span class="fa fa-folder-open-o"></span></a>
+                        <a href="{{ route('account.summary', ['withClosed' => 'withClosed']) }}" title="Show all accounts" class="btn btn-sm btn-info"><span class="fa fa-folder-o"></a>
+                    </div>
+                </div>
             </div>
             <!-- /.box -->
         </div>
         <!-- /.col -->
 
 		<div class="col-md-4">
-            <div class="box">
-                <div class="box-header">
-                    <h3 class="box-title">View filters</h3>
-
-                    <div class="box-tools">
-                        <button type="button" class="btn btn-box-tool" data-box-widget="collapse">
-                                <i class="fa fa-minus"></i>
-                        </button>
-                    </div>
-                    <!-- /.box-tools -->
-                </div>
-                <!-- /.box-header -->
-                <div class="box-body" style="display: block;">
-                    <p>
-                        <a href="{{ route('account.summary') }}">Show active accounts only</a>
-                    </p>
-                    <p>
-                        <a href="{{ route('account.summary', ['withClosed' => 'withClosed']) }}">Show all accounts</a>
-                    </p>
-                </div>
-                <!-- /.box-body -->
-            </div>
-
             <div id="PayeeCategoryRecommendationContainer">
                 <payee-category-recommendation-box></payee-category-recommendation-box>
             </div>
-
 		</div>
 		<!-- /.col -->
     </div>

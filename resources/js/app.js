@@ -1,6 +1,7 @@
 require('./bootstrap');
 
 if (   window.location.pathname === '/account/summary'
+    || window.location.pathname === '/account/summary/withClosed'
     || window.location.pathname === '/') {
     require('./account/summary');
 }
