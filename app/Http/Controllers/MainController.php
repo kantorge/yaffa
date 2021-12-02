@@ -10,8 +10,10 @@ use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Models\TransactionType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use JavaScript;
 
 class MainController extends Controller
@@ -72,12 +74,14 @@ class MainController extends Controller
             ->with(['config', 'config.account_group', 'config.currency'])
             ->get();
 
+        $transactionTypeTransfer = TransactionType::where('name', 'transfer')->first();
+
         $accounts
-            ->map(function ($account) use ($currencies, $baseCurrency) {
+            ->map(function ($account) use ($currencies, $baseCurrency, $transactionTypeTransfer) {
                 // Get account group name for later grouping
                 $account['account_group'] = $account->config->account_group->name;
 
-                // Get all standard transactions
+                // Get all standard transfer transactions
                 $standardTransactions = Transaction::with(
                     [
                         'config',
@@ -86,6 +90,7 @@ class MainController extends Controller
                 )
                 ->where('schedule', 0)
                 ->where('budget', 0)
+                ->where('transaction_type_id', '=', $transactionTypeTransfer->id)
                 ->whereHasMorph(
                     'config',
                     [TransactionDetailStandard::class],
@@ -96,31 +101,85 @@ class MainController extends Controller
                 )
                 ->get();
 
-                // Get all investment transactions
-                $investmentTransactions = Transaction::with(
-                    [
-                        'config',
-                        'transactionType',
-                    ]
+                // Get summary for all standard transaction (withdrawal / deposit)
+                $transactionsWithdrawalValue = DB::table('transactions')
+                ->select(
+                    DB::raw('sum(-transaction_details_standard.amount_from) AS amount')
                 )
-                ->where('schedule', 0)
-                ->where('budget', 0)
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($account) {
-                        $query->Where('account_id', $account->id);
-                    }
+                ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
+                ->where(function ($query) {
+                    $this->commonFilters($query);
+                })
+                ->where('transactions.config_type', 'transaction_detail_standard')
+                ->whereIn('transactions.transaction_type_id', function ($query) {
+                    $query->from('transaction_types')
+                    ->select('id')
+                    ->where('type', 'Standard')
+                    ->where('name', 'withdrawal');
+                })
+                ->where('transaction_details_standard.account_from_id', $account->id)
+                ->get()
+                ->first();
+
+                $transactionsDepositValue = DB::table('transactions')
+                ->select(
+                    DB::raw('sum(transaction_details_standard.amount_to) AS amount')
                 )
-                ->get();
+                ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
+                ->where(function ($query) {
+                    $this->commonFilters($query);
+                })
+                ->where('transactions.config_type', 'transaction_detail_standard')
+                ->whereIn('transactions.transaction_type_id', function ($query) {
+                    $query->from('transaction_types')
+                    ->select('id')
+                    ->where('type', 'Standard')
+                    ->where('name', 'deposit');
+                })
+                ->where('transaction_details_standard.account_to_id', $account->id)
+                ->get()
+                ->first();
 
-                $transactions = $standardTransactions->merge($investmentTransactions);
+                // Get summary for all investment transactions
+                $investmentTransactionsValue = DB::table('transactions')
+                ->select(
+                    DB::raw('sum(
+                                    (CASE WHEN transaction_types.amount_operator = "plus" THEN 1 ELSE -1 END)
+                                  * (IFNULL(transaction_details_investment.price, 0) * IFNULL(transaction_details_investment.quantity, 0))
 
-                // Get summary of transaction values
-                $account['sum'] = $transactions
+                                  + IFNULL(transaction_details_investment.dividend, 0)
+                                  - IFNULL(transaction_details_investment.tax, 0)
+                                  - IFNULL(transaction_details_investment.commission, 0)
+                                  ) AS amount')
+                )
+                ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+                ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
+                ->where(function ($query) {
+                    $this->commonFilters($query);
+                })
+                ->where('transactions.config_type', 'transaction_detail_investment')
+                ->whereIn('transactions.transaction_type_id', function ($query) {
+                    $query->from('transaction_types')
+                    ->select('id')
+                    ->where('type', 'Investment')
+                    ->whereNotNull('amount_operator');
+                })
+                ->where('transaction_details_investment.account_id', $account->id)
+                ->get()
+                ->first();
+
+                // Get summary of transfer transaction values
+                $account['sum'] = $standardTransactions
                     ->sum(function ($transaction) use ($account) {
                         return $transaction->cashflowValue($account);
                     });
+
+                // Add standard transaction result
+                $account['sum'] += $transactionsWithdrawalValue->amount ?? 0;
+                $account['sum'] += $transactionsDepositValue->amount ?? 0;
+
+                // Add investment transaction result
+                $account['sum'] += $investmentTransactionsValue->amount ?? 0;
 
                 // Add opening balance
                 $account['sum'] += $account->config->opening_balance;
@@ -128,12 +187,12 @@ class MainController extends Controller
                 // Add value of investments
                 $investments = $account->config->getAssociatedInvestmentsAndQuantity();
                 $account['sum'] += $investments->sum(function ($item) {
-                    $investment = Investment::find($item['investment']);
-                    if ($item['quantity'] > 0) {
-                        return $item['quantity'] * $investment->getLatestPrice();
+                    if ($item->quantity === 0) {
+                        return 0;
                     }
 
-                    return 0;
+                    $investment = Investment::find($item->investment_id);
+                    return $item->quantity * $investment->getLatestPrice();
                 });
 
                 // Apply currency exchange, if necesary
@@ -166,6 +225,7 @@ class MainController extends Controller
                 'summary' => array_values($summary->toArray()),
                 'total' => $total,
                 'baseCurrency' => $baseCurrency,
+                'withClosed' => $withClosed,
             ]
         );
     }
@@ -347,5 +407,12 @@ class MainController extends Controller
                 'withForecast' => $withForecast,
             ]
         );
+    }
+
+    private function commonFilters($query)
+    {
+        $query->where('transactions.user_id', Auth::user()->id)
+        ->where('transactions.schedule', 0)
+        ->where('transactions.budget', 0);
     }
 }

@@ -31,7 +31,7 @@ $(document).ready( function () {
         {
             data: "id",
             title: "Actions",
-            render: function ( data, type, row, meta ) {
+            render: function (data) {
                 return '' +
                     '<a href="' + route('tag.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                     '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +

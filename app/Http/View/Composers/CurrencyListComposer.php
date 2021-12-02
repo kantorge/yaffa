@@ -2,7 +2,7 @@
 
 namespace App\Http\View\Composers;
 
-use App\Models\Currency;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class CurrencyListComposer
@@ -15,7 +15,9 @@ class CurrencyListComposer
      */
     public function compose(View $view)
     {
-        $allCurrencies = Currency::pluck('name', 'id')->all();
+        $allCurrencies = Auth::user()
+        ->currencies()
+        ->pluck('name', 'id')->all();
 
         $view->with('allCurrencies', $allCurrencies);
     }

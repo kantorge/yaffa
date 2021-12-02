@@ -12,7 +12,7 @@
             <!-- /.box-header -->
             <div class="box-body">
                 <p>
-                    Your payee <strong>{{ payeeSuggestion.payee }}</strong>
+                    Your payee <strong><a :href="editlink">{{ payeeSuggestion.payee }}</a></strong>
                     used category <strong>{{ payeeSuggestion.category }}</strong>
                     {{ payeeSuggestion.max }} times out of {{ payeeSuggestion.sum }} transactions.
                 </p>
@@ -93,6 +93,12 @@
                 $(this.$refs.PayeeCategoryRecommendationBox).boxWidget('remove');
             }
         },
+
+        computed: {
+            editlink() {
+                return route('account-entity.edit', {type: 'payee', account_entity: this.payeeSuggestion.payee_id});
+            }
+        }
     }
 </script>
 

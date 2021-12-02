@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use JavaScript;
 
 class ReportController extends Controller
@@ -35,152 +36,143 @@ class ReportController extends Controller
             });
 
         // Get opening balance for all accounts
-        $accounts = AccountEntity::where('config_type', 'account')
-            ->with([
-                'config',
-                'config.currency',
-            ])
-            ->get()
-            ->map(function ($account) use ($firstRates, $baseCurrency) {
-                $account['sum'] += $account->config->opening_balance;
-
-                // Apply currency exchange, if necesary
-                if ($account->config->currency_id != $baseCurrency->id) {
-                    // Get first exchange rate for given currency
-                    $rate = $firstRates
-                        ->where('from_id', $account->config->currency_id)
-                        ->first();
-
-                    $account['sum'] *= ($rate ? $rate->rate : 1);
-                }
-
-                return $account;
-            });
-
-        // Get all standard transactions (one-time AND scheduled/budget)
-        $standardTransactionsAll = Transaction::where(
-            'config_type',
-            'transaction_detail_standard'
-        )
-        // Exclude transfers
-        ->where(
-            'transaction_type_id',
-            '!=',
-            TransactionType::where('name', '=', 'transfer')->first()->id
-        )
-        // Load all necessary relations
+        $accounts = Auth::user()
+        ->accounts()
         ->with([
             'config',
-            'transactionType',
-            'transactionSchedule',
-            'config.accountFrom.config',
-            'config.accountTo.config',
-        ])
-        //->orderBy('id', 'desc')
-        //->limit(10)
-        ->get();
-
-        // Get all investment transactions
-        $investmentTransactionsAll = Transaction::where(
-            'config_type',
-            'transaction_detail_investment'
-        )
-        // Load all necessary relations
-        ->with([
-            'config',
-            'transactionType',
-            'transactionSchedule',
-            'config.account.config',
+            'config.currency',
         ])
         ->get();
 
-        [$standardTransactionsHistory, $standardTransactionSchedule] = $standardTransactionsAll->partition(function ($transaction) {
-            return ! $transaction->schedule && ! $transaction->budget;
+        $openingBalances = $accounts->map(function ($account) use ($firstRates, $baseCurrency) {
+            $account['sum'] += $account->config->opening_balance;
+
+            // Apply currency exchange, if necesary
+            if ($account->config->currency_id != $baseCurrency->id) {
+                // Get first exchange rate for given currency
+                $rate = $firstRates
+                    ->where('from_id', $account->config->currency_id)
+                    ->first();
+
+                $account['sum'] *= ($rate ? $rate->rate : 1);
+            }
+
+            return $account;
         });
 
-        [$investmentTransactionsHistory, $investmentTransactionSchedule] = $investmentTransactionsAll->partition(function ($transaction) {
+        // Compact accounts and currencies
+        $accountCurrencyList = $accounts->pluck('config.currency_id', 'id')->toArray();
+
+        // Get all standard transactions (one-time AND scheduled/budget)
+        $transactionTypeWithdrawal = TransactionType::where('name', 'withdrawal')->first();
+        $transactionTypeDeposit = TransactionType::where('name', 'deposit')->first();
+
+        $standardTransactionsList = DB::table('transactions')
+        ->select(
+            'transactions.id',
+            'transactions.schedule',
+            'transactions.budget',
+            'transaction_schedules.start_date',
+            'transaction_schedules.next_date',
+            'transaction_schedules.end_date',
+            'transaction_schedules.frequency',
+            'transaction_schedules.interval',
+            'transaction_schedules.count',
+        )
+        ->selectRaw('LAST_DAY(transactions.date - interval 1 month) + interval 1 day AS month')
+        ->selectRaw('CASE WHEN transactions.transaction_type_id = ? THEN transaction_details_standard.account_from_id ELSE transaction_details_standard.account_to_id END AS account_id', [$transactionTypeWithdrawal->id])
+        ->selectRaw('CASE WHEN transactions.transaction_type_id = ? THEN -transaction_details_standard.amount_from ELSE transaction_details_standard.amount_to END AS amount', [$transactionTypeWithdrawal->id])
+        ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
+        ->leftJoin('transaction_schedules', 'transactions.id', '=', 'transaction_schedules.transaction_id')
+        ->where('transactions.user_id', '=', Auth::user()->id)
+        ->where('transactions.config_type', '=', 'transaction_detail_standard')
+        ->whereIn('transactions.transaction_type_id', [$transactionTypeDeposit->id, $transactionTypeWithdrawal->id])
+        ->get();
+
+        $investmentTransactionsList = DB::table('transactions')
+        ->select(
+            'transactions.id',
+            'transactions.schedule',
+            'transactions.budget',
+            'transaction_details_investment.account_id',
+            'transaction_schedules.start_date',
+            'transaction_schedules.next_date',
+            'transaction_schedules.end_date',
+            'transaction_schedules.frequency',
+            'transaction_schedules.interval',
+            'transaction_schedules.count',
+        )
+        ->selectRaw('LAST_DAY(transactions.date - interval 1 month) + interval 1 day AS month')
+        ->selectRaw('(CASE WHEN transaction_types.amount_operator = "plus" THEN 1 ELSE -1 END) * (IFNULL(transaction_details_investment.price, 0) * IFNULL(transaction_details_investment.quantity, 0)) + IFNULL(transaction_details_investment.dividend, 0) - IFNULL(transaction_details_investment.tax, 0) - IFNULL(transaction_details_investment.commission, 0) AS amount')
+        ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+        ->leftJoin('transaction_schedules', 'transactions.id', '=', 'transaction_schedules.transaction_id')
+        ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
+        ->where('transactions.user_id', Auth::user()->id)
+        ->where('transactions.config_type', 'transaction_detail_investment')
+        ->whereIn('transactions.transaction_type_id', function ($query) {
+            $query->from('transaction_types')
+            ->select('id')
+            ->where('type', 'Investment')
+            ->whereNotNull('amount_operator');
+        })
+        ->get();
+
+        $transactionList = $standardTransactionsList->merge($investmentTransactionsList);
+
+        [$transactionsHistory, $transactionSchedule] = $transactionList->partition(function ($transaction) {
             return ! $transaction->schedule && ! $transaction->budget;
         });
 
         // Group standard transactions by month, and get all relevant details
-        $standardCompact = [];
-        $standardTransactionsHistory->each(function ($transaction) use (&$standardCompact) {
-            $month = $transaction->date->format('Y-m-01');
-            $currency_id = ($transaction->transactionType->name === 'withdrawal' ? $transaction->config->accountFrom->config->currency_id : $transaction->config->accountTo->config->currency_id);
+        $compact = [];
+        $transactionsHistory->each(function ($transaction) use (&$compact, $accountCurrencyList) {
+            $currency = $accountCurrencyList[$transaction->account_id];
 
-            $standardCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
-        });
-
-        // Group investment transactions
-        $investmentCompact = [];
-        $investmentTransactionsHistory->each(function ($transaction) use (&$investmentCompact) {
-            $month = $transaction->date->format('Y-m-01');
-            $currency_id = $transaction->config->account->config->currency_id;
-
-            $investmentCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
+            $compact[$transaction->month][$currency][] = floatval($transaction->amount);
         });
 
         if ($withForecast) {
+            // Hydrate model
+            $transactionSchedule = $transactionSchedule->map(function ($transaction) {
+                $item = [
+                    'id' => $transaction->id,
+                    'amount' => floatval($transaction->amount),
+                    'account_id' => $transaction->account_id,
+                    'transaction_schedule' => (object) [
+                        'start_date' => $transaction->start_date,
+                        'next_date' => $transaction->next_date,
+                        'end_date' => $transaction->end_date,
+                        'frequency' => $transaction->frequency,
+                        'interval' => $transaction->interval,
+                        'count' => $transaction->count,
+                    ]
+                ];
+
+                return Transaction::hydrate([$item])[0];
+            });
+
             // Get standard transaction schedule and/or budget instances
             $this->getScheduleInstances(
-                $standardTransactionSchedule,
+                $transactionSchedule,
                 'custom',
                 null,
                 (new Carbon())->addYears(50)
-            )->each(function ($transaction) use (&$standardCompact, $baseCurrency) {
+            )->each(function ($transaction) use (&$compact, $accountCurrencyList, $baseCurrency) {
                 $month = $transaction->date->format('Y-m-01');
-
-                // Set currency to base currency, and check if any adjustments are necessary
-                $currency_id = $baseCurrency->id;
-                if ($transaction->transactionType->name === 'withdrawal' && $transaction->config->accountFrom) {
-                    $currency_id = $transaction->config->accountFrom->config->currency_id;
-                } elseif ($transaction->config->accountTo) {
-                    $currency_id = $transaction->config->accountTo->config->currency_id;
+                if (array_key_exists($transaction->account_id, $accountCurrencyList)) {
+                    $currency = $accountCurrencyList[$transaction->account_id];
+                } else {
+                    $currency = $baseCurrency->id;
                 }
 
-                $standardCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
-            });
-
-            // Get investment transaction schedule and/or budget instances
-            $this->getScheduleInstances(
-                $investmentTransactionSchedule,
-                'start',
-                null,
-                (new Carbon())->addYears(50)
-            )->each(function ($transaction) use (&$investmentCompact) {
-                $month = $transaction->date->format('Y-m-01');
-                $currency_id = $transaction->config->account->config->currency_id;
-
-                $investmentCompact[$month][$currency_id][] = $transaction->cashFlowValue(null);
+                $compact[$month][$currency][] = $transaction->amount;
             });
         }
 
         // Summarize standard and investment items, applying currency rate
         $monthlyData = [];
 
-        foreach ($standardCompact as $month => $monthData) {
-            foreach ($monthData as $currency => $items) {
-                if (! array_key_exists($month, $monthlyData)) {
-                    $monthlyData[$month] = 0;
-                }
-
-                if ($baseCurrency->id != $currency) {
-                    $rate = $allRates
-                        ->where('from_id', $currency)
-                        ->where('date_from', '<', new Carbon($month))
-                        ->sortByDesc('date_from')
-                        ->first();
-
-                    $rate = ($rate ? $rate->rate : 1);
-                } else {
-                    $rate = 1;
-                }
-
-                $monthlyData[$month] += array_sum($items) * $rate;
-            }
-        }
-
-        foreach ($investmentCompact as $month => $monthData) {
+        foreach ($compact as $month => $monthData) {
             foreach ($monthData as $currency => $items) {
                 if (! array_key_exists($month, $monthlyData)) {
                     $monthlyData[$month] = 0;
@@ -204,7 +196,7 @@ class ReportController extends Controller
 
         // Convert monthly data into dataTables format
         $final = [];
-        $runningTotal = $accounts->sum('sum');
+        $runningTotal = $openingBalances->sum('sum');
         foreach ($monthlyData as $month => $data) {
             $runningTotal += $data;
             $final[] = [

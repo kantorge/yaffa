@@ -31,7 +31,7 @@ $(function () {
         {
             data: "base",
             title: "Base currency",
-            render: function ( data, type, row, meta ) {
+            render: function (data, type) {
                 if (type == 'filter') {
                     return  (data ? 'Yes' : 'No');
                 }
@@ -44,7 +44,7 @@ $(function () {
         {
             data: "auto_update",
             title: "Auto update",
-            render: function ( data, type, row, meta ) {
+            render: function (data, type) {
                 if (type == 'filter') {
                     return  (data ? 'Yes' : 'No');
                 }
@@ -61,7 +61,7 @@ $(function () {
         {
             data: "id",
             title: "Actions",
-            render: function ( data, type, row, meta ) {
+            render: function (data, type, row) {
                 return '' +
                         '<a href="' + route('currencies.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
                        // Base currency cannot be deleted or set as default
