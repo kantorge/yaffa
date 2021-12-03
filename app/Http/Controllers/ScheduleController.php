@@ -152,8 +152,7 @@ class ScheduleController extends Controller
             'account_from_name' => $this->allAccounts[$transaction->config->account_from_id] ?? null,
             'account_to_id' => $transaction->config->account_to_id,
             'account_to_name' => $this->allAccounts[$transaction->config->account_to_id] ?? null,
-            'amount_from' => $transaction->config->amount_from,
-            'amount_to' => $transaction->config->amount_to,
+            'amount' => $transaction->config->amount_to,
             'tags' => array_values($itemTags),
             'categories' => array_values($itemCategories),
         ];
@@ -171,8 +170,7 @@ class ScheduleController extends Controller
             'account_from_name' => $this->allAccounts[$transaction->config->account_id],
             'account_to_id' => $transaction->config->investment_id,
             'account_to_name' => $transaction->config->investment->name,
-            'amount_from' => ($amount < 0 ? -$amount : null),
-            'amount_to' => ($amount > 0 ? $amount : null),
+            'amount' => ($amount > 0 ? $amount : 0),
 
             'tags' => [],
 
