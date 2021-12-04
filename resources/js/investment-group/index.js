@@ -1,9 +1,7 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
-$(document).ready( function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
+$(function() {
     $('#table').DataTable({
         data: investmentGroups,
         columns: [
@@ -18,11 +16,10 @@ $(document).ready( function () {
         {
             data: "id",
             title: "Actions",
-            render: function ( data, type, row, meta ) {
+            render: function (data) {
                 return '' +
-                    '<a href="' + route('investment-group.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                    '<form id="form-delete-' + data + '" action="' + route('investment-group.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                    '<a href="' + route('investment-group.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type=submit"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
             },
             orderable: false
         }
@@ -30,9 +27,13 @@ $(document).ready( function () {
         order: [[ 1, 'asc' ]]
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-delete", function() {
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        let form = document.getElementById('form-delete');
+        form.action = route('investment-group.destroy', this.dataset.id);
+        form.submit();
     });
 });

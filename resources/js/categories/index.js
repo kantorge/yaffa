@@ -1,12 +1,9 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
-$(document).ready( function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    categories = categories.map(c => { c.parent = c.parent || {name: ''};return c;});
-
+$(function() {
     $('#table').DataTable({
-        data: categories,
+        data: categories.map(c => { c.parent = c.parent || {name: ''}; return c;}),
         columns: [
         {
             data: "id",
@@ -53,7 +50,7 @@ $(document).ready( function () {
         }
 
         let form = document.getElementById('form-delete');
-        form.action = route('categories.destroy', {category: this.dataset.id});
+        form.action = route('categories.destroy', this.dataset.id);
         form.submit();
     });
 });
