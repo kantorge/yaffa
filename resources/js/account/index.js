@@ -2,8 +2,6 @@ require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
 $(function() {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
     $('#table').DataTable({
         data: accounts,
         columns: [
@@ -18,7 +16,7 @@ $(function() {
         {
             data: "active",
             title: "Active",
-            render: function ( data, type, row, meta ) {
+            render: function (data, type) {
                 if (type == 'filter') {
                     return  (data ? 'Yes' : 'No');
                 }
@@ -43,11 +41,10 @@ $(function() {
         {
             data: "id",
             title: "Actions",
-            render: function ( data, type, row, meta ) {
+            render: function (data) {
                 return '' +
                        '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                       '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                       '<form id="form-delete-' + data + '" action="' + route('account-entity.destroy', {type: 'account', account_entity: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
             },
             orderable: false
         }
@@ -55,9 +52,13 @@ $(function() {
         order: [[ 1, 'asc' ]]
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-delete", function() {
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        let form = document.getElementById('form-delete');
+        form.action = route('account-entity.destroy', {type: 'account', account_entity: this.dataset.id});
+        form.submit();
     });
 });

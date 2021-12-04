@@ -69,7 +69,7 @@ $(function() {
         order: [[ 1, 'asc' ]]
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
+    $("#table").on("click", ".data-delete", function() {
         if (!confirm('Are you sure to want to delete this item?')) {
             return;
         }
