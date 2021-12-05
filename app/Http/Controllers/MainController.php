@@ -225,6 +225,7 @@ class MainController extends Controller
                 'summary' => array_values($summary->toArray()),
                 'total' => $total,
                 'baseCurrency' => $baseCurrency,
+                'withClosed' => $withClosed,
             ]
         );
     }

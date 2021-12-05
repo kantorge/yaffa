@@ -41,6 +41,7 @@
                     <date-picker
                         format="YYYY-MM-DD"
                         id="schedule_start"
+                        :lang="dataPickerLanguage"
                         style="width: 100%;"
                         type="date"
                         value-type="format"
@@ -62,6 +63,7 @@
                     <date-picker
                         format="YYYY-MM-DD"
                         id="schedule_next"
+                        :lang="dataPickerLanguage"
                         style="width: 100%;"
                         type="date"
                         value-type="format"
@@ -83,10 +85,11 @@
                     class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
-                    <label for="schedule_end" class="control-label">End (last) date</label>
+                    <label for="schedule_end" class="control-label">End date</label>
                     <date-picker
                         format="YYYY-MM-DD"
                         id="schedule_end"
+                        :lang="dataPickerLanguage"
                         style="width: 100%;"
                         type="date"
                         value-type="format"
@@ -133,7 +136,16 @@
         },
 
         data() {
-            return {}
+            let data = {};
+
+            // Date picker settings
+            data.dataPickerLanguage = {
+                formatLocale: {
+                    firstDayOfWeek: 1,
+                },
+                monthBeforeYear: false,
+            };
+            return data;
         },
     }
 </script>

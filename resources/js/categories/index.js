@@ -1,12 +1,9 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
-$(document).ready( function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    categories = categories.map(c => { c.parent = c.parent || {name: ''};return c;});
-
+$(function() {
     $('#table').DataTable({
-        data: categories,
+        data: categories.map(c => { c.parent = c.parent || {name: ''}; return c;}),
         columns: [
         {
             data: "id",
@@ -23,7 +20,7 @@ $(document).ready( function () {
         {
             data: "active",
             title: "Active",
-            render: function ( data, type, row, meta ) {
+            render: function (data, type) {
                 if (type == 'filter') {
                     return  (data ? 'Yes' : 'No');
                 }
@@ -36,11 +33,10 @@ $(document).ready( function () {
         {
             data: "id",
             title: "Actions",
-            render: function ( data, type, row, meta ) {
+            render: function (data) {
                 return '' +
-                    '<a href="' + route('categories.edit', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                    '<form id="form-delete-' + data + '" action="' + route('categories.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                    '<a href="' + route('categories.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
             },
             orderable: false
         }
@@ -48,9 +44,13 @@ $(document).ready( function () {
         order: [[ 1, 'asc' ]]
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-delete", function() {
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        let form = document.getElementById('form-delete');
+        form.action = route('categories.destroy', this.dataset.id);
+        form.submit();
     });
 });

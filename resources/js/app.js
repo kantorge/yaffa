@@ -1,6 +1,7 @@
 require('./bootstrap');
 
 if (   window.location.pathname === '/account/summary'
+    || window.location.pathname === '/account/summary/withClosed'
     || window.location.pathname === '/') {
     require('./account/summary');
 }
@@ -85,7 +86,7 @@ $( function () {
     });
 
     // Generally available cancel button with confirmation
-    $(".cancel.confirm-needed").on("click", function(e) {
+    $(".cancel.confirm-needed").on("click", function() {
         return confirm('Are you sure to abandon this form?');
     });
 });

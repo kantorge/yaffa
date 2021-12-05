@@ -72,6 +72,7 @@ class AccountTest extends TestCase
         $account = AccountEntity::factory()->for($user1)->account($user1)->create();
 
         $user2 = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
 
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
@@ -83,11 +84,14 @@ class AccountTest extends TestCase
     public function user_can_view_list_of_accounts()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         AccountEntity::factory()->for($user)->account($user)->count(5)->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'account']));
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
 
         $response->assertStatus(200);
         $response->assertViewIs("account.index");
@@ -97,6 +101,8 @@ class AccountTest extends TestCase
     public function user_can_access_create_form()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -112,6 +118,8 @@ class AccountTest extends TestCase
     public function user_cannot_create_an_account_with_missing_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, AccountGroup::class);
         $currency = $this->createForUser($user, Currency::class);
         $response = $this
@@ -137,6 +145,8 @@ class AccountTest extends TestCase
     public function user_can_create_an_account()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -162,6 +172,8 @@ class AccountTest extends TestCase
     public function user_can_edit_an_existing_account()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -183,6 +195,8 @@ class AccountTest extends TestCase
     public function user_cannot_update_an_account_with_missing_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -208,6 +222,8 @@ class AccountTest extends TestCase
     public function user_can_update_an_account_with_proper_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -242,12 +258,19 @@ class AccountTest extends TestCase
     public function user_can_delete_an_existing_account()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
+        $accountConfig = $account->config;
 
         $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $account->id));
 
-        $this->assertDatabaseMissing($account->getTable(), $account->toArray());
+        // Check if model was deleted
+        $this->assertDatabaseMissing($account->getTable(), $account->makeHidden('config')->toArray());
+
+        // Check if config was also deleted
+        $this->assertDatabaseMissing('accounts', $accountConfig->toArray());
     }
 }

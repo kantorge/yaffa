@@ -19,7 +19,7 @@
 @import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-red.css';
 
 
-//sidebar select fix
+// Sidebar select fix
 .skin-blue .sidebar-form select {
   box-shadow: none;
   background-color: #374850;
@@ -50,6 +50,10 @@
 
 .text-italic {
     font-style: italic;
+}
+
+.cell-no-break {
+    white-space: nowrap;
 }
 
 .reconcile {

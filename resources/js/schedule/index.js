@@ -4,7 +4,7 @@ import { RRule } from 'rrule';
 
 $(function() {
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
+    var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
     // Parse dates in transactionData, and initialize RRule
     let tableData = transactionData.map(function(transaction) {
@@ -35,14 +35,15 @@ $(function() {
             {
                 data: "schedule_config.start_date",
                 title: "Start date",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-                }
+                },
+                className: "cell-no-break",
             },
             {
                 data: "schedule_config.rule",
                 title: "Schedule",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     // Return human readable format
                     return data.toText();
                 }
@@ -50,60 +51,55 @@ $(function() {
             {
                 data: "schedule_config.next_date",
                 title: "Next date",
-                render: function(data, type, row, meta) {
+                render: function(data) {
                     if (!data) {
                         return '';
                     }
 
                     return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-                }
+                },
+                className: "cell-no-break",
             },
             {
                 data: "schedule",
                 title: "Schedule",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
             {
                 data: "budget",
                 title: "Budget",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
             {
                 data: "schedule_config.active",
                 title: "Active",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
             {
                 data: "transaction_type",
                 title: "Type",
+                render: function (data, type) {
+                    if (type == 'filter') {
+                        return  data;
+                    }
+                    return (  data == 'Standard'
+                            ? '<i class="fa fa-money text-primary" title="Standard"></i>'
+                            : '<i class="fa fa-line-chart text-primary" title="Investment"></i>');
+                },
+                className: "text-center",
             },
             {
                 title: 'Payee',
-                render: function (data, type, row, meta ) {
+                render: function (data, type, row) {
                     if (row.transaction_type == 'Standard') {
                         if (row.transaction_name == 'withdrawal') {
                             return row.account_to_name;
@@ -127,7 +123,7 @@ $(function() {
             },
             {
                 title: "Category",
-                render: function (data, type, row, meta ) {
+                render: function (data, type, row) {
                     //standard transaction
                     if (row.transaction_type == 'Standard') {
                         //empty
@@ -159,7 +155,7 @@ $(function() {
             },
             {
                 title: "Amount",
-                render: function (data, type, row, meta ) {
+                render: function (data, type, row) {
                     let prefix = '';
                     if (row.transaction_operator == 'minus') {
                         prefix = '- ';
@@ -167,34 +163,46 @@ $(function() {
                     if (row.transaction_operator == 'plus') {
                         prefix = '+ ';
                     }
-                    return prefix + numberRenderer(row.amount_to);
+                    return prefix + numberRenderer(row.amount);
                 },
             },
             {
-                data: "comment",
                 title: "Comment",
-                render: function(data, type, row, meta){
-                    if(type === 'display'){
-                       data = truncateString(data, 20);
+                render: function (data, type, row) {
+                    if (!row.comment) {
+                        return null;
                     }
 
-                    return data;
-                 },
-                createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).prop('title', cellData);
-                }
+                    if (type === 'filter') {
+                        return row.comment;
+                    }
+
+                    return '<i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + row.comment + '"></i>';
+                },
+                className: "text-center",
             },
             {
                 data: "tags",
                 title: "Tags",
-                render: function (data, type, row, meta ) {
-                    return data.join(', ');
-                }
+                render: function (data, type) {
+                    if (data.length === 0) {
+                        return '';
+                    }
+
+                    if (type === 'filter') {
+                        return data.join(', ');
+                    }
+
+                    if (data) {
+                        return '<i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + data.join(', ') + '"></i>';
+                    }
+                },
+                className: "text-center",
             },
             {
                 data: 'id',
                 title: "Actions",
-                render: function (data, type, row, meta ) {
+                render: function (data, type, row) {
                     return  '' +
                             (row.transaction_type == 'Standard'
                              ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
@@ -210,7 +218,7 @@ $(function() {
                 orderable: false
             }
         ],
-        createdRow: function( row, data) {
+        createdRow: function (row, data) {
             if (!data.schedule_config.next_date) {
                 return;
             }
@@ -251,10 +259,22 @@ $(function() {
     $('input[name=budget]').on("change", function() {
         table.column(4).search(this.value).draw();
     });
+
+    $('input[name=active]').on("change", function() {
+        table.column(5).search(this.value).draw();
+    });
+
+    // Injitialize tooltips on this page
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
 });
 
-// DataTables helper: truncate a string
-function truncateString(str, max, add) {
-    add = add || '...';
-    return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
+function booleanToTableIcon (data, type) {
+    if (type == 'filter') {
+        return  (data ? 'Yes' : 'No');
+    }
+    return (  data
+            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+            : '<i class="fa fa-square text-danger" title="No"></i>');
 }

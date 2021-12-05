@@ -49,6 +49,7 @@
                                         <label for="date" class="control-label">Date</label>
                                         <date-picker
                                             id="date"
+                                            :lang="dataPickerLanguage"
                                             v-model="form.date"
                                             value-type="format"
                                             format="YYYY-MM-DD"
@@ -300,6 +301,14 @@
 
             // TODO: adjust initial callback based on action
             data.callback = 'new';
+
+            // Date picker settings
+            data.dataPickerLanguage = {
+                formatLocale: {
+                    firstDayOfWeek: 1,
+                },
+                monthBeforeYear: false,
+            };
 
             return data;
         },

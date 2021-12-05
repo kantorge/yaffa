@@ -12,6 +12,7 @@ use App\Models\Payee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use JavaScript;
 
@@ -270,7 +271,11 @@ class AccountEntityController extends Controller
     public function destroy(Request $request, AccountEntity $accountEntity)
     {
         try {
-            $accountEntity->delete();
+            // Try to delete config as well
+            DB::transaction(function () use ($accountEntity) {
+                $accountEntity->delete();
+                $accountEntity->config->delete();
+            });
 
             self::addSimpleSuccessMessage(
                 __(':type deleted', ['type' => Str::ucfirst($request->type)])
