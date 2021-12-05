@@ -81,16 +81,6 @@ class TransactionController extends Controller
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
-            if ($transaction->schedule || $transaction->budget) {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
-                $transactionSchedule->fill($validated['schedule_config']);
-                $transaction->transactionSchedule()->save($transactionSchedule);
-            }
-
             $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
             // Handle default payee amount, if present, by adding amount as an item
@@ -106,6 +96,16 @@ class TransactionController extends Controller
             $transaction->transactionItems()->saveMany($transactionItems);
 
             $transaction->push();
+
+            if ($transaction->schedule || $transaction->budget) {
+                $transactionSchedule = new TransactionSchedule(
+                    [
+                        'transaction_id' => $transaction->id,
+                    ]
+                );
+                $transactionSchedule->fill($validated['schedule_config']);
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
 
             return $transaction;
         });
@@ -137,6 +137,8 @@ class TransactionController extends Controller
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
+            $transaction->push();
+
             if ($transaction->schedule) {
                 $transactionSchedule = new TransactionSchedule(
                     [
@@ -146,8 +148,6 @@ class TransactionController extends Controller
                 $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
-
-            $transaction->push();
 
             return $transaction;
         });
