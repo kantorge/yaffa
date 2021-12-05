@@ -108,7 +108,7 @@ $(function() {
             {
                 data: "date",
                 title: "Date",
-                render: function(data) {
+                render: function (data) {
                     if (!data) {
                         return data;
                     }
@@ -119,7 +119,7 @@ $(function() {
                 data: "reconciled",
                 title: '<span title="Reconciled">R</span>',
                 className: "text-center",
-                render: function( data, type, row) {
+                render: function (data, type, row) {
                     if (type == 'filter') {
                         return  (   !row.schedule
                                  && (row.transaction_type.type == 'Standard' || row.transaction_type.type == 'Investment')
@@ -145,7 +145,7 @@ $(function() {
             dtColumnSettingCategories,
             {
                 title: "Withdrawal",
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
                 },
             },
@@ -322,6 +322,10 @@ $(function() {
         let form = document.getElementById('form-delete');
         form.action = route('transactions.destroy', {transaction: this.dataset.id});
         form.submit();
+    });
+
+    $('input[name=reconciled]').on("change", function() {
+        $('#historyTable').DataTable().column(1).search(this.value).draw();
     });
 });
 
