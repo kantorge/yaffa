@@ -45,6 +45,7 @@ class PayeeTest extends TestCase
         $payee = AccountEntity::factory()->for($user1)->payee($user1)->create();
 
         $user2 = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
 
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
@@ -56,6 +57,8 @@ class PayeeTest extends TestCase
     public function user_can_view_list_of_payees()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         AccountEntity::factory()->for($user)->payee($user)->count(5)->create();
 
@@ -69,6 +72,7 @@ class PayeeTest extends TestCase
     public function user_can_access_create_form()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
 
         $response = $this
             ->actingAs($user)
@@ -82,6 +86,8 @@ class PayeeTest extends TestCase
     public function user_cannot_create_a_payee_with_missing_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $category = $this->createForUser($user, Category::class);
         $response = $this
             ->actingAs($user)
@@ -104,6 +110,8 @@ class PayeeTest extends TestCase
     public function user_can_create_a_payee()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
 
         $attributes = $baseAttributes = AccountEntity::factory()->for($user)->raw();
@@ -128,6 +136,8 @@ class PayeeTest extends TestCase
     public function user_can_edit_an_existing_payee()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -148,6 +158,8 @@ class PayeeTest extends TestCase
     public function user_cannot_update_a_payee_with_missing_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -172,6 +184,8 @@ class PayeeTest extends TestCase
     public function user_can_update_a_payee_with_proper_data()
     {
         $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -199,14 +213,21 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_account_group()
+    public function user_can_delete_an_existing_payee()
     {
         $user = User::factory()->create();
         $this->createForUser($user, Category::class);
-        $account = AccountEntity::factory()->for($user)->payee($user)->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
 
-        $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $account->id));
+        $payee = AccountEntity::factory()->for($user)->payee($user)->create();
+        $payeeConfig = $payee->config;
 
-        $this->assertDatabaseMissing($account->getTable(), $account->toArray());
+        $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $payee->id));
+
+        // Check if model was deleted
+        $this->assertDatabaseMissing($payee->getTable(), $payee->makeHidden('config')->toArray());
+
+        // Check if config was also deleted
+        $this->assertDatabaseMissing('payees', $payeeConfig->toArray());
     }
 }
