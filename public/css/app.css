@@ -6228,3 +6228,7 @@ table.text-center th {
 .reconcile {
   cursor: pointer;
 }
+
+.d-inline-block {
+  display: inline-block;
+}

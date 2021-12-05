@@ -48,9 +48,6 @@
 
     @include('template.components.model-delete-form')
 
-    <form id="form-skip" action="'" method="POST" style="display: none;">
-        <input type="hidden" name="_method" value="PATCH">
-        @csrf
-    </form>
+    @include('template.components.transaction-skip-form')
 
 @stop
