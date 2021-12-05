@@ -17,70 +17,66 @@
         <!-- /.box-header -->
         <div class="box-body">
             <div class="row">
-                <div class="col-lg-2">
-                    <div class="form-group">
+                <div class="col-lg-12">
+                    <div class="form-group d-inline-block">
                         <label class="control-label">
                             Schedule
                         </label>
                         <div>
-                            <div class="btn-group btn-group-justified" data-toggle="buttons">
-                                <label class="btn btn-primary">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-primary" title="Yes">
                                     <input type="radio" name="schedule" value="Yes" class="radio-inline">
-                                    Yes
+                                    <span class="fa fa-fw fa-check"></span>
                                 </label>
-                                <label class="btn btn-primary active">
+                                <label class="btn btn-primary active" title="Any">
                                     <input type="radio" name="schedule" value="" class="radio-inline" checked="checked">
-                                    Any
+                                    <span class="fa fa-fw fa-circle-o"></span>
                                 </label>
-                                <label class="btn btn-primary">
+                                <label class="btn btn-primary" title="No">
                                     <input type="radio" name="schedule" value="No" class="radio-inline">
-                                    No
+                                    <span class="fa fa-fw fa-close"></span>
                                 </label>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-2">
-                    <div class="form-group">
+                    <div class="form-group d-inline-block">
                         <label class="control-label">
                             Budget
                         </label>
                         <div>
-                            <div class="btn-group btn-group-justified" data-toggle="buttons">
-                                <label class="btn btn-primary">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-primary" title="Yes">
                                     <input type="radio" name="budget" value="Yes" class="radio-inline">
-                                    Yes
+                                    <span class="fa fa-fw fa-check"></span>
                                 </label>
-                                <label class="btn btn-primary active">
+                                <label class="btn btn-primary active" title="Any">
                                     <input type="radio" name="budget" value="" class="radio-inline" checked="checked">
-                                    Any
+                                    <span class="fa fa-fw fa-circle-o"></span>
                                 </label>
-                                <label class="btn btn-primary">
+                                <label class="btn btn-primary" title="No">
                                     <input type="radio" name="budget" value="No" class="radio-inline">
-                                    No
+                                    <span class="fa fa-fw fa-close"></span>
                                 </label>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-2">
-                    <div class="form-group">
+                    <div class="form-group d-inline-block">
                         <label class="control-label">
                             Active
                         </label>
                         <div>
-                            <div class="btn-group btn-group-justified" data-toggle="buttons">
-                                <label class="btn btn-primary">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-primary" title="Yes">
                                     <input type="radio" name="active" value="Yes" class="radio-inline">
-                                    Yes
+                                    <span class="fa fa-fw fa-check"></span>
                                 </label>
-                                <label class="btn btn-primary active">
-                                    <input type="radio" name="active" value="" class="radio-inline" checked="checked">
-                                    Any
+                                <label class="btn btn-primary active" title="Any">
+                                    <input type="radio" name="budget" value="" class="radio-inline" checked="checked">
+                                    <span class="fa fa-fw fa-circle-o"></span>
                                 </label>
-                                <label class="btn btn-primary">
+                                <label class="btn btn-primary" title="No">
                                     <input type="radio" name="active" value="No" class="radio-inline">
-                                    No
+                                    <span class="fa fa-fw fa-close"></span>
                                 </label>
                             </div>
                         </div>
@@ -93,5 +89,9 @@
         <!-- /.box-body -->
     </div>
     <!-- /.box -->
+
+    @include('template.components.model-delete-form')
+
+    @include('template.components.transaction-skip-form')
 
 @stop
