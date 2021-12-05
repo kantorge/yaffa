@@ -3,7 +3,6 @@ require( 'datatables.net-bs' );
 import { RRule } from 'rrule';
 
 $(function() {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
     // Parse dates in transactionData, and initialize RRule
@@ -209,11 +208,9 @@ $(function() {
                                '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
+                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
                             '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                            '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ';
                 },
                 orderable: false
             }
@@ -241,15 +238,20 @@ $(function() {
         paging:         false,
     });
 
-    $('.data-skip').on('click', function (e) {
-        e.preventDefault();
-        $('#form-skip-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-skip", function() {
+        let form = document.getElementById('form-skip');
+        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
+        form.submit();
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-delete", function() {
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        let form = document.getElementById('form-delete');
+        form.action = route('transactions.destroy', {transaction: this.dataset.id});
+        form.submit();
     });
 
     $('input[name=schedule]').on("change", function() {
