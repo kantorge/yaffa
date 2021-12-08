@@ -92,12 +92,7 @@
                                 </div>
                                 <label for="date_to" class="col-sm-2 control-label">Date to</label>
                                 <div class="col-sm-4">
-                                    <div class="input-group margin">
-                                        <input type="text" class="form-control hasDatepicker" id="date_to">
-                                        <span class="input-group-btn">
-                                            <button class="btn btn-flat btn-info" id="date_to_today" title="Set to today"><i class="fa fa-calendar"></i></button>
-                                        </span>
-                                    </div>
+                                    <input type="text" class="form-control hasDatepicker" id="date_to">
                                 </div>
                             </div>
                             <div class="row">
@@ -191,4 +186,6 @@
             </div>
         </div>
     </div>
+
+    @include('template.components.model-delete-form')
 @stop

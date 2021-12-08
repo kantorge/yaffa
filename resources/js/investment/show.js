@@ -1,8 +1,7 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
-require( 'daterangepicker');
-var moment = require('moment');
+import Datepicker from 'vanillajs-datepicker/Datepicker';
 
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
@@ -10,12 +9,11 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 $(function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
     // Table data transformation
     window.transactions = window.transactions.map(function(transaction) {
         if (transaction.date) {
             transaction.date = new Date(Date.parse(transaction.date));
+            transaction.date.setHours(0, 0, 0, 0);
         }
 
         return transaction;
@@ -70,12 +68,14 @@ $(function () {
             {
                 data: "date",
                 title: "Date",
-                render: function ( data, type, row, meta ) {
-                    if (!data) {
-                        return data;
+                render: function (data, type) {
+                    if (type === 'display' && data) {
+                        return data.toLocaleDateString('Hu-hu');
                     }
-                    return data.toLocaleDateString('Hu-hu').replace(/\s/g, '&nbsp;');
+
+                    return data
                 },
+                className: "cell-no-break",
             },
             {
                 data: "transaction_name",
@@ -94,7 +94,7 @@ $(function () {
             {
                 data: "price",
                 title: "Price",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     if (data === null) {
                         return data;
                     }
@@ -105,7 +105,7 @@ $(function () {
             {
                 data: "dividend",
                 title: "Dividend",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     if (data === null) {
                         return data;
                     }
@@ -116,7 +116,7 @@ $(function () {
             {
                 data: "commission",
                 title: "Commission",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     if (data === null) {
                         return data;
                     }
@@ -127,7 +127,7 @@ $(function () {
             {
                 data: "tax",
                 title: "Tax",
-                render: function(data, type, row, meta) {
+                render: function (data) {
                     if (data === null) {
                         return data;
                     }
@@ -137,7 +137,7 @@ $(function () {
             },
             {
                 title: "Amount",
-                render: function( data, type, row, meta) {
+                render: function (data, type, row) {
                     var operator = row.amount_operator;
                     if (!operator) {
                         return 0;
@@ -154,7 +154,7 @@ $(function () {
             {
                 data: "id",
                 title: "Actions",
-                render: function ( data, type, row, meta ) {
+                render: function (data, type, row) {
                     var actions = '' +
                         '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="Make this the start date"></i></button> ' +
                         '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
@@ -162,8 +162,7 @@ $(function () {
                         actions += '' +
                         '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                         '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
-                        '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                        '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
                     }
 
                     return actions;
@@ -171,7 +170,7 @@ $(function () {
                 orderable: false
             }
         ],
-        createdRow: function( row, data, dataIndex ) {
+        createdRow: function (row, data) {
             if (data.schedule) {
                 $(row).addClass('text-muted text-italic');
             }
@@ -179,59 +178,78 @@ $(function () {
         order: [[ 0, 'asc' ]]
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
+    $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        let form = document.getElementById('form-delete');
+        form.action = route('transactions.destroy', {transaction: this.dataset.id});
+        form.submit();
     });
 
-    $("#table").on("click", ".set-date", function(e) {
+    $("#table").on("click", ".set-date", function(event) {
         //TODO: catch invalid combinations
-        if ($(this).data('type') == 'from') {
-            $('#date_from').data('daterangepicker').setStartDate( $(this).data('date') );
+        if (this.dataset.type === 'from') {
+            datepickerFrom.setDate(
+                new Date(this.dataset.date),
+                {
+                    clear: true
+                }
+            );
         } else {
-            $('#date_to').data('daterangepicker').setStartDate( $(this).data('date') );
+            datepickerTo.setDate(
+                new Date(this.dataset.date),
+                {
+                    clear: true
+                }
+            );
         }
         window.table.draw();
         window.calculateSummary.call();
     });
 
-    //initialize date filter inputs
+    // Initialize date filter inputs
     var datePickerStandardSettings = {
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
+        weekStart: 1,
+        todayBtn: true,
+        todayBtnMode: 1,
+        todayHighlight: true,
+        format: 'yyyy-mm-dd',
+        autohide: true,
+        buttonClass: 'btn',
     };
-    //get min and max dates from transactions
-    window.minDate = moment(Math.min(...transactions.map(e => new Date(e.date))));
-    window.maxDate = moment(Math.max(...transactions.map(e => new Date(e.date))));
 
-    $('#date_from').daterangepicker(datePickerStandardSettings);
-    $('#date_to').daterangepicker(datePickerStandardSettings);
+    // Get min and max dates from transactions
+    window.minDate = new Date(Math.min(...transactions.map(e => e.date)));
+    window.maxDate = new Date(Math.max(...transactions.map(e => e.date)));
 
-    $('#date_from').on('apply.daterangepicker', function(ev, picker) {
-        $('#date_to').data('daterangepicker').minDate = picker.endDate;
+    window.datepickerFrom = new Datepicker(document.getElementById('date_from'), datePickerStandardSettings);
+    window.datepickerTo = new Datepicker(document.getElementById('date_to'), datePickerStandardSettings);
+
+    document.getElementById('date_from').addEventListener("changeDate", function(event) {
+        datepickerTo.setOptions({
+            minDate: event.date,
+        });
         window.table.draw();
         window.calculateSummary.call();
     });
 
-    $('#date_to').on('apply.daterangepicker', function(ev, picker) {
-        $('#date_from').data('daterangepicker').maxDate = picker.startDate;
+    document.getElementById('date_to').addEventListener("changeDate", function(event) {
+        datepickerFrom.setOptions({
+            maxDate: event.date,
+        });
         window.table.draw();
         window.calculateSummary.call();
     });
 
-    //summary calculations
+    // Summary calculations
     window.calculateSummary = function() {
-        var min = $('#date_from').data('daterangepicker').startDate;
-        var max = $('#date_to').data('daterangepicker').endDate;
+        var min = datepickerFrom.getDate();
+        var max = datepickerTo.getDate();
 
         var filtered = transactions.filter(function(transaction) {
-            var date = moment(transaction.date);
-            return ( date >= min && date <= max);
+            return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
         });
 
         window.summary.Buying.value = filtered.filter(trx => trx.transaction_name == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
@@ -248,14 +266,16 @@ $(function () {
         } else if (filtered.filter(trx => !!trx.price).length > 0) {  //TODO: remove filter duplicate
             lastPrice = filtered
             .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
-            .sort(function(a,b) {
-                return (  moment(a.date).isBefore(moment(b.date))
-                        ? 1
-                        : (moment(b.date).isBefore(moment(a.date))
-                           ? -1
-                           : 0
-                          )
-                       );
+            .sort(function (a, b) {
+                if (a.date.getTime() < b.date.getTime()) {
+                    return 1;
+                }
+
+                if (a.date.getTime() > b.date.getTime()) {
+                    return -1;
+                }
+
+                return 0;
             })[0].price;
         } else {
             lastPrice = 1;
@@ -263,7 +283,7 @@ $(function () {
 
         window.summary.Value.value = window.summary.Quantity.value * lastPrice;
 
-        //final result
+        // Final result
         window.summary.Result.value =   window.summary.Selling.value
                                       + window.summary.Dividend.value
                                       + window.summary.Value.value
@@ -271,9 +291,9 @@ $(function () {
                                       - window.summary.Commission.value
                                       - window.summary.Taxes.value;
 
-        //calculate ROI
+        // Calculate ROI
         var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
-        var years = $('#date_to').data('daterangepicker').startDate.diff($('#date_from').data('daterangepicker').startDate, 'years',true);
+        var years = calculateYears(datepickerTo.getDate(), datepickerFrom.getDate());
         var AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
         document.getElementById('summaryROI').innerHTML = (ROI * 100).toFixed(2) + '%';
         document.getElementById('summaryAROI').innerHTML = (AROI * 100).toFixed(2) + '%';
@@ -287,11 +307,25 @@ $(function () {
     };
 
     window.dateReset = function() {
-        $('#date_from').data('daterangepicker').setStartDate( minDate );
-        $('#date_from').data('daterangepicker').maxDate = maxDate;
+        datepickerFrom.setDate(
+            minDate,
+            {
+                clear: true
+            }
+        );
+        datepickerFrom.setOptions({
+            maxDate: maxDate,
+        });
 
-        $('#date_to').data('daterangepicker').setStartDate (maxDate);
-        $('#date_to').data('daterangepicker').minDate = minDate;
+        datepickerTo.setDate(
+            maxDate,
+            {
+                clear: true
+            }
+        );
+        datepickerTo.setOptions({
+            minDate: minDate,
+        });
 
         window.table.draw();
         window.calculateSummary.call();
@@ -300,14 +334,14 @@ $(function () {
 
     $("#clear_dates").on('click', dateReset);
 
-    //datatables filtering
+    // Datatables filtering
     $.fn.dataTable.ext.search.push(
-        function( settings, data, dataIndex ) {
-            var min = $('#date_from').data('daterangepicker').startDate;
-            var max = $('#date_to').data('daterangepicker').startDate;
-            var date = moment( data[0] );
+        function (settings, data) {
+            var min = datepickerFrom.getDate();
+            var max = datepickerTo.getDate();
+            var date = new Date(data[0]);
 
-            return ( date.isSameOrAfter(min) && date.isSameOrBefore(max));
+            return (date.getTime() >= min.getTime() && date.getTime() <= max.getTime());
         }
     );
 
@@ -372,3 +406,15 @@ $(function () {
         document.getElementById('quantityChartNoData').classList.remove('hidden');
     }
 });
+
+window.getIsoDate = function (date) {
+    return new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ))
+            .toISOString()
+            .split("T")[0];
+}
+
+window.calculateYears = function (from, to) {
+    var diffMs = to - from;
+    var diffDate = new Date(diffMs); // miliseconds from epoch
+    return Math.abs(diffDate.getUTCFullYear() - 1970);
+}
