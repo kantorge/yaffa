@@ -11,7 +11,7 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
-        "@vue/compiler-sfc": "^3.2.23",
+        "@vue/compiler-sfc": "^3.2.24",
         "axios": "^0.21.4",
         "bootstrap": "^4.6.1",
         "cross-env": "^7.0.3",
@@ -26,8 +26,8 @@
         "postcss": "^8.4.4",
         "resolve-url-loader": "^4.0.0",
         "sass": "^1.44.0",
-        "sass-loader": "^12.3.0",
-        "vue": "^3.2.23"
+        "sass-loader": "^12.4.0",
+        "vue": "^3.2.24"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.23",
