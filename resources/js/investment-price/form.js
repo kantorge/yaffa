@@ -1,13 +1,16 @@
-require( 'daterangepicker');
-
+import Datepicker from 'vanillajs-datepicker/Datepicker';
 
 $(function () {
-    $('#date').daterangepicker({
-        singleDatePicker: true,
-        showDropdowns: true,
-        locale: {
-            format: 'YYYY-MM-DD'
-        },
-        autoApply: true
-    });
+    new Datepicker(
+        document.getElementById('date'),
+        {
+            weekStart: 1,
+            todayBtn: true,
+            todayBtnMode: 1,
+            todayHighlight: true,
+            format: 'yyyy-mm-dd',
+            autohide: true,
+            buttonClass: 'btn',
+        }
+    );
 });

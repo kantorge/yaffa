@@ -9,6 +9,7 @@ use App\Models\InvestmentPrice;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use JavaScript;
 
 class InvestmentPriceController extends Controller
@@ -22,16 +23,22 @@ class InvestmentPriceController extends Controller
     {
         $this->authorize('view', $investment);
 
+        $pricesOrdered = DB::table('investment_prices')
+            ->select('id', 'date', 'price')
+            ->where('investment_id', $investment->id)
+            ->orderBy('date')
+            ->get();
+
         // Pass data for DataTables
         JavaScript::put([
-            'prices' => $investment->investmentPrices,
+            'prices' => $pricesOrdered,
         ]);
 
         return view(
             'investment-prices.list',
             [
                 'investment' => $investment,
-                'prices' => $investment->investmentPrices
+                'prices' => $pricesOrdered
             ]
         );
     }

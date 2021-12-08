@@ -84,7 +84,7 @@ $(function() {
         data: "comment",
         title: "Comment",
         render: function(data, type) {
-            if(type === 'display'){
+            if (type === 'display') {
                data = truncateString(data, 20);
             }
 
