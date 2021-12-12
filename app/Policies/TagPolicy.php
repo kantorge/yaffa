@@ -15,7 +15,6 @@ class TagPolicy
         return $user->id === $tag->user_id;
     }
 
-
     /**
      * Determine whether the user can view any models.
      *
