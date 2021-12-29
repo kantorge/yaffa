@@ -134,7 +134,7 @@ class TransactionRequest extends FormRequest
                     'config.account_to_id' => [
                         'required',
                         'exists:account_entities,id,config_type,account',
-                ],
+                    ],
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0',
                 ]);

@@ -86,10 +86,10 @@ class TransactionController extends Controller
             // Handle default payee amount, if present, by adding amount as an item
             if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
                 $newItem = TransactionItem::create([
-                        'transaction_id' => $transaction->id,
-                        'amount' => $validated['remaining_payee_default_amount'],
-                        'category_id' => $validated['remaining_payee_default_category_id'],
-                    ]);
+                    'transaction_id' => $transaction->id,
+                    'amount' => $validated['remaining_payee_default_amount'],
+                    'category_id' => $validated['remaining_payee_default_category_id'],
+                ]);
                 $transactionItems[] = $newItem;
             }
 

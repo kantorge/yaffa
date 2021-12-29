@@ -31,7 +31,7 @@ class AccountEntityRequest extends FormRequest
 
         if ($this->config_type === 'account') {
             $rules = array_merge($rules, [
-                'config.opening_balance'  => [
+                'config.opening_balance' => [
                     'required',
                     'numeric',
                 ],

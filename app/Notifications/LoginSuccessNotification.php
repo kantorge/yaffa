@@ -19,7 +19,6 @@ class LoginSuccessNotification extends Notification
         $this->event = $event;
     }
 
-
     /**
      * Get the notification's delivery channels.
      *
@@ -40,8 +39,8 @@ class LoginSuccessNotification extends Notification
     public function toMail($notifiable)
     {
         logger()->debug('event', ['event' => $this->event]);
-        return (new MailMessage)
-                    ->subject('YAFFA info - successful login')
-                    ->line('Successful login at '. config('app.url') .' for user '. $this->event->user->email);
+        return (new MailMessage())
+            ->subject('YAFFA info - successful login')
+            ->line('Successful login at '. config('app.url') .' for user '. $this->event->user->email);
     }
 }

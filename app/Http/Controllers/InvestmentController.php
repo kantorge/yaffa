@@ -275,7 +275,8 @@ class InvestmentController extends Controller
                         'quantity' => $runningTotal,
                         'schedule' => $runningSchedule,
                     ];
-            });
+            })
+            ->sortBy('date');
 
         JavaScript::put([
             'investment' => $investment,

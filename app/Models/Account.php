@@ -47,7 +47,7 @@ class Account extends AccountEntity
         return $this->morphOne(AccountEntity::class, 'config');
     }
 
-    public function account_group()
+    public function accountGroup()
     {
         return $this->belongsTo(AccountGroup::class);
     }

@@ -82,7 +82,7 @@ class InvestmentPriceController extends Controller
             'investment-prices.form',
             [
                 'investment' => $investmentPrice->investment,
-                'investmentPrice'=> $investmentPrice
+                'investmentPrice'=> $investmentPrice,
             ]
         );
     }

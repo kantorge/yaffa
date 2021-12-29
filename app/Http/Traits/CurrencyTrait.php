@@ -51,7 +51,7 @@ trait CurrencyTrait
      */
     public function getBaseCurrency(): ?Currency
     {
-        return  Auth::user()->currencies()->where('base', 1)->firstOr(function () {
+        return Auth::user()->currencies()->where('base', 1)->firstOr(function () {
             return Auth::user()->currencies()->orderBy('id')->firstOr(function () {
                 return null;
             });
