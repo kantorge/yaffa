@@ -243,7 +243,7 @@ class InvestmentController extends Controller
 
                 foreach ($transformer->transform($rule, $constraint) as $instance) {
                     $newTransaction = $transaction;
-                    $newTransaction['date'] = $instance->getStart()->format('Y-m-d');
+                    $newTransaction['date'] = $instance->getStart();
                     $newTransaction['transaction_group'] = 'forecast';
                     $newTransaction['schedule_is_first'] = $first;
 
@@ -257,26 +257,27 @@ class InvestmentController extends Controller
         $runningTotal = 0;
         $runningSchedule = 0;
         $quantities = $transactions
+            // TODO: group by date
+            ->sortBy('date')
             ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
                 $operator = $transaction['quantity_operator'];
                 if (! $operator) {
                     $quantity = 0;
                 } else {
-                    $quantity = ($operator == 'minus' ? -1 : 1) * $transaction['quantity'];
+                    $quantity = ($operator === 'minus' ? -1 : 1) * $transaction['quantity'];
                 }
 
                 $runningSchedule += $quantity;
-                if ($transaction['transaction_group'] == 'history') {
+                if ($transaction['transaction_group'] === 'history') {
                     $runningTotal += $quantity;
                 }
 
                 return [
-                        'date' => $transaction['date'],
+                        'date' => $transaction['date']->format('Y-m-d'),
                         'quantity' => $runningTotal,
                         'schedule' => $runningSchedule,
                     ];
-            })
-            ->sortBy('date');
+            });
 
         JavaScript::put([
             'investment' => $investment,
