@@ -248,6 +248,10 @@ $(function () {
         var min = datepickerFrom.getDate();
         var max = datepickerTo.getDate();
 
+        if (typeof max === 'undefined' || typeof min === 'undefined') {
+            return;
+        }
+
         var filtered = transactions.filter(function(transaction) {
             return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
         });
