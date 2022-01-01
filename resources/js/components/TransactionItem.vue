@@ -198,13 +198,46 @@
                 placeholder: "Select tag(s)",
                 allowClear: true
             })
-            .on('select2:select', function (e) {
+            .on('select2:select select2:unselect', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
                 e.target.dispatchEvent(event);
 
                 $vm.$emit('updateItemTag', $(e.target).select2('val'));
             });
 
+            // Add already existing tags as labels
+            if (this.tags.length > 0) {
+                let data = [];
+                this.tags.forEach(function(tag) {
+                    data.push({
+                        id: tag.id,
+                        name: tag.name,
+                    });
+
+                    var option = new Option(tag.name, tag.id, true, true);
+                    elementTags.append(option).trigger('change');
+                })
+
+                // Manually trigger the `select2:select` event
+                elementTags.trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+                /*
+                elementTags.select2(
+                    'data',
+                    this.tags.map(function(tag) {
+                        return {
+                            id: tag.id,
+                            tag: tag.name,
+                        }
+                    })
+                );
+                */
+                //console.log(elementTags.select2('data'));
+            }
         },
 
         methods: {
