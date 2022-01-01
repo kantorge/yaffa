@@ -232,7 +232,12 @@
                     </div>
                     <div class="box-tools col-sm-2">
                         <div class="pull-right">
-                            <button class="btn btn-sm btn-default" type="button" @click="onCancel">
+                            <button
+                                class="btn btn-sm btn-default"
+                                type="button"
+                                style="margin-left: 10px; margin-bottom: 5px;"
+                                @click="onCancel"
+                            >
                                 Cancel
                             </button>
                             <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
@@ -598,6 +603,13 @@
                 if (this.callback == 'returnToAccount') {
                     return route('account.history', { account: this.form.config.account_id });
                 }
+            },
+
+            onCancel() {
+                if(confirm('Are you sure you want to discard any changes?')) {
+                    window.history.back();
+                }
+                return false;
             },
 
             onSubmit() {
