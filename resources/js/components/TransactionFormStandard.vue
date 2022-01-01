@@ -298,40 +298,15 @@
                                 <label class="control-label block-label">After saving</label>
                                 <div class="btn-group">
                                     <button
+                                        v-for="item in activeCallbackOptions"
+                                        :key="item.id"
                                         class="btn btn-default"
-                                        :class="callback == 'new' ? 'active' : ''"
+                                        :class="callback == item.value ? 'active' : ''"
                                         type="button"
-                                        value="new"
+                                        :value="item.value"
                                         @click="callback = $event.currentTarget.getAttribute('value')"
                                     >
-                                        Add an other transaction
-                                    </button>
-                                    <button
-                                        class="btn btn-default"
-                                        :class="callback == 'clone' ? 'active' : ''"
-                                        type="button"
-                                        value="clone"
-                                        @click="callback = $event.currentTarget.getAttribute('value')"
-                                    >
-                                        Clone this transaction
-                                    </button>
-                                    <button
-                                        class="btn btn-default"
-                                        :class="callback == 'returnToAccount' ? 'active' : ''"
-                                        type="button"
-                                        value="returnToAccount"
-                                        @click="callback = $event.currentTarget.getAttribute('value')"
-                                    >
-                                        Return to selected account
-                                    </button>
-                                    <button
-                                        class="btn btn-default"
-                                        :class="callback == 'returnToDashboard' ? 'active' : ''"
-                                        type="button"
-                                        value="returnToDashboard"
-                                        @click="callback = $event.currentTarget.getAttribute('value')"
-                                    >
-                                        Return to dashboard
+                                        {{ item.label }}
                                     </button>
                                 </div>
                             </div>
@@ -361,10 +336,13 @@
                                     class="form-control"
                                     v-model="callback"
                                 >
-                                    <option value="new">Add an other transaction</option>
-                                    <option value="clone">Clone this transaction</option>
-                                    <option value="returnToAccount">Return to selected account</option>
-                                    <option value="returnToDashboard">Return to dashboard</option>
+                                    <option
+                                        v-for="item in activeCallbackOptions"
+                                        :key="item.id"
+                                        :value="item.value"
+                                    >
+                                        {{ item.label }}
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -462,6 +440,35 @@
                 monthBeforeYear: false,
             };
 
+            // Possible callback options
+            data.callbackOptions = [
+                {
+                    value: 'new',
+                    label: 'Add an other transaction',
+                    enabled: true,
+                },
+                {
+                    value: 'clone',
+                    label: 'Clone this transaction',
+                    enabled: true,
+                },
+                {
+                    value: 'returnToPrimaryAccount',
+                    label: 'Return to selected account',
+                    enabled: true,
+                },
+                {
+                    value: 'returnToSecondaryAccount',
+                    label: 'Return to target account',
+                    enabled: false,
+                },
+                {
+                    value: 'returnToDashboard',
+                    label: 'Return to dashboard',
+                    enabled: true,
+                },
+            ]
+
             return data;
         },
 
@@ -472,6 +479,10 @@
                 }
 
                 return route('transactions.storeStandard');
+            },
+
+            activeCallbackOptions() {
+                return this.callbackOptions.filter(option => option.enabled);
             },
 
             // Account TO and FROM labels based on transaction type
@@ -790,6 +801,16 @@
                         .select2('destroy')
                         .select2(this.getAccountSelectConfig('to'));
                 }
+
+                // Update callback options
+                var foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
+                this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
+
+                // Ensure, that selected item is enabled. Otherwise, set to first enabled option
+                var selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
+                if (! this.callbackOptions[selectedCallbackIndex].enabled) {
+                    this.callback = this.callbackOptions.find(option => option.enabled)['value'];
+                }
             },
 
             // Add a new empty item to list of transaction items
@@ -869,12 +890,16 @@
             },
 
             // Determine, which account to use as a callback, if user wants to return to selected account
-            getReturnAccount() {
-                if (this.form.transaction_type == 'deposit') {
+            getReturnAccount(accountType) {
+                if (accountType === 'primary' && this.form.transaction_type == 'deposit') {
                     return this.form.config.account_to_id;
                 }
 
-                // Withdrawal and transfer
+                if (accountType === 'secondary') {
+                    return this.form.config.account_to_id;
+                }
+
+                // Withdrawal and transfer primary
                 return this.form.config.account_from_id;
             },
 
@@ -891,8 +916,12 @@
                     return route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
                 }
 
-                if (this.callback == 'returnToAccount') {
-                    return route('account.history', { account: this.getReturnAccount() });
+                if (this.callback == 'returnToPrimaryAccount') {
+                    return route('account.history', { account: this.getReturnAccount('primary') });
+                }
+
+                if (this.callback == 'returnToSecondaryAccount') {
+                    return route('account.history', { account: this.getReturnAccount('secondary') });
                 }
             },
 

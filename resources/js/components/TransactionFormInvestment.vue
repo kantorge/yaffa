@@ -600,7 +600,11 @@
                     return route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
                 }
 
-                if (this.callback == 'returnToAccount') {
+                if (this.callback == 'returnToPrimaryAccount') {
+                    return route('account.history', { account: this.form.config.account_id });
+                }
+
+                if (this.callback == 'returnToSecondaryAccount') {
                     return route('account.history', { account: this.form.config.account_id });
                 }
             },
