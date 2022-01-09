@@ -152,6 +152,13 @@ class TransactionController extends Controller
             return $transaction;
         });
 
+        // Adjust source transaction schedule, if needed
+        if ($validated['action'] === 'enter') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+            $sourceTransaction->transactionSchedule->skipNextInstance();
+        }
+
         self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
 
         return response()->json(
