@@ -18,6 +18,11 @@ class ReportController extends Controller
     use CurrencyTrait;
     use ScheduleTrait;
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function cashFlow(Request $request)
     {
         // Check if forecast is required
@@ -245,6 +250,13 @@ class ReportController extends Controller
                 'categories' => $categories->pluck('full_name', 'id'),
                 'byYears' => $byYears,
             ]
+        );
+    }
+
+    public function transactionsByCriteria()
+    {
+        return view(
+            'reports.transactions'
         );
     }
 }
