@@ -179,15 +179,13 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_first_instance) {
                             data = row.originalId;
-                            return  '' +
-                                    '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ';
+                            return  '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success" title="Edit and insert instance"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title=Skip current schedule"><i class="fa fa-fw fa-forward"></i></i></button> ';
                         }
                         return null;
                     }
 
-                    return  '' +
-                            (row.transaction_type.type == 'Standard'
+                    return  (row.transaction_type.type == 'Standard'
                              ? '<button class="btn btn-xs btn-success data-quickview" data-id="' + data + '" type="button" title="Quick view"><i class="fa fa-fw fa-eye"></i></button> ' +
                                '<a href="' + route('transactions.openStandard', {transaction: data, action: 'show'}) + '" class="btn btn-xs btn-success" title="View details"><i class="fa fa-fw fa-search"></i></a> ' +
                                '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
