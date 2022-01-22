@@ -181,6 +181,13 @@ class TransactionController extends Controller
         // Load all relevant relations
         $transaction->load(self::STANDARD_RELATIONS);
 
+        // Show is routed to special view
+        if ($action === 'show') {
+            return view('transactions.show_standard', [
+                'transaction' => $transaction,
+            ]);
+        }
+
         // Adjust date and schedule settings, if entering a recurring item
         if ($action === 'enter') {
             // Reset schedule and budget flags

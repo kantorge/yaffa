@@ -83,7 +83,7 @@ Route::get(
     '/transactions/standard/{transaction}/{action}',
     [TransactionController::class, 'openStandard']
 )
-->where('action', 'edit|clone|enter')
+->where('action', 'edit|clone|enter|show')
 ->name('transactions.openStandard');
 
 Route::get(
@@ -104,5 +104,6 @@ Route::resource(
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
+Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])->name('reports.transactions');
 
 Auth::routes();

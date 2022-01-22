@@ -188,7 +188,9 @@ $(function() {
 
                     return  '' +
                             (row.transaction_type.type == 'Standard'
-                             ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                             ? '<button class="btn btn-xs btn-success data-quickview" data-id="' + data + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ' +
+                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ' +
+                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
@@ -333,4 +335,13 @@ $(function() {
 function truncateString(str, max, add){
     add = add || '...';
     return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
- }
+}
+
+import { createApp } from 'vue'
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
+const app = createApp({})
+
+app.component('transaction-show-modal', TransactionShowModal)
+
+app.mount('#app')

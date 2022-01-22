@@ -66,4 +66,10 @@
 
     @include('template.components.transaction-skip-form')
 
+    <div id="app">
+        <transaction-show-modal
+            element="#historyTable, #scheduleTable"
+            selector=".data-quickview"
+        ></transaction-show-modal>
+    </div>
 @stop
