@@ -27,6 +27,8 @@ Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 
 Route::get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChart');
 Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportController@scheduledTransactions');
+
 Route::get('/transactions', 'App\Http\Controllers\API\TransactionApiController@findTransactions');
+Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
