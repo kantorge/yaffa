@@ -301,6 +301,8 @@ class TransactionController extends Controller
     {
         $transaction->delete();
 
+        self::addMessage('Transaction #'.$transaction->id.' deleted', 'success', '', '', true);
+
         return redirect()->back();
     }
 
