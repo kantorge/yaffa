@@ -1,0 +1,20 @@
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic');
+
+// Datatables
+@import "~datatables.net-bs/css/dataTables.bootstrap.css";
+
+//Select2
+@import 'select2/dist/css/select2';
+
+// AdminLTE, including Bootstrap
+@import '../../vendor/almasaeed2010/adminlte/bower_components/bootstrap/dist/css/bootstrap.min.css';
+@import '../../vendor/almasaeed2010/adminlte/bower_components/font-awesome/css/font-awesome.min.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/AdminLTE.css';
+// TODO: make selection dynamic based on environment
+@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-blue.css';
+@import '../../vendor/almasaeed2010/adminlte/dist/css/skins/skin-red.css';
+
+// Date picker
+//@import '../../node_modules/vanillajs-datepicker/sass/datepicker';
+@import '../../node_modules/vanillajs-datepicker/dist/css/datepicker-bs4';
