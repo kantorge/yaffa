@@ -1,6 +1,8 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
+import * as dataTableHelpers from './../components/dataTableHelper'
+
 $(function() {
     // Table data transformation
     window.transactionData = window.transactionData.map(function(transaction) {
@@ -94,6 +96,7 @@ $(function() {
             $(td).prop('title', cellData);
         }
     };
+
     var dtColumnSettingTags = {
         data: "tags",
         title: "Tags",
@@ -185,14 +188,18 @@ $(function() {
                         return null;
                     }
 
-                    return  (row.transaction_type.type == 'Standard'
-                             ? '<button class="btn btn-xs btn-success data-quickview" data-id="' + data + '" type="button" title="Quick view"><i class="fa fa-fw fa-eye"></i></button> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'show'}) + '" class="btn btn-xs btn-success" title="View details"><i class="fa fa-fw fa-search"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i></a> '
-                             : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
-                               '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i></a> ' ) +
-                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="Delete"><i class="fa fa-fw fa-trash"></i></button>';
+                    if (row.transaction_type.type == 'Standard') {
+                        return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                                dataTableHelpers.dataTablesActionButton(data, 'delete');
+                    }
+
+                    // Investment
+                    return  '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
+                            '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i></a> ' +
+                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="Delete"><i class="fa fa-fw fa-trash"></i></button>';
                 },
                 orderable: false
             }
@@ -314,15 +321,7 @@ $(function() {
         form.submit();
     });
 
-    $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
+    dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
 
     $('input[name=reconciled]').on("change", function() {
         $('#historyTable').DataTable().column(1).search(this.value).draw();

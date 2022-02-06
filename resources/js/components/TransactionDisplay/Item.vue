@@ -16,17 +16,24 @@
             </div>
             <div class="col-xs-12 col-sm-3 transaction_detail_container d-xs-none">
                 <label>Tags</label>
-                <span
-                  class="label label-info"
-                  v-for="tag in tags"
-                  :key="tag.id"
-                >
-                    {{ tag.name }}
+                <div v-if="tags.length > 0">
+                    <span
+                        class="label label-info"
+                        v-for="tag in tags"
+                        :key="tag.id"
+                    >
+                        {{ tag.name }}
+                    </span>
+                </div>
+                <span v-else class="text-muted">
+                    Not set
                 </span>
             </div>
             <div class="col-xs-12 col-sm-2 transaction_detail_container d-xs-none">
                 <label>Comment</label>
-                {{ comment }}
+                <span :class="(comment ? '' : 'text-muted')">
+                    {{ comment || "Not set" }}
+                </span>
             </div>
             <div class="col-xs-12 col-sm-1">
                 <button

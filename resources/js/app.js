@@ -1,5 +1,51 @@
 require('./bootstrap');
 
+// Helper functions
+// TODO: find appropriate place for these
+Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
+    if (nonBreakingSpaces !== false) {
+        nonBreakingSpaces = true;
+    }
+
+    var result = this.toLocaleString(
+        'hu-HU',
+        {
+            style: 'currency',
+            currency: currency.iso_code,
+            currencyDisplay: 'narrowSymbol',
+            minimumFractionDigits: currency.num_digits,
+            maximumFractionDigits: currency.num_digits
+        }
+    );
+
+    if (nonBreakingSpaces) {
+        result = result.replace(/\s/g, '&nbsp;');
+    }
+
+    return result;
+};
+
+Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSpaces) {
+    if (nonBreakingSpaces !== false) {
+        nonBreakingSpaces = true;
+    }
+
+    maximumFractionDigits = maximumFractionDigits || 4;
+
+    var result = this.toLocaleString('hu-HU',
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maximumFractionDigits
+        }
+    );
+
+    if (nonBreakingSpaces) {
+        result = result.replace(/\s/g, '&nbsp;');
+    }
+
+    return result;
+};
+
 if (   window.location.pathname === '/account/summary'
     || window.location.pathname === '/account/summary/withClosed'
     || window.location.pathname === '/') {
@@ -64,6 +110,10 @@ if (   window.location.pathname === '/transactions/investment/create'
     require('./transactions/investment');
 }
 
+if (/^\/transactions\/standard\/\d+\/(show)/.test(window.location.pathname)) {
+    require('./transactions/show');
+}
+
 if (window.location.pathname === '/schedule') {
     require('./schedule/index');
 }
@@ -76,7 +126,11 @@ if (window.location.pathname === '/reports/budgetchart') {
     require('./reports/budgetchart');
 }
 
-$( function () {
+if (window.location.pathname === '/reports/transactions') {
+    require('./reports/transactions');
+}
+
+$(function() {
     // Generally available account selector
     $('#jump_to_account').on('change', function() {
         if (this.value == '') {
@@ -90,50 +144,3 @@ $( function () {
         return confirm('Are you sure to abandon this form?');
     });
 });
-
-
-// Helper functions
-// TODO: find appropriate place for these
-Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    var result = this.toLocaleString(
-        'hu-HU',
-        {
-            style: 'currency',
-            currency: currency.iso_code,
-            currencyDisplay: 'narrowSymbol',
-            minimumFractionDigits: currency.num_digits,
-            maximumFractionDigits: currency.num_digits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};
-
-Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    maximumFractionDigits = maximumFractionDigits || 4;
-
-    var result = this.toLocaleString('hu-HU',
-        {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: maximumFractionDigits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};

@@ -22,6 +22,7 @@
     @yield('adminlte_css_pre')
 
     <link rel="stylesheet" href="{{ mix(config('adminlte.laravel_mix_css_path', 'css/app.css')) }}">
+    <link rel="stylesheet" href="{{ mix(config('adminlte.laravel_mix_css_path', 'css/vendor.css')) }}">
 
     {{-- Custom Stylesheets (post AdminLTE) --}}
     @yield('adminlte_css')

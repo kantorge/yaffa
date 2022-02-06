@@ -73,16 +73,25 @@
                 icon.className = "fa fa-fw fa-spin fa-spinner";
 
                 fetch('/api/transaction/' + this.dataset.id)
-                    .then(response => response.json())
-                    .then(function(data) {
-                        console.log(data.transaction)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw Error(response.statusText);
+                    }
+                    return response;
+                }).then(response => response.json())
+                .then(function(data) {
+                    console.log(data.transaction)
 
-                        $vm.transaction = data.transaction;
+                    $vm.transaction = data.transaction;
 
-                        $('#modal-quickview').modal();
+                    $('#modal-quickview').modal();
 
-                        icon.className = originalIconClass;
-                    });
+                    icon.className = originalIconClass;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    icon.className = originalIconClass;
+                });
             })
 
         },
