@@ -20,8 +20,8 @@
 
                 <transaction-item
                     :id="item.id"
-                    :amount="item.amount"
-                    :category="item.category"
+                    :amount="Number(item.amount)"
+                    :category="item.category || {}"
                     :comment="item.comment"
                     :tags="item.tags || []"
                     :currency="currency"
@@ -52,7 +52,7 @@
         },
         props: {
             transactionItems: Array,
-            currency: String,
+            currency: Object,
         },
 
         mounted() {

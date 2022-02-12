@@ -3,15 +3,16 @@
         <div class="row">
             <div class="col-xs-12 col-sm-4">
                 <label>Category</label>
-                {{ category.full_name }}
+                <span :class="(category.full_name ? '' : 'text-muted')">
+                    {{ category.full_name || "Not set" }}
+                </span>
             </div>
             <div class="col-xs-12 col-sm-2">
                 <label>
                     Amount
-                    <span v-if="currency">({{currency}})</span>
                 </label>
                 <div class="input-group">
-                    {{ amount }}
+                    {{ amount.toLocalCurrency(currency, false) }}
                 </div>
             </div>
             <div class="col-xs-12 col-sm-3 transaction_detail_container d-xs-none">
@@ -53,18 +54,12 @@
 
         props: {
             id: Number,
-            amount: [Number, String],
+            amount: Number,
             category: Object,
-            currency: String,
+            currency: Object,
             comment: String,
             tags: Array,
         },
-
-        data() {
-            return {};
-        },
-
-        mounted() {},
 
         methods: {
             // Toggle the visibility of event details (comment / tags)

@@ -176,7 +176,7 @@ $(function() {
         table.ajax.reload(function() {
             document.getElementById('reload').removeAttribute('disabled');
 
-            // (Re-)Injitialize tooltips in table
+            // (Re-)Initialize tooltips in table
             $('[data-toggle="tooltip"]').tooltip()
         });
     });

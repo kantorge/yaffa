@@ -94,8 +94,7 @@
                                 {{ ammountFromFieldLabel }}
                             </dt>
                             <dd class="col-xs-8">
-                                {{ form.config.amount_from }}
-                                <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
+                                {{ transaction.config.amount_from.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
 
                             <dt class="col-xs-4" v-show="exchangeRatePresent">
@@ -109,22 +108,21 @@
                                 Amount to
                             </dt>
                             <dd class="col-xs-8" v-show="exchangeRatePresent">
-                                {{ form.config.amount_to }}
-                                <span v-if="to.account_currency">({{to.account_currency}})</span>
-                            </dd>
-
-                            <dt class="col-xs-4">Total allocated:</dt>
-                            <dd class="col-xs-8">
-                                {{ allocatedAmount }}
-                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                {{ transaction.config.amount_to.toLocalCurrency(transaction.config.account_to.config.currency, false) }}
                             </dd>
 
                             <dt class="col-xs-4">
-                                Not allocated:
+                                Total allocated
                             </dt>
                             <dd class="col-xs-8">
-                                {{ remainingAmountNotAllocated }}
-                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                {{ allocatedAmount.toLocalCurrency(ammountFromCurrency, false) }}
+                            </dd>
+
+                            <dt class="col-xs-4">
+                                Not allocated
+                            </dt>
+                            <dd class="col-xs-8">
+                                {{ remainingAmountNotAllocated.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
                         </dl>
                     </div>
@@ -145,7 +143,7 @@
             <div class="col-md-7">
                 <transaction-item-container
                     :transactionItems="transaction.transaction_items"
-                    :currency="from.account_currency"
+                    :currency="ammountFromCurrency"
                 ></transaction-item-container>
             </div>
             <!--/.col (right) -->
@@ -172,44 +170,9 @@
             }
         },
 
-        data() {
-            let data = {};
-
-            // Storing all data and references about source account or payee
-            // Set as withdrawal by default
-            data.from = {
-                type: 'account',
-                account_currency : null,
-            };
-
-            // Storing all data and references about target account or payee
-            // Set as withdrawal by default
-            data.to = {
-                type: 'payee',
-                account_currency : null,
-            };
-
-            // Main form data
-            data.form = {
-                transaction_type: 'withdrawal',
-                config_type: 'transaction_detail_standard',
-                date: '',
-                comment: null,
-                schedule: false,
-                budget: false,
-                reconciled: false,
-                config: {},
-                items: [],
-                remaining_payee_default_amount: 0,
-                remaining_payee_default_category_id: null,
-            };
-
-            return data;
-        },
-
         computed: {
             formattedDate() {
-                if (typeof this.transaction.id === 'undefined') {
+                if (typeof this.transaction.date === 'undefined') {
                     return;
                 }
 
@@ -232,17 +195,13 @@
                 return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
             },
 
-            // Amound from currency is dependent on many other data
-            ammountFromCurrencyLabel() {
+            // Amound from currency is dependent on transaction type
+            ammountFromCurrency() {
                 if (this.transaction.transaction_type.name === 'withdrawal' || this.transaction.transaction_type.name === 'transfer') {
-                    return this.from.account_currency;
+                    return this.transaction.config.account_from.config.currency;
                 }
 
-                if (this.transaction.transaction_type.name === 'deposit') {
-                    return this.to.account_currency;
-                }
-
-                return '';
+                return this.transaction.config.account_to.config.currency;
             },
 
             // Calculate the summary of all existing items and their values
@@ -253,26 +212,17 @@
             },
 
             remainingAmountNotAllocated() {
-                return this.form.config.amount_from - this.allocatedAmount;
-            },
-
-            // Return ID of account, if present any of fields (using account from in transfer)
-            accountId() {
-                if (this.form.transaction_type === 'deposit') {
-                    return this.form.config.account_to_id;
-                }
-
-                return this.form.config.account_from_id;
+                return this.transaction.config.amount_from - this.allocatedAmount;
             },
 
             // Indicates if transaction type is transfer, and currencies of accounts are different
             exchangeRatePresent() {
-                return this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency;
+                return this.transaction.config.account_from.config.currency && this.transaction.config.account_to.config.currency && this.transaction.config.account_from.config.currency.id != this.transaction.config.account_to.config.currency.id;
             },
 
             exchangeRate() {
-                const from = this.form.config.amount_from;
-                const to = this.form.config.amount_to;
+                const from = this.transaction.config.amount_from;
+                const to = this.transaction.config.amount_to;
 
                 if (from && to) {
                     return (Number(to) / Number(from)).toFixed(4);
@@ -281,24 +231,6 @@
                 return 0;
             },
         },
-
-        created() {},
-
-        mounted() {},
-
-        methods: {},
-
-        watch: {
-            // Update TO amount with FROM value, if needed
-            "form.config.amount_from": {
-                immediate: true,
-                handler(value) {
-                    if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
-                        this.form.config.amount_to = value;
-                    }
-                },
-            },
-        }
     }
 </script>
 
