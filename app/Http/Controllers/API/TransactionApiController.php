@@ -39,41 +39,7 @@ class TransactionApiController extends Controller
 
     public function getItem(Transaction $transaction)
     {
-        $transaction->load([
-            'config',
-            'config.accountFrom',
-            'config.accountTo',
-            'transactionSchedule',
-            'transactionType',
-            'transactionItems',
-            'transactionItems.tags',
-            'transactionItems.category',
-        ]);
-
-        if ($transaction->transactionType->name === 'withdrawal') {
-            $transaction->load([
-                'config.accountFrom.config',
-                'config.accountFrom.config.currency',
-                'config.accountTo.config',
-            ]);
-        }
-
-        if ($transaction->transactionType->name === 'deposit') {
-            $transaction->load([
-                'config.accountTo.config',
-                'config.accountTo.config.currency',
-                'config.accountFrom.config',
-            ]);
-        }
-
-        if ($transaction->transactionType->name === 'transfer') {
-            $transaction->load([
-                'config.accountFrom.config',
-                'config.accountFrom.config.currency',
-                'config.accountTo.config',
-                'config.accountTo.config.currency',
-            ]);
-        }
+        $transaction->loadStandardDetails();
 
         return response()->json(
             [
@@ -131,16 +97,18 @@ class TransactionApiController extends Controller
 
     private function getCurrency(Transaction $transaction)
     {
+        $currency = null;
+
         if ($transaction->transactionType->type === 'Standard') {
             if ($transaction->transactionType->name === 'withdrawal') {
                 $currency = $this->allAccountCurrencies[$transaction->config->account_from_id];
             } elseif ($transaction->transactionType->name === 'deposit') {
                 $currency = $this->allAccountCurrencies[$transaction->config->account_to_id];
-            } elseif ($transaction->transactionType->name === 'transaction') {
+            } elseif ($transaction->transactionType->name === 'transfer') {
                 $currency = $this->allAccountCurrencies[$transaction->config->account_from_id];
             }
         } elseif ($transaction->transactionType->type === 'Investment') {
-            $currency = null;
+            $currency = $this->allAccountCurrencies[$transaction->config->account_id];
         }
 
         return [

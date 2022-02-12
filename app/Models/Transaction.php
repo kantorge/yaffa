@@ -164,6 +164,47 @@ class Transaction extends Model
         return 0;
     }
 
+    public function loadStandardDetails()
+    {
+        $this->load([
+            'config',
+            'config.accountFrom',
+            'config.accountTo',
+            'transactionSchedule',
+            'transactionType',
+            'transactionItems',
+            'transactionItems.tags',
+            'transactionItems.category',
+        ]);
+
+        // TODO: this is not needed for all use cases
+
+        if ($this->transactionType->name === 'withdrawal') {
+            $this->load([
+                'config.accountFrom.config',
+                'config.accountFrom.config.currency',
+                'config.accountTo.config',
+            ]);
+        }
+
+        if ($this->transactionType->name === 'deposit') {
+            $this->load([
+                'config.accountTo.config',
+                'config.accountTo.config.currency',
+                'config.accountFrom.config',
+            ]);
+        }
+
+        if ($this->transactionType->name === 'transfer') {
+            $this->load([
+                'config.accountFrom.config',
+                'config.accountFrom.config.currency',
+                'config.accountTo.config',
+                'config.accountTo.config.currency',
+            ]);
+        }
+    }
+
     public function transactionCurrency()
     {
         if ($this->config_type === 'transaction_detail_standard') {

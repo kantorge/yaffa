@@ -17,17 +17,6 @@ class TransactionController extends Controller
     private const STANDARD_VIEW = 'transactions.form_standard';
     private const INVESTMENT_VIEW = 'transactions.form_investment';
 
-    private const STANDARD_RELATIONS = [
-        'config',
-        'config.accountFrom',
-        'config.accountTo',
-        'transactionSchedule',
-        'transactionType',
-        'transactionItems',
-        'transactionItems.tags',
-        'transactionItems.category',
-    ];
-
     private const INVESTMENT_RELATIONS = [
         'config',
         'config.account',
@@ -179,9 +168,9 @@ class TransactionController extends Controller
     public function openStandard(Transaction $transaction, string $action)
     {
         // Load all relevant relations
-        $transaction->load(self::STANDARD_RELATIONS);
+        $transaction->loadStandardDetails();
 
-        // Show is routed to special view
+        // Show is routed to special view, and also further data is needed
         if ($action === 'show') {
             return view('transactions.show_standard', [
                 'transaction' => $transaction,
