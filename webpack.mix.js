@@ -15,6 +15,7 @@ mix.js([
         'select2'
     ], 'public/js/vendor.js')
     .sass('resources/sass/app.scss', 'public/css')
+    .sass('resources/sass/vendor.scss', 'public/css')
     .webpackConfig({
         externals: function (context, request, callback) {
             if (/xlsx|canvg|pdfmake/.test(request)) {

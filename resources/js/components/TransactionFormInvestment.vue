@@ -187,50 +187,23 @@
         <footer class="main-footer navbar-fixed-bottom hidden">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-sm-2">
-                        <label class="control-label">After saving</label>
-                    </div>
-                    <div class="col-sm-8">
+                    <div class="hidden-xs col-sm-8">
+                        <label class="control-label block-label">After saving</label>
                         <div class="btn-group">
                             <button
+                                v-for="item in activeCallbackOptions"
+                                :key="item.id"
                                 class="btn btn-default"
-                                :class="callback == 'new' ? 'active' : ''"
+                                :class="callback == item.value ? 'active' : ''"
                                 type="button"
-                                value="new"
+                                :value="item.value"
                                 @click="callback = $event.currentTarget.getAttribute('value')"
                             >
-                                Add an other transaction
-                            </button>
-                            <button
-                                class="btn btn-default"
-                                :class="callback == 'clone' ? 'active' : ''"
-                                type="button"
-                                value="clone"
-                                @click="callback = $event.currentTarget.getAttribute('value')"
-                            >
-                                Clone this transaction
-                            </button>
-                            <button
-                                class="btn btn-default"
-                                :class="callback == 'returnToAccount' ? 'active' : ''"
-                                type="button"
-                                value="returnToAccount"
-                                @click="callback = $event.currentTarget.getAttribute('value')"
-                            >
-                                Return to selected account
-                            </button>
-                            <button
-                                class="btn btn-default"
-                                :class="callback == 'returnToDashboard' ? 'active' : ''"
-                                type="button"
-                                value="returnToDashboard"
-                                @click="callback = $event.currentTarget.getAttribute('value')"
-                            >
-                                Return to dashboard
+                                {{ item.label }}
                             </button>
                         </div>
                     </div>
-                    <div class="box-tools col-sm-2">
+                    <div class="col-xs-12 col-sm-4">
                         <div class="pull-right">
                             <button
                                 class="btn btn-sm btn-default"
@@ -242,6 +215,21 @@
                             </button>
                             <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
                         </div>
+                    </div>
+                    <div class="col-xs-12 d-sm-none">
+                        <label class="control-label block-label">After saving</label>
+                        <select
+                            class="form-control"
+                            v-model="callback"
+                        >
+                            <option
+                                v-for="item in activeCallbackOptions"
+                                :key="item.id"
+                                :value="item.value"
+                            >
+                                {{ item.label }}
+                            </option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -307,6 +295,30 @@
             // TODO: adjust initial callback based on action
             data.callback = 'new';
 
+            // Possible callback options
+            data.callbackOptions = [
+                {
+                    value: 'new',
+                    label: 'Add an other transaction',
+                    enabled: true,
+                },
+                {
+                    value: 'clone',
+                    label: 'Clone this transaction',
+                    enabled: true,
+                },
+                {
+                    value: 'returnToPrimaryAccount',
+                    label: 'Return to selected account',
+                    enabled: true,
+                },
+                {
+                    value: 'returnToDashboard',
+                    label: 'Return to dashboard',
+                    enabled: true,
+                },
+            ]
+
             // Date picker settings
             data.dataPickerLanguage = {
                 formatLocale: {
@@ -340,7 +352,11 @@
 
             currency() {
                 return this.account_currency || this.investment_currency;
-            }
+            },
+
+            activeCallbackOptions() {
+                return this.callbackOptions.filter(option => option.enabled);
+            },
         },
 
         created() {
@@ -633,3 +649,20 @@
         }
     }
 </script>
+
+<style scoped>
+    @media (min-width: 576px) {
+        .block-label {
+            display: block;
+        }
+
+        .d-sm-none {
+            display: none;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .block-label {
+            margin-right: 10px;
+        }
+    }
+</style>

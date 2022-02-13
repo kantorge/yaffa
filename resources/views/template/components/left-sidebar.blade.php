@@ -76,6 +76,7 @@
                 </span>
             </a>
             <ul class="treeview-menu">
+                <li><a href="{{ route('reports.transactions') }}"><i class="fa fa-search"></i> <span>Find transactions</span></a></li>
                 <li><a href="{{ route('reports.cashflow') }}"><i class="fa fa-line-chart"></i> <span>Cash flow</span></a></li>
                 <li><a href="{{ route('reports.budgetchart') }}"><i class="fa fa-line-chart"></i> <span>Budget chart</span></a></li>
             </ul>

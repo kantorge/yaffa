@@ -22,7 +22,9 @@ class CategoryApiController extends Controller
         if ($query) {
             $categories = Auth::user()
                 ->categories()
-                ->active()
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->active();
+                })
                 ->get()
                 ->filter(function ($category) use ($query) {
                     return stripos($category->full_name, $query) !== false;
@@ -58,7 +60,9 @@ class CategoryApiController extends Controller
                 ->select(
                     'categories.id',
                 )
-                ->where('categories.active', true)
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->where('categories.active', true);
+                })
                 ->where('categories.user_id', Auth::user()->id)
                 ->when($request->has('payee'), function ($query) use ($request) {
                     $query->whereRaw(

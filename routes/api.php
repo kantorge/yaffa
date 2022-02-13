@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
 Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiController@getStandardList');
 Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiController@getInvestmentList');
 Route::get('/assets/account/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getItem');
@@ -24,7 +25,10 @@ Route::get('/assets/accept_default_category_suggestion/{accountEntity}/{category
 
 Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 
-Route::Get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChart');
-Route::Get('/scheduled_transactions', 'App\Http\Controllers\API\ReportController@scheduledTransactions');
+Route::get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChart');
+Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportController@scheduledTransactions');
+
+Route::get('/transactions', 'App\Http\Controllers\API\TransactionApiController@findTransactions');
+Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');

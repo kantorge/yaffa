@@ -1,6 +1,7 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import { RRule } from 'rrule';
+import * as dataTableHelpers from './../components/dataTableHelper';
 
 $(function() {
     var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
@@ -63,7 +64,7 @@ $(function() {
                 data: "schedule",
                 title: "Schedule",
                 render: function (data, type) {
-                    return booleanToTableIcon(data, type);
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -71,7 +72,7 @@ $(function() {
                 data: "budget",
                 title: "Budget",
                 render: function (data, type) {
-                    return booleanToTableIcon(data, type);
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -79,7 +80,7 @@ $(function() {
                 data: "schedule_config.active",
                 title: "Active",
                 render: function (data, type) {
-                    return booleanToTableIcon(data, type);
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -167,34 +168,15 @@ $(function() {
             },
             {
                 title: "Comment",
-                render: function (data, type, row) {
-                    if (!row.comment) {
-                        return null;
-                    }
-
-                    if (type === 'filter') {
-                        return row.comment;
-                    }
-
-                    return '<i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + row.comment + '"></i>';
-                },
+                render: function (data, type) {
+                    return commentIcon(data, type);                },
                 className: "text-center",
             },
             {
                 data: "tags",
                 title: "Tags",
                 render: function (data, type) {
-                    if (data.length === 0) {
-                        return '';
-                    }
-
-                    if (type === 'filter') {
-                        return data.join(', ');
-                    }
-
-                    if (data) {
-                        return '<i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + data.join(', ') + '"></i>';
-                    }
+                    return tagIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -204,11 +186,11 @@ $(function() {
                 render: function (data, type, row) {
                     return  '' +
                             (row.transaction_type == 'Standard'
-                             ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
+                             ? dataTablesActionButton(data, 'standardEdit') +
+                               dataTablesActionButton(data, 'standardClone')
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
+                               dataTablesActionButton(data, 'delete') +
                             '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ';
                 },
@@ -244,15 +226,8 @@ $(function() {
         form.submit();
     });
 
-    $("#table").on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
+    // Delete functionality
+    initializeDeleteButton('#table');
 
     $('input[name=schedule]').on("change", function() {
         table.column(3).search(this.value).draw();
@@ -271,12 +246,3 @@ $(function() {
         $('[data-toggle="tooltip"]').tooltip()
     });
 });
-
-function booleanToTableIcon (data, type) {
-    if (type == 'filter') {
-        return  (data ? 'Yes' : 'No');
-    }
-    return (  data
-            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-            : '<i class="fa fa-square text-danger" title="No"></i>');
-}
