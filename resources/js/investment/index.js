@@ -31,6 +31,10 @@ $(function() {
             title: "Symbol"
         },
         {
+            data: "isin",
+            title: "ISIN number"
+        },
+        {
             data: "investment_group.name",
             title: "Investment group"
         },

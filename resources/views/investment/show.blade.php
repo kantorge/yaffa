@@ -22,6 +22,8 @@
                                 <dd>{{ $investment->name }}</dd>
                                 <dt>Symbol</dt>
                                 <dd>{{ $investment->symbol }}</dd>
+                                <dt>ISIN number</dt>
+                                <dd>{{ $investment->isin }}</dd>
                                 <dt>Active</dt>
                                 <dd>
                                     @if($investment->active)

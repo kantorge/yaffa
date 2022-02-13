@@ -94,6 +94,21 @@
             </div>
 
             <div class="form-group">
+                <label for="isin" class="control-label col-sm-3">
+                    ISIN number
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="isin"
+                        name="isin"
+                        type="text"
+                        value="{{old('isin', $investment->isin ?? '' )}}"
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="comment" class="control-label col-sm-3">
                     Comment
                 </label>
