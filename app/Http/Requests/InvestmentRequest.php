@@ -35,6 +35,18 @@ class InvestmentRequest extends FormRequest
                         });
                 }),
             ],
+            'isin' => [
+                'nullable',
+                'min:12',
+                'max:12',
+                Rule::unique('investments')->where(function ($query) {
+                    return $query
+                        ->where('user_id', $this->user()->id)
+                        ->when($this->investment, function ($query) {
+                            return $query->where('id', '!=', $this->investment->id);
+                        });
+                }),
+            ],
             'comment' => [
                 'nullable',
                 'max:191',

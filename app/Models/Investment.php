@@ -42,6 +42,7 @@ class Investment extends Model
     protected $fillable = [
         'name',
         'symbol',
+        'isin',
         'comment',
         'active',
         'auto_update',
