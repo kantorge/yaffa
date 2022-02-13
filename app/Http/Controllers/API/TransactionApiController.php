@@ -105,14 +105,14 @@ class TransactionApiController extends Controller
             } elseif ($transaction->transactionType->name === 'deposit') {
                 $currency = $this->allAccountCurrencies[$transaction->config->account_to_id];
             } elseif ($transaction->transactionType->name === 'transfer') {
-                $currency = $this->allAccountCurrencies[$transaction->config->account_from_id];
+                $currency = $this->allAccountCurrencies[$transaction->config->account_to_id];
             }
         } elseif ($transaction->transactionType->type === 'Investment') {
             $currency = $this->allAccountCurrencies[$transaction->config->account_id];
         }
 
         return [
-            'currency' => $currency,
+            'currency' => $currency->config->currency,
         ];
     }
 

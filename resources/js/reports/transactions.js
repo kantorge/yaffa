@@ -76,11 +76,11 @@ $(function() {
             {
                 title: "Category",
                 render: function (data, type, row) {
-                    //standard transaction
+                    // Standard transaction
                     if (row.transaction_type === 'Standard') {
-                        //empty
+                        // Empty
                         if (row.categories.length === 0) {
-                            return '';
+                            return 'Not set';
                         }
 
                         if (row.categories.length > 1) {
@@ -101,14 +101,14 @@ $(function() {
                         return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
                     }
 
-                    return '';
+                    return 'Not set';
                 },
                 orderable: false
             },
             {
                 title: 'Amount',
                 render: function (data, type, row) {
-                    //standard transaction
+                    // Standard transaction
                     if (row.transaction_type === 'Standard') {
                         let prefix = '';
                         if (row.transaction_operator == 'minus') {
@@ -117,7 +117,7 @@ $(function() {
                         if (row.transaction_operator == 'plus') {
                             prefix = '+ ';
                         }
-                        return prefix + row.amount;//.toLocalCurrency(row.currency);
+                        return prefix + row.amount.toLocalCurrency(row.currency);
                     }
                     // Investment transaction
                     /* not implemented yet

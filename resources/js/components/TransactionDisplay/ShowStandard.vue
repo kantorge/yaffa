@@ -97,17 +97,17 @@
                                 {{ transaction.config.amount_from.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
 
-                            <dt class="col-xs-4" v-show="exchangeRatePresent">
+                            <dt class="col-xs-4" v-if="exchangeRatePresent">
                                 Exchange rate
                             </dt>
-                            <dd class="col-xs-8" v-show="exchangeRatePresent">
+                            <dd class="col-xs-8" v-if="exchangeRatePresent">
                                 {{ exchangeRate }}
                             </dd>
 
-                            <dt class="col-xs-4" v-show="exchangeRatePresent">
+                            <dt class="col-xs-4" v-if="exchangeRatePresent">
                                 Amount to
                             </dt>
-                            <dd class="col-xs-8" v-show="exchangeRatePresent">
+                            <dd class="col-xs-8" v-if="exchangeRatePresent">
                                 {{ transaction.config.amount_to.toLocalCurrency(transaction.config.account_to.config.currency, false) }}
                             </dd>
 

@@ -30,7 +30,7 @@ export function tagIcon(tags, type) {
     }
 
     if (tags) {
-        return '<i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
+        return ' <i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
     }
 }
 
@@ -43,7 +43,7 @@ export function commentIcon(comment, type) {
         return comment;
     }
 
-    return '<i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
+    return ' <i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
 }
 
 export function initializeDeleteButton(selector) {
