@@ -169,14 +169,14 @@ $(function() {
             {
                 title: "Comment",
                 render: function (data, type) {
-                    return commentIcon(data, type);                },
+                    return dataTableHelpers.commentIcon(data, type);                },
                 className: "text-center",
             },
             {
                 data: "tags",
                 title: "Tags",
                 render: function (data, type) {
-                    return tagIcon(data, type);
+                    return dataTableHelpers.tagIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -186,11 +186,11 @@ $(function() {
                 render: function (data, type, row) {
                     return  '' +
                             (row.transaction_type == 'Standard'
-                             ? dataTablesActionButton(data, 'standardEdit') +
-                               dataTablesActionButton(data, 'standardClone')
+                             ? dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
+                             dataTableHelpers.dataTablesActionButton(data, 'standardClone')
                              : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
                                '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                               dataTablesActionButton(data, 'delete') +
+                               dataTableHelpers.dataTablesActionButton(data, 'delete') +
                             '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ';
                 },
@@ -227,7 +227,7 @@ $(function() {
     });
 
     // Delete functionality
-    initializeDeleteButton('#table');
+    dataTableHelpers.initializeDeleteButton('#table');
 
     $('input[name=schedule]').on("change", function() {
         table.column(3).search(this.value).draw();

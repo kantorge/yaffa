@@ -49,6 +49,90 @@ class TransactionApiController extends Controller
         );
     }
 
+    public function getScheduledItems()
+    {
+        // Get all accounts and payees so their name can be reused
+        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
+            ->pluck('name', 'id')
+            ->all();
+
+        // Get all tags
+        $this->allTags = Auth::user()->tags->pluck('name', 'id')->all();
+
+        // Get all categories
+        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
+
+        // Get all currencies
+        $this->allAccountCurrencies = Auth::user()->accounts()
+            ->with([
+                'config',
+                'config.currency',
+            ])
+            ->get();
+
+        // Get all standard transactions
+        $standardTransactions = Transaction::with(
+            [
+                'config',
+                'transactionType',
+                'transactionSchedule',
+                'transactionItems',
+                'transactionItems.tags',
+            ]
+        )
+        ->where('user_id', Auth::user()->id)
+        ->where('schedule', 1)
+        ->where(
+            'config_type',
+            '=',
+            'transaction_detail_standard'
+        )
+        ->get();
+
+        // Get all investment transactions
+        $investmentTransactions = Transaction::with(
+            [
+                'config',
+                'config.investment',
+                'transactionType',
+                'transactionSchedule',
+            ]
+        )
+        ->where('user_id', Auth::user()->id)
+        ->where('schedule', 1)
+        ->where(
+            'config_type',
+            '=',
+            'transaction_detail_investment'
+        )
+        ->get();
+
+        // Unify and merge two transaction types
+        $transactions = $standardTransactions
+            ->map(function ($transaction) {
+                $commonData = $this->transformDataCommon($transaction);
+                $baseData = $this->transformDataStandard($transaction);
+                $currency = $this->getCurrency($transaction);
+
+                return array_merge($commonData, $baseData, $currency);
+            })
+            ->merge($investmentTransactions
+                ->map(function ($transaction) {
+                    $commonData = $this->transformDataCommon($transaction);
+                    $baseData = $this->transformDataInvestment($transaction);
+                    $currency = $this->getCurrency($transaction);
+
+                    return array_merge($commonData, $baseData, $currency);
+                }));
+
+        return response()->json(
+            [
+                'transactions' => $transactions->values(),
+            ],
+            Response::HTTP_OK
+        );
+    }
+
     // TODO: unify with schedule controller
     private function transformDataStandard(Transaction $transaction)
     {
@@ -80,6 +164,29 @@ class TransactionApiController extends Controller
     }
 
     // TODO: unify with schedule controller
+    private function transformDataInvestment(Transaction $transaction)
+    {
+        $amount = $transaction->cashflowValue(null);
+
+        return [
+            'transaction_operator' => $transaction->transactionType->amount_operator,
+            'quantity_operator' => $transaction->transactionType->quantity_operator,
+
+            'account_from_id' => $transaction->config->account_id,
+            'account_from_name' => $this->allAccounts[$transaction->config->account_id],
+            'account_to_id' => $transaction->config->investment_id,
+            'account_to_name' => $transaction->config->investment->name,
+            'amount' => ($amount > 0 ? $amount : 0),
+
+            'tags' => [],
+
+            'investment_name' => $transaction->config->investment->name,
+            'quantity' => $transaction->config->quantity,
+            'price' => $transaction->config->price,
+        ];
+    }
+
+    // TODO: unify with schedule controller
     private function transformDataCommon(Transaction $transaction)
     {
         return [
@@ -89,6 +196,14 @@ class TransactionApiController extends Controller
             'transaction_type' => $transaction->transactionType->type,
             'config_type' => $transaction->config_type,
             'schedule' => $transaction->schedule,
+            'schedule_config' => [
+                'start_date' => $transaction->transactionSchedule->start_date->toW3cString(),
+                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
+                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->format('Y-m-d') : null),
+                'frequency' => $transaction->transactionSchedule->frequency,
+                'count' => $transaction->transactionSchedule->count,
+                'interval' => $transaction->transactionSchedule->interval,
+            ],
             'budget' => $transaction->budget,
             'comment' => $transaction->comment,
             'reconciled' => $transaction->reconciled,
@@ -101,14 +216,14 @@ class TransactionApiController extends Controller
 
         if ($transaction->transactionType->type === 'Standard') {
             if ($transaction->transactionType->name === 'withdrawal') {
-                $currency = $this->allAccountCurrencies[$transaction->config->account_from_id];
+                $currency = $this->allAccountCurrencies->find($transaction->config->account_from_id);
             } elseif ($transaction->transactionType->name === 'deposit') {
-                $currency = $this->allAccountCurrencies[$transaction->config->account_to_id];
+                $currency = $this->allAccountCurrencies->find($transaction->config->account_to_id);
             } elseif ($transaction->transactionType->name === 'transfer') {
-                $currency = $this->allAccountCurrencies[$transaction->config->account_to_id];
+                $currency = $this->allAccountCurrencies->find($transaction->config->account_to_id);
             }
         } elseif ($transaction->transactionType->type === 'Investment') {
-            $currency = $this->allAccountCurrencies[$transaction->config->account_id];
+            $currency = $this->allAccountCurrencies->find($transaction->config->account_id);
         }
 
         return [
