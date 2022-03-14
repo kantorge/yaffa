@@ -67,19 +67,23 @@ export function booleanToTableIcon (data, type) {
             : '<i class="fa fa-square text-danger" title="No"></i>');
 }
 
-export function transactionTypeIcon(type, name) {
+export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'Standard') {
         if (name === 'withdrawal') {
-            return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="Withdrawal"></i>';
+            customTitle = customTitle || "Withdrawal";
+            return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
-            return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="Deposit"></i>';
+            customTitle = customTitle || "Deposit";
+            return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
-            return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="Transfer"></i>';
+            customTitle = customTitle || "Transfer";
+            return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'Investment') {
-        return '<i class="fa fa-line-chart text-primary" data-toggle="tooltip" title="' + name + '"></i>';
+        customTitle = customTitle || name;
+        return '<i class="fa fa-line-chart text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
     }
 
     return null;

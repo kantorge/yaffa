@@ -15,8 +15,6 @@
                     Your payee <strong><a :href="editlink">{{ payeeSuggestion.payee }}</a></strong>
                     used category <strong>{{ payeeSuggestion.category }}</strong>
                     {{ payeeSuggestion.max }} times out of {{ payeeSuggestion.sum }} transactions.
-                </p>
-                <p>
                     It might be a good idea to set it as default category.
                 </p>
                 <div class="btn-toolbar" v-if="!success">
