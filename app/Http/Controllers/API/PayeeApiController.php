@@ -26,7 +26,9 @@ class PayeeApiController extends Controller
         if ($request->get('q')) {
             $payees = Auth::user()
                 ->payees()
-                ->active()
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->active();
+                })
                 ->select(['id', 'name AS text'])
                 ->when($request->get('q'), function ($query) use ($request) {
                     $query->where('name', 'LIKE', '%'.$request->get('q').'%');
@@ -55,7 +57,9 @@ class PayeeApiController extends Controller
                     "transaction_details_standard.account_{$payeeDirection}_id"
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
-                ->where('account_entities.active', true)
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->where('account_entities.active', true);
+                })
                 ->where('transactions.user_id', Auth::user()->id)
                 ->where('account_entities.user_id', Auth::user()->id)
                 ->where(

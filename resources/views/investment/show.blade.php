@@ -22,6 +22,8 @@
                                 <dd>{{ $investment->name }}</dd>
                                 <dt>Symbol</dt>
                                 <dd>{{ $investment->symbol }}</dd>
+                                <dt>ISIN number</dt>
+                                <dd>{{ $investment->isin }}</dd>
                                 <dt>Active</dt>
                                 <dd>
                                     @if($investment->active)
@@ -88,11 +90,11 @@
                             <div class="form-group">
                                 <label for="date_from" class="col-sm-2 control-label">Date from</label>
                                 <div class="col-sm-4">
-                                    <input type="text" class="form-control hasDatepicker" id="date_from">
+                                    <input type="text" class="form-control" id="date_from">
                                 </div>
                                 <label for="date_to" class="col-sm-2 control-label">Date to</label>
                                 <div class="col-sm-4">
-                                    <input type="text" class="form-control hasDatepicker" id="date_to">
+                                    <input type="text" class="form-control" id="date_to">
                                 </div>
                             </div>
                             <div class="row">

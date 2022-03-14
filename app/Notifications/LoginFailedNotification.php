@@ -38,8 +38,8 @@ class LoginFailedNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        return (new MailMessage)
-                    ->subject('YAFFA alert - failed login notification')
-                    ->line('Failed login attempt at '. config('app.url'));
+        return (new MailMessage())
+            ->subject('YAFFA alert - failed login notification')
+            ->line('Failed login attempt at '. config('app.url'));
     }
 }

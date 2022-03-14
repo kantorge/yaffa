@@ -71,7 +71,7 @@ class MainController extends Controller
             ->when(! $withClosed, function ($query) {
                 return $query->active();
             })
-            ->with(['config', 'config.account_group', 'config.currency'])
+            ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get();
 
         $transactionTypeTransfer = TransactionType::where('name', 'transfer')->first();
@@ -79,7 +79,7 @@ class MainController extends Controller
         $accounts
             ->map(function ($account) use ($currencies, $baseCurrency, $transactionTypeTransfer) {
                 // Get account group name for later grouping
-                $account['account_group'] = $account->config->account_group->name;
+                $account['account_group'] = $account->config->accountGroup->name;
 
                 // Get all standard transfer transactions
                 $standardTransactions = Transaction::with(
@@ -326,7 +326,7 @@ class MainController extends Controller
                     }
                 }
 
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
+                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
                 $transaction->amount_from = $transaction->config->amount_from;

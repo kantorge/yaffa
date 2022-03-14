@@ -44,7 +44,7 @@ class AccountEntityController extends Controller
         // Show all accounts of user from the database and return to view
         $accounts = Auth::user()
             ->accounts()
-            ->with(['config', 'config.account_group', 'config.currency'])
+            ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get();
 
         // Pass data for DataTables
@@ -192,7 +192,7 @@ class AccountEntityController extends Controller
 
     public function editAccount(AccountEntity $accountEntity)
     {
-        $accountEntity->load(['config', 'config.account_group', 'config.currency']);
+        $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
         // Get all account groups
         $allAccountGroups = Auth::user()->accountGroups()->pluck('name', 'id')->all();

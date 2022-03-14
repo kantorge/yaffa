@@ -34,7 +34,7 @@ class RegisterController extends Controller
     {
         if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
             self::addMessage(
-                "You cannot register new users.",
+                'You cannot register new users.',
                 'danger',
                 'User limit reached',
                 'exclamation-triangle'

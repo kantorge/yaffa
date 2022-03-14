@@ -18,6 +18,11 @@ class ReportController extends Controller
     use CurrencyTrait;
     use ScheduleTrait;
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function cashFlow(Request $request)
     {
         // Check if forecast is required
@@ -48,7 +53,7 @@ class ReportController extends Controller
             $account['sum'] += $account->config->opening_balance;
 
             // Apply currency exchange, if necesary
-            if ($account->config->currency_id != $baseCurrency->id) {
+            if ($account->config->currency_id !== $baseCurrency->id) {
                 // Get first exchange rate for given currency
                 $rate = $firstRates
                     ->where('from_id', $account->config->currency_id)
@@ -145,7 +150,7 @@ class ReportController extends Controller
                         'frequency' => $transaction->frequency,
                         'interval' => $transaction->interval,
                         'count' => $transaction->count,
-                    ]
+                    ],
                 ];
 
                 return Transaction::hydrate([$item])[0];
@@ -178,7 +183,7 @@ class ReportController extends Controller
                     $monthlyData[$month] = 0;
                 }
 
-                if ($baseCurrency->id != $currency) {
+                if ($baseCurrency->id !== $currency) {
                     $rate = $allRates
                         ->where('from_id', $currency)
                         ->where('date_from', '<', new Carbon($month))
@@ -245,6 +250,13 @@ class ReportController extends Controller
                 'categories' => $categories->pluck('full_name', 'id'),
                 'byYears' => $byYears,
             ]
+        );
+    }
+
+    public function transactionsByCriteria()
+    {
+        return view(
+            'reports.transactions'
         );
     }
 }

@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use App\Providers\Faker\FakeCurrency;
-use Faker\{Factory, Generator};
+use Faker\Factory;
+use Faker\Generator;
 use Illuminate\Support\ServiceProvider;
 
 class FakerServiceProvider extends ServiceProvider

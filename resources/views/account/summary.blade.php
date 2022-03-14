@@ -17,7 +17,7 @@
 @section('content')
 
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-5">
             <div class="box">
                 <div class="box-header">
                     <h3 class="box-title">Total value</h3>
@@ -79,9 +79,12 @@
         </div>
         <!-- /.col -->
 
-		<div class="col-md-4">
+		<div class="col-md-7">
             <div id="PayeeCategoryRecommendationContainer">
                 <payee-category-recommendation-box></payee-category-recommendation-box>
+            </div>
+            <div id="ScheduleCalendar">
+                <schedule-calendar></schedule-calendar>
             </div>
 		</div>
 		<!-- /.col -->

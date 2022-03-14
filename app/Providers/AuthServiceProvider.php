@@ -2,10 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\AccountGroup;
-use App\Policies\AccountGroupPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {

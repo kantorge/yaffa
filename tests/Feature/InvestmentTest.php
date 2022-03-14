@@ -92,6 +92,7 @@ class InvestmentTest extends TestCase
                     'name' => '',
                     'active' => 1,
                     'symbol' => '',
+                    'isin' => '',
                     'investment_group_id' => $investmentGroup->id,
                     'currency_id' => $currency->id,
                     'auto_update' => null,

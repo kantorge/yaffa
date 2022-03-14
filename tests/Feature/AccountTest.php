@@ -91,7 +91,6 @@ class AccountTest extends TestCase
         AccountEntity::factory()->for($user)->account($user)->count(5)->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'account']));
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
 
         $response->assertStatus(200);
         $response->assertViewIs("account.index");

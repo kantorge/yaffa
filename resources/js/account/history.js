@@ -1,6 +1,8 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 
+import * as dataTableHelpers from './../components/dataTableHelper'
+
 $(function() {
     // Table data transformation
     window.transactionData = window.transactionData.map(function(transaction) {
@@ -94,6 +96,7 @@ $(function() {
             $(td).prop('title', cellData);
         }
     };
+
     var dtColumnSettingTags = {
         data: "tags",
         title: "Tags",
@@ -179,20 +182,24 @@ $(function() {
                     if (row.schedule) {
                         if (row.schedule_first_instance) {
                             data = row.originalId;
-                            return  '' +
-                                    '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ';
+                            return  '<a href="' + route('transactions.openStandard', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success" title="Edit and insert instance"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title=Skip current schedule"><i class="fa fa-fw fa-forward"></i></i></button> ';
                         }
                         return null;
                     }
 
-                    return  '' +
-                            (row.transaction_type.type == 'Standard'
-                             ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
-                             : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
+                    if (row.transaction_type.type == 'Standard') {
+                        return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
+                                dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                                dataTableHelpers.dataTablesActionButton(data, 'delete');
+                    }
+
+                    // Investment
+                    return  '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
+                            '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i></a> ' +
+                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="Delete"><i class="fa fa-fw fa-trash"></i></button>';
                 },
                 orderable: false
             }
@@ -314,15 +321,7 @@ $(function() {
         form.submit();
     });
 
-    $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
+    dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
 
     $('input[name=reconciled]').on("change", function() {
         $('#historyTable').DataTable().column(1).search(this.value).draw();
@@ -333,4 +332,13 @@ $(function() {
 function truncateString(str, max, add){
     add = add || '...';
     return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
- }
+}
+
+import { createApp } from 'vue'
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
+const app = createApp({})
+
+app.component('transaction-show-modal', TransactionShowModal)
+
+app.mount('#app')

@@ -30,6 +30,7 @@ class InvestmentFactory extends Factory
         return [
             'name' => $name,
             'symbol' => Str::slug($name),
+            'isin' => $this->faker->asciify(str_repeat('*', 12)),
             'comment' => $this->faker->boolean(25) ? $this->faker->text(191) : null,
             'active' => $this->faker->boolean(80) ? true : false,
             'auto_update' => false,
