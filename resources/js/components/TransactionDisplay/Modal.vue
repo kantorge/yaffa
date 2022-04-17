@@ -80,8 +80,6 @@
                     return response;
                 }).then(response => response.json())
                 .then(function(data) {
-                    console.log(data.transaction)
-
                     $vm.transaction = data.transaction;
 
                     $('#modal-quickview').modal();

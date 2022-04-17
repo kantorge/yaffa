@@ -68,7 +68,7 @@
 
             itemListShow() {
                 /* TODO: resolve without select2
-                $(".transaction_item_row:not(#transaction_item_prototype)").each(function() {
+                $(".transaction_item_row").each(function() {
                     if(   $(this).find("div.transaction_detail_container input.transaction_item_comment").val() != ""
                         || $(this).find("div.transaction_detail_container select").select2('data').length > 0) {
                         $(this).find(".transaction_detail_container").removeClass('d-xs-none');
