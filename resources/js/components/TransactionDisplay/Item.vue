@@ -1,6 +1,13 @@
 <template>
     <div class="list-group-item transaction_item_row" :data-has-details="tags.length > 0 || !!comment">
         <div class="row">
+            <button
+                type="button"
+                class="btn btn-sm btn-info d-sm-none"
+                title="Show item details"
+                @click="toggleItemDetails"
+            ><span class="fa fa-eye"></span></button>
+
             <div class="col-xs-12 col-sm-4">
                 <label>Category</label>
                 <span class="ml-1" :class="(category.full_name ? '' : 'text-muted')">
@@ -37,12 +44,7 @@
                 </span>
             </div>
             <div class="col-xs-12 col-sm-1">
-                <button
-                    type="button"
-                    class="btn btn-xs btn-info d-sm-none"
-                    title="Show item details"
-                    @click="toggleItemDetails"
-                ><span class="fa fa-eye"></span></button>
+
             </div>
         </div>
     </div>
@@ -88,5 +90,13 @@
         .ml-1 {
             margin-left: .25em;
         }
+    }
+
+    /* Float show button to upper right corner of container */
+    .transaction_item_row button {
+        position: absolute;
+        top: .25em;
+        right: .25em;
+        z-index: 10;
     }
 </style>
