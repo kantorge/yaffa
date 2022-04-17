@@ -3,7 +3,7 @@
         <div class="row">
             <div class="col-xs-12 col-sm-4">
                 <label>Category</label>
-                <span :class="(category.full_name ? '' : 'text-muted')">
+                <span class="ml-1" :class="(category.full_name ? '' : 'text-muted')">
                     {{ category.full_name || "Not set" }}
                 </span>
             </div>
@@ -11,28 +11,28 @@
                 <label>
                     Amount
                 </label>
-                <div class="input-group">
+                <span class="ml-1">
                     {{ amount.toLocalCurrency(currency, false) }}
-                </div>
+                </span>
             </div>
             <div class="col-xs-12 col-sm-3 transaction_detail_container d-xs-none">
                 <label>Tags</label>
-                <div v-if="tags.length > 0">
+                <span v-if="tags.length > 0">
                     <span
-                        class="label label-info"
+                        class="ml-1 label label-info"
                         v-for="tag in tags"
                         :key="tag.id"
                     >
                         {{ tag.name }}
                     </span>
-                </div>
+                </span>
                 <span v-else class="text-muted">
                     Not set
                 </span>
             </div>
             <div class="col-xs-12 col-sm-2 transaction_detail_container d-xs-none">
                 <label>Comment</label>
-                <span :class="(comment ? '' : 'text-muted')">
+                <span class="ml-1" :class="(comment ? '' : 'text-muted')">
                     {{ comment || "Not set" }}
                 </span>
             </div>
@@ -84,9 +84,9 @@
         .d-xs-none {
             display: none;
         }
-    }
 
-    span.label {
-        margin: .25em;
+        .ml-1 {
+            margin-left: .25em;
+        }
     }
 </style>
