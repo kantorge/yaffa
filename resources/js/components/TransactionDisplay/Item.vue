@@ -1,5 +1,5 @@
 <template>
-    <div class="list-group-item transaction_item_row">
+    <div class="list-group-item transaction_item_row" :data-has-details="tags.length > 0 || !!comment">
         <div class="row">
             <div class="col-xs-12 col-sm-4">
                 <label>Category</label>
@@ -38,11 +38,11 @@
             </div>
             <div class="col-xs-12 col-sm-1">
                 <button
-                type="button"
-                class="btn btn-sm btn-info d-sm-none"
-                title="Show item details"
-                @click="toggleItemDetails"
-            ><span class="fa fa-edit"></span></button>
+                    type="button"
+                    class="btn btn-xs btn-info d-sm-none"
+                    title="Show item details"
+                    @click="toggleItemDetails"
+                ><span class="fa fa-eye"></span></button>
             </div>
         </div>
     </div>
