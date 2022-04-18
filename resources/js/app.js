@@ -64,6 +64,10 @@ if (   window.location.pathname === '/account-entity'
     require('./payees/index');
 }
 
+if (/^\/payees\/merge/.test(window.location.pathname)) {
+    require('./payees/merge');
+}
+
 if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
     require('./account/history');
 }

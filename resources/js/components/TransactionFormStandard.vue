@@ -852,8 +852,16 @@
                 this.payeeCategory.text = null;
             },
 
+            getPlaceholder(type) {
+                if (this.getAccountType(type) == 'account') {
+                    return 'Select account';
+                }
+                return 'Select payee';
+            },
+
             getAccountSelectConfig (type) {
                 let $vm = this;
+                let otherType = (type == 'from' ? 'to' : 'from');
 
                 return {
                     ajax: {
@@ -870,19 +878,21 @@
                             };
                         },
                         processResults: function (data) {
-                            //TODO: exclude current selection from results
-                            //var other = toAccountInput.get(0);
-                            //var other_id = (other.selectedIndex === -1 ? -1 : other.options[other.selectedIndex].value);
-                            var other_id = null;
+                            // Exclude account that is selected in other account select
+                            let otherAccountId = $vm.form.config['account_' + otherType + '_id'];
+                            if (otherAccountId) {
+                                data = data.filter(item => item.id != otherAccountId);
+                            }
+
                             return {
-                                results: data.filter(obj => obj.id !== other_id)
+                                results: data,
                             };
                         },
                         cache: true
                     },
                     selectOnClose: false,
-                    //TODO: make placeholder dynamic to transaction type
-                    //placeholder: "Select account to debit",
+                    // Set placeholder based on type parameter and transaction type
+                    placeholder: this.getPlaceholder(type),
                     allowClear: true,
                     width: 'resolve',
                 };

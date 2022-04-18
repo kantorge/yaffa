@@ -124,7 +124,7 @@ class CurrencyController extends Controller
     {
         $baseCurrency = $this->getBaseCurrency();
 
-        if ($currency == $baseCurrency) {
+        if ($currency->id === $baseCurrency->id) {
             return redirect()->back();
         }
 

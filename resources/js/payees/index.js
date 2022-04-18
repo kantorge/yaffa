@@ -39,10 +39,10 @@ $(function () {
                 data: "id",
                 title: "Actions",
                 render: function(data) {
-                    return '' +
-                        '<a href="' + route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                        '<button class="btn btn-sm btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                        '<form id="form-delete-' + data + '" action="' + route('account-entity.destroy', {type: 'payee', account_entity: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                    return  '<a href="' + route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                            '<form id="form-delete-' + data + '" action="' + route('account-entity.destroy', {type: 'payee', account_entity: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
+                            '<a href="' + route('payees.merge.form', {payeeSource: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-random" title="Merge into an other payee"></i></a> ';
                 },
                 orderable: false
             }

@@ -106,4 +106,8 @@ Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('re
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])->name('reports.transactions');
 
+// Add route to display form to merge two payees
+Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])->name('payees.merge.form');
+Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->name('payees.merge.submit');
+
 Auth::routes();

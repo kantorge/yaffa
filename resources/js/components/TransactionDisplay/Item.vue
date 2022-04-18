@@ -1,9 +1,16 @@
 <template>
-    <div class="list-group-item transaction_item_row">
+    <div class="list-group-item transaction_item_row" :data-has-details="tags.length > 0 || !!comment">
         <div class="row">
+            <button
+                type="button"
+                class="btn btn-sm btn-info d-sm-none"
+                title="Show item details"
+                @click="toggleItemDetails"
+            ><span class="fa fa-eye"></span></button>
+
             <div class="col-xs-12 col-sm-4">
                 <label>Category</label>
-                <span :class="(category.full_name ? '' : 'text-muted')">
+                <span class="ml-1" :class="(category.full_name ? '' : 'text-muted')">
                     {{ category.full_name || "Not set" }}
                 </span>
             </div>
@@ -11,38 +18,33 @@
                 <label>
                     Amount
                 </label>
-                <div class="input-group">
+                <span class="ml-1">
                     {{ amount.toLocalCurrency(currency, false) }}
-                </div>
+                </span>
             </div>
             <div class="col-xs-12 col-sm-3 transaction_detail_container d-xs-none">
                 <label>Tags</label>
-                <div v-if="tags.length > 0">
+                <span v-if="tags.length > 0">
                     <span
-                        class="label label-info"
+                        class="ml-1 label label-info"
                         v-for="tag in tags"
                         :key="tag.id"
                     >
                         {{ tag.name }}
                     </span>
-                </div>
+                </span>
                 <span v-else class="text-muted">
                     Not set
                 </span>
             </div>
             <div class="col-xs-12 col-sm-2 transaction_detail_container d-xs-none">
                 <label>Comment</label>
-                <span :class="(comment ? '' : 'text-muted')">
+                <span class="ml-1" :class="(comment ? '' : 'text-muted')">
                     {{ comment || "Not set" }}
                 </span>
             </div>
             <div class="col-xs-12 col-sm-1">
-                <button
-                type="button"
-                class="btn btn-sm btn-info d-sm-none"
-                title="Show item details"
-                @click="toggleItemDetails"
-            ><span class="fa fa-edit"></span></button>
+
             </div>
         </div>
     </div>
@@ -84,9 +86,17 @@
         .d-xs-none {
             display: none;
         }
+
+        .ml-1 {
+            margin-left: .25em;
+        }
     }
 
-    span.label {
-        margin: .25em;
+    /* Float show button to upper right corner of container */
+    .transaction_item_row button {
+        position: absolute;
+        top: .25em;
+        right: .25em;
+        z-index: 10;
     }
 </style>

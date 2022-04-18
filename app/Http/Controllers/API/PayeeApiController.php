@@ -36,7 +36,7 @@ class PayeeApiController extends Controller
                 ->orderBy('name')
                 ->take(10)
                 ->get();
-        } else {
+        } elseif ($request->get('account_id')) {
             // Account and transaction type is expected to be present
             $accountId = $request->get('account_id');
 
@@ -79,6 +79,9 @@ class PayeeApiController extends Controller
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get();
+        } else {
+            // Set payees to be empty
+            $payees = collect();
         }
 
         return response()->json($payees, Response::HTTP_OK);

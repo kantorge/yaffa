@@ -273,10 +273,10 @@ class InvestmentController extends Controller
                 }
 
                 return [
-                        'date' => $transaction['date']->format('Y-m-d'),
-                        'quantity' => $runningTotal,
-                        'schedule' => $runningSchedule,
-                    ];
+                    'date' => $transaction['date']->format('Y-m-d'),
+                    'quantity' => $runningTotal,
+                    'schedule' => $runningSchedule,
+                ];
             });
 
         JavaScript::put([
