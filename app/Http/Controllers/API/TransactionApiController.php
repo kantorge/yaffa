@@ -189,6 +189,18 @@ class TransactionApiController extends Controller
     // TODO: unify with schedule controller
     private function transformDataCommon(Transaction $transaction)
     {
+        // Prepare schedule related data if schedule is set
+        $schedule = null;
+        if ($transaction->schedule) {
+            $schedule = [
+                'start_date' => $transaction->transactionSchedule->start_date->toW3cString(),
+                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
+                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->format('Y-m-d') : null),
+                'frequency' => $transaction->transactionSchedule->frequency,
+                'count' => $transaction->transactionSchedule->count,
+                'interval' => $transaction->transactionSchedule->interval,
+            ];
+        }
         return [
             'id' => $transaction->id,
             'date' => $transaction->date,  // Change compared to schedule controller
@@ -196,14 +208,7 @@ class TransactionApiController extends Controller
             'transaction_type' => $transaction->transactionType->type,
             'config_type' => $transaction->config_type,
             'schedule' => $transaction->schedule,
-            'schedule_config' => [
-                'start_date' => $transaction->transactionSchedule->start_date->toW3cString(),
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
-                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->format('Y-m-d') : null),
-                'frequency' => $transaction->transactionSchedule->frequency,
-                'count' => $transaction->transactionSchedule->count,
-                'interval' => $transaction->transactionSchedule->interval,
-            ],
+            'schedule_config' => $schedule,
             'budget' => $transaction->budget,
             'comment' => $transaction->comment,
             'reconciled' => $transaction->reconciled,

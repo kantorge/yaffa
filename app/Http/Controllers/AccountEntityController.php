@@ -21,8 +21,13 @@ class AccountEntityController extends Controller
     {
         $this->middleware('auth');
         $this->authorizeResource(AccountEntity::class);
+    }
 
-        // Check if known type is requested
+    /*
+     * Check if type parameter is provided and if it is valid. It is only needed if not running from CLI.
+     */
+    private function checkTypeParam(Request $request)
+    {
         if (! app()->runningInConsole() && (! $request->has('type') || ! in_array($request->type, ['account', 'payee']))) {
             abort(Response::HTTP_NOT_FOUND);
         }
@@ -35,10 +40,12 @@ class AccountEntityController extends Controller
      */
     public function index(Request $request)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'index'.Str::ucfirst($request->type)}();
     }
 
-    public function indexAccount()
+    private function indexAccount()
     {
         // Show all accounts of user from the database and return to view
         $accounts = Auth::user()
@@ -54,7 +61,7 @@ class AccountEntityController extends Controller
         return view('account.index');
     }
 
-    public function indexPayee()
+    private function indexPayee()
     {
         // Show all payees of user from the database and return to view
         $payees = Auth::user()
@@ -92,10 +99,12 @@ class AccountEntityController extends Controller
      */
     public function create(Request $request)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'create'.Str::ucfirst($request->type)}();
     }
 
-    public function createAccount()
+    private function createAccount()
     {
         // Get all account groups
         $allAccountGroups = Auth::user()
@@ -135,7 +144,7 @@ class AccountEntityController extends Controller
         return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
 
-    public function createPayee()
+    private function createPayee()
     {
         return view('payee.form');
     }
@@ -148,6 +157,8 @@ class AccountEntityController extends Controller
      */
     public function store(AccountEntityRequest $request)
     {
+        $this->checkTypeParam($request);
+
         $validated = $request->validated();
 
         $accountEntity = new AccountEntity($validated);
@@ -186,10 +197,12 @@ class AccountEntityController extends Controller
      */
     public function edit(Request $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
     }
 
-    public function editAccount(AccountEntity $accountEntity)
+    private function editAccount(AccountEntity $accountEntity)
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
@@ -209,7 +222,7 @@ class AccountEntityController extends Controller
         );
     }
 
-    public function editPayee(AccountEntity $accountEntity)
+    private function editPayee(AccountEntity $accountEntity)
     {
         $accountEntity->load(['config']);
 
@@ -230,6 +243,8 @@ class AccountEntityController extends Controller
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         $validated = $request->validated();
 
         if ($validated['config_type'] === 'account') {
@@ -269,6 +284,8 @@ class AccountEntityController extends Controller
      */
     public function destroy(Request $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         try {
             // Try to delete config as well
             DB::transaction(function () use ($accountEntity) {
@@ -292,5 +309,76 @@ class AccountEntityController extends Controller
 
             return redirect()->back();
         }
+    }
+
+    /**
+     * Display a form to merge two payees.
+     *
+     * @param  \App\Models\AccountEntity $payeeSource
+     * @return \Illuminate\Http\Response
+     */
+    public function mergePayeesForm(?AccountEntity $payeeSource)
+    {
+        if ($payeeSource) {
+            JavaScript::put([
+                'payeeSource' => $payeeSource->toArray(),
+            ]);
+        }
+
+        return view('payee.merge');
+    }
+
+    /*
+     * Merge two payees.
+     */
+    public function mergePayees(Request $request)
+    {
+        $validated = $request->validate([
+            'payee_source' => [
+                'required',
+                'exists:account_entities,id,config_type,payee',
+            ],
+            'payee_target' => [
+                'required',
+                'exists:account_entities,id,config_type,payee',
+                'different:payee_source',
+            ],
+            'action' => [
+                'required',
+                'in:delete,close',
+            ],
+        ]);
+
+        // Wrap database transaction
+        DB::beginTransaction();
+        try {
+            // Update all transaction detail items with source payee to target payee
+            DB::table('transaction_details_standard')
+            ->where('account_from_id', $validated['payee_source'])
+            ->update(['account_from_id' => $validated['payee_target']]);
+
+            DB::table('transaction_details_standard')
+                ->where('account_to_id', $validated['payee_source'])
+                ->update(['account_to_id' => $validated['payee_target']]);
+
+            // Hydrate the source payee
+            $payeeSource = AccountEntity::find($validated['payee_source']);
+
+            // Delete or set active to false the source payee model, based on value of action field
+            if ($request->action === 'delete') {
+                $payeeSource->delete();
+            } else {
+                $payeeSource->active = false;
+                $payeeSource->push();
+            }
+
+            DB::commit();
+            self::addSimpleSuccessMessage('Payees merged');
+        } catch (\Exception $e) {
+            DB::rollback();
+            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+        }
+
+        return redirect()->route('account-entity.index', ['type' => 'payee']);
     }
 }
