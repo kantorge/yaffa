@@ -397,8 +397,9 @@ class MainController extends Controller
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
                     return $transaction->transactionGroup === 'schedule';
-                })->values(),
-            ]);
+                })
+                ->values(),
+        ]);
 
         return view(
             'account.history',
