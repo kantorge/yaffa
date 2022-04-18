@@ -52,7 +52,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group form-horizontal">
-                            <label for="payee_target">
+                            <label>
                                 After merging
                             </label>
                             <div class="radio">
