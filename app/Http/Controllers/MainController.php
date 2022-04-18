@@ -196,7 +196,7 @@ class MainController extends Controller
                 });
 
                 // Apply currency exchange, if necesary
-                if ($account->config->currency_id != $baseCurrency->id) {
+                if ($account->config->currency_id !== $baseCurrency->id) {
                     $account['sum_foreign'] = $account['sum'];
                     $account['sum'] *= $currencies->find($account->config->currency_id)->rate();
                 }
