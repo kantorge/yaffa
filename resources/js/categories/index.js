@@ -34,9 +34,9 @@ $(function() {
             data: "id",
             title: "Actions",
             render: function (data) {
-                return '' +
-                    '<a href="' + route('categories.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
+                return  '<a href="' + route('categories.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                        '<a href="' + route('categories.merge.form', {categorySource: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-random" title="Merge into an other category"></i></a> ';
             },
             orderable: false
         }
