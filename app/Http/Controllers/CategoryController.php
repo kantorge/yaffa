@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use JavaScript;
 
 class CategoryController extends Controller
@@ -110,5 +112,64 @@ class CategoryController extends Controller
 
             return redirect()->back();
         }
+    }
+
+    /**
+     * Display a form to merge two categories.
+     *
+     * @param  \App\Models\Category $categorySource
+     * @return \Illuminate\Http\Response
+     */
+    public function mergeCategoriesForm(?Category $categorySource)
+    {
+        if ($categorySource) {
+            JavaScript::put([
+                'categorySource' => $categorySource->toArray(),
+            ]);
+        }
+
+        return view('categories.merge');
+    }
+
+    /*
+     * Merge two categories.
+     */
+    public function mergeCategories(CategoryMergeRequest $request)
+    {
+        // Retrieve the validated input data
+        $validated = $request->validated();
+
+        // Wrap database transaction
+        DB::beginTransaction();
+        try {
+            // Update all transaction detail items with source category to target category
+            DB::table('transaction_items')
+            ->where('category_id', $validated['category_source'])
+            ->update(['category_id' => $validated['category_target']]);
+
+            // Update all child categories with source parent to target parent
+            DB::table('categories')
+            ->where('parent_id', $validated['category_source'])
+            ->update(['parent_id' => $validated['category_target']]);
+
+            // Hydrate the source category
+            $categorySource = Category::find($validated['category_source']);
+
+            // Delete or set active to false the source category model, based on value of action field
+            if ($request->action === 'delete') {
+                $categorySource->delete();
+            } else {
+                $categorySource->active = false;
+                $categorySource->push();
+            }
+
+            DB::commit();
+            self::addSimpleSuccessMessage('Categories merged');
+        } catch (\Exception $e) {
+            DB::rollback();
+            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+        }
+
+        return redirect()->route('categories.index');
     }
 }

@@ -1,24 +1,24 @@
 @extends('template.layouts.page')
 
-@section('title', 'Merge payees')
+@section('title', 'Merge categories')
 
 @section('content_header')
-<h1>Merge payees</h1>
+<h1>Merge categories</h1>
 @stop
 
 @section('content')
 
     <form
         accept-charset="UTF-8"
-        action="{{ route('payees.merge.submit') }}"
+        action="{{ route('categories.merge.submit') }}"
         autocomplete="off"
-        id="merge-payees-form"
+        id="merge-categories-form"
         method="POST"
     >
         <div class="box box-primary">
             <div class="box-header">
                 <h3 class="box-title">
-                    Select payees to merge
+                    Select categories to merge
                 </h3>
             </div>
             <!-- /.box-header -->
@@ -26,25 +26,25 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="payee_source">
-                                Payee to be merged
+                            <label for="category_source">
+                                Category to be merged
                             </label>
                             <select
                                 class="form-control"
-                                id="payee_source"
-                                name="payee_source"
+                                id="category_source"
+                                name="category_source"
                             ></select>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="payee_target">
-                                Where to merge payee
+                            <label for="category_target">
+                                Where to merge category
                             </label>
                             <select
                                 class="form-control"
-                                id="payee_target"
-                                name="payee_target"
+                                id="category_target"
+                                name="category_target"
                             ></select>
                         </div>
                     </div>
@@ -58,11 +58,11 @@
                             <div class="radio">
                                 <label class="radio-inline">
                                     <input type="radio" name="action" value="delete" checked="checked">
-                                    Delete payee
+                                    Delete category
                                 </label>
                                 <label class="radio-inline">
                                     <input type="radio" name="action" value="close" checked="">
-                                    Set payee to inactive
+                                    Set category to inactive
                                 </label>
                             </div>
                         </div>
@@ -78,7 +78,7 @@
                             >
                                 Cancel
                             </button>
-                            <input class="btn btn-primary" type="submit" value="Merge payees">
+                            <input class="btn btn-primary" type="submit" value="Merge categories">
                         </div>
                     </div>
                 </div>

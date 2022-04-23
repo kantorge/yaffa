@@ -74,6 +74,10 @@ if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
 if (window.location.pathname === '/categories') {
     require('./categories/index');
 }
+if (/^\/categories\/merge/.test(window.location.pathname)) {
+    require('./categories/merge');
+}
+
 if (window.location.pathname === '/currencies') {
     require('./currencies/index');
 }
