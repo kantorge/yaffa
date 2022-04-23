@@ -33,7 +33,7 @@ $(function() {
         {
             data: "config.opening_balance",
             title: "Opening balance",
-            render: function (data, type, row) {
+            render: function (data, _type, row) {
                 // Apply currency format to the data from currency config
                 return data.toLocalCurrency(row.config.currency);
             },
