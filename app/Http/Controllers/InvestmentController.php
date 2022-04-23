@@ -243,7 +243,7 @@ class InvestmentController extends Controller
 
                 foreach ($transformer->transform($rule, $constraint) as $instance) {
                     $newTransaction = $transaction;
-                    $newTransaction['date'] = $instance->getStart();
+                    $newTransaction['date'] = new Carbon($instance->getStart());
                     $newTransaction['transaction_group'] = 'forecast';
                     $newTransaction['schedule_is_first'] = $first;
 
