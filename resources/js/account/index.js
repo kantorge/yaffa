@@ -27,16 +27,20 @@ $(function() {
             className: "text-center",
         },
         {
+            data: "config.currency.name",
+            title: "Currency"
+        },
+        {
             data: "config.opening_balance",
-            title: "Opening balance"
+            title: "Opening balance",
+            render: function (data, type, row) {
+                // Apply currency format to the data from currency config
+                return data.toLocalCurrency(row.config.currency);
+            },
         },
         {
             data: "config.account_group.name",
             title: "Account group"
-        },
-        {
-            data: "config.currency.name",
-            title: "Currency"
         },
         {
             data: "id",
