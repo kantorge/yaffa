@@ -42,3 +42,8 @@ td.dt-nowrap {
 .d-inline-block {
     display: inline-block;
 }
+
+/* Dynamic, clickable icons in DataTables */
+table.dataTable td.activeIcon > i:not(.fa-spinner) {
+    cursor: pointer;
+}

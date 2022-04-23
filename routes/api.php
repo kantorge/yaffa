@@ -7,6 +7,7 @@ Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiContr
 Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiController@getInvestmentList');
 Route::get('/assets/account/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getItem');
 Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
+Route::put('/assets/account/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountApiController@updateActive');
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
 Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
