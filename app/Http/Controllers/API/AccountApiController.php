@@ -209,18 +209,4 @@ class AccountApiController extends Controller
                 Response::HTTP_OK
             );
     }
-
-    public function updateActive(AccountEntity $accountEntity, $active)
-    {
-        $this->authorize('update', $accountEntity);
-
-        $accountEntity->active = $active;
-        $accountEntity->save();
-
-        return response()
-            ->json(
-                $accountEntity,
-                Response::HTTP_OK
-            );
-    }
 }

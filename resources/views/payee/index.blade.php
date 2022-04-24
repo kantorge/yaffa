@@ -25,4 +25,6 @@
     </div>
     <!-- /.box -->
 
+    @include('template.components.model-delete-form')
+
 @stop

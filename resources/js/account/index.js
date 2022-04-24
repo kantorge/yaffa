@@ -4,7 +4,7 @@ import * as dataTableHelpers from './../components/dataTableHelper';
 
 const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-let datatable = $('#table').DataTable({
+$('#table').DataTable({
     data: accounts,
     columns: [
         {
@@ -49,9 +49,9 @@ let datatable = $('#table').DataTable({
         }
     ],
     order: [[ 1, 'asc' ]],
-    initComplete : function() {
-        $("#table").on("click", "td.activeIcon > i", function() {
-            var row = datatable.row( $(this).parents('tr') );
+    initComplete : function(settings) {
+        $(settings.nTable).on("click", "td.activeIcon > i", function() {
+            var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
 
             // Do not request change if previous request is still in progress
             if ($(this).hasClass("fa-spinner")) {
@@ -64,7 +64,7 @@ let datatable = $('#table').DataTable({
             // Send request to change account active state
             $.ajax ({
                 type: 'PUT',
-                url: '/api/assets/account/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
+                url: '/api/assets/accountentity/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
                 data: {
                     "_token": csrfToken,
                 },
