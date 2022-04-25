@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +37,40 @@ class AccountEntity extends Model
     public function config()
     {
         return $this->morphTo();
+    }
+
+    public function transactionDetailStandardFrom()
+    {
+        return $this->hasMany(TransactionDetailStandard::class, 'account_from_id');
+    }
+
+    public function transactionDetailStandardTo()
+    {
+        return $this->hasMany(TransactionDetailStandard::class, 'account_to_id');
+    }
+
+    // Relation to transactions where this account is the from account or the to account
+    public function transactionsFrom()
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailStandard::class,
+            'account_from_id',
+            'config_id',
+            'id',
+            'id'
+        );
+    }
+    public function transactionsTo()
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailStandard::class,
+            'account_to_id',
+            'config_id',
+            'id',
+            'id'
+        );
     }
 
     /**

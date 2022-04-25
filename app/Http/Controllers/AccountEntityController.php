@@ -8,6 +8,7 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Payee;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -67,18 +68,91 @@ class AccountEntityController extends Controller
         $payees = Auth::user()
             ->payees()
             ->with(['config'])
+            // Get count of associated transactions
+            // We assume, that the same payee can never be used in the same transaction as account from and to. This might be handled better in the future.
+            ->withCount(['transactionDetailStandardFrom' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }])
+            ->withCount(['transactionDetailStandardTo' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }])
+            // Get first date of associated transactions
+            ->withMin(['transactionsFrom' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }], 'date')
+            ->withMin(['transactionsTo' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }], 'date')
+            // Get last date of associated transactions
+            ->withMax(['transactionsFrom' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }], 'date')
+            ->withMax(['transactionsTo' => function (Builder $query) {
+                $query->whereHas('config', function (Builder $query) {
+                    $query->where('schedule', '=', false)
+                        ->where('budget', '=', false);
+                });
+            }], 'date')
+            ->withCasts([
+                'transactions_to_min_date' => 'datetime',
+                'transactions_from_min_date' => 'datetime',
+                'transactions_to_max_date' => 'datetime',
+                'transactions_from_max_date' => 'datetime',
+            ])
             ->get();
 
         // Get categories to display name
         $categories = Category::with(['parent'])->get();
 
-        // Load additional data
+        // Load additional data and make further calculations
         $payees->map(function ($payee) use ($categories) {
-            // Full category name
+            // Get full category name
             if (is_null($payee->config->category_id)) {
                 $payee['config']['category_full_name'] = '';
             } else {
                 $payee['config']['category_full_name'] = $categories->find($payee->config->category_id)->full_name;
+            }
+
+            // Calculate total amount of transactions
+            $payee['total_transactions'] = $payee['transaction_detail_standard_from_count'] + $payee['transaction_detail_standard_to_count'];
+
+            // Calculate first date of transactions based on first date of from and to transactions
+            // Compare dates if both are set, otherwise use the date that is set
+            if (is_null($payee['transactions_from_min_date']) && is_null($payee['transactions_to_min_date'])) {
+                $payee['transactions_min_date'] = null;
+            } elseif (is_null($payee['transactions_from_min_date'])) {
+                $payee['transactions_min_date'] = $payee['transactions_to_min_date'];
+            } elseif (is_null($payee['transactions_to_min_date'])) {
+                $payee['transactions_min_date'] = $payee['transactions_from_min_date'];
+            } else {
+                $payee['transactions_min_date'] = min($payee['transactions_from_min_date'], $payee['transactions_to_min_date']);
+            }
+
+            // Calculate last date of transactions based on last date of from and to transactions
+            // Compare dates if both are set, otherwise use the date that is set
+            if (is_null($payee['transactions_from_max_date']) && is_null($payee['transactions_to_max_date'])) {
+                $payee['transactions_max_date'] = null;
+            } elseif (is_null($payee['transactions_from_max_date'])) {
+                $payee['transactions_max_date'] = $payee['transactions_to_max_date'];
+            } elseif (is_null($payee['transactions_to_max_date'])) {
+                $payee['transactions_max_date'] = $payee['transactions_from_max_date'];
+            } else {
+                $payee['transactions_max_date'] = max($payee['transactions_from_max_date'], $payee['transactions_to_max_date']);
             }
 
             return $payee;

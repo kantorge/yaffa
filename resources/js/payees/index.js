@@ -2,7 +2,22 @@ require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import * as dataTableHelpers from './../components/dataTableHelper';
 
+// Get CSRF Token from meta tag
 const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+// Loop payees and prepare data for datatable
+window.payees = window.payees.map(function(payee) {
+    // Parse first date if it exists
+    if (payee.transactions_min_date) {
+        payee.transactions_min_date = new Date(Date.parse(payee.transactions_min_date));
+    }
+    // Parse last date if it exists
+    if (payee.transactions_max_date) {
+        payee.transactions_max_date = new Date(Date.parse(payee.transactions_max_date));
+    }
+
+    return payee;
+});
 
 $('#table').DataTable({
     data: payees,
@@ -31,6 +46,41 @@ $('#table').DataTable({
             }
         },
         {
+            // Display count of associated transactions
+            data: "total_transactions",
+            title: "Transactions",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data > 0 ? data : 'Never used');
+                }
+                return data;
+            }
+        },
+        {
+            // Display first transaction date
+            data: "transactions_min_date",
+            title: "First transaction",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                }
+
+                return (data ? data.toISOString() : null);
+            }
+        },
+        {
+            // Display last transaction date
+            data: "transactions_max_date",
+            title: "Last transaction",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                }
+
+                return (data ? data.toISOString() : null);
+            }
+        },
+        {
             data: "id",
             title: "Actions",
             render: function(data) {
@@ -44,6 +94,15 @@ $('#table').DataTable({
     createdRow: function(row, data) {
         if (!data.config.category_full_name) {
             $('td:eq(3)', row).addClass("text-muted text-italic");
+        }
+        if (data.total_transactions === 0) {
+            $('td:eq(4)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_min_date) {
+            $('td:eq(5)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_max_date) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
         }
     },
     order: [[ 1, 'asc' ]],
