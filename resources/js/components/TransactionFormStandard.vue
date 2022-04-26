@@ -410,7 +410,7 @@
             data.form = new Form({
                 transaction_type: 'withdrawal',
                 config_type: 'transaction_detail_standard',
-                date: '',
+                date: new Date().toISOString().slice(0, 10),
                 comment: null,
                 schedule: false,
                 budget: false,
