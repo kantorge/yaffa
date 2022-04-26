@@ -6,7 +6,7 @@
             action = "new"
             :payee = "{}"
             ref="payeeModal"
-            @newPayeeAdded="setPayee"
+            @payeeSelected="setPayee"
         ></payee-form>
 
         <!-- form start -->

@@ -8,7 +8,7 @@ Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiCon
 Route::get('/assets/account/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getItem');
 Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
 
-Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive');
+Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
 Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
@@ -20,6 +20,8 @@ Route::get('/assets/investment/price/{investment}', 'App\Http\Controllers\API\In
 
 Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
 Route::post('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@storePayee')->name('api.payee.store');
+Route::get('/assets/payee/similar', 'App\Http\Controllers\API\PayeeApiController@getSimilarPayees')->name('api.payee.similar');
+
 Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');
 Route::get('/assets/get_default_category_suggestion', 'App\Http\Controllers\API\PayeeApiController@getPayeeDefaultSuggestion');
 Route::get('/assets/dismiss_default_category_suggestion/{accountEntity}', 'App\Http\Controllers\API\PayeeApiController@dismissPayeeDefaultCategorySuggestion');
