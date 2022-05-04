@@ -8,409 +8,7 @@ import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
-$(function () {
-    // Table data transformation
-    window.transactions = window.transactions.map(function(transaction) {
-        if (transaction.date) {
-            transaction.date = new Date(Date.parse(transaction.date));
-            transaction.date.setHours(0, 0, 0, 0);
-        }
-
-        return transaction;
-    });
-
-    window.summary = {
-        'Buying' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Selling' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Added': {
-            value : 0,
-            isCurrency : false,
-        },
-        'Removed': {
-            value : 0,
-            isCurrency : false,
-        },
-        'Dividend' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Commission' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Taxes' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Quantity' : {
-            value : 0,
-            isCurrency : false,
-        },
-        'Value' : {
-            value : 0,
-            isCurrency : true,
-        },
-        'Result' : {
-            value : 0,
-            isCurrency : true,
-        },
-    };
-
-    window.table = $('#table').DataTable({
-        data: transactions,
-        columns: [
-            {
-                data: "date",
-                title: "Date",
-                render: function (data, type) {
-                    if (type === 'display' && data) {
-                        return data.toLocaleDateString('Hu-hu');
-                    }
-
-                    return data
-                },
-                className: "cell-no-break",
-            },
-            {
-                data: "transaction_name",
-                title: "Transaction",
-            },
-            {
-                data: "quantity",
-                title: "Quantity",
-                render: function(data) {
-                    if (data !== null) {
-                        return data.toLocaleString('hu-HU');
-                    }
-                    return null;
-                }
-            },
-            {
-                data: "price",
-                title: "Price",
-                render: function (data) {
-                    if (data === null) {
-                        return data;
-                    }
-
-                    return data.toLocalCurrency(investment.currency);
-                },
-            },
-            {
-                data: "dividend",
-                title: "Dividend",
-                render: function (data) {
-                    if (data === null) {
-                        return data;
-                    }
-
-                    return data.toLocalCurrency(investment.currency);
-                },
-            },
-            {
-                data: "commission",
-                title: "Commission",
-                render: function (data) {
-                    if (data === null) {
-                        return data;
-                    }
-
-                    return data.toLocalCurrency(investment.currency);
-                },
-            },
-            {
-                data: "tax",
-                title: "Tax",
-                render: function (data) {
-                    if (data === null) {
-                        return data;
-                    }
-
-                    return data.toLocalCurrency(investment.currency);
-                },
-            },
-            {
-                title: "Amount",
-                render: function (data, type, row) {
-                    var operator = row.amount_operator;
-                    if (!operator) {
-                        return 0;
-                    }
-                    var result = (operator == 'minus'
-                            ? - row.price * row.quantity
-                            : row.dividend + row.price * row.quantity )
-                            - row.tax
-                            - row.commission;
-
-                    return result.toLocalCurrency(investment.currency);
-                }
-            },
-            {
-                data: "id",
-                title: "Actions",
-                render: function (data, type, row) {
-                    var actions = '' +
-                        '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="Make this the start date"></i></button> ' +
-                        '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
-                    if (!row.schedule) {
-                        actions += '' +
-                        '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                        '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
-                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
-                    }
-
-                    return actions;
-                },
-                orderable: false
-            }
-        ],
-        createdRow: function (row, data) {
-            if (data.schedule) {
-                $(row).addClass('text-muted text-italic');
-            }
-        },
-        order: [[ 0, 'asc' ]]
-    });
-
-    $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
-
-    $("#table").on("click", ".set-date", function(event) {
-        //TODO: catch invalid combinations
-        if (this.dataset.type === 'from') {
-            datepickerFrom.setDate(
-                new Date(this.dataset.date),
-                {
-                    clear: true
-                }
-            );
-        } else {
-            datepickerTo.setDate(
-                new Date(this.dataset.date),
-                {
-                    clear: true
-                }
-            );
-        }
-        window.table.draw();
-        window.calculateSummary.call();
-    });
-
-    // Initialize date filter inputs
-    var datePickerStandardSettings = {
-        weekStart: 1,
-        todayBtn: true,
-        todayBtnMode: 1,
-        todayHighlight: true,
-        format: 'yyyy-mm-dd',
-        autohide: true,
-        buttonClass: 'btn',
-    };
-
-    // Get min and max dates from transactions
-    window.minDate = new Date(Math.min(...transactions.map(e => e.date)));
-    window.maxDate = new Date(Math.max(...transactions.map(e => e.date)));
-
-    window.datepickerFrom = new Datepicker(document.getElementById('date_from'), datePickerStandardSettings);
-    window.datepickerTo = new Datepicker(document.getElementById('date_to'), datePickerStandardSettings);
-
-    document.getElementById('date_from').addEventListener("changeDate", function(event) {
-        datepickerTo.setOptions({
-            minDate: event.date,
-        });
-        window.table.draw();
-        window.calculateSummary.call();
-    });
-
-    document.getElementById('date_to').addEventListener("changeDate", function(event) {
-        datepickerFrom.setOptions({
-            maxDate: event.date,
-        });
-        window.table.draw();
-        window.calculateSummary.call();
-    });
-
-    // Summary calculations
-    window.calculateSummary = function() {
-        var min = datepickerFrom.getDate();
-        var max = datepickerTo.getDate();
-
-        if (typeof max === 'undefined' || typeof min === 'undefined') {
-            return;
-        }
-
-        var filtered = transactions.filter(function(transaction) {
-            return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
-        });
-
-        window.summary.Buying.value = filtered.filter(trx => trx.transaction_name == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-        window.summary.Added.value = filtered.filter(trx => trx.transaction_name == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
-        window.summary.Removed.value = filtered.filter(trx => trx.transaction_name == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
-        window.summary.Selling.value = filtered.filter(trx => trx.transaction_name == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-        window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
-        window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
-        window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);
-        window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
-
-        if (prices.length > 0) {
-            var lastPrice = prices.slice(-1)[0].price;
-        } else if (filtered.filter(trx => !!trx.price).length > 0) {  //TODO: remove filter duplicate
-            lastPrice = filtered
-            .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
-            .sort(function (a, b) {
-                if (a.date.getTime() < b.date.getTime()) {
-                    return 1;
-                }
-
-                if (a.date.getTime() > b.date.getTime()) {
-                    return -1;
-                }
-
-                return 0;
-            })[0].price;
-        } else {
-            lastPrice = 1;
-        }
-
-        window.summary.Value.value = window.summary.Quantity.value * lastPrice;
-
-        // Final result
-        window.summary.Result.value =   window.summary.Selling.value
-                                      + window.summary.Dividend.value
-                                      + window.summary.Value.value
-                                      - window.summary.Buying.value
-                                      - window.summary.Commission.value
-                                      - window.summary.Taxes.value;
-
-        // Calculate ROI
-        var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
-        var years = calculateYears(datepickerTo.getDate(), datepickerFrom.getDate());
-        var AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
-        document.getElementById('summaryROI').innerHTML = (ROI * 100).toFixed(2) + '%';
-        document.getElementById('summaryAROI').innerHTML = (AROI * 100).toFixed(2) + '%';
-
-        //assign calculated data to respective fields
-        for (var prop in window.summary) {
-            if (Object.prototype.hasOwnProperty.call(window.summary, prop)) {
-                document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency ? window.summary[prop].value.toLocalCurrency(investment.currency) : window.summary[prop].value.toLocaleString('hu-HU'));
-            }
-        }
-    };
-
-    window.dateReset = function() {
-        datepickerFrom.setDate(
-            minDate,
-            {
-                clear: true
-            }
-        );
-        datepickerFrom.setOptions({
-            maxDate: maxDate,
-        });
-
-        datepickerTo.setDate(
-            maxDate,
-            {
-                clear: true
-            }
-        );
-        datepickerTo.setOptions({
-            minDate: minDate,
-        });
-
-        window.table.draw();
-        window.calculateSummary.call();
-    };
-    window.dateReset.call();
-
-    $("#clear_dates").on('click', dateReset);
-
-    // Datatables filtering
-    $.fn.dataTable.ext.search.push(
-        function (settings, data) {
-            var min = datepickerFrom.getDate();
-            var max = datepickerTo.getDate();
-            var date = new Date(data[0]);
-
-            return (date.getTime() >= min.getTime() && date.getTime() <= max.getTime());
-        }
-    );
-
-    //initialize charts
-    if (prices.length > 0) {
-        var chartPrice = am4core.create("chartPrice", am4charts.XYChart);
-        chartPrice.data = prices;
-
-        chartPrice.dateFormatter.inputDateFormat = "yyyy-MM-dd";
-
-        var categoryAxis = chartPrice.xAxes.push(new am4charts.DateAxis());
-        categoryAxis.dataFields.category = "date";
-        var valueAxis = chartPrice.yAxes.push(new am4charts.ValueAxis());
-
-        var series = chartPrice.series.push(new am4charts.LineSeries());
-        series.dataFields.valueY = "price";
-        series.dataFields.dateX = "date";
-        series.strokeWidth = 3;
-
-        var bullet = series.bullets.push(new am4charts.Bullet());
-        var square = bullet.createChild(am4core.Rectangle);
-        square.width = 5;
-        square.height = 5;
-        square.horizontalCenter = "middle";
-        square.verticalCenter = "middle";
-
-        var scrollbarX = new am4charts.XYChartScrollbar();
-        scrollbarX.series.push(series);
-        chartPrice.scrollbarX = scrollbarX;
-    } else {
-        document.getElementById('chartPrice').remove();
-        document.getElementById('priceChartNoData').classList.remove('hidden');
-    }
-
-    if (quantities.length > 0) {
-        var chartQuantity = am4core.create("chartQuantity", am4charts.XYChart);
-        chartQuantity.data = quantities;
-
-        chartQuantity.dateFormatter.inputDateFormat = "yyyy-MM-dd";
-
-        var categoryAxis = chartQuantity.xAxes.push(new am4charts.DateAxis());
-        categoryAxis.dataFields.category = "date";
-        var valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
-
-        var seriesHistory = chartQuantity.series.push(new am4charts.StepLineSeries());
-        seriesHistory.dataFields.valueY = "quantity";
-        seriesHistory.dataFields.dateX = "date";
-        seriesHistory.strokeWidth = 3;
-
-        var seriesSchedule = chartQuantity.series.push(new am4charts.StepLineSeries());
-        seriesSchedule.dataFields.valueY = "schedule";
-        seriesSchedule.dataFields.dateX = "date";
-        seriesSchedule.strokeWidth = 3;
-        seriesSchedule.strokeDasharray = "3,3";
-
-        var scrollbarX = new am4charts.XYChartScrollbar();
-        scrollbarX.series.push(seriesHistory);
-        scrollbarX.series.push(seriesSchedule);
-        chartQuantity.scrollbarX = scrollbarX;
-    } else {
-        document.getElementById('chartQuantity').remove();
-        document.getElementById('quantityChartNoData').classList.remove('hidden');
-    }
-});
-
+// Some helper functions
 window.getIsoDate = function (date) {
     return new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ))
             .toISOString()
@@ -421,4 +19,420 @@ window.calculateYears = function (from, to) {
     var diffMs = to - from;
     var diffDate = new Date(diffMs); // miliseconds from epoch
     return Math.abs(diffDate.getUTCFullYear() - 1970);
+}
+
+// Table data transformation
+window.transactions = window.transactions.map(function(transaction) {
+    if (transaction.date) {
+        transaction.date = new Date(Date.parse(transaction.date));
+        transaction.date.setHours(0, 0, 0, 0);
+    }
+
+    return transaction;
+});
+
+// Quantity chart data transformation
+window.quantities = window.quantities.map(function(quantity) {
+    quantity.date = new Date(Date.parse(quantity.date));
+    quantity.date.setHours(0, 0, 0, 0);
+    return quantity;
+});
+
+// Add a dummy value to quantity chart to draw beyon last value. Set date to next month. Values are copied from last value.
+window.quantities.push({
+    date: new Date(quantities[quantities.length - 1].date.getTime() + 30*24*60*60*1000),
+    quantity: quantities[quantities.length - 1].quantity,
+    schedule: quantities[quantities.length - 1].schedule,
+});
+
+window.summary = {
+    'Buying' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Selling' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Added': {
+        value : 0,
+        isCurrency : false,
+    },
+    'Removed': {
+        value : 0,
+        isCurrency : false,
+    },
+    'Dividend' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Commission' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Taxes' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Quantity' : {
+        value : 0,
+        isCurrency : false,
+    },
+    'Value' : {
+        value : 0,
+        isCurrency : true,
+    },
+    'Result' : {
+        value : 0,
+        isCurrency : true,
+    },
+};
+
+window.table = $('#table').DataTable({
+    data: transactions,
+    columns: [
+        {
+            data: "date",
+            title: "Date",
+            render: function (data, type) {
+                if (type === 'display' && data) {
+                    return data.toLocaleDateString('Hu-hu');
+                }
+
+                return data
+            },
+            className: "cell-no-break",
+        },
+        {
+            data: "transaction_name",
+            title: "Transaction",
+        },
+        {
+            data: "quantity",
+            title: "Quantity",
+            render: function(data) {
+                if (data !== null) {
+                    return data.toLocaleString('hu-HU');
+                }
+                return null;
+            }
+        },
+        {
+            data: "price",
+            title: "Price",
+            render: function (data) {
+                if (data === null) {
+                    return data;
+                }
+
+                return data.toLocalCurrency(investment.currency);
+            },
+        },
+        {
+            data: "dividend",
+            title: "Dividend",
+            render: function (data) {
+                if (data === null) {
+                    return data;
+                }
+
+                return data.toLocalCurrency(investment.currency);
+            },
+        },
+        {
+            data: "commission",
+            title: "Commission",
+            render: function (data) {
+                if (data === null) {
+                    return data;
+                }
+
+                return data.toLocalCurrency(investment.currency);
+            },
+        },
+        {
+            data: "tax",
+            title: "Tax",
+            render: function (data) {
+                if (data === null) {
+                    return data;
+                }
+
+                return data.toLocalCurrency(investment.currency);
+            },
+        },
+        {
+            title: "Amount",
+            render: function (data, type, row) {
+                var operator = row.amount_operator;
+                if (!operator) {
+                    return 0;
+                }
+                var result = (operator == 'minus'
+                        ? - row.price * row.quantity
+                        : row.dividend + row.price * row.quantity )
+                        - row.tax
+                        - row.commission;
+
+                return result.toLocalCurrency(investment.currency);
+            }
+        },
+        {
+            data: "id",
+            title: "Actions",
+            render: function (data, type, row) {
+                var actions = '' +
+                    '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="Make this the start date"></i></button> ' +
+                    '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
+                if (!row.schedule) {
+                    actions += '' +
+                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+                }
+
+                return actions;
+            },
+            orderable: false
+        }
+    ],
+    createdRow: function (row, data) {
+        if (data.schedule) {
+            $(row).addClass('text-muted text-italic');
+        }
+    },
+    order: [[ 0, 'asc' ]]
+});
+
+$("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
+    if (!confirm('Are you sure to want to delete this item?')) {
+        return;
+    }
+
+    let form = document.getElementById('form-delete');
+    form.action = route('transactions.destroy', {transaction: this.dataset.id});
+    form.submit();
+});
+
+$("#table").on("click", ".set-date", function(event) {
+    //TODO: catch invalid combinations
+    if (this.dataset.type === 'from') {
+        datepickerFrom.setDate(
+            new Date(this.dataset.date),
+            {
+                clear: true
+            }
+        );
+    } else {
+        datepickerTo.setDate(
+            new Date(this.dataset.date),
+            {
+                clear: true
+            }
+        );
+    }
+    window.table.draw();
+    window.calculateSummary.call();
+});
+
+// Initialize date filter inputs
+var datePickerStandardSettings = {
+    weekStart: 1,
+    todayBtn: true,
+    todayBtnMode: 1,
+    todayHighlight: true,
+    format: 'yyyy-mm-dd',
+    autohide: true,
+    buttonClass: 'btn',
+};
+
+// Get min and max dates from transactions
+window.minDate = new Date(Math.min(...transactions.map(e => e.date)));
+window.maxDate = new Date(Math.max(...transactions.map(e => e.date)));
+
+window.datepickerFrom = new Datepicker(document.getElementById('date_from'), datePickerStandardSettings);
+window.datepickerTo = new Datepicker(document.getElementById('date_to'), datePickerStandardSettings);
+
+document.getElementById('date_from').addEventListener("changeDate", function(event) {
+    datepickerTo.setOptions({
+        minDate: event.date,
+    });
+    window.table.draw();
+    window.calculateSummary.call();
+});
+
+document.getElementById('date_to').addEventListener("changeDate", function(event) {
+    datepickerFrom.setOptions({
+        maxDate: event.date,
+    });
+    window.table.draw();
+    window.calculateSummary.call();
+});
+
+// Summary calculations
+window.calculateSummary = function() {
+    var min = datepickerFrom.getDate();
+    var max = datepickerTo.getDate();
+
+    if (typeof max === 'undefined' || typeof min === 'undefined') {
+        return;
+    }
+
+    var filtered = transactions.filter(function(transaction) {
+        return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
+    });
+
+    window.summary.Buying.value = filtered.filter(trx => trx.transaction_name == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Added.value = filtered.filter(trx => trx.transaction_name == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Removed.value = filtered.filter(trx => trx.transaction_name == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Selling.value = filtered.filter(trx => trx.transaction_name == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
+    window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
+    window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);
+    window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
+
+    var lastPrice;
+    if (prices.length > 0) {
+        lastPrice = prices.slice(-1)[0].price;
+    } else if (filtered.filter(trx => !!trx.price).length > 0) {  //TODO: remove filter duplicate
+        lastPrice = filtered
+        .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
+        .sort(function (a, b) {
+            if (a.date.getTime() < b.date.getTime()) {
+                return 1;
+            }
+
+            if (a.date.getTime() > b.date.getTime()) {
+                return -1;
+            }
+
+            return 0;
+        })[0].price;
+    } else {
+        lastPrice = 1;
+    }
+
+    window.summary.Value.value = window.summary.Quantity.value * lastPrice;
+
+    // Final result
+    window.summary.Result.value =   window.summary.Selling.value
+                                    + window.summary.Dividend.value
+                                    + window.summary.Value.value
+                                    - window.summary.Buying.value
+                                    - window.summary.Commission.value
+                                    - window.summary.Taxes.value;
+
+    // Calculate ROI
+    var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
+    var years = calculateYears(datepickerTo.getDate(), datepickerFrom.getDate());
+    var AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
+    document.getElementById('summaryROI').innerHTML = (ROI * 100).toFixed(2) + '%';
+    document.getElementById('summaryAROI').innerHTML = (AROI * 100).toFixed(2) + '%';
+
+    // Assign calculated data to respective fields
+    for (var prop in window.summary) {
+        if (Object.prototype.hasOwnProperty.call(window.summary, prop)) {
+            document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency ? window.summary[prop].value.toLocalCurrency(investment.currency) : window.summary[prop].value.toLocaleString('hu-HU'));
+        }
+    }
+};
+
+window.dateReset = function() {
+    datepickerFrom.setDate(
+        minDate,
+        {
+            clear: true
+        }
+    );
+    datepickerFrom.setOptions({
+        maxDate: maxDate,
+    });
+
+    datepickerTo.setDate(
+        maxDate,
+        {
+            clear: true
+        }
+    );
+    datepickerTo.setOptions({
+        minDate: minDate,
+    });
+
+    window.table.draw();
+    window.calculateSummary.call();
+};
+window.dateReset.call();
+
+$("#clear_dates").on('click', dateReset);
+
+// Datatables filtering
+$.fn.dataTable.ext.search.push(
+    function (settings, data) {
+        var min = datepickerFrom.getDate();
+        var max = datepickerTo.getDate();
+        var date = new Date(data[0]);
+
+        return (date.getTime() >= min.getTime() && date.getTime() <= max.getTime());
+    }
+);
+
+// Initialize charts
+if (prices.length > 0) {
+    var chartPrice = am4core.create("chartPrice", am4charts.XYChart);
+    chartPrice.data = prices;
+
+    chartPrice.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+
+    var categoryAxis = chartPrice.xAxes.push(new am4charts.DateAxis());
+    categoryAxis.dataFields.category = "date";
+    var valueAxis = chartPrice.yAxes.push(new am4charts.ValueAxis());
+
+    var series = chartPrice.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "price";
+    series.dataFields.dateX = "date";
+    series.strokeWidth = 3;
+
+    var bullet = series.bullets.push(new am4charts.Bullet());
+    var square = bullet.createChild(am4core.Rectangle);
+    square.width = 5;
+    square.height = 5;
+    square.horizontalCenter = "middle";
+    square.verticalCenter = "middle";
+
+    var scrollbarX = new am4charts.XYChartScrollbar();
+    scrollbarX.series.push(series);
+    chartPrice.scrollbarX = scrollbarX;
+} else {
+    document.getElementById('chartPrice').remove();
+    document.getElementById('priceChartNoData').classList.remove('hidden');
+}
+
+if (quantities.length > 0) {
+    window.chartQuantity = am4core.create("chartQuantity", am4charts.XYChart);
+    chartQuantity.data = quantities;
+
+    var categoryAxis = chartQuantity.xAxes.push(new am4charts.DateAxis());
+    categoryAxis.dataFields.category = "date";
+    var valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
+
+    var seriesHistory = chartQuantity.series.push(new am4charts.StepLineSeries());
+    seriesHistory.dataFields.valueY = "quantity";
+    seriesHistory.dataFields.dateX = "date";
+    seriesHistory.strokeWidth = 3;
+    seriesHistory.startLocation = 1;
+
+    var seriesSchedule = chartQuantity.series.push(new am4charts.StepLineSeries());
+    seriesSchedule.dataFields.valueY = "schedule";
+    seriesSchedule.dataFields.dateX = "date";
+    seriesSchedule.strokeWidth = 3;
+    seriesSchedule.strokeDasharray = "3,3";
+    seriesSchedule.startLocation = 1;
+
+    var scrollbarX = new am4charts.XYChartScrollbar();
+    scrollbarX.series.push(seriesHistory);
+    scrollbarX.series.push(seriesSchedule);
+    chartQuantity.scrollbarX = scrollbarX;
+} else {
+    document.getElementById('chartQuantity').remove();
+    document.getElementById('quantityChartNoData').classList.remove('hidden');
 }

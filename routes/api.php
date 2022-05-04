@@ -17,6 +17,7 @@ Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiControll
 Route::get('/assets/investment/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getInvestmentDetails')->name('investment.getDetails');
 Route::get('/assets/investment/suffix/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getCurrencySuffix');
 Route::get('/assets/investment/price/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getPriceHistory');
+Route::put('/assets/investment/{investment}/active/{active}', 'App\Http\Controllers\API\InvestmentApiController@updateActive')->name('api.investment.updateActive');
 
 Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
 Route::post('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@storePayee')->name('api.payee.store');
