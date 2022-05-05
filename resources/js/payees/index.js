@@ -39,7 +39,7 @@ $('#table').DataTable({
             className: "text-center activeIcon",
         },
         {
-            data: "config.category_full_name",
+            data: "category_full_name",
             title: "Default category",
             render: function(data) {
                 return (data ? data : 'Not set');
@@ -47,7 +47,7 @@ $('#table').DataTable({
         },
         {
             // Display count of associated transactions
-            data: "total_transactions",
+            data: "transactions_count",
             title: "Transactions",
             render: function(data, type) {
                 if (type === 'display') {
@@ -92,10 +92,10 @@ $('#table').DataTable({
         }
     ],
     createdRow: function(row, data) {
-        if (!data.config.category_full_name) {
+        if (!data.category_full_name) {
             $('td:eq(3)', row).addClass("text-muted text-italic");
         }
-        if (data.total_transactions === 0) {
+        if (data.transactions_count === 0) {
             $('td:eq(4)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_min_date) {

@@ -65,98 +65,163 @@ class AccountEntityController extends Controller
     private function indexPayee()
     {
         // Show all payees of user from the database and return to view
-        $payees = Auth::user()
-            ->payees()
-            ->with(['config'])
-            // Get count of associated transactions
-            // We assume, that the same payee can never be used in the same transaction as account from and to. This might be handled better in the future.
-            ->withCount(['transactionDetailStandardFrom' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }])
-            ->withCount(['transactionDetailStandardTo' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }])
-            // Get first date of associated transactions
-            ->withMin(['transactionsFrom' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }], 'date')
-            ->withMin(['transactionsTo' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }], 'date')
-            // Get last date of associated transactions
-            ->withMax(['transactionsFrom' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }], 'date')
-            ->withMax(['transactionsTo' => function (Builder $query) {
-                $query->whereHas('config', function (Builder $query) {
-                    $query->where('schedule', '=', false)
-                        ->where('budget', '=', false);
-                });
-            }], 'date')
-            ->withCasts([
-                'transactions_to_min_date' => 'datetime',
-                'transactions_from_min_date' => 'datetime',
-                'transactions_to_max_date' => 'datetime',
-                'transactions_from_max_date' => 'datetime',
-            ])
-            ->get();
+        $payees = DB::select("
+            SELECT
+                base_data.id,
+                name,
+                active,
+                transactions_from_count + transactions_to_count AS transactions_count,
+                IF(
+                    transactions_from_min_date IS NULL OR transactions_to_min_date IS NULL,
+                    COALESCE(transactions_from_min_date, transactions_to_min_date),
+                    LEAST(transactions_from_min_date, transactions_to_min_date)
+                ) AS transactions_min_date,
+                IF(
+                    transactions_from_max_date IS NULL OR transactions_to_max_date IS NULL,
+                    COALESCE(transactions_from_max_date, transactions_to_max_date),
+                    GREATEST(transactions_from_max_date, transactions_to_max_date)
+                ) AS transactions_max_date,
+                payees.category_id
+
+            FROM (
+
+                select
+                    `account_entities` .*,
+                    (
+                    select
+                        count(*)
+                    from
+                        `transaction_details_standard`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and exists (
+                        select
+                            *
+                        from
+                            `transactions`
+                        where
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                            and `transactions`.`config_type` = 'transaction_detail_standard'
+                            and `schedule` = 0
+                            and `budget` = 0)) as `transactions_from_count`,
+                    (
+                    select
+                        count(*)
+                    from
+                        `transaction_details_standard`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and exists (
+                        select
+                            *
+                        from
+                            `transactions`
+                        where
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                            and `transactions`.`config_type` = 'transaction_detail_standard'
+                            and `schedule` = 0
+                            and `budget` = 0)) as `transactions_to_count`,
+                    (
+                    select
+                        min(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_from_min_date`,
+                    (
+                    select
+                        min(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_to_min_date`,
+                    (
+                    select
+                        max(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_from_max_date`,
+                    (
+                    select
+                        max(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_to_max_date`
+                    from
+                        `account_entities`
+                    where
+                        `account_entities`.`user_id` = ?
+                        and `account_entities`.`user_id` is not null
+                        and `config_type` = 'payee'
+                ) AS base_data
+
+                LEFT JOIN payees ON base_data.config_id = payees.id",
+            [Auth::user()->id]);
 
         // Get categories to display name
         $categories = Category::with(['parent'])->get();
 
         // Load additional data and make further calculations
-        $payees->map(function ($payee) use ($categories) {
+        array_map(function ($payee) use ($categories) {
             // Get full category name
-            if (is_null($payee->config->category_id)) {
-                $payee['config']['category_full_name'] = '';
+            if (is_null($payee->category_id)) {
+                $payee->category_full_name = '';
             } else {
-                $payee['config']['category_full_name'] = $categories->find($payee->config->category_id)->full_name;
-            }
-
-            // Calculate total amount of transactions
-            $payee['total_transactions'] = $payee['transaction_detail_standard_from_count'] + $payee['transaction_detail_standard_to_count'];
-
-            // Calculate first date of transactions based on first date of from and to transactions
-            // Compare dates if both are set, otherwise use the date that is set
-            if (is_null($payee['transactions_from_min_date']) && is_null($payee['transactions_to_min_date'])) {
-                $payee['transactions_min_date'] = null;
-            } elseif (is_null($payee['transactions_from_min_date'])) {
-                $payee['transactions_min_date'] = $payee['transactions_to_min_date'];
-            } elseif (is_null($payee['transactions_to_min_date'])) {
-                $payee['transactions_min_date'] = $payee['transactions_from_min_date'];
-            } else {
-                $payee['transactions_min_date'] = min($payee['transactions_from_min_date'], $payee['transactions_to_min_date']);
-            }
-
-            // Calculate last date of transactions based on last date of from and to transactions
-            // Compare dates if both are set, otherwise use the date that is set
-            if (is_null($payee['transactions_from_max_date']) && is_null($payee['transactions_to_max_date'])) {
-                $payee['transactions_max_date'] = null;
-            } elseif (is_null($payee['transactions_from_max_date'])) {
-                $payee['transactions_max_date'] = $payee['transactions_to_max_date'];
-            } elseif (is_null($payee['transactions_to_max_date'])) {
-                $payee['transactions_max_date'] = $payee['transactions_from_max_date'];
-            } else {
-                $payee['transactions_max_date'] = max($payee['transactions_from_max_date'], $payee['transactions_to_max_date']);
+                $payee->category_full_name = $categories->find($payee->category_id)->full_name;
             }
 
             return $payee;
-        });
+        }, $payees);
 
         // Pass data for DataTables
         JavaScript::put([
