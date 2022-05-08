@@ -15,8 +15,8 @@ class InvestmentSeeder extends Seeder
      */
     public function run(User $user)
     {
-        Investment::create(
-            [
+        Investment::factory()
+        ->create([
                 'name' => 'Magyar Telekom',
                 'active' => 1,
                 'symbol' => 'MTEL',
@@ -26,8 +26,8 @@ class InvestmentSeeder extends Seeder
             ]
         );
 
-        Investment::create(
-            [
+        Investment::factory()
+        ->create([
                 'name' => 'Disney',
                 'active' => 1,
                 'symbol' => 'DIS',
@@ -38,8 +38,8 @@ class InvestmentSeeder extends Seeder
             ]
         );
 
-        Investment::create(
-            [
+        Investment::factory()
+        ->create([
                 'name' => 'Euro investment',
                 'active' => 1,
                 'symbol' => 'E',
