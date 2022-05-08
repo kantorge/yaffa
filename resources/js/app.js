@@ -64,12 +64,20 @@ if (   window.location.pathname === '/account-entity'
     require('./payees/index');
 }
 
+if (/^\/payees\/merge/.test(window.location.pathname)) {
+    require('./payees/merge');
+}
+
 if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
     require('./account/history');
 }
 if (window.location.pathname === '/categories') {
     require('./categories/index');
 }
+if (/^\/categories\/merge/.test(window.location.pathname)) {
+    require('./categories/merge');
+}
+
 if (window.location.pathname === '/currencies') {
     require('./currencies/index');
 }

@@ -196,7 +196,7 @@ class MainController extends Controller
                 });
 
                 // Apply currency exchange, if necesary
-                if ($account->config->currency_id != $baseCurrency->id) {
+                if ($account->config->currency_id !== $baseCurrency->id) {
                     $account['sum_foreign'] = $account['sum'];
                     $account['sum'] *= $currencies->find($account->config->currency_id)->rate();
                 }
@@ -397,8 +397,9 @@ class MainController extends Controller
             'scheduleData' => $transactions
                 ->filter(function ($transaction) {
                     return $transaction->transactionGroup === 'schedule';
-                })->values(),
-            ]);
+                })
+                ->values(),
+        ]);
 
         return view(
             'account.history',

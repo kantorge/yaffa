@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PayeeApiController extends Controller
 {
@@ -36,7 +37,7 @@ class PayeeApiController extends Controller
                 ->orderBy('name')
                 ->take(10)
                 ->get();
-        } else {
+        } elseif ($request->get('account_id')) {
             // Account and transaction type is expected to be present
             $accountId = $request->get('account_id');
 
@@ -79,6 +80,9 @@ class PayeeApiController extends Controller
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get();
+        } else {
+            // Set payees to be empty
+            $payees = collect();
         }
 
         return response()->json($payees, Response::HTTP_OK);
@@ -274,5 +278,38 @@ class PayeeApiController extends Controller
         $newPayee->push();
 
         return $newPayee;
+    }
+
+    /* Get existing payees that are similar to the given name
+     * Optionally limit search to active or inactive payees
+     */
+    public function getSimilarPayees(Request $request)
+    {
+        $query = Str::lower($request->get('query'));
+        $withActive = $request->get('withActive');
+
+        // Get all payees of the user
+        $payees = Auth::user()
+            ->payees()
+            ->when($withActive, function ($query) {
+                return $query->where('active', true);
+            })
+            ->get(['id', 'name', 'active']);
+
+        // Filter payees by similarity to query
+        $payees = $payees->map(function ($payee) use ($query) {
+            similar_text($query, Str::lower($payee->name), $percentage);
+            $payee->percentage = $percentage;
+            return $payee;
+        })
+        ->filter(function ($payee) {
+            return true || $payee->percentage > 80;
+        })
+        ->sortByDesc('percentage')
+        ->take(5)
+        ->values();
+
+        // Return response with payees
+        return response($payees, Response::HTTP_OK);
     }
 }

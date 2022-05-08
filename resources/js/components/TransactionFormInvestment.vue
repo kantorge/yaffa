@@ -272,7 +272,7 @@
             data.form = new Form({
                 transaction_type: 'Buy',
                 config_type: 'transaction_detail_investment',
-                date: '',
+                date: new Date().toISOString().slice(0, 10),
                 comment: null,
                 schedule: false,
                 budget: false,

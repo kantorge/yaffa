@@ -76,4 +76,18 @@ class InvestmentApiController extends Controller
         // Return data
         return response()->json($prices, Response::HTTP_OK);
     }
+
+    public function updateActive(Investment $investment, $active)
+    {
+        $this->authorize('update', $investment);
+
+        $investment->active = $active;
+        $investment->save();
+
+        return response()
+            ->json(
+                $investment,
+                Response::HTTP_OK
+            );
+    }
 }

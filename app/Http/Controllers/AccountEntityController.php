@@ -9,6 +9,7 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Payee;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -22,8 +23,13 @@ class AccountEntityController extends Controller
     {
         $this->middleware('auth');
         $this->authorizeResource(AccountEntity::class);
+    }
 
-        // Check if known type is requested
+    /*
+     * Check if type parameter is provided and if it is valid. It is only needed if not running from CLI.
+     */
+    private function checkTypeParam(Request $request)
+    {
         if (! app()->runningInConsole() && (! $request->has('type') || ! in_array($request->type, ['account', 'payee']))) {
             abort(Response::HTTP_NOT_FOUND);
         }
@@ -36,10 +42,12 @@ class AccountEntityController extends Controller
      */
     public function index(Request $request)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'index'.Str::ucfirst($request->type)}();
     }
 
-    public function indexAccount()
+    private function indexAccount()
     {
         // Show all accounts of user from the database and return to view
         $accounts = Auth::user()
@@ -55,28 +63,166 @@ class AccountEntityController extends Controller
         return view('account.index');
     }
 
-    public function indexPayee()
+    private function indexPayee()
     {
         // Show all payees of user from the database and return to view
-        $payees = Auth::user()
-            ->payees()
-            ->with(['config'])
-            ->get();
+        $payees = DB::select("
+            SELECT
+                base_data.id,
+                name,
+                active,
+                transactions_from_count + transactions_to_count AS transactions_count,
+                IF(
+                    transactions_from_min_date IS NULL OR transactions_to_min_date IS NULL,
+                    COALESCE(transactions_from_min_date, transactions_to_min_date),
+                    LEAST(transactions_from_min_date, transactions_to_min_date)
+                ) AS transactions_min_date,
+                IF(
+                    transactions_from_max_date IS NULL OR transactions_to_max_date IS NULL,
+                    COALESCE(transactions_from_max_date, transactions_to_max_date),
+                    GREATEST(transactions_from_max_date, transactions_to_max_date)
+                ) AS transactions_max_date,
+                payees.category_id
+
+            FROM (
+
+                select
+                    `account_entities` .*,
+                    (
+                    select
+                        count(*)
+                    from
+                        `transaction_details_standard`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and exists (
+                        select
+                            *
+                        from
+                            `transactions`
+                        where
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                            and `transactions`.`config_type` = 'transaction_detail_standard'
+                            and `schedule` = 0
+                            and `budget` = 0)) as `transactions_from_count`,
+                    (
+                    select
+                        count(*)
+                    from
+                        `transaction_details_standard`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and exists (
+                        select
+                            *
+                        from
+                            `transactions`
+                        where
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                            and `transactions`.`config_type` = 'transaction_detail_standard'
+                            and `schedule` = 0
+                            and `budget` = 0)) as `transactions_to_count`,
+                    (
+                    select
+                        min(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_from_min_date`,
+                    (
+                    select
+                        min(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_to_min_date`,
+                    (
+                    select
+                        max(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_from_max_date`,
+                    (
+                    select
+                        max(`transactions`.`date`)
+                    from
+                        `transactions`
+                    inner join `transaction_details_standard` on
+                        `transaction_details_standard`.`id` = `transactions`.`config_id`
+                    where
+                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                            and exists (
+                            select
+                                *
+                            from
+                                `transaction_details_standard`
+                            where
+                                `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                and `schedule` = 0
+                                and `budget` = 0)))) as `transactions_to_max_date`
+                    from
+                        `account_entities`
+                    where
+                        `account_entities`.`user_id` = ?
+                        and `account_entities`.`user_id` is not null
+                        and `config_type` = 'payee'
+                ) AS base_data
+
+                LEFT JOIN payees ON base_data.config_id = payees.id",
+            [Auth::user()->id]);
 
         // Get categories to display name
         $categories = Category::with(['parent'])->get();
 
-        // Load additional data
-        $payees->map(function ($payee) use ($categories) {
-            // Full category name
-            if (is_null($payee->config->category_id)) {
-                $payee['config']['category_full_name'] = '';
+        // Load additional data and make further calculations
+        array_map(function ($payee) use ($categories) {
+            // Get full category name
+            if (is_null($payee->category_id)) {
+                $payee->category_full_name = '';
             } else {
-                $payee['config']['category_full_name'] = $categories->find($payee->config->category_id)->full_name;
+                $payee->category_full_name = $categories->find($payee->category_id)->full_name;
             }
 
             return $payee;
-        });
+        }, $payees);
 
         // Pass data for DataTables
         JavaScript::put([
@@ -93,10 +239,12 @@ class AccountEntityController extends Controller
      */
     public function create(Request $request)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'create'.Str::ucfirst($request->type)}();
     }
 
-    public function createAccount()
+    private function createAccount()
     {
         // Get all account groups
         $allAccountGroups = Auth::user()
@@ -136,7 +284,7 @@ class AccountEntityController extends Controller
         return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
 
-    public function createPayee()
+    private function createPayee()
     {
         return view('payee.form');
     }
@@ -149,6 +297,8 @@ class AccountEntityController extends Controller
      */
     public function store(AccountEntityRequest $request)
     {
+        $this->checkTypeParam($request);
+
         $validated = $request->validated();
 
         $accountEntity = new AccountEntity($validated);
@@ -187,10 +337,12 @@ class AccountEntityController extends Controller
      */
     public function edit(Request $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
     }
 
-    public function editAccount(AccountEntity $accountEntity)
+    private function editAccount(AccountEntity $accountEntity)
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
@@ -210,7 +362,7 @@ class AccountEntityController extends Controller
         );
     }
 
-    public function editPayee(AccountEntity $accountEntity)
+    private function editPayee(AccountEntity $accountEntity)
     {
         $accountEntity->load(['config']);
 
@@ -231,6 +383,8 @@ class AccountEntityController extends Controller
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         $validated = $request->validated();
 
         if ($validated['config_type'] === 'account') {
@@ -270,6 +424,8 @@ class AccountEntityController extends Controller
      */
     public function destroy(Request $request, AccountEntity $accountEntity)
     {
+        $this->checkTypeParam($request);
+
         try {
             // Try to delete config as well
             DB::transaction(function () use ($accountEntity) {
@@ -293,5 +449,76 @@ class AccountEntityController extends Controller
 
             return redirect()->back();
         }
+    }
+
+    /**
+     * Display a form to merge two payees.
+     *
+     * @param  \App\Models\AccountEntity $payeeSource
+     * @return \Illuminate\Http\Response
+     */
+    public function mergePayeesForm(?AccountEntity $payeeSource)
+    {
+        if ($payeeSource) {
+            JavaScript::put([
+                'payeeSource' => $payeeSource->toArray(),
+            ]);
+        }
+
+        return view('payee.merge');
+    }
+
+    /*
+     * Merge two payees.
+     */
+    public function mergePayees(Request $request)
+    {
+        $validated = $request->validate([
+            'payee_source' => [
+                'required',
+                'exists:account_entities,id,config_type,payee',
+            ],
+            'payee_target' => [
+                'required',
+                'exists:account_entities,id,config_type,payee',
+                'different:payee_source',
+            ],
+            'action' => [
+                'required',
+                'in:delete,close',
+            ],
+        ]);
+
+        // Wrap database transaction
+        DB::beginTransaction();
+        try {
+            // Update all transaction detail items with source payee to target payee
+            DB::table('transaction_details_standard')
+            ->where('account_from_id', $validated['payee_source'])
+            ->update(['account_from_id' => $validated['payee_target']]);
+
+            DB::table('transaction_details_standard')
+                ->where('account_to_id', $validated['payee_source'])
+                ->update(['account_to_id' => $validated['payee_target']]);
+
+            // Hydrate the source payee
+            $payeeSource = AccountEntity::find($validated['payee_source']);
+
+            // Delete or set active to false the source payee model, based on value of action field
+            if ($request->action === 'delete') {
+                $payeeSource->delete();
+            } else {
+                $payeeSource->active = false;
+                $payeeSource->push();
+            }
+
+            DB::commit();
+            self::addSimpleSuccessMessage('Payees merged');
+        } catch (\Exception $e) {
+            DB::rollback();
+            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+        }
+
+        return redirect()->route('account-entity.index', ['type' => 'payee']);
     }
 }

@@ -13,6 +13,7 @@
             <h3 class="box-title"></h3>
             <div class="pull-right box-tools">
                 <a href="/categories/create" class="btn btn-success" title="New category"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('categories.merge.form') }}" class="btn btn-primary" title="Merge categories"><i class="fa fa-random"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

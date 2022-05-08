@@ -119,14 +119,9 @@ class InvestmentPriceController extends Controller
     {
         $refill = false;
 
-        $date = Carbon::create('yesterday');
-        if (! $from) {
-            $from = Carbon::create('yesterday');
-        }
-
         $client = new GuzzleClient();
 
-        $res = $client->request('GET', 'https://www.alphavantage.co/query', [
+        $response = $client->request('GET', 'https://www.alphavantage.co/query', [
             'query' => [
                 'function' => 'TIME_SERIES_DAILY',
                 'datatype' => 'json',
@@ -136,20 +131,13 @@ class InvestmentPriceController extends Controller
             ],
         ]);
 
-        $obj = json_decode($res->getBody());
+        $obj = json_decode($response->getBody());
 
         foreach ($obj->{'Time Series (Daily)'} as $date => $daily_data) {
-            /*
-            // Skip item, if older than latest data, and no refill is needed
-            if (!$refill && Carbon::parse($date)->lessThanOrEqualTo($data['latestDate'])) {
+            // If the date is before the from date, skip it
+            if ($from && $from->gt(Carbon::createFromFormat('Y-m-d', $date))) {
                 continue;
             }
-
-            // Skip item, if older than first transaction data, even if refill is needed
-            if (Carbon::parse($date)->lessThanOrEqualTo($data['firstDate'])) {
-                continue;
-            }
-            */
 
             InvestmentPrice::updateOrCreate(
                 [

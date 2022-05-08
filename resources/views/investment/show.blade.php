@@ -23,7 +23,7 @@
                                 <dt>Symbol</dt>
                                 <dd>{{ $investment->symbol }}</dd>
                                 <dt>ISIN number</dt>
-                                <dd>{{ $investment->isin }}</dd>
+                                <dd>{!! ($investment->isin ? $investment->isin : '<span class="text-muted">Not set</span>') !!}</dd>
                                 <dt>Active</dt>
                                 <dd>
                                     @if($investment->active)

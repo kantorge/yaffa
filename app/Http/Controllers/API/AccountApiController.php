@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\TransactionType;
 use Illuminate\Http\Request;
@@ -13,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class AccountApiController extends Controller
 {
-    public function __construct(AccountEntity $account)
+    public function __construct()
     {
         $this->middleware('auth:sanctum');
     }

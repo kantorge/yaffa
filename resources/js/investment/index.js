@@ -1,9 +1,13 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
+import * as dataTableHelpers from './../components/dataTableHelper';
+
+// Get CSRF Token from meta tag
+const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
 $(function() {
     $('#table').DataTable({
-        data: investments.map(c => { c.investment_price_provider = c.investment_price_provider || {name: ''};return c;}),
+        data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || {name: ''};return c;}),
         columns: [
         {
             data: "id",
@@ -17,14 +21,9 @@ $(function() {
             data: "active",
             title: "Active",
             render: function (data, type) {
-                if (type == 'filter') {
-                    return  (data ? 'Yes' : 'No');
-                }
-                return (  data
-                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="fa fa-square text-danger" title="No"></i>');
+                return dataTableHelpers.booleanToTableIcon(data, type);
             },
-            className: "text-center",
+            className: "text-center activeIcon",
         },
         {
             data: "symbol",
@@ -70,7 +69,37 @@ $(function() {
             orderable: false
         }
         ],
-        order: [[ 1, 'asc' ]]
+        order: [[ 1, 'asc' ]],
+        initComplete : function(settings) {
+            $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function() {
+                var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+
+                // Change icon to spinner
+                $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
+
+                // Send request to change payee active state
+                $.ajax ({
+                    type: 'PUT',
+                    url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
+                    data: {
+                        "_token": csrfToken,
+                    },
+                    dataType: "json",
+                    context: this,
+                    success: function (data) {
+                        // Update row in table data souerce
+                        investments.filter(investment => investment.id === data.id)[0].active = data.active;
+                    },
+                    error: function (_data) {
+                        alert('Error changing investment active state');
+                    },
+                    complete: function(_data) {
+                        // Re-render row
+                        row.invalidate();
+                    }
+                });
+            });
+        }
     });
 
     $("#table").on("click", ".data-delete", function() {

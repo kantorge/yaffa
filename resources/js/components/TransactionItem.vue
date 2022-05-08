@@ -279,13 +279,6 @@
 </script>
 
 <style scoped>
-    /* TODO: decide on highlighting */
-    TBD.input.transaction_item_amount:focus {
-        width: 200%;
-        left: -100%;
-        box-shadow: -4px 3px 4px;
-    }
-
     @media (min-width: 576px) {
         .d-sm-none {
             display: none;
