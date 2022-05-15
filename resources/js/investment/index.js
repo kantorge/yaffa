@@ -42,19 +42,14 @@ $(function() {
             title: "Currency"
         },
         {
-            data: "investment_price_provider.name",
+            data: "investment_price_provider_name",
             title: "Price provider"
         },
         {
             data: "auto_update",
             title: "Auto update",
             render: function (data, type) {
-                if (type == 'filter') {
-                    return  (data ? 'Yes' : 'No');
-                }
-                return (  data
-                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="fa fa-square text-danger" title="No"></i>');
+                return dataTableHelpers.booleanToTableIcon(data, type);
             },
             className: "text-center",
         },
@@ -63,8 +58,8 @@ $(function() {
             title: "Actions",
             render: function (data) {
                 return '' +
-                    '<a href="' + route('investment.edit', data) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
+                    '<a href="' + route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
             },
             orderable: false
         }

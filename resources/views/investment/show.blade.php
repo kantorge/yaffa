@@ -40,9 +40,9 @@
                                     <dt>Comment</dt>
                                     <dd>{{ $investment->comment }}</dd>
                                 @endif
-                                @if($investment->investment_price_provider_id)
+                                @if($investment->investment_price_provider)
                                     <dt>Price provider</dt>
-                                    <dd>{{ $investment->investment_price_provider->name }}</dd>
+                                    <dd>{{ $investment->investment_price_provider_name }}</dd>
                                     <dt>Auto update</dt>
                                     <dd>
                                         @if($investment->auto_update)
@@ -157,7 +157,7 @@
                     <h3 class="box-title">Price history</h3>
                     <div class="box-tools pull-right">
                         <span class="label label-danger hidden" id="priceChartNoData">No data available</span>
-                        @if($investment->investment_price_provider_id)
+                        @if($investment->investment_price_provider)
                             <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-success" title="Load new price data">
                                 <span class="fa fa-cloud-download"></span>
                             </a>

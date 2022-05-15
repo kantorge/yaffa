@@ -33,7 +33,7 @@ class InvestmentSeeder extends Seeder
                 'symbol' => 'DIS',
                 'investment_group_id' => $user->investmentGroups()->where('name', 'Stock')->pluck('id')->first(),
                 'currency_id' => $user->currencies()->where('iso_code', 'USD')->pluck('id')->first(),
-                'investment_price_provider_id' => 1,
+                'investment_price_provider' => 'alpha_vantage',
                 'user_id' => $user->id,
             ]
         );

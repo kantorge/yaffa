@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
         if ($this->app->environment('local')) {
             $schedule->command('telescope:prune')->daily();
         }
+
+        // Run the investment price retrieval job
+        $schedule->job(new GetInvestmentPrices)->dailyAt('04:00');;
     }
 
     /**

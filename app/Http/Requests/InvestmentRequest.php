@@ -3,13 +3,21 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\FormRequest;
+use App\Models\Investment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\App;
 
 class InvestmentRequest extends FormRequest
 {
     public function rules()
     {
+        // Get all available investment price providers from Investment modell and add them to the validation rules
+        // Only array keys are used in the validation rules
+        $investmentPriceProviders = array_keys(
+                                        App::make(Investment::class)->getAllInvestmentPriceProviders()
+                                    );
+
         return [
             'name' => [
                 'required',
@@ -69,9 +77,9 @@ class InvestmentRequest extends FormRequest
                     return $query->where('user_id', Auth::user()->id);
                 }),
             ],
-            'investment_price_provider_id' => [
+            'investment_price_provider' => [
                 'nullable',
-                'exists:investment_price_providers,id',
+                Rule::in($investmentPriceProviders),
             ],
         ];
     }
@@ -87,7 +95,7 @@ class InvestmentRequest extends FormRequest
         $this->merge([
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
-            'investment_price_provider_id' => $this->investment_price_provider_id ?? null,
+            'investment_price_provider' => $this->investment_price_provider ?? null,
         ]);
     }
 }

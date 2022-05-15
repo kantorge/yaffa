@@ -37,7 +37,6 @@ class InvestmentController extends Controller
             ->with([
                 'currency',
                 'investment_group',
-                'investment_price_provider'
             ])
             ->get();
 
@@ -138,7 +137,6 @@ class InvestmentController extends Controller
         $investment->load([
             'investment_group',
             'currency',
-            'investment_price_provider',
         ]);
 
         // Get all transactions related to selected investment

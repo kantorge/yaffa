@@ -153,7 +153,7 @@ class InvestmentTest extends TestCase
                     'investment_group_id' => $investment->investment_group_id,
                     'currency_id' => $investment->currency_id,
                     'auto_update' => $investment->auto_update,
-                    'investent_price_provider_id' => $investment->investment_price_provider_id,
+                    'investent_price_provider' => $investment->investment_price_provider,
                 ]
             );
 
@@ -184,7 +184,7 @@ class InvestmentTest extends TestCase
                     'investment_group_id' => $investment->investment_group_id,
                     'currency_id' => $investment->currency_id,
                     'auto_update' => $investment->auto_update,
-                    'investent_price_provider_id' => $investment->investment_price_provider_id,
+                    'investent_price_provider' => $investment->investment_price_provider,
                 ]
             );
 
