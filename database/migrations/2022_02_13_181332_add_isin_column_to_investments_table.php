@@ -14,7 +14,7 @@ class AddIsinColumnToInvestmentsTable extends Migration
     public function up()
     {
         Schema::table('investments', function (Blueprint $table) {
-            $table->string('isin', 12)->after('symbol');
+            $table->string('isin', 12)->after('symbol')->nullable();
         });
     }
 
