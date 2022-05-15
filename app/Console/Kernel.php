@@ -26,8 +26,9 @@ class Kernel extends ConsoleKernel
             $schedule->command('telescope:prune')->daily();
         }
 
-        // Run the investment price retrieval job
-        $schedule->job(new GetInvestmentPrices)->dailyAt('04:00');;
+        // Run the investment price retrieval command
+
+        $schedule->command('app:investment-prices:get')->dailyAt('04:00');;
     }
 
     /**
