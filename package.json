@@ -30,7 +30,7 @@
         "vue": "^3.2.31"
     },
     "dependencies": {
-        "@amcharts/amcharts4": "^4.10.24",
+        "@amcharts/amcharts4": "^4.10.25",
         "currency.js": "^2.0.4",
         "datatables.net": "^1.11.5",
         "datatables.net-bs": "^1.11.5",
