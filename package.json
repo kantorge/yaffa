@@ -33,7 +33,7 @@
         "@amcharts/amcharts4": "^4.10.24",
         "currency.js": "^2.0.4",
         "datatables.net": "^1.11.5",
-        "datatables.net-bs": "^1.11.5",
+        "datatables.net-bs": "^1.12.1",
         "mathjs": "^9.5.2",
         "overlayscrollbars": "^1.13.1",
         "rrule": "^2.6.9",
