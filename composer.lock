@@ -1442,16 +1442,16 @@
         },
         {
             "name": "enlightn/enlightn",
-            "version": "v1.25.0",
+            "version": "v1.26.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/enlightn/enlightn.git",
-                "reference": "418ee027a7fefb72b725c8af7c3663ae01024526"
+                "reference": "1937be5e6bd3142dfd03de90927ddd571f16477c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/enlightn/enlightn/zipball/418ee027a7fefb72b725c8af7c3663ae01024526",
-                "reference": "418ee027a7fefb72b725c8af7c3663ae01024526",
+                "url": "https://api.github.com/repos/enlightn/enlightn/zipball/1937be5e6bd3142dfd03de90927ddd571f16477c",
+                "reference": "1937be5e6bd3142dfd03de90927ddd571f16477c",
                 "shasum": ""
             },
             "require": {
@@ -1523,9 +1523,9 @@
             "support": {
                 "docs": "https://www.laravel-enlightn.com/docs/",
                 "issues": "https://github.com/enlightn/enlightn/issues",
-                "source": "https://github.com/enlightn/enlightn/tree/v1.25.0"
+                "source": "https://github.com/enlightn/enlightn/tree/v1.26.0"
             },
-            "time": "2022-02-22T00:30:44+00:00"
+            "time": "2022-06-11T10:46:25+00:00"
         },
         {
             "name": "enlightn/security-checker",
@@ -2366,16 +2366,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v8.83.15",
+            "version": "v8.83.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "bf8fbdd9061611b2c05562fa14f6987cc5145d78"
+                "reference": "6be5abd144faf517879af7298e9d79f06f250f75"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/bf8fbdd9061611b2c05562fa14f6987cc5145d78",
-                "reference": "bf8fbdd9061611b2c05562fa14f6987cc5145d78",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/6be5abd144faf517879af7298e9d79f06f250f75",
+                "reference": "6be5abd144faf517879af7298e9d79f06f250f75",
                 "shasum": ""
             },
             "require": {
@@ -2535,7 +2535,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2022-05-31T14:57:02+00:00"
+            "time": "2022-06-07T15:09:06+00:00"
         },
         {
             "name": "laravel/sanctum",
@@ -2724,16 +2724,16 @@
         },
         {
             "name": "league/commonmark",
-            "version": "2.3.2",
+            "version": "2.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/commonmark.git",
-                "reference": "6eddb90a9e4a1a8c5773226068fcfb48cb36812a"
+                "reference": "0da1dca5781dd3cfddbe328224d9a7a62571addc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/6eddb90a9e4a1a8c5773226068fcfb48cb36812a",
-                "reference": "6eddb90a9e4a1a8c5773226068fcfb48cb36812a",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/0da1dca5781dd3cfddbe328224d9a7a62571addc",
+                "reference": "0da1dca5781dd3cfddbe328224d9a7a62571addc",
                 "shasum": ""
             },
             "require": {
@@ -2826,7 +2826,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-06-03T14:07:39+00:00"
+            "time": "2022-06-07T21:28:26+00:00"
         },
         {
             "name": "league/config",
@@ -3134,16 +3134,16 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "2.6.0",
+            "version": "2.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "247918972acd74356b0a91dfaa5adcaec069b6c0"
+                "reference": "5579edf28aee1190a798bfa5be8bc16c563bd524"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/247918972acd74356b0a91dfaa5adcaec069b6c0",
-                "reference": "247918972acd74356b0a91dfaa5adcaec069b6c0",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/5579edf28aee1190a798bfa5be8bc16c563bd524",
+                "reference": "5579edf28aee1190a798bfa5be8bc16c563bd524",
                 "shasum": ""
             },
             "require": {
@@ -3222,7 +3222,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/2.6.0"
+                "source": "https://github.com/Seldaek/monolog/tree/2.7.0"
             },
             "funding": [
                 {
@@ -3234,7 +3234,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-05-10T09:36:00+00:00"
+            "time": "2022-06-09T08:59:12+00:00"
         },
         {
             "name": "nesbot/carbon",
@@ -8057,16 +8057,16 @@
         },
         {
             "name": "imanghafoori/laravel-microscope",
-            "version": "v1.0.245",
+            "version": "v1.0.249",
             "source": {
                 "type": "git",
                 "url": "https://github.com/imanghafoori1/laravel-microscope.git",
-                "reference": "c24c018ae927d2f458b5d485d4b4ebc6c08fda02"
+                "reference": "b4f7183933f7d85f310201322e06c2e772905411"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imanghafoori1/laravel-microscope/zipball/c24c018ae927d2f458b5d485d4b4ebc6c08fda02",
-                "reference": "c24c018ae927d2f458b5d485d4b4ebc6c08fda02",
+                "url": "https://api.github.com/repos/imanghafoori1/laravel-microscope/zipball/b4f7183933f7d85f310201322e06c2e772905411",
+                "reference": "b4f7183933f7d85f310201322e06c2e772905411",
                 "shasum": ""
             },
             "require": {
@@ -8117,9 +8117,9 @@
             ],
             "support": {
                 "issues": "https://github.com/imanghafoori1/laravel-microscope/issues",
-                "source": "https://github.com/imanghafoori1/laravel-microscope/tree/v1.0.245"
+                "source": "https://github.com/imanghafoori1/laravel-microscope/tree/v1.0.249"
             },
-            "time": "2022-06-03T23:31:06+00:00"
+            "time": "2022-06-14T19:15:12+00:00"
         },
         {
             "name": "imanghafoori/php-abstract-filesystem",
@@ -8223,16 +8223,16 @@
         },
         {
             "name": "imanghafoori/php-token-analyzer",
-            "version": "v0.1.32",
+            "version": "v0.1.34",
             "source": {
                 "type": "git",
                 "url": "https://github.com/imanghafoori1/php_token_analyzer.git",
-                "reference": "053c7c5b1283d19ae2e61110302eda957faf490a"
+                "reference": "69bd09b9972490eb4428f46cdde7e07929e374f6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imanghafoori1/php_token_analyzer/zipball/053c7c5b1283d19ae2e61110302eda957faf490a",
-                "reference": "053c7c5b1283d19ae2e61110302eda957faf490a",
+                "url": "https://api.github.com/repos/imanghafoori1/php_token_analyzer/zipball/69bd09b9972490eb4428f46cdde7e07929e374f6",
+                "reference": "69bd09b9972490eb4428f46cdde7e07929e374f6",
                 "shasum": ""
             },
             "require": {
@@ -8266,9 +8266,9 @@
             ],
             "support": {
                 "issues": "https://github.com/imanghafoori1/php_token_analyzer/issues",
-                "source": "https://github.com/imanghafoori1/php_token_analyzer/tree/v0.1.32"
+                "source": "https://github.com/imanghafoori1/php_token_analyzer/tree/v0.1.34"
             },
-            "time": "2022-06-04T22:17:43+00:00"
+            "time": "2022-06-08T21:55:00+00:00"
         },
         {
             "name": "imanghafoori/smart-realtime-facades",
@@ -9422,16 +9422,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "1.5.1",
+            "version": "1.6.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "981cc368a216c988e862a75e526b6076987d1b50"
+                "reference": "4a07085f74cb1f3fc7103efa537d9f00ebb74ec7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/981cc368a216c988e862a75e526b6076987d1b50",
-                "reference": "981cc368a216c988e862a75e526b6076987d1b50",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/4a07085f74cb1f3fc7103efa537d9f00ebb74ec7",
+                "reference": "4a07085f74cb1f3fc7103efa537d9f00ebb74ec7",
                 "shasum": ""
             },
             "require": {
@@ -9441,6 +9441,7 @@
                 "php-parallel-lint/php-parallel-lint": "^1.2",
                 "phpstan/extension-installer": "^1.0",
                 "phpstan/phpstan": "^1.5",
+                "phpstan/phpstan-phpunit": "^1.1",
                 "phpstan/phpstan-strict-rules": "^1.0",
                 "phpunit/phpunit": "^9.5",
                 "symfony/process": "^5.2"
@@ -9460,9 +9461,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.5.1"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.6.3"
             },
-            "time": "2022-05-05T11:32:40+00:00"
+            "time": "2022-06-14T11:40:08+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -11037,16 +11038,16 @@
         },
         {
             "name": "squizlabs/php_codesniffer",
-            "version": "3.6.2",
+            "version": "3.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/squizlabs/PHP_CodeSniffer.git",
-                "reference": "5e4e71592f69da17871dba6e80dd51bce74a351a"
+                "reference": "a2cd51b45bcaef9c1f2a4bda48f2dd2fa2b95563"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/5e4e71592f69da17871dba6e80dd51bce74a351a",
-                "reference": "5e4e71592f69da17871dba6e80dd51bce74a351a",
+                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/a2cd51b45bcaef9c1f2a4bda48f2dd2fa2b95563",
+                "reference": "a2cd51b45bcaef9c1f2a4bda48f2dd2fa2b95563",
                 "shasum": ""
             },
             "require": {
@@ -11089,7 +11090,7 @@
                 "source": "https://github.com/squizlabs/PHP_CodeSniffer",
                 "wiki": "https://github.com/squizlabs/PHP_CodeSniffer/wiki"
             },
-            "time": "2021-12-12T21:44:58+00:00"
+            "time": "2022-06-13T06:31:38+00:00"
         },
         {
             "name": "symfony/cache",
@@ -11329,6 +11330,7 @@
                     "type": "tidelift"
                 }
             ],
+            "abandoned": "symfony/error-handler",
             "time": "2022-04-12T15:19:55+00:00"
         },
         {
