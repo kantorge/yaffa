@@ -18,7 +18,7 @@ use JavaScript;
 
 class AccountEntityController extends Controller
 {
-    public function __construct(Request $request)
+    public function __construct()
     {
         $this->middleware('auth');
         $this->authorizeResource(AccountEntity::class);

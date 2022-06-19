@@ -68,7 +68,7 @@ class TransactionDetailStandardFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $accounts = AccountEntity::where('config_type', 'account')->inRandomOrder()->take(2)->get();
-            $amount = $this->faker->numberBetween($min = 1, $max = 100);
+            $amount = $this->faker->numberBetween(1, 100);
 
             return [
                 'amount_from' => $amount,
