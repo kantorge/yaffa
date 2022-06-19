@@ -1,35 +1,35 @@
-const pluralize = require("pluralize")
+const pluralize = require('pluralize');
 
 // Import dataTable helper functions, used to display transaction icons
 import * as dataTableHelpers from './../components/dataTableHelper'
 
 const ApiParameterNames = new Map([
-    ['account', 'accounts'],
-    ['payee', 'payees'],
-    ['category', 'categories'],
-    ['tag', 'tags'],
+  ['account', 'accounts'],
+  ['payee', 'payees'],
+  ['category', 'categories'],
+  ['tag', 'tags'],
 ]);
 
 // Common function to get transaction count for specific result types
 var getTransactionCount = function (element) {
-    var type = element.dataset.type;
-    var apiParameterName = ApiParameterNames.get(type) + '[]';
-    var id = element.dataset.id;
+  var type = element.dataset.type;
+  var apiParameterName = ApiParameterNames.get(type) + '[]';
+  var id = element.dataset.id;
 
-    // Get the count from the API
-    fetch(`/api/transactions/?only_count=1&${apiParameterName}=${id}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.count === 0) {
-            element.innerHTML = '<span class="label label-default">No transactions</span>';
-        } else {
-            element.innerHTML = '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="View transactions" class="label label-info">' + pluralize('transaction', data.count, true)  + '</a>';
-        }
-        element.classList.remove('hidden');
-    })
-    .catch(error => {
-        console.log(error);
-    });
+  // Get the count from the API
+  fetch(`/api/transactions/?only_count=1&${apiParameterName}=${id}`)
+  .then(response => response.json())
+  .then(data => {
+    if (data.count === 0) {
+      element.innerHTML = '<span class="label label-default">No transactions</span>';
+    } else {
+      element.innerHTML = '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="View transactions" class="label label-info">' + pluralize('transaction', data.count, true)  + '</a>';
+    }
+    element.classList.remove('hidden');
+  })
+  .catch(error => {
+    console.log(error);
+  });
 }
 
 // Loop the span placeholder for all the account results, and get the number of associated transactions for each account.
