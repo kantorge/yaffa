@@ -12,7 +12,6 @@
     },
     "devDependencies": {
         "@vue/compiler-sfc": "^3.2.31",
-        "axios": "^0.21.4",
         "bootstrap": "^4.6.1",
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.1",
@@ -31,11 +30,13 @@
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.25",
+        "axios": "^0.21.4",
         "currency.js": "^2.0.4",
-        "datatables.net-bs": "^1.12.1",
         "datatables.net": "^1.12.1",
+        "datatables.net-bs": "^1.12.1",
         "mathjs": "^9.5.2",
         "overlayscrollbars": "^1.13.1",
+        "pluralize": "^8.0.0",
         "rrule": "^2.6.9",
         "select2": "^4.0.13",
         "v-calendar": "^3.0.0-alpha.8",

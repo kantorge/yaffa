@@ -238,6 +238,9 @@ class TransactionApiController extends Controller
 
     public function findTransactions(Request $request)
     {
+        // Check if only count is requested
+        $onlyCount = $request->has('only_count');
+
         if (! $request->hasAny([
             'date_from',
             'date_to',
@@ -247,7 +250,8 @@ class TransactionApiController extends Controller
             'tags'])) {
             return response()->json(
                 [
-                    'data' => []
+                    'data' => [],
+                    'count' => 0,
                 ],
                 Response::HTTP_OK
             );
@@ -256,7 +260,7 @@ class TransactionApiController extends Controller
         $user = Auth::user();
 
         // Get standard transactions matching any provided criteria
-        $standardTransactions = Transaction::where('user_id', $user->id)
+        $standardQuery = Transaction::where('user_id', $user->id)
             ->where('schedule', 0)
             ->where('budget', 0)
             ->where('config_type', 'transaction_detail_standard')
@@ -299,7 +303,21 @@ class TransactionApiController extends Controller
                                 ->whereIn('tag_id', $request->get('tags'));
                         });
                 });
-            })
+            });
+
+        // Return only count of transactions if requested
+        if ($onlyCount) {
+            $count = $standardQuery->count();
+            return response()->json(
+                [
+                    'data' => [],
+                    'count' => $count,
+                ],
+                Response::HTTP_OK
+            );
+        }
+
+        $standardTransactions = $standardQuery
             ->with([
                 'config',
                 'transactionType',

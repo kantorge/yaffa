@@ -197,6 +197,12 @@ class AccountApiController extends Controller
         return $accountEntity->config->currency->suffix;
     }
 
+    /**
+     * Get the account entity for the given id.
+     *
+     * @param AccountEntity $accountEntity
+     * @return Response
+     */
     public function getItem(AccountEntity $accountEntity)
     {
         $this->authorize('view', $accountEntity);
