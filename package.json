@@ -32,10 +32,11 @@
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.25",
         "currency.js": "^2.0.4",
-        "datatables.net-bs": "^1.12.1",
         "datatables.net": "^1.12.1",
+        "datatables.net-bs": "^1.12.1",
         "mathjs": "^9.5.2",
         "overlayscrollbars": "^1.13.1",
+        "pluralize": "^8.0.0",
         "rrule": "^2.6.9",
         "select2": "^4.0.13",
         "v-calendar": "^3.0.0-alpha.8",

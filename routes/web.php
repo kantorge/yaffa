@@ -10,6 +10,7 @@ use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
@@ -113,5 +114,8 @@ Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->n
 // Routes to display form to merge two categories
 Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+
+// Route(s) for search related functionality
+Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 Auth::routes();
