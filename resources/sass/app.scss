@@ -1,18 +1,18 @@
 // Sidebar select fix
 .skin-blue .sidebar-form select {
-  box-shadow: none;
-  background-color: #374850;
-  border: 1px solid transparent;
-  height: 35px;
-  color: #666;
-  border-top-left-radius: 2px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 2px;
+    box-shadow: none;
+    background-color: #374850;
+    border: 1px solid transparent;
+    height: 35px;
+    color: #666;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 2px;
 }
 .skin-blue .sidebar-form select:focus {
-  background-color: #fff;
-  color: #666;
+    background-color: #fff;
+    color: #666;
 }
 
 td.dt-nowrap {

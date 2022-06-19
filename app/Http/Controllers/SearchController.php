@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class SearchController extends Controller
 {
@@ -19,7 +18,7 @@ class SearchController extends Controller
         $searchTerm = $request->get('q');
         $results = [];
 
-        if ($searchTerm && Str::length($searchTerm) > 2) {
+        if ($searchTerm && mb_strlen($searchTerm) > 2) {
             // Search for accounts of the user
             $results['accounts'] = $this->searchAccounts($searchTerm);
 

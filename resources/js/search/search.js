@@ -1,4 +1,4 @@
-var pluralize = require('pluralize')
+const pluralize = require("pluralize")
 
 // Import dataTable helper functions, used to display transaction icons
 import * as dataTableHelpers from './../components/dataTableHelper'
