@@ -288,8 +288,9 @@ $(function() {
                     return  '' +
                             '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'edit'}) : route('transactions.openInvestment', {transaction: data, action: 'edit'})) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
+                            dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
+                            dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                            dataTableHelpers.dataTablesActionButton(data, 'delete');
                 },
                 orderable: false
             }
