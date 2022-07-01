@@ -32,8 +32,8 @@ class ReportController extends Controller
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
      *
-     * @param  Illuminate\Http\Request $request
-     * @return Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
      */
     public function budgetChart(Request $request)
     {
@@ -280,7 +280,7 @@ class ReportController extends Controller
             ->get();
 
         $requestedCategories->each(function ($category) use (&$categories) {
-            if (is_null($category->parent_id)) {
+            if ($category->parent_id === null) {
                 $children = Auth::user()
                     ->categories()
                     ->where('parent_id', '=', $category->id)

@@ -2,8 +2,9 @@
 
 namespace App\Http\View\Composers;
 
-use App\Models\InvestmentPriceProvider;
+use App\Models\Investment;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\App;
 
 class InvestmentPriceProviderListComposer
 {
@@ -15,7 +16,8 @@ class InvestmentPriceProviderListComposer
      */
     public function compose(View $view)
     {
-        $allInvestmentPriceProviders = InvestmentPriceProvider::pluck('name', 'id')->all();
+        $investment = App::make(Investment::class);
+        $allInvestmentPriceProviders = $investment->getAllInvestmentPriceProviders();
 
         $view->with('allInvestmentPriceProviders', $allInvestmentPriceProviders);
     }

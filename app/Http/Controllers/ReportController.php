@@ -253,10 +253,27 @@ class ReportController extends Controller
         );
     }
 
-    public function transactionsByCriteria()
+    /**
+     * Display form for searching transactions. Pass any preset filters from query string.
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function transactionsByCriteria(Request $request)
     {
-        return view(
-            'reports.transactions'
-        );
+        // Get preset filters from query string
+        $filters = [];
+        if ($request->has('accounts')) {
+            $filters['accounts'] = $request->get('accounts');
+        }
+        if ($request->has('payees')) {
+            $filters['payees'] = $request->get('payees');
+        }
+
+        JavaScript::put([
+            'filters' => $filters,
+        ]);
+
+        return view('reports.transactions');
     }
 }

@@ -625,6 +625,11 @@
             if (urlParams.get('account_from')) {
                 this.form.config.account_from_id = urlParams.get('account_from');
             }
+            /* TODO: planned function to set account_to from URL
+            if (urlParams.get('account_to')) {
+                this.form.config.account_to_id = urlParams.get('account_to');
+            }
+            */
 
             // Set form action
             this.form.action = this.action;

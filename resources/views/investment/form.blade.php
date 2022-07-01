@@ -190,30 +190,30 @@
             </div>
 
             <div class="form-group">
-                <label for="investment_price_provider_id" class="control-label col-sm-3">
+                <label for="investment_price_provider" class="control-label col-sm-3">
                     Price provider
                 </label>
                 <div class="col-sm-9">
                     <select
                         class="form-control"
-                        id="investment_price_provider_id"
-                        name="investment_price_provider_id"
+                        id="investment_price_provider"
+                        name="investment_price_provider"
                     >
                         <option value=''> < No price provider ></option>
-                        @forelse($allInvestmentPriceProviders as $id => $name)
+                        @forelse($allInvestmentPriceProviders as $id => $properties)
                             <option
                                 value="{{ $id }}"
                                 @if (old())
-                                    @if (old('investment_price_provider_id') == $id)
+                                    @if (old('investment_price_provider') == $id)
                                         selected="selected"
                                     @endif
                                 @elseif(isset($investment))
-                                    @if ($investment['investment_price_provider_id'] == $id)
+                                    @if ($investment['investment_price_provider'] == $id)
                                         selected="selected"
                                     @endif
                                 @endif
                             >
-                                {{ $name }}
+                                {{ $properties['name'] }}
                             </option>
                         @empty
 

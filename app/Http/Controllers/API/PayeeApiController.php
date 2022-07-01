@@ -312,4 +312,23 @@ class PayeeApiController extends Controller
         // Return response with payees
         return response($payees, Response::HTTP_OK);
     }
+
+    /**
+     * Get the payee entity and main attributes for the given id
+     *
+     * @param AccountEntity $accountEntity
+     * @return Response
+     */
+    public function getItem(AccountEntity $accountEntity)
+    {
+        $this->authorize('view', $accountEntity);
+
+        $accountEntity->load(['config', 'config.category']);
+
+        return response()
+            ->json(
+                $accountEntity,
+                Response::HTTP_OK
+            );
+    }
 }

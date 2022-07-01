@@ -138,6 +138,10 @@ if (window.location.pathname === '/reports/transactions') {
     require('./reports/transactions');
 }
 
+if (window.location.pathname === '/search') {
+    require('./search/search');
+}
+
 $(function() {
     // Generally available account selector
     $('#jump_to_account').on('change', function() {

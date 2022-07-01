@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\API\AccountApiController;
+use App\Http\Controllers\API\PayeeApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
 Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiController@getStandardList');
 Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiController@getInvestmentList');
-Route::get('/assets/account/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getItem');
+Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
 Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
@@ -21,6 +23,7 @@ Route::put('/assets/investment/{investment}/active/{active}', 'App\Http\Controll
 
 Route::get('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@getList');
 Route::post('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@storePayee')->name('api.payee.store');
+Route::get('/assets/payee/{accountEntity}', [PayeeApiController::class, 'getItem']);
 Route::get('/assets/payee/similar', 'App\Http\Controllers\API\PayeeApiController@getSimilarPayees')->name('api.payee.similar');
 
 Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');

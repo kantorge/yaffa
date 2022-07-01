@@ -4,12 +4,12 @@
     <!-- sidebar: style can be found in sidebar.less -->
     <section class="sidebar">
 
-    <!-- search form (Optional) -->
-    <form action="#" method="get" class="sidebar-form">
+    <!-- search form -->
+    <form action="{{ route('search') }}" method="get" class="sidebar-form">
         <div class="input-group">
-        <input type="text" name="q" class="form-control" placeholder="Search...">
+        <input type="text" name="q" class="form-control" placeholder="Search..." autocomplete="off">
         <span class="input-group-btn">
-            <button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
+            <button type="submit" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
             </button>
             </span>
         </div>

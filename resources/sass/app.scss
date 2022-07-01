@@ -1,18 +1,18 @@
 // Sidebar select fix
 .skin-blue .sidebar-form select {
-  box-shadow: none;
-  background-color: #374850;
-  border: 1px solid transparent;
-  height: 35px;
-  color: #666;
-  border-top-left-radius: 2px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 2px;
+    box-shadow: none;
+    background-color: #374850;
+    border: 1px solid transparent;
+    height: 35px;
+    color: #666;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 2px;
 }
 .skin-blue .sidebar-form select:focus {
-  background-color: #fff;
-  color: #666;
+    background-color: #fff;
+    color: #666;
 }
 
 td.dt-nowrap {
@@ -46,4 +46,27 @@ td.dt-nowrap {
 /* Dynamic, clickable icons in DataTables */
 table.dataTable td.activeIcon > i:not(.fa-spinner) {
     cursor: pointer;
+}
+
+/* Font Awesome Icons as bullet list for search result */
+ul.custom-fa-bullet-list {
+    list-style: none;
+}
+
+ul.search-result-list li {
+    margin: 5px 0;
+}
+
+ul.search-result-list li.active:before {
+    font-family: 'FontAwesome';
+    content: '\f111';
+    margin:0 5px 0 -15px;
+    color: #00a65a;
+}
+
+ul.search-result-list li.inactive:before {
+    font-family: 'FontAwesome';
+    content: '\f10c';
+    margin:0 5px 0 -15px;
+    color: #d33724;
 }
