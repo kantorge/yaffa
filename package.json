@@ -11,22 +11,22 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
-        "@vue/compiler-sfc": "^3.2.31",
+        "@vue/compiler-sfc": "^3.2.37",
         "bootstrap": "^4.6.1",
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.1",
         "file-loader": "^6.2.0",
         "jquery": "^3.6",
-        "laravel-mix": "^6.0.43",
+        "laravel-mix": "^6.0.49",
         "lodash": "^4.17.21",
-        "mini-css-extract-plugin": "^2.6.0",
+        "mini-css-extract-plugin": "^2.6.1",
         "node-sass": "^7.0.1",
         "popper.js": "^1.16.1",
-        "postcss": "^8.4.12",
+        "postcss": "^8.4.14",
         "resolve-url-loader": "^4.0.0",
-        "sass": "^1.49.9",
+        "sass": "^1.53.0",
         "sass-loader": "^12.6.0",
-        "vue": "^3.2.31"
+        "vue": "^3.2.37"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.25",
@@ -37,7 +37,7 @@
         "mathjs": "^9.5.2",
         "overlayscrollbars": "^1.13.2",
         "pluralize": "^8.0.0",
-        "rrule": "^2.6.9",
+        "rrule": "^2.7.0",
         "select2": "^4.0.13",
         "v-calendar": "^3.0.0-alpha.8",
         "vanillajs-datepicker": "^1.2.0",
