@@ -100,6 +100,17 @@ class Transaction extends Model
         return $categories;
     }
 
+    /**
+     * Create a scope for basic transactions, which are neither scheduled nor budgeted.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeBasicTransaction($query)
+    {
+        return $query->where('schedule', false)->where('budget', false);
+    }
+
     //TODO: how this can be achieved without converting data to array AND without additional database queries
     public function getTagsArray()
     {

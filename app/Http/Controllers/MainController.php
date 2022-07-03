@@ -88,8 +88,7 @@ class MainController extends Controller
                         'transactionType',
                     ]
                 )
-                ->where('schedule', 0)
-                ->where('budget', 0)
+                ->basicTransaction()
                 ->where('transaction_type_id', '=', $transactionTypeTransfer->id)
                 ->whereHasMorph(
                     'config',
@@ -255,8 +254,7 @@ class MainController extends Controller
         $standardTransactions = Transaction::where(function ($query) {
             $query->where('schedule', 1)
                 ->orWhere(function ($query) {
-                    $query->where('schedule', 0);
-                    $query->where('budget', 0);
+                    $query->basicTransaction();
                 });
         })
         ->where('user_id', $user->id)
@@ -280,8 +278,7 @@ class MainController extends Controller
         $investmentTransactions = Transaction::where(function ($query) {
             $query->where('schedule', 1)
                 ->orWhere(function ($query) {
-                    $query->where('schedule', 0);
-                    $query->where('budget', 0);
+                    $query->basicTransaction();
                 });
         })
         ->where('user_id', $user->id)

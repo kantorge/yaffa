@@ -261,8 +261,7 @@ class TransactionApiController extends Controller
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
-            ->where('schedule', 0)
-            ->where('budget', 0)
+            ->basicTransaction()
             ->where('config_type', 'transaction_detail_standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
                 $query->where('date', '>=', $request->get('date_from'));
