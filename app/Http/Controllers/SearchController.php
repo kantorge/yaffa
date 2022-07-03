@@ -126,6 +126,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->transactions()
+            ->basicTransaction()
             ->whereRaw('UPPER(`comment`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('date');
