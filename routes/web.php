@@ -52,7 +52,7 @@ Route::get(
 Route::resource(
     'currency-rate',
     CurrencyRateController::class
-)->except(['index', 'show']);
+)->only(['destroy']);
 
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
