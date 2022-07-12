@@ -38,11 +38,18 @@ window.quantities = window.quantities.map(function(quantity) {
     return quantity;
 });
 
-// Add a dummy value to quantity chart to draw beyon last value. Set date to next month. Values are copied from last value.
+// Add a dummy value to quantity chart to draw beyond last value. Set date to two months ahead. Values are copied from last value.
 window.quantities.push({
-    date: new Date(quantities[quantities.length - 1].date.getTime() + 30*24*60*60*1000),
+    date: new Date(quantities[quantities.length - 1].date.getTime() + 2*30*24*60*60*1000),
     quantity: quantities[quantities.length - 1].quantity,
     schedule: quantities[quantities.length - 1].schedule,
+});
+
+// Add a dummy value to quantity chart to draw before first value. Set date to two months behind. Values are set to 0, assuming no historical quantity existed.
+window.quantities.unshift({
+    date: new Date(quantities[0].date.getTime() - 2*30*24*60*60*1000),
+    quantity: 0,
+    schedule: 0,
 });
 
 window.summary = {
