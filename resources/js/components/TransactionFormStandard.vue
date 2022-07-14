@@ -485,6 +485,11 @@
                     label: 'Return to dashboard',
                     enabled: true,
                 },
+                {
+                    value: 'back',
+                    label: 'Return to previous page',
+                    enabled: true,
+                },
             ]
 
             return data;
@@ -951,25 +956,32 @@
                 return this.form.config.account_from_id;
             },
 
-            getCallbackUrl(transactionId) {
-                if (this.callback == 'returnToDashboard') {
-                    return route('home');
+            loadCallbackUrl(transactionId) {
+                if (this.callback === 'returnToDashboard') {
+                    location.href = route('home');
                 }
 
-                if (this.callback == 'new') {
-                    return route('transactions.createStandard');
+                if (this.callback === 'new') {
+                    location.href = route('transactions.createStandard');
                 }
 
-                if (this.callback == 'clone') {
-                    return route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
+                if (this.callback === 'clone') {
+                    location.href = route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
                 }
 
-                if (this.callback == 'returnToPrimaryAccount') {
-                    return route('account.history', { account: this.getReturnAccount('primary') });
+                if (this.callback === 'returnToPrimaryAccount') {
+                    location.href = route('account.history', { account: this.getReturnAccount('primary') });
                 }
 
-                if (this.callback == 'returnToSecondaryAccount') {
-                    return route('account.history', { account: this.getReturnAccount('secondary') });
+                if (this.callback === 'returnToSecondaryAccount') {
+                    location.href = route('account.history', { account: this.getReturnAccount('secondary') });
+                }
+
+                // Default, return back
+                if (document.referrer) {
+                    location.href = document.referrer;
+                } else {
+                    history.back();
                 }
             },
 
@@ -984,12 +996,12 @@
                 if (this.action !== 'edit') {
                     this.form.post(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 } else {
                     this.form.patch(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 }
             },

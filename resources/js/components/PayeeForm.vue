@@ -225,9 +225,7 @@
                         .then(response => this.processAfterSubmit(response));
                 } else {
                     this.form.patch(this.formUrl, this.form)
-                        .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
-                        });
+                        .then(response => this.processAfterSubmit(response));
                 }
             },
         }

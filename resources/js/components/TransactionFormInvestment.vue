@@ -335,6 +335,11 @@
                     label: 'Return to dashboard',
                     enabled: true,
                 },
+                {
+                    value: 'back',
+                    label: 'Return to previous page',
+                    enabled: true,
+                },
             ]
 
             // Date picker settings
@@ -639,25 +644,32 @@
                     this.form.config.dividend = null;
                 }
             },
-            getCallbackUrl(transactionId) {
-                if (this.callback == 'returnToDashboard') {
-                    return route('home');
+            loadCallbackUrl(transactionId) {
+                if (this.callback === 'returnToDashboard') {
+                    location.href =  route('home');
                 }
 
-                if (this.callback == 'new') {
-                    return route('transactions.createInvestment');
+                if (this.callback === 'new') {
+                    location.href =  route('transactions.createInvestment');
                 }
 
-                if (this.callback == 'clone') {
-                    return route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
+                if (this.callback === 'clone') {
+                    location.href =  route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
                 }
 
-                if (this.callback == 'returnToPrimaryAccount') {
-                    return route('account.history', { account: this.form.config.account_id });
+                if (this.callback === 'returnToPrimaryAccount') {
+                    location.href =  route('account.history', { account: this.form.config.account_id });
                 }
 
-                if (this.callback == 'returnToSecondaryAccount') {
-                    return route('account.history', { account: this.form.config.account_id });
+                if (this.callback === 'returnToSecondaryAccount') {
+                    location.href =  route('account.history', { account: this.form.config.account_id });
+                }
+
+                // Default, return back
+                if (document.referrer) {
+                    location.href = document.referrer;
+                } else {
+                    history.back();
                 }
             },
 
@@ -672,12 +684,12 @@
                 if (this.action !== 'edit') {
                     this.form.post(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 } else {
                     this.form.patch(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 }
             },
