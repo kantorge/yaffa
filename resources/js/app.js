@@ -107,13 +107,13 @@ if (window.location.pathname === '/tag') {
     require('./tags/index');
 }
 if (   window.location.pathname === '/transactions/standard/create'
-    || /^\/transactions\/standard\/\d+\/(edit|clone|enter|replaceSchedule)/.test(window.location.pathname)) {
+    || /^\/transactions\/standard\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
 
     require('./transactions/standard');
 }
 
 if (   window.location.pathname === '/transactions/investment/create'
-    || /^\/transactions\/investment\/\d+\/(edit|clone|enter|replaceSchedule)/.test(window.location.pathname)) {
+    || /^\/transactions\/investment\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
 
     require('./transactions/investment');
 }

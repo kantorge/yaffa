@@ -19,7 +19,7 @@ class TransactionRequest extends FormRequest
     {
         $rules = [
             'id' => 'nullable|exists:transactions,id',
-            'action' => 'required|in:create,edit,clone,enter,replaceSchedule',
+            'action' => 'required|in:create,edit,clone,enter,replace',
             'transaction_type_id' => 'required|exists:transaction_types,id',
             'comment' => 'nullable|max:191',
             'reconciled' => 'boolean',
@@ -65,7 +65,7 @@ class TransactionRequest extends FormRequest
         }
 
         // Add optional rules for replacing a schedule
-        if ($this->get('action') === 'replaceSchedule') {
+        if ($this->get('action') === 'replace') {
             $rules = array_merge($rules, [
                 'original_schedule_config.start_date' => 'required|date',
                 'original_schedule_config.next_date' => [

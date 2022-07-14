@@ -290,7 +290,7 @@ $(function() {
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
                             dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
                             dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                            dataTableHelpers.dataTablesActionButton(data, 'replaceSchedule', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
                             dataTableHelpers.dataTablesActionButton(data, 'delete');
                 },
                 orderable: false

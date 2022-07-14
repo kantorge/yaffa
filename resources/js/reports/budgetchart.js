@@ -308,7 +308,7 @@ $(function () {
                 render: function (data, _type, row) {
                     return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
                             dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                            dataTableHelpers.dataTablesActionButton(data, 'replaceSchedule', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
                             dataTableHelpers.dataTablesActionButton(data, 'delete') +
                             (row.schedule
                              ? '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +

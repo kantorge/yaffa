@@ -107,7 +107,7 @@ class TransactionController extends Controller
         }
 
         // Adjust source transaction schedule, if creating a new schedule clone
-        if ($validated['action'] === 'replaceSchedule') {
+        if ($validated['action'] === 'replace') {
             $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
 

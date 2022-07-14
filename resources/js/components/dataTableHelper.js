@@ -15,8 +15,8 @@ export function dataTablesActionButton(id, action, transactionType) {
         clone(transactionType) {
             return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
         },
-        replaceSchedule(transactionType) {
-            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'replaceSchedule'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
+        replace(transactionType) {
+            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
         }
     }
 

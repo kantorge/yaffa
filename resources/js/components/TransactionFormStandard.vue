@@ -149,11 +149,11 @@
                                     <div class="form-group form-horizontal row">
                                         <div class="col-xs-4 checkbox">
                                             <label
-                                                :title="(action === 'replaceSchedule' ? 'You cannot change schedule settings for this type of action' : '')"
-                                                :data-toggle="(action === 'replaceSchedule' ? 'tooltip' : '')"
+                                                :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
+                                                :data-toggle="(action === 'replace' ? 'tooltip' : '')"
                                             >
                                                 <input
-                                                    :disabled="form.reconciled || action == 'replaceSchedule'"
+                                                    :disabled="form.reconciled || action === 'replace'"
                                                     type="checkbox"
                                                     value="1"
                                                     v-model="form.schedule"
@@ -163,11 +163,11 @@
                                         </div>
                                         <div class="col-xs-4 checkbox">
                                             <label
-                                                :title="(action === 'replaceSchedule' ? 'You cannot change schedule settings for this type of action' : '')"
-                                                :data-toggle="(action === 'replaceSchedule' ? 'tooltip' : '')"
+                                                :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
+                                                :data-toggle="(action === 'replace' ? 'tooltip' : '')"
                                             >
                                                 <input
-                                                    :disabled="form.reconciled || form.transaction_type == 'transfer' || action == 'replaceSchedule'"
+                                                    :disabled="form.reconciled || form.transaction_type == 'transfer' || action === 'replace'"
                                                     type="checkbox"
                                                     value="1"
                                                     v-model="form.budget"
@@ -250,7 +250,7 @@
                         ></transaction-schedule>
 
                         <transaction-schedule
-                            v-if="(form.schedule || form.budget) && action === 'replaceSchedule'"
+                            v-if="(form.schedule || form.budget) && action === 'replace'"
                             :withCheckbox = "true"
                             title = "Update base schedule"
                             :allowCustomization = "false"
@@ -644,7 +644,7 @@
                 }
 
                 // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
-                if (this.action === 'replaceSchedule') {
+                if (this.action === 'replace') {
                     this.form.original_schedule_config = JSON.parse(JSON.stringify(this.form.schedule_config));
                     this.form.original_schedule_config.next_date = undefined;
 
