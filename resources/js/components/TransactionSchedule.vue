@@ -1,7 +1,19 @@
 <template>
-    <div class="box" v-show="isVisible">
+    <div class="box">
         <div class="box-header with-border">
-            <h3 class="box-title">Schedule</h3>
+            <h3 class="box-title" v-html="title"></h3>
+            <div class="box-tools pull-right" v-if="withCheckbox">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            value="1"
+                            v-model="allowCustomization"
+                        >
+                        Customize
+                    </label>
+                </div>
+            </div>
         </div>
         <!-- /.box-header -->
         <div class="box-body" id="">
@@ -15,6 +27,7 @@
                         class="form-control"
                         id="schedule_frequency"
                         v-model="schedule.frequency"
+                        :disabled="!allowCustomization"
                     >
                         <option value="DAILY">Daily</option>
                         <option value="WEEKLY">Weekly</option>
@@ -28,6 +41,7 @@
                 >
                     <label for="schedule_interval" class="control-label">Interval</label>
                     <MathInput
+                        :disabled="!allowCustomization"
                         class="form-control"
                         id="schedule_interval"
                         v-model="schedule.interval"
@@ -46,6 +60,7 @@
                         type="date"
                         value-type="format"
                         v-model="schedule.start_date"
+                        :disabled="!allowCustomization"
                     ></date-picker>
                 </div>
                 <div
@@ -68,6 +83,7 @@
                         type="date"
                         value-type="format"
                         v-model="schedule.next_date"
+                        :disabled="!allowCustomization"
                     ></date-picker>
                 </div>
                 <div
@@ -79,6 +95,7 @@
                         class="form-control"
                         id="schedule_count"
                         v-model="schedule.count"
+                        :disabled="!allowCustomization"
                     ></MathInput>
                 </div>
                 <div
@@ -94,6 +111,7 @@
                         type="date"
                         value-type="format"
                         v-model="schedule.end_date"
+                        :disabled="!allowCustomization"
                     ></date-picker>
                 </div>
                 <div
@@ -108,6 +126,7 @@
                         v-model="schedule.inflation"
                         type="number"
                         step=".01"
+                        :disabled="!allowCustomization"
                     >
                 </div>
             </div>
@@ -128,11 +147,22 @@
         },
 
         props: {
-            isVisible: Boolean,
             isSchedule: Boolean,
             isBudget: Boolean,
             schedule: Object,
             form: Object,
+            title: {
+                type: String,
+                default: 'Schedule',
+            },
+            withCheckbox: {
+                type: Boolean,
+                default: false,
+            },
+            allowCustomization: {
+                type: Boolean,
+                default: true,
+            },
         },
 
         data() {

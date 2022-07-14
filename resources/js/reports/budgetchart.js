@@ -1,6 +1,7 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import { RRule } from 'rrule';
+import * as dataTableHelpers from './../components/dataTableHelper'
 
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
@@ -188,39 +189,24 @@ $(function () {
             {
                 data: "schedule",
                 title: "Schedule",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
             {
                 data: "budget",
                 title: "Budget",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
             {
                 data: "transaction_schedule.active",
                 title: "Active",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
+                render: function (data, type) {
+                    return dataTableHelpers.booleanToTableIcon(data, type);
                 },
                 className: "text-center",
             },
@@ -254,22 +240,20 @@ $(function () {
             },
             {
                 title: "Category",
-                render: function (data, type, row, meta ) {
+                render: function (_data, _type, row) {
                     //standard transaction
-                    if (row.transaction_type == 'Standard') {
-                        //empty
-                        if (row.categories.length == 0) {
-                            return '';
-                        }
-
+                    if (row.transaction_type.type === 'Standard') {
                         if (row.categories.length > 1) {
                             return 'Split transaction';
-                        } else {
+                        }
+                        if (row.categories.length === 1) {
                             return row.categories[0];
                         }
+
+                        return '';
                     }
                     //investment transaction
-                    if (row.transaction_type == 'Investment') {
+                    if (row.transaction_type.type === 'Investment') {
                         if (!row.quantity_operator) {
                             return row.transaction_type.name;
                         }
@@ -286,7 +270,7 @@ $(function () {
             },
             {
                 title: "Amount",
-                render: function (data, type, row, meta ) {
+                render: function (_data, _type, row) {
                     let prefix = '';
                     if (row.transaction_operator == 'minus') {
                         prefix = '- ';
@@ -300,39 +284,36 @@ $(function () {
             {
                 data: "comment",
                 title: "Comment",
-                render: function(data, type, row, meta){
+                render: function(data, type) {
                     if(type === 'display'){
                        data = truncateString(data, 20);
                     }
 
                     return data;
                  },
-                createdCell: function (td, cellData, rowData, row, col) {
+                createdCell: function (td, cellData) {
                     $(td).prop('title', cellData);
                 }
             },
             {
                 data: "tags",
                 title: "Tags",
-                render: function (data, type, row, meta ) {
+                render: function (data) {
                     return data.join(', ');
                 }
             },
             {
                 data: 'id',
                 title: "Actions",
-                render: function (data, type, row, meta ) {
-                    return  '' +
-                            (row.transaction_type.type == 'Standard'
-                             ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
-                             : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
-                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
+                render: function (data, _type, row) {
+                    return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'replaceSchedule', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'delete') +
+                            (row.schedule
+                             ? '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
+                             : '');
                 },
                 orderable: false
             }
@@ -360,16 +341,13 @@ $(function () {
         paging:         false,
     });
 
-    $('.data-skip').on('click', function (e) {
-        e.preventDefault();
-        $('#form-skip-' + $(this).data('form')).submit();
+    $("#table").on("click", ".data-skip", function() {
+        let form = document.getElementById('form-skip');
+        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
+        form.submit();
     });
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
-    });
+    dataTableHelpers.initializeDeleteButton("#table");
 });
 
 // DataTables helper: truncate a string

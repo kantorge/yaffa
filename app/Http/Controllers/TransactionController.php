@@ -99,11 +99,21 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        // Adjust source transaction schedule, if needed
+        // Adjust source transaction schedule, if entering schedule instance
         if ($validated['action'] === 'enter') {
             $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
             $sourceTransaction->transactionSchedule->skipNextInstance();
+        }
+
+        // Adjust source transaction schedule, if creating a new schedule clone
+        if ($validated['action'] === 'replaceSchedule') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+
+            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+
+            $sourceTransaction->push();
         }
 
         self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);

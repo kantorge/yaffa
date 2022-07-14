@@ -84,14 +84,14 @@ Route::get(
     '/transactions/standard/{transaction}/{action}',
     [TransactionController::class, 'openStandard']
 )
-->where('action', 'edit|clone|enter|show')
+->where('action', 'edit|clone|enter|show|replaceSchedule')
 ->name('transactions.openStandard');
 
 Route::get(
     '/transactions/investment/{transaction}/{action}',
     [TransactionController::class, 'openInvestment']
 )
-->where('action', 'edit|clone|enter')
+->where('action', 'edit|clone|enter|replaceSchedule')
 ->name('transactions.openInvestment');
 
 Route::patch('/transactions/standard/{transaction}', [TransactionController::class, 'updateStandard'])->name('transactions.updateStandard');

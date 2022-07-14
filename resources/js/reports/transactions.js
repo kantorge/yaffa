@@ -175,8 +175,8 @@ window.table = $("#dataTable").DataTable({
                 if (row.transaction_type === 'Standard') {
                     return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
                             dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                            dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
-                            dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                            dataTableHelpers.dataTablesActionButton(data, 'edit', 'Standard') +
+                            dataTableHelpers.dataTablesActionButton(data, 'clone', 'Standard') +
                             dataTableHelpers.dataTablesActionButton(data, 'delete');
                 }
 

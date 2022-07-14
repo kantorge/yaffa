@@ -191,8 +191,8 @@ $(function() {
                     if (row.transaction_type.type == 'Standard') {
                         return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
                                 dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                                dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
-                                dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                                dataTableHelpers.dataTablesActionButton(data, 'edit', 'Standard') +
+                                dataTableHelpers.dataTablesActionButton(data, 'clone', 'Standard') +
                                 dataTableHelpers.dataTablesActionButton(data, 'delete');
                     }
 
@@ -286,10 +286,11 @@ $(function() {
                 title: "Actions",
                 render: function(data, type, row) {
                     return  '' +
-                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            '<a href="' + route('transactions.open' + row.transaction_type.type, {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            dataTableHelpers.dataTablesActionButton(data, 'standardEdit') +
-                            dataTableHelpers.dataTablesActionButton(data, 'standardClone') +
+                            dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'replaceSchedule', row.transaction_type.type) +
                             dataTableHelpers.dataTablesActionButton(data, 'delete');
                 },
                 orderable: false

@@ -75,4 +75,8 @@
     </div>
 </div>
 
+@include('template.components.model-delete-form')
+
+@include('template.components.transaction-skip-form')
+
 @stop

@@ -148,9 +148,12 @@
 
                                     <div class="form-group form-horizontal row">
                                         <div class="col-xs-4 checkbox">
-                                            <label>
+                                            <label
+                                                :title="(action === 'replaceSchedule' ? 'You cannot change schedule settings for this type of action' : '')"
+                                                :data-toggle="(action === 'replaceSchedule' ? 'tooltip' : '')"
+                                            >
                                                 <input
-                                                    :disabled="form.reconciled"
+                                                    :disabled="form.reconciled || action == 'replaceSchedule'"
                                                     type="checkbox"
                                                     value="1"
                                                     v-model="form.schedule"
@@ -159,9 +162,12 @@
                                             </label>
                                         </div>
                                         <div class="col-xs-4 checkbox">
-                                            <label>
+                                            <label
+                                                :title="(action === 'replaceSchedule' ? 'You cannot change schedule settings for this type of action' : '')"
+                                                :data-toggle="(action === 'replaceSchedule' ? 'tooltip' : '')"
+                                            >
                                                 <input
-                                                    :disabled="form.reconciled || form.transaction_type == 'transfer'"
+                                                    :disabled="form.reconciled || form.transaction_type == 'transfer' || action == 'replaceSchedule'"
                                                     type="checkbox"
                                                     value="1"
                                                     v-model="form.budget"
@@ -236,11 +242,24 @@
                         <!-- /.box -->
 
                         <transaction-schedule
-                            :isVisible="form.schedule || form.budget"
+                            v-if="form.schedule || form.budget"
                             :isSchedule="form.schedule"
                             :isBudget="form.budget"
                             :schedule="form.schedule_config"
                             :form="form"
+                        ></transaction-schedule>
+
+                        <transaction-schedule
+                            v-if="(form.schedule || form.budget) && action === 'replaceSchedule'"
+                            :withCheckbox = "true"
+                            title = "Update base schedule"
+                            :allowCustomization = "false"
+
+                            :isSchedule = "form.schedule"
+                            :isBudget = "form.budget"
+                            :schedule = "form.original_schedule_config"
+                            :form = "form"
+                            ref = "scheduleOriginal"
                         ></transaction-schedule>
 
                     </div>
@@ -618,6 +637,18 @@
                     this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
                     this.form.schedule_config.inflation = this.transaction.transaction_schedule.inflation;
                 }
+
+                // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
+                if (this.action === 'replaceSchedule') {
+                    this.form.original_schedule_config = JSON.parse(JSON.stringify(this.form.schedule_config));
+                    this.form.original_schedule_config.next_date = undefined;
+
+                    // Set new schedule start date to today
+                    this.form.schedule_config.start_date = new Date().toISOString().slice(0, 10);
+
+                    // Set cloned schedule end date to today - 1 day
+                    this.form.original_schedule_config.end_date = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                }
             }
 
             // Check for various default values in URL
@@ -753,6 +784,9 @@
                     $vm.addNewItemToSelect('#account_to', data.id, data.name);
                 }
             }
+
+            // Initial sync between schedules, if applicable
+            this.syncScheduleStartDate(this.form.schedule_config.start_date);
         },
 
         methods: {
@@ -985,6 +1019,21 @@
                         }
                     });
             },
+
+            // Sync the standard schedule start date to the cloned schedule end date
+            syncScheduleStartDate(newDate) {
+                if (!this.form.original_schedule_config) {
+                    return;
+                }
+
+                if (!this.$refs.scheduleOriginal || this.$refs.scheduleOriginal.allowCustomization) {
+                    return;
+                }
+
+                let date = new Date(newDate);
+                date.setDate( date.getDate() - 1);
+                this.form.original_schedule_config.end_date = date.toISOString().split('T')[0];
+            },
         },
 
         watch: {
@@ -994,6 +1043,11 @@
 
             payeeDefaultCategory (newId) {
                 this.form.remaining_payee_default_category_id = newId;
+            },
+
+            // On change of new schedule start date, adjust original schedule end date to previous day
+            "form.schedule_config.start_date": function (newDate) {
+                this.syncScheduleStartDate(newDate);
             },
 
             // Update TO amount with FROM value, if needed
@@ -1007,6 +1061,13 @@
             },
         }
     }
+
+    // Initialize tooltips
+    // TODO: can this be part of Vue init?
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+
 </script>
 
 <style scoped>

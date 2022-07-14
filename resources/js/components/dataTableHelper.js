@@ -1,4 +1,4 @@
-export function dataTablesActionButton(id, action) {
+export function dataTablesActionButton(id, action, transactionType) {
     var functions = {
         delete: function() {
             return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
@@ -9,15 +9,18 @@ export function dataTablesActionButton(id, action) {
         standardShow: function() {
             return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
         },
-        standardEdit: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+        edit: function(transactionType) {
+            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
         },
-        standardClone: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+        clone(transactionType) {
+            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+        },
+        replaceSchedule(transactionType) {
+            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'replaceSchedule'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
         }
     }
 
-    return functions[action]();
+    return functions[action](transactionType);
 }
 
 export function tagIcon(tags, type) {

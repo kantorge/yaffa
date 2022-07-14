@@ -63,12 +63,17 @@
                                         <input
                                             id="entry_type_schedule"
                                             class="checkbox-inline"
-                                            :disabled="form.reconciled"
+                                            :disabled="form.reconciled || action == 'replaceSchedule'"
                                             type="checkbox"
                                             value="1"
                                             v-model="form.schedule"
                                         >
-                                        <label for="entry_type_schedule" class="control-label">Scheduled</label>
+                                        <label
+                                            for="entry_type_schedule"
+                                            class="control-label"
+                                            :title="(action === 'replaceSchedule' ? 'You cannot change schedule settings for this type of action' : '')"
+                                            :data-toggle="(action === 'replaceSchedule' ? 'tooltip' : '')"
+                                        >Scheduled</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -177,11 +182,24 @@
     <!-- /.box -->
 
         <transaction-schedule
-            :isVisible="form.schedule"
+            v-if="form.schedule"
             :isSchedule="form.schedule"
             :isBudget="false"
             :schedule="form.schedule_config"
             :form="form"
+        ></transaction-schedule>
+
+        <transaction-schedule
+            v-if="form.schedule && action === 'replaceSchedule'"
+            :withCheckbox = "true"
+            title = "Update base schedule"
+            :allowCustomization = "false"
+            ref = "scheduleOriginal"
+
+            :isSchedule = "form.schedule"
+            :isBudget = "false"
+            :schedule = "form.original_schedule_config"
+            :form = "form"
         ></transaction-schedule>
 
         <footer class="main-footer navbar-fixed-bottom hidden">
@@ -391,6 +409,21 @@
                     this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
                     this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
                 }
+
+                // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
+                if (this.action === 'replaceSchedule') {
+                    this.form.original_schedule_config = JSON.parse(JSON.stringify(this.form.schedule_config));
+                    this.form.original_schedule_config.next_date = undefined;
+
+                    let date = new Date();
+
+                    // Set new schedule start date to today
+                    this.form.schedule_config.start_date = date.toISOString().slice(0, 10);
+
+                    // Set cloned schedule end date to today - 1 day
+                    date.setDate( date.getDate() - 1);
+                    this.form.original_schedule_config.end_date = date.toISOString().slice(0, 10);
+                }
             }
 
             // TODO: make the list dynamic based on database settings
@@ -584,6 +617,9 @@
                 });
             }
 
+            // Initial sync between schedules, if applicable
+            this.syncScheduleStartDate(this.form.schedule_config.start_date);
+
             // Display fixed footer
             setTimeout(function() {
                 $("footer").removeClass("hidden");
@@ -646,8 +682,35 @@
                 }
             },
 
+            // Sync the standard schedule start date to the cloned schedule end date
+            syncScheduleStartDate(newDate) {
+                if (!this.form.original_schedule_config) {
+                    return;
+                }
+
+                if (!this.$refs.scheduleOriginal || this.$refs.scheduleOriginal.allowCustomization) {
+                    return;
+                }
+
+                let date = new Date(newDate);
+                date.setDate( date.getDate() - 1);
+                this.form.original_schedule_config.end_date = date.toISOString().split('T')[0];
+            },
+        },
+
+        watch: {
+            // On change of new schedule start date, adjust original schedule end date to previous day
+            "form.schedule_config.start_date": function (newDate) {
+                this.syncScheduleStartDate(newDate);
+            },
         }
     }
+
+    // Initialize tooltips
+    // TODO: can this be part of Vue init?
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
 </script>
 
 <style scoped>
