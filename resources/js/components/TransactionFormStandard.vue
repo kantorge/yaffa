@@ -959,22 +959,27 @@
             loadCallbackUrl(transactionId) {
                 if (this.callback === 'returnToDashboard') {
                     location.href = route('home');
+                    return;
                 }
 
                 if (this.callback === 'new') {
                     location.href = route('transactions.createStandard');
+                    return;
                 }
 
                 if (this.callback === 'clone') {
                     location.href = route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
+                    return;
                 }
 
                 if (this.callback === 'returnToPrimaryAccount') {
                     location.href = route('account.history', { account: this.getReturnAccount('primary') });
+                    return;
                 }
 
                 if (this.callback === 'returnToSecondaryAccount') {
                     location.href = route('account.history', { account: this.getReturnAccount('secondary') });
+                    return;
                 }
 
                 // Default, return back

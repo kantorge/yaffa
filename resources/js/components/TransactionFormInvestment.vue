@@ -647,22 +647,27 @@
             loadCallbackUrl(transactionId) {
                 if (this.callback === 'returnToDashboard') {
                     location.href =  route('home');
+                    return;
                 }
 
                 if (this.callback === 'new') {
                     location.href =  route('transactions.createInvestment');
+                    return;
                 }
 
                 if (this.callback === 'clone') {
                     location.href =  route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
+                    return;
                 }
 
                 if (this.callback === 'returnToPrimaryAccount') {
                     location.href =  route('account.history', { account: this.form.config.account_id });
+                    return;
                 }
 
                 if (this.callback === 'returnToSecondaryAccount') {
                     location.href =  route('account.history', { account: this.form.config.account_id });
+                    return;
                 }
 
                 // Default, return back
