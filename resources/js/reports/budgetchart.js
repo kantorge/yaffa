@@ -51,8 +51,6 @@ const computeMovingAverage = (baseData, period) => {
 const elementCategorySelectSelector = '#category_id';
 const elementRefreshButton = document.getElementById('reload');
 
-window.tableData = [];
-
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
 
 chart.numberFormatter.intlLocales = "hu-HU";
@@ -151,7 +149,6 @@ elementRefreshButton.addEventListener('click', reloadData);
 var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
 
 window.table = $('#table').DataTable({
-    //data: tableData,
     ajax: {
         url: '/api/scheduled_transactions',
         type: 'GET',
