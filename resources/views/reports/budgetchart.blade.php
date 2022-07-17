@@ -13,6 +13,12 @@
         <div class="box">
             <div class="box-header">
                 <div class="pull-right box-tools">
+                    @if(!$byYears)
+                        <button type="button" class="btn btn-primary" title="Zoom in" id="btnZoomIn">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    @endif
+
                     <a
                         class="btn {{($byYears ? 'btn-primary' : 'btn-info') }}"
                         href="{{ route('reports.budgetchart', ['byYears' => ($byYears ? '' : 'byYears')]) }}"
@@ -35,20 +41,7 @@
                 <p>Selecting parent category loads all related subcategories too.</p>
             </div>
             <div class="box-body">
-                <select
-                    class="form-control"
-                    id="category_id"
-                    multiple
-                    size="15"
-                >
-                    @forelse($categories as $id => $name)
-                        <option value="{{ $id }}">
-                            {{ $name }}
-                        </option>
-                    @empty
-
-                    @endforelse
-                </select>
+                <select id="category_id" class="form-control" style="width: 100%"></select>
             </div>
             <div class="box-footer">
                 <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Change</button>

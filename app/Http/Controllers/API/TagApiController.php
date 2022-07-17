@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -29,5 +30,16 @@ class TagApiController extends Controller
 
         // Return fetched data
         return response()->json($tags, Response::HTTP_OK);
+    }
+
+    public function getItem(Tag $tag)
+    {
+        $this->authorize('view', $tag);
+
+        return response()
+            ->json(
+                $tag,
+                Response::HTTP_OK
+            );
     }
 }

@@ -32,6 +32,7 @@ Route::get('/assets/dismiss_default_category_suggestion/{accountEntity}', 'App\H
 Route::get('/assets/accept_default_category_suggestion/{accountEntity}/{category}', 'App\Http\Controllers\API\PayeeApiController@acceptPayeeDefaultCategorySuggestion');
 
 Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
+Route::get('/assets/tag/{tag}', 'App\Http\Controllers\API\TagApiController@getItem');
 
 Route::get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChart');
 Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportController@scheduledTransactions');

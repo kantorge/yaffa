@@ -317,12 +317,7 @@ $(function() {
         paging:         false,
     });
 
-    $("#historyTable, #scheduleTable").on("click", ".data-skip", function() {
-        let form = document.getElementById('form-skip');
-        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
-        form.submit();
-    });
-
+    dataTableHelpers.initializeSkipInstanceButton("#historyTable, #scheduleTable");
     dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
 
     $('input[name=reconciled]').on("change", function() {

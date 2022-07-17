@@ -241,6 +241,7 @@ class ReportController extends Controller
         // Pass currency related data for amCharts
         JavaScript::put([
             'currency' => $this->getBaseCurrency(),
+            'categories' => $request->get('categories', []),
             'byYears' => $byYears,
         ]);
 
@@ -268,6 +269,12 @@ class ReportController extends Controller
         }
         if ($request->has('payees')) {
             $filters['payees'] = $request->get('payees');
+        }
+        if ($request->has('categories')) {
+            $filters['categories'] = $request->get('categories');
+        }
+        if ($request->has('tags')) {
+            $filters['tags'] = $request->get('tags');
         }
 
         JavaScript::put([

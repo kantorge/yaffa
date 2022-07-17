@@ -1,7 +1,7 @@
 export function dataTablesActionButton(id, action, transactionType) {
     var functions = {
         delete: function() {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
         },
         standardQuickView: function() {
             return '<button class="btn btn-xs btn-success data-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
@@ -57,6 +57,14 @@ export function initializeDeleteButton(selector) {
 
         let form = document.getElementById('form-delete');
         form.action = route('transactions.destroy', {transaction: this.dataset.id});
+        form.submit();
+    });
+}
+
+export function initializeSkipInstanceButton(selector) {
+    $(selector).on("click", ".data-skip", function() {
+        let form = document.getElementById('form-skip');
+        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
         form.submit();
     });
 }

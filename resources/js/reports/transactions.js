@@ -333,6 +333,7 @@ if (filters.payees) {
     });
 }
 
+// Category select2 functionality
 $('#select_category').select2({
     multiple: true,
     ajax: {
@@ -357,6 +358,39 @@ $('#select_category').select2({
     allowClear: true
 });
 
+// Append preset categories, if any
+if (filters.categories) {
+    filters.categories.forEach(function(category) {
+        $.ajax({
+            url:  '/api/assets/category/' + category,
+            data: {},
+            success: function(data) {
+                $('#select_category')
+                .append(new Option(data.full_name, data.id, true, true))
+                .trigger('change')
+                .trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: {
+                            id: data.id,
+                            name: data.full_name,
+                        }
+                    }
+                });
+
+                // Set category filter to true
+                presetFilters.categories = true;
+
+                // If all preset filters are ready, reload table data
+                if (presetFilters.ready()) {
+                    reloadTable();
+                }
+            }
+        });
+    });
+}
+
+// Tag select2 functionality
 $('#select_tag').select2({
     multiple: true,
     ajax: {
@@ -378,6 +412,38 @@ $('#select_tag').select2({
     placeholder: "Select tag(s)",
     allowClear: true
 });
+
+// Append preset tags, if any
+if (filters.tags) {
+    filters.tags.forEach(function(tag) {
+        $.ajax({
+            url:  '/api/assets/tag/' + tag,
+            data: {},
+            success: function(data) {
+                $('#select_tag')
+                .append(new Option(data.name, data.id, true, true))
+                .trigger('change')
+                .trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: {
+                            id: data.id,
+                            name: data.name,
+                        }
+                    }
+                });
+
+                // Set tag filter to true
+                presetFilters.tags = true;
+
+                // If all preset filters are ready, reload table data
+                if (presetFilters.ready()) {
+                    reloadTable();
+                }
+            }
+        });
+    });
+}
 
 import { createApp } from 'vue'
 

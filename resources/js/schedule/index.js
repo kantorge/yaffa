@@ -167,9 +167,11 @@ $(function() {
                 },
             },
             {
+                data: 'comment',
                 title: "Comment",
                 render: function (data, type) {
-                    return dataTableHelpers.commentIcon(data, type);                },
+                    return dataTableHelpers.commentIcon(data, type);
+                },
                 className: "text-center",
             },
             {
@@ -184,12 +186,12 @@ $(function() {
                 data: 'id',
                 title: "Actions",
                 render: function (data, _type, row) {
-                    return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                            dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                            dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                    return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type) +
+                            dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type) +
                             dataTableHelpers.dataTablesActionButton(data, 'delete') +
                             (row.schedule
-                             ? '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                             ? '<a href="' + (row.transaction_type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                                '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
                              : '');
                 },

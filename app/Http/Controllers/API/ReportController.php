@@ -193,6 +193,11 @@ class ReportController extends Controller
 
     public function scheduledTransactions(Request $request)
     {
+        // Return empty response if categories are not set or empty
+        if (! $request->has('categories') || ! $request->input('categories')) {
+            return response()->json([], Response::HTTP_OK);
+        }
+
         // Get all accounts and payees so their name can be reused
         $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
             ->pluck('name', 'id')
