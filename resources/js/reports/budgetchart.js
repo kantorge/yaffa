@@ -402,8 +402,8 @@ $(elementCategorySelectSelector).select2({
         },
         cache: true
     },
-    selectOnClose: true,
-    placeholder: "Select category",
+    selectOnClose: false,
+    placeholder: "Select category or categories",
     allowClear: true
 });
 
