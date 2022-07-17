@@ -111,6 +111,31 @@ class Transaction extends Model
         return $query->where('schedule', false)->where('budget', false);
     }
 
+    /**
+     * Create a dynamic scope to filter transactions by schedule and/or budget flag
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByType($query, $type)
+    {
+        switch ($type) {
+            case 'schedule':
+                return $query->where('schedule', true)->where('budget', false);
+            case 'budget':
+                return $query->where('budget', true)->where('schedule', false);
+            case 'both':
+                return $query->where('schedule', true)->where('budget', true);
+            case 'any':
+                return $query->where('schedule', true)->orWhere('budget', true);
+            case 'none':
+                return $query->where('schedule', false)->where('budget', false);
+            default:
+                return $query;
+        }
+    }
+
     //TODO: how this can be achieved without converting data to array AND without additional database queries
     public function getTagsArray()
     {

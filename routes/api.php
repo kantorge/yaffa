@@ -38,7 +38,12 @@ Route::get('/budgetchart', 'App\Http\Controllers\API\ReportController@budgetChar
 Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportController@scheduledTransactions');
 
 Route::get('/transactions', 'App\Http\Controllers\API\TransactionApiController@findTransactions');
-Route::get('/transactions/get_scheduled_items', 'App\Http\Controllers\API\TransactionApiController@getScheduledItems');
+Route::get(
+    '/transactions/get_scheduled_items/{type}',
+    'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
+)
+->where('type', 'schedule|budget|any|both');
+
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');

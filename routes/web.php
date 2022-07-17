@@ -11,7 +11,6 @@ use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -25,8 +24,6 @@ Route::get(
     '/account/history/{account}/{withForecast?}',
     [MainController::class, 'account_details']
 )->name('account.history');
-
-Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 
 Route::get('/account/summary/{withClosed?}', [MainController::class, 'index'])->name('account.summary');
 
@@ -105,6 +102,7 @@ Route::resource(
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
+Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])->name('reports.transactions');
 
 // Routes to display form to merge two payees

@@ -1,35 +1,39 @@
 require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import { RRule } from 'rrule';
-import * as dataTableHelpers from './../components/dataTableHelper';
+import * as dataTableHelpers from '../components/dataTableHelper';
 
 var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
-// Parse dates in transactionData, and initialize RRule
-let tableData = transactionData.map(function(transaction) {
-    transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-    if (transaction.schedule_config.next_date) {
-        transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-    }
-    if (transaction.schedule_config.end_date) {
-        transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-    }
-
-    // Create rule
-    transaction.schedule_config.rule = new RRule({
-        freq: RRule[transaction.schedule_config.frequency],
-        interval: transaction.schedule_config.interval,
-        dtstart: transaction.schedule_config.start_date,
-        until: transaction.schedule_config.end_date,
-    });
-
-    transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
-
-    return transaction;
-});
-
 window.table = $('#table').DataTable({
-    data: tableData,
+    ajax: {
+        url: '/api/transactions/get_scheduled_items/any',
+        type: 'GET',
+        dataSrc: function(data) {
+            return data.transactions.map(function(transaction) {
+                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                if (transaction.schedule_config.next_date) {
+                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
+                }
+                if (transaction.schedule_config.end_date) {
+                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
+                }
+
+                // Create rule
+                transaction.schedule_config.rule = new RRule({
+                    freq: RRule[transaction.schedule_config.frequency],
+                    interval: transaction.schedule_config.interval,
+                    dtstart: transaction.schedule_config.start_date,
+                    until: transaction.schedule_config.end_date,
+                });
+
+                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
+
+                return transaction;
+            });
+        },
+        deferRender: true
+    },
     columns: [
         {
             data: "schedule_config.start_date",

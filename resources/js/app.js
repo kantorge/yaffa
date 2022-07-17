@@ -122,8 +122,8 @@ if (/^\/transactions\/standard\/\d+\/(show)/.test(window.location.pathname)) {
     require('./transactions/show');
 }
 
-if (window.location.pathname === '/schedule') {
-    require('./schedule/index');
+if (window.location.pathname === '/reports/schedule') {
+    require('./reports/schedule');
 }
 
 if (window.location.pathname === '/reports/cashflow') {

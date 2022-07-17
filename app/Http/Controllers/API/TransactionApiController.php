@@ -49,7 +49,7 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function getScheduledItems()
+    public function getScheduledItems(string $type)
     {
         // Get all accounts and payees so their name can be reused
         $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
@@ -81,7 +81,7 @@ class TransactionApiController extends Controller
             ]
         )
         ->where('user_id', Auth::user()->id)
-        ->where('schedule', 1)
+        ->byType($type)
         ->where(
             'config_type',
             '=',
@@ -99,7 +99,7 @@ class TransactionApiController extends Controller
             ]
         )
         ->where('user_id', Auth::user()->id)
-        ->where('schedule', 1)
+        ->byType($type)
         ->where(
             'config_type',
             '=',
@@ -133,7 +133,34 @@ class TransactionApiController extends Controller
         );
     }
 
-    // TODO: unify with schedule controller
+    private function transformDataCommon(Transaction $transaction)
+    {
+        // Prepare schedule related data if schedule is set
+        $schedule = null;
+        if ($transaction->transactionSchedule) {
+            $schedule = [
+                'start_date' => $transaction->transactionSchedule->start_date->toW3cString(),
+                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
+                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->format('Y-m-d') : null),
+                'frequency' => $transaction->transactionSchedule->frequency,
+                'count' => $transaction->transactionSchedule->count,
+                'interval' => $transaction->transactionSchedule->interval,
+            ];
+        }
+        return [
+            'id' => $transaction->id,
+            'date' => $transaction->date,  // Change compared to schedule controller
+            'transaction_name' => $transaction->transactionType->name,
+            'transaction_type' => $transaction->transactionType->type,
+            'config_type' => $transaction->config_type,
+            'schedule_config' => $schedule,
+            'schedule' => $transaction->schedule,
+            'budget' => $transaction->budget,
+            'comment' => $transaction->comment,
+            'reconciled' => $transaction->reconciled,
+        ];
+    }
+
     private function transformDataStandard(Transaction $transaction)
     {
         $transactionArray = $transaction->toArray();
@@ -186,35 +213,6 @@ class TransactionApiController extends Controller
         ];
     }
 
-    // TODO: unify with schedule controller
-    private function transformDataCommon(Transaction $transaction)
-    {
-        // Prepare schedule related data if schedule is set
-        $schedule = null;
-        if ($transaction->schedule) {
-            $schedule = [
-                'start_date' => $transaction->transactionSchedule->start_date->toW3cString(),
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->format('Y-m-d') : null),
-                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->format('Y-m-d') : null),
-                'frequency' => $transaction->transactionSchedule->frequency,
-                'count' => $transaction->transactionSchedule->count,
-                'interval' => $transaction->transactionSchedule->interval,
-            ];
-        }
-        return [
-            'id' => $transaction->id,
-            'date' => $transaction->date,  // Change compared to schedule controller
-            'transaction_name' => $transaction->transactionType->name,
-            'transaction_type' => $transaction->transactionType->type,
-            'config_type' => $transaction->config_type,
-            'schedule' => $transaction->schedule,
-            'schedule_config' => $schedule,
-            'budget' => $transaction->budget,
-            'comment' => $transaction->comment,
-            'reconciled' => $transaction->reconciled,
-        ];
-    }
-
     private function getCurrency(Transaction $transaction)
     {
         $currency = null;
@@ -232,7 +230,7 @@ class TransactionApiController extends Controller
         }
 
         return [
-            'currency' => $currency->config->currency,
+            'currency' => $currency?->config->currency,
         ];
     }
 

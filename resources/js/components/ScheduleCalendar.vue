@@ -96,7 +96,7 @@ export default {
 
     created() {
         let $vm = this;
-        axios.get('/api/transactions/get_scheduled_items')
+        axios.get('/api/transactions/get_scheduled_items/schedule')
         .then(function(response) {
             $vm.transactions = response.data.transactions;
             $vm.attributes= $vm.transactions.filter((transaction) => transaction.schedule_config && transaction.schedule_config.next_date)

@@ -283,4 +283,9 @@ class ReportController extends Controller
 
         return view('reports.transactions');
     }
+
+    public function getSchedules()
+    {
+        return view('reports.schedule');
+    }
 }
