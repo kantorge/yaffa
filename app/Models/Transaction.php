@@ -101,24 +101,13 @@ class Transaction extends Model
     }
 
     /**
-     * Create a scope for basic transactions, which are neither scheduled nor budgeted.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeBasicTransaction($query)
-    {
-        return $query->where('schedule', false)->where('budget', false);
-    }
-
-    /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByType($query, $type)
+    public function scopeByScheduleType($query, $type)
     {
         switch ($type) {
             case 'schedule':

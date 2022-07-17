@@ -90,7 +90,7 @@ class Investment extends Model
                 'transactionType',
             ]
         )
-        ->basicTransaction()
+        ->byScheduleType('none')
         ->where('config_type', 'transaction_detail_investment')
         ->whereHasMorph(
             'config',
@@ -130,7 +130,7 @@ class Investment extends Model
                     'config',
                 ]
             )
-            ->basicTransaction()
+            ->byScheduleType('none')
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],

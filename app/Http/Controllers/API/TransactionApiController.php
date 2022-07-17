@@ -81,7 +81,7 @@ class TransactionApiController extends Controller
             ]
         )
         ->where('user_id', Auth::user()->id)
-        ->byType($type)
+        ->byScheduleType($type)
         ->where(
             'config_type',
             '=',
@@ -99,7 +99,7 @@ class TransactionApiController extends Controller
             ]
         )
         ->where('user_id', Auth::user()->id)
-        ->byType($type)
+        ->byScheduleType($type)
         ->where(
             'config_type',
             '=',
@@ -259,7 +259,7 @@ class TransactionApiController extends Controller
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
-            ->basicTransaction()
+            ->byScheduleType('none')
             ->where('config_type', 'transaction_detail_standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
                 $query->where('date', '>=', $request->get('date_from'));
