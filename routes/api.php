@@ -42,7 +42,7 @@ Route::get(
     '/transactions/get_scheduled_items/{type}',
     'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
 )
-->where('type', 'schedule|budget|any|both');
+->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
 
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 

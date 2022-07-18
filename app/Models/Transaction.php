@@ -111,8 +111,12 @@ class Transaction extends Model
     {
         switch ($type) {
             case 'schedule':
+                return $query->where('schedule', true);
+            case 'schedule_only':
                 return $query->where('schedule', true)->where('budget', false);
             case 'budget':
+                return $query->where('budget', true);
+            case 'budget_only':
                 return $query->where('budget', true)->where('schedule', false);
             case 'both':
                 return $query->where('schedule', true)->where('budget', true);

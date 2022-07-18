@@ -27,11 +27,11 @@
                     <span class="day-label text-sm">{{ day.day }}</span>
                     <div>
                         <a
-                        v-for="item in attributes"
-                        :key="item.key"
-                        style="margin: 0 1px;"
-                        :href="getTransactionLink(item.customData.transaction_type, item.customData.id)"
-                        v-html="getTransactionTypeIcon(item.customData)"
+                            v-for="item in attributes"
+                            :key="item.key"
+                            style="margin: 0 1px;"
+                            :href="getTransactionLink(item.customData.transaction_type, item.customData.id)"
+                            v-html="getTransactionTypeIcon(item.customData)"
                         ></a>
                     </div>
                     </div>
