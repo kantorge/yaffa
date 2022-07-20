@@ -114,14 +114,17 @@ class Investment extends Model
         });
     }
 
-    public function getLatestPrice($type = 'combined')
+    public function getLatestPrice($type = 'combined', Carbon $onOrBefore = null)
     {
         $investmentId = $this->id;
 
         if ($type === 'stored' || $type === 'combined') {
             $price = InvestmentPrice::where('investment_id', $investmentId)
-                                        ->latest('date')
-                                        ->first();
+                ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                    $query->where('date', '<=', $onOrBefore);
+                })
+                ->latest('date')
+                ->first();
         }
 
         if ($type === 'transaction' || $type === 'combined') {
@@ -140,6 +143,9 @@ class Investment extends Model
                         ->WhereNotNull('price');
                 }
             )
+            ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                $query->where('date', '<=', $onOrBefore);
+            })
             ->latest('date')
             ->first();
         }

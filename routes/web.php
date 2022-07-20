@@ -53,6 +53,7 @@ Route::resource(
 
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
+Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
 Route::get(

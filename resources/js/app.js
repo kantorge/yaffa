@@ -93,6 +93,9 @@ if (window.location.pathname === '/investment') {
 if (/^\/investment\/summary/.test(window.location.pathname)) {
     require('./investment/summary');
 }
+if (window.location.pathname === '/investment/timeline') {
+    require('./investment/timeline');
+}
 if (/^\/investment\/\d+/.test(window.location.pathname)) {
     require('./investment/show');
 }

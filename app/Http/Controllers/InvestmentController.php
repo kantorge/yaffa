@@ -7,6 +7,7 @@ use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -143,12 +144,11 @@ class InvestmentController extends Controller
         $rawTransactions =
             Transaction::with([
                 'config',
-                'config.investment',
                 'transactionType',
             ])
             ->whereHasMorph(
                 'config',
-                [\App\Models\TransactionDetailInvestment::class],
+                [TransactionDetailInvestment::class],
                 function (Builder $query) use ($investment) {
                     $query->Where('investment_id', $investment->id);
                 }
@@ -219,17 +219,19 @@ class InvestmentController extends Controller
                     $rule->setInterval($transaction['schedule']->interval);
                 }
 
-                $transformer = new ArrayTransformer();
-
                 $transformerConfig = new ArrayTransformerConfig();
-                $transformerConfig->setVirtualLimit(100);
                 $transformerConfig->enableLastDayOfMonthFix();
+                // Avoid overloading too frequent schedules. TODO: notify user if limit is reached.
+                $transformerConfig->setVirtualLimit(500);
+
+                $transformer = new ArrayTransformer();
                 $transformer->setConfig($transformerConfig);
 
                 $startDate = new Carbon($transaction['schedule']->next_date);
                 $startDate->startOfDay();
+
                 if (is_null($transaction['schedule']->end_date)) {
-                    $endDate = (new Carbon())->addYears(25); //TODO: get end date from settings, and/or display default setting
+                    $endDate = (new Carbon(config('yaffa.app_end_date')));
                 } else {
                     $endDate = new Carbon($transaction['schedule']->end_date);
                 }
@@ -287,5 +289,10 @@ class InvestmentController extends Controller
         return view('investment.show', [
             'investment' => $investment,
         ]);
+    }
+
+    public function timeline()
+    {
+        return view('investment.timeline');
     }
 }

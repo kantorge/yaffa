@@ -16,6 +16,7 @@ Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@g
 Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
 
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
+Route::get('/assets/investment/timeline', 'App\Http\Controllers\API\InvestmentApiController@getInvestmentsWithTimeline');
 Route::get('/assets/investment/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getInvestmentDetails')->name('investment.getDetails');
 Route::get('/assets/investment/suffix/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getCurrencySuffix');
 Route::get('/assets/investment/price/{investment}', 'App\Http\Controllers\API\InvestmentApiController@getPriceHistory');

@@ -70,6 +70,7 @@
                 <li><a href="{{ route('reports.cashflow') }}"><i class="fa fa-line-chart"></i> <span>Cash flow</span></a></li>
                 <li><a href="{{ route('reports.budgetchart') }}"><i class="fa fa-line-chart"></i> <span>Budget chart</span></a></li>
                 <li><a href="{{ route('report.schedules') }}"><i class="fa fa-list"></i> <span>List of schedules and budgets</span></a></li>
+                <li><a href="{{ route('investment.timeline') }}"><i class="fa fa-line-chart"></i> <span>Investment timeline</span></a></li>
             </ul>
         </li>
         <li class="treeview">
