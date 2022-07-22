@@ -27,10 +27,23 @@ $(function () {
 
     var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
     dateAxis.dataFields.category = "month";
-
     dateAxis.dateFormatter.intlLocales = localeString;
     dateAxis.dateFormats.setKey("year", { "year": "numeric" });
     dateAxis.dateFormats.setKey("month", { "year": "numeric", "month": "short" });
+
+    // Set up event listener to date axis to highlight current month
+    dateAxis.events.on("datavalidated", function(ev) {
+        var axis = ev.target;
+        const now = new Date();
+
+        // Create a range
+        var range = axis.axisRanges.create();
+        range.date = new Date(now.getFullYear(), now.getMonth(), 1);
+        range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fillOpacity = 0.4;
+        range.grid.strokeOpacity = 0;
+    });
 
     var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 

@@ -36,6 +36,20 @@ function initializeChart() {
     dateAxis.strictMinMax = true;
     dateAxis.renderer.tooltipLocation = 0;
 
+    // Set up event listener to date axis to highlight current month
+    dateAxis.events.on("datavalidated", function(ev) {
+        var axis = ev.target;
+        const now = new Date();
+
+        // Create a range
+        var range = axis.axisRanges.create();
+        range.date = new Date(now.getFullYear(), now.getMonth(), 1);
+        range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        range.axisFill.fill = am4core.color("#396478");
+        range.axisFill.fillOpacity = 0.5;
+        range.grid.strokeOpacity = 0;
+    });
+
     var series1 = chart.series.push(new am4charts.ColumnSeries());
     //series1.columns.template.tooltipText = "{name}: {openDateX} - {dateX}";
     series1.columns.template.tooltipText = `[bold]{name}[/]
