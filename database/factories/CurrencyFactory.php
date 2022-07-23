@@ -29,6 +29,8 @@ class CurrencyFactory extends Factory
             'iso_code' => $currency['isoCode'],
             'num_digits' => $currency['minorUnits'],
             'suffix' => $currency['symbol'],
+            'base' => null,
+            'auto_update' => $this->faker->boolean,
             'user_id' => User::inRandomOrder()->first()->id,
         ];
     }

@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Investment;
+use App\Models\Currency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,20 +10,20 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class GetInvestmentPrices implements ShouldQueue
+class GetCurrencyRates implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $investment;
+    public $currency;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Investment $investment)
+    public function __construct(Currency $currency)
     {
-        $this->investment = $investment;
+        $this->currency = $currency;
     }
 
     /**
@@ -31,9 +31,9 @@ class GetInvestmentPrices implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
-        // Invoke provider's getInvestmentPrice method
-        $this->investment->getInvestmentPriceFromProvider();
+        // Invoke missing currency rate retrieval method for the currency
+        $this->currency->retreiveMissingCurrencyRateToBase();
     }
 }
