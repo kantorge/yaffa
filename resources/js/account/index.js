@@ -2,8 +2,6 @@ require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import * as dataTableHelpers from './../components/dataTableHelper';
 
-const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
 $('#table').DataTable({
     data: accounts,
     columns: [

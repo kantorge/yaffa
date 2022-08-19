@@ -1,13 +1,11 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net');
+require('datatables.net-bs');
 
-$(function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    window.baseCurrency = window.baseCurrency || {};
+window.baseCurrency = window.baseCurrency || {};
 
-    $('#table').DataTable({
-        data: currencies,
-        columns: [
+$('#table').DataTable({
+    data: currencies,
+    columns: [
         {
             data: "id",
             title: "ID"
@@ -33,11 +31,11 @@ $(function () {
             title: "Base currency",
             render: function (data, type) {
                 if (type == 'filter') {
-                    return  (data ? 'Yes' : 'No');
+                    return (data ? 'Yes' : 'No');
                 }
-                return (  data
-                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '');
+                return (data
+                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                    : '');
             },
             className: "text-center",
         },
@@ -46,11 +44,11 @@ $(function () {
             title: "Auto update",
             render: function (data, type) {
                 if (type == 'filter') {
-                    return  (data ? 'Yes' : 'No');
+                    return (data ? 'Yes' : 'No');
                 }
-                return (  data
-                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="fa fa-square text-danger" title="No"></i>');
+                return (data
+                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                    : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
@@ -61,26 +59,28 @@ $(function () {
         {
             data: "id",
             title: "Actions",
-            render: function (data, type, row) {
+            render: function (data, _type, row) {
                 return '' +
-                        '<a href="' + route('currencies.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                       // Base currency cannot be deleted or set as default
-                       ( !row.base
-                         ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
-                           '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                           '<form id="form-delete-' + data + '" action="' + route('currencies.destroy', data) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
-                           '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
-                         : '');
+                    '<a href="' + route('currencies.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                    // Base currency cannot be deleted or set as default
+                    (!row.base
+                        ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
+                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ' +
+                        '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
+                        : '');
             },
             orderable: false
         }
-        ],
-        order: [[ 1, 'asc' ]]
-    });
+    ],
+    order: [[1, 'asc']]
+});
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
-    });
+$("#table").on("click", ".data-delete", function() {
+    if (!confirm('Are you sure to want to delete this item?')) {
+        return;
+    }
+
+    let form = document.getElementById('form-delete');
+    form.action = route('currency.destroy', {investment: this.dataset.id});
+    form.submit();
 });

@@ -64,6 +64,17 @@ class Investment extends Model
         'investment_price_provider_name',
     ];
 
+    /**
+     * Scope a query to only include active investments.
+     *
+     *  @param Builder $query
+     * @return Builder
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query->where('active', true);
+    }
+
     public function investmentPrices()
     {
         return $this->hasMany(InvestmentPrice::class);

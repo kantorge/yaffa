@@ -1,7 +1,7 @@
 require('./bootstrap');
 
 // Helper functions
-// TODO: find appropriate place for these
+// TODO: find appropriate place for these custom functions
 Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
     if (nonBreakingSpaces !== false) {
         nonBreakingSpaces = true;

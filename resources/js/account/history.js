@@ -1,5 +1,5 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net');
+require('datatables.net-bs');
 
 import * as dataTableHelpers from './../components/dataTableHelper'
 
@@ -21,10 +21,9 @@ $(function() {
         return transaction;
     });
 
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
+var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
-    //define some settings, that are common for the two tables
+// Define some settings, that are common for the two tables
     var dtColumnSettingPayee = {
         title: 'Payee',
         render: function (data, type, row) {
@@ -326,7 +325,7 @@ $(function() {
 });
 
 // DataTables helper: truncate a string
-function truncateString(str, max, add){
+function truncateString(str, max, add) {
     add = add || '...';
     return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
 }
