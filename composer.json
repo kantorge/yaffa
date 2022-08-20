@@ -11,14 +11,14 @@
     "require": {
         "php": "^8.0",
         "almasaeed2010/adminlte": "~2.4",
-        "amrshawky/laravel-currency": "^4.0",
+        "amrshawky/laravel-currency": "^5.0",
         "enlightn/enlightn": "^1.22",
         "fakerphp/faker": "^1.13",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^8.12",
+        "laravel/framework": "^9.0",
         "laravel/sanctum": "^2.12",
         "laravel/ui": "^3.3",
         "nesbot/carbon": "^2.40",
@@ -27,14 +27,14 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
-        "facade/ignition": "^2.5",
         "imanghafoori/laravel-microscope": "^1.0",
         "laravel/telescope": "^4.6",
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
-        "nunomaduro/collision": "^5.0",
+        "nunomaduro/collision": "^6.1",
         "nunomaduro/phpinsights": "^2.0",
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "spatie/laravel-ignition": "^1.0"
     },
     "config": {
         "discard-changes": true,
