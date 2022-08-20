@@ -280,7 +280,7 @@ $('#account').select2({
         }
     })
     .done(data => {
-        window.account_currency = JSON.parse(data);
+        window.account_currency = data;
 
         // Enable the file input
         document.getElementById('csv_file').disabled = false;
