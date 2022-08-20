@@ -38,7 +38,7 @@
         "jquery-csv": "^1.0.21",
         "json-rules-engine": "^6.1.2",
         "mathjs": "^9.5.2",
-        "overlayscrollbars": "^1.13.2",
+        "overlayscrollbars": "^1.13.3",
         "pluralize": "^8.0.0",
         "rrule": "^2.7.1",
         "select2": "^4.0.13",
