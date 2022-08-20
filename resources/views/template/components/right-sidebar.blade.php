@@ -27,6 +27,15 @@
               </div>
             </a>
           </li>
+          <li>
+            <a href="{{ route('import.csv') }}">
+              <i class="menu-icon fa fa-upload bg-green"></i>
+
+              <div class="menu-info">
+                <h4 class="control-sidebar-subheading">Import transactions</h4>
+              </div>
+            </a>
+          </li>
         </ul>
         <!-- /.control-sidebar-menu -->
       </div>

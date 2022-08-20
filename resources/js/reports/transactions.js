@@ -83,24 +83,24 @@ window.table = $("#dataTable").DataTable({
         },
         {
             title: 'Type',
-            render: function(data, type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_type, row.transaction_name);
+            render: function(_data, _type, row) {
+                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type);
             },
             className: "text-center",
         },
         {
             title: 'From',
-            data: 'account_from_name',
+            data: 'config.account_from.name',
         },
         {
             title: 'To',
-            data: 'account_to_name',
+            data: 'config.account_to.name',
         },
         {
             title: "Category",
             render: function (data, type, row) {
                 // Standard transaction
-                if (row.transaction_type === 'Standard') {
+                if (row.transaction_config_type === 'standard') {
                     // Empty
                     if (row.categories.length === 0) {
                         return 'Not set';
@@ -113,15 +113,15 @@ window.table = $("#dataTable").DataTable({
                     }
                 }
                 //investment transaction
-                if (row.transaction_type === 'Investment') {
+                if (row.transaction_config_type === 'investment') {
                     if (!row.quantityOperator) {
-                        return row.transaction_name;
+                        return row.transaction_type;
                     }
                     if (!row.transactionOperator) {
-                        return row.transaction_name + " " + row.quantity;
+                        return row.transaction_type + " " + row.quantity;
                     }
 
-                    return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                    return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
                 }
 
                 return 'Not set';
@@ -132,7 +132,7 @@ window.table = $("#dataTable").DataTable({
             title: 'Amount',
             render: function (data, type, row) {
                 // Standard transaction
-                if (row.transaction_type === 'Standard') {
+                if (row.transaction_config_type === 'standard') {
                     let prefix = '';
                     if (row.transaction_operator == 'minus') {
                         prefix = '- ';
@@ -140,19 +140,19 @@ window.table = $("#dataTable").DataTable({
                     if (row.transaction_operator == 'plus') {
                         prefix = '+ ';
                     }
-                    return prefix + row.amount.toLocalCurrency(row.currency);
+                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
                 }
                 // Investment transaction
                 /* not implemented yet
-                if (row.transaction_type === 'Investment') {
+                if (row.transaction_config_type === 'investment') {
                     if (!row.quantityOperator) {
-                        return row.transaction_name;
+                        return row.transaction_type;
                     }
                     if (!row.transactionOperator) {
-                        return row.transaction_name + " " + row.quantity;
+                        return row.transaction_type + " " + row.quantity;
                     }
 
-                    return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                    return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
                 }
                 */
 
@@ -172,17 +172,17 @@ window.table = $("#dataTable").DataTable({
             data: 'id',
             title: "Actions",
             render: function(data, _type, row) {
-                if (row.transaction_type === 'Standard') {
+                if (row.transaction_config_type === 'standard') {
                     return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
                             dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                            dataTableHelpers.dataTablesActionButton(data, 'edit', 'Standard') +
-                            dataTableHelpers.dataTablesActionButton(data, 'clone', 'Standard') +
+                            dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
+                            dataTableHelpers.dataTablesActionButton(data, 'clone', 'standard') +
                             dataTableHelpers.dataTablesActionButton(data, 'delete');
                 }
 
                 /* Not implemnted yet
-                return '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                            '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                return '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                            '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
                             '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
                 */
             },
@@ -207,6 +207,69 @@ function reloadTable() {
 
 // Reload button functionality
 $("#reload").on('click', reloadTable);
+
+// Quick view button functionality
+// TODO: this could be unified accross the app, with some flexibility on the table selector and control settings
+// TODO: can we rely on some cases, where the transaction data is available, and no API call is necessary?
+$('#dataTable').on('click', 'button.transaction-quickview', function () {
+    let icon = this.querySelector('i');
+    // If spinner is displayed, do not initiate another request
+    if (icon.classList.contains("fa-spinner")) {
+        return false;
+    }
+
+    const originalIconClass = icon.className;
+    icon.className = "fa fa-fw fa-spin fa-spinner";
+
+    fetch('/api/transaction/' + this.dataset.id)
+    .then(function(response) {
+        if (!response.ok) {
+            throw Error(response.statusText);
+        }
+        return response;
+    }).then(response => response.json())
+    .then(function(data) {
+        let transaction = data.transaction;
+
+        // Convert dates to Date objects
+        if (transaction.date) {
+            transaction.date = new Date(transaction.date);
+        }
+        if (transaction.transaction_schedule) {
+            if (transaction.transaction_schedule.start_date) {
+                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+            }
+            if (transaction.transaction_schedule.end_date) {
+                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+            }
+            if (transaction.transaction_schedule.next_date) {
+                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+            }
+        }
+
+        // Emit global event for modal to display
+        let event = new CustomEvent('showTransactionQuickviewModal', {
+            detail: {
+                transaction: transaction,
+                controls: {
+                    show: true,
+                    edit: true,
+                    clone: true,
+                    skip: true,
+                    enter: true,
+                    delete: true,
+                }
+            }
+        });
+        window.dispatchEvent(event);
+    })
+    .catch((error) => {
+        console.log(error);
+    })
+    .finally(() => {
+        icon.className = originalIconClass;
+    });
+});
 
 $("#clear_dates").on('click', function() {
     dateRangePicker.setDates(

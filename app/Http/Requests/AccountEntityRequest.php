@@ -58,6 +58,10 @@ class AccountEntityRequest extends FormRequest
                         return $query->where('user_id', Auth::user()->id);
                     }),
                 ],
+                'config.import_alias' => [
+                    'nullable',
+                    'string',
+                ],
             ]);
         }
 

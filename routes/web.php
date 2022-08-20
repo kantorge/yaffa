@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
@@ -75,7 +76,6 @@ Route::resource('tag', TagController::class)->except(['show']);
 
 Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
 Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
-Route::post('/transactions/standard', [TransactionController::class, 'storeStandard'])->name('transactions.storeStandard');
 Route::post('/transactions/investment', [TransactionController::class, 'storeInvestment'])->name('transactions.storeInvestment');
 
 Route::get(
@@ -83,16 +83,15 @@ Route::get(
     [TransactionController::class, 'openStandard']
 )
 ->where('action', 'edit|clone|enter|show|replace')
-->name('transactions.openStandard');
+->name('transactions.open.standard');
 
 Route::get(
     '/transactions/investment/{transaction}/{action}',
     [TransactionController::class, 'openInvestment']
 )
 ->where('action', 'edit|clone|enter|replace')
-->name('transactions.openInvestment');
+->name('transactions.open.investment');
 
-Route::patch('/transactions/standard/{transaction}', [TransactionController::class, 'updateStandard'])->name('transactions.updateStandard');
 Route::patch('/transactions/investment/{transaction}', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])->name('transactions.skipScheduleInstance');
 Route::resource(
@@ -116,5 +115,8 @@ Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])
 
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+// Route for the CSV import functionality
+Route::get('/import/csv', [ImportController::class, 'importCsv'])->name('import.csv');
 
 Auth::routes();

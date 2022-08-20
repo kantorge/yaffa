@@ -191,6 +191,7 @@ class ReportController extends Controller
         return response()->json($result, Response::HTTP_OK);
     }
 
+    // TODO: unify with TransactionApiController::getScheduledItems(), or utilize it
     public function scheduledTransactions(Request $request)
     {
         // Return empty response if categories are not set or empty
@@ -219,6 +220,8 @@ class ReportController extends Controller
         $standardTransactions = Transaction::with(
             [
                 'config',
+                'config.accountFrom',
+                'config.accountTo',
                 'transactionType',
                 'transactionSchedule',
                 'transactionItems',
@@ -256,7 +259,6 @@ class ReportController extends Controller
                     }
                 }
 
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id == $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id] ?? null;
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id] ?? null;
                 $transaction->amount_from = $transaction->config->amount_from;

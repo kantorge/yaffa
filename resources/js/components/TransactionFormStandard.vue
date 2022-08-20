@@ -70,15 +70,15 @@
                                         <label class="block-label" for="date">
                                             Date
                                         </label>
-                                        <date-picker
+                                        <Datepicker
                                             id="date"
-                                            :lang="dataPickerLanguage"
                                             v-model="form.date"
-                                            value-type="format"
-                                            format="YYYY-MM-DD"
-                                            type="date"
                                             :disabled="form.schedule || form.budget"
-                                        ></date-picker>
+                                            autoApply
+                                            format="yyyy. MM. dd."
+                                            :enableTimePicker="false"
+                                            utc="preserve"
+                                        ></Datepicker>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -147,7 +147,7 @@
                                 </div>
 
                                     <div class="form-group form-horizontal row">
-                                        <div class="col-xs-4 checkbox">
+                                        <div class="col-xs-4 checkbox" v-if="!simplified">
                                             <label
                                                 :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
                                                 :data-toggle="(action === 'replace' ? 'tooltip' : '')"
@@ -161,7 +161,7 @@
                                                 Scheduled
                                             </label>
                                         </div>
-                                        <div class="col-xs-4 checkbox">
+                                        <div class="col-xs-4 checkbox" v-if="!simplified">
                                             <label
                                                 :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
                                                 :data-toggle="(action === 'replace' ? 'tooltip' : '')"
@@ -237,6 +237,37 @@
                                         ></MathInput>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-xs-12">
+                                        <dl class="dl-horizontal">
+                                            <dt>Total amount:</dt>
+                                            <dd>
+                                                {{ form.config.amount_from || 0 }}
+                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                            </dd>
+                                            <dt>Total allocated:</dt>
+                                            <dd>
+                                                {{ allocatedAmount }}
+                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                            </dd>
+                                            <dt v-show="payeeCategory.id">
+                                                Remaining amount to
+                                                <span class="notbold"><br>{{ payeeCategory.text }}</span>:
+                                            </dt>
+                                            <dd v-show="payeeCategory.id">
+                                                {{ remainingAmountToPayeeDefault }}
+                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                            </dd>
+                                            <dt v-show="!payeeCategory.id">
+                                                Not allocated:
+                                            </dt>
+                                            <dd v-show="!payeeCategory.id">
+                                                {{ remainingAmountNotAllocated }}
+                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <!-- /.box -->
@@ -247,6 +278,7 @@
                             :isBudget="form.budget"
                             :schedule="form.schedule_config"
                             :form="form"
+                            key="current"
                         ></transaction-schedule>
 
                         <transaction-schedule
@@ -260,6 +292,7 @@
                             :schedule = "form.original_schedule_config"
                             :form = "form"
                             ref = "scheduleOriginal"
+                            key="original"
                         ></transaction-schedule>
 
                     </div>
@@ -276,59 +309,13 @@
                         ></transaction-item-container>
                     </div>
                     <!--/.col (right) -->
-
                 </div>
                 <!-- /.row -->
 
                 <div class="box box-primary">
                     <div class="box-body">
                         <div class="row">
-                            <div class="col-xs-8 col-sm-3">
-                                <dl class="dl-horizontal">
-                                    <dt>Total amount:</dt>
-                                    <dd>
-                                        {{ form.config.amount_from || 0 }}
-                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                    </dd>
-                                    <dt>Total allocated:</dt>
-                                    <dd>
-                                        {{ allocatedAmount }}
-                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                    </dd>
-                                    <dt v-show="payeeCategory.id">
-                                        Remaining amount to
-                                        <span class="notbold"><br>{{ payeeCategory.text }}</span>:
-                                    </dt>
-                                    <dd v-show="payeeCategory.id">
-                                        {{ remainingAmountToPayeeDefault }}
-                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                    </dd>
-                                    <dt v-show="!payeeCategory.id">
-                                        Not allocated:
-                                    </dt>
-                                    <dd v-show="!payeeCategory.id">
-                                        {{ remainingAmountNotAllocated }}
-                                        <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                    </dd>
-                                </dl>
-                            </div>
-                            <div class="hidden-xs col-sm-7">
-                                <label class="control-label block-label">After saving</label>
-                                <div class="btn-group">
-                                    <button
-                                        v-for="item in activeCallbackOptions"
-                                        :key="item.id"
-                                        class="btn btn-default"
-                                        :class="callback == item.value ? 'active' : ''"
-                                        type="button"
-                                        :value="item.value"
-                                        @click="callback = $event.currentTarget.getAttribute('value')"
-                                    >
-                                        {{ item.label }}
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-xs-4 col-sm-2">
+                            <div class="col-xs-12">
                                 <div class="pull-right">
                                     <button
                                         class="btn btn-sm btn-default"
@@ -348,21 +335,6 @@
                                     </Button>
                                 </div>
                             </div>
-                            <div class="col-xs-12 d-sm-none">
-                                <label class="control-label block-label">After saving</label>
-                                <select
-                                    class="form-control"
-                                    v-model="callback"
-                                >
-                                    <option
-                                        v-for="item in activeCallbackOptions"
-                                        :key="item.id"
-                                        :value="item.value"
-                                    >
-                                        {{ item.label }}
-                                    </option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,8 +351,8 @@
     import Form from 'vform'
     import {Button, AlertErrors} from 'vform/src/components/bootstrap4'
 
-    import DatePicker from 'vue2-datepicker';
-    import 'vue2-datepicker/index.css';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
 
     import TransactionItemContainer from './TransactionItemContainer.vue'
     import TransactionSchedule from './TransactionSchedule.vue'
@@ -389,10 +361,8 @@
 
     export default {
         components: {
-            'transaction-item-container': TransactionItemContainer,
-            'transaction-schedule': TransactionSchedule,
-            'payee-form': PayeeForm,
-            DatePicker,
+            TransactionItemContainer, TransactionSchedule, PayeeForm,
+            Datepicker,
             Button, AlertErrors,
             MathInput,
         },
@@ -400,6 +370,17 @@
         props: {
             action: String,
             transaction: Object,
+            simplified: {
+                // If true, no schedule or budget is shown
+                type: Boolean,
+                default: false,
+            },
+            fromModal: {
+                // If true, the form is shown in a modal, which controls the notification behavior
+                // TODO: does the component need to be aware of this? Or can this be avoided?
+                type: Boolean,
+                default: false,
+            },
         },
 
         data() {
@@ -427,9 +408,10 @@
 
             // Main form data
             data.form = new Form({
+                fromModal: this.fromModal,
                 transaction_type: 'withdrawal',
                 config_type: 'transaction_detail_standard',
-                date: new Date().toISOString().slice(0, 10),
+                date: window.todayInUTC(),
                 comment: null,
                 schedule: false,
                 budget: false,
@@ -447,67 +429,10 @@
             // Id counter for items
             data.itemCounter = 0;
 
-            // TODO: adjust initial callback based on action
-            data.callback = 'new';
-
-            // Date picker settings
-            data.dataPickerLanguage = {
-                formatLocale: {
-                    firstDayOfWeek: 1,
-                },
-                monthBeforeYear: false,
-            };
-
-            // Possible callback options
-            data.callbackOptions = [
-                {
-                    value: 'new',
-                    label: 'Add an other transaction',
-                    enabled: true,
-                },
-                {
-                    value: 'clone',
-                    label: 'Clone this transaction',
-                    enabled: true,
-                },
-                {
-                    value: 'returnToPrimaryAccount',
-                    label: 'Return to selected account',
-                    enabled: true,
-                },
-                {
-                    value: 'returnToSecondaryAccount',
-                    label: 'Return to target account',
-                    enabled: false,
-                },
-                {
-                    value: 'returnToDashboard',
-                    label: 'Return to dashboard',
-                    enabled: true,
-                },
-                {
-                    value: 'back',
-                    label: 'Return to previous page',
-                    enabled: true,
-                },
-            ]
-
             return data;
         },
 
         computed: {
-            formUrl() {
-                if (this.action === 'edit') {
-                    return route('transactions.updateStandard', {transaction: this.form.id});
-                }
-
-                return route('transactions.storeStandard');
-            },
-
-            activeCallbackOptions() {
-                return this.callbackOptions.filter(option => option.enabled);
-            },
-
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
                 return (this.form.transaction_type == 'withdrawal' || this.form.transaction_type == 'transfer' ? 'Account from' : 'Payee')
@@ -522,7 +447,7 @@
                 return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
             },
 
-            // Amound from currency is dependent on many other data
+            // Amount from currency is dependent on many other data
             ammountFromCurrencyLabel() {
                 if (this.form.transaction_type === 'withdrawal' || this.form.transaction_type === 'transfer') {
                     return this.from.account_currency;
@@ -601,74 +526,15 @@
         },
 
         created() {
-            var $vm = this;
-
             // Copy values of existing transaction into component form data
-            if (Object.keys(this.transaction).length > 0) {
-                // Populate form data with already known values
-                this.form.id = this.transaction.id
-                this.form.transaction_type = this.transaction.transaction_type.name;
-                this.form.date = this.transaction.date;
-                this.form.comment = this.transaction.comment;
-                this.form.schedule = this.transaction.schedule;
-                this.form.budget = this.transaction.budget;
-                this.form.reconciled = this.transaction.reconciled;
-
-                // Copy configuration
-                this.form.config.amount_from = this.transaction.config.amount_from;
-                this.form.config.amount_to = this.transaction.config.amount_to;
-
-                this.form.config.account_from_id = this.transaction.config.account_from_id;
-                this.form.config.account_to_id = this.transaction.config.account_to_id;
-
-                // Copy items, and ensure that amount is number
-                if (this.transaction.transaction_items.length > 0) {
-                    this.transaction.transaction_items
-                        .map((item) => {
-                            item.id = $vm.itemCounter++;
-                            item.amount = Number(item.amount);
-                            return item;
-                        })
-                        .forEach(item => this.form.items.push(item));
-                }
-
-                // Copy schedule config
-                if (this.transaction.transaction_schedule) {
-                    this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
-                    this.form.schedule_config.count = this.transaction.transaction_schedule.count;
-                    this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
-                    this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
-                    this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
-                    this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
-                    this.form.schedule_config.inflation = this.transaction.transaction_schedule.inflation;
-                }
-
-                // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
-                if (this.action === 'replace') {
-                    this.form.original_schedule_config = JSON.parse(JSON.stringify(this.form.schedule_config));
-                    this.form.original_schedule_config.next_date = undefined;
-
-                    // Set new schedule start date to today
-                    this.form.schedule_config.start_date = new Date().toISOString().slice(0, 10);
-
-                    // Set cloned schedule end date to today - 1 day
-                    this.form.original_schedule_config.end_date = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-                }
-            }
+            this.initializeTransaction();
 
             // Check for various default values in URL
+            // TODO: this should be moved to container (parent) component
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('account_from')) {
                 this.form.config.account_from_id = urlParams.get('account_from');
             }
-            /* TODO: planned function to set account_to from URL
-            if (urlParams.get('account_to')) {
-                this.form.config.account_to_id = urlParams.get('account_to');
-            }
-            */
-
-            // Set form action
-            this.form.action = this.action;
         },
 
         mounted() {
@@ -689,7 +555,8 @@
                             }
                         })
                         .done(data => {
-                            $vm.from.account_currency = data;
+                            const currency = JSON.parse(data);
+                            $vm.from.account_currency = currency.suffix;
                         });
                     } else {
                         $.ajax({
@@ -713,24 +580,7 @@
                 });
 
             // Load default value for account FROM, based on transaction type
-            if (this.form.config.account_from_id) {
-                if (this.getAccountType('from') == 'account') {
-                    $.ajax({
-                        url:  '/api/assets/account/' + this.form.config.account_from_id,
-                        data: {
-                            _token: $vm.csrfToken,
-                        }
-                    })
-                    .done(data => {
-                        // Create the option and append to Select2
-                        $vm.addNewItemToSelect('#account_from', data.id, data.name);
-                    });
-                } else if (this.getAccountType('from') == 'payee') {
-                    const data = this.transaction.config.account_from;
-                    // Create the option and append to Select2
-                    $vm.addNewItemToSelect('#account_from', data.id, data.name);
-                }
-            }
+            this.getDefaultAccountDetails(this.transaction?.config?.account_from, 'from');
 
             // Account TO dropdown functionality
             $("#account_to")
@@ -747,7 +597,8 @@
                             }
                         })
                         .done(data => {
-                            $vm.to.account_currency = data;
+                            const currency = JSON.parse(data);
+                            $vm.to.account_currency = currency.suffix;
                         });
                     } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({
@@ -771,50 +622,129 @@
                 });
 
             // Load default value for account TO
-            if (this.form.config.account_to_id) {
-                if (this.getAccountType('to') == 'account') {
-                    $.ajax({
-                        url:  '/api/assets/account/' + this.form.config.account_to_id,
-                        data: {
-                            _token: $vm.csrfToken,
-                        }
-                    })
-                    .done(data => {
-                        // Create the option and append to Select2
-                        $vm.addNewItemToSelect('#account_to', data.id, data.name);
-                    });
-                } else if (this.getAccountType('to') == 'payee') {
-                    const data = this.transaction.config.account_to;
-                    // Create the option and append to Select2
-                    $vm.addNewItemToSelect('#account_to', data.id, data.name);
-                }
-            }
+            this.getDefaultAccountDetails(this.transaction?.config?.account_to, 'to');
 
             // Initial sync between schedules, if applicable
             this.syncScheduleStartDate(this.form.schedule_config.start_date);
         },
 
         methods: {
+            initializeTransaction() {
+                if (Object.keys(this.transaction).length > 0) {
+                    // Populate form data with already known values
+                    this.form.id = this.transaction.id
+                    this.form.transaction_type = this.transaction.transaction_type.name;
+
+                    // Populate date from source transaction, and ensure that it's a Date object
+                    this.form.date = this.copyDateObject(this.transaction.date);
+
+                    this.form.comment = this.transaction.comment;
+                    this.form.schedule = this.transaction.schedule;
+                    this.form.budget = this.transaction.budget;
+                    this.form.reconciled = this.transaction.reconciled;
+
+                    // Copy configuration
+                    this.form.config.amount_from = this.transaction.config.amount_from;
+                    this.form.config.amount_to = this.transaction.config.amount_to;
+
+                    this.form.config.account_from_id = this.transaction.config.account_from_id;
+                    this.form.config.account_to_id = this.transaction.config.account_to_id;
+
+                    // Copy items, and ensure that amount is number
+                    if (this.transaction.transaction_items.length > 0) {
+                        this.transaction.transaction_items
+                            .map((item) => {
+                                //item.id = $vm.itemCounter++;
+                                item.id = this.itemCounter++;
+                                item.amount = Number(item.amount);
+                                return item;
+                            })
+                            .forEach(item => this.form.items.push(item));
+                    }
+
+                    // Copy schedule config
+                    // TODO: date conversion should take place here, or elsewehere?
+                    if (this.transaction.transaction_schedule) {
+                        this.form.schedule_config.frequency = this.transaction.transaction_schedule.frequency;
+                        this.form.schedule_config.count = this.transaction.transaction_schedule.count;
+                        this.form.schedule_config.interval = this.transaction.transaction_schedule.interval;
+
+                        this.form.schedule_config.start_date = this.copyDateObject(this.transaction.transaction_schedule.start_date);
+                        this.form.schedule_config.next_date = this.copyDateObject(this.transaction.transaction_schedule.next_date);
+                        this.form.schedule_config.end_date = this.copyDateObject(this.transaction.transaction_schedule.end_date);
+
+                        this.form.schedule_config.inflation = this.transaction.transaction_schedule.inflation;
+                    }
+
+                    // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
+                    if (this.action === 'replace') {
+                        this.form.original_schedule_config = {};
+                        this.form.original_schedule_config.frequency = this.form.schedule_config.frequency;
+                        this.form.original_schedule_config.count = this.form.schedule_config.count;
+                        this.form.original_schedule_config.interval = this.form.schedule_config.interval;
+                        this.form.original_schedule_config.inflation = this.form.schedule_config.inflation;
+                        this.form.original_schedule_config.start_date = this.copyDateObject(this.form.schedule_config.start_date);
+
+                        // Reset next date of original schedule config to set it ended
+                        this.form.original_schedule_config.next_date = undefined;
+
+                        // Set new schedule start date to today
+                        this.form.schedule_config.start_date = window.todayInUTC();
+
+                        // If this is a schedule, then set the new next date to today
+                        if (this.form.schedule) {
+                            this.form.schedule_config.next_date = window.todayInUTC();
+                        }
+
+                        // Set original schedule end date to today - 1 day
+                        this.form.original_schedule_config.end_date = new Date(window.todayInUTC().getTime() - 24 * 60 * 60 * 1000);
+                    }
+                }
+
+                // Set form action
+                this.form.action = this.action;
+            },
+
+            copyDateObject(date) {
+                if (date instanceof Date) {
+                    return date;
+                }
+                if (date) {
+                    return new Date(date);
+                }
+
+                return null;
+            },
+
             changeTransactionType: function (event) {
+                // Get new type from event
                 const newState = event.currentTarget.getAttribute('value');
+                // Get existing type from form
                 const oldState = this.form.transaction_type;
 
+                // Ignore event if no actual change has happened
                 if (newState === oldState) {
                     return false;
                 }
 
+                // Confirm transaction type change with user
                 if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
                     event.currentTarget.blur();
                     return false;
                 }
 
+                // Proceed with component update
+                this.onChangeTransactionType(newState, false);
+            },
+
+            onChangeTransactionType(newState, forceUpdate) {
                 const oldTypeFrom = this.getAccountType('from');
                 const oldTypeTo = this.getAccountType('to');
 
                 this.form.transaction_type = newState;
 
                 // Reassign account FROM functionality, if changed
-                if (oldTypeFrom !== this.getAccountType('from')) {
+                if (oldTypeFrom !== this.getAccountType('from') || forceUpdate) {
                     if (this.getAccountType('from') === 'account') {
                         this.from.type = 'account';
                         this.resetAccount('from');
@@ -829,8 +759,8 @@
                         .select2(this.getAccountSelectConfig('from'));
                 }
 
-                // Reassign account FROM functionality, if changed
-                if (oldTypeTo !== this.getAccountType('to')) {
+                // Reassign account TO functionality, if changed
+                if (oldTypeTo !== this.getAccountType('to') || forceUpdate) {
                     if (this.getAccountType('to') === 'account') {
                         this.to.type = 'account';
                         this.resetAccount('to');
@@ -845,15 +775,8 @@
                         .select2(this.getAccountSelectConfig('to'));
                 }
 
-                // Update callback options
-                var foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
-                this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
-
-                // Ensure, that selected item is enabled. Otherwise, set to first enabled option
-                var selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
-                if (! this.callbackOptions[selectedCallbackIndex].enabled) {
-                    this.callback = this.callbackOptions.find(option => option.enabled)['value'];
-                }
+                // Emmit event, so that parent container can react on it
+                this.$emit('changeTransactionType', newState);
             },
 
             // Add a new empty item to list of transaction items
@@ -942,71 +865,57 @@
                 };
             },
 
-            // Determine, which account to use as a callback, if user wants to return to selected account
-            getReturnAccount(accountType) {
-                if (accountType === 'primary' && this.form.transaction_type == 'deposit') {
-                    return this.form.config.account_to_id;
-                }
-
-                if (accountType === 'secondary') {
-                    return this.form.config.account_to_id;
-                }
-
-                // Withdrawal and transfer primary
-                return this.form.config.account_from_id;
-            },
-
-            loadCallbackUrl(transactionId) {
-                if (this.callback === 'returnToDashboard') {
-                    location.href = route('home');
+            getDefaultAccountDetails(account, type) {
+                if (!account || !account.id) {
                     return;
                 }
 
-                if (this.callback === 'new') {
-                    location.href = route('transactions.createStandard');
-                    return;
+                const $vm = this;
+                const selector = '#account_' + type;
+
+                if (this.getAccountType(type) == 'account') {
+                    $.ajax({
+                        url:  '/api/assets/account/' + account.id,
+                        data: {
+                            _token: $vm.csrfToken,
+                        }
+                    })
+                    .done(data => {
+                        // Create the option and append to Select2
+                        $vm.addNewItemToSelect(selector, data.id, data.name);
+                    });
+                } else if (this.getAccountType(type) == 'payee') {
+                    const data = account;
+                    // Create the option and append to Select2
+                    $vm.addNewItemToSelect(selector, data.id, data.name);
                 }
 
-                if (this.callback === 'clone') {
-                    location.href = route('transactions.openStandard', { transaction: transactionId, action: 'clone' });
-                    return;
-                }
-
-                if (this.callback === 'returnToPrimaryAccount') {
-                    location.href = route('account.history', { account: this.getReturnAccount('primary') });
-                    return;
-                }
-
-                if (this.callback === 'returnToSecondaryAccount') {
-                    location.href = route('account.history', { account: this.getReturnAccount('secondary') });
-                    return;
-                }
-
-                // Default, return back
-                if (document.referrer) {
-                    location.href = document.referrer;
-                } else {
-                    history.back();
-                }
             },
 
             onCancel() {
                 if(confirm('Are you sure you want to discard any changes?')) {
-                    window.history.back();
+                    this.$emit('cancel');
                 }
                 return false;
             },
 
             onSubmit() {
-                if (this.action !== 'edit') {
-                    this.form.post(this.formUrl, this.form)
-                        .then(( response ) => {
-                            this.loadCallbackUrl(response.data.transaction_id);
+                if (this.action === 'edit') {
+                    // Edit existing transaction
+                    this.form.patch(
+                            route('api.transactions.updateStandard', {transaction: this.form.id}),
+                            this.form
+                        )
+                        .then((response) => {
+                            this.$emit('success', response.data.transaction);
                         });
                 } else {
-                    this.form.patch(this.formUrl, this.form)
-                        .then(( response ) => {
-                            this.loadCallbackUrl(response.data.transaction_id);
+                    // Any type of new transaction
+                    this.form.post(
+                            route('api.transactions.storeStandard'), this.form
+                        )
+                        .then((response) => {
+                            this.$emit('success', response.data.transaction);
                         });
                 }
             },
@@ -1039,17 +948,11 @@
 
             // Sync the standard schedule start date to the cloned schedule end date
             syncScheduleStartDate(newDate) {
-                if (!this.form.original_schedule_config) {
+                if (!newDate || !this.form.original_schedule_config || !this.$refs.scheduleOriginal || this.$refs.scheduleOriginal.allowCustomization) {
                     return;
                 }
-
-                if (!this.$refs.scheduleOriginal || this.$refs.scheduleOriginal.allowCustomization) {
-                    return;
-                }
-
-                let date = new Date(newDate);
-                date.setDate( date.getDate() - 1);
-                this.form.original_schedule_config.end_date = date.toISOString().split('T')[0];
+                let date = this.copyDateObject(newDate);
+                this.form.original_schedule_config.end_date = new Date(date.getTime() - 24 * 60 * 60 * 1000);
             },
         },
 
@@ -1076,25 +979,34 @@
                     }
                 },
             },
+
+            transaction (transaction) {
+                // TODO: consider using form.update()
+                this.form.reset();
+
+                // Copy values of existing transaction into component form data
+                this.initializeTransaction();
+
+                // Ensure that new transaction type is set
+                // TODO: should this be part of initializeTransaction()?
+                this.onChangeTransactionType(transaction.transaction_type, true);
+
+                // Load default value for accounts
+                this.getDefaultAccountDetails(transaction.config.account_from, 'from');
+                this.getDefaultAccountDetails(transaction.config.account_to, 'to');
+            }
         }
     }
 
     // Initialize tooltips
     // TODO: can this be part of Vue init?
-    $(document).ready(function() {
-        $('[data-toggle="tooltip"]').tooltip()
-    });
-
+    $('[data-toggle="tooltip"]').tooltip();
 </script>
 
 <style scoped>
     @media (min-width: 576px) {
         .block-label {
             display: block;
-        }
-
-        .d-sm-none {
-            display: none;
         }
     }
     @media (max-width: 575.98px) {

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\TransactionType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -130,12 +132,22 @@ class AccountApiController extends Controller
         return response()->json($accounts, Response::HTTP_OK);
     }
 
-    public function getInvestmentList(Request $request)
+    public function getAccountListForInvestments(Request $request)
     {
         if ($request->get('q')) {
             $accounts = Auth::user()
-                ->investments()
+                ->accounts()
                 ->active()
+                ->when($request->get('currency_id'), function ($query) use ($request) {
+                    // Get account entity with config having the same currency as the one provided
+                    $query->whereHasMorph(
+                        'config',
+                        [Account::class],
+                        function (Builder $query) use ($request) {
+                            $query->where('currency_id', $request->get('currency_id'));
+                        }
+                    );
+                })
                 ->select(['id', 'name AS text'])
                 ->where('name', 'LIKE', '%'.$request->get('q').'%')
                 ->where('active', true)
@@ -190,11 +202,17 @@ class AccountApiController extends Controller
         return response()->json($accounts, Response::HTTP_OK);
     }
 
-    public function getAccountCurrencyLabel(AccountEntity $accountEntity)
+    /**
+     * Get the the currency associated with the account.
+     *
+     * @param App\Models\AccountEntity $accountEntity
+     * @return string
+     */
+    public function getAccountCurrency(AccountEntity $accountEntity): string
     {
         $this->authorize('view', $accountEntity);
 
-        return $accountEntity->config->currency->suffix;
+        return $accountEntity->config->currency;
     }
 
     /**

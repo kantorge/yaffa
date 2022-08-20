@@ -4,19 +4,19 @@ export function dataTablesActionButton(id, action, transactionType) {
             return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
         },
         standardQuickView: function() {
-            return '<button class="btn btn-xs btn-success data-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+            return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
         },
         standardShow: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
+            return '<a href="' + route('transactions.open.standard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
         },
         edit: function(transactionType) {
-            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
         },
         clone(transactionType) {
-            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
         },
         replace(transactionType) {
-            return '<a href="' + route('transactions.open' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
         }
     }
 
@@ -79,7 +79,7 @@ export function booleanToTableIcon (data, type) {
 }
 
 export function transactionTypeIcon(type, name, customTitle) {
-    if (type === 'Standard') {
+    if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || "Withdrawal";
             return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
@@ -92,10 +92,16 @@ export function transactionTypeIcon(type, name, customTitle) {
             customTitle = customTitle || "Transfer";
             return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
-    } else if (type === 'Investment') {
+    } else if (type === 'investment') {
         customTitle = customTitle || name;
         return '<i class="fa fa-line-chart text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
     }
 
     return null;
+}
+
+export function muteCellWithValue(column, mutedValue) {
+    if (column.text() === mutedValue) {
+        column.addClass('text-muted text-italic');
+    }
 }

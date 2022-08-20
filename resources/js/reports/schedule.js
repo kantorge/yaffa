@@ -88,13 +88,13 @@ window.table = $('#table').DataTable({
             className: "text-center",
         },
         {
-            data: "transaction_type",
+            data: "transaction_config_type",
             title: "Type",
             render: function (data, type) {
                 if (type == 'filter') {
                     return  data;
                 }
-                return (  data == 'Standard'
+                return (  data === 'standard'
                         ? '<i class="fa fa-money text-primary" title="Standard"></i>'
                         : '<i class="fa fa-line-chart text-primary" title="Investment"></i>');
             },
@@ -103,21 +103,21 @@ window.table = $('#table').DataTable({
         {
             title: 'Payee',
             render: function (_data, _type, row) {
-                if (row.transaction_type == 'Standard') {
-                    if (row.transaction_name == 'withdrawal') {
-                        return row.account_to_name;
+                if (row.transaction_config_type === 'standard') {
+                    if (row.transaction_type === 'withdrawal') {
+                        return row.config.account_to.name;
                     }
-                    if (row.transaction_name == 'deposit') {
-                        return row.account_from_name;
+                    if (row.transaction_type === 'deposit') {
+                        return row.config.account_from.name;
                     }
-                    if (row.transaction_name == 'transfer') {
-                        if (row.transaction_operator == 'minus') {
-                            return 'Transfer to ' + row.account_to_name;
+                    if (row.transaction_type === 'transfer') {
+                        if (row.transaction_operator === 'minus') {
+                            return 'Transfer to ' + row.config.account_to.name;
                         } else {
-                            return 'Transfer from ' + row.account_from_name;
+                            return 'Transfer from ' + row.config.account_from.name;
                         }
                     }
-                } else if (row.transaction_type == 'Investment') {
+                } else if (row.transaction_config_type === 'investment') {
                     return row.investment_name;
                 }
 
@@ -128,7 +128,7 @@ window.table = $('#table').DataTable({
             title: "Category",
             render: function (_data, _type, row) {
                 //standard transaction
-                if (row.transaction_type == 'Standard') {
+                if (row.transaction_config_type === 'standard') {
                     //empty
                     if (row.categories.length == 0) {
                         return '';
@@ -141,15 +141,15 @@ window.table = $('#table').DataTable({
                     }
                 }
                 //investment transaction
-                if (row.transaction_type == 'Investment') {
+                if (row.transaction_config_type === 'investment') {
                     if (!row.quantity_operator) {
-                        return row.transaction_name;
+                        return row.transaction_type;
                     }
                     if (!row.transaction_operator) {
-                        return row.transaction_name + " " + row.quantity;
+                        return row.transaction_type + " " + row.quantity;
                     }
 
-                    return row.transaction_name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                    return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
                 }
 
                 return '';
@@ -166,7 +166,7 @@ window.table = $('#table').DataTable({
                 if (row.transaction_operator == 'plus') {
                     prefix = '+ ';
                 }
-                return prefix + numberRenderer(row.amount);
+                return prefix + numberRenderer(row.config.amount_to);
             },
         },
         {
@@ -189,12 +189,12 @@ window.table = $('#table').DataTable({
             data: 'id',
             title: "Actions",
             render: function (data, _type, row) {
-                return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type) +
+                return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_config_type) +
+                        dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
+                        dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
                         dataTableHelpers.dataTablesActionButton(data, 'delete') +
                         (row.schedule
-                            ? '<a href="' + route('transactions.open' + row.transaction_type, {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            ? '<a href="' + route('transactions.open.' + row.transaction_config_type, {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
                             : '');
             },
@@ -212,7 +212,11 @@ window.table = $('#table').DataTable({
             $(row).addClass('warning');
         }
     },
+    initComplete: function (_settings, _json) {
+        $('[data-toggle="tooltip"]').tooltip();
+    },
     order: [
+        // Start date is the first column
         [ 0, "asc" ]
     ],
     deferRender:    true,
@@ -237,9 +241,4 @@ $('input[name=budget]').on("change", function() {
 
 $('input[name=active]').on("change", function() {
     table.column(5).search(this.value).draw();
-});
-
-// Injitialize tooltips on this page
-$(function () {
-    $('[data-toggle="tooltip"]').tooltip()
 });

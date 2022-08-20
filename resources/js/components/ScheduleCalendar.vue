@@ -30,7 +30,7 @@
                             v-for="item in attributes"
                             :key="item.key"
                             style="margin: 0 1px;"
-                            :href="getTransactionLink(item.customData.transaction_type, item.customData.id)"
+                            :href="getTransactionLink(item.customData.transaction_config_type, item.customData.id)"
                             v-html="getTransactionTypeIcon(item.customData)"
                         ></a>
                     </div>
@@ -51,30 +51,24 @@ export default {
 
     methods: {
         getTransactionTypeIcon: function(transaction) {
-            return dataTableHelpers.transactionTypeIcon(transaction.transaction_type, transaction.transaction_name, this.getTransactionLabel(transaction));
+            return dataTableHelpers.transactionTypeIcon(transaction.transaction_config_type, transaction.transaction_type, this.getTransactionLabel(transaction));
         },
         getTransactionLink: function(type, id) {
-            if (type === 'Standard') {
-                return route('transactions.openStandard', {transaction: id, action: 'enter'});
+            if (type === 'standard') {
+                return route('transactions.open.standard', {transaction: id, action: 'enter'});
             }
-            if (type === 'Investment') {
-                return route('transactions.openInvestment', {transaction: id, action: 'enter'});
+            if (type === 'investment') {
+                return route('transactions.open.investment', {transaction: id, action: 'enter'});
             }
+            // Not expected, but fallback to home route
             return route('home');
         },
         getTransactionLabel: function(transaction) {
-            if (transaction.transaction_type === 'Standard') {
-                if (transaction.transaction_name === 'withdrawal') {
-                    return 'Withdraw ' + transaction.amount.toLocalCurrency(transaction.currency) + ' from ' + transaction.account_from_name + ' to ' + transaction.account_to_name;
-                }
-
-                if (transaction.transaction_name === 'deposit') {
-                    return 'Deposit ' + transaction.amount.toLocalCurrency(transaction.currency) + ' from ' + transaction.account_from_name + ' to ' + transaction.account_to_name;
-                }
-
-                if (transaction.transaction_name === 'transfer') {
-                    return 'Transfer ' + transaction.amount.toLocalCurrency(transaction.currency) + ' from ' + transaction.account_from_name + ' to ' + transaction.account_to_name;
-                }
+            if (transaction.transaction_config_type === 'standard') {
+                // Capitalize first letter of transaction type
+                const type = transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1);
+                // Return constructed label
+                return type + ' ' + transaction.config.amount_to.toLocalCurrency(transaction.currency) + ' from ' + transaction.config.account_from.name + ' to ' + transaction.config.account_to.name;
             }
         },
         refreshTooltip: function() {
@@ -98,8 +92,12 @@ export default {
         let $vm = this;
         axios.get('/api/transactions/get_scheduled_items/schedule')
         .then(function(response) {
-            $vm.transactions = response.data.transactions;
-            $vm.attributes= $vm.transactions.filter((transaction) => transaction.schedule_config && transaction.schedule_config.next_date)
+            $vm.attributes= response.data.transactions
+            // Keep only the transactions with a next date set.
+            // Note: the date values are not converted to JavaScript Date objects in general.
+            // TODO: is it a valid case for a returned schedule to not have a schedule_config set?
+            .filter((transaction) => transaction.schedule_config && transaction.schedule_config.next_date)
+            // Map the data to the format required by the calendar component
             .map(function(transaction, index) {
                 return {
                     key: index + 1,

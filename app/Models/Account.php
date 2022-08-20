@@ -103,7 +103,7 @@ class Account extends AccountEntity
             ->whereIn('transactions.transaction_type_id', function ($query) {
                 $query->from('transaction_types')
                 ->select('id')
-                ->where('type', 'Investment')
+                ->where('type', 'investment')
                 ->whereNotNull('quantity_operator');
             })
             ->where('transaction_details_investment.account_id', $this->config->id)

@@ -47,15 +47,15 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="date" class="control-label">Date</label>
-                                        <date-picker
+                                        <Datepicker
                                             id="date"
-                                            :lang="dataPickerLanguage"
                                             v-model="form.date"
-                                            value-type="format"
-                                            format="YYYY-MM-DD"
-                                            type="date"
                                             :disabled="form.schedule"
-                                        ></date-picker>
+                                            autoApply
+                                            format="yyyy. MM. dd."
+                                            :enableTimePicker="false"
+                                            utc="preserve"
+                                        ></Datepicker>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -265,16 +265,16 @@
     import Form from 'vform'
     import {Button, AlertErrors} from 'vform/src/components/bootstrap4'
 
-    import DatePicker from 'vue2-datepicker';
-    import 'vue2-datepicker/index.css';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
 
     import TransactionSchedule from './TransactionSchedule.vue'
 
     export default {
         components: {
-            'transaction-schedule': TransactionSchedule,
+            TransactionSchedule,
             MathInput,
-            DatePicker,
+            Datepicker,
             Button, AlertErrors
         },
 
@@ -308,7 +308,7 @@
             data.investment_currency = null;
             data.investment_currency_id = null;
 
-            data.csrfToken = $('meta[name="csrf-token"]').attr('content');
+            data.csrfToken = window.csrfToken;
 
             // TODO: adjust initial callback based on action
             data.callback = 'new';
@@ -341,14 +341,6 @@
                     enabled: true,
                 },
             ]
-
-            // Date picker settings
-            data.dataPickerLanguage = {
-                formatLocale: {
-                    firstDayOfWeek: 1,
-                },
-                monthBeforeYear: false,
-            };
 
             return data;
         },
@@ -656,7 +648,7 @@
                 }
 
                 if (this.callback === 'clone') {
-                    location.href =  route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
+                    location.href =  route('transactions.open.investment', { transaction: transactionId, action: 'clone' });
                     return;
                 }
 
@@ -711,7 +703,7 @@
 
                 let date = new Date(newDate);
                 date.setDate( date.getDate() - 1);
-                this.form.original_schedule_config.end_date = date.toISOString().split('T')[0];
+                this.form.original_schedule_config.end_date = date.isoDateString();
             },
         },
 

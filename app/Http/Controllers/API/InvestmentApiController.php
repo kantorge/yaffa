@@ -139,8 +139,8 @@ class InvestmentApiController extends Controller
                 $commonData =
                     [
                         'id' => $transaction->id,
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
+                        'transaction_type' => $transaction->transactionType->name,
+                        'transaction_config_type' => $transaction->transactionType->type,
                         'amount_operator' => $transaction->transactionType->amount_operator,
                         'quantity_operator' => $transaction->transactionType->quantity_operator,
 

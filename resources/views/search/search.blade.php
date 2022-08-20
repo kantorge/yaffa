@@ -254,10 +254,7 @@
     </div>
 
     <div id="app">
-        <transaction-show-modal
-            element="#transactions"
-            selector=".data-quickview"
-        ></transaction-show-modal>
+        <transaction-show-modal></transaction-show-modal>
     </div>
 
     @endif

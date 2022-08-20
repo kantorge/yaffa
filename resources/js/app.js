@@ -46,6 +46,23 @@ Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSp
     return result;
 };
 
+Date.prototype.datePart = function () {
+    var d = new Date(this);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+Date.prototype.isoDateString = function () {
+    return this.toISOString().split('T')[0];
+}
+
+// Function to create a new date in UTC
+// TODO: where to put this function instead of global scope?
+window.todayInUTC = function () {
+    let date = new Date();
+    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+}
+
 if (   window.location.pathname === '/account/summary'
     || window.location.pathname === '/account/summary/withClosed'
     || window.location.pathname === '/') {
@@ -144,6 +161,13 @@ if (window.location.pathname === '/reports/transactions') {
 if (window.location.pathname === '/search') {
     require('./search/search');
 }
+
+if (window.location.pathname === '/import/csv') {
+    require('./import/csv');
+}
+
+// Notifications
+require('./notifications');
 
 $(function() {
     // Generally available account selector

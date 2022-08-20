@@ -35,6 +35,7 @@ class Payee extends AccountEntity
      * @var array
      */
     protected $fillable = [
+        'import_alias',
         'category_id',
         'category_suggestion_dismissed',
     ];

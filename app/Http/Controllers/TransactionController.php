@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
-use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionDetailStandard;
-use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -56,73 +53,6 @@ class TransactionController extends Controller
             'transaction' => null,
             'action' => 'create',
         ]);
-    }
-
-    public function storeStandard(TransactionRequest $request)
-    {
-        $validated = $request->validated();
-
-        $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::make($validated);
-            $transaction->user_id = Auth::user()->id;
-            $transaction->save();
-
-            $transactionDetails = TransactionDetailStandard::create($validated['config']);
-            $transaction->config()->associate($transactionDetails);
-
-            $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
-
-            // Handle default payee amount, if present, by adding amount as an item
-            if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
-                $newItem = TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'amount' => $validated['remaining_payee_default_amount'],
-                    'category_id' => $validated['remaining_payee_default_category_id'],
-                ]);
-                $transactionItems[] = $newItem;
-            }
-
-            $transaction->transactionItems()->saveMany($transactionItems);
-
-            $transaction->push();
-
-            if ($transaction->schedule || $transaction->budget) {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
-                $transactionSchedule->fill($validated['schedule_config']);
-                $transaction->transactionSchedule()->save($transactionSchedule);
-            }
-
-            return $transaction;
-        });
-
-        // Adjust source transaction schedule, if entering schedule instance
-        if ($validated['action'] === 'enter') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-            $sourceTransaction->transactionSchedule->skipNextInstance();
-        }
-
-        // Adjust source transaction schedule, if creating a new schedule clone
-        if ($validated['action'] === 'replace') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-
-            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
-
-            $sourceTransaction->push();
-        }
-
-        self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
-
-        return response()->json(
-            [
-                'transaction_id' => $transaction->id,
-            ]
-        );
     }
 
     public function storeInvestment(TransactionRequest $request)
@@ -223,51 +153,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function updateStandard(TransactionRequest $request, Transaction $transaction)
-    {
-        $validated = $request->validated();
-
-        // Load all relevant relations
-        $transaction->load(['transactionItems']);
-
-        $transaction->fill($validated);
-        $transaction->config->fill($validated['config']);
-
-        if ($transaction->schedule || $transaction->budget) {
-            $transaction->transactionSchedule->fill($validated['schedule_config']);
-        }
-
-        // Replace exising transaction items with new array
-        $transaction->transactionItems()->delete();
-
-        $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
-
-        // Handle default payee amount, if present, by adding amount as an item
-        if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
-            $newItem = TransactionItem::create(
-                [
-                    'transaction_id' => $transaction->id,
-                    'amount' => $validated['remaining_payee_default_amount'],
-                    'category_id' => $validated['remaining_payee_default_category_id'],
-                ]
-            );
-            $transactionItems[] = $newItem;
-        }
-
-        $transaction->transactionItems()->saveMany($transactionItems);
-
-        // Save entire transaction
-        $transaction->push();
-
-        self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
-
-        return response()->json(
-            [
-                'transaction_id' => $transaction->id,
-            ]
-        );
-    }
-
     public function updateInvestment(TransactionRequest $request, Transaction $transaction)
     {
         $validated = $request->validated();
@@ -311,44 +196,5 @@ class TransactionController extends Controller
         self::addSimpleSuccessMessage('Transaction schedule instance skipped');
 
         return redirect()->back();
-    }
-
-    private function processTransactionItem($transactionItems, $transactionId)
-    {
-        $processedTransactionItems = [];
-        foreach ($transactionItems as $item) {
-            // Ignore item, if amount is missing
-            if (! array_key_exists('amount', $item) || is_null($item['amount'])) {
-                continue;
-            }
-
-            $newItem = TransactionItem::create(
-                array_merge(
-                    $item,
-                    ['transaction_id' => $transactionId]
-                )
-            );
-
-            // Create new tags and attach any tags
-            if (array_key_exists('tags', $item)) {
-                foreach ($item['tags'] as $tag) {
-                    $newTag = Tag::firstOrCreate(
-                        ['id' => $tag],
-                        ['name' => $tag]
-                    );
-
-                    // Confirm to user if item was currently created
-                    if ($newTag->wasRecentlyCreated) {
-                        self::addMessage('Tag added ('.$newTag->name.')', 'success', '', '', true);
-                    }
-
-                    $newItem->tags()->attach($newTag);
-                }
-            }
-
-            $processedTransactionItems[] = $newItem;
-        }
-
-        return $processedTransactionItems;
     }
 }

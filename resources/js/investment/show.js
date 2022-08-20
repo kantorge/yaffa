@@ -8,13 +8,6 @@ import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
-// Some helper functions
-window.getIsoDate = function (date) {
-    return new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ))
-            .toISOString()
-            .split("T")[0];
-}
-
 window.calculateYears = function (from, to) {
     var diffMs = to - from;
     var diffDate = new Date(diffMs); // miliseconds from epoch
@@ -111,7 +104,7 @@ window.table = $('#table').DataTable({
             className: "cell-no-break",
         },
         {
-            data: "transaction_name",
+            data: "transaction_type",
             title: "Transaction",
         },
         {
@@ -193,8 +186,8 @@ window.table = $('#table').DataTable({
                     '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
                 if (!row.schedule) {
                     actions += '' +
-                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
                     '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
                 }
 
@@ -289,10 +282,10 @@ window.calculateSummary = function() {
         return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
     });
 
-    window.summary.Buying.value = filtered.filter(trx => trx.transaction_name == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-    window.summary.Added.value = filtered.filter(trx => trx.transaction_name == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Removed.value = filtered.filter(trx => trx.transaction_name == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Selling.value = filtered.filter(trx => trx.transaction_name == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Buying.value = filtered.filter(trx => trx.transaction_type == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Added.value = filtered.filter(trx => trx.transaction_type == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Removed.value = filtered.filter(trx => trx.transaction_type == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Selling.value = filtered.filter(trx => trx.transaction_type == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
     window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
     window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
     window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);

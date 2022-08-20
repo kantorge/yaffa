@@ -51,17 +51,17 @@
                     class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.start_date') ? 'has-error' : ''"
                 >
-                    <label for="schedule_start" class="control-label">Start date</label>
-                    <date-picker
-                        format="YYYY-MM-DD"
-                        id="schedule_start"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
+                    <label
+                        :for="'schedule_start_' + this.$.vnode.key" class="control-label">Start date</label>
+                    <Datepicker
+                        :id="'schedule_start_' + this.$.vnode.key"
                         v-model="schedule.start_date"
                         :disabled="!allowCustomization"
-                    ></date-picker>
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -75,16 +75,15 @@
                                 :class="!schedule.next_date ? 'fa-warning text-warning' : 'fa-info-circle text-info'"
                                 title="If next date is empty, then this schedule is considered to be finished"></span>
                     </label>
-                    <date-picker
-                        format="YYYY-MM-DD"
+                    <Datepicker
                         id="schedule_next"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
                         v-model="schedule.next_date"
                         :disabled="!allowCustomization"
-                    ></date-picker>
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -103,16 +102,15 @@
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_end" class="control-label">End date</label>
-                    <date-picker
-                        format="YYYY-MM-DD"
+                    <Datepicker
                         id="schedule_end"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
                         v-model="schedule.end_date"
                         :disabled="!allowCustomization"
-                    ></date-picker>
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -136,13 +134,13 @@
 </template>
 
 <script>
-    import DatePicker from 'vue2-datepicker';
-    import 'vue2-datepicker/index.css';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
     import MathInput from './MathInput.vue'
 
     export default {
         components: {
-            DatePicker,
+            Datepicker,
             MathInput,
         },
 

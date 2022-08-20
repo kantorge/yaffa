@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 
-import TransactionFormStandard from './../components/TransactionFormStandard.vue'
+import TransactionContainerStandard from './../components/TransactionForm/ContainerStandard.vue'
 const app = createApp({})
-app.component('transaction-form-standard', TransactionFormStandard)
+app.component('transaction-container-standard', TransactionContainerStandard)
 
 app.mount('#app')

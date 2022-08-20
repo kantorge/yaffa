@@ -1,12 +1,9 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net');
+require('datatables.net-bs');
 
-$(document).ready( function () {
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    $('#table').DataTable({
-        data: tags,
-        columns: [
+$('#table').DataTable({
+    data: tags,
+    columns: [
         {
             data: "id",
             title: "ID"
@@ -20,11 +17,11 @@ $(document).ready( function () {
             title: "Active",
             render: function (data, type) {
                 if (type == 'filter') {
-                    return  (data ? 'Yes' : 'No');
+                    return (data ? 'Yes' : 'No');
                 }
-                return (  data
-                        ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                        : '<i class="fa fa-square text-danger" title="No"></i>');
+                return (data
+                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                    : '<i class="fa fa-square text-danger" title="No"></i>');
             },
             className: "text-center",
         },
@@ -39,13 +36,12 @@ $(document).ready( function () {
             },
             orderable: false
         }
-        ],
-        order: [[ 1, 'asc' ]]
-    });
+    ],
+    order: [[1, 'asc']]
+});
 
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this tag? It will be removed from all associated transactions, and this action cannot be undone.')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
-    });
+$("#table").on("click", ".data-delete", function (e) {
+    if (!confirm('Are you sure to want to delete this tag? It will be removed from all associated transactions, and this action cannot be undone.')) return;
+    e.preventDefault();
+    $('#form-delete-' + $(this).data('form')).submit();
 });

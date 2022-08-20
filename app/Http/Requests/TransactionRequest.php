@@ -18,8 +18,10 @@ class TransactionRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'id' => 'nullable|exists:transactions,id',
             'action' => 'required|in:create,edit,clone,enter,replace',
+            'fromModal' => 'nullable|boolean',
+
+            'id' => 'nullable|exists:transactions,id',
             'transaction_type_id' => 'required|exists:transaction_types,id',
             'comment' => 'nullable|max:191',
             'reconciled' => 'boolean',

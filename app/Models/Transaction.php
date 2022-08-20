@@ -45,6 +45,11 @@ class Transaction extends Model
 
     protected $hidden = ['config_id'];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
     protected $casts = [
         'date' => 'datetime',
         'reconciled' => 'boolean',
@@ -157,10 +162,14 @@ class Transaction extends Model
         return $categories;
     }
 
-    public function delete()
+    /**
+     * Override the default delete method to delete the transaction configuration as well
+     *
+     * @return void
+     */
+    public function delete(): void
     {
         $this->config()->delete();
-
         parent::delete();
     }
 
@@ -266,7 +275,7 @@ class Transaction extends Model
         $scheduleInstances = new Collection();
 
         if (is_null($maxLookAhead)) {
-            $maxLookAhead = (new Carbon())->addYears(1); //TODO: get end date from settings, and/or display default setting
+            $maxLookAhead = (new Carbon(config('yaffa.app_end_date')));
         }
 
         if (is_null($constraintStart)) {

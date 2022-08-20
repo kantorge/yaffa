@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\PayeeApiController;
+use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
 Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiController@getStandardList');
-Route::get('/assets/account/investment', 'App\Http\Controllers\API\AccountApiController@getInvestmentList');
+Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
 Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
-Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrencyLabel');
+Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrency');
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
 
@@ -44,6 +45,9 @@ Route::get(
     'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
 )
 ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
+Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])->name('api.transactions.storeStandard');
+Route::patch('/transactions/standard/{transaction}', [TransactionApiController::class, 'updateStandard'])->name('api.transactions.updateStandard');
+Route::patch('/transactions/{transaction}/skip', [TransactionApiController::class, 'skipScheduleInstance'])->name('api.transactions.skipScheduleInstance');
 
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 

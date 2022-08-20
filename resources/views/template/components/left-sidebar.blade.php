@@ -82,6 +82,7 @@
             <ul class="treeview-menu">
                 <li><a href="{{ route('transactions.createStandard') }}"><i class="fa fa-cart-plus"></i> <span>Add transaction</span></a></li>
                 <li><a href="{{ route('transactions.createInvestment') }}"><i class="fa fa-line-chart"></i> <span>Add investment transaction</span></a></li>
+                <li><a href="{{ route('import.csv') }}"><i class="fa fa-upload"></i> <span>Import transactions</span></a></li>
             </ul>
         </li>
     </ul>

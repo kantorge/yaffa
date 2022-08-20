@@ -1,14 +1,10 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net');
+require('datatables.net-bs');
 import * as dataTableHelpers from './../components/dataTableHelper';
 
-// Get CSRF Token from meta tag
-const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-$(function() {
-    $('#table').DataTable({
-        data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || {name: ''};return c;}),
-        columns: [
+$('#table').DataTable({
+    data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
+    columns: [
         {
             data: "id",
             title: "ID"
@@ -63,47 +59,46 @@ $(function() {
             },
             orderable: false
         }
-        ],
-        order: [[ 1, 'asc' ]],
-        initComplete : function(settings) {
-            $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function() {
-                var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+    ],
+    order: [[1, 'asc']],
+    initComplete: function (settings) {
+        $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
+            var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
 
-                // Change icon to spinner
-                $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
+            // Change icon to spinner
+            $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
 
-                // Send request to change payee active state
-                $.ajax ({
-                    type: 'PUT',
-                    url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
-                    data: {
-                        "_token": csrfToken,
-                    },
-                    dataType: "json",
-                    context: this,
-                    success: function (data) {
-                        // Update row in table data souerce
-                        investments.filter(investment => investment.id === data.id)[0].active = data.active;
-                    },
-                    error: function (_data) {
-                        alert('Error changing investment active state');
-                    },
-                    complete: function(_data) {
-                        // Re-render row
-                        row.invalidate();
-                    }
-                });
+            // Send request to change payee active state
+            $.ajax({
+                type: 'PUT',
+                url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data souerce
+                    investments.filter(investment => investment.id === data.id)[0].active = data.active;
+                },
+                error: function (_data) {
+                    alert('Error changing investment active state');
+                },
+                complete: function (_data) {
+                    // Re-render row
+                    row.invalidate();
+                }
             });
-        }
-    });
+        });
+    }
+});
 
-    $("#table").on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
-            return;
-        }
+$("#table").on("click", ".data-delete", function () {
+    if (!confirm('Are you sure to want to delete this item?')) {
+        return;
+    }
 
-        let form = document.getElementById('form-delete');
-        form.action = route('investment.destroy', {investment: this.dataset.id});
-        form.submit();
-    });
+    let form = document.getElementById('form-delete');
+    form.action = route('investment.destroy', { investment: this.dataset.id });
+    form.submit();
 });

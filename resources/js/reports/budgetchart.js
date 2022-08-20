@@ -240,21 +240,22 @@ window.table = $('#table').DataTable({
         {
             title: 'Payee',
             render: function (_data, _type, row) {
-                if (row.transaction_type.type == 'Standard') {
-                    if (row.transaction_type.name == 'withdrawal') {
-                        return row.account_to_name;
+                if (row.transaction_type.type === 'standard') {
+                    if (row.transaction_type.name === 'withdrawal' && row.config.account_to) {
+                        return row.config.account_to.name;
                     }
-                    if (row.transaction_type.name == 'deposit') {
-                        return row.account_from_name;
+                    if (row.transaction_type.name === 'deposit' && row.config.account_from) {
+                        return row.config.account_from.name;
                     }
-                    if (row.transaction_type.name == 'transfer') {
-                        if (row.transaction_operator == 'minus') {
-                            return 'Transfer to ' + row.account_to_name;
+                    if (row.transaction_type.name === 'transfer') {
+                        if (row.transaction_operator === 'minus') {
+                            return 'Transfer to ' + row.config.account_to.name;
                         } else {
-                            return 'Transfer from ' + row.account_from_name;
+                            return 'Transfer from ' + row.config.account_from.name;
                         }
                     }
-                } else if (row.transaction_type.type == 'Investment') {
+                }
+                if (row.transaction_type.type === 'investment') {
                     return row.investment_name;
                 }
 
@@ -265,7 +266,7 @@ window.table = $('#table').DataTable({
             title: "Category",
             render: function (_data, _type, row) {
                 //standard transaction
-                if (row.transaction_type.type === 'Standard') {
+                if (row.transaction_type.type === 'standard') {
                     if (row.categories.length > 1) {
                         return 'Split transaction';
                     }
@@ -276,7 +277,7 @@ window.table = $('#table').DataTable({
                     return '';
                 }
                 //investment transaction
-                if (row.transaction_type.type === 'Investment') {
+                if (row.transaction_type.type === 'investment') {
                     if (!row.quantity_operator) {
                         return row.transaction_type.name;
                     }
@@ -295,10 +296,10 @@ window.table = $('#table').DataTable({
             title: "Amount",
             render: function (_data, _type, row) {
                 let prefix = '';
-                if (row.transaction_operator == 'minus') {
+                if (row.transaction_type.amount_operator == 'minus') {
                     prefix = '- ';
                 }
-                if (row.transaction_operator == 'plus') {
+                if (row.transaction_type.amount_operator == 'plus') {
                     prefix = '+ ';
                 }
                 return prefix + numberRenderer(row.amount_to);
@@ -329,7 +330,7 @@ window.table = $('#table').DataTable({
                         dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
                         dataTableHelpers.dataTablesActionButton(data, 'delete') +
                         (row.schedule
-                            ? '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                            ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', {transaction: data, action: 'enter'}) : route('transactions.open.investment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                             '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
                             : '');
             },

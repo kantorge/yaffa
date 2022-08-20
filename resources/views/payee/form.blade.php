@@ -111,6 +111,19 @@
                     </select>
                 </div>
             </div>
+
+            <div class="form-group">
+                <label for="import_alias" class="control-label col-sm-3">
+                    Import alias
+                </label>
+                <div class="col-sm-9">
+                    <textarea
+                        class="form-control"
+                        id="import_alias"
+                        name="config[import_alias]"
+                    >{{old('config.import_alias', $payee->config->import_alias ?? '' )}}</textarea>
+                </div>
+            </div>
         </div>
         <!-- /.box-body -->
         <div class="box-footer">

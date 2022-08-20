@@ -69,6 +69,7 @@ class AccountEntityController extends Controller
                 base_data.id,
                 name,
                 active,
+                import_alias,
                 transactions_from_count + transactions_to_count AS transactions_count,
                 IF(
                     transactions_from_min_date IS NULL OR transactions_to_min_date IS NULL,

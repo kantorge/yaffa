@@ -2,9 +2,6 @@ require( 'datatables.net' );
 require( 'datatables.net-bs' );
 import * as dataTableHelpers from './../components/dataTableHelper';
 
-// Get CSRF Token from meta tag
-const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
 // Loop payees and prepare data for datatable
 window.payees = window.payees.map(function(payee) {
     // Parse first date if it exists
@@ -78,6 +75,16 @@ $('#table').DataTable({
                 }
 
                 return (data ? data.toISOString() : null);
+            }
+        },
+        {
+            data: 'import_alias',
+            title: 'Import alias',
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.replace('\n', '<br>') : 'Not set');
+                }
+                return data;
             }
         },
         {

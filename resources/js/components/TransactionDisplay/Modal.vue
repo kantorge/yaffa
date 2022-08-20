@@ -15,9 +15,11 @@
                 </div>
                 <div class="modal-footer">
                     <div class="pull-right" v-if="transaction.id">
-                        <a :href=" getRoute('show') " class="btn btn-success" title="View details"><i class="fa fa-fw fa-search"></i> Open</a>
-                        <a :href=" getRoute('edit') " class="btn btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i> Edit</a>
-                        <a :href=" getRoute('clone') " class="btn btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i> Clone</a>
+                        <button v-if="controls.skip && transaction.schedule" class="btn btn-warning" @click="skipInstance" title="Skip schedule instance"><i class="fa fa-fw fa-fast-forward"></i> Skip instance</button>
+                        <button v-if="controls.enter && transaction.schedule" class="btn btn-success enter" @click="enterInstance" title="Enter schedule instance"><i class="fa fa-fw fa-pencil"></i> Enter instance</button>
+                        <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" title="View details"><i class="fa fa-fw fa-search"></i> Open</a>
+                        <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i> Edit</a>
+                        <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i> Clone</a>
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>
@@ -37,18 +39,22 @@
             'transaction-show-standard': ShowStandard,
         },
         props: {
-            element: {
-                type: String,
-                required: true,
-            },
-            selector: {
-                type: String,
-                default: null,
-            },
+            initialControls: {
+                type: Object,
+                default: {
+                    show: true,
+                    edit: true,
+                    clone: true,
+                    skip: false,
+                    enter: false,
+                    delete: false,
+                },
+            }
         },
         data() {
             return {
                 transaction: {},
+                controls: this.initialControls,
             };
         },
         methods: {
@@ -56,42 +62,55 @@
                 this.$emit('close');
             },
             getRoute(action) {
-                return route('transactions.openStandard', {transaction: this.transaction.id, action: action})
-            }
+                return route('transactions.open.standard', {transaction: this.transaction.id, action: action})
+            },
+            skipInstance() {
+                let url = route('api.transactions.skipScheduleInstance', {transaction: this.transaction.id});
+                fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    },
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Update the transaction schedule next date from the response
+                    this.transaction.transaction_schedule.next_date = new Date(data.transaction.transaction_schedule.next_date);
+                }).catch(error => {
+                    console.error(error);
+                });
+            },
+            enterInstance() {
+                // Create a new transaction instance with the schedule next date set as date
+                let transaction = Object.assign({}, this.transaction, {date: this.transaction.transaction_schedule.next_date});
+
+                // Emit a custom event to global scope about the new transaction to be opened in modal editor
+                // TODO: how to avoid using global scope?
+
+                let event = new CustomEvent('initiateEnterInstance', {
+                    detail: {
+                        // Pass the entire transaction object to the event
+                        transaction: transaction,
+                    }
+                });
+                window.dispatchEvent(event);
+
+            },
+            showTransaction(transaction, controls) {
+                this.transaction = transaction;
+                this.controls = controls;
+
+                $('#modal-quickview').modal('show');
+            },
         },
         mounted() {
             let $vm = this;
 
-            // TODO: this should be more dynamic. Not part of the component, or at least set as a prop
-            $(this.element).on("click", this.selector, function() {
-                let icon = this.querySelector('i');
-                if (icon.classList.contains("fa-spinner")) {
-                    return false;
-                }
-
-                const originalIconClass = icon.className;
-                icon.className = "fa fa-fw fa-spin fa-spinner";
-
-                fetch('/api/transaction/' + this.dataset.id)
-                .then(function(response) {
-                    if (!response.ok) {
-                        throw Error(response.statusText);
-                    }
-                    return response;
-                }).then(response => response.json())
-                .then(function(data) {
-                    $vm.transaction = data.transaction;
-
-                    $('#modal-quickview').modal();
-
-                    icon.className = originalIconClass;
-                })
-                .catch((error) => {
-                    console.log(error);
-                    icon.className = originalIconClass;
-                });
-            })
-
+            // Set up global event listener for displaying a transaction in the modal
+            window.addEventListener('showTransactionQuickviewModal', function(event) {
+                $vm.showTransaction(event.detail.transaction, event.detail.controls);
+            });
         },
     };
 </script>
