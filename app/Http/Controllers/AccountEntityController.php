@@ -354,7 +354,7 @@ class AccountEntityController extends Controller
         return view(
             'account.form',
             [
-                'account'=> $accountEntity,
+                'account' => $accountEntity,
                 'allAccountGroups' => $allAccountGroups,
                 'allCurrencies' => $allCurrencies,
             ]
@@ -368,7 +368,7 @@ class AccountEntityController extends Controller
         return view(
             'payee.form',
             [
-                'payee'=> $accountEntity,
+                'payee' => $accountEntity,
             ]
         );
     }
@@ -453,7 +453,7 @@ class AccountEntityController extends Controller
     /**
      * Display a form to merge two payees.
      *
-     * @param  \App\Models\AccountEntity $payeeSource
+     * @param  \App\Models\AccountEntity  $payeeSource
      * @return \Illuminate\Http\Response
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)

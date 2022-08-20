@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\TransactionItem;
-use App\Models\TransactionSchedule;
-use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -108,8 +104,8 @@ class Transaction extends Model
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $type
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByScheduleType($query, $type)
@@ -177,7 +173,7 @@ class Transaction extends Model
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
      *
-     * @param App\Models\AccountEntity $account
+     * @param  App\Models\AccountEntity  $account
      * @return Numeric
      */
     public function cashflowValue(?AccountEntity $account)

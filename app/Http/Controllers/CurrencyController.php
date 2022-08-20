@@ -30,7 +30,7 @@ class CurrencyController extends Controller
             ->currencies()
             ->get();
 
-        $baseCurrency =  $this->getBaseCurrency();
+        $baseCurrency = $this->getBaseCurrency();
 
         $currencies->map(function ($currency) {
             $currency['latest_rate'] = $currency->rate();
@@ -73,7 +73,7 @@ class CurrencyController extends Controller
      */
     public function edit(Currency $currency)
     {
-        return view('currencies.form', ['currency'=> $currency]);
+        return view('currencies.form', ['currency' => $currency]);
     }
 
     public function update(CurrencyRequest $request, Currency $currency)

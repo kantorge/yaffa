@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 class TransactionController extends Controller
 {
     private const STANDARD_VIEW = 'transactions.form_standard';
+
     private const INVESTMENT_VIEW = 'transactions.form_investment';
 
     private const INVESTMENT_RELATIONS = [
@@ -101,8 +102,8 @@ class TransactionController extends Controller
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param App\Model\Transaction $transaction
-     * @param string $action
+     * @param  App\Model\Transaction  $transaction
+     * @param  string  $action
      * @return view
      */
     public function openStandard(Transaction $transaction, string $action)

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -38,7 +37,7 @@ class InvestmentPriceController extends Controller
             'investment-prices.list',
             [
                 'investment' => $investment,
-                'prices' => $pricesOrdered
+                'prices' => $pricesOrdered,
             ]
         );
     }
@@ -82,7 +81,7 @@ class InvestmentPriceController extends Controller
             'investment-prices.form',
             [
                 'investment' => $investmentPrice->investment,
-                'investmentPrice'=> $investmentPrice,
+                'investmentPrice' => $investmentPrice,
             ]
         );
     }

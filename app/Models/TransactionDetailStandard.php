@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TransactionDetailStandard extends Transaction

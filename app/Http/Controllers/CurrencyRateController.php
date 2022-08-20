@@ -33,7 +33,7 @@ class CurrencyRateController extends Controller
             'currencyrates.index',
             with([
                 'from' => $from,
-                'to'=> $to,
+                'to' => $to,
             ])
         );
     }

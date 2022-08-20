@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -52,7 +51,7 @@ class InvestmentController extends Controller
     public function edit(Investment $investment)
     {
         return view('investment.form', [
-            'investment'=> $investment,
+            'investment' => $investment,
         ]);
     }
 

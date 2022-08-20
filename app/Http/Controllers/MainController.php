@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
@@ -22,8 +21,11 @@ class MainController extends Controller
     use ScheduleTrait;
 
     private $allAccounts;
+
     private $allTags;
+
     private $allCategories;
+
     private $currentAccount;
 
     public function __construct()
@@ -42,13 +44,13 @@ class MainController extends Controller
      *
      * Transaction types table holds information of operators to be used, except transfer, which depends on direction
      *
-     * @param  mixed $withClosed Indicate, whether closed accounts should also be displayed
+     * @param  mixed  $withClosed Indicate, whether closed accounts should also be displayed
      * @return void
      */
     public function index($withClosed = null)
     {
         // Try to get base currency. Get user to define it, if no currencies exist.
-        $baseCurrency =  $this->getBaseCurrency();
+        $baseCurrency = $this->getBaseCurrency();
         if (! $baseCurrency) {
             $this->addMessage(
                 "Please add at least one currency, that you'll use. You can set it as the default currency, which will be used in reports and summaries.",
@@ -191,6 +193,7 @@ class MainController extends Controller
                     }
 
                     $investment = Investment::find($item->investment_id);
+
                     return $item->quantity * $investment->getLatestPrice();
                 });
 

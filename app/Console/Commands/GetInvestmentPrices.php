@@ -46,7 +46,7 @@ class GetInvestmentPrices extends Command
             ->get();
 
         // Loop through all investments and invoke the price retrieval job
-        $investments->each(function($investment) {
+        $investments->each(function ($investment) {
             GetInvestmentPricesJob::dispatch($investment);
         });
 

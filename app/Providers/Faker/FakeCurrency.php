@@ -2,8 +2,6 @@
 
 namespace App\Providers\Faker;
 
-use App\Providers\Faker\CurrencyData;
-
 class FakeCurrency extends \Faker\Provider\Base
 {
     /*

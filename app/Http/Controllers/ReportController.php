@@ -257,7 +257,7 @@ class ReportController extends Controller
     /**
      * Display form for searching transactions. Pass any preset filters from query string.
      *
-     * @param  Request $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function transactionsByCriteria(Request $request)

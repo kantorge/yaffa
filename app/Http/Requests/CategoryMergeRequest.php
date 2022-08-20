@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\FormRequest;
 use App\Rules\CategoryMergeValidSource;
 
 class CategoryMergeRequest extends FormRequest

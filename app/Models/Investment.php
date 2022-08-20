@@ -2,13 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\Currency;
-use App\Models\InvestmentGroup;
-use App\Models\InvestmentPrice;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
-use App\Models\User;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,7 +60,7 @@ class Investment extends Model
     /**
      * Scope a query to only include active investments.
      *
-     *  @param Builder $query
+     *  @param  Builder  $query
      * @return Builder
      */
     public function scopeActive(Builder $query)
@@ -197,17 +190,17 @@ class Investment extends Model
     }
 
     /**
-    * @var array
-    */
+     * @var array
+     */
     protected $priceProviders = [
         'alpha_vantage' => [
             'name' => 'Alpha Vantage',
-        ]
+        ],
     ];
 
-   /**
-    * @return string|null
-    */
+    /**
+     * @return string|null
+     */
     public function getInvestmentPriceProviderNameAttribute()
     {
         // If the price provider is not set, return null
@@ -225,6 +218,7 @@ class Investment extends Model
 
     /**
      * Return all available price providers
+     *
      * @return array
      */
     public function getAllInvestmentPriceProviders()
@@ -238,7 +232,7 @@ class Investment extends Model
      */
     public function getInvestmentPriceFromProvider(): void
     {
-        $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
+        $providerSuffix = 'getInvestmentPriceFrom'.str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
         $this->{$providerSuffix}();
     }
 

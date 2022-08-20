@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use AmrShawky\LaravelCurrency\Facade\Currency as CurrencyApi;
-use App\Models\CurrencyRate;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -59,7 +57,7 @@ class Currency extends Model
     /**
      * Create a scope for the query to only return base currencies.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeBase($query)
@@ -70,7 +68,7 @@ class Currency extends Model
     /**
      * Create a scope for the query to only return currencies that are not base currencies.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeNotBase($query)
@@ -117,12 +115,12 @@ class Currency extends Model
     /**
      * Get the currency rates for this currency.
      *
-     * @param Carbon|null $from
+     * @param  Carbon|null  $from
      * @return void
      */
     public function retreiveCurrencyRateToBase(?Carbon $from = null): void
     {
-        $baseCurrency =  $this->baseCurrency();
+        $baseCurrency = $this->baseCurrency();
 
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {
             // TODO: is an exception needed?
@@ -161,7 +159,7 @@ class Currency extends Model
      */
     public function retreiveMissingCurrencyRateToBase(): void
     {
-        $baseCurrency =  $this->baseCurrency();
+        $baseCurrency = $this->baseCurrency();
 
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {
             // TODO: is an exception needed?

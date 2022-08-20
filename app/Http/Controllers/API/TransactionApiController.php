@@ -18,8 +18,11 @@ use Illuminate\Support\Facades\DB;
 class TransactionApiController extends Controller
 {
     private $allAccounts;
+
     private $allAccountCurrencies;
+
     private $allTags;
+
     private $allCategories;
 
     public function __construct()
@@ -152,6 +155,7 @@ class TransactionApiController extends Controller
                 'interval' => $transaction->transactionSchedule->interval,
             ];
         }
+
         return [
             'id' => $transaction->id,
             'date' => $transaction->date,  // Change compared to schedule controller
@@ -265,7 +269,7 @@ class TransactionApiController extends Controller
             'accounts',
             'categories',
             'payees',
-            'tags'])) {
+            'tags', ])) {
             return response()->json(
                 [
                     'data' => [],
@@ -325,6 +329,7 @@ class TransactionApiController extends Controller
         // Return only count of transactions if requested
         if ($onlyCount) {
             $count = $standardQuery->count();
+
             return response()->json(
                 [
                     'data' => [],
@@ -343,7 +348,7 @@ class TransactionApiController extends Controller
             ])
             ->get()
             ->loadMorph('config', [
-                TransactionDetailStandard::class => ['config']
+                TransactionDetailStandard::class => ['config'],
             ]);
 
         // Preprocess data
@@ -382,7 +387,7 @@ class TransactionApiController extends Controller
 
         return response()->json(
             [
-                'data' => $data
+                'data' => $data,
             ],
             Response::HTTP_OK
         );
@@ -448,7 +453,7 @@ class TransactionApiController extends Controller
 
         // Create notification only if invoked from standalone view (not modal)
         // TODO: can this be done in a better way?
-        if (!$validated['fromModal']) {
+        if (! $validated['fromModal']) {
             self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
         }
 
@@ -497,7 +502,7 @@ class TransactionApiController extends Controller
 
         // Create notification only if invoked from standalone view (not modal)
         // TODO: can this be done in a better way?
-        if (!$validated['fromModal']) {
+        if (! $validated['fromModal']) {
             self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
         }
 

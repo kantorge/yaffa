@@ -44,12 +44,12 @@ class InvestmentGroupController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param InvestmentGroup $investmentGroup
+     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\View\View
      */
     public function edit(InvestmentGroup $investmentGroup)
     {
-        return view('investment-group.form', ['investmentGroup'=> $investmentGroup]);
+        return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
     }
 
     public function store(InvestmentGroupRequest $request)
@@ -81,7 +81,7 @@ class InvestmentGroupController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param InvestmentGroup $investmentGroup
+     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Http\Response
      */
     public function destroy(InvestmentGroup $investmentGroup)

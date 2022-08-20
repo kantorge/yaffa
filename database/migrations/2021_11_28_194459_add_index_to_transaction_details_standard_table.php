@@ -14,7 +14,7 @@ class AddIndexToTransactionDetailsStandardTable extends Migration
     public function up()
     {
         Schema::table('transaction_details_standard', function (Blueprint $table) {
-           $table->index(['account_from_id', 'account_to_id']);
+            $table->index(['account_from_id', 'account_to_id']);
         });
     }
 

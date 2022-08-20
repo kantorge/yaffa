@@ -300,6 +300,7 @@ class PayeeApiController extends Controller
         $payees = $payees->map(function ($payee) use ($query) {
             similar_text($query, Str::lower($payee->name), $percentage);
             $payee->percentage = $percentage;
+
             return $payee;
         })
         ->filter(function ($payee) {
@@ -316,7 +317,7 @@ class PayeeApiController extends Controller
     /**
      * Get the payee entity and main attributes for the given id
      *
-     * @param AccountEntity $accountEntity
+     * @param  AccountEntity  $accountEntity
      * @return Response
      */
     public function getItem(AccountEntity $accountEntity)

@@ -51,7 +51,6 @@ class InvestmentTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investment->id))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-
     /** @test */
     public function user_can_view_list_of_investments()
     {
@@ -82,7 +81,7 @@ class InvestmentTest extends TestCase
     public function user_cannot_create_an_investment_with_missing_data()
     {
         $user = User::factory()->create();
-        list($currency, $investmentGroup) = $this->createPrerequisites($user);
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
 
         $response = $this
             ->actingAs($user)

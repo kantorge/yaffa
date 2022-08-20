@@ -44,12 +44,12 @@ class TagController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Tag $tag
+     * @param  Tag  $tag
      * @return \Illuminate\View\View
      */
     public function edit(Tag $tag)
     {
-        return view('tag.form', ['tag'=> $tag]);
+        return view('tag.form', ['tag' => $tag]);
     }
 
     public function store(TagRequest $request)

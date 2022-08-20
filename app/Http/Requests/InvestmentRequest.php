@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\FormRequest;
 use App\Models\Investment;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\App;
 
 class InvestmentRequest extends FormRequest
 {
@@ -15,8 +14,8 @@ class InvestmentRequest extends FormRequest
         // Get all available investment price providers from Investment modell and add them to the validation rules
         // Only array keys are used in the validation rules
         $investmentPriceProviders = array_keys(
-                                        App::make(Investment::class)->getAllInvestmentPriceProviders()
-                                    );
+            App::make(Investment::class)->getAllInvestmentPriceProviders()
+        );
 
         return [
             'name' => [

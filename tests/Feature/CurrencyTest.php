@@ -42,18 +42,15 @@ class CurrencyTest extends TestCase
 
         $user2 = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-
     /** @test */
     public function user_can_view_list_of_currencies()
     {
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model);
 
@@ -88,7 +85,7 @@ class CurrencyTest extends TestCase
             ->postJson(
                 route("{$this->base_route}.store"),
                 [
-                    'name' => ''
+                    'name' => '',
                 ]
             );
         $response->assertStatus(422);

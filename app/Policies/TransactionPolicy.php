@@ -19,7 +19,6 @@ class TransactionPolicy
      * Determine whether the user can view any models.
      *
      * @param  \App\Models\User  $user
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function viewAny(User $user)
@@ -32,7 +31,6 @@ class TransactionPolicy
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Transaction  $transaction
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function view(User $user, Transaction $transaction)
@@ -44,7 +42,6 @@ class TransactionPolicy
      * Determine whether the user can create models.
      *
      * @param  \App\Models\User  $user
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function create(User $user)
@@ -57,7 +54,6 @@ class TransactionPolicy
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Transaction  $transaction
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function update(User $user, Transaction $transaction)
@@ -70,7 +66,6 @@ class TransactionPolicy
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Transaction  $transaction
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function delete(User $user, Transaction $transaction)
@@ -83,7 +78,6 @@ class TransactionPolicy
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Transaction  $transaction
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function restore(User $user, Transaction $transaction)
@@ -96,7 +90,6 @@ class TransactionPolicy
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Transaction  $transaction
-     *
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function forceDelete(User $user, Transaction $transaction)

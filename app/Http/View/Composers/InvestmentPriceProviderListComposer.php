@@ -3,8 +3,8 @@
 namespace App\Http\View\Composers;
 
 use App\Models\Investment;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\App;
+use Illuminate\View\View;
 
 class InvestmentPriceProviderListComposer
 {

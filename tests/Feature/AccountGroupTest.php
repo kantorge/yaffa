@@ -44,19 +44,16 @@ class AccountGroupTest extends TestCase
 
         $user2 = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
     }
-
 
     /** @test */
     public function user_can_view_list_of_account_groups()
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, $this->base_model, [], 5);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
@@ -70,7 +67,6 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $response = $this
             ->actingAs($user)
             ->get(route("{$this->base_route}.create"));
@@ -84,13 +80,12 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $response = $this
             ->actingAs($user)
             ->postJson(
                 route("{$this->base_route}.store"),
                 [
-                    'name' => ''
+                    'name' => '',
                 ]
             );
         $response->assertStatus(422);
@@ -109,7 +104,6 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $accountGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $accountGroup));
@@ -123,7 +117,6 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $accountGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this
@@ -145,7 +138,6 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $accountGroup = $this->createForUser($user, $this->base_model);
         $accountGroup2 = $this->rawForUser($user, $this->base_model);
 
@@ -176,7 +168,6 @@ class AccountGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $accountGroup = $this->createForUser($user, $this->base_model);
         $this->createForUser($user, Currency::class);
         AccountEntity::factory()->for($user)->account($user)->create();

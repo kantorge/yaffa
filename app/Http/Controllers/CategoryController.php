@@ -64,7 +64,7 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Category $category
+     * @param  Category  $category
      * @return \Illuminate\View\View
      */
     public function edit(Category $category)
@@ -72,7 +72,7 @@ class CategoryController extends Controller
         return view(
             'categories.form',
             [
-                'category'=> $category,
+                'category' => $category,
             ]
         );
     }
@@ -93,7 +93,7 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Category $category
+     * @param  Category  $category
      * @return \Illuminate\Http\Response
      */
     public function destroy(Category $category)
@@ -117,7 +117,7 @@ class CategoryController extends Controller
     /**
      * Display a form to merge two categories.
      *
-     * @param  \App\Models\Category $categorySource
+     * @param  \App\Models\Category  $categorySource
      * @return \Illuminate\Http\Response
      */
     public function mergeCategoriesForm(?Category $categorySource)

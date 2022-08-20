@@ -28,7 +28,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Currency::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
@@ -40,7 +39,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
@@ -73,19 +71,16 @@ class AccountTest extends TestCase
 
         $user2 = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
     }
-
 
     /** @test */
     public function user_can_view_list_of_accounts()
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         AccountEntity::factory()->for($user)->account($user)->count(5)->create();
@@ -93,7 +88,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'account']));
 
         $response->assertStatus(200);
-        $response->assertViewIs("account.index");
+        $response->assertViewIs('account.index');
     }
 
     /** @test */
@@ -101,7 +96,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -110,7 +104,7 @@ class AccountTest extends TestCase
             ->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("account.form");
+        $response->assertViewIs('account.form');
     }
 
     /** @test */
@@ -118,7 +112,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $accountGroup = $this->createForUser($user, AccountGroup::class);
         $currency = $this->createForUser($user, Currency::class);
         $response = $this
@@ -145,7 +138,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -172,7 +164,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -187,7 +178,7 @@ class AccountTest extends TestCase
             );
 
         $response->assertStatus(200);
-        $response->assertViewIs("account.form");
+        $response->assertViewIs('account.form');
     }
 
     /** @test */
@@ -195,7 +186,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -222,7 +212,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -258,7 +247,6 @@ class AccountTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();

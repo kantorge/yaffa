@@ -206,12 +206,13 @@ class AccountApiController extends Controller
     /**
      * Get the the currency associated with the account.
      *
-     * @param \App\Models\AccountEntity $accountEntity
+     * @param  \App\Models\AccountEntity  $accountEntity
      * @return \App\Models\Currency
      */
     public function getAccountCurrency(AccountEntity $accountEntity): Currency
     {
         $this->authorize('view', $accountEntity);
+        $accountEntity->load('config');
 
         return $accountEntity->config->currency;
     }
@@ -219,7 +220,7 @@ class AccountApiController extends Controller
     /**
      * Get the account entity for the given id.
      *
-     * @param AccountEntity $accountEntity
+     * @param  AccountEntity  $accountEntity
      * @return Response
      */
     public function getItem(AccountEntity $accountEntity)

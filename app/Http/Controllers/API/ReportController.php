@@ -21,7 +21,9 @@ class ReportController extends Controller
     use ScheduleTrait;
 
     private $allAccounts;
+
     private $allTags;
+
     private $allCategories;
 
     public function __construct()
@@ -32,7 +34,7 @@ class ReportController extends Controller
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
      *
-     * @param  \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function budgetChart(Request $request)

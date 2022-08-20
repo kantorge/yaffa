@@ -47,7 +47,6 @@ class CategoryTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $category->id))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-
     /** @test */
     public function user_can_view_list_of_categories()
     {

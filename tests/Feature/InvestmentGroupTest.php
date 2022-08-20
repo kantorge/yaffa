@@ -44,19 +44,16 @@ class InvestmentGroupTest extends TestCase
 
         $user2 = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
     }
-
 
     /** @test */
     public function user_can_view_list_of_investment_groups()
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, $this->base_model, [], 5);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
@@ -70,7 +67,6 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $response = $this
             ->actingAs($user)
             ->get(route("{$this->base_route}.create"));
@@ -84,13 +80,12 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $response = $this
             ->actingAs($user)
             ->postJson(
                 route("{$this->base_route}.store"),
                 [
-                    'name' => ''
+                    'name' => '',
                 ]
             );
         $response->assertStatus(422);
@@ -109,7 +104,6 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $investmentGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $investmentGroup));
@@ -123,7 +117,6 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $investmentGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this
@@ -145,7 +138,6 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $investmentGroup = $this->createForUser($user, $this->base_model);
         $investmentGroup2 = $this->rawForUser($user, $this->base_model);
 
@@ -175,7 +167,6 @@ class InvestmentGroupTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $investmentGroup = $this->createForUser($user, $this->base_model);
         $this->createForUser($user, Currency::class);
         Investment::factory()->for($user)->create();

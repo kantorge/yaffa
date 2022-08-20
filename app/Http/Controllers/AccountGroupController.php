@@ -44,12 +44,12 @@ class AccountGroupController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param AccountGroup $accountGroup
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\View\View
      */
     public function edit(AccountGroup $accountGroup)
     {
-        return view('account-group.form', ['accountGroup'=> $accountGroup]);
+        return view('account-group.form', ['accountGroup' => $accountGroup]);
     }
 
     public function store(AccountGroupRequest $request)

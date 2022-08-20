@@ -47,7 +47,7 @@ class InvestmentApiController extends Controller
     /**
      * Read and return the currency suffix of the currency associated to the provided investment
      *
-     * @param App\Models\Investment $investment
+     * @param  App\Models\Investment  $investment
      * @return string
      */
     public function getCurrencySuffix(Investment $investment)
@@ -60,7 +60,7 @@ class InvestmentApiController extends Controller
     /**
      * Read and return the details of a selected investment
      *
-     * @param App\Models\Investment $investment
+     * @param  App\Models\Investment  $investment
      * @return App\Models\Investment
      */
     public function getInvestmentDetails(Investment $investment)
@@ -101,6 +101,7 @@ class InvestmentApiController extends Controller
 
     /**
      * Get all investments with timeline data
+     *
      * @return Illuminate\Http\Response
      */
     public function getInvestmentsWithTimeline()
@@ -261,10 +262,10 @@ class InvestmentApiController extends Controller
 
             return $investment;
         })
-        ->each(function($investment) use (&$positions) {
+        ->each(function ($investment) use (&$positions) {
             $start = true;
 
-            foreach($investment->quantities as $item) {
+            foreach ($investment->quantities as $item) {
                 if ($start && $item['schedule'] > 0) {
                     $period = [
                         'id' => $investment->id,
@@ -277,24 +278,26 @@ class InvestmentApiController extends Controller
                     ];
 
                     $start = false;
+
                     continue;
                 }
 
-                if (!$start && ($item['schedule'] === 0 || $item['schedule']=== 0.0)) {
+                if (! $start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
                     $period['end'] = $item['date'];
                     $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
                     $positions[] = $period;
                     $period = [];
 
                     $start = true;
+
                     continue;
                 }
 
                 $period['quantity'] = $item['schedule'];
-            };
+            }
 
             // If period start was set but end date is missiong, set it to app config end date
-            if (array_key_exists('start', $period) && !array_key_exists('end', $period)) {
+            if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
                 $period['end'] = config('yaffa.app_end_date');
                 $period['last_price'] = $investment->getLatestPrice('combined');
                 $positions[] = $period;
