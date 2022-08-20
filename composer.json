@@ -12,7 +12,7 @@
         "php": "^8.0",
         "almasaeed2010/adminlte": "~2.4",
         "amrshawky/laravel-currency": "^5.0",
-        "enlightn/enlightn": "^1.22",
+        "enlightn/enlightn": "^2.1",
         "fakerphp/faker": "^1.13",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
@@ -32,6 +32,7 @@
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^6.1",
+        "nunomaduro/larastan": "^2.0",
         "nunomaduro/phpinsights": "^2.0",
         "phpunit/phpunit": "^9.5",
         "spatie/laravel-ignition": "^1.0"

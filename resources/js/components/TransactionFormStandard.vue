@@ -555,8 +555,7 @@
                             }
                         })
                         .done(data => {
-                            const currency = JSON.parse(data);
-                            $vm.from.account_currency = currency.suffix;
+                            $vm.from.account_currency = data.suffix;
                         });
                     } else {
                         $.ajax({
@@ -597,8 +596,7 @@
                             }
                         })
                         .done(data => {
-                            const currency = JSON.parse(data);
-                            $vm.to.account_currency = currency.suffix;
+                            $vm.to.account_currency = data.suffix;
                         });
                     } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({

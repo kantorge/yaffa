@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\Currency;
 use App\Models\TransactionType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -205,10 +206,10 @@ class AccountApiController extends Controller
     /**
      * Get the the currency associated with the account.
      *
-     * @param App\Models\AccountEntity $accountEntity
-     * @return string
+     * @param \App\Models\AccountEntity $accountEntity
+     * @return \App\Models\Currency
      */
-    public function getAccountCurrency(AccountEntity $accountEntity): string
+    public function getAccountCurrency(AccountEntity $accountEntity): Currency
     {
         $this->authorize('view', $accountEntity);
 

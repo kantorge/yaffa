@@ -46,5 +46,7 @@ class GetCurrencyRates extends Command
         $currencies->each(function ($currency) {
             GetCurrencyRatesJob::dispatch($currency);
         });
+
+        return 0;
     }
 }

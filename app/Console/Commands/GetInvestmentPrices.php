@@ -49,5 +49,7 @@ class GetInvestmentPrices extends Command
         $investments->each(function($investment) {
             GetInvestmentPricesJob::dispatch($investment);
         });
+
+        return 0;
     }
 }
