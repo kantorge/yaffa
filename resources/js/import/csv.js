@@ -19,6 +19,24 @@ window.account_currency = {};
 window.unmatchedRows = [];
 window.schedules = [];
 
+// Helper function to save nested object values
+function storeNestedObjectValue(base, names, value) {
+    // If a value is given, remove the last name and keep it for later:
+    var lastName = arguments.length === 3 ? names.pop() : false;
+
+    // Walk the hierarchy, creating new objects where needed.
+    // If the lastName was removed, then the last object is not set yet:
+    for( var i = 0; i < names.length; i++ ) {
+        base = base[ names[i] ] = base[ names[i] ] || {};
+    }
+
+    // If a value was given, set it to the last name:
+    if( lastName ) base = base[ lastName ] = value;
+
+    // Return the last object in the hierarchy:
+    return base;
+};
+
 // Require the rule engine
 // TODO: make this dynamic based on the selected account
 let engine = require('./rules/hun_raiffeisen_v1.js');
@@ -53,46 +71,39 @@ document.getElementById('csv_file').addEventListener('change', function () {
                 hidden: false,
                 similarTransactions: false,
                 quickRecordingPossible: false,
+                config: {},
             };
 
             engine.run(transaction)
                 .then(({ events }) => {
 
+                    // Loop all rules to extract transaction data from row
                     events.filter(event => event.params.processingRules).map(event => event.params.processingRules.map(rule => {
-                        // Loop all rules to extract transaction data from row
-                        rawTransaction[rule.transactionField] = rule.customFunction(transaction, rawTransaction);
-                    }))
+                        // Get value from rule
+                        const value = rule.customFunction(transaction, rawTransaction);
+
+                        // If field is provided as list of keys (.), split to an array and handle accordingly
+                        if (rule.transactionField.includes('.')) {
+                            const fieldPath = rule.transactionField.split('.');
+                            storeNestedObjectValue(rawTransaction, fieldPath, value);
+                        } else {
+                            rawTransaction[rule.transactionField] = value;
+                        }
+                    }));
 
                     // TODO: proper filtering
                     if (rawTransaction.date) {
-                        // console.log(rawTransaction)
-
-                        // Transformations for proper transaction format
-                        // TODO: can and should this be part of the processing rules?
-                        let newTransaction = Object.assign({}, rawTransaction);
-                        newTransaction.config = {};
-                        if (rawTransaction.account_from) {
-                            newTransaction.config.account_from = rawTransaction.account_from;
-                        }
-                        if (rawTransaction.account_to) {
-                            newTransaction.config.account_to = rawTransaction.account_to;
-                        }
-                        if (rawTransaction.amount) {
-                            newTransaction.config.amount_from = rawTransaction.amount;
-                            newTransaction.config.amount_to = rawTransaction.amount;
-                        }
-
                         // Does this draft transaction qualify for a quick recording?
                         // It needs: date, account_from, account_to, amount_from, amount_to, payee default category
-                        if (newTransaction.date && newTransaction.config.account_from && newTransaction.config.account_to && newTransaction.config.amount_from && newTransaction.config.amount_to) {
-                            if (newTransaction.transaction_type === 'withdrawal' && newTransaction.config.account_to.config.category_id) {
-                                newTransaction.quickRecordingPossible = true;
-                            } else if (newTransaction.transaction_type === 'deposit' && newTransaction.config.account_from.config.category_id) {
-                                newTransaction.quickRecordingPossible = true;
+                        if (rawTransaction.date && rawTransaction.config && rawTransaction.config.account_from && rawTransaction.config.account_to && rawTransaction.config.amount_from && rawTransaction.config.amount_to) {
+                            if (rawTransaction.transaction_type === 'withdrawal' && rawTransaction.config.account_to.config.category_id) {
+                                rawTransaction.quickRecordingPossible = true;
+                            } else if (rawTransaction.transaction_type === 'deposit' && rawTransaction.config.account_from.config.category_id) {
+                                rawTransaction.quickRecordingPossible = true;
                             }
                         }
 
-                        transactions.push(newTransaction);
+                        transactions.push(rawTransaction);
                     } else {
                         unmatchedRows.push(transaction);
                     }
@@ -156,13 +167,13 @@ function collectSimilarTransactions() {
                 if (transaction.date.isoDateString() === existingTransaction.date.isoDateString()) {
                     similarityCount++;
                 }
-                if (transaction.amount == existingTransaction.config.amount_to) {
+                if (transaction.config.amount_to == existingTransaction.config.amount_to) {
                     similarityCount++;
                 }
-                if (transaction.account_from?.id == existingTransaction.config.account_from.id) {
+                if (transaction.config.account_from?.id == existingTransaction.config.account_from.id) {
                     similarityCount++;
                 }
-                if (transaction.account_to?.id == existingTransaction.config.account_to.id) {
+                if (transaction.config.account_to?.id == existingTransaction.config.account_to.id) {
                     similarityCount++;
                 }
 
@@ -188,13 +199,13 @@ function collectSimilarTransactions() {
                 if (transaction.date.isoDateString() === schedule.schedule_config.next_date.isoDateString()) {
                     similarityCount++;
                 }
-                if (transaction.amount == schedule.config.amount_to) {
+                if (transaction.config.amount_to == schedule.config.amount_to) {
                     similarityCount++;
                 }
-                if (transaction.account_from && transaction.account_from.id == schedule.config.account_from.id) {
+                if (transaction.config.account_from && transaction.config.account_from.id == schedule.config.account_from.id) {
                     similarityCount++;
                 }
-                if (transaction.account_to && transaction.account_to.id == schedule.config.account_to.id) {
+                if (transaction.config.account_to && transaction.config.account_to.id == schedule.config.account_to.id) {
                     similarityCount++;
                 }
 
@@ -317,8 +328,8 @@ window.table = $("#dataTable").DataTable({
         {
             title: 'From',
             render: function (_data, _type, row) {
-                if (row.account_from) {
-                    return row.account_from.name;
+                if (row.config && row.config.account_from) {
+                    return row.config.account_from.name;
                 }
 
                 return 'Not set';
@@ -327,8 +338,8 @@ window.table = $("#dataTable").DataTable({
         {
             title: 'To',
             render: function (_data, _type, row) {
-                if (row.account_to) {
-                    return row.account_to.name;
+                if (row.config && row.config.account_to) {
+                    return row.config.account_to.name;
                 }
 
                 return 'Not set';
@@ -345,22 +356,25 @@ window.table = $("#dataTable").DataTable({
                 // Set the relevant account type based on the transaction type
                 const accountType = row.transaction_type === 'deposit' ? 'account_from' : 'account_to';
                 // Check if payee is set
-                if (!row[accountType]) {
+                if (!row.config[accountType]) {
                     return 'Not set';
                 }
 
                 // Check if default category is set for the payee
-                if (!row[accountType].config.category) {
+                if (!row.config[accountType].config.category) {
                     return 'Not set';
                 }
 
-                return row[accountType].config.category.full_name;
+                return row.config[accountType].config.category.full_name;
             },
             orderable: false
         },
         {
             title: 'Amount',
             render: function (_data, _type, row) {
+                if (!row.config.amount_to) {
+                    return 'Not set';
+                }
                 let prefix = '';
                 if (row.transaction_operator == 'minus') {
                     prefix = '- ';
@@ -368,7 +382,7 @@ window.table = $("#dataTable").DataTable({
                 if (row.transaction_operator == 'plus') {
                     prefix = '+ ';
                 }
-                return prefix + row.amount.toLocalCurrency(window.account_currency);
+                return prefix + row.config.amount_to.toLocalCurrency(window.account_currency);
             },
             className: "dt-nowrap",
         },
@@ -652,26 +666,20 @@ $('#dataTable').on('click', 'button.record', function () {
     recentTransactionDraftId = $(this).data('draft');
     // TODO: Disable all the action buttons of this item
 
-    //let transactionId = $(this).data('draftId');
     let transaction = window.transactions.find(transaction => transaction.draftId == $(this).data('draft'));
-
-    // Make some transformations to the transaction
-    transaction.config = {};
-    transaction.config.amount_to = transaction.amount;
-    transaction.config.amount_from = transaction.amount;
-    transaction.config.account_from_id = transaction.account_from.id;
-    transaction.config.account_to_id = transaction.account_to.id;
 
     // Further data preparation
     transaction.action = 'create';
     transaction.config_type = 'transaction_detail_standard';
     transaction.items = [];
     transaction.fromModal = true;
+    transaction.config.account_from_id = transaction.config.account_from.id;
+    transaction.config.account_to_id = transaction.config.account_to.id;
 
     // If default category is set, use it as remaining payee default amount
     if (transaction.config.account_to?.config.category) {
         transaction.remaining_payee_default_amount = transaction.amount;
-        transaction.remaining_payee_default_category_id = transaction.account_to.config.category.id;
+        transaction.remaining_payee_default_category_id = transaction.config.account_to.config.category.id;
     }
 
     // Call the backend to create the transaction

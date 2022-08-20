@@ -82,8 +82,16 @@
                 });
             },
             enterInstance() {
-                // Create a new transaction instance with the schedule next date set as date
-                let transaction = Object.assign({}, this.transaction, {date: this.transaction.transaction_schedule.next_date});
+                // Create a new transaction instance based on the schedule instance
+                let transaction = Object.assign(
+                    {},
+                    this.transaction,
+                    {
+                        date: this.transaction.transaction_schedule.next_date, // TODO: for importing, this should be the date of the draft
+                        schedule: false,
+                        budget: false
+                    }
+                );
 
                 // Emit a custom event to global scope about the new transaction to be opened in modal editor
                 // TODO: how to avoid using global scope?

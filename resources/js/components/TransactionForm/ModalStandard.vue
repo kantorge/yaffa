@@ -6,7 +6,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
-                    <h4 class="modal-title">Create transaction</h4>
+                    <h4 class="modal-title" v-html="modalTitle"></h4>
                 </div>
                 <div class="modal-body">
                     <transaction-form-standard
@@ -94,6 +94,21 @@
             window.addEventListener('initiateCreateFromDraft', function(event) {
                 $vm.onInitiateCreateDraft(event.detail.transaction);
             });
+        },
+        computed: {
+            modalTitle() {
+                var titles = new Map(
+                    [
+                        ['create', 'Add new transaction'],
+                        ['edit', 'Modify existing transaction'],
+                        ['clone', 'Clone existing transaction'],
+                        ['enter', 'Enter scheduled transaction instance'],
+                        ['replace', 'Clone scheduled transaction and close base item'],
+                    ]
+                );
+
+                return titles.get(this.action);
+            },
         },
     };
 </script>

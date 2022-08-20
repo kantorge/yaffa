@@ -94,7 +94,7 @@ let ruleCardPayment = new Rule({
                     }
                 },
                 {
-                    transactionField: 'amount',
+                    transactionField: 'config.amount_from',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
@@ -106,13 +106,25 @@ let ruleCardPayment = new Rule({
                     }
                 },
                 {
-                    transactionField: 'account_to',
+                    transactionField: 'config.amount_to',
+                    customFunction: function (fact, _transaction) {
+                        // Amount is in format '-123,45 HUF'. We need the number as a positive number.
+                        // TODO: HUF is hardcoded, while it'll be determined by account currency.
+                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let match = regex.exec(fact['Összeg']);
+                        if (match) {
+                            return parseFloat(match[1].replace(/,/, '.'));
+                        }
+                    }
+                },
+                {
+                    transactionField: 'config.account_to',
                     customFunction: function (fact, _transaction) {
                         return findPayee(fact['Közlemény/2']);
                     }
                 },
                 {
-                    transactionField: 'account_from',
+                    transactionField: 'config.account_from',
                     customFunction: function (_fact, _transaction) {
                         // Get ID and name from select2 element
                         return {
@@ -126,7 +138,7 @@ let ruleCardPayment = new Rule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -199,7 +211,7 @@ let ruleOutgoingWireTransfer = new Rule({
                     }
                 },
                 {
-                    transactionField: 'amount',
+                    transactionField: 'config.amount_from',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
@@ -211,13 +223,25 @@ let ruleOutgoingWireTransfer = new Rule({
                     }
                 },
                 {
-                    transactionField: 'account_to',
+                    transactionField: 'config.amount_to',
+                    customFunction: function (fact, _transaction) {
+                        // Amount is in format '-123,45 HUF'. We need the number as a positive number.
+                        // TODO: HUF is hardcoded, while it'll be determined by account currency.
+                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let match = regex.exec(fact['Összeg']);
+                        if (match) {
+                            return parseFloat(match[1].replace(/,/, '.'));
+                        }
+                    }
+                },
+                {
+                    transactionField: 'config.account_to',
                     customFunction: function (fact, _transaction) {
                         return findPayee(fact['Közlemény/2']);
                     }
                 },
                 {
-                    transactionField: 'account_from',
+                    transactionField: 'config.account_from',
                     customFunction: function (_fact, _transaction) {
                         // Get ID and name from select2 element
                         return {
@@ -231,7 +255,7 @@ let ruleOutgoingWireTransfer = new Rule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -303,7 +327,7 @@ engine.addRule({
                     }
                 },
                 {
-                    transactionField: 'amount',
+                    transactionField: 'config.amount_from',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '123,45 HUF'. We need the number as a positive number.
                         let regex = new RegExp(/^(\d+,\d+) HUF$/);
@@ -314,13 +338,24 @@ engine.addRule({
                     }
                 },
                 {
-                    transactionField: 'account_from',
+                    transactionField: 'config.amount_to',
+                    customFunction: function (fact, _transaction) {
+                        // Amount is in format '123,45 HUF'. We need the number as a positive number.
+                        let regex = new RegExp(/^(\d+,\d+) HUF$/);
+                        let match = regex.exec(fact['Összeg']);
+                        if (match) {
+                            return parseFloat(match[1].replace(/,/, '.'));
+                        }
+                    }
+                },
+                {
+                    transactionField: 'config.account_from',
                     customFunction: function (fact, _transaction) {
                         return findPayee(fact['Közlemény/2']);
                     }
                 },
                 {
-                    transactionField: 'account_to',
+                    transactionField: 'config.account_to',
                     customFunction: function (_fact, _transaction) {
                         // Get ID and name from select2 element
                         return {
@@ -334,7 +369,7 @@ engine.addRule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -350,16 +385,16 @@ let ruleCashWithdrawal = new Rule({
         any: [
             {
                 all: [
-                        {
-                            fact: 'Típus',
-                            operator: 'equal',
-                            value: 'Elektronik. saját számlás átvezetés'
-                        },
-                        {
-                            fact: 'Közlemény/3',
-                            operator: 'equal',
-                            value: 'Hitelkártya feltöltés'
-                        }
+                    {
+                        fact: 'Típus',
+                        operator: 'equal',
+                        value: 'Elektronik. saját számlás átvezetés'
+                    },
+                    {
+                        fact: 'Közlemény/3',
+                        operator: 'equal',
+                        value: 'Hitelkártya feltöltés'
+                    }
                 ]
             },
             {
@@ -417,7 +452,7 @@ let ruleCashWithdrawal = new Rule({
                     }
                 },
                 {
-                    transactionField: 'amount',
+                    transactionField: 'config.amount_from',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
@@ -429,13 +464,25 @@ let ruleCashWithdrawal = new Rule({
                     }
                 },
                 {
-                    transactionField: 'account_to',
+                    transactionField: 'config.amount_to',
+                    customFunction: function (fact, _transaction) {
+                        // Amount is in format '-123,45 HUF'. We need the number as a positive number.
+                        // TODO: HUF is hardcoded, while it'll be determined by account currency.
+                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let match = regex.exec(fact['Összeg']);
+                        if (match) {
+                            return parseFloat(match[1].replace(/,/, '.'));
+                        }
+                    }
+                },
+                {
+                    transactionField: 'config.account_to',
                     customFunction: function (_fact, _transaction) {
                         return undefined;
                     }
                 },
                 {
-                    transactionField: 'account_from',
+                    transactionField: 'config.account_from',
                     customFunction: function (_fact, _transaction) {
                         // Get ID and name from select2 element
                         return {
