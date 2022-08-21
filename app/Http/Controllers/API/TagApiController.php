@@ -17,6 +17,10 @@ class TagApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/tag')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $tags = Auth::user()
             ->tags()
             ->active()
@@ -34,6 +38,10 @@ class TagApiController extends Controller
 
     public function getItem(Tag $tag)
     {
+        /**
+         * @get('/api/assets/tag/{tag}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $tag);
 
         return response()

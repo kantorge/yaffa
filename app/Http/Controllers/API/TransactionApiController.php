@@ -32,6 +32,10 @@ class TransactionApiController extends Controller
 
     public function reconcile(Transaction $transaction, $newState)
     {
+        /**
+         * @put('/api/transaction/{transaction}/reconciled/{newState}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('update', $transaction);
 
         $transaction->reconciled = $newState;
@@ -47,6 +51,10 @@ class TransactionApiController extends Controller
 
     public function getItem(Transaction $transaction)
     {
+        /**
+         * @get('/api/transaction/{transaction}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $transaction->loadStandardDetails();
 
         return response()->json(
@@ -59,6 +67,10 @@ class TransactionApiController extends Controller
 
     public function getScheduledItems(string $type)
     {
+        /**
+         * @get('/api/transactions/get_scheduled_items/{type}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         // Get all accounts and payees so their name can be reused
         $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
             ->pluck('name', 'id')
@@ -260,6 +272,10 @@ class TransactionApiController extends Controller
 
     public function findTransactions(Request $request)
     {
+        /**
+         * @get('/api/transactions')
+         * @middlewares('api', 'auth:sanctum')
+         */
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
 
@@ -395,6 +411,11 @@ class TransactionApiController extends Controller
 
     public function storeStandard(TransactionRequest $request)
     {
+        /**
+         * @post('/api/transactions/standard')
+         * @name('api.transactions.storeStandard')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
@@ -466,6 +487,11 @@ class TransactionApiController extends Controller
 
     public function updateStandard(TransactionRequest $request, Transaction $transaction)
     {
+        /**
+         * @patch('/api/transactions/standard/{transaction}')
+         * @name('api.transactions.updateStandard')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $validated = $request->validated();
 
         // Load all relevant relations
@@ -554,6 +580,11 @@ class TransactionApiController extends Controller
 
     public function skipScheduleInstance(Transaction $transaction)
     {
+        /**
+         * @patch('/api/transactions/{transaction}/skip')
+         * @name('api.transactions.skipScheduleInstance')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $transaction->transactionSchedule->skipNextInstance();
 
         return response()->json(

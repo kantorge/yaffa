@@ -18,6 +18,10 @@ class CategoryApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/category')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $query = $request->get('q');
         if ($query) {
             $categories = Auth::user()
@@ -97,6 +101,10 @@ class CategoryApiController extends Controller
 
     public function getItem(Category $category)
     {
+        /**
+         * @get('/api/assets/category/{category}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $category);
 
         return response()

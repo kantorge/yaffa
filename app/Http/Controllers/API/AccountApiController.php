@@ -22,6 +22,10 @@ class AccountApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/account')
+         * @middlewares('api', 'auth:sanctum')
+         */
         if ($request->get('q')) {
             $accounts = Auth::user()
                 ->accounts()
@@ -78,6 +82,10 @@ class AccountApiController extends Controller
 
     public function getStandardList(Request $request)
     {
+        /**
+         * @get('/api/assets/account/standard')
+         * @middlewares('api', 'auth:sanctum')
+         */
         if ($request->get('q')) {
             $accounts = Auth::user()
                 ->accounts()
@@ -135,6 +143,10 @@ class AccountApiController extends Controller
 
     public function getAccountListForInvestments(Request $request)
     {
+        /**
+         * @get('/api/assets/account/investment')
+         * @middlewares('api', 'auth:sanctum')
+         */
         if ($request->get('q')) {
             $accounts = Auth::user()
                 ->accounts()
@@ -211,6 +223,10 @@ class AccountApiController extends Controller
      */
     public function getAccountCurrency(AccountEntity $accountEntity): Currency
     {
+        /**
+         * @get('/api/assets/account/currency/{accountEntity}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $accountEntity);
         $accountEntity->load('config');
 
@@ -225,6 +241,10 @@ class AccountApiController extends Controller
      */
     public function getItem(AccountEntity $accountEntity)
     {
+        /**
+         * @get('/api/assets/account/{accountEntity}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $accountEntity);
 
         $accountEntity->load(['config', 'config.currency']);

@@ -25,6 +25,11 @@ class CurrencyController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/currencies')
+         * @name('currencies.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Currency')
+         */
         // Show all currencies of user from the database and return to view
         $currencies = Auth::user()
             ->currencies()
@@ -49,11 +54,21 @@ class CurrencyController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/currencies/create')
+         * @name('currencies.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         */
         return view('currencies.form');
     }
 
     public function store(CurrencyRequest $request)
     {
+        /**
+         * @post('/currencies')
+         * @name('currencies.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         */
         $validated = $request->validated();
 
         $currency = Currency::make($validated);
@@ -73,11 +88,22 @@ class CurrencyController extends Controller
      */
     public function edit(Currency $currency)
     {
+        /**
+         * @get('/currencies/{currency}/edit')
+         * @name('currencies.edit')
+         * @middlewares('web', 'auth', 'can:update,currency')
+         */
         return view('currencies.form', ['currency' => $currency]);
     }
 
     public function update(CurrencyRequest $request, Currency $currency)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/currencies/{currency}')
+         * @name('currencies.update')
+         * @middlewares('web', 'auth', 'can:update,currency')
+         */
         $validated = $request->validated();
 
         $currency->fill($validated)
@@ -96,6 +122,11 @@ class CurrencyController extends Controller
      */
     public function destroy(Currency $currency)
     {
+        /**
+         * @delete('/currencies/{currency}')
+         * @name('currencies.destroy')
+         * @middlewares('web', 'auth', 'can:delete,currency')
+         */
         // Base currency cannot be deleted
         if ($currency->base) {
             self::addSimpleDangerMessage('Base currency cannot be deleted');
@@ -122,6 +153,11 @@ class CurrencyController extends Controller
 
     public function setDefault(Currency $currency)
     {
+        /**
+         * @get('/currencies/{currency}/setDefault')
+         * @name('currencies.setDefault')
+         * @middlewares('web', 'auth')
+         */
         $baseCurrency = $this->getBaseCurrency();
 
         if ($currency->id === $baseCurrency->id) {

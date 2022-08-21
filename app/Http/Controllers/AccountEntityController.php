@@ -40,6 +40,11 @@ class AccountEntityController extends Controller
      */
     public function index(Request $request)
     {
+        /**
+         * @get('/account-entity')
+         * @name('account-entity.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'index'.Str::ucfirst($request->type)}();
@@ -238,6 +243,11 @@ class AccountEntityController extends Controller
      */
     public function create(Request $request)
     {
+        /**
+         * @get('/account-entity/create')
+         * @name('account-entity.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'create'.Str::ucfirst($request->type)}();
@@ -296,6 +306,11 @@ class AccountEntityController extends Controller
      */
     public function store(AccountEntityRequest $request)
     {
+        /**
+         * @post('/account-entity')
+         * @name('account-entity.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         $validated = $request->validated();
@@ -336,6 +351,11 @@ class AccountEntityController extends Controller
      */
     public function edit(Request $request, AccountEntity $accountEntity)
     {
+        /**
+         * @get('/account-entity/{account_entity}/edit')
+         * @name('account-entity.edit')
+         * @middlewares('web', 'auth', 'can:update,account_entity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
@@ -382,6 +402,12 @@ class AccountEntityController extends Controller
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/account-entity/{account_entity}')
+         * @name('account-entity.update')
+         * @middlewares('web', 'auth', 'can:update,account_entity')
+         */
         $this->checkTypeParam($request);
 
         $validated = $request->validated();
@@ -423,6 +449,11 @@ class AccountEntityController extends Controller
      */
     public function destroy(Request $request, AccountEntity $accountEntity)
     {
+        /**
+         * @delete('/account-entity/{account_entity}')
+         * @name('account-entity.destroy')
+         * @middlewares('web', 'auth', 'can:delete,account_entity')
+         */
         $this->checkTypeParam($request);
 
         try {
@@ -458,6 +489,11 @@ class AccountEntityController extends Controller
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
     {
+        /**
+         * @get('/payees/merge/{payeeSource?}')
+         * @name('payees.merge.form')
+         * @middlewares('web', 'auth')
+         */
         if ($payeeSource) {
             JavaScript::put([
                 'payeeSource' => $payeeSource->toArray(),
@@ -472,6 +508,11 @@ class AccountEntityController extends Controller
      */
     public function mergePayees(Request $request)
     {
+        /**
+         * @post('/payees/merge')
+         * @name('payees.merge.submit')
+         * @middlewares('web', 'auth')
+         */
         $validated = $request->validate([
             'payee_source' => [
                 'required',

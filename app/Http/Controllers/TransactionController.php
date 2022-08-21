@@ -30,6 +30,11 @@ class TransactionController extends Controller
 
     public function createStandard()
     {
+        /**
+         * @get('/transactions/standard/create')
+         * @name('transactions.createStandard')
+         * @middlewares('web', 'auth')
+         */
         // Sanity check for necessary assets
         if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
             $this->addMessage(
@@ -50,6 +55,11 @@ class TransactionController extends Controller
 
     public function createInvestment()
     {
+        /**
+         * @get('/transactions/investment/create')
+         * @name('transactions.createInvestment')
+         * @middlewares('web', 'auth')
+         */
         return view(self::INVESTMENT_VIEW, [
             'transaction' => null,
             'action' => 'create',
@@ -58,6 +68,11 @@ class TransactionController extends Controller
 
     public function storeInvestment(TransactionRequest $request)
     {
+        /**
+         * @post('/transactions/investment')
+         * @name('transactions.storeInvestment')
+         * @middlewares('web', 'auth')
+         */
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
@@ -108,6 +123,11 @@ class TransactionController extends Controller
      */
     public function openStandard(Transaction $transaction, string $action)
     {
+        /**
+         * @get('/transactions/standard/{transaction}/{action}')
+         * @name('transactions.open.standard')
+         * @middlewares('web', 'auth')
+         */
         // Load all relevant relations
         $transaction->loadStandardDetails();
 
@@ -136,6 +156,11 @@ class TransactionController extends Controller
 
     public function openInvestment(Transaction $transaction, string $action)
     {
+        /**
+         * @get('/transactions/investment/{transaction}/{action}')
+         * @name('transactions.open.investment')
+         * @middlewares('web', 'auth')
+         */
         $transaction->load(self::INVESTMENT_RELATIONS);
 
         // Adjust date and schedule settings, if entering a recurring item
@@ -156,6 +181,11 @@ class TransactionController extends Controller
 
     public function updateInvestment(TransactionRequest $request, Transaction $transaction)
     {
+        /**
+         * @patch('/transactions/investment/{transaction}')
+         * @name('transactions.updateInvestment')
+         * @middlewares('web', 'auth')
+         */
         $validated = $request->validated();
 
         $transaction->fill($validated);
@@ -184,6 +214,11 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
+        /**
+         * @delete('/transactions/{transaction}')
+         * @name('transactions.destroy')
+         * @middlewares('web', 'auth')
+         */
         $transaction->delete();
 
         self::addMessage('Transaction #'.$transaction->id.' deleted', 'success', '', '', true);
@@ -193,6 +228,11 @@ class TransactionController extends Controller
 
     public function skipScheduleInstance(Transaction $transaction)
     {
+        /**
+         * @patch('/transactions/{transaction}/skip')
+         * @name('transactions.skipScheduleInstance')
+         * @middlewares('web', 'auth')
+         */
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage('Transaction schedule instance skipped');
 

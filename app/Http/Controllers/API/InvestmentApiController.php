@@ -26,6 +26,10 @@ class InvestmentApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/investment')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $investments = Auth::user()
             ->investments()
             ->where('active', true)
@@ -52,6 +56,10 @@ class InvestmentApiController extends Controller
      */
     public function getCurrencySuffix(Investment $investment)
     {
+        /**
+         * @get('/api/assets/investment/suffix/{investment}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $investment);
 
         return $investment->currency->suffix;
@@ -65,6 +73,11 @@ class InvestmentApiController extends Controller
      */
     public function getInvestmentDetails(Investment $investment)
     {
+        /**
+         * @get('/api/assets/investment/{investment}')
+         * @name('investment.getDetails')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $investment);
 
         $investment->load(['currency']);
@@ -74,6 +87,10 @@ class InvestmentApiController extends Controller
 
     public function getPriceHistory(Investment $investment)
     {
+        /**
+         * @get('/api/assets/investment/price/{investment}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $investment);
 
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
@@ -87,6 +104,11 @@ class InvestmentApiController extends Controller
 
     public function updateActive(Investment $investment, $active)
     {
+        /**
+         * @put('/api/assets/investment/{investment}/active/{active}')
+         * @name('api.investment.updateActive')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('update', $investment);
 
         $investment->active = $active;
@@ -106,6 +128,10 @@ class InvestmentApiController extends Controller
      */
     public function getInvestmentsWithTimeline()
     {
+        /**
+         * @get('/api/assets/investment/timeline')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $investments = Auth::user()
             ->investments()
             ->with([

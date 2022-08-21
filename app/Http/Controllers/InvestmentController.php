@@ -31,6 +31,11 @@ class InvestmentController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/investment')
+         * @name('investment.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Investment')
+         */
         // Get all investments of the user from the database and return to view
         $investments = Auth::user()
             ->investments()
@@ -50,6 +55,11 @@ class InvestmentController extends Controller
 
     public function edit(Investment $investment)
     {
+        /**
+         * @get('/investment/{investment}/edit')
+         * @name('investment.edit')
+         * @middlewares('web', 'auth', 'can:update,investment')
+         */
         return view('investment.form', [
             'investment' => $investment,
         ]);
@@ -57,6 +67,12 @@ class InvestmentController extends Controller
 
     public function update(InvestmentRequest $request, Investment $investment)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/investment/{investment}')
+         * @name('investment.update')
+         * @middlewares('web', 'auth', 'can:update,investment')
+         */
         // Retrieve the validated input data
         $validated = $request->validated();
         $investment->fill($validated);
@@ -69,11 +85,21 @@ class InvestmentController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/investment/create')
+         * @name('investment.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Investment')
+         */
         return view('investment.form');
     }
 
     public function store(InvestmentRequest $request)
     {
+        /**
+         * @post('/investment')
+         * @name('investment.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Investment')
+         */
         $validated = $request->validated();
 
         $investment = Investment::make($validated);
@@ -93,6 +119,11 @@ class InvestmentController extends Controller
      */
     public function destroy(Investment $investment)
     {
+        /**
+         * @delete('/investment/{investment}')
+         * @name('investment.destroy')
+         * @middlewares('web', 'auth', 'can:delete,investment')
+         */
         $investment->delete();
 
         self::addSimpleSuccessMessage('Investment deleted');
@@ -102,6 +133,11 @@ class InvestmentController extends Controller
 
     public function summary()
     {
+        /**
+         * @get('/investment/summary')
+         * @name('investment.summary')
+         * @middlewares('web', 'auth')
+         */
         // Show all investments from the database and return to view
         $investments = Auth::user()
             ->investments()
@@ -128,6 +164,11 @@ class InvestmentController extends Controller
 
     public function show(Investment $investment)
     {
+        /**
+         * @get('/investment/{investment}')
+         * @name('investment.show')
+         * @middlewares('web', 'auth', 'can:view,investment')
+         */
         // Get all stored price points
         $prices = InvestmentPrice::where('investment_id', $investment->id)
             ->orderBy('date')
@@ -292,6 +333,11 @@ class InvestmentController extends Controller
 
     public function timeline()
     {
+        /**
+         * @get('/investment/timeline')
+         * @name('investment.timeline')
+         * @middlewares('web', 'auth')
+         */
         return view('investment.timeline');
     }
 }

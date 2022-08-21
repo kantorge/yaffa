@@ -21,6 +21,11 @@ class CurrencyRateController extends Controller
 
     public function index(Currency $from, Currency $to)
     {
+        /**
+         * @get('/currencyrates/{from}/{to}')
+         * @name('currency-rate.index')
+         * @middlewares('web')
+         */
         $currencyRates = $this->currencyRate
                             ->where('from_id', $from->id)
                             ->where('to_id', $to->id)
@@ -46,6 +51,11 @@ class CurrencyRateController extends Controller
      */
     public function destroy(CurrencyRate $currencyRate)
     {
+        /**
+         * @delete('/currency-rate/{currency_rate}')
+         * @name('currency-rate.destroy')
+         * @middlewares('web')
+         */
         $currencyRate->delete();
 
         self::addSimpleSuccessMessage('Currency rate deleted');
@@ -55,6 +65,11 @@ class CurrencyRateController extends Controller
 
     public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null)
     {
+        /**
+         * @get('/currencyrates/get/{currency}/{from?}')
+         * @name('currencyrate.retreiveRate')
+         * @middlewares('web')
+         */
         $currency->retreiveCurrencyRateToBase($from);
 
         return redirect()->back();
@@ -62,6 +77,11 @@ class CurrencyRateController extends Controller
 
     public function retreiveMissingCurrencyRateToBase(Currency $currency)
     {
+        /**
+         * @get('/currencyrates/missing/{currency}')
+         * @name('currencyrate.retreiveMissing')
+         * @middlewares('web')
+         */
         $currency->retreiveMissingCurrencyRateToBase();
 
         return redirect()->back();

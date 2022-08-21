@@ -49,6 +49,15 @@ class MainController extends Controller
      */
     public function index($withClosed = null)
     {
+        /**
+         * @get('/')
+         * @name('home')
+         * @middlewares('web', 'auth')
+         *
+         * @get('/account/summary/{withClosed?}')
+         * @name('account.summary')
+         * @middlewares('web', 'auth')
+         */
         // Try to get base currency. Get user to define it, if no currencies exist.
         $baseCurrency = $this->getBaseCurrency();
         if (! $baseCurrency) {
@@ -234,6 +243,11 @@ class MainController extends Controller
 
     public function account_details(AccountEntity $account, $withForecast = null)
     {
+        /**
+         * @get('/account/history/{account}/{withForecast?}')
+         * @name('account.history')
+         * @middlewares('web', 'auth')
+         */
         $user = Auth::user();
 
         // Get account details and load to class variable

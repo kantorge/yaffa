@@ -15,6 +15,11 @@ class SearchController extends Controller
      */
     public function search(Request $request)
     {
+        /**
+         * @get('/search')
+         * @name('search')
+         * @middlewares('web')
+         */
         $searchTerm = $request->get('q');
         $results = [];
 

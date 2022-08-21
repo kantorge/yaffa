@@ -25,6 +25,11 @@ class ReportController extends Controller
 
     public function cashFlow(Request $request)
     {
+        /**
+         * @get('/reports/cashflow')
+         * @name('reports.cashflow')
+         * @middlewares('web', 'auth')
+         */
         // Check if forecast is required
         $withForecast = $request->get('withForecast') ?? false;
 
@@ -232,6 +237,11 @@ class ReportController extends Controller
 
     public function budgetChart(Request $request)
     {
+        /**
+         * @get('/reports/budgetchart')
+         * @name('reports.budgetchart')
+         * @middlewares('web', 'auth')
+         */
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
 
@@ -262,6 +272,11 @@ class ReportController extends Controller
      */
     public function transactionsByCriteria(Request $request)
     {
+        /**
+         * @get('/reports/transactions')
+         * @name('reports.transactions')
+         * @middlewares('web', 'auth')
+         */
         // Get preset filters from query string
         $filters = [];
         if ($request->has('accounts')) {
@@ -286,6 +301,11 @@ class ReportController extends Controller
 
     public function getSchedules()
     {
+        /**
+         * @get('/reports/schedule')
+         * @name('report.schedules')
+         * @middlewares('web', 'auth')
+         */
         return view('reports.schedule');
     }
 }

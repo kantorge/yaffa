@@ -15,6 +15,11 @@ class AccountEntityApiController extends Controller
 
     public function updateActive(AccountEntity $accountEntity, $active)
     {
+        /**
+         * @put('/api/assets/accountentity/{accountEntity}/active/{active}')
+         * @name('api.accountentity.updateActive')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('update', $accountEntity);
 
         $accountEntity->active = $active;

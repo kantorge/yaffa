@@ -39,6 +39,10 @@ class ReportController extends Controller
      */
     public function budgetChart(Request $request)
     {
+        /**
+         * @get('/api/budgetchart')
+         * @middlewares('api', 'auth:sanctum')
+         */
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
         $periodFormat = $byYears ? 'Y-01-01' : 'Y-m-01';
@@ -196,6 +200,10 @@ class ReportController extends Controller
     // TODO: unify with TransactionApiController::getScheduledItems(), or utilize it
     public function scheduledTransactions(Request $request)
     {
+        /**
+         * @get('/api/scheduled_transactions')
+         * @middlewares('api', 'auth:sanctum')
+         */
         // Return empty response if categories are not set or empty
         if (! $request->has('categories') || ! $request->input('categories')) {
             return response()->json([], Response::HTTP_OK);
