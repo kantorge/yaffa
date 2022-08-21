@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class TagController extends Controller
 {
@@ -34,7 +34,7 @@ class TagController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'tags' => $tags,
         ]);
 

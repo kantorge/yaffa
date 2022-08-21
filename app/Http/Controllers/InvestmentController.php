@@ -10,7 +10,7 @@ use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
@@ -46,7 +46,7 @@ class InvestmentController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investments' => $investments,
         ]);
 
@@ -155,7 +155,7 @@ class InvestmentController extends Controller
         });
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investments' => $investments,
         ]);
 
@@ -319,7 +319,7 @@ class InvestmentController extends Controller
                 ];
             });
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investment' => $investment,
             'transactions' => array_values($transactions->toArray()),
             'prices' => $prices,

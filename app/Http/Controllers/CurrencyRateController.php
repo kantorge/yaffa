@@ -6,7 +6,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use Carbon\Carbon;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyRateController extends Controller
 {
@@ -32,7 +32,7 @@ class CurrencyRateController extends Controller
                             ->orderBy('date')
                             ->get();
 
-        JavaScript::put(['currencyRates' => $currencyRates]);
+        JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
         return view(
             'currencyrates.index',

@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentPriceController extends Controller
 {
@@ -34,7 +34,7 @@ class InvestmentPriceController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'prices' => $pricesOrdered,
         ]);
 

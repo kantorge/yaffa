@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentGroupController extends Controller
 {
@@ -34,7 +34,7 @@ class InvestmentGroupController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investmentGroups' => $investmentGroups,
         ]);
 

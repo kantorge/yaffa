@@ -13,7 +13,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller
 {
@@ -59,7 +59,7 @@ class AccountEntityController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'accounts' => $accounts,
         ]);
 
@@ -229,7 +229,7 @@ class AccountEntityController extends Controller
         }, $payees);
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'payees' => $payees,
         ]);
 
@@ -495,7 +495,7 @@ class AccountEntityController extends Controller
          * @middlewares('web', 'auth')
          */
         if ($payeeSource) {
-            JavaScript::put([
+            JavaScriptFacade::put([
                 'payeeSource' => $payeeSource->toArray(),
             ]);
         }

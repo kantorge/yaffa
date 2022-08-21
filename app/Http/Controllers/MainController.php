@@ -13,7 +13,7 @@ use App\Models\TransactionType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class MainController extends Controller
 {
@@ -405,7 +405,7 @@ class MainController extends Controller
             })
             ->values();
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class ImportController extends Controller
 {
@@ -26,7 +26,7 @@ class ImportController extends Controller
             ->with('config', 'config.category')
             ->get();
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'payees' => $payees,
         ]);
 

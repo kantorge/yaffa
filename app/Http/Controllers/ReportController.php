@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class ReportController extends Controller
 {
@@ -220,7 +220,7 @@ class ReportController extends Controller
             return $a['month'] <=> $b['month'];
         });
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'transactionDataHistory' => $final,
             'singleAxes' => (bool) $singleAxes,
             'currency' => $baseCurrency,
@@ -249,7 +249,7 @@ class ReportController extends Controller
         $categories = Category::all()->sortBy('full_name');
 
         // Pass currency related data for amCharts
-        JavaScript::put([
+        JavaScriptFacade::put([
             'currency' => $this->getBaseCurrency(),
             'categories' => $request->get('categories', []),
             'byYears' => $byYears,
@@ -292,7 +292,7 @@ class ReportController extends Controller
             $filters['tags'] = $request->get('tags');
         }
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'filters' => $filters,
         ]);
 

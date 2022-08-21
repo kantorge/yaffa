@@ -7,7 +7,7 @@ use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CategoryController extends Controller
 {
@@ -36,7 +36,7 @@ class CategoryController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'categories' => $categories,
         ]);
 
@@ -159,7 +159,7 @@ class CategoryController extends Controller
          * @middlewares('web', 'auth')
          */
         if ($categorySource) {
-            JavaScript::put([
+            JavaScriptFacade::put([
                 'categorySource' => $categorySource->toArray(),
             ]);
         }

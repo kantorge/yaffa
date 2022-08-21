@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountGroupController extends Controller
 {
@@ -34,7 +34,7 @@ class AccountGroupController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'accountGroups' => $accountGroups,
         ]);
 

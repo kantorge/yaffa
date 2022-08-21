@@ -6,7 +6,7 @@ use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyController extends Controller
 {
@@ -44,7 +44,7 @@ class CurrencyController extends Controller
         });
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
         ]);
