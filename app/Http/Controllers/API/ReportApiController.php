@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-class ReportController extends Controller
+class ReportApiController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
