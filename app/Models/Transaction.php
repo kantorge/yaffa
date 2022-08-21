@@ -39,7 +39,9 @@ class Transaction extends Model
         'user_id',
     ];
 
-    protected $hidden = ['config_id'];
+    protected $hidden = [
+        'config_id'
+    ];
 
     /**
      * The attributes that should be cast to native types.
@@ -161,19 +163,19 @@ class Transaction extends Model
     /**
      * Override the default delete method to delete the transaction configuration as well
      *
-     * @return void
+     * @return bool|null
      */
-    public function delete(): void
+    public function delete(): bool|null
     {
         $this->config()->delete();
-        parent::delete();
+        return parent::delete();
     }
 
     /**
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
      *
-     * @param  App\Models\AccountEntity  $account
+     * @param  \App\Models\AccountEntity  $account
      * @return Numeric
      */
     public function cashflowValue(?AccountEntity $account)
