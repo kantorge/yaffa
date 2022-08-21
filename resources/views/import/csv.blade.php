@@ -101,7 +101,6 @@
                         <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
                         </button>
                     </div>
-
                 </div>
 
                 <div class="box-body table-responsive no-padding" style="display: none;">

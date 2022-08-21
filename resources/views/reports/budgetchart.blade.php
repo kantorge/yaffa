@@ -35,16 +35,34 @@
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="box">
-            <div class="box-header">
-                <h3>Select categories to display</h3>
-                <p>Selecting parent category loads all related subcategories too.</p>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box">
+                    <div class="box-header">
+                        <h3>Select categories to display</h3>
+                        <p>Selecting parent category loads all related subcategories too.</p>
+                    </div>
+                    <div class="box-body">
+                        <select id="category_id" class="form-control" style="width: 100%"></select>
+                    </div>
+                    <div class="box-footer">
+                        <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Change</button>
+                    </div>
+                </div>
             </div>
-            <div class="box-body">
-                <select id="category_id" class="form-control" style="width: 100%"></select>
-            </div>
-            <div class="box-footer">
-                <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Change</button>
+            <div class="col-xs-12">
+                <div class="box box-default collapsed-box">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">List of categories</h3>
+                        <div class="box-tools pull-right">
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="box-body" style="display: none;">
+                        <div id="category_tree"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

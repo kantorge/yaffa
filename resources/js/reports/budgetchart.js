@@ -1,23 +1,22 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
-import 'select2';
-import { RRule } from 'rrule';
-import * as dataTableHelpers from './../components/dataTableHelper'
-
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
-am4core.useTheme(am4themes_animated);
-am4core.useTheme(am4themes_kelly);
+require('datatables.net');
+require('datatables.net-bs');
+import * as dataTableHelpers from './../components/dataTableHelper'
+import 'jstree';
+import 'jstree/src/themes/default/style.css'
+import 'select2';
+import { RRule } from 'rrule';
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
 const computeMovingAverage = (baseData, period) => {
     var maxActualDate = null;
-    for (var i = baseData.length ; i > 0; i--) {
-        if (baseData[i-1].actual) {
-            maxActualDate = baseData[i-1].date;
+    for (var i = baseData.length; i > 0; i--) {
+        if (baseData[i - 1].actual) {
+            maxActualDate = baseData[i - 1].date;
             break;
         }
     }
@@ -26,7 +25,7 @@ const computeMovingAverage = (baseData, period) => {
         maxActualDate = baseData[baseData.length - 1].date;
     }
 
-    return baseData.map(function(currentItem, index) {
+    return baseData.map(function (currentItem, index) {
         if (currentItem.date > maxActualDate) {
             if (index > 0) {
                 currentItem.movingAverage = baseData[index - 1].movingAverage;
@@ -38,7 +37,7 @@ const computeMovingAverage = (baseData, period) => {
         intervalStart.setMonth(intervalStart.getMonth() - period);
         var intervalEnd = currentItem.date;
 
-        var previousPeriod = baseData.filter(function(item) {
+        var previousPeriod = baseData.filter(function (item) {
             return item.date >= intervalStart && item.date <= intervalEnd;
         });
 
@@ -51,6 +50,8 @@ const computeMovingAverage = (baseData, period) => {
 const elementCategorySelectSelector = '#category_id';
 const elementRefreshButton = document.getElementById('reload');
 
+am4core.useTheme(am4themes_animated);
+am4core.useTheme(am4themes_kelly);
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
 
 chart.numberFormatter.intlLocales = "hu-HU";
@@ -99,7 +100,7 @@ chart.cursor = new am4charts.XYCursor();
 // Set AmCharts zoom in functionality for button
 const btnZoomIn = document.getElementById('btnZoomIn')
 if (btnZoomIn) {
-    btnZoomIn.addEventListener('click', function() {
+    btnZoomIn.addEventListener('click', function () {
         // Zoom to current month +/- 13 months
         var currentDate = new Date();
         dateAxis.zoomToDates(
@@ -109,7 +110,7 @@ if (btnZoomIn) {
     });
 }
 
-let reloadData = function() {
+let reloadData = function () {
     elementRefreshButton.disabled = true;
 
     $.ajax({
@@ -119,23 +120,23 @@ let reloadData = function() {
             byYears: (byYears ? 1 : 0),
         }
     })
-    .done(function(data) {
-        // Convert date
-        data = data.map(function(item) {
-            item.date = new Date(item.period);
-            return item;
-        });
+        .done(function (data) {
+            // Convert date
+            data = data.map(function (item) {
+                item.date = new Date(item.period);
+                return item;
+            });
 
-        // Add moving average (assuming data is ordered)
-        if (data.length > 0) {
-            data = computeMovingAverage(data, 12 * (byYears ? 5 : 1));
-        }
-        chart.data = data;
-        chart.invalidateData();
-    })
-    .always(function() {
-        elementRefreshButton.disabled = false;
-    });
+            // Add moving average (assuming data is ordered)
+            if (data.length > 0) {
+                data = computeMovingAverage(data, 12 * (byYears ? 5 : 1));
+            }
+            chart.data = data;
+            chart.invalidateData();
+        })
+        .always(function () {
+            elementRefreshButton.disabled = false;
+        });
 
     window.table.ajax.reload();
 
@@ -146,14 +147,14 @@ let reloadData = function() {
 // Attach event listener to refresh button
 elementRefreshButton.addEventListener('click', reloadData);
 
-var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
+var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
 window.table = $('#table').DataTable({
     ajax: {
         url: '/api/scheduled_transactions',
         type: 'GET',
-        dataSrc: function(data) {
-            return data.map(function(transaction) {
+        dataSrc: function (data) {
+            return data.map(function (transaction) {
                 transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
                 if (transaction.transaction_schedule.next_date) {
                     transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
@@ -176,7 +177,7 @@ window.table = $('#table').DataTable({
             });
         },
         data: function () {
-            return $.extend( {}, {
+            return $.extend({}, {
                 'categories': $(elementCategorySelectSelector).val()
             });
         },
@@ -186,14 +187,14 @@ window.table = $('#table').DataTable({
         {
             data: "transaction_schedule.start_date",
             title: "Start date",
-            render: function(data) {
+            render: function (data) {
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
             }
         },
         {
             data: "transaction_schedule.rule",
             title: "Schedule",
-            render: function(data) {
+            render: function (data) {
                 // Return human readable format
                 return data.toText();
             }
@@ -201,7 +202,7 @@ window.table = $('#table').DataTable({
         {
             data: "transaction_schedule.next_date",
             title: "Next date",
-            render: function(data) {
+            render: function (data) {
                 if (!data) {
                     return '';
                 }
@@ -325,39 +326,39 @@ window.table = $('#table').DataTable({
             data: 'id',
             title: "Actions",
             render: function (data, _type, row) {
-                return  dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'delete') +
-                        (row.schedule
-                            ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', {transaction: data, action: 'enter'}) : route('transactions.open.investment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
-                            : '');
+                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'delete') +
+                    (row.schedule
+                        ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                        '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
+                        : '');
             },
             orderable: false
         }
     ],
-    createdRow: function( row, data) {
+    createdRow: function (row, data) {
         if (!data.transaction_schedule.next_date) {
             return;
         }
 
-        if (data.transaction_schedule.next_date  < new Date(new Date().setHours(0,0,0,0)) ) {
+        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('danger');
-        } else if (data.transaction_schedule.next_date  < new Date(new Date().setHours(24,0,0,0)) ) {
+        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
             $(row).addClass('warning');
         }
     },
     order: [
-        [ 0, "asc" ]
+        [0, "asc"]
     ],
-    deferRender:    true,
-    scrollY:        '400px',
+    deferRender: true,
+    scrollY: '400px',
     scrollCollapse: true,
-    scroller:       true,
-    stateSave:      false,
-    processing:     true,
-    paging:         false,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
 });
 
 dataTableHelpers.initializeSkipInstanceButton("#table");
@@ -365,7 +366,7 @@ dataTableHelpers.initializeDeleteButton("#table");
 
 // Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
 let presetFilters = {
-    ready: function() {
+    ready: function () {
         for (let key in presetFilters) {
             if (presetFilters[key] === false) {
                 return false;
@@ -409,33 +410,33 @@ $(elementCategorySelectSelector).select2({
 });
 
 // Attach event listener to category select2 for select and unselect events to update browser url, without reloading page.
-let rebuildUrl = function() {
+let rebuildUrl = function () {
     let params = $(elementCategorySelectSelector).val().map((category) => 'categories[]=' + category);
-    window.history.pushState('' , '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
 }
 $(elementCategorySelectSelector).on('select2:select', rebuildUrl);
 $(elementCategorySelectSelector).on('select2:unselect', rebuildUrl);
 
 // Append preset categories, if any
-categories.forEach(function(category) {
+categories.forEach(function (category) {
     presetFilters[category] = false;
 
     $.ajax({
-        url:  '/api/assets/category/' + category,
+        url: '/api/assets/category/' + category,
         data: {},
-        success: function(data) {
+        success: function (data) {
             $(elementCategorySelectSelector)
-            .append(new Option(data.full_name, data.id, true, true))
-            .trigger('change')
-            .trigger({
-                type: 'select2:select',
-                params: {
-                    data: {
-                        id: data.id,
-                        name: data.full_name,
+                .append(new Option(data.full_name, data.id, true, true))
+                .trigger('change')
+                .trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: {
+                            id: data.id,
+                            name: data.full_name,
+                        }
                     }
-                }
-            });
+                });
 
             presetFilters[category] = true;
 
@@ -446,4 +447,44 @@ categories.forEach(function(category) {
             }
         }
     });
+});
+
+// Initialize category tree view
+$('#category_tree').jstree({
+    core: {
+        data: function (obj, callback) {
+            fetch('/api/assets/categories?withInactive=1')
+                .then(response => response.json())
+                .then(data => {
+                    let categories = data.map(category =>
+                        ({
+                            id: category.id,
+                            parent: category.parent_id || '#',
+                            text: category.name,
+                            full_name: category.full_name,
+                        })
+                    );
+                    callback.call(this, categories);
+                })
+		}
+    }
+})
+.on('activate_node.jstree', function (_event, data) {
+    let categorySource = data.node.original;
+
+    // Abort if item is already added to select
+    if ($(elementCategorySelectSelector).val().includes(categorySource.id.toString())) {
+        return;
+    }
+
+    // Append clicked category to select
+    $(elementCategorySelectSelector)
+        .append(new Option(categorySource.full_name, categorySource.id, true, true))
+        .trigger({
+            type: 'select2:select',
+            params: {
+                data: categorySource
+            }
+        })
+        .trigger('change');
 });

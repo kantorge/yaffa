@@ -23,7 +23,7 @@ class CategoryApiController extends Controller
          * @middlewares('api', 'auth:sanctum')
          */
         $query = $request->get('q');
-        if ($query) {
+        if ($query && $query !== '*') {
             $categories = Auth::user()
                 ->categories()
                 ->when($request->missing('withInactive'), function ($query) {
@@ -35,6 +35,20 @@ class CategoryApiController extends Controller
                 })
                 ->sortBy('full_name')
                 ->take(10)
+                ->map(function ($category) {
+                    $category->text = $category->full_name;
+
+                    return $category->only(['id', 'text']);
+                })
+                ->values();
+        } elseif ($query === '*') {
+            $categories = Auth::user()
+                ->categories()
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->active();
+                })
+                ->get()
+                ->sortBy('full_name')
                 ->map(function ($category) {
                     $category->text = $category->full_name;
 
@@ -91,6 +105,26 @@ class CategoryApiController extends Controller
             })
             ->values();
         }
+
+        return response()
+            ->json(
+                $categories,
+                Response::HTTP_OK
+            );
+    }
+
+    public function getFullList(Request $request)
+    {
+        /**
+         * @get('/api/assets/categories')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $categories = Auth::user()
+            ->categories()
+            ->when($request->missing('withInactive'), function ($query) {
+                $query->active();
+            })
+            ->get();
 
         return response()
             ->json(

@@ -37,6 +37,7 @@
         "datatables.net-bs": "^1.12.1",
         "jquery-csv": "^1.0.21",
         "json-rules-engine": "^6.1.2",
+        "jstree": "^3.3.12",
         "mathjs": "^9.5.2",
         "overlayscrollbars": "^1.13.3",
         "pluralize": "^8.0.0",

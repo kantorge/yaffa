@@ -14,6 +14,7 @@ Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
+Route::get('/assets/categories', 'App\Http\Controllers\API\CategoryApiController@getFullList');
 Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
 
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
