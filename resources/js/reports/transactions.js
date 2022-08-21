@@ -7,6 +7,12 @@ import { DateRangePicker } from 'vanillajs-datepicker';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
 
+// Define selector constants
+const elementAccountSelector = '#select_account';
+const elementCategorySelectSelector = '#select_category';
+const elementPayeeSelector = '#select_payee';
+const elementTagSelector = '#select_tag';
+
 // Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
 let presetFilters = {
     ready: function() {
@@ -283,7 +289,7 @@ $(".clear-select").on('click', function() {
 })
 
 // Account filter select2 functionality
-$('#select_account').select2({
+$(elementAccountSelector).select2({
     multiple: true,
     ajax: {
         url: '/api/assets/account',
@@ -302,7 +308,6 @@ $('#select_account').select2({
         },
         cache: true
     },
-    selectOnClose: true,
     placeholder: "Select account",
     allowClear: true
 });
@@ -340,7 +345,7 @@ if (filters.accounts) {
 }
 
 // Payee select2 functionality
-$('#select_payee').select2({
+$(elementPayeeSelector).select2({
     multiple: true,
     ajax: {
         url: '/api/assets/payee',
@@ -397,7 +402,7 @@ if (filters.payees) {
 }
 
 // Category select2 functionality
-$('#select_category').select2({
+$(elementCategorySelectSelector).select2({
     multiple: true,
     ajax: {
         url: '/api/assets/category',
@@ -454,7 +459,7 @@ if (filters.categories) {
 }
 
 // Tag select2 functionality
-$('#select_tag').select2({
+$(elementTagSelector).select2({
     multiple: true,
     ajax: {
         url:  '/api/assets/tag',
@@ -507,6 +512,38 @@ if (filters.tags) {
         });
     });
 }
+
+// Attach event listener to all select2 elements for select and unselect events to update browser url, without reloading page.
+let rebuildUrl = function () {
+    let params = [];
+
+    // Accounts
+    const accounts = $(elementAccountSelector).val().map((item) => 'accounts[]=' + item);
+    params.push(...accounts);
+
+    // Categories
+    const categories = $(elementCategorySelectSelector).val().map((item) => 'categories[]=' + item);
+    params.push(...categories);
+
+    // Payees
+    const payees = $(elementPayeeSelector).val().map((item) => 'payees[]=' + item);
+    params.push(...payees);
+
+    // Tags
+    const tags = $(elementTagSelector).val().map((item) => 'tags[]=' + item);
+    params.push(...tags);
+
+    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+}
+$(elementAccountSelector).on('select2:select', rebuildUrl);
+$(elementAccountSelector).on('select2:unselect', rebuildUrl);
+$(elementCategorySelectSelector).on('select2:select', rebuildUrl);
+$(elementCategorySelectSelector).on('select2:unselect', rebuildUrl);
+$(elementPayeeSelector).on('select2:select', rebuildUrl);
+$(elementPayeeSelector).on('select2:unselect', rebuildUrl);
+$(elementTagSelector).on('select2:select', rebuildUrl);
+$(elementTagSelector).on('select2:unselect', rebuildUrl);
+
 
 import { createApp } from 'vue'
 
