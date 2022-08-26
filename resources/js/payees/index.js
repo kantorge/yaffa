@@ -1,5 +1,4 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net-bs');
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 // Loop payees and prepare data for datatable
@@ -16,7 +15,7 @@ window.payees = window.payees.map(function(payee) {
     return payee;
 });
 
-$('#table').DataTable({
+window.table = $('#table').DataTable({
     data: payees,
     columns: [
         {
@@ -158,4 +157,9 @@ $("#table").on("click", ".data-delete", function() {
     let form = document.getElementById('form-delete');
     form.action = route('account-entity.destroy', {type: 'payee', account_entity: this.dataset.id});
     form.submit();
+});
+
+// Listeners for button filter(s)
+$('input[name=active]').on("change", function() {
+    table.column(2).search(this.value).draw();
 });

@@ -1,5 +1,4 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net-bs');
 
 import Datepicker from 'vanillajs-datepicker/Datepicker';
 

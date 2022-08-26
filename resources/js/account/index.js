@@ -1,8 +1,13 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
-import * as dataTableHelpers from './../components/dataTableHelper';
+require('datatables.net-bs');
+import {
+    booleanToTableIcon,
+    genericDataTablesActionButton,
+    // initializeDeleteButtonListener
+} from './../components/dataTableHelper';
 
-$('#table').DataTable({
+const dataTableSelector = '#table';
+
+window.table = $(dataTableSelector).DataTable({
     data: accounts,
     columns: [
         {
@@ -17,7 +22,7 @@ $('#table').DataTable({
             data: "active",
             title: "Active",
             render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
+                return booleanToTableIcon(data, type);
             },
             className: "text-center activeIcon",
         },
@@ -41,12 +46,14 @@ $('#table').DataTable({
             title: "Actions",
             render: function (data) {
                 return  '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
+                        genericDataTablesActionButton(data, 'delete');
             },
             orderable: false
         }
     ],
-    order: [[ 1, 'asc' ]],
+    order: [
+        [ 1, 'asc' ]
+    ],
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
@@ -73,7 +80,19 @@ $('#table').DataTable({
                     accounts.filter(account => account.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
-                    alert('Error changing account active state');
+                    // Emit a custom event to global scope about the problem
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'danger',
+                                message: 'Error while changing account active state',
+                                title: null,
+                                icon: null,
+                                dismissable: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
                 },
                 complete: function(_data) {
                     // Re-render row
@@ -84,7 +103,8 @@ $('#table').DataTable({
     }
 });
 
-$("#table").on("click", ".data-delete", function() {
+// TODO: can the type parameter be incorporated into the initializeDeleteButtonListener function?
+$(dataTableSelector).on("click", ".data-delete", function() {
     if (!confirm('Are you sure to want to delete this item?')) {
         return;
     }
@@ -92,4 +112,9 @@ $("#table").on("click", ".data-delete", function() {
     let form = document.getElementById('form-delete');
     form.action = route('account-entity.destroy', {type: 'account', account_entity: this.dataset.id});
     form.submit();
+});
+
+// Listeners for button filter(s)
+$('input[name=active]').on("change", function() {
+    table.column(2).search(this.value).draw();
 });

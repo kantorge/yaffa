@@ -1,4 +1,3 @@
-require('datatables.net');
 require('datatables.net-bs');
 
 import * as dataTableHelpers from './../components/dataTableHelper'

@@ -3,7 +3,6 @@
  * The array of objects is then run throug a rule engine, to create a list of possible transactions.
  */
 
-import 'datatables.net';
 import 'datatables.net-bs';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'

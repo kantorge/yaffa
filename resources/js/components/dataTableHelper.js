@@ -23,6 +23,37 @@ export function dataTablesActionButton(id, action, transactionType) {
     return functions[action](transactionType);
 }
 
+export function genericDataTablesActionButton(id, action, route) {
+    var functions = {
+        delete: function(id) {
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+        },
+        edit: function(id, route) {
+            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+        },
+    }
+
+    return functions[action](id, route);
+}
+
+export function initializeDeleteButtonListener(tableSelector, route) {
+    // Generate click listener for the table element provided
+    $(tableSelector).on("click", ".data-delete", function () {
+        // Confirm the action with the user
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        // Get the form placed in Blade component
+        let form = document.getElementById('form-delete');
+
+        // Adjust form action and submit
+        // Ziggy route helper is expected to exist at global scope
+        form.action = window.route(route, this.dataset.id);
+        form.submit();
+    });
+}
+
 export function tagIcon(tags, type) {
     if (!tags || tags.length === 0) {
         return '';

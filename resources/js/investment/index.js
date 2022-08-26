@@ -1,8 +1,9 @@
-require('datatables.net');
 require('datatables.net-bs');
 import * as dataTableHelpers from './../components/dataTableHelper';
 
-$('#table').DataTable({
+const dataTableSelector = '#table';
+
+window.table = $(dataTableSelector).DataTable({
     data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
     columns: [
         {
@@ -93,12 +94,9 @@ $('#table').DataTable({
     }
 });
 
-$("#table").on("click", ".data-delete", function () {
-    if (!confirm('Are you sure to want to delete this item?')) {
-        return;
-    }
+dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'investment.destroy');
 
-    let form = document.getElementById('form-delete');
-    form.action = route('investment.destroy', { investment: this.dataset.id });
-    form.submit();
+// Listeners for button filter(s)
+$('input[name=active]').on("change", function() {
+    table.column(2).search(this.value).draw();
 });

@@ -1,9 +1,15 @@
-require('datatables.net');
 require('datatables.net-bs');
+import {
+    booleanToTableIcon,
+    genericDataTablesActionButton,
+    initializeDeleteButtonListener
+} from './../components/dataTableHelper';
+
+const dataTableSelector = '#table';
 
 window.baseCurrency = window.baseCurrency || {};
 
-$('#table').DataTable({
+$(dataTableSelector).DataTable({
     data: currencies,
     columns: [
         {
@@ -43,12 +49,7 @@ $('#table').DataTable({
             data: "auto_update",
             title: "Auto update",
             render: function (data, type) {
-                if (type == 'filter') {
-                    return (data ? 'Yes' : 'No');
-                }
-                return (data
-                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                    : '<i class="fa fa-square text-danger" title="No"></i>');
+                return booleanToTableIcon(data, type);
             },
             className: "text-center",
         },
@@ -60,13 +61,12 @@ $('#table').DataTable({
             data: "id",
             title: "Actions",
             render: function (data, _type, row) {
-                return '' +
-                    '<a href="' + route('currencies.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
                         ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
-                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                        '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
+                          genericDataTablesActionButton(data, 'delete') +
+                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
                         : '');
             },
             orderable: false
@@ -75,12 +75,4 @@ $('#table').DataTable({
     order: [[1, 'asc']]
 });
 
-$("#table").on("click", ".data-delete", function() {
-    if (!confirm('Are you sure to want to delete this item?')) {
-        return;
-    }
-
-    let form = document.getElementById('form-delete');
-    form.action = route('currency.destroy', {investment: this.dataset.id});
-    form.submit();
-});
+initializeDeleteButtonListener(dataTableSelector, 'currencies.destroy');

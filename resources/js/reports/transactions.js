@@ -1,5 +1,4 @@
 // Import external libraries
-import 'datatables.net';
 import 'datatables.net-bs';
 import 'select2';
 import { DateRangePicker } from 'vanillajs-datepicker';

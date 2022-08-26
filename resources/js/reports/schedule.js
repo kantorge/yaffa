@@ -1,5 +1,4 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net-bs');
 import { RRule } from 'rrule';
 import * as dataTableHelpers from '../components/dataTableHelper';
 
@@ -231,6 +230,7 @@ window.table = $('#table').DataTable({
 dataTableHelpers.initializeSkipInstanceButton('#table');
 dataTableHelpers.initializeDeleteButton('#table');
 
+// Listeners for button filters
 $('input[name=schedule]').on("change", function() {
     table.column(3).search(this.value).draw();
 });

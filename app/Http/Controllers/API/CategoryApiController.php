@@ -147,4 +147,23 @@ class CategoryApiController extends Controller
                 Response::HTTP_OK
             );
     }
+
+    public function updateActive(Category $category, $active)
+    {
+        /**
+         * @put('/assets/category/{category}/active/{active}')
+         * @name('api.category.updateActive')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $this->authorize('update', $category);
+
+        $category->active = $active;
+        $category->save();
+
+        return response()
+            ->json(
+                $category,
+                Response::HTTP_OK
+            );
+    }
 }

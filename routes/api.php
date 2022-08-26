@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AccountApiController;
+use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,7 @@ Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Co
 
 Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
 Route::get('/assets/categories', 'App\Http\Controllers\API\CategoryApiController@getFullList');
+Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])->name('api.category.updateActive');
 Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
 
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
