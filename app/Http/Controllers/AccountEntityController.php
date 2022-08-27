@@ -89,119 +89,124 @@ class AccountEntityController extends Controller
                 payees.category_id
 
             FROM (
-
                 select
                     `account_entities` .*,
                     (
-                    select
-                        count(*)
-                    from
-                        `transaction_details_standard`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and exists (
                         select
-                            *
+                            count(*)
+                        from
+                            `transaction_details_standard`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and exists (
+                            select
+                                *
+                            from
+                                `transactions`
+                            where
+                                `transaction_details_standard`.`id` = `transactions`.`config_id`
+                                and `transactions`.`config_type` = 'transaction_detail_standard'
+                                and `schedule` = 0
+                                and `budget` = 0)
+                    ) as `transactions_from_count`,
+                    (
+                        select
+                            count(*)
+                        from
+                            `transaction_details_standard`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and exists (
+                            select
+                                *
+                            from
+                                `transactions`
+                            where
+                                `transaction_details_standard`.`id` = `transactions`.`config_id`
+                                and `transactions`.`config_type` = 'transaction_detail_standard'
+                                and `schedule` = 0
+                                and `budget` = 0)
+                    ) as `transactions_to_count`,
+                    (
+                        select
+                            min(`transactions`.`date`)
                         from
                             `transactions`
-                        where
+                        inner join `transaction_details_standard` on
                             `transaction_details_standard`.`id` = `transactions`.`config_id`
-                            and `transactions`.`config_type` = 'transaction_detail_standard'
-                            and `schedule` = 0
-                            and `budget` = 0)) as `transactions_from_count`,
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_from_min_date`,
                     (
-                    select
-                        count(*)
-                    from
-                        `transaction_details_standard`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and exists (
                         select
-                            *
+                            min(`transactions`.`date`)
                         from
                             `transactions`
-                        where
+                        inner join `transaction_details_standard` on
                             `transaction_details_standard`.`id` = `transactions`.`config_id`
-                            and `transactions`.`config_type` = 'transaction_detail_standard'
-                            and `schedule` = 0
-                            and `budget` = 0)) as `transactions_to_count`,
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_to_min_date`,
                     (
-                    select
-                        min(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_from_min_date`,
+                        select
+                            max(`transactions`.`date`)
+                        from
+                            `transactions`
+                        inner join `transaction_details_standard` on
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_from_max_date`,
                     (
-                    select
-                        min(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_to_min_date`,
-                    (
-                    select
-                        max(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_from_max_date`,
-                    (
-                    select
-                        max(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_to_max_date`
+                        select
+                            max(`transactions`.`date`)
+                        from
+                            `transactions`
+                        inner join `transaction_details_standard` on
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_to_max_date`
                     from
                         `account_entities`
                     where
