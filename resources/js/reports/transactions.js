@@ -467,6 +467,7 @@ $(elementTagSelector).select2({
         data: function (params) {
             return {
                 q: params.term,
+                withInactive: true,
             };
         },
         processResults: function (data) {

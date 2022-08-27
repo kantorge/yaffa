@@ -23,7 +23,9 @@ class TagApiController extends Controller
          */
         $tags = Auth::user()
             ->tags()
-            ->active()
+            ->when($request->missing('withInactive'), function ($query) {
+                $query->active();
+            })
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
                 $query->where('name', 'LIKE', '%'.$request->get('q').'%');
