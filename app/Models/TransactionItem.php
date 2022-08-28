@@ -36,6 +36,11 @@ class TransactionItem extends Model
         'comment',
     ];
 
+    public function transaction()
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
