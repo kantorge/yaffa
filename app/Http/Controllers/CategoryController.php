@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -33,6 +34,30 @@ class CategoryController extends Controller
         $categories = Auth::user()
             ->categories()
             ->with(['parent'])
+            // Also pass the number of associated standard transactions
+            ->withCount([
+                'transaction as transactions_count' => function (Builder $query) {
+                    $query->select(DB::raw('COUNT(distinct transactions.id)'))
+                        ->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
+                }
+            ])
+            // TODO: how should this be solved using withMin?
+            ->withCount([
+                'transaction as transactions_min_date' => function (Builder $query) {
+                    $query->select(DB::raw('MIN(transactions.date)'))
+                        ->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
+                }
+            ])
+            // TODO: how should this be solved using withMax?
+            ->withCount([
+                'transaction as transactions_max_date' => function (Builder $query) {
+                    $query->select(DB::raw('MAX(transactions.date)'))
+                        ->where('transactions.schedule', false)
+                        ->where('transactions.budget', false);
+                }
+            ])
             ->get();
 
         // Pass data for DataTables

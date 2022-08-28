@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -69,5 +71,15 @@ class Category extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transactionItem()
+    {
+        return $this->hasMany(TransactionItem::class);
+    }
+
+    public function transaction()
+    {
+        return $this->hasManyThrough(Transaction::class, TransactionItem::class, 'category_id', 'id', 'id', 'transaction_id');
     }
 }

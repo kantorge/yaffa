@@ -7,8 +7,26 @@ import {
 
 const dataTableSelector = '#table';
 
+// Loop categories and prepare data for datatable
+window.categories = window.categories.map(function(category) {
+    // Parse first date if it exists
+    if (category.transactions_min_date) {
+        category.transactions_min_date = new Date(Date.parse(category.transactions_min_date));
+    }
+    // Parse last date if it exists
+    if (category.transactions_max_date) {
+        category.transactions_max_date = new Date(Date.parse(category.transactions_max_date));
+    }
+
+    // Adjust parent name
+    category.parent = category.parent || { id: undefined, name: 'Not set' };
+
+    return category;
+});
+
+
 window.table = $(dataTableSelector).DataTable({
-    data: categories.map(c => { c.parent = c.parent || { name: '' }; return c; }),
+    data: window.categories,
     columns: [
         {
             data: "id",
@@ -31,6 +49,41 @@ window.table = $(dataTableSelector).DataTable({
             className: "text-center activeIcon",
         },
         {
+            // Display count of associated transactions
+            data: "transactions_count",
+            title: "Transactions",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data > 0 ? data : 'Never used');
+                }
+                return data;
+            }
+        },
+        {
+            // Display first transaction date
+            data: "transactions_min_date",
+            title: "First transaction",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                }
+
+                return (data ? data.toISOString() : null);
+            }
+        },
+        {
+            // Display last transaction date
+            data: "transactions_max_date",
+            title: "Last transaction",
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                }
+
+                return (data ? data.toISOString() : null);
+            }
+        },
+        {
             data: "id",
             title: "Actions",
             render: function (data) {
@@ -44,6 +97,20 @@ window.table = $(dataTableSelector).DataTable({
     order: [
         [1, 'asc']
     ],
+    createdRow: function(row, data) {
+        if (typeof data.parent.id === 'undefined') {
+            $('td:eq(2)', row).addClass("text-muted text-italic");
+        }
+        if (data.transactions_count === 0) {
+            $('td:eq(4)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_min_date) {
+            $('td:eq(5)', row).addClass("text-muted text-italic");
+        }
+        if (!data.transactions_max_date) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
+        }
+    },
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );

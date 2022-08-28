@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,11 +35,6 @@ class TransactionItem extends Model
         'amount',
         'comment',
     ];
-
-    public function transaction()
-    {
-        return $this->belongsTo(Transaction::class);
-    }
 
     public function category()
     {
