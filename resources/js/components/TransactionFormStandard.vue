@@ -58,6 +58,7 @@
                                                 type="button"
                                                 value="transfer"
                                                 @click="changeTransactionType"
+                                                :disabled="form.budget"
                                             >
                                                 Transfer
                                             </button>
