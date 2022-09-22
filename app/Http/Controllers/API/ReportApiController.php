@@ -43,6 +43,7 @@ class ReportApiController extends Controller
          * @get('/api/budgetchart')
          * @middlewares('api', 'auth:sanctum')
          */
+
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
         $periodFormat = $byYears ? 'Y-01-01' : 'Y-m-01';
@@ -53,7 +54,7 @@ class ReportApiController extends Controller
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
-        $allRates = $this->allCurrencyRatesByMonth(true, true);
+        $allRates = $this->allCurrencyRatesByMonth(true, true)->sortByDesc('date_from');
 
         // Get all standard transactions with related categories
         $standardTransactions = TransactionItem::with([
@@ -76,7 +77,7 @@ class ReportApiController extends Controller
         })
         ->get();
 
-        // Group standard transactions by selected perio, and get all relevant details
+        // Group standard transactions by selected period, and get all relevant details
         $standardCompact = [];
         $standardTransactions->each(function ($item) use (&$standardCompact, $periodFormat) {
             $period = $item->transaction->date->format($periodFormat);
@@ -98,9 +99,8 @@ class ReportApiController extends Controller
                 }
 
                 $rate = $allRates
-                    ->where('month', $period)
                     ->where('from_id', $currency)
-                    ->first();
+                    ->firstWhere('date_from', '<=', $period);
 
                 $dataByPeriod[$period]['actual'] += array_sum($items) * ($rate ? $rate->rate : 1);
             }
@@ -171,9 +171,8 @@ class ReportApiController extends Controller
                 }
 
                 $rate = $allRates
-                    ->where('month', $period)
                     ->where('from_id', $currency)
-                    ->first();
+                    ->firstWhere('date_from', '<=', $period);
 
                 $dataByPeriod[$period]['budget'] += array_sum($items) * ($rate ? $rate->rate : 1);
             }
@@ -197,92 +196,7 @@ class ReportApiController extends Controller
         return response()->json($result, Response::HTTP_OK);
     }
 
-    // TODO: unify with TransactionApiController::getScheduledItems(), or utilize it
-    public function scheduledTransactions(Request $request)
-    {
-        /**
-         * @get('/api/scheduled_transactions')
-         * @middlewares('api', 'auth:sanctum')
-         */
-        // Return empty response if categories are not set or empty
-        if (! $request->has('categories') || ! $request->input('categories')) {
-            return response()->json([], Response::HTTP_OK);
-        }
-
-        // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        // Get all tags
-        $this->allTags = Tag::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        // Get all categories
-        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
-
-        // Get list of requested categories
-        // Ensure, that child categories are loaded for all parents
-        $categories = $this->getChildCategories($request);
-
-        // Get all standard transactions
-        $standardTransactions = Transaction::with(
-            [
-                'config',
-                'config.accountFrom',
-                'config.accountTo',
-                'transactionType',
-                'transactionSchedule',
-                'transactionItems',
-                'transactionItems.tags',
-            ]
-        )
-        ->where('user_id', Auth::user()->id)
-        ->where(function ($query) {
-            return $query->where('schedule', 1)
-                ->orWhere('budget', 1);
-        })
-        ->where(
-            'config_type',
-            '=',
-            'transaction_detail_standard'
-        )
-        ->whereHas('transactionItems', function ($query) use ($categories) {
-            $query->whereIn('category_id', $categories->pluck('id'));
-        })
-        ->get();
-
-        // Prepare data for datatables
-        $transactions = $standardTransactions
-            ->map(function ($transaction) {
-                $itemTags = [];
-                $itemCategories = [];
-                foreach ($transaction->transactionItems as $item) {
-                    if (isset($item['tags'])) {
-                        foreach ($item['tags'] as $tag) {
-                            $itemTags[$tag['id']] = $this->allTags[$tag['id']];
-                        }
-                    }
-                    if (isset($item['category_id'])) {
-                        $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
-                    }
-                }
-
-                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id] ?? null;
-                $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id] ?? null;
-                $transaction->amount_from = $transaction->config->amount_from;
-                $transaction->amount_to = $transaction->config->amount_to;
-                $transaction->tags = array_values($itemTags);
-                $transaction->categories = array_values($itemCategories);
-
-                return $transaction;
-            });
-
-        // Return fetched and prepared data
-        return response()->json($transactions, Response::HTTP_OK);
-    }
-
+    // TODO: unify with TransactionApiController
     private function getChildCategories(Request $request)
     {
         $categories = collect();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
+use App\Http\Traits\CurrencyTrait;
 use App\Models\AccountEntity;
 use App\Models\Tag;
 use App\Models\Transaction;
@@ -12,11 +13,15 @@ use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
 {
+
+    use CurrencyTrait;
+
     private $allAccounts;
 
     private $allAccountCurrencies;
@@ -24,6 +29,8 @@ class TransactionApiController extends Controller
     private $allTags;
 
     private $allCategories;
+
+    private $baseCurrency;
 
     public function __construct()
     {
@@ -65,12 +72,20 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function getScheduledItems(string $type)
+    public function getScheduledItems(string $type, Request $request)
     {
         /**
          * @get('/api/transactions/get_scheduled_items/{type}')
          * @middlewares('api', 'auth:sanctum')
          */
+
+        // Return empty response if categories are required, but not set or empty
+        if($request->has('category_required')) {
+            if (! $request->has('categories') || ! $request->input('categories')) {
+                return response()->json([], Response::HTTP_OK);
+            }
+        }
+
         // Get all accounts and payees so their name can be reused
         $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
             ->pluck('name', 'id')
@@ -90,6 +105,13 @@ class TransactionApiController extends Controller
             ])
             ->get();
 
+        // Load the base currency for the user
+        $this->baseCurrency = $this->getBaseCurrency();
+
+        // Get list of requested categories
+        // Ensure, that child categories are loaded for all parents
+        $categories = $this->getChildCategories($request);
+
         // Get all standard transactions
         $standardTransactions = Transaction::with(
             [
@@ -107,25 +129,35 @@ class TransactionApiController extends Controller
             '=',
             'transaction_detail_standard'
         )
+        ->when($categories->count() > 0, function($query) use ($categories) {
+            $query->whereHas('transactionItems', function ($query) use ($categories) {
+                $query->whereIn('category_id', $categories->pluck('id'));
+            });
+        })
         ->get();
 
-        // Get all investment transactions
-        $investmentTransactions = Transaction::with(
-            [
-                'config',
-                'config.investment',
-                'transactionType',
-                'transactionSchedule',
-            ]
-        )
-        ->where('user_id', Auth::user()->id)
-        ->byScheduleType($type)
-        ->where(
-            'config_type',
-            '=',
-            'transaction_detail_investment'
-        )
-        ->get();
+        // Return empty collection if categories are required
+        if ($request->has('category_required')) {
+            $investmentTransactions = new Collection();
+        } else {
+            // Get all investment transactions
+            $investmentTransactions = Transaction::with(
+                [
+                    'config',
+                    'config.investment',
+                    'transactionType',
+                    'transactionSchedule',
+                ]
+            )
+            ->where('user_id', Auth::user()->id)
+            ->byScheduleType($type)
+            ->where(
+                'config_type',
+                '=',
+                'transaction_detail_investment'
+            )
+            ->get();
+        }
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
@@ -266,7 +298,7 @@ class TransactionApiController extends Controller
         }
 
         return [
-            'currency' => $currency?->config->currency,
+            'currency' => $currency?->config->currency ?? $this->baseCurrency,
         ];
     }
 
@@ -592,5 +624,33 @@ class TransactionApiController extends Controller
                 'transaction' => $transaction,
             ]
         );
+    }
+
+    private function getChildCategories(Request $request)
+    {
+        $categories = collect();
+
+        if ($request->missing('categories')) {
+            return $categories;
+        }
+
+        $requestedCategories = Auth::user()
+            ->categories()
+            ->whereIn('id', $request->get('categories'))
+            ->get();
+
+        $requestedCategories->each(function ($category) use (&$categories) {
+            if ($category->parent_id === null) {
+                $children = Auth::user()
+                    ->categories()
+                    ->where('parent_id', '=', $category->id)
+                    ->get();
+                $categories = $categories->merge($children);
+            }
+
+            $categories->push($category);
+        });
+
+        return $categories->unique('id');
     }
 }

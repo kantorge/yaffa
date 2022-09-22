@@ -31,10 +31,6 @@ td.dt-nowrap {
   font-style: italic;
 }
 
-.cell-no-break {
-  white-space: nowrap;
-}
-
 .reconcile {
   cursor: pointer;
 }

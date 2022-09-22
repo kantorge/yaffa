@@ -40,7 +40,7 @@ window.table = $('#table').DataTable({
             render: function (data) {
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
             },
-            className: "cell-no-break",
+            className: "dt-nowrap",
         },
         {
             data: "schedule_config.rule",
@@ -60,7 +60,7 @@ window.table = $('#table').DataTable({
 
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
             },
-            className: "cell-no-break",
+            className: "dt-nowrap",
         },
         {
             data: "schedule",
@@ -157,16 +157,21 @@ window.table = $('#table').DataTable({
         },
         {
             title: "Amount",
-            render: function (_data, _type, row) {
-                let prefix = '';
-                if (row.transaction_operator == 'minus') {
-                    prefix = '- ';
+            render: function (_data, type, row) {
+                if (type === 'display') {
+                    let prefix = '';
+                    if (row.transaction_operator == 'minus') {
+                        prefix = '- ';
+                    }
+                    if (row.transaction_operator == 'plus') {
+                        prefix = '+ ';
+                    }
+                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
                 }
-                if (row.transaction_operator == 'plus') {
-                    prefix = '+ ';
-                }
-                return prefix + numberRenderer(row.config.amount_to);
+
+                return row.config.amount_to;
             },
+            className: 'dt-nowrap',
         },
         {
             data: 'comment',

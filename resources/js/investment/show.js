@@ -100,7 +100,7 @@ window.table = $('#table').DataTable({
 
                 return data
             },
-            className: "cell-no-break",
+            className: "dt-nowrap",
         },
         {
             data: "transaction_type",

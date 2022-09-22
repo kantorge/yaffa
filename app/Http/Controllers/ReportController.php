@@ -30,6 +30,7 @@ class ReportController extends Controller
          * @name('reports.cashflow')
          * @middlewares('web', 'auth')
          */
+
         // Check if forecast is required
         $withForecast = $request->get('withForecast') ?? false;
 

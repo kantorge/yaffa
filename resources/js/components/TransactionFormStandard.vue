@@ -209,6 +209,14 @@
                                         <label for="transaction_amount_from" class="control-label">
                                             {{ ammountFromFieldLabel }}
                                             <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
+                                            <span v-if="form.budget && !ammountFromCurrencyLabel">
+                                                ({{ baseCurrency.suffix }})
+                                                <span
+                                                    class="fa fa-info-circle text-primary"
+                                                    title="Budget is calculated using your base currency, unless you define an account with an other currency."
+                                                    data-toggle="tooltip"
+                                                ></span>
+                                            </span>
                                         </label>
                                         <MathInput
                                             class="form-control"
@@ -466,6 +474,11 @@
                 return this.form.items
                     .map(item => Number(item.amount) || 0)
                     .reduce((amount, currentValue) => amount + currentValue, 0 );
+            },
+
+            // Provide the base currency from the global scope for template
+            baseCurrency() {
+                return window.baseCurrency;
             },
 
             remainingAmountToPayeeDefault() {
@@ -998,7 +1011,7 @@
     }
 
     // Initialize tooltips
-    // TODO: can this be part of Vue init?
+    // TODO: how to better support dynamic icons?
     $('[data-toggle="tooltip"]').tooltip();
 </script>
 

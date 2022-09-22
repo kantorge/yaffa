@@ -150,48 +150,51 @@ var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
 window.table = $('#table').DataTable({
     ajax: {
-        url: '/api/scheduled_transactions',
+        url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
         dataSrc: function (data) {
-            return data.map(function (transaction) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
-                if (transaction.transaction_schedule.next_date) {
-                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
+            var transactions = data.transactions || [];
+            return transactions.map(function (transaction) {
+                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                if (transaction.schedule_config.next_date) {
+                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
                 }
-                if (transaction.transaction_schedule.end_date) {
-                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                if (transaction.schedule_config.end_date) {
+                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
                 }
 
                 // Create rule
-                transaction.transaction_schedule.rule = new RRule({
-                    freq: RRule[transaction.transaction_schedule.frequency],
-                    interval: transaction.transaction_schedule.interval,
-                    dtstart: transaction.transaction_schedule.start_date,
-                    until: transaction.transaction_schedule.end_date,
+                transaction.schedule_config.rule = new RRule({
+                    freq: RRule[transaction.schedule_config.frequency],
+                    interval: transaction.schedule_config.interval,
+                    dtstart: transaction.schedule_config.start_date,
+                    until: transaction.schedule_config.end_date,
                 });
 
-                transaction.transaction_schedule.active = !!transaction.transaction_schedule.rule.after(new Date(), true);
+                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
 
                 return transaction;
             });
         },
         data: function () {
             return $.extend({}, {
-                'categories': $(elementCategorySelectSelector).val()
+                'categories': $(elementCategorySelectSelector).val(),
+                'category_required': 1,
             });
         },
         deferRender: true
     },
     columns: [
         {
-            data: "transaction_schedule.start_date",
+            data: "schedule_config.start_date",
             title: "Start date",
             render: function (data) {
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-            }
+            },
+            className: "dt-nowrap",
         },
         {
-            data: "transaction_schedule.rule",
+            data: "schedule_config.rule",
             title: "Schedule",
             render: function (data) {
                 // Return human readable format
@@ -199,7 +202,7 @@ window.table = $('#table').DataTable({
             }
         },
         {
-            data: "transaction_schedule.next_date",
+            data: "schedule_config.next_date",
             title: "Next date",
             render: function (data) {
                 if (!data) {
@@ -207,7 +210,8 @@ window.table = $('#table').DataTable({
                 }
 
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-            }
+            },
+            className: "dt-nowrap",
         },
         {
             data: "schedule",
@@ -226,7 +230,7 @@ window.table = $('#table').DataTable({
             className: "text-center",
         },
         {
-            data: "transaction_schedule.active",
+            data: "schedule_config.active",
             title: "Active",
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
@@ -234,13 +238,22 @@ window.table = $('#table').DataTable({
             className: "text-center",
         },
         {
-            data: "transaction_type.type",
+            data: "transaction_config_type",
             title: "Type",
+            render: function (data, type) {
+                if (type == 'filter') {
+                    return  data;
+                }
+                return (  data === 'standard'
+                        ? '<i class="fa fa-money text-primary" title="Standard"></i>'
+                        : '<i class="fa fa-line-chart text-primary" title="Investment"></i>');
+            },
+            className: "text-center",
         },
         {
             title: 'Payee',
             render: function (_data, _type, row) {
-                if (row.transaction_type.type === 'standard') {
+                if (row.transaction_config_type === 'standard') {
                     if (row.transaction_type.name === 'withdrawal' && row.config.account_to) {
                         return row.config.account_to.name;
                     }
@@ -255,7 +268,7 @@ window.table = $('#table').DataTable({
                         }
                     }
                 }
-                if (row.transaction_type.type === 'investment') {
+                if (row.transaction_config_type === 'investment') {
                     return row.investment_name;
                 }
 
@@ -266,7 +279,7 @@ window.table = $('#table').DataTable({
             title: "Category",
             render: function (_data, _type, row) {
                 //standard transaction
-                if (row.transaction_type.type === 'standard') {
+                if (row.transaction_config_type === 'standard') {
                     if (row.categories.length > 1) {
                         return 'Split transaction';
                     }
@@ -277,7 +290,7 @@ window.table = $('#table').DataTable({
                     return '';
                 }
                 //investment transaction
-                if (row.transaction_type.type === 'investment') {
+                if (row.transaction_config_type === 'investment') {
                     if (!row.quantity_operator) {
                         return row.transaction_type.name;
                     }
@@ -294,16 +307,21 @@ window.table = $('#table').DataTable({
         },
         {
             title: "Amount",
-            render: function (_data, _type, row) {
-                let prefix = '';
-                if (row.transaction_type.amount_operator == 'minus') {
-                    prefix = '- ';
+            render: function (_data, type, row) {
+                if (type === 'display') {
+                    let prefix = '';
+                    if (row.transaction_operator == 'minus') {
+                        prefix = '- ';
+                    }
+                    if (row.transaction_operator == 'plus') {
+                        prefix = '+ ';
+                    }
+                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
                 }
-                if (row.transaction_type.amount_operator == 'plus') {
-                    prefix = '+ ';
-                }
-                return prefix + numberRenderer(row.amount_to);
+
+                return row.config.amount_to;
             },
+            className: 'dt-nowrap',
         },
         {
             data: 'comment',
@@ -325,12 +343,12 @@ window.table = $('#table').DataTable({
             data: 'id',
             title: "Actions",
             render: function (data, _type, row) {
-                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_config_type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
                     dataTableHelpers.dataTablesActionButton(data, 'delete') +
                     (row.schedule
-                        ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                        ? '<a href="' + (row.transaction_config_type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
                         '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
                         : '');
             },
@@ -338,15 +356,18 @@ window.table = $('#table').DataTable({
         }
     ],
     createdRow: function (row, data) {
-        if (!data.transaction_schedule.next_date) {
+        if (!data.schedule_config.next_date) {
             return;
         }
 
-        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+        if (data.schedule_config.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('danger');
-        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+        } else if (data.schedule_config.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
             $(row).addClass('warning');
         }
+    },
+    initComplete: function (_settings, _json) {
+        $('[data-toggle="tooltip"]').tooltip();
     },
     order: [
         [0, "asc"]
