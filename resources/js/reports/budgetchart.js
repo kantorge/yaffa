@@ -433,7 +433,11 @@ $(elementCategorySelectSelector).select2({
 let rebuildUrl = function () {
     let params = $(elementCategorySelectSelector).val().map((category) => 'categories[]=' + category);
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+
+    // Finally, adjust reload button availability
+    elementRefreshButton.disabled = ($(elementCategorySelectSelector).val().length === 0);
 }
+
 $(elementCategorySelectSelector).on('select2:select', rebuildUrl);
 $(elementCategorySelectSelector).on('select2:unselect', rebuildUrl);
 
@@ -472,7 +476,7 @@ categories.forEach(function (category) {
 // Initialize category tree view
 $('#category_tree').jstree({
     core: {
-        data: function (obj, callback) {
+        data: function (_obj, callback) {
             fetch('/api/assets/categories?withInactive=1')
                 .then(response => response.json())
                 .then(data => {
@@ -480,14 +484,16 @@ $('#category_tree').jstree({
                         ({
                             id: category.id,
                             parent: category.parent_id || '#',
-                            text: category.name,
+                            text: (category.active ? category.name : '<span class="text-muted" title="Inactive">' + category.name + '</span>'),
                             full_name: category.full_name,
+                            icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
                         })
                     );
                     callback.call(this, categories);
                 })
 		}
-    }
+    },
+    plugins : [ "wholerow" ]
 })
 .on('activate_node.jstree', function (_event, data) {
     let categorySource = data.node.original;
@@ -508,3 +514,13 @@ $('#category_tree').jstree({
         })
         .trigger('change');
 });
+
+// Clear button function
+document.getElementById('clear').addEventListener('click', function() {
+    $(elementCategorySelectSelector).val(null).trigger("change");
+    reloadData();
+});
+
+// Finally, adjust Reload button availability
+// TODO: can this be unified with rebuildUrl function?
+elementRefreshButton.disabled = ($(elementCategorySelectSelector).val().length === 0);

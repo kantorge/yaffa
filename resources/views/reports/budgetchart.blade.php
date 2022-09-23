@@ -39,14 +39,19 @@
             <div class="col-xs-12">
                 <div class="box">
                     <div class="box-header">
-                        <h3>Select categories to display</h3>
-                        <p>Selecting parent category loads all related subcategories too.</p>
+                        <h3 class="box-title">
+                            Select categories to display
+                            <i class="fa fa-info-circle text-primary" title="Selecting a parent category loads all related subcategories too." data-toggle="tooltip"></i>
+                        </h3>
                     </div>
                     <div class="box-body">
                         <select id="category_id" class="form-control" style="width: 100%"></select>
                     </div>
                     <div class="box-footer">
-                        <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Change</button>
+                        <div class="box-tools pull-right">
+                            <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">Clear selection</button>
+                            <button name="reload" type="button" id="reload" class="btn btn-primary">Load data</button>
+                        </div>
                     </div>
                 </div>
             </div>
