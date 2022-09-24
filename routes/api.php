@@ -1,16 +1,17 @@
 <?php
 
-use App\Http\Controllers\API\AccountApiController;
+use App\Http\Controllers\API\AccountController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/assets/account', 'App\Http\Controllers\API\AccountApiController@getList');
-Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountApiController@getStandardList');
-Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
-Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
-Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountApiController@getAccountCurrency');
+Route::get('/assets/account', 'App\Http\Controllers\API\AccountController@getList');
+Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountController@getStandardList');
+Route::get('/assets/account/investment', [AccountController::class, 'getAccountListForInvestments']);
+Route::get('/assets/account/{accountEntity}', [AccountController::class, 'getItem']);
+Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountController@getAccountCurrency');
+Route::get('/account/balance/{accountEntity?}', [AccountController::class, 'getAccountBalance']);
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
 

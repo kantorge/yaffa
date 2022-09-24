@@ -16,7 +16,7 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [MainController::class, 'index'])->name('home');
+Route::view('/', 'dashboard')->name('home');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
 Route::resource('account-entity', AccountEntityController::class)->except(['show']);
@@ -25,8 +25,6 @@ Route::get(
     '/account/history/{account}/{withForecast?}',
     [MainController::class, 'account_details']
 )->name('account.history');
-
-Route::get('/account/summary/{withClosed?}', [MainController::class, 'index'])->name('account.summary');
 
 Route::resource('categories', CategoryController::class)->except(['show']);
 Route::resource('currencies', CurrencyController::class)->except(['show']);

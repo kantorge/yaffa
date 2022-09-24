@@ -63,10 +63,8 @@ window.todayInUTC = function () {
     return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
 }
 
-if (   window.location.pathname === '/account/summary'
-    || window.location.pathname === '/account/summary/withClosed'
-    || window.location.pathname === '/') {
-    require('./account/summary');
+if (window.location.pathname === '/') {
+    require('./dashboard');
 }
 
 if (window.location.pathname === '/account-group') {

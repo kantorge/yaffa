@@ -46,6 +46,7 @@
         "v-calendar": "^3.0.0-alpha.8",
         "vanillajs-datepicker": "^1.2.0",
         "vform": "^2.1.2",
-        "vue-loader": "^16.8.3"
+        "vue-loader": "^16.8.3",
+        "vue-skeletor": "^1.0.6"
     }
 }
