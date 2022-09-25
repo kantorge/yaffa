@@ -7,8 +7,6 @@ import {
 
 const dataTableSelector = '#table';
 
-window.baseCurrency = window.baseCurrency || {};
-
 $(dataTableSelector).DataTable({
     data: currencies,
     columns: [
@@ -26,11 +24,11 @@ $(dataTableSelector).DataTable({
         },
         {
             data: "num_digits",
-            title: "Number of decimal digits"
+            title: "Number of decimal digits displayed"
         },
         {
             data: "suffix",
-            title: "Suffix"
+            title: "Suffix displayed"
         },
         {
             data: "base",
@@ -54,8 +52,32 @@ $(dataTableSelector).DataTable({
             className: "text-center",
         },
         {
-            data: "latest_rate",
-            title: "Latest rate to base currency"
+            title: "Latest rate to base currency",
+            defaultContent: "",
+            render: function (_data, _type, row) {
+                if (row.base) {
+                    return;
+                }
+                if (!row.latest_rate) {
+                    return "Not available";
+                }
+                return "1 " + row.suffix + " = " + parseFloat(row.latest_rate).toLocalCurrency({iso_code: baseCurrency.iso_code, num_digits: 4}, false);
+            },
+            className: "dt-nowrap",
+        },
+        {
+            title: "Latest rate from base currency",
+            defaultContent: "",
+            render: function (_data, _type, row) {
+                if (row.base) {
+                    return;
+                }
+                if (!row.latest_rate) {
+                    return "Not available";
+                }
+                return "1 " + baseCurrency.iso_code + " = " + (1 / parseFloat(row.latest_rate)).toLocalCurrency({iso_code: row.iso_code, num_digits: 4}, false);
+            },
+            className: "dt-nowrap",
         },
         {
             data: "id",

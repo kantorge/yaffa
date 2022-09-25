@@ -35,8 +35,6 @@ class CurrencyController extends Controller
             ->currencies()
             ->get();
 
-        $baseCurrency = $this->getBaseCurrency();
-
         $currencies->map(function ($currency) {
             $currency['latest_rate'] = $currency->rate();
 
@@ -46,7 +44,6 @@ class CurrencyController extends Controller
         // Pass data for DataTables
         JavaScriptFacade::put([
             'currencies' => $currencies,
-            'baseCurrency' => $baseCurrency,
         ]);
 
         return view('currencies.index');
