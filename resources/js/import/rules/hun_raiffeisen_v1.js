@@ -98,10 +98,10 @@ let ruleCardPayment = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -110,10 +110,10 @@ let ruleCardPayment = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -168,6 +168,7 @@ let ruleOutgoingWireTransfer = new Rule({
                     'Elektronikus forint átutalás',
                     'Állandó átutalás',
                     'Csoportos beszedési megbízás',
+                    'Forint átutalás',
                 ]
             }
         ]
@@ -215,10 +216,10 @@ let ruleOutgoingWireTransfer = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -227,10 +228,10 @@ let ruleOutgoingWireTransfer = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -330,10 +331,11 @@ engine.addRule({
                     transactionField: 'config.amount_from',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '123,45 HUF'. We need the number as a positive number.
-                        let regex = new RegExp(/^(\d+,\d+) HUF$/);
+                        // TODO: HUF is hardcoded, while it'll be determined by account currency.
+                        let regex = new RegExp(/^((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -341,10 +343,11 @@ engine.addRule({
                     transactionField: 'config.amount_to',
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '123,45 HUF'. We need the number as a positive number.
-                        let regex = new RegExp(/^(\d+,\d+) HUF$/);
+                        // TODO: HUF is hardcoded, while it'll be determined by account currency.
+                        let regex = new RegExp(/^((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -392,8 +395,11 @@ let ruleCashWithdrawal = new Rule({
                     },
                     {
                         fact: 'Közlemény/3',
-                        operator: 'equal',
-                        value: 'Hitelkártya feltöltés'
+                        operator: 'in',
+                        value: [
+                            'Hitelkártya feltöltés',
+                            'Pay off credit card',
+                        ]
                     }
                 ]
             },
@@ -456,10 +462,10 @@ let ruleCashWithdrawal = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
@@ -468,10 +474,10 @@ let ruleCashWithdrawal = new Rule({
                     customFunction: function (fact, _transaction) {
                         // Amount is in format '-123,45 HUF'. We need the number as a positive number.
                         // TODO: HUF is hardcoded, while it'll be determined by account currency.
-                        let regex = new RegExp(/^-(\d+,\d+) HUF$/);
+                        let regex = new RegExp(/^-((\d+\s)*\d+,\d+) HUF$/);
                         let match = regex.exec(fact['Összeg']);
                         if (match) {
-                            return parseFloat(match[1].replace(/,/, '.'));
+                            return parseFloat(match[1].replace(/\s/g, '').replace(/,/, '.'));
                         }
                     }
                 },
