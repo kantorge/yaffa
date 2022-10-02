@@ -196,6 +196,95 @@ class ReportApiController extends Controller
         return response()->json($result, Response::HTTP_OK);
     }
 
+    /**
+     * Collect actual transactions for the given interval.
+     *
+     * @param int  $year
+     * @param int  $month
+     * @return \Illuminate\Http\Response
+     */
+    public function getCategoryWaterfallData(string $type, int $year, int $month = null)
+    {
+        /**
+         * @get('/api/budgetchart')
+         * @middlewares('api', 'auth:sanctum')
+         */
+
+        // Get monthly average currency rate for all currencies against base currency
+        $baseCurrency = $this->getBaseCurrency();
+        $allRates = $this->allCurrencyRatesByMonth(true, true)->sortByDesc('date_from');
+
+        // Get all standard transactions with related categories
+        $standardTransactions = TransactionItem::with([
+            'category',
+            'transaction',
+            'transaction.transactionType',
+            'transaction.config.accountFrom.config',
+            'transaction.config.accountTo.config',
+        ])
+        ->whereHas('transaction', function ($query) use($year, $month) {
+            $query->where('user_id', Auth::user()->id)
+                ->when(is_null($month), function($query) use ($year) {
+                return $query->whereRaw('YEAR(date) = ?', [$year]);
+            })
+            ->when($year && $month, function($query) use ($year, $month) {
+                return $query->whereRaw('YEAR(date) = ?', [$year])
+                            ->whereRaw('MONTH(date) = ?', [$month]);
+            })
+            ->byScheduleType('none')
+            ->where('config_type', 'transaction_detail_standard')
+            ->where(
+                'transaction_type_id',
+                '!=',
+                TransactionType::where('name', '=', 'transfer')->first()->id
+            );
+        })
+        ->get();
+
+        // TODO: add investment transaction results
+
+        // Summarize items, applying currency rate
+        $dataByCategory = [];
+
+        $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRates) {
+            // Determine the category group. This should be the top level category ideally.
+            $category = $item->category?->parent?->name ?? $item->category?->name ?? 'No category assigned';
+
+            // Ensure that we have an array element for the category
+            if (! array_key_exists($category, $dataByCategory)) {
+                $dataByCategory[$category] = 0;
+            }
+
+            // Get the currency and determine currency rate
+            $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
+            if ($currency_id !== $baseCurrency->id) {
+                $rate = $allRates
+                    ->where('from_id', $currency_id)
+                    ->firstWhere('date_from', '<=', $item->transaction->date);
+            } else {
+                $rate = null;
+            }
+
+            $dataByCategory[$category] += ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount * ($rate ? $rate->rate : 1);
+        });
+
+        $result = [];
+        foreach ($dataByCategory as $category => $value) {
+            $result[] = [
+                'category' => $category,
+                'value' => $value,
+            ];
+        }
+
+        // Return fetched and prepared data
+        return response()->json(
+            [
+                'chartData' => $result,
+            ],
+            Response::HTTP_OK
+        );
+    }
+
     // TODO: unify with TransactionApiController
     private function getChildCategories(Request $request)
     {

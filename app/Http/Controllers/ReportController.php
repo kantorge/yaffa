@@ -251,7 +251,6 @@ class ReportController extends Controller
 
         // Pass currency related data for amCharts
         JavaScriptFacade::put([
-            'currency' => $this->getBaseCurrency(),
             'categories' => $request->get('categories', []),
             'byYears' => $byYears,
         ]);

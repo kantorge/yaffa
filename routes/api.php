@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AccountController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\PayeeApiController;
+use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,9 +42,11 @@ Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 Route::get('/assets/tag/{tag}', 'App\Http\Controllers\API\TagApiController@getItem');
 
 Route::get('/budgetchart', 'App\Http\Controllers\API\ReportApiController@budgetChart');
+Route::get('/reports/waterfall/{type}/{year}/{month?}', [ReportApiController::class, 'getCategoryWaterfallData'])->where('type', 'budget|result|all');
 Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportApiController@scheduledTransactions');
 
-Route::get('/transactions', 'App\Http\Controllers\API\TransactionApiController@findTransactions');
+Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
+
 Route::get(
     '/transactions/get_scheduled_items/{type}',
     'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
@@ -56,3 +59,12 @@ Route::patch('/transactions/{transaction}/skip', [TransactionApiController::clas
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
+
+/*
+Route::post('/token', function (Request $request) {
+    $user = \App\Models\User::first();
+    $token = $user->createToken('API token');
+
+    return ['token' => $token->plainTextToken];
+});
+*/

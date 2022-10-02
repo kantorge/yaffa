@@ -120,32 +120,32 @@ export default {
 </script>
 
 <style>
-  .custom-calendar.vc-container {
-    border-radius: 0;
-    width: 100%;
-  }
-    .vc-header {
-      background-color: #f1f5f8;
-      padding: 10px 0;
+    .custom-calendar.vc-container {
+        border-radius: 0;
+        width: 100%;
     }
-    .vc-weeks {
-      padding: 0;
+    .custom-calendar .vc-header {
+        background-color: #f1f5f8;
+        padding: 10px 0;
     }
-    .vc-weekday {
-      background-color: #f8fafc;
-      border-bottom: 1px solid #eaeaea;
-      border-top: 1px solid #eaeaea;
-      padding: 5px 0;
+    .custom-calendar .vc-weeks {
+        padding: 0;
     }
-    .vc-day {
-      border: 1px solid #b8c2cc;
-      padding: 0 5px 3px 5px;
-      text-align: left;
-      height: 60px;
-      min-width: 45px;
-      background-color: white;
+    .custom-calendar .vc-weekday {
+        background-color: #f8fafc;
+        border-bottom: 1px solid #eaeaea;
+        border-top: 1px solid #eaeaea;
+        padding: 5px 0;
     }
-    .vc-day-dots {
-      margin-bottom: 5px;
+    .custom-calendar .vc-day {
+        border: 1px solid #b8c2cc;
+        padding: 0 5px 3px 5px;
+        text-align: left;
+        height: 60px;
+        min-width: 45px;
+        background-color: white;
+    }
+    .custom-calendar .vc-day-dots {
+        margin-bottom: 5px;
     }
 </style>

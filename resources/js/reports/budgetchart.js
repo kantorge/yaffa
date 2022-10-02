@@ -56,9 +56,9 @@ window.chart = am4core.create("chartdiv", am4charts.XYChart);
 chart.numberFormatter.intlLocales = "hu-HU";
 chart.numberFormatter.numberFormat = {
     style: 'currency',
-    currency: currency.iso_code,
-    minimumFractionDigits: currency.num_digits,
-    maximumFractionDigits: currency.num_digits
+    currency: baseCurrency.iso_code,
+    minimumFractionDigits: baseCurrency.num_digits,
+    maximumFractionDigits: baseCurrency.num_digits
 };
 
 var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
