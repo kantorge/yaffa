@@ -70,7 +70,7 @@ var seriesActual = chart.series.push(new am4charts.ColumnSeries());
 seriesActual.dataFields.valueY = "actual";
 seriesActual.dataFields.dateX = "date";
 seriesActual.name = "Actual";
-seriesActual.tooltipText = "{dateX}: [bold]{valueY}[/]";
+seriesActual.tooltipText = "[bold]Actual:[/] {valueY}";
 
 var seriesBudget = chart.series.push(new am4charts.LineSeries());
 seriesBudget.strokeWidth = 3;
@@ -78,14 +78,14 @@ seriesBudget.strokeDasharray = "8,4";
 seriesBudget.dataFields.valueY = "budget";
 seriesBudget.dataFields.dateX = "date";
 seriesBudget.name = "Budget";
-seriesBudget.tooltipText = "{dateX}: [bold]{valueY}[/]";
+seriesBudget.tooltipText = "[bold]Budget:[/] {valueY}";
 
 var seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
 seriesMovingAverage.strokeWidth = 3;
 seriesMovingAverage.dataFields.valueY = "movingAverage";
 seriesMovingAverage.dataFields.dateX = "date";
 seriesMovingAverage.name = "Moving average";
-seriesMovingAverage.tooltipText = "{dateX}: [bold]{valueY}[/]";
+seriesMovingAverage.tooltipText = "[bold]Moving average:[/] {valueY}";
 
 var scrollbarX = new am4charts.XYChartScrollbar();
 scrollbarX.series.push(seriesBudget);
