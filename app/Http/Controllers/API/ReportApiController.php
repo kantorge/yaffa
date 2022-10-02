@@ -5,8 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\AccountEntity;
-use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionType;
@@ -300,7 +298,7 @@ class ReportApiController extends Controller
             if ($currency_id !== $baseCurrency->id) {
                 $rate = $allRates
                     ->where('from_id', $currency_id)
-                    ->firstWhere('date_from', '<=', $item->transaction->date);
+                    ->firstWhere('date_from', '<=', $transaction->date);
             } else {
                 $rate = null;
             }
