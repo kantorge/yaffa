@@ -178,7 +178,7 @@ class Transaction extends Model
      * @param  \App\Models\AccountEntity  $account
      * @return Numeric
      */
-    public function cashflowValue(?AccountEntity $account)
+    public function cashflowValue(AccountEntity $account = null)
     {
         if ($this->config_type === 'transaction_detail_standard') {
             $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');

@@ -137,7 +137,7 @@ class MainController extends Controller
                 $transaction->tags = array_values($itemTags);
                 $transaction->categories = array_values($itemCategories);
             } elseif ($transaction->config_type === 'transaction_detail_investment') {
-                $amount = $transaction->cashflowValue(null);
+                $amount = $transaction->cashflowValue();
 
                 $transaction->transactionOperator = $transaction->transactionType->amount_operator;
                 $transaction->quantityOperator = $transaction->transactionType->quantity_operator;

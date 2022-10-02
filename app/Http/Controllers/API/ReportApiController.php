@@ -241,8 +241,6 @@ class ReportApiController extends Controller
         })
         ->get();
 
-        // TODO: add investment transaction results
-
         // Summarize items, applying currency rate
         $dataByCategory = [];
 
@@ -267,6 +265,49 @@ class ReportApiController extends Controller
 
             $dataByCategory[$category] += ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount * ($rate ? $rate->rate : 1);
         });
+
+        // Add investment transaction results
+        $investmentTransactions = Transaction::with([
+            'transactionType',
+            'config.account.config',
+        ])
+        //->where('config_type', 'transaction_detail_investment')
+        ->whereIn(
+            'transaction_type_id',
+            TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
+        )
+        ->where('user_id', Auth::user()->id)
+        ->when(is_null($month), function($query) use ($year) {
+            return $query->whereRaw('YEAR(date) = ?', [$year]);
+        })
+        ->when($year && $month, function($query) use ($year, $month) {
+            return $query->whereRaw('YEAR(date) = ?', [$year])
+                        ->whereRaw('MONTH(date) = ?', [$month]);
+        })
+        ->get();
+
+        $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRates) {
+            // Determine the category group. This should be the top level category ideally.
+            $category = ($transaction->transactionType->amount_operator === 'plus' ? 'Investment income' : 'Investment payment');
+
+            // Ensure that we have an array element for the category
+            if (! array_key_exists($category, $dataByCategory)) {
+                $dataByCategory[$category] = 0;
+            }
+
+            // Get the currency and determine currency rate
+            $currency_id = $transaction->config->account->config->currency_id;
+            if ($currency_id !== $baseCurrency->id) {
+                $rate = $allRates
+                    ->where('from_id', $currency_id)
+                    ->firstWhere('date_from', '<=', $item->transaction->date);
+            } else {
+                $rate = null;
+            }
+
+            $dataByCategory[$category] += $transaction->cashflowValue() * ($rate ? $rate->rate : 1);
+        });
+
 
         $result = [];
         foreach ($dataByCategory as $category => $value) {

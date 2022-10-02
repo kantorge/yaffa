@@ -254,7 +254,7 @@ class TransactionApiController extends Controller
 
     private function transformDataInvestment(Transaction $transaction)
     {
-        $amount = $transaction->cashflowValue(null);
+        $amount = $transaction->cashflowValue();
 
         return [
             'transaction_operator' => $transaction->transactionType->amount_operator,
