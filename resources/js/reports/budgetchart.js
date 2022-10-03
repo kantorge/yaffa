@@ -6,7 +6,6 @@ require('datatables.net-bs');
 import * as dataTableHelpers from './../components/dataTableHelper'
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
-import 'select2';
 import { RRule } from 'rrule';
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
@@ -46,7 +45,6 @@ const computeMovingAverage = (baseData, period) => {
     })
 }
 
-const elementCategorySelectSelector = '#category_id';
 const elementRefreshButton = document.getElementById('reload');
 
 am4core.useTheme(am4themes_animated);
@@ -115,7 +113,7 @@ let reloadData = function () {
     $.ajax({
         url: '/api/budgetchart',
         data: {
-            categories: $(elementCategorySelectSelector).val(),
+            categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
             byYears: (byYears ? 1 : 0),
         }
     })
@@ -148,6 +146,9 @@ elementRefreshButton.addEventListener('click', reloadData);
 
 var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
+// Initially we need to prevent dataTables from calling AJAX, as JStree will not be initialized
+let initialTableLoad = true;
+
 window.table = $('#table').DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
@@ -176,13 +177,20 @@ window.table = $('#table').DataTable({
                 return transaction;
             });
         },
-        data: function () {
-            return $.extend({}, {
-                'categories': $(elementCategorySelectSelector).val(),
-                'category_required': 1,
+        data: function() {
+            if (initialTableLoad) {
+                initialTableLoad = false;
+                return {
+                    categories: [],
+                    category_required: 1,
+                };
+            }
+
+            return Object.assign({}, {
+                categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
+                category_required: 1,
             });
         },
-        deferRender: true
     },
     columns: [
         {
@@ -397,130 +405,74 @@ let presetFilters = {
 };
 
 // Loop filter categories and populate presetFilters array.
-categories.forEach(category => presetFilters[category] = false);
+presetCategories.forEach(category => presetFilters[category] = false);
 
 // Disable table refresh, if any filters are preset
 if (!presetFilters.ready()) {
     elementRefreshButton.disabled = true;
 }
 
-// Category select2 functionality
-$(elementCategorySelectSelector).select2({
-    multiple: true,
-    ajax: {
-        url: '/api/assets/category',
-        dataType: 'json',
-        delay: 150,
-        data: function (params) {
-            return {
-                q: params.term,
-                withInactive: true,
-            };
-        },
-        processResults: function (data) {
-            return {
-                results: data,
-            };
-        },
-        cache: true
-    },
-    selectOnClose: false,
-    placeholder: "Select category or categories",
-    allowClear: true
-});
-
 // Attach event listener to category select2 for select and unselect events to update browser url, without reloading page.
 let rebuildUrl = function () {
-    let params = $(elementCategorySelectSelector).val().map((category) => 'categories[]=' + category);
+    let params = $('#category_tree').jstree('get_checked').map((category) => 'categories[]=' + category);
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
 
     // Finally, adjust reload button availability
-    elementRefreshButton.disabled = ($(elementCategorySelectSelector).val().length === 0);
+    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
 }
 
-$(elementCategorySelectSelector).on('select2:select', rebuildUrl);
-$(elementCategorySelectSelector).on('select2:unselect', rebuildUrl);
-
-// Append preset categories, if any
-categories.forEach(function (category) {
-    presetFilters[category] = false;
-
-    $.ajax({
-        url: '/api/assets/category/' + category,
-        data: {},
-        success: function (data) {
-            $(elementCategorySelectSelector)
-                .append(new Option(data.full_name, data.id, true, true))
-                .trigger('change')
-                .trigger({
-                    type: 'select2:select',
-                    params: {
-                        data: {
-                            id: data.id,
-                            name: data.full_name,
-                        }
-                    }
-                });
-
-            presetFilters[category] = true;
-
-            // If all preset filters are ready, reload table data
-            if (presetFilters.ready()) {
-                elementRefreshButton.disabled = false;
-                elementRefreshButton.click();
-            }
-        }
-    });
-});
-
 // Initialize category tree view
-$('#category_tree').jstree({
+$('#category_tree')
+.jstree({
     core: {
         data: function (_obj, callback) {
             fetch('/api/assets/categories?withInactive=1')
                 .then(response => response.json())
                 .then(data => {
-                    let categories = data.map(category =>
-                        ({
+                    let categories = data.map(function(category) {
+                        var i = presetCategories.findIndex(cat => cat == category.id);
+                        presetCategories[i] = false;
+
+                        return {
                             id: category.id,
                             parent: category.parent_id || '#',
                             text: (category.active ? category.name : '<span class="text-muted" title="Inactive">' + category.name + '</span>'),
                             full_name: category.full_name,
                             icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
-                        })
-                    );
+                            state: {
+                                selected: (i > -1)
+                            }
+                        }
+                    });
                     callback.call(this, categories);
                 })
-		}
+		},
+        themes: {
+            dots: false
+          }
     },
-    plugins : [ "wholerow" ]
+    plugins: [
+        "checkbox"
+    ],
+    checkbox: {
+        keep_selected_style: false
+    },
 })
-.on('activate_node.jstree', function (_event, data) {
-    let categorySource = data.node.original;
+.on('select_node.jstree', rebuildUrl)
+.on('deselect_node.jstree', rebuildUrl)
+.on('ready.jstree', function() {
+    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
+    reloadData();
+});
 
-    // Abort if item is already added to select
-    if ($(elementCategorySelectSelector).val().includes(categorySource.id.toString())) {
-        return;
-    }
-
-    // Append clicked category to select
-    $(elementCategorySelectSelector)
-        .append(new Option(categorySource.full_name, categorySource.id, true, true))
-        .trigger({
-            type: 'select2:select',
-            params: {
-                data: categorySource
-            }
-        })
-        .trigger('change');
+// Select all button function
+document.getElementById('all').addEventListener('click', function() {
+    $('#category_tree').jstree('check_all');
+    rebuildUrl()
 });
 
 // Clear button function
 document.getElementById('clear').addEventListener('click', function() {
-    $(elementCategorySelectSelector).val(null).trigger("change");
-    reloadData();
+    $('#category_tree').jstree('uncheck_all');
+    rebuildUrl()
 });
-
-// Finally, adjust Reload button availability
-// TODO: can this be unified with rebuildUrl function?
-elementRefreshButton.disabled = ($(elementCategorySelectSelector).val().length === 0);

@@ -41,31 +41,17 @@
                     <div class="box-header">
                         <h3 class="box-title">
                             Select categories to display
-                            <i class="fa fa-info-circle text-primary" title="Selecting a parent category loads all related subcategories too." data-toggle="tooltip"></i>
                         </h3>
                     </div>
                     <div class="box-body">
-                        <select id="category_id" class="form-control" style="width: 100%"></select>
+                        <div id="category_tree"></div>
                     </div>
                     <div class="box-footer">
                         <div class="box-tools pull-right">
                             <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">Clear selection</button>
+                            <button name="reload" type="button" id="all" class="btn btn-default btn-sm">Select all</button>
                             <button name="reload" type="button" id="reload" class="btn btn-primary">Load data</button>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="box box-default collapsed-box">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">List of categories</h3>
-                        <div class="box-tools pull-right">
-                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="box-body" style="display: none;">
-                        <div id="category_tree"></div>
                     </div>
                 </div>
             </div>

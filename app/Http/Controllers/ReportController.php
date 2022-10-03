@@ -246,19 +246,15 @@ class ReportController extends Controller
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
 
-        // Get all categories
-        $categories = Category::all()->sortBy('full_name');
-
         // Pass currency related data for amCharts
         JavaScriptFacade::put([
-            'categories' => $request->get('categories', []),
+            'presetCategories' => $request->get('categories', []),
             'byYears' => $byYears,
         ]);
 
         return view(
             'reports.budgetchart',
             [
-                'categories' => $categories->pluck('full_name', 'id'),
                 'byYears' => $byYears,
             ]
         );
