@@ -344,11 +344,15 @@ class AccountEntityController extends Controller
 
             // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
             $preferences = [];
-            foreach ($validated['config']['preferred'] as $categoryId) {
-                $preferences[$categoryId] = ['preferred' => true];
+            if (array_key_exists('preferred', $validated['config'])) {
+                foreach ($validated['config']['preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => true];
+                }
             }
-            foreach ($validated['config']['not_preferred'] as $categoryId) {
-                $preferences[$categoryId] = ['preferred' => false];
+            if (array_key_exists('not_preferred', $validated['config'])) {
+                foreach ($validated['config']['not_preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => false];
+                }
             }
 
             $accountEntity->push();
