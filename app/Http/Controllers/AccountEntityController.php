@@ -300,6 +300,10 @@ class AccountEntityController extends Controller
 
     private function createPayee()
     {
+        JavaScriptFacade::put([
+            'categoryPreferences' => [],
+        ]);
+
         return view('payee.form');
     }
 
@@ -337,6 +341,19 @@ class AccountEntityController extends Controller
         if ($validated['config_type'] === 'payee') {
             $payeeConfig = Payee::create($validated['config']);
             $accountEntity->config()->associate($payeeConfig);
+
+            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            $preferences = [];
+            foreach ($validated['config']['preferred'] as $categoryId) {
+                $preferences[$categoryId] = ['preferred' => true];
+            }
+            foreach ($validated['config']['not_preferred'] as $categoryId) {
+                $preferences[$categoryId] = ['preferred' => false];
+            }
+
+            $accountEntity->push();
+
+            $accountEntity->categoryPreference()->sync($preferences);
 
             $accountEntity->push();
 
@@ -388,7 +405,19 @@ class AccountEntityController extends Controller
 
     private function editPayee(AccountEntity $accountEntity)
     {
-        $accountEntity->load(['config']);
+        $accountEntity->load(['config', 'categoryPreference']);
+
+        // Simplify the category preference structure and pass it as JavaScript variable
+        $categoryPreference = $accountEntity->categoryPreference->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'full_name' => $item->full_name,
+                'preferred' => $item->pivot->preferred,
+            ];
+        });
+        JavaScriptFacade::put([
+            'categoryPreferences' => $categoryPreference->toArray(),
+        ]);
 
         return view(
             'payee.form',
@@ -435,6 +464,21 @@ class AccountEntityController extends Controller
 
             $accountEntity->fill($validated);
             $accountEntity->config->fill($validated['config']);
+
+            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            $preferences = [];
+            if (array_key_exists('preferred', $validated['config'])) {
+                foreach ($validated['config']['preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => true];
+                }
+            }
+            if (array_key_exists('not_preferred', $validated['config'])) {
+                foreach ($validated['config']['not_preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => false];
+                }
+            }
+
+            $accountEntity->categoryPreference()->sync($preferences);
 
             $accountEntity->push();
 

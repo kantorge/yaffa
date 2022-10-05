@@ -46,6 +46,23 @@ class AccountEntity extends Model
         return $this->hasMany(TransactionDetailStandard::class, 'account_to_id');
     }
 
+    // Relationsip to categories indicating the category preference for this account entity.
+    // Relevant mainly for payees.
+    public function categoryPreference()
+    {
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->withPivot('preferred');
+    }
+
+    public function preferredCategories()
+    {
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', true);
+    }
+
+    public function deferredCategories()
+    {
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', false);
+    }
+
     // Relation to transactions where this account is the from account or the to account
     public function transactionsFrom()
     {

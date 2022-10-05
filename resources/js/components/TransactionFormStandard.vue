@@ -573,15 +573,16 @@
                         });
                     } else {
                         $.ajax({
-                            url:  '/api/assets/get_default_category_for_payee',
+                            url:  '/api/assets/payee/' + e.params.data.id,
                             data: {
-                                payee_id: e.params.data.id,
                                 _token: $vm.csrfToken,
                             }
                         })
                         .done(function( data ) {
-                            $vm.payeeCategory.id = data.id;
-                            $vm.payeeCategory.text = data.full_name;
+                            if (data.config.category) {
+                                $vm.payeeCategory.id = data.config.category.id;
+                                $vm.payeeCategory.text = data.config.category.full_name;
+                            }
                         });
                     }
                 })
@@ -614,15 +615,16 @@
                         });
                     } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({
-                            url:  '/api/assets/get_default_category_for_payee',
+                            url:  '/api/assets/payee/' + e.params.data.id,
                             data: {
-                                payee_id: e.params.data.id,
                                 _token: $vm.csrfToken,
                             }
                         })
                         .done(function( data ) {
-                            $vm.payeeCategory.id = data.id;
-                            $vm.payeeCategory.text = data.full_name;
+                            if (data.config.category) {
+                                $vm.payeeCategory.id = data.config.category.id;
+                                $vm.payeeCategory.text = data.config.category.full_name;
+                            }
                         });
                     }
                 })

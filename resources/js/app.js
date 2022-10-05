@@ -78,6 +78,10 @@ if (   window.location.pathname === '/account-entity'
     && /type=payee/.test(window.location.search)) {
     require('./payees/index');
 }
+if (   /^\/account-entity\/(create|\d+\/edit)/.test(window.location.pathname)
+    && /type=payee/.test(window.location.search)) {
+    require('./payees/form');
+}
 
 if (/^\/payees\/merge/.test(window.location.pathname)) {
     require('./payees/merge');

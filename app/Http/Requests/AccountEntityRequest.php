@@ -61,6 +61,29 @@ class AccountEntityRequest extends FormRequest
                     'nullable',
                     'string',
                 ],
+                'config.preferred' => [
+                    'nullable',
+                    'array',
+                ],
+                'config.preferred.*' => [
+                    Rule::exists('categories', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                    // TODO: prevent items to be added from other select
+                    Rule::notIn('config.not_preferred'),
+                ],
+                'config.not_preferred' => [
+                    'nullable',
+                    'array',
+                ],
+                'config.not_preferred.*' => [
+                    Rule::exists('categories', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                    // TODO: prevent items to be added from other select
+                    Rule::notIn('config.preferred'),
+                    'different:config.category_id',
+                ],
             ]);
         }
 

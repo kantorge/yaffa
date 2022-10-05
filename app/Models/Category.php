@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -92,5 +93,10 @@ class Category extends Model
     public function transaction()
     {
         return $this->hasManyThrough(Transaction::class, TransactionItem::class, 'category_id', 'id', 'id', 'transaction_id');
+    }
+
+    public function payeesNotPreferring()
+    {
+        return $this->belongsToMany(AccountEntity::class, 'account_entity_category_preference')->where('preferred', false);
     }
 }

@@ -92,28 +92,6 @@ class PayeeApiController extends Controller
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getDefaultCategoryForPayee(Request $request)
-    {
-        /**
-         * @get('/api/assets/get_default_category_for_payee')
-         * @middlewares('api', 'auth:sanctum')
-         */
-        if ($request->missing('payee_id')) {
-            return response('', Response::HTTP_OK);
-        }
-
-        $payee = Auth::user()
-            ->payees()
-            ->with(['config', 'config.category'])
-            ->find($request->get('payee_id'));
-
-        if (! $payee->config->category_id) {
-            return response('', Response::HTTP_OK);
-        }
-
-        return response($payee->config->category->only(['id', 'full_name']), Response::HTTP_OK);
-    }
-
     public function getPayeeDefaultSuggestion()
     {
         /**
@@ -358,7 +336,12 @@ class PayeeApiController extends Controller
          */
         $this->authorize('view', $accountEntity);
 
-        $accountEntity->load(['config', 'config.category']);
+        $accountEntity->load([
+            'config',
+            'config.category',
+            'preferredCategories',
+            'deferredCategories',
+        ]);
 
         return response()
             ->json(

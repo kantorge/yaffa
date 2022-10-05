@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AccountController;
-use App\Http\Controllers\API\CategoryApiController;
+use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TransactionApiController;
@@ -16,10 +16,10 @@ Route::get('/account/balance/{accountEntity?}', [AccountController::class, 'getA
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', 'App\Http\Controllers\API\AccountEntityApiController@updateActive')->name('api.accountentity.updateActive');
 
-Route::get('/assets/category', 'App\Http\Controllers\API\CategoryApiController@getList');
-Route::get('/assets/categories', 'App\Http\Controllers\API\CategoryApiController@getFullList');
-Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])->name('api.category.updateActive');
-Route::get('/assets/category/{category}', 'App\Http\Controllers\API\CategoryApiController@getItem');
+Route::get('/assets/category', [CategoryController::class,'getList']);
+Route::get('/assets/categories', [CategoryController::class,'getFullList']);
+Route::put('/assets/category/{category}/active/{active}', [CategoryController::class, 'updateActive'])->name('api.category.updateActive');
+Route::get('/assets/category/{category}', [CategoryController::class,'getItem']);
 
 Route::get('/assets/investment', 'App\Http\Controllers\API\InvestmentApiController@getList');
 Route::get('/assets/investment/timeline', 'App\Http\Controllers\API\InvestmentApiController@getInvestmentsWithTimeline');
@@ -33,7 +33,6 @@ Route::post('/assets/payee', 'App\Http\Controllers\API\PayeeApiController@storeP
 Route::get('/assets/payee/similar', 'App\Http\Controllers\API\PayeeApiController@getSimilarPayees')->name('api.payee.similar');
 Route::get('/assets/payee/{accountEntity}', [PayeeApiController::class, 'getItem']);
 
-Route::get('/assets/get_default_category_for_payee', 'App\Http\Controllers\API\PayeeApiController@getDefaultCategoryForPayee');
 Route::get('/assets/get_default_category_suggestion', 'App\Http\Controllers\API\PayeeApiController@getPayeeDefaultSuggestion');
 Route::get('/assets/dismiss_default_category_suggestion/{accountEntity}', 'App\Http\Controllers\API\PayeeApiController@dismissPayeeDefaultCategorySuggestion');
 Route::get('/assets/accept_default_category_suggestion/{accountEntity}/{category}', 'App\Http\Controllers\API\PayeeApiController@acceptPayeeDefaultCategorySuggestion');
