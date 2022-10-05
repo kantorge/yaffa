@@ -30,7 +30,8 @@
                                 Date
                             </dt>
                             <dd class="col-xs-8">
-                                {{ formattedDate }}
+                                <span v-if="transaction.date">{{ formattedDate(transaction.date) }}</span>
+                                <span v-else class="text-muted text-italic">Not set</span>
                             </dd>
 
                             <dt class="col-xs-4">
@@ -171,16 +172,6 @@
         },
 
         computed: {
-            formattedDate() {
-                if (typeof this.transaction.date === 'undefined') {
-                    return;
-                }
-
-                const date = new Date(this.transaction.date); // Can prop be updated like this?
-
-                return date.toLocaleDateString('Hu-hu');
-            },
-
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
                 return (this.transaction.transaction_type.name == 'withdrawal' || this.transaction.transaction_type.name == 'transfer' ? 'Account from' : 'Payee')
@@ -231,6 +222,17 @@
                 return 0;
             },
         },
+        methods: {
+            formattedDate(date) {
+                if (typeof date === 'undefined') {
+                    return;
+                }
+
+                const newDate = new Date(date);
+
+                return newDate.toLocaleDateString('Hu-hu');
+            },
+        }
     }
 </script>
 
@@ -238,33 +240,5 @@
     dl.row {
         display: flex;
         flex-wrap: wrap;
-    }
-
-    @media (min-width: 576px) {
-        .block-label {
-            display: block;
-        }
-
-        .d-sm-none {
-            display: none;
-        }
-    }
-    @media (max-width: 575.98px) {
-        .block-label {
-            margin-right: 10px;
-        }
-
-        .dl-horizontal dt {
-            float: left;
-            width: 100px;
-            overflow: hidden;
-            clear: left;
-            text-align: right;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .dl-horizontal dd {
-            margin-left: 110px;
-        }
     }
 </style>

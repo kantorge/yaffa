@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
@@ -31,6 +31,11 @@ class InvestmentController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/investment')
+         * @name('investment.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Investment')
+         */
         // Get all investments of the user from the database and return to view
         $investments = Auth::user()
             ->investments()
@@ -41,7 +46,7 @@ class InvestmentController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investments' => $investments,
         ]);
 
@@ -50,13 +55,24 @@ class InvestmentController extends Controller
 
     public function edit(Investment $investment)
     {
+        /**
+         * @get('/investment/{investment}/edit')
+         * @name('investment.edit')
+         * @middlewares('web', 'auth', 'can:update,investment')
+         */
         return view('investment.form', [
-            'investment'=> $investment,
+            'investment' => $investment,
         ]);
     }
 
     public function update(InvestmentRequest $request, Investment $investment)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/investment/{investment}')
+         * @name('investment.update')
+         * @middlewares('web', 'auth', 'can:update,investment')
+         */
         // Retrieve the validated input data
         $validated = $request->validated();
         $investment->fill($validated);
@@ -69,11 +85,21 @@ class InvestmentController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/investment/create')
+         * @name('investment.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Investment')
+         */
         return view('investment.form');
     }
 
     public function store(InvestmentRequest $request)
     {
+        /**
+         * @post('/investment')
+         * @name('investment.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Investment')
+         */
         $validated = $request->validated();
 
         $investment = Investment::make($validated);
@@ -93,6 +119,11 @@ class InvestmentController extends Controller
      */
     public function destroy(Investment $investment)
     {
+        /**
+         * @delete('/investment/{investment}')
+         * @name('investment.destroy')
+         * @middlewares('web', 'auth', 'can:delete,investment')
+         */
         $investment->delete();
 
         self::addSimpleSuccessMessage('Investment deleted');
@@ -102,6 +133,11 @@ class InvestmentController extends Controller
 
     public function summary()
     {
+        /**
+         * @get('/investment/summary')
+         * @name('investment.summary')
+         * @middlewares('web', 'auth')
+         */
         // Show all investments from the database and return to view
         $investments = Auth::user()
             ->investments()
@@ -119,7 +155,7 @@ class InvestmentController extends Controller
         });
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investments' => $investments,
         ]);
 
@@ -128,6 +164,11 @@ class InvestmentController extends Controller
 
     public function show(Investment $investment)
     {
+        /**
+         * @get('/investment/{investment}')
+         * @name('investment.show')
+         * @middlewares('web', 'auth', 'can:view,investment')
+         */
         // Get all stored price points
         $prices = InvestmentPrice::where('investment_id', $investment->id)
             ->orderBy('date')
@@ -143,12 +184,11 @@ class InvestmentController extends Controller
         $rawTransactions =
             Transaction::with([
                 'config',
-                'config.investment',
                 'transactionType',
             ])
             ->whereHasMorph(
                 'config',
-                [\App\Models\TransactionDetailInvestment::class],
+                [TransactionDetailInvestment::class],
                 function (Builder $query) use ($investment) {
                     $query->Where('investment_id', $investment->id);
                 }
@@ -162,8 +202,8 @@ class InvestmentController extends Controller
                 $commonData =
                     [
                         'id' => $transaction->id,
-                        'transaction_name' => $transaction->transactionType->name,
-                        'transaction_type' => $transaction->transactionType->type,
+                        'transaction_type' => $transaction->transactionType->name,
+                        'transaction_config_type' => $transaction->transactionType->type,
                         'amount_operator' => $transaction->transactionType->amount_operator,
                         'quantity_operator' => $transaction->transactionType->quantity_operator,
 
@@ -219,17 +259,19 @@ class InvestmentController extends Controller
                     $rule->setInterval($transaction['schedule']->interval);
                 }
 
-                $transformer = new ArrayTransformer();
-
                 $transformerConfig = new ArrayTransformerConfig();
-                $transformerConfig->setVirtualLimit(100);
                 $transformerConfig->enableLastDayOfMonthFix();
+                // Avoid overloading too frequent schedules. TODO: notify user if limit is reached.
+                $transformerConfig->setVirtualLimit(500);
+
+                $transformer = new ArrayTransformer();
                 $transformer->setConfig($transformerConfig);
 
                 $startDate = new Carbon($transaction['schedule']->next_date);
                 $startDate->startOfDay();
+
                 if (is_null($transaction['schedule']->end_date)) {
-                    $endDate = (new Carbon())->addYears(25); //TODO: get end date from settings, and/or display default setting
+                    $endDate = (new Carbon(config('yaffa.app_end_date')));
                 } else {
                     $endDate = new Carbon($transaction['schedule']->end_date);
                 }
@@ -277,7 +319,7 @@ class InvestmentController extends Controller
                 ];
             });
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investment' => $investment,
             'transactions' => array_values($transactions->toArray()),
             'prices' => $prices,
@@ -287,5 +329,15 @@ class InvestmentController extends Controller
         return view('investment.show', [
             'investment' => $investment,
         ]);
+    }
+
+    public function timeline()
+    {
+        /**
+         * @get('/investment/timeline')
+         * @name('investment.timeline')
+         * @middlewares('web', 'auth')
+         */
+        return view('investment.timeline');
     }
 }

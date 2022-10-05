@@ -1,9 +1,6 @@
 
 require('select2');
 
-// Read csrf token from meta tag
-const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
 // Add select2 functionality to payee_source select
 $('#category_source').select2({
     placeholder: 'Select category to be merged',

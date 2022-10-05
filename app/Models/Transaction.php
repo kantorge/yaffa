@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\TransactionItem;
-use App\Models\TransactionSchedule;
-use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,8 +39,15 @@ class Transaction extends Model
         'user_id',
     ];
 
-    protected $hidden = ['config_id'];
+    protected $hidden = [
+        'config_id'
+    ];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
     protected $casts = [
         'date' => 'datetime',
         'reconciled' => 'boolean',
@@ -100,6 +103,35 @@ class Transaction extends Model
         return $categories;
     }
 
+    /**
+     * Create a dynamic scope to filter transactions by schedule and/or budget flag
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByScheduleType($query, $type)
+    {
+        switch ($type) {
+            case 'schedule':
+                return $query->where('schedule', true);
+            case 'schedule_only':
+                return $query->where('schedule', true)->where('budget', false);
+            case 'budget':
+                return $query->where('budget', true);
+            case 'budget_only':
+                return $query->where('budget', true)->where('schedule', false);
+            case 'both':
+                return $query->where('schedule', true)->where('budget', true);
+            case 'any':
+                return $query->where('schedule', true)->orWhere('budget', true);
+            case 'none':
+                return $query->where('schedule', false)->where('budget', false);
+            default:
+                return $query;
+        }
+    }
+
     //TODO: how this can be achieved without converting data to array AND without additional database queries
     public function getTagsArray()
     {
@@ -128,21 +160,25 @@ class Transaction extends Model
         return $categories;
     }
 
-    public function delete()
+    /**
+     * Override the default delete method to delete the transaction configuration as well
+     *
+     * @return bool|null
+     */
+    public function delete(): bool|null
     {
         $this->config()->delete();
-
-        parent::delete();
+        return parent::delete();
     }
 
     /**
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
      *
-     * @param App\Models\AccountEntity $account
+     * @param  \App\Models\AccountEntity  $account
      * @return Numeric
      */
-    public function cashflowValue(?AccountEntity $account)
+    public function cashflowValue(AccountEntity $account = null)
     {
         if ($this->config_type === 'transaction_detail_standard') {
             $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');
@@ -237,7 +273,7 @@ class Transaction extends Model
         $scheduleInstances = new Collection();
 
         if (is_null($maxLookAhead)) {
-            $maxLookAhead = (new Carbon())->addYears(1); //TODO: get end date from settings, and/or display default setting
+            $maxLookAhead = (new Carbon(config('yaffa.app_end_date')));
         }
 
         if (is_null($constraintStart)) {

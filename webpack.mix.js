@@ -11,7 +11,6 @@ mix.js([
         'datatables.net-bs',
         'jquery',
         'mathjs',
-        'moment',
         'select2'
     ], 'public/js/vendor.js')
     .sass('resources/sass/app.scss', 'public/css')

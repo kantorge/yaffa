@@ -1,23 +1,57 @@
-export function dataTablesActionButton(id, action) {
+export function dataTablesActionButton(id, action, transactionType) {
     var functions = {
         delete: function() {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
         },
         standardQuickView: function() {
-            return '<button class="btn btn-xs btn-success data-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+            return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
         },
         standardShow: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
+            return '<a href="' + route('transactions.open.standard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
         },
-        standardEdit: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+        edit: function(transactionType) {
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
         },
-        standardClone: function() {
-            return '<a href="' + route('transactions.openStandard', {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+        clone(transactionType) {
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+        },
+        replace(transactionType) {
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
         }
     }
 
-    return functions[action]();
+    return functions[action](transactionType);
+}
+
+export function genericDataTablesActionButton(id, action, route) {
+    var functions = {
+        delete: function(id) {
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+        },
+        edit: function(id, route) {
+            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+        },
+    }
+
+    return functions[action](id, route);
+}
+
+export function initializeDeleteButtonListener(tableSelector, route) {
+    // Generate click listener for the table element provided
+    $(tableSelector).on("click", ".data-delete", function () {
+        // Confirm the action with the user
+        if (!confirm('Are you sure to want to delete this item?')) {
+            return;
+        }
+
+        // Get the form placed in Blade component
+        let form = document.getElementById('form-delete');
+
+        // Adjust form action and submit
+        // Ziggy route helper is expected to exist at global scope
+        form.action = window.route(route, this.dataset.id);
+        form.submit();
+    });
 }
 
 export function tagIcon(tags, type) {
@@ -58,6 +92,14 @@ export function initializeDeleteButton(selector) {
     });
 }
 
+export function initializeSkipInstanceButton(selector) {
+    $(selector).on("click", ".data-skip", function() {
+        let form = document.getElementById('form-skip');
+        form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
+        form.submit();
+    });
+}
+
 export function booleanToTableIcon (data, type) {
     if (type == 'filter') {
         return  (data ? 'Yes' : 'No');
@@ -68,7 +110,7 @@ export function booleanToTableIcon (data, type) {
 }
 
 export function transactionTypeIcon(type, name, customTitle) {
-    if (type === 'Standard') {
+    if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || "Withdrawal";
             return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
@@ -81,10 +123,16 @@ export function transactionTypeIcon(type, name, customTitle) {
             customTitle = customTitle || "Transfer";
             return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
-    } else if (type === 'Investment') {
+    } else if (type === 'investment') {
         customTitle = customTitle || name;
         return '<i class="fa fa-line-chart text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
     }
 
     return null;
+}
+
+export function muteCellWithValue(column, mutedValue) {
+    if (column.text() === mutedValue) {
+        column.addClass('text-muted text-italic');
+    }
 }

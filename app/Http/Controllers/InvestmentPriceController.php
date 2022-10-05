@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -10,7 +9,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentPriceController extends Controller
 {
@@ -21,6 +20,11 @@ class InvestmentPriceController extends Controller
 
     public function list(Investment $investment)
     {
+        /**
+         * @get('/investment-price/list/{investment}')
+         * @name('investment-price.list')
+         * @middlewares('web', 'auth')
+         */
         $this->authorize('view', $investment);
 
         $pricesOrdered = DB::table('investment_prices')
@@ -30,7 +34,7 @@ class InvestmentPriceController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'prices' => $pricesOrdered,
         ]);
 
@@ -38,13 +42,18 @@ class InvestmentPriceController extends Controller
             'investment-prices.list',
             [
                 'investment' => $investment,
-                'prices' => $pricesOrdered
+                'prices' => $pricesOrdered,
             ]
         );
     }
 
     public function create(Request $request)
     {
+        /**
+         * @get('/investment-price/create')
+         * @name('investment-price.create')
+         * @middlewares('web', 'auth')
+         */
         $investment = Investment::find($request->get('investment'));
         $this->authorize('view', $investment);
 
@@ -58,6 +67,11 @@ class InvestmentPriceController extends Controller
 
     public function store(InvestmentPriceRequest $request)
     {
+        /**
+         * @post('/investment-price')
+         * @name('investment-price.store')
+         * @middlewares('web', 'auth')
+         */
         $investment = Investment::find($request->investment_id);
         $this->authorize('view', $investment);
 
@@ -78,17 +92,28 @@ class InvestmentPriceController extends Controller
      */
     public function edit(InvestmentPrice $investmentPrice)
     {
+        /**
+         * @get('/investment-price/{investment_price}/edit')
+         * @name('investment-price.edit')
+         * @middlewares('web', 'auth')
+         */
         return view(
             'investment-prices.form',
             [
                 'investment' => $investmentPrice->investment,
-                'investmentPrice'=> $investmentPrice,
+                'investmentPrice' => $investmentPrice,
             ]
         );
     }
 
     public function update(InvestmentPriceRequest $request)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/investment-price/{investment_price}')
+         * @name('investment-price.update')
+         * @middlewares('web', 'auth')
+         */
         $validated = $request->validated();
 
         InvestmentPrice::find($request->input('id'))
@@ -108,6 +133,11 @@ class InvestmentPriceController extends Controller
      */
     public function destroy(InvestmentPrice $investmentPrice)
     {
+        /**
+         * @delete('/investment-price/{investment_price}')
+         * @name('investment-price.destroy')
+         * @middlewares('web', 'auth')
+         */
         $investmentPrice->delete();
 
         self::addSimpleSuccessMessage('Investment price deleted');
@@ -117,6 +147,11 @@ class InvestmentPriceController extends Controller
 
     public function retreiveInvestmentPriceAlphaVantage(Investment $investment, ?Carbon $from = null)
     {
+        /**
+         * @get('/investment-price/get/{investment}/{from?}')
+         * @name('investment-price.retreive')
+         * @middlewares('web', 'auth')
+         */
         $refill = false;
 
         $client = new GuzzleClient();

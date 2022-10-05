@@ -9,13 +9,12 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Payee;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller
 {
@@ -42,6 +41,11 @@ class AccountEntityController extends Controller
      */
     public function index(Request $request)
     {
+        /**
+         * @get('/account-entity')
+         * @name('account-entity.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'index'.Str::ucfirst($request->type)}();
@@ -56,7 +60,7 @@ class AccountEntityController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'accounts' => $accounts,
         ]);
 
@@ -71,6 +75,7 @@ class AccountEntityController extends Controller
                 base_data.id,
                 name,
                 active,
+                import_alias,
                 transactions_from_count + transactions_to_count AS transactions_count,
                 IF(
                     transactions_from_min_date IS NULL OR transactions_to_min_date IS NULL,
@@ -85,119 +90,124 @@ class AccountEntityController extends Controller
                 payees.category_id
 
             FROM (
-
                 select
                     `account_entities` .*,
                     (
-                    select
-                        count(*)
-                    from
-                        `transaction_details_standard`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and exists (
                         select
-                            *
+                            count(*)
+                        from
+                            `transaction_details_standard`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and exists (
+                            select
+                                *
+                            from
+                                `transactions`
+                            where
+                                `transaction_details_standard`.`id` = `transactions`.`config_id`
+                                and `transactions`.`config_type` = 'transaction_detail_standard'
+                                and `schedule` = 0
+                                and `budget` = 0)
+                    ) as `transactions_from_count`,
+                    (
+                        select
+                            count(*)
+                        from
+                            `transaction_details_standard`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and exists (
+                            select
+                                *
+                            from
+                                `transactions`
+                            where
+                                `transaction_details_standard`.`id` = `transactions`.`config_id`
+                                and `transactions`.`config_type` = 'transaction_detail_standard'
+                                and `schedule` = 0
+                                and `budget` = 0)
+                    ) as `transactions_to_count`,
+                    (
+                        select
+                            min(`transactions`.`date`)
                         from
                             `transactions`
-                        where
+                        inner join `transaction_details_standard` on
                             `transaction_details_standard`.`id` = `transactions`.`config_id`
-                            and `transactions`.`config_type` = 'transaction_detail_standard'
-                            and `schedule` = 0
-                            and `budget` = 0)) as `transactions_from_count`,
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_from_min_date`,
                     (
-                    select
-                        count(*)
-                    from
-                        `transaction_details_standard`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and exists (
                         select
-                            *
+                            min(`transactions`.`date`)
                         from
                             `transactions`
-                        where
+                        inner join `transaction_details_standard` on
                             `transaction_details_standard`.`id` = `transactions`.`config_id`
-                            and `transactions`.`config_type` = 'transaction_detail_standard'
-                            and `schedule` = 0
-                            and `budget` = 0)) as `transactions_to_count`,
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_to_min_date`,
                     (
-                    select
-                        min(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_from_min_date`,
+                        select
+                            max(`transactions`.`date`)
+                        from
+                            `transactions`
+                        inner join `transaction_details_standard` on
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_from_max_date`,
                     (
-                    select
-                        min(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_to_min_date`,
-                    (
-                    select
-                        max(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_from_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_from_max_date`,
-                    (
-                    select
-                        max(`transactions`.`date`)
-                    from
-                        `transactions`
-                    inner join `transaction_details_standard` on
-                        `transaction_details_standard`.`id` = `transactions`.`config_id`
-                    where
-                        `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
-                        and ((`transactions`.`config_type` = 'transaction_detail_standard'
-                            and exists (
-                            select
-                                *
-                            from
-                                `transaction_details_standard`
-                            where
-                                `transactions`.`config_id` = `transaction_details_standard`.`id`
-                                and `schedule` = 0
-                                and `budget` = 0)))) as `transactions_to_max_date`
+                        select
+                            max(`transactions`.`date`)
+                        from
+                            `transactions`
+                        inner join `transaction_details_standard` on
+                            `transaction_details_standard`.`id` = `transactions`.`config_id`
+                        where
+                            `account_entities`.`id` = `transaction_details_standard`.`account_to_id`
+                            and ((`transactions`.`config_type` = 'transaction_detail_standard'
+                                and exists (
+                                select
+                                    *
+                                from
+                                    `transaction_details_standard`
+                                where
+                                    `transactions`.`config_id` = `transaction_details_standard`.`id`
+                                    and `schedule` = 0
+                                    and `budget` = 0)))
+                    ) as `transactions_to_max_date`
                     from
                         `account_entities`
                     where
@@ -225,7 +235,7 @@ class AccountEntityController extends Controller
         }, $payees);
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'payees' => $payees,
         ]);
 
@@ -239,6 +249,11 @@ class AccountEntityController extends Controller
      */
     public function create(Request $request)
     {
+        /**
+         * @get('/account-entity/create')
+         * @name('account-entity.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'create'.Str::ucfirst($request->type)}();
@@ -286,6 +301,10 @@ class AccountEntityController extends Controller
 
     private function createPayee()
     {
+        JavaScriptFacade::put([
+            'categoryPreferences' => [],
+        ]);
+
         return view('payee.form');
     }
 
@@ -297,6 +316,11 @@ class AccountEntityController extends Controller
      */
     public function store(AccountEntityRequest $request)
     {
+        /**
+         * @post('/account-entity')
+         * @name('account-entity.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         */
         $this->checkTypeParam($request);
 
         $validated = $request->validated();
@@ -319,6 +343,19 @@ class AccountEntityController extends Controller
             $payeeConfig = Payee::create($validated['config']);
             $accountEntity->config()->associate($payeeConfig);
 
+            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            $preferences = [];
+            foreach ($validated['config']['preferred'] as $categoryId) {
+                $preferences[$categoryId] = ['preferred' => true];
+            }
+            foreach ($validated['config']['not_preferred'] as $categoryId) {
+                $preferences[$categoryId] = ['preferred' => false];
+            }
+
+            $accountEntity->push();
+
+            $accountEntity->categoryPreference()->sync($preferences);
+
             $accountEntity->push();
 
             self::addSimpleSuccessMessage('Payee added');
@@ -337,6 +374,11 @@ class AccountEntityController extends Controller
      */
     public function edit(Request $request, AccountEntity $accountEntity)
     {
+        /**
+         * @get('/account-entity/{account_entity}/edit')
+         * @name('account-entity.edit')
+         * @middlewares('web', 'auth', 'can:update,account_entity')
+         */
         $this->checkTypeParam($request);
 
         return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
@@ -355,7 +397,7 @@ class AccountEntityController extends Controller
         return view(
             'account.form',
             [
-                'account'=> $accountEntity,
+                'account' => $accountEntity,
                 'allAccountGroups' => $allAccountGroups,
                 'allCurrencies' => $allCurrencies,
             ]
@@ -364,12 +406,24 @@ class AccountEntityController extends Controller
 
     private function editPayee(AccountEntity $accountEntity)
     {
-        $accountEntity->load(['config']);
+        $accountEntity->load(['config', 'categoryPreference']);
+
+        // Simplify the category preference structure and pass it as JavaScript variable
+        $categoryPreference = $accountEntity->categoryPreference->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'full_name' => $item->full_name,
+                'preferred' => $item->pivot->preferred,
+            ];
+        });
+        JavaScriptFacade::put([
+            'categoryPreferences' => $categoryPreference->toArray(),
+        ]);
 
         return view(
             'payee.form',
             [
-                'payee'=> $accountEntity,
+                'payee' => $accountEntity,
             ]
         );
     }
@@ -383,6 +437,12 @@ class AccountEntityController extends Controller
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/account-entity/{account_entity}')
+         * @name('account-entity.update')
+         * @middlewares('web', 'auth', 'can:update,account_entity')
+         */
         $this->checkTypeParam($request);
 
         $validated = $request->validated();
@@ -406,6 +466,21 @@ class AccountEntityController extends Controller
             $accountEntity->fill($validated);
             $accountEntity->config->fill($validated['config']);
 
+            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            $preferences = [];
+            if (array_key_exists('preferred', $validated['config'])) {
+                foreach ($validated['config']['preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => true];
+                }
+            }
+            if (array_key_exists('not_preferred', $validated['config'])) {
+                foreach ($validated['config']['not_preferred'] as $categoryId) {
+                    $preferences[$categoryId] = ['preferred' => false];
+                }
+            }
+
+            $accountEntity->categoryPreference()->sync($preferences);
+
             $accountEntity->push();
 
             self::addSimpleSuccessMessage('Payee updated');
@@ -424,6 +499,11 @@ class AccountEntityController extends Controller
      */
     public function destroy(Request $request, AccountEntity $accountEntity)
     {
+        /**
+         * @delete('/account-entity/{account_entity}')
+         * @name('account-entity.destroy')
+         * @middlewares('web', 'auth', 'can:delete,account_entity')
+         */
         $this->checkTypeParam($request);
 
         try {
@@ -454,13 +534,18 @@ class AccountEntityController extends Controller
     /**
      * Display a form to merge two payees.
      *
-     * @param  \App\Models\AccountEntity $payeeSource
+     * @param  \App\Models\AccountEntity  $payeeSource
      * @return \Illuminate\Http\Response
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
     {
+        /**
+         * @get('/payees/merge/{payeeSource?}')
+         * @name('payees.merge.form')
+         * @middlewares('web', 'auth')
+         */
         if ($payeeSource) {
-            JavaScript::put([
+            JavaScriptFacade::put([
                 'payeeSource' => $payeeSource->toArray(),
             ]);
         }
@@ -473,6 +558,11 @@ class AccountEntityController extends Controller
      */
     public function mergePayees(Request $request)
     {
+        /**
+         * @post('/payees/merge')
+         * @name('payees.merge.submit')
+         * @middlewares('web', 'auth')
+         */
         $validated = $request->validate([
             'payee_source' => [
                 'required',

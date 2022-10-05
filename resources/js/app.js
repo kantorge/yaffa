@@ -1,7 +1,7 @@
 require('./bootstrap');
 
 // Helper functions
-// TODO: find appropriate place for these
+// TODO: find appropriate place for these custom functions
 Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
     if (nonBreakingSpaces !== false) {
         nonBreakingSpaces = true;
@@ -46,10 +46,25 @@ Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSp
     return result;
 };
 
-if (   window.location.pathname === '/account/summary'
-    || window.location.pathname === '/account/summary/withClosed'
-    || window.location.pathname === '/') {
-    require('./account/summary');
+Date.prototype.datePart = function () {
+    var d = new Date(this);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+Date.prototype.isoDateString = function () {
+    return this.toISOString().split('T')[0];
+}
+
+// Function to create a new date in UTC
+// TODO: where to put this function instead of global scope?
+window.todayInUTC = function () {
+    let date = new Date();
+    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+}
+
+if (window.location.pathname === '/') {
+    require('./dashboard');
 }
 
 if (window.location.pathname === '/account-group') {
@@ -62,6 +77,10 @@ if (   window.location.pathname === '/account-entity'
 if (   window.location.pathname === '/account-entity'
     && /type=payee/.test(window.location.search)) {
     require('./payees/index');
+}
+if (   /^\/account-entity\/(create|\d+\/edit)/.test(window.location.pathname)
+    && /type=payee/.test(window.location.search)) {
+    require('./payees/form');
 }
 
 if (/^\/payees\/merge/.test(window.location.pathname)) {
@@ -93,6 +112,9 @@ if (window.location.pathname === '/investment') {
 if (/^\/investment\/summary/.test(window.location.pathname)) {
     require('./investment/summary');
 }
+if (window.location.pathname === '/investment/timeline') {
+    require('./investment/timeline');
+}
 if (/^\/investment\/\d+/.test(window.location.pathname)) {
     require('./investment/show');
 }
@@ -107,13 +129,13 @@ if (window.location.pathname === '/tag') {
     require('./tags/index');
 }
 if (   window.location.pathname === '/transactions/standard/create'
-    || /^\/transactions\/standard\/\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
+    || /^\/transactions\/standard\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
 
     require('./transactions/standard');
 }
 
 if (   window.location.pathname === '/transactions/investment/create'
-    || /^\/transactions\/investment\/\d+\/(edit|clone|enter)/.test(window.location.pathname)) {
+    || /^\/transactions\/investment\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
 
     require('./transactions/investment');
 }
@@ -122,8 +144,8 @@ if (/^\/transactions\/standard\/\d+\/(show)/.test(window.location.pathname)) {
     require('./transactions/show');
 }
 
-if (window.location.pathname === '/schedule') {
-    require('./schedule/index');
+if (window.location.pathname === '/reports/schedule') {
+    require('./reports/schedule');
 }
 
 if (window.location.pathname === '/reports/cashflow') {
@@ -141,6 +163,13 @@ if (window.location.pathname === '/reports/transactions') {
 if (window.location.pathname === '/search') {
     require('./search/search');
 }
+
+if (window.location.pathname === '/import/csv') {
+    require('./import/csv');
+}
+
+// Notifications
+require('./notifications');
 
 $(function() {
     // Generally available account selector

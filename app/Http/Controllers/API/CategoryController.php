@@ -6,10 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class CategoryApiController extends Controller
+class CategoryController extends Controller
 {
     public function __construct()
     {
@@ -18,12 +19,24 @@ class CategoryApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/category')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $query = $request->get('q');
-        if ($query) {
+        if ($query && $query !== '*') {
             $categories = Auth::user()
                 ->categories()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
+                })
+                // Exclude not preferred categories even when searching for them
+                ->when($request->has('payee'), function ($query) use ($request) {
+                    $query->whereDoesntHave (
+                        'payeesNotPreferring',
+                        function (Builder $query) use ($request) {
+                            $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
+                        })->get();
                 })
                 ->get()
                 ->filter(function ($category) use ($query) {
@@ -31,6 +44,20 @@ class CategoryApiController extends Controller
                 })
                 ->sortBy('full_name')
                 ->take(10)
+                ->map(function ($category) {
+                    $category->text = $category->full_name;
+
+                    return $category->only(['id', 'text']);
+                })
+                ->values();
+        } elseif ($query === '*') {
+            $categories = Auth::user()
+                ->categories()
+                ->when($request->missing('withInactive'), function ($query) {
+                    $query->active();
+                })
+                ->get()
+                ->sortBy('full_name')
                 ->map(function ($category) {
                     $category->text = $category->full_name;
 
@@ -95,9 +122,52 @@ class CategoryApiController extends Controller
             );
     }
 
+    public function getFullList(Request $request)
+    {
+        /**
+         * @get('/api/assets/categories')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $categories = Auth::user()
+            ->categories()
+            ->when($request->missing('withInactive'), function ($query) {
+                $query->active();
+            })
+            ->get();
+
+        return response()
+            ->json(
+                $categories,
+                Response::HTTP_OK
+            );
+    }
+
     public function getItem(Category $category)
     {
+        /**
+         * @get('/api/assets/category/{category}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $category);
+
+        return response()
+            ->json(
+                $category,
+                Response::HTTP_OK
+            );
+    }
+
+    public function updateActive(Category $category, $active)
+    {
+        /**
+         * @put('/assets/category/{category}/active/{active}')
+         * @name('api.category.updateActive')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $this->authorize('update', $category);
+
+        $category->active = $active;
+        $category->save();
 
         return response()
             ->json(

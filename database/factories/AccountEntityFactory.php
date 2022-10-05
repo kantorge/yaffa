@@ -34,7 +34,7 @@ class AccountEntityFactory extends Factory
     public function payee(User $user = null)
     {
         return $this->state(function (array $attributes) use ($user) {
-            if (!$user) {
+            if (! $user) {
                 $user = User::find($attributes['user_id']);
             }
 
@@ -51,7 +51,7 @@ class AccountEntityFactory extends Factory
     public function account(User $user = null)
     {
         return $this->state(function (array $attributes) use ($user) {
-            if (!$user) {
+            if (! $user) {
                 $user = User::find($attributes['user_id']);
             }
 

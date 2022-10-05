@@ -23,9 +23,9 @@ class TransactionItemFactory extends Factory
     public function definition()
     {
         return [
-            'category_id'   => Category::whereNotNull('parent_id')->inRandomOrder()->first()->id,
-            'amount'        => $this->faker->numberBetween(1, 100),
-            'comment'       => $this->faker->boolean(50) ? $this->faker->text(191) : null,
+            'category_id' => Category::whereNotNull('parent_id')->inRandomOrder()->first()->id,
+            'amount' => $this->faker->numberBetween(1, 100),
+            'comment' => $this->faker->boolean(50) ? $this->faker->text(191) : null,
         ];
     }
 }

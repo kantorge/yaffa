@@ -24,6 +24,10 @@ class PayeeApiController extends Controller
 
     public function getList(Request $request)
     {
+        /**
+         * @get('/api/assets/payee')
+         * @middlewares('api', 'auth:sanctum')
+         */
         if ($request->get('q')) {
             $payees = Auth::user()
                 ->payees()
@@ -88,26 +92,12 @@ class PayeeApiController extends Controller
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getDefaultCategoryForPayee(Request $request)
-    {
-        if ($request->missing('payee_id')) {
-            return response('', Response::HTTP_OK);
-        }
-
-        $payee = Auth::user()
-            ->payees()
-            ->with(['config', 'config.category'])
-            ->find($request->get('payee_id'));
-
-        if (! $payee->config->category_id) {
-            return response('', Response::HTTP_OK);
-        }
-
-        return response($payee->config->category->only(['id', 'full_name']), Response::HTTP_OK);
-    }
-
     public function getPayeeDefaultSuggestion()
     {
+        /**
+         * @get('/api/assets/get_default_category_suggestion')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $baseQueryFrom = DB::table('transaction_items')
             ->join(
                 'transactions',
@@ -243,6 +233,10 @@ class PayeeApiController extends Controller
 
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
     {
+        /**
+         * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
@@ -254,6 +248,10 @@ class PayeeApiController extends Controller
 
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
     {
+        /**
+         * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
@@ -265,6 +263,11 @@ class PayeeApiController extends Controller
 
     public function storePayee(AccountEntityRequest $request)
     {
+        /**
+         * @post('/api/assets/payee')
+         * @name('api.payee.store')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('create', AccountEntity::class);
 
         $validated = $request->validated();
@@ -285,6 +288,11 @@ class PayeeApiController extends Controller
      */
     public function getSimilarPayees(Request $request)
     {
+        /**
+         * @get('/api/assets/payee/similar')
+         * @name('api.payee.similar')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $query = Str::lower($request->get('query'));
         $withActive = $request->get('withActive');
 
@@ -300,6 +308,7 @@ class PayeeApiController extends Controller
         $payees = $payees->map(function ($payee) use ($query) {
             similar_text($query, Str::lower($payee->name), $percentage);
             $payee->percentage = $percentage;
+
             return $payee;
         })
         ->filter(function ($payee) {
@@ -316,14 +325,23 @@ class PayeeApiController extends Controller
     /**
      * Get the payee entity and main attributes for the given id
      *
-     * @param AccountEntity $accountEntity
+     * @param  AccountEntity  $accountEntity
      * @return Response
      */
     public function getItem(AccountEntity $accountEntity)
     {
+        /**
+         * @get('/api/assets/payee/{accountEntity}')
+         * @middlewares('api', 'auth:sanctum')
+         */
         $this->authorize('view', $accountEntity);
 
-        $accountEntity->load(['config', 'config.category']);
+        $accountEntity->load([
+            'config',
+            'config.category',
+            'preferredCategories',
+            'deferredCategories',
+        ]);
 
         return response()
             ->json(

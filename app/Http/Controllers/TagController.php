@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class TagController extends Controller
 {
@@ -22,6 +22,11 @@ class TagController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/tag')
+         * @name('tag.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Tag')
+         */
         // Get all tags of the user from the database and return to view
         $tags = Auth::user()
             ->tags()
@@ -29,7 +34,7 @@ class TagController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'tags' => $tags,
         ]);
 
@@ -38,22 +43,37 @@ class TagController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/tag/create')
+         * @name('tag.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Tag')
+         */
         return view('tag.form');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Tag $tag
+     * @param  Tag  $tag
      * @return \Illuminate\View\View
      */
     public function edit(Tag $tag)
     {
-        return view('tag.form', ['tag'=> $tag]);
+        /**
+         * @get('/tag/{tag}/edit')
+         * @name('tag.edit')
+         * @middlewares('web', 'auth', 'can:update,tag')
+         */
+        return view('tag.form', ['tag' => $tag]);
     }
 
     public function store(TagRequest $request)
     {
+        /**
+         * @post('/tag')
+         * @name('tag.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\Tag')
+         */
         $validated = $request->validated();
 
         $tag = Tag::make($validated);
@@ -67,6 +87,12 @@ class TagController extends Controller
 
     public function update(TagRequest $request, Tag $tag)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/tag/{tag}')
+         * @name('tag.update')
+         * @middlewares('web', 'auth', 'can:update,tag')
+         */
         // Retrieve the validated input data
         $validated = $request->validated();
 
@@ -86,6 +112,11 @@ class TagController extends Controller
      */
     public function destroy(Tag $tag)
     {
+        /**
+         * @delete('/tag/{tag}')
+         * @name('tag.destroy')
+         * @middlewares('web', 'auth', 'can:delete,tag')
+         */
         $tag->delete();
 
         self::addSimpleSuccessMessage('Tag deleted');

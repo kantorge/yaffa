@@ -37,8 +37,9 @@ class LoginSuccessNotification extends Notification
     public function toMail()
     {
         logger()->debug('event', ['event' => $this->event]);
+
         return (new MailMessage())
             ->subject('YAFFA info - successful login')
-            ->line('Successful login at '. config('app.url') .' for user '. $this->event->user->email);
+            ->line('Successful login at '.config('app.url').' for user '.$this->event->user->email);
     }
 }

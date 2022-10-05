@@ -81,7 +81,7 @@ class TagTest extends TestCase
             ->postJson(
                 route("{$this->base_route}.store"),
                 [
-                    'name' => ''
+                    'name' => '',
                 ]
             );
         $response->assertStatus(422);

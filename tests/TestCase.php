@@ -10,6 +10,7 @@ abstract class TestCase extends BaseTestCase
     use CreatesApplication;
 
     protected $base_route = null;
+
     protected $base_model = null;
 
     protected function setBaseRoute($route)

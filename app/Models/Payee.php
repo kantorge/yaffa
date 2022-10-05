@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\Category;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -35,6 +31,7 @@ class Payee extends AccountEntity
      * @var array
      */
     protected $fillable = [
+        'import_alias',
         'category_id',
         'category_suggestion_dismissed',
     ];

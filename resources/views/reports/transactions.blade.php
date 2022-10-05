@@ -97,10 +97,7 @@
     </div>
 
     <div id="app">
-        <transaction-show-modal
-            element="#dataTable"
-            selector=".data-quickview"
-        ></transaction-show-modal>
+        <transaction-show-modal></transaction-show-modal>
     </div>
 
     @include('template.components.model-delete-form')

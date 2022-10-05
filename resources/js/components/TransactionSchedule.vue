@@ -1,7 +1,19 @@
 <template>
-    <div class="box" v-show="isVisible">
+    <div class="box">
         <div class="box-header with-border">
-            <h3 class="box-title">Schedule</h3>
+            <h3 class="box-title" v-html="title"></h3>
+            <div class="box-tools pull-right" v-if="withCheckbox">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            value="1"
+                            v-model="allowCustomization"
+                        >
+                        Customize
+                    </label>
+                </div>
+            </div>
         </div>
         <!-- /.box-header -->
         <div class="box-body" id="">
@@ -15,6 +27,7 @@
                         class="form-control"
                         id="schedule_frequency"
                         v-model="schedule.frequency"
+                        :disabled="!allowCustomization"
                     >
                         <option value="DAILY">Daily</option>
                         <option value="WEEKLY">Weekly</option>
@@ -28,6 +41,7 @@
                 >
                     <label for="schedule_interval" class="control-label">Interval</label>
                     <MathInput
+                        :disabled="!allowCustomization"
                         class="form-control"
                         id="schedule_interval"
                         v-model="schedule.interval"
@@ -37,16 +51,17 @@
                     class="col-xs-6 col-sm-4 form-group"
                     :class="form.errors.has('schedule_config.start_date') ? 'has-error' : ''"
                 >
-                    <label for="schedule_start" class="control-label">Start date</label>
-                    <date-picker
-                        format="YYYY-MM-DD"
-                        id="schedule_start"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
+                    <label
+                        :for="'schedule_start_' + this.$.vnode.key" class="control-label">Start date</label>
+                    <Datepicker
+                        :id="'schedule_start_' + this.$.vnode.key"
                         v-model="schedule.start_date"
-                    ></date-picker>
+                        :disabled="!allowCustomization"
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -60,15 +75,15 @@
                                 :class="!schedule.next_date ? 'fa-warning text-warning' : 'fa-info-circle text-info'"
                                 title="If next date is empty, then this schedule is considered to be finished"></span>
                     </label>
-                    <date-picker
-                        format="YYYY-MM-DD"
+                    <Datepicker
                         id="schedule_next"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
                         v-model="schedule.next_date"
-                    ></date-picker>
+                        :disabled="!allowCustomization"
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -79,6 +94,7 @@
                         class="form-control"
                         id="schedule_count"
                         v-model="schedule.count"
+                        :disabled="!allowCustomization"
                     ></MathInput>
                 </div>
                 <div
@@ -86,15 +102,15 @@
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_end" class="control-label">End date</label>
-                    <date-picker
-                        format="YYYY-MM-DD"
+                    <Datepicker
                         id="schedule_end"
-                        :lang="dataPickerLanguage"
-                        style="width: 100%;"
-                        type="date"
-                        value-type="format"
                         v-model="schedule.end_date"
-                    ></date-picker>
+                        :disabled="!allowCustomization"
+                        autoApply
+                        format="yyyy. MM. dd."
+                        :enableTimePicker="false"
+                        utc="preserve"
+                    ></Datepicker>
                 </div>
                 <div
                     class="col-xs-6 col-sm-4 form-group"
@@ -108,6 +124,7 @@
                         v-model="schedule.inflation"
                         type="number"
                         step=".01"
+                        :disabled="!allowCustomization"
                     >
                 </div>
             </div>
@@ -117,22 +134,33 @@
 </template>
 
 <script>
-    import DatePicker from 'vue2-datepicker';
-    import 'vue2-datepicker/index.css';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
     import MathInput from './MathInput.vue'
 
     export default {
         components: {
-            DatePicker,
+            Datepicker,
             MathInput,
         },
 
         props: {
-            isVisible: Boolean,
             isSchedule: Boolean,
             isBudget: Boolean,
             schedule: Object,
             form: Object,
+            title: {
+                type: String,
+                default: 'Schedule',
+            },
+            withCheckbox: {
+                type: Boolean,
+                default: false,
+            },
+            allowCustomization: {
+                type: Boolean,
+                default: true,
+            },
         },
 
         data() {

@@ -13,6 +13,12 @@
         <div class="box">
             <div class="box-header">
                 <div class="pull-right box-tools">
+                    @if(!$byYears)
+                        <button type="button" class="btn btn-primary" title="Zoom in" id="btnZoomIn">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    @endif
+
                     <a
                         class="btn {{($byYears ? 'btn-primary' : 'btn-info') }}"
                         href="{{ route('reports.budgetchart', ['byYears' => ($byYears ? '' : 'byYears')]) }}"
@@ -29,29 +35,25 @@
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="box">
-            <div class="box-header">
-                <h3>Select categories to display</h3>
-                <p>Selecting parent category loads all related subcategories too.</p>
-            </div>
-            <div class="box-body">
-                <select
-                    class="form-control"
-                    id="category_id"
-                    multiple
-                    size="15"
-                >
-                    @forelse($categories as $id => $name)
-                        <option value="{{ $id }}">
-                            {{ $name }}
-                        </option>
-                    @empty
-
-                    @endforelse
-                </select>
-            </div>
-            <div class="box-footer">
-                <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Change</button>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">
+                            Select categories to display
+                        </h3>
+                    </div>
+                    <div class="box-body">
+                        <div id="category_tree"></div>
+                    </div>
+                    <div class="box-footer">
+                        <div class="box-tools pull-right">
+                            <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">Clear selection</button>
+                            <button name="reload" type="button" id="all" class="btn btn-default btn-sm">Select all</button>
+                            <button name="reload" type="button" id="reload" class="btn btn-primary">Load data</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -74,5 +76,9 @@
         <!-- /.box -->
     </div>
 </div>
+
+@include('template.components.model-delete-form')
+
+@include('template.components.transaction-skip-form')
 
 @stop

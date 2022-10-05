@@ -10,7 +10,11 @@
 
     <div class="box">
         <div class="box-header">
-            <h3 class="box-title">List of payees</h3>
+            <div class="row">
+                <div class="col-lg-12">
+                    @include('template.components.tablefilter-active')
+                </div>
+            </div>
             <div class="pull-right box-tools">
                 <a href="{{ route('account-entity.create', ['type' => 'payee']) }}" class="btn btn-success" title="New payee"><i class="fa fa-plus"></i></a>
                 <a href="{{ route('payees.merge.form') }}" class="btn btn-primary" title="Merge payees"><i class="fa fa-random"></i></a>

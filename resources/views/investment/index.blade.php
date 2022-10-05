@@ -10,7 +10,11 @@
 
     <div class="box">
         <div class="box-header">
-            <h3 class="box-title">List of investments</h3>
+            <div class="row">
+                <div class="col-lg-12">
+                    @include('template.components.tablefilter-active')
+                </div>
+            </div>
             <div class="pull-right box-tools">
                 <a href="{{ route('investment.create') }}" class="btn btn-success" title="New investment"><i class="fa fa-plus"></i></a>
             </div>

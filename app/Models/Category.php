@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\AccountEntity;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,8 +69,34 @@ class Category extends Model
         return $query->where('active', 1);
     }
 
+    /**
+     * Scope a query to only include top level categories.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeTopLevel($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transactionItem()
+    {
+        return $this->hasMany(TransactionItem::class);
+    }
+
+    public function transaction()
+    {
+        return $this->hasManyThrough(Transaction::class, TransactionItem::class, 'category_id', 'id', 'id', 'transaction_id');
+    }
+
+    public function payeesNotPreferring()
+    {
+        return $this->belongsToMany(AccountEntity::class, 'account_entity_category_preference')->where('preferred', false);
     }
 }

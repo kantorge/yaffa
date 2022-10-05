@@ -8,6 +8,7 @@ trait CreatesApplication
 {
     /**
      * If true, setup has run at least once.
+     *
      * @var bool
      */
     protected static $createApplicationHasRunOnce = false;

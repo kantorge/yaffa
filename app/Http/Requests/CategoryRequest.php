@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\FormRequest;
-
 class CategoryRequest extends FormRequest
 {
     public function rules()

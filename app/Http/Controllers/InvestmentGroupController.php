@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentGroupController extends Controller
 {
@@ -22,6 +22,11 @@ class InvestmentGroupController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/investment-group')
+         * @name('investment-group.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\InvestmentGroup')
+         */
         // Get all investment groups of the user from the database and return to view
         $investmentGroups = Auth::user()
             ->investmentGroups()
@@ -29,7 +34,7 @@ class InvestmentGroupController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'investmentGroups' => $investmentGroups,
         ]);
 
@@ -38,22 +43,37 @@ class InvestmentGroupController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/investment-group/create')
+         * @name('investment-group.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\InvestmentGroup')
+         */
         return view('investment-group.form');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param InvestmentGroup $investmentGroup
+     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\View\View
      */
     public function edit(InvestmentGroup $investmentGroup)
     {
-        return view('investment-group.form', ['investmentGroup'=> $investmentGroup]);
+        /**
+         * @get('/investment-group/{investment_group}/edit')
+         * @name('investment-group.edit')
+         * @middlewares('web', 'auth', 'can:update,investment_group')
+         */
+        return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
     }
 
     public function store(InvestmentGroupRequest $request)
     {
+        /**
+         * @post('/investment-group')
+         * @name('investment-group.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\InvestmentGroup')
+         */
         $validated = $request->validated();
 
         $investmentGroup = InvestmentGroup::make($validated);
@@ -67,6 +87,12 @@ class InvestmentGroupController extends Controller
 
     public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/investment-group/{investment_group}')
+         * @name('investment-group.update')
+         * @middlewares('web', 'auth', 'can:update,investment_group')
+         */
         $validated = $request->validated();
 
         $investmentGroup
@@ -81,11 +107,16 @@ class InvestmentGroupController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param InvestmentGroup $investmentGroup
+     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Http\Response
      */
     public function destroy(InvestmentGroup $investmentGroup)
     {
+        /**
+         * @delete('/investment-group/{investment_group}')
+         * @name('investment-group.destroy')
+         * @middlewares('web', 'auth', 'can:delete,investment_group')
+         */
         try {
             $investmentGroup->delete();
             self::addSimpleSuccessMessage('Investment group deleted');

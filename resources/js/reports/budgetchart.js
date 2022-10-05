@@ -1,19 +1,20 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
-import { RRule } from 'rrule';
-
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-am4core.useTheme(am4themes_animated);
+import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+require('datatables.net-bs');
+import * as dataTableHelpers from './../components/dataTableHelper'
+import 'jstree';
+import 'jstree/src/themes/default/style.css'
+import { RRule } from 'rrule';
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
 const computeMovingAverage = (baseData, period) => {
     var maxActualDate = null;
-    for (var i = baseData.length ; i > 0; i--) {
-        if (baseData[i-1].actual) {
-            maxActualDate = baseData[i-1].date;
+    for (var i = baseData.length; i > 0; i--) {
+        if (baseData[i - 1].actual) {
+            maxActualDate = baseData[i - 1].date;
             break;
         }
     }
@@ -22,7 +23,7 @@ const computeMovingAverage = (baseData, period) => {
         maxActualDate = baseData[baseData.length - 1].date;
     }
 
-    return baseData.map(function(currentItem, index) {
+    return baseData.map(function (currentItem, index) {
         if (currentItem.date > maxActualDate) {
             if (index > 0) {
                 currentItem.movingAverage = baseData[index - 1].movingAverage;
@@ -34,7 +35,7 @@ const computeMovingAverage = (baseData, period) => {
         intervalStart.setMonth(intervalStart.getMonth() - period);
         var intervalEnd = currentItem.date;
 
-        var previousPeriod = baseData.filter(function(item) {
+        var previousPeriod = baseData.filter(function (item) {
             return item.date >= intervalStart && item.date <= intervalEnd;
         });
 
@@ -44,64 +45,81 @@ const computeMovingAverage = (baseData, period) => {
     })
 }
 
-window.tableData = [];
+const elementRefreshButton = document.getElementById('reload');
 
-$(function () {
-    window.chart = am4core.create("chartdiv", am4charts.XYChart);
+am4core.useTheme(am4themes_animated);
+am4core.useTheme(am4themes_kelly);
+window.chart = am4core.create("chartdiv", am4charts.XYChart);
 
-    chart.numberFormatter.intlLocales = "hu-HU";
-    chart.numberFormatter.numberFormat = {
-        style: 'currency',
-        currency: currency.iso_code,
-        minimumFractionDigits: currency.num_digits,
-        maximumFractionDigits: currency.num_digits
-    };
+chart.numberFormatter.intlLocales = "hu-HU";
+chart.numberFormatter.numberFormat = {
+    style: 'currency',
+    currency: baseCurrency.iso_code,
+    minimumFractionDigits: baseCurrency.num_digits,
+    maximumFractionDigits: baseCurrency.num_digits
+};
 
-    var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "period";
+var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+dateAxis.dataFields.category = "period";
 
-    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
-    var seriesBudget = chart.series.push(new am4charts.LineSeries());
-    seriesBudget.dataFields.valueY = "budget";
-    seriesBudget.dataFields.dateX = "date";
-    seriesBudget.name = "Budget";
-    seriesBudget.tooltipText = "{dateX}: [bold]{valueY}[/]";
+var seriesActual = chart.series.push(new am4charts.ColumnSeries());
+seriesActual.dataFields.valueY = "actual";
+seriesActual.dataFields.dateX = "date";
+seriesActual.name = "Actual";
+seriesActual.tooltipText = "[bold]Actual:[/] {valueY}";
 
-    var seriesActual = chart.series.push(new am4charts.ColumnSeries());
-    seriesActual.dataFields.valueY = "actual";
-    seriesActual.dataFields.dateX = "date";
-    seriesActual.name = "Actual";
-    seriesActual.tooltipText = "{dateX}: [bold]{valueY}[/]";
+var seriesBudget = chart.series.push(new am4charts.LineSeries());
+seriesBudget.strokeWidth = 3;
+seriesBudget.strokeDasharray = "8,4";
+seriesBudget.dataFields.valueY = "budget";
+seriesBudget.dataFields.dateX = "date";
+seriesBudget.name = "Budget";
+seriesBudget.tooltipText = "[bold]Budget:[/] {valueY}";
 
-    var seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
-    seriesMovingAverage.dataFields.valueY = "movingAverage";
-    seriesMovingAverage.dataFields.dateX = "date";
-    seriesMovingAverage.name = "Moving average";
-    seriesMovingAverage.tooltipText = "{dateX}: [bold]{valueY}[/]";
+var seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
+seriesMovingAverage.strokeWidth = 3;
+seriesMovingAverage.dataFields.valueY = "movingAverage";
+seriesMovingAverage.dataFields.dateX = "date";
+seriesMovingAverage.name = "Moving average";
+seriesMovingAverage.tooltipText = "[bold]Moving average:[/] {valueY}";
 
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(seriesBudget);
-    scrollbarX.series.push(seriesActual);
-    scrollbarX.series.push(seriesMovingAverage);
-    chart.scrollbarX = scrollbarX;
+var scrollbarX = new am4charts.XYChartScrollbar();
+scrollbarX.series.push(seriesBudget);
+scrollbarX.series.push(seriesActual);
+scrollbarX.series.push(seriesMovingAverage);
+chart.scrollbarX = scrollbarX;
 
-    chart.legend = new am4charts.Legend();
-    chart.cursor = new am4charts.XYCursor();
+chart.legend = new am4charts.Legend();
+chart.cursor = new am4charts.XYCursor();
 
-    $("#reload").on('click', function() {
-        $(this).prop('disabled', true);
+// Set AmCharts zoom in functionality for button
+const btnZoomIn = document.getElementById('btnZoomIn')
+if (btnZoomIn) {
+    btnZoomIn.addEventListener('click', function () {
+        // Zoom to current month +/- 13 months
+        var currentDate = new Date();
+        dateAxis.zoomToDates(
+            new Date(currentDate.setMonth(currentDate.getMonth() - 13)),
+            new Date(currentDate.setMonth(currentDate.getMonth() + 26))
+        );
+    });
+}
 
-        $.ajax({
-            url: '/api/budgetchart',
-            data: {
-                categories: $("#category_id").val(),
-                byYears: (byYears ? 1 : 0),
-            }
-        })
-        .done(function(data) {
+let reloadData = function () {
+    elementRefreshButton.disabled = true;
+
+    $.ajax({
+        url: '/api/budgetchart',
+        data: {
+            categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
+            byYears: (byYears ? 1 : 0),
+        }
+    })
+        .done(function (data) {
             // Convert date
-            data = data.map(function(item) {
+            data = data.map(function (item) {
                 item.date = new Date(item.period);
                 return item;
             });
@@ -113,180 +131,192 @@ $(function () {
             chart.data = data;
             chart.invalidateData();
         })
-        .always(function() {
-            $("#reload").prop('disabled', false);
+        .always(function () {
+            elementRefreshButton.disabled = false;
         });
 
-        window.table.ajax.reload();
-    });
+    window.table.ajax.reload();
 
-    var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    var numberRenderer = $.fn.dataTable.render.number( '&nbsp;', ',', 0 ).display;
+    // (Re-)Initialize tooltips in table
+    $('[data-toggle="tooltip"]').tooltip();
+}
 
-    window.table = $('#table').DataTable({
-        //data: tableData,
-        ajax: {
-            url: '/api/scheduled_transactions',
-            type: 'GET',
-            dataSrc: function(data) {
-                return data.map(function(transaction) {
-                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
-                    if (transaction.transaction_schedule.next_date) {
-                        transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-                    }
-                    if (transaction.transaction_schedule.end_date) {
-                        transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-                    }
+// Attach event listener to refresh button
+elementRefreshButton.addEventListener('click', reloadData);
 
-                    // Create rule
-                    transaction.transaction_schedule.rule = new RRule({
-                        freq: RRule[transaction.transaction_schedule.frequency],
-                        interval: transaction.transaction_schedule.interval,
-                        dtstart: transaction.transaction_schedule.start_date,
-                        until: transaction.transaction_schedule.end_date,
-                    });
+var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
-                    transaction.transaction_schedule.active = !!transaction.transaction_schedule.rule.after(new Date(), true);
+// Initially we need to prevent dataTables from calling AJAX, as JStree will not be initialized
+let initialTableLoad = true;
 
-                    return transaction;
+window.table = $('#table').DataTable({
+    ajax: {
+        url: '/api/transactions/get_scheduled_items/any',
+        type: 'GET',
+        dataSrc: function (data) {
+            var transactions = data.transactions || [];
+            return transactions.map(function (transaction) {
+                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                if (transaction.schedule_config.next_date) {
+                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
+                }
+                if (transaction.schedule_config.end_date) {
+                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
+                }
+
+                // Create rule
+                transaction.schedule_config.rule = new RRule({
+                    freq: RRule[transaction.schedule_config.frequency],
+                    interval: transaction.schedule_config.interval,
+                    dtstart: transaction.schedule_config.start_date,
+                    until: transaction.schedule_config.end_date,
                 });
-            },
-            data: function () {
-                return $.extend( {}, {
-                    'categories': $("#category_id").val()
-                });
-            },
-            deferRender: true
+
+                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
+
+                return transaction;
+            });
         },
-        columns: [
-            {
-                data: "transaction_schedule.start_date",
-                title: "Start date",
-                render: function(data, type, row, meta) {
-                    return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-                }
-            },
-            {
-                data: "transaction_schedule.rule",
-                title: "Schedule",
-                render: function(data, type, row, meta) {
-                    // Return human readable format
-                    return data.toText();
-                }
-            },
-            {
-                data: "transaction_schedule.next_date",
-                title: "Next date",
-                render: function(data, type, row, meta) {
-                    if (!data) {
-                        return '';
-                    }
+        data: function() {
+            if (initialTableLoad) {
+                initialTableLoad = false;
+                return {
+                    categories: [],
+                    category_required: 1,
+                };
+            }
 
-                    return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
+            return Object.assign({}, {
+                categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
+                category_required: 1,
+            });
+        },
+    },
+    columns: [
+        {
+            data: "schedule_config.start_date",
+            title: "Start date",
+            render: function (data) {
+                return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
+            },
+            className: "dt-nowrap",
+        },
+        {
+            data: "schedule_config.rule",
+            title: "Schedule",
+            render: function (data) {
+                // Return human readable format
+                return data.toText();
+            }
+        },
+        {
+            data: "schedule_config.next_date",
+            title: "Next date",
+            render: function (data) {
+                if (!data) {
+                    return '';
                 }
-            },
-            {
-                data: "schedule",
-                title: "Schedule",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
-                },
-                className: "text-center",
-            },
-            {
-                data: "budget",
-                title: "Budget",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
-                },
-                className: "text-center",
-            },
-            {
-                data: "transaction_schedule.active",
-                title: "Active",
-                render: function (data, type, row, meta ) {
-                    if (type == 'filter') {
-                        return  (data ? 'Yes' : 'No');
-                    }
-                    return (  data
-                            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                            : '<i class="fa fa-square text-danger" title="No"></i>');
-                },
-                className: "text-center",
-            },
-            {
-                data: "transaction_type.type",
-                title: "Type",
-            },
-            {
-                title: 'Payee',
-                render: function (data, type, row, meta ) {
-                    if (row.transaction_type.type == 'Standard') {
-                        if (row.transaction_type.name == 'withdrawal') {
-                            return row.account_to_name;
-                        }
-                        if (row.transaction_type.name == 'deposit') {
-                            return row.account_from_name;
-                        }
-                        if (row.transaction_type.name == 'transfer') {
-                            if (row.transaction_operator == 'minus') {
-                                return 'Transfer to ' + row.account_to_name;
-                            } else {
-                                return 'Transfer from ' + row.account_from_name;
-                            }
-                        }
-                    } else if (row.transaction_type.type == 'Investment') {
-                        return row.investment_name;
-                    }
 
-                    return null;
-                },
+                return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
             },
-            {
-                title: "Category",
-                render: function (data, type, row, meta ) {
-                    //standard transaction
-                    if (row.transaction_type == 'Standard') {
-                        //empty
-                        if (row.categories.length == 0) {
-                            return '';
-                        }
-
-                        if (row.categories.length > 1) {
-                            return 'Split transaction';
+            className: "dt-nowrap",
+        },
+        {
+            data: "schedule",
+            title: "Schedule",
+            render: function (data, type) {
+                return dataTableHelpers.booleanToTableIcon(data, type);
+            },
+            className: "text-center",
+        },
+        {
+            data: "budget",
+            title: "Budget",
+            render: function (data, type) {
+                return dataTableHelpers.booleanToTableIcon(data, type);
+            },
+            className: "text-center",
+        },
+        {
+            data: "schedule_config.active",
+            title: "Active",
+            render: function (data, type) {
+                return dataTableHelpers.booleanToTableIcon(data, type);
+            },
+            className: "text-center",
+        },
+        {
+            data: "transaction_config_type",
+            title: "Type",
+            render: function (data, type) {
+                if (type == 'filter') {
+                    return  data;
+                }
+                return (  data === 'standard'
+                        ? '<i class="fa fa-money text-primary" title="Standard"></i>'
+                        : '<i class="fa fa-line-chart text-primary" title="Investment"></i>');
+            },
+            className: "text-center",
+        },
+        {
+            title: 'Payee',
+            render: function (_data, _type, row) {
+                if (row.transaction_config_type === 'standard') {
+                    if (row.transaction_type.name === 'withdrawal' && row.config.account_to) {
+                        return row.config.account_to.name;
+                    }
+                    if (row.transaction_type.name === 'deposit' && row.config.account_from) {
+                        return row.config.account_from.name;
+                    }
+                    if (row.transaction_type.name === 'transfer') {
+                        if (row.transaction_operator === 'minus') {
+                            return 'Transfer to ' + row.config.account_to.name;
                         } else {
-                            return row.categories[0];
+                            return 'Transfer from ' + row.config.account_from.name;
                         }
                     }
-                    //investment transaction
-                    if (row.transaction_type == 'Investment') {
-                        if (!row.quantity_operator) {
-                            return row.transaction_type.name;
-                        }
-                        if (!row.transaction_operator) {
-                            return row.transaction_type.name + " " + row.quantity;
-                        }
+                }
+                if (row.transaction_config_type === 'investment') {
+                    return row.investment_name;
+                }
 
-                        return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                return null;
+            },
+        },
+        {
+            title: "Category",
+            render: function (_data, _type, row) {
+                //standard transaction
+                if (row.transaction_config_type === 'standard') {
+                    if (row.categories.length > 1) {
+                        return 'Split transaction';
+                    }
+                    if (row.categories.length === 1) {
+                        return row.categories[0];
                     }
 
                     return '';
-                },
-                orderable: false
+                }
+                //investment transaction
+                if (row.transaction_config_type === 'investment') {
+                    if (!row.quantity_operator) {
+                        return row.transaction_type.name;
+                    }
+                    if (!row.transaction_operator) {
+                        return row.transaction_type.name + " " + row.quantity;
+                    }
+
+                    return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
+                }
+
+                return '';
             },
-            {
-                title: "Amount",
-                render: function (data, type, row, meta ) {
+            orderable: false
+        },
+        {
+            title: "Amount",
+            render: function (_data, type, row) {
+                if (type === 'display') {
                     let prefix = '';
                     if (row.transaction_operator == 'minus') {
                         prefix = '- ';
@@ -294,86 +324,155 @@ $(function () {
                     if (row.transaction_operator == 'plus') {
                         prefix = '+ ';
                     }
-                    return prefix + numberRenderer(row.amount_to);
-                },
-            },
-            {
-                data: "comment",
-                title: "Comment",
-                render: function(data, type, row, meta){
-                    if(type === 'display'){
-                       data = truncateString(data, 20);
-                    }
-
-                    return data;
-                 },
-                createdCell: function (td, cellData, rowData, row, col) {
-                    $(td).prop('title', cellData);
+                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
                 }
-            },
-            {
-                data: "tags",
-                title: "Tags",
-                render: function (data, type, row, meta ) {
-                    return data.join(', ');
-                }
-            },
-            {
-                data: 'id',
-                title: "Actions",
-                render: function (data, type, row, meta ) {
-                    return  '' +
-                            (row.transaction_type.type == 'Standard'
-                             ? '<a href="' + route('transactions.openStandard', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openStandard', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> '
-                             : '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                               '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' ) +
-                            '<button class="btn btn-xs btn-danger data-delete" data-form="' + data + '"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ' +
-                            '<form id="form-delete-' + data + '" action="' + route('transactions.destroy', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="_token" value="' + csrfToken + '"></form>' +
-                            '<a href="' + (row.transaction_type.type == 'Standard' ? route('transactions.openStandard', {transaction: data, action: 'enter'}) : route('transactions.openInvestment', {transaction: data, action: 'enter'})) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-form="' + data + '"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
-                            '<form id="form-skip-' + data + '" action="' + route('transactions.skipScheduleInstance', {transaction: data}) + '" method="POST" style="display: none;"><input type="hidden" name="_method" value="PATCH"><input type="hidden" name="_token" value="' + csrfToken + '"></form>';
-                },
-                orderable: false
-            }
-        ],
-        createdRow: function( row, data) {
-            if (!data.transaction_schedule.next_date) {
-                return;
-            }
 
-            if (data.transaction_schedule.next_date  < new Date(new Date().setHours(0,0,0,0)) ) {
-                $(row).addClass('danger');
-            } else if (data.transaction_schedule.next_date  < new Date(new Date().setHours(24,0,0,0)) ) {
-                $(row).addClass('warning');
-            }
+                return row.config.amount_to;
+            },
+            className: 'dt-nowrap',
         },
-        order: [
-            [ 0, "asc" ]
-        ],
-        deferRender:    true,
-        scrollY:        '400px',
-        scrollCollapse: true,
-        scroller:       true,
-        stateSave:      false,
-        processing:     true,
-        paging:         false,
-    });
+        {
+            data: 'comment',
+            title: "Comment",
+            render: function (data, type) {
+                return dataTableHelpers.commentIcon(data, type);
+            },
+            className: "text-center",
+        },
+        {
+            data: "tags",
+            title: "Tags",
+            render: function (data, type) {
+                return dataTableHelpers.tagIcon(data, type);
+            },
+            className: "text-center",
+        },
+        {
+            data: 'id',
+            title: "Actions",
+            render: function (data, _type, row) {
+                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_config_type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'delete') +
+                    (row.schedule
+                        ? '<a href="' + (row.transaction_config_type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
+                        '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
+                        : '');
+            },
+            orderable: false
+        }
+    ],
+    createdRow: function (row, data) {
+        if (!data.schedule_config.next_date) {
+            return;
+        }
 
-    $('.data-skip').on('click', function (e) {
-        e.preventDefault();
-        $('#form-skip-' + $(this).data('form')).submit();
-    });
-
-    $("#table").on("click", ".data-delete", function(e) {
-        if (!confirm('Are you sure to want to delete this item?')) return;
-        e.preventDefault();
-        $('#form-delete-' + $(this).data('form')).submit();
-    });
+        if (data.schedule_config.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+            $(row).addClass('danger');
+        } else if (data.schedule_config.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+            $(row).addClass('warning');
+        }
+    },
+    initComplete: function (_settings, _json) {
+        $('[data-toggle="tooltip"]').tooltip();
+    },
+    order: [
+        [0, "asc"]
+    ],
+    deferRender: true,
+    scrollY: '400px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
 });
 
-// DataTables helper: truncate a string
-function truncateString(str, max, add) {
-    add = add || '...';
-    return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
+dataTableHelpers.initializeSkipInstanceButton("#table");
+dataTableHelpers.initializeDeleteButton("#table");
+
+// Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
+let presetFilters = {
+    ready: function () {
+        for (let key in presetFilters) {
+            if (presetFilters[key] === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+
+// Loop filter categories and populate presetFilters array.
+presetCategories.forEach(category => presetFilters[category] = false);
+
+// Disable table refresh, if any filters are preset
+if (!presetFilters.ready()) {
+    elementRefreshButton.disabled = true;
 }
+
+// Attach event listener to category select2 for select and unselect events to update browser url, without reloading page.
+let rebuildUrl = function () {
+    let params = $('#category_tree').jstree('get_checked').map((category) => 'categories[]=' + category);
+    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+
+    // Finally, adjust reload button availability
+    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
+}
+
+// Initialize category tree view
+$('#category_tree')
+.jstree({
+    core: {
+        data: function (_obj, callback) {
+            fetch('/api/assets/categories?withInactive=1')
+                .then(response => response.json())
+                .then(data => {
+                    let categories = data.map(function(category) {
+                        var i = presetCategories.findIndex(cat => cat == category.id);
+                        presetCategories[i] = false;
+
+                        return {
+                            id: category.id,
+                            parent: category.parent_id || '#',
+                            text: (category.active ? category.name : '<span class="text-muted" title="Inactive">' + category.name + '</span>'),
+                            full_name: category.full_name,
+                            icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
+                            state: {
+                                selected: (i > -1)
+                            }
+                        }
+                    });
+                    callback.call(this, categories);
+                })
+		},
+        themes: {
+            dots: false
+          }
+    },
+    plugins: [
+        "checkbox"
+    ],
+    checkbox: {
+        keep_selected_style: false
+    },
+})
+.on('select_node.jstree', rebuildUrl)
+.on('deselect_node.jstree', rebuildUrl)
+.on('ready.jstree', function() {
+    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
+    reloadData();
+});
+
+// Select all button function
+document.getElementById('all').addEventListener('click', function() {
+    $('#category_tree').jstree('check_all');
+    rebuildUrl()
+});
+
+// Clear button function
+document.getElementById('clear').addEventListener('click', function() {
+    $('#category_tree').jstree('uncheck_all');
+    rebuildUrl()
+});

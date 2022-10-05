@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Support\Facades\Auth;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountGroupController extends Controller
 {
@@ -22,6 +22,11 @@ class AccountGroupController extends Controller
      */
     public function index()
     {
+        /**
+         * @get('/account-group')
+         * @name('account-group.index')
+         * @middlewares('web', 'auth', 'can:viewAny,App\Models\AccountGroup')
+         */
         // Get all account groups of the user from the database and return to view
         $accountGroups = Auth::user()
             ->accountGroups()
@@ -29,7 +34,7 @@ class AccountGroupController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScript::put([
+        JavaScriptFacade::put([
             'accountGroups' => $accountGroups,
         ]);
 
@@ -38,22 +43,37 @@ class AccountGroupController extends Controller
 
     public function create()
     {
+        /**
+         * @get('/account-group/create')
+         * @name('account-group.create')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountGroup')
+         */
         return view('account-group.form');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param AccountGroup $accountGroup
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\View\View
      */
     public function edit(AccountGroup $accountGroup)
     {
-        return view('account-group.form', ['accountGroup'=> $accountGroup]);
+        /**
+         * @get('/account-group/{account_group}/edit')
+         * @name('account-group.edit')
+         * @middlewares('web', 'auth', 'can:update,account_group')
+         */
+        return view('account-group.form', ['accountGroup' => $accountGroup]);
     }
 
     public function store(AccountGroupRequest $request)
     {
+        /**
+         * @post('/account-group')
+         * @name('account-group.store')
+         * @middlewares('web', 'auth', 'can:create,App\Models\AccountGroup')
+         */
         $validated = $request->validated();
 
         $accountGroup = AccountGroup::make($validated);
@@ -67,6 +87,12 @@ class AccountGroupController extends Controller
 
     public function update(AccountGroupRequest $request, AccountGroup $accountGroup)
     {
+        /**
+         * @methods('PUT', PATCH')
+         * @uri('/account-group/{account_group}')
+         * @name('account-group.update')
+         * @middlewares('web', 'auth', 'can:update,account_group')
+         */
         $validated = $request->validated();
 
         $accountGroup->fill($validated)
@@ -85,6 +111,11 @@ class AccountGroupController extends Controller
      */
     public function destroy(AccountGroup $accountGroup)
     {
+        /**
+         * @delete('/account-group/{account_group}')
+         * @name('account-group.destroy')
+         * @middlewares('web', 'auth', 'can:delete,account_group')
+         */
         try {
             $accountGroup->delete();
             self::addSimpleSuccessMessage('Account group deleted');

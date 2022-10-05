@@ -20,8 +20,10 @@ try {
  */
 
 window.axios = require('axios');
-
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Get CSRF Token from meta tag
+window.csrfToken = $('meta[name="csrf-token"]').attr('content');
 
 /**
  * Next we will register the CSRF Token as a common header with Axios so that

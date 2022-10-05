@@ -24,6 +24,11 @@
         @case('enter')
             Enter scheduled transaction instance
             @break
+
+        @case('replace')
+            Clone scheduled transaction and close base item
+            @break
+
     @endswitch
 @endsection
 

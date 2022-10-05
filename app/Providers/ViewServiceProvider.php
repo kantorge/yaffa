@@ -8,6 +8,7 @@ use App\Http\View\Composers\CategoryParentListComposer;
 use App\Http\View\Composers\CurrencyListComposer;
 use App\Http\View\Composers\InvestmentGroupListComposer;
 use App\Http\View\Composers\InvestmentPriceProviderListComposer;
+use App\Http\View\Composers\JavaScriptVariablesComposer;
 use App\Http\View\Composers\NotificationMessageComposer;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +24,9 @@ class ViewServiceProvider extends ServiceProvider
     {
         // Account list for quick jump
         View::composer('template.layouts.page', AccountListComposer::class);
+
+        // Generic JavaScript variables (for logged in views)
+        View::composer('template.layouts.page', JavaScriptVariablesComposer::class);
 
         // General notification helper content
         View::composer('template.layouts.page', NotificationMessageComposer::class);

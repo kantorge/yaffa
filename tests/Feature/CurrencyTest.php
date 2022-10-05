@@ -41,16 +41,16 @@ class CurrencyTest extends TestCase
         $currency = $this->createForUser($user1, $this->base_model);
 
         $user2 = User::factory()->create();
-
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-
     /** @test */
     public function user_can_view_list_of_currencies()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model);
 
@@ -63,6 +63,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
 
         $response = $this
@@ -76,13 +77,15 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_create_a_currency_with_missing_data()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
+
         $response = $this
             ->actingAs($user)
             ->postJson(
                 route("{$this->base_route}.store"),
                 [
-                    'name' => ''
+                    'name' => '',
                 ]
             );
         $response->assertStatus(422);
@@ -99,7 +102,9 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_currency()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
+
         $currency = $this->createForUser($user, $this->base_model);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $currency));
@@ -111,7 +116,9 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_update_a_currency_with_missing_data()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
+
         $currency = $this->createForUser($user, $this->base_model);
 
         $response = $this
@@ -131,7 +138,9 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_update_a_currency_with_proper_data()
     {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
         $user = User::factory()->create();
+
         $currency = $this->createForUser($user, $this->base_model);
 
         $response = $this

@@ -4,9 +4,7 @@
         :id="'transaction_item_' + id"
     >
         <div class="row">
-            <div
-                class="col-xs-12 col-sm-4 form-group"
-            >
+            <div class="col-xs-12 col-sm-4 form-group">
                 <label>Category</label>
                 <select
                     class="form-control category"

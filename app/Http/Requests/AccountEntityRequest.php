@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -57,6 +56,33 @@ class AccountEntityRequest extends FormRequest
                     Rule::exists('categories', 'id')->where(function ($query) {
                         return $query->where('user_id', Auth::user()->id);
                     }),
+                ],
+                'config.import_alias' => [
+                    'nullable',
+                    'string',
+                ],
+                'config.preferred' => [
+                    'nullable',
+                    'array',
+                ],
+                'config.preferred.*' => [
+                    Rule::exists('categories', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                    // TODO: prevent items to be added from other select
+                    Rule::notIn('config.not_preferred'),
+                ],
+                'config.not_preferred' => [
+                    'nullable',
+                    'array',
+                ],
+                'config.not_preferred.*' => [
+                    Rule::exists('categories', 'id')->where(function ($query) {
+                        return $query->where('user_id', Auth::user()->id);
+                    }),
+                    // TODO: prevent items to be added from other select
+                    Rule::notIn('config.preferred'),
+                    'different:config.category_id',
                 ],
             ]);
         }

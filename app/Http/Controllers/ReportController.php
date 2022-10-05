@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class ReportController extends Controller
 {
@@ -25,6 +25,12 @@ class ReportController extends Controller
 
     public function cashFlow(Request $request)
     {
+        /**
+         * @get('/reports/cashflow')
+         * @name('reports.cashflow')
+         * @middlewares('web', 'auth')
+         */
+
         // Check if forecast is required
         $withForecast = $request->get('withForecast') ?? false;
 
@@ -215,7 +221,7 @@ class ReportController extends Controller
             return $a['month'] <=> $b['month'];
         });
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'transactionDataHistory' => $final,
             'singleAxes' => (bool) $singleAxes,
             'currency' => $baseCurrency,
@@ -232,22 +238,23 @@ class ReportController extends Controller
 
     public function budgetChart(Request $request)
     {
+        /**
+         * @get('/reports/budgetchart')
+         * @name('reports.budgetchart')
+         * @middlewares('web', 'auth')
+         */
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
 
-        // Get all categories
-        $categories = Category::all()->sortBy('full_name');
-
         // Pass currency related data for amCharts
-        JavaScript::put([
-            'currency' => $this->getBaseCurrency(),
+        JavaScriptFacade::put([
+            'presetCategories' => $request->get('categories', []),
             'byYears' => $byYears,
         ]);
 
         return view(
             'reports.budgetchart',
             [
-                'categories' => $categories->pluck('full_name', 'id'),
                 'byYears' => $byYears,
             ]
         );
@@ -256,11 +263,16 @@ class ReportController extends Controller
     /**
      * Display form for searching transactions. Pass any preset filters from query string.
      *
-     * @param  Request $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function transactionsByCriteria(Request $request)
     {
+        /**
+         * @get('/reports/transactions')
+         * @name('reports.transactions')
+         * @middlewares('web', 'auth')
+         */
         // Get preset filters from query string
         $filters = [];
         if ($request->has('accounts')) {
@@ -269,11 +281,27 @@ class ReportController extends Controller
         if ($request->has('payees')) {
             $filters['payees'] = $request->get('payees');
         }
+        if ($request->has('categories')) {
+            $filters['categories'] = $request->get('categories');
+        }
+        if ($request->has('tags')) {
+            $filters['tags'] = $request->get('tags');
+        }
 
-        JavaScript::put([
+        JavaScriptFacade::put([
             'filters' => $filters,
         ]);
 
         return view('reports.transactions');
+    }
+
+    public function getSchedules()
+    {
+        /**
+         * @get('/reports/schedule')
+         * @name('report.schedules')
+         * @middlewares('web', 'auth')
+         */
+        return view('reports.schedule');
     }
 }

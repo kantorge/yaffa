@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Investment;
 use Illuminate\Database\Eloquent\Model;
 
 class InvestmentPrice extends Model

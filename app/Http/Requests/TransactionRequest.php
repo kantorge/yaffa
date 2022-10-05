@@ -18,8 +18,10 @@ class TransactionRequest extends FormRequest
     public function rules()
     {
         $rules = [
+            'action' => 'required|in:create,edit,clone,enter,replace',
+            'fromModal' => 'nullable|boolean',
+
             'id' => 'nullable|exists:transactions,id',
-            'action' => 'required|in:create,edit,clone,enter',
             'transaction_type_id' => 'required|exists:transaction_types,id',
             'comment' => 'nullable|max:191',
             'reconciled' => 'boolean',
@@ -61,6 +63,30 @@ class TransactionRequest extends FormRequest
         } else {
             $rules = array_merge($rules, [
                 'date' => 'required|date',
+            ]);
+        }
+
+        // Add optional rules for replacing a schedule
+        if ($this->get('action') === 'replace') {
+            $rules = array_merge($rules, [
+                'original_schedule_config.start_date' => 'required|date',
+                'original_schedule_config.next_date' => [
+                    'nullable',
+                    'date',
+                    'after_or_equal:original_schedule_config.start_date',
+                ],
+                'original_schedule_config.end_date' => [
+                    'nullable',
+                    'date',
+                    'after_or_equal:original_schedule_config.start_date',
+                ],
+                'original_schedule_config.frequency' => [
+                    'required',
+                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+                ],
+                'original_schedule_config.interval' => 'nullable|integer|gte:1',
+                'original_schedule_config.count' => 'nullable|integer|gte:1',
+                'original_schedule_config.inflation' => 'nullable|numeric',
             ]);
         }
 

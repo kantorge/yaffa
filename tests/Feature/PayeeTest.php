@@ -46,26 +46,23 @@ class PayeeTest extends TestCase
 
         $user2 = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
-
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
     }
-
 
     /** @test */
     public function user_can_view_list_of_payees()
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Category::class);
         AccountEntity::factory()->for($user)->payee($user)->count(5)->create();
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'payee']));
 
         $response->assertStatus(200);
-        $response->assertViewIs("payee.index");
+        $response->assertViewIs('payee.index');
     }
 
     /** @test */
@@ -73,13 +70,12 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $response = $this
             ->actingAs($user)
             ->get(route("{$this->base_route}.create", ['type' => 'payee']));
 
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertViewIs("payee.form");
+        $response->assertViewIs('payee.form');
     }
 
     /** @test */
@@ -87,7 +83,6 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $category = $this->createForUser($user, Category::class);
         $response = $this
             ->actingAs($user)
@@ -111,7 +106,6 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Category::class);
 
         $attributes = $baseAttributes = AccountEntity::factory()->for($user)->raw();
@@ -137,7 +131,6 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -151,7 +144,7 @@ class PayeeTest extends TestCase
             );
 
         $response->assertStatus(200);
-        $response->assertViewIs("payee.form");
+        $response->assertViewIs('payee.form');
     }
 
     /** @test */
@@ -159,7 +152,6 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -185,7 +177,6 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -218,7 +209,6 @@ class PayeeTest extends TestCase
         $user = User::factory()->create();
         $this->createForUser($user, Category::class);
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
-
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
         $payeeConfig = $payee->config;
 

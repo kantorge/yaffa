@@ -5,18 +5,18 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [MainController::class, 'index'])->name('home');
+Route::view('/', 'dashboard')->name('home');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
 Route::resource('account-entity', AccountEntityController::class)->except(['show']);
@@ -25,10 +25,6 @@ Route::get(
     '/account/history/{account}/{withForecast?}',
     [MainController::class, 'account_details']
 )->name('account.history');
-
-Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-
-Route::get('/account/summary/{withClosed?}', [MainController::class, 'index'])->name('account.summary');
 
 Route::resource('categories', CategoryController::class)->except(['show']);
 Route::resource('currencies', CurrencyController::class)->except(['show']);
@@ -52,10 +48,11 @@ Route::get(
 Route::resource(
     'currency-rate',
     CurrencyRateController::class
-)->except(['index', 'show']);
+)->only(['destroy']);
 
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
+Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
 Route::get(
@@ -77,24 +74,22 @@ Route::resource('tag', TagController::class)->except(['show']);
 
 Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
 Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
-Route::post('/transactions/standard', [TransactionController::class, 'storeStandard'])->name('transactions.storeStandard');
 Route::post('/transactions/investment', [TransactionController::class, 'storeInvestment'])->name('transactions.storeInvestment');
 
 Route::get(
     '/transactions/standard/{transaction}/{action}',
     [TransactionController::class, 'openStandard']
 )
-->where('action', 'edit|clone|enter|show')
-->name('transactions.openStandard');
+->where('action', 'edit|clone|enter|show|replace')
+->name('transactions.open.standard');
 
 Route::get(
     '/transactions/investment/{transaction}/{action}',
     [TransactionController::class, 'openInvestment']
 )
-->where('action', 'edit|clone|enter')
-->name('transactions.openInvestment');
+->where('action', 'edit|clone|enter|replace')
+->name('transactions.open.investment');
 
-Route::patch('/transactions/standard/{transaction}', [TransactionController::class, 'updateStandard'])->name('transactions.updateStandard');
 Route::patch('/transactions/investment/{transaction}', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])->name('transactions.skipScheduleInstance');
 Route::resource(
@@ -105,6 +100,7 @@ Route::resource(
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
+Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])->name('reports.transactions');
 
 // Routes to display form to merge two payees

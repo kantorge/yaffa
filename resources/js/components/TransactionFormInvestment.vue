@@ -47,15 +47,15 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="date" class="control-label">Date</label>
-                                        <date-picker
+                                        <Datepicker
                                             id="date"
-                                            :lang="dataPickerLanguage"
                                             v-model="form.date"
-                                            value-type="format"
-                                            format="YYYY-MM-DD"
-                                            type="date"
                                             :disabled="form.schedule"
-                                        ></date-picker>
+                                            autoApply
+                                            format="yyyy. MM. dd."
+                                            :enableTimePicker="false"
+                                            utc="preserve"
+                                        ></Datepicker>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -63,12 +63,17 @@
                                         <input
                                             id="entry_type_schedule"
                                             class="checkbox-inline"
-                                            :disabled="form.reconciled"
+                                            :disabled="form.reconciled || action == 'replace'"
                                             type="checkbox"
                                             value="1"
                                             v-model="form.schedule"
                                         >
-                                        <label for="entry_type_schedule" class="control-label">Scheduled</label>
+                                        <label
+                                            for="entry_type_schedule"
+                                            class="control-label"
+                                            :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
+                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
+                                        >Scheduled</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -177,11 +182,24 @@
     <!-- /.box -->
 
         <transaction-schedule
-            :isVisible="form.schedule"
+            v-if="form.schedule"
             :isSchedule="form.schedule"
             :isBudget="false"
             :schedule="form.schedule_config"
             :form="form"
+        ></transaction-schedule>
+
+        <transaction-schedule
+            v-if="form.schedule && action === 'replace'"
+            :withCheckbox = "true"
+            title = "Update base schedule"
+            :allowCustomization = "false"
+            ref = "scheduleOriginal"
+
+            :isSchedule = "form.schedule"
+            :isBudget = "false"
+            :schedule = "form.original_schedule_config"
+            :form = "form"
         ></transaction-schedule>
 
         <footer class="main-footer navbar-fixed-bottom hidden">
@@ -247,16 +265,16 @@
     import Form from 'vform'
     import {Button, AlertErrors} from 'vform/src/components/bootstrap4'
 
-    import DatePicker from 'vue2-datepicker';
-    import 'vue2-datepicker/index.css';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css'
 
     import TransactionSchedule from './TransactionSchedule.vue'
 
     export default {
         components: {
-            'transaction-schedule': TransactionSchedule,
+            TransactionSchedule,
             MathInput,
-            DatePicker,
+            Datepicker,
             Button, AlertErrors
         },
 
@@ -290,7 +308,7 @@
             data.investment_currency = null;
             data.investment_currency_id = null;
 
-            data.csrfToken = $('meta[name="csrf-token"]').attr('content');
+            data.csrfToken = window.csrfToken;
 
             // TODO: adjust initial callback based on action
             data.callback = 'new';
@@ -317,15 +335,12 @@
                     label: 'Return to dashboard',
                     enabled: true,
                 },
-            ]
-
-            // Date picker settings
-            data.dataPickerLanguage = {
-                formatLocale: {
-                    firstDayOfWeek: 1,
+                {
+                    value: 'back',
+                    label: 'Return to previous page',
+                    enabled: true,
                 },
-                monthBeforeYear: false,
-            };
+            ]
 
             return data;
         },
@@ -390,6 +405,21 @@
                     this.form.schedule_config.start_date = this.transaction.transaction_schedule.start_date;
                     this.form.schedule_config.next_date = this.transaction.transaction_schedule.next_date;
                     this.form.schedule_config.end_date = this.transaction.transaction_schedule.end_date;
+                }
+
+                // If creating a schedule clone, we need to duplicate the schedule config, and make some adjustments
+                if (this.action === 'replace') {
+                    this.form.original_schedule_config = JSON.parse(JSON.stringify(this.form.schedule_config));
+                    this.form.original_schedule_config.next_date = undefined;
+
+                    let date = new Date();
+
+                    // Set new schedule start date to today
+                    this.form.schedule_config.start_date = date.toISOString().slice(0, 10);
+
+                    // Set cloned schedule end date to today - 1 day
+                    date.setDate( date.getDate() - 1);
+                    this.form.original_schedule_config.end_date = date.toISOString().slice(0, 10);
                 }
             }
 
@@ -584,6 +614,9 @@
                 });
             }
 
+            // Initial sync between schedules, if applicable
+            this.syncScheduleStartDate(this.form.schedule_config.start_date);
+
             // Display fixed footer
             setTimeout(function() {
                 $("footer").removeClass("hidden");
@@ -603,25 +636,37 @@
                     this.form.config.dividend = null;
                 }
             },
-            getCallbackUrl(transactionId) {
-                if (this.callback == 'returnToDashboard') {
-                    return route('home');
+            loadCallbackUrl(transactionId) {
+                if (this.callback === 'returnToDashboard') {
+                    location.href =  route('home');
+                    return;
                 }
 
-                if (this.callback == 'new') {
-                    return route('transactions.createInvestment');
+                if (this.callback === 'new') {
+                    location.href =  route('transactions.createInvestment');
+                    return;
                 }
 
-                if (this.callback == 'clone') {
-                    return route('transactions.openInvestment', { transaction: transactionId, action: 'clone' });
+                if (this.callback === 'clone') {
+                    location.href =  route('transactions.open.investment', { transaction: transactionId, action: 'clone' });
+                    return;
                 }
 
-                if (this.callback == 'returnToPrimaryAccount') {
-                    return route('account.history', { account: this.form.config.account_id });
+                if (this.callback === 'returnToPrimaryAccount') {
+                    location.href =  route('account.history', { account: this.form.config.account_id });
+                    return;
                 }
 
-                if (this.callback == 'returnToSecondaryAccount') {
-                    return route('account.history', { account: this.form.config.account_id });
+                if (this.callback === 'returnToSecondaryAccount') {
+                    location.href =  route('account.history', { account: this.form.config.account_id });
+                    return;
+                }
+
+                // Default, return back
+                if (document.referrer) {
+                    location.href = document.referrer;
+                } else {
+                    history.back();
                 }
             },
 
@@ -636,18 +681,45 @@
                 if (this.action !== 'edit') {
                     this.form.post(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 } else {
                     this.form.patch(this.formUrl, this.form)
                         .then(( response ) => {
-                            location.href = this.getCallbackUrl(response.data.transaction_id);
+                            this.loadCallbackUrl(response.data.transaction_id);
                         });
                 }
             },
 
+            // Sync the standard schedule start date to the cloned schedule end date
+            syncScheduleStartDate(newDate) {
+                if (!this.form.original_schedule_config) {
+                    return;
+                }
+
+                if (!this.$refs.scheduleOriginal || this.$refs.scheduleOriginal.allowCustomization) {
+                    return;
+                }
+
+                let date = new Date(newDate);
+                date.setDate( date.getDate() - 1);
+                this.form.original_schedule_config.end_date = date.isoDateString();
+            },
+        },
+
+        watch: {
+            // On change of new schedule start date, adjust original schedule end date to previous day
+            "form.schedule_config.start_date": function (newDate) {
+                this.syncScheduleStartDate(newDate);
+            },
         }
     }
+
+    // Initialize tooltips
+    // TODO: can this be part of Vue init?
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
 </script>
 
 <style scoped>

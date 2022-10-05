@@ -1,5 +1,4 @@
-require( 'datatables.net' );
-require( 'datatables.net-bs' );
+require('datatables.net-bs');
 
 import Datepicker from 'vanillajs-datepicker/Datepicker';
 
@@ -7,13 +6,6 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
-
-// Some helper functions
-window.getIsoDate = function (date) {
-    return new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ))
-            .toISOString()
-            .split("T")[0];
-}
 
 window.calculateYears = function (from, to) {
     var diffMs = to - from;
@@ -38,11 +30,18 @@ window.quantities = window.quantities.map(function(quantity) {
     return quantity;
 });
 
-// Add a dummy value to quantity chart to draw beyon last value. Set date to next month. Values are copied from last value.
+// Add a dummy value to quantity chart to draw beyond last value. Set date to two months ahead. Values are copied from last value.
 window.quantities.push({
-    date: new Date(quantities[quantities.length - 1].date.getTime() + 30*24*60*60*1000),
+    date: new Date(quantities[quantities.length - 1].date.getTime() + 2*30*24*60*60*1000),
     quantity: quantities[quantities.length - 1].quantity,
     schedule: quantities[quantities.length - 1].schedule,
+});
+
+// Add a dummy value to quantity chart to draw before first value. Set date to two months behind. Values are set to 0, assuming no historical quantity existed.
+window.quantities.unshift({
+    date: new Date(quantities[0].date.getTime() - 2*30*24*60*60*1000),
+    quantity: 0,
+    schedule: 0,
 });
 
 window.summary = {
@@ -101,10 +100,10 @@ window.table = $('#table').DataTable({
 
                 return data
             },
-            className: "cell-no-break",
+            className: "dt-nowrap",
         },
         {
-            data: "transaction_name",
+            data: "transaction_type",
             title: "Transaction",
         },
         {
@@ -186,8 +185,8 @@ window.table = $('#table').DataTable({
                     '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
                 if (!row.schedule) {
                     actions += '' +
-                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                    '<a href="' + route('transactions.openInvestment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
                     '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
                 }
 
@@ -282,10 +281,10 @@ window.calculateSummary = function() {
         return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
     });
 
-    window.summary.Buying.value = filtered.filter(trx => trx.transaction_name == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-    window.summary.Added.value = filtered.filter(trx => trx.transaction_name == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Removed.value = filtered.filter(trx => trx.transaction_name == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Selling.value = filtered.filter(trx => trx.transaction_name == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Buying.value = filtered.filter(trx => trx.transaction_type == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Added.value = filtered.filter(trx => trx.transaction_type == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Removed.value = filtered.filter(trx => trx.transaction_type == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Selling.value = filtered.filter(trx => trx.transaction_type == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
     window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
     window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
     window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);

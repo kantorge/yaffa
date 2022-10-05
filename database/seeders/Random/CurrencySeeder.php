@@ -35,7 +35,7 @@ class CurrencySeeder extends Seeder
                         ->for($user)
                         ->make();
 
-                    ++$i;
+                    $i++;
 
                     if ($i > $maxRetries) {
                         throw new \OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));

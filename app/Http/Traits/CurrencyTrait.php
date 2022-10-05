@@ -13,7 +13,7 @@ trait CurrencyTrait
     /**
      * Load a collection for all currencies, with an average rate by month
      *
-     * @param  bool $onlyToBaseCurrency
+     * @param  bool  $onlyToBaseCurrency
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function allCurrencyRatesByMonth(bool $withCarbonDates = true, bool $onlyToBaseCurrency = true): Collection

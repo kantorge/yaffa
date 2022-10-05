@@ -38,6 +38,6 @@ class LoginFailedNotification extends Notification
     {
         return (new MailMessage())
             ->subject('YAFFA alert - failed login notification')
-            ->line('Failed login attempt at '. config('app.url'));
+            ->line('Failed login attempt at '.config('app.url'));
     }
 }

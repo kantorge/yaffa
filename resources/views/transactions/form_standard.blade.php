@@ -24,14 +24,18 @@
         @case('enter')
             Enter scheduled transaction instance
             @break
+
+        @case('replace')
+            Clone scheduled transaction and close base item
+            @break
     @endswitch
 @endsection
 
 @section('content')
     <div id="app">
-        <transaction-form-standard
+        <transaction-container-standard
             action = "{{ $action }}"
             :transaction = "{{ $transaction ?? '{}' }}"
-        ></transaction-form-standard>
+        ></transaction-container-standard>
     </div>
 @endsection

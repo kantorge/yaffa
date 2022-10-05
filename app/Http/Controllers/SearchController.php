@@ -10,11 +10,16 @@ class SearchController extends Controller
     /**
      * Search various models based on the search term.
      *
-     * @param Request $request
+     * @param  Request  $request
      * @return \Illuminate\View\View
      */
     public function search(Request $request)
     {
+        /**
+         * @get('/search')
+         * @name('search')
+         * @middlewares('web')
+         */
         $searchTerm = $request->get('q');
         $results = [];
 
@@ -44,14 +49,14 @@ class SearchController extends Controller
     /**
      * Search for accounts of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchAccounts($searchTerm)
     {
         return Auth::user()
             ->accounts()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('name');
     }
@@ -59,14 +64,14 @@ class SearchController extends Controller
     /**
      * Search for payees of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchPayees($searchTerm)
     {
         return Auth::user()
             ->payees()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('name');
     }
@@ -74,14 +79,14 @@ class SearchController extends Controller
     /**
      * Search for tags of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchTags($searchTerm)
     {
         return Auth::user()
             ->tags()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('name');
     }
@@ -89,14 +94,14 @@ class SearchController extends Controller
     /**
      * Search for categories of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchCategories($searchTerm)
     {
         return Auth::user()
             ->categories()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('full_name');
     }
@@ -104,14 +109,14 @@ class SearchController extends Controller
     /**
      * Search for investments of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchInvestments($searchTerm)
     {
         return Auth::user()
             ->investments()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('name');
     }
@@ -119,14 +124,15 @@ class SearchController extends Controller
     /**
      * Search for transactions of the user.
      *
-     * @param string $searchTerm
+     * @param  string  $searchTerm
      * @return \Illuminate\Database\Eloquent\Collection
      */
     private function searchTransactions($searchTerm)
     {
         return Auth::user()
             ->transactions()
-            ->whereRaw('UPPER(`comment`) LIKE ?', ['%' . strtoupper($searchTerm) . '%'])
+            ->byScheduleType('none')
+            ->whereRaw('UPPER(`comment`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
             ->get()
             ->sortBy('date');
     }

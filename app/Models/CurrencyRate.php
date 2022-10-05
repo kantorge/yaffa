@@ -34,5 +34,6 @@ class CurrencyRate extends Model
      */
     protected $casts = [
         'date' => 'datetime:Y-m-d',
+        // TODO: Add proper cast type for 'rate'
     ];
 }

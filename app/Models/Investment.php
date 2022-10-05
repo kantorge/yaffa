@@ -2,13 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\Currency;
-use App\Models\InvestmentGroup;
-use App\Models\InvestmentPrice;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
-use App\Models\User;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Database\Eloquent\Builder;
@@ -64,6 +57,17 @@ class Investment extends Model
         'investment_price_provider_name',
     ];
 
+    /**
+     * Scope a query to only include active investments.
+     *
+     *  @param  Builder  $query
+     * @return Builder
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query->where('active', true);
+    }
+
     public function investmentPrices()
     {
         return $this->hasMany(InvestmentPrice::class);
@@ -90,8 +94,7 @@ class Investment extends Model
                 'transactionType',
             ]
         )
-        ->where('schedule', 0)
-        ->where('budget', 0)
+        ->byScheduleType('none')
         ->where('config_type', 'transaction_detail_investment')
         ->whereHasMorph(
             'config',
@@ -115,14 +118,17 @@ class Investment extends Model
         });
     }
 
-    public function getLatestPrice($type = 'combined')
+    public function getLatestPrice($type = 'combined', Carbon $onOrBefore = null)
     {
         $investmentId = $this->id;
 
         if ($type === 'stored' || $type === 'combined') {
             $price = InvestmentPrice::where('investment_id', $investmentId)
-                                        ->latest('date')
-                                        ->first();
+                ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                    $query->where('date', '<=', $onOrBefore);
+                })
+                ->latest('date')
+                ->first();
         }
 
         if ($type === 'transaction' || $type === 'combined') {
@@ -131,8 +137,7 @@ class Investment extends Model
                     'config',
                 ]
             )
-            ->where('schedule', 0)
-            ->where('budget', 0)
+            ->byScheduleType('none')
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],
@@ -142,6 +147,9 @@ class Investment extends Model
                         ->WhereNotNull('price');
                 }
             )
+            ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                $query->where('date', '<=', $onOrBefore);
+            })
             ->latest('date')
             ->first();
         }
@@ -182,17 +190,17 @@ class Investment extends Model
     }
 
     /**
-    * @var array
-    */
+     * @var array
+     */
     protected $priceProviders = [
         'alpha_vantage' => [
             'name' => 'Alpha Vantage',
-        ]
+        ],
     ];
 
-   /**
-    * @return string|null
-    */
+    /**
+     * @return string|null
+     */
     public function getInvestmentPriceProviderNameAttribute()
     {
         // If the price provider is not set, return null
@@ -210,6 +218,7 @@ class Investment extends Model
 
     /**
      * Return all available price providers
+     *
      * @return array
      */
     public function getAllInvestmentPriceProviders()
@@ -223,7 +232,7 @@ class Investment extends Model
      */
     public function getInvestmentPriceFromProvider(): void
     {
-        $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
+        $providerSuffix = 'getInvestmentPriceFrom'.str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
         $this->{$providerSuffix}();
     }
 

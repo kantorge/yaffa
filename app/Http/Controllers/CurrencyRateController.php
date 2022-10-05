@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use AmrShawky\LaravelCurrency\Facade\Currency as CurrencyApi;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use Carbon\Carbon;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyRateController extends Controller
 {
@@ -22,19 +21,24 @@ class CurrencyRateController extends Controller
 
     public function index(Currency $from, Currency $to)
     {
+        /**
+         * @get('/currencyrates/{from}/{to}')
+         * @name('currency-rate.index')
+         * @middlewares('web')
+         */
         $currencyRates = $this->currencyRate
                             ->where('from_id', $from->id)
                             ->where('to_id', $to->id)
                             ->orderBy('date')
                             ->get();
 
-        JavaScript::put(['currencyRates' => $currencyRates]);
+        JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
         return view(
             'currencyrates.index',
             with([
                 'from' => $from,
-                'to'=> $to,
+                'to' => $to,
             ])
         );
     }
@@ -47,6 +51,11 @@ class CurrencyRateController extends Controller
      */
     public function destroy(CurrencyRate $currencyRate)
     {
+        /**
+         * @delete('/currency-rate/{currency_rate}')
+         * @name('currency-rate.destroy')
+         * @middlewares('web')
+         */
         $currencyRate->delete();
 
         self::addSimpleSuccessMessage('Currency rate deleted');
@@ -56,57 +65,25 @@ class CurrencyRateController extends Controller
 
     public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null)
     {
-        $baseCurrency =  $this->getBaseCurrency();
-
-        if ($baseCurrency->id === $currency->id) {
-            return 1;
-        }
-
-        $date = Carbon::create('yesterday');
-        if (! $from) {
-            $from = Carbon::create('yesterday');
-        }
-
-        $rates = CurrencyApi::rates()
-            ->timeSeries($from->format('Y-m-d'), $date->format('Y-m-d'))
-            ->base($currency->iso_code)
-            ->symbols([$baseCurrency->iso_code])
-            ->get();
-
-        foreach ($rates as $date => $rate) {
-            CurrencyRate::updateOrCreate(
-                [
-                    'from_id' => $currency->id,
-                    'to_id' => $baseCurrency->id,
-                    'date' => $date,
-                ],
-                [
-                    'rate' => $rate[$baseCurrency->iso_code],
-                ]
-            );
-        }
+        /**
+         * @get('/currencyrates/get/{currency}/{from?}')
+         * @name('currencyrate.retreiveRate')
+         * @middlewares('web')
+         */
+        $currency->retreiveCurrencyRateToBase($from);
 
         return redirect()->back();
     }
 
     public function retreiveMissingCurrencyRateToBase(Currency $currency)
     {
-        $baseCurrency =  $this->getBaseCurrency();
+        /**
+         * @get('/currencyrates/missing/{currency}')
+         * @name('currencyrate.retreiveMissing')
+         * @middlewares('web')
+         */
+        $currency->retreiveMissingCurrencyRateToBase();
 
-        $rate = CurrencyRate::where('from_id', $currency->id)
-                                    ->where('to_id', $baseCurrency->id)
-                                    ->latest('date')
-                                    ->first();
-
-        // Fallback to last 30 days
-        if (! $rate) {
-            $rate = new CurrencyRate([
-                'from_id' => $currency->id,
-                'to_id' => $baseCurrency->id,
-                'date' => Carbon::create('30 days ago'),
-            ]);
-        }
-
-        return $this->retreiveCurrencyRateToBase($currency, $rate->date);
+        return redirect()->back();
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\FormRequest;
 use Illuminate\Validation\Rule;
 
 class InvestmentGroupRequest extends FormRequest

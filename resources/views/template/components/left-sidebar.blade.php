@@ -31,17 +31,8 @@
 
     <!-- Sidebar Menu -->
     <ul class="sidebar-menu" data-widget="tree">
-        <li class="treeview">
-            <a href="#"><i class="fa fa-dashboard"></i> <span>Dashboards</span>
-                <span class="pull-right-container">
-                    <i class="fa fa-angle-left pull-right"></i>
-                </span>
-            </a>
-            <ul class="treeview-menu">
-                <li><a href="{{ route('account.summary') }}"><i class="fa fa-dashboard"></i> <span>Main page</span></a></li>
-                <li><a href="{{ route('investment.summary') }}"><i class="fa fa-line-chart"></i> <span>Investments</span></a></li>
-            </ul>
-        </li>
+        <li><a href="{{ route('home') }}"><i class="fa fa-dashboard"></i> <span>Dashboard</span></a></li>
+        <li><a href="{{ route('investment.summary') }}"><i class="fa fa-line-chart"></i> <span>Investment summary</span></a></li>
         <li class="treeview">
             <a href="#"><i class="fa fa-database"></i> <span>Assets</span>
                 <span class="pull-right-container">
@@ -60,16 +51,6 @@
             </ul>
         </li>
         <li class="treeview">
-            <a href="#"><i class="fa fa-money"></i> <span>Budget</span>
-                <span class="pull-right-container">
-                    <i class="fa fa-angle-left pull-right"></i>
-                </span>
-            </a>
-            <ul class="treeview-menu">
-                <li><a href="{{ route('schedule.index') }}"><i class="fa fa-list"></i> <span>List of schedules and budgets</span></a></li>
-            </ul>
-        </li>
-        <li class="treeview">
             <a href="#"><i class="fa fa-table"></i> <span>Reports</span>
                 <span class="pull-right-container">
                     <i class="fa fa-angle-left pull-right"></i>
@@ -79,6 +60,8 @@
                 <li><a href="{{ route('reports.transactions') }}"><i class="fa fa-search"></i> <span>Find transactions</span></a></li>
                 <li><a href="{{ route('reports.cashflow') }}"><i class="fa fa-line-chart"></i> <span>Cash flow</span></a></li>
                 <li><a href="{{ route('reports.budgetchart') }}"><i class="fa fa-line-chart"></i> <span>Budget chart</span></a></li>
+                <li><a href="{{ route('report.schedules') }}"><i class="fa fa-list"></i> <span>List of schedules and budgets</span></a></li>
+                <li><a href="{{ route('investment.timeline') }}"><i class="fa fa-line-chart"></i> <span>Investment timeline</span></a></li>
             </ul>
         </li>
         <li class="treeview">

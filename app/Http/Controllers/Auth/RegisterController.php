@@ -32,6 +32,11 @@ class RegisterController extends Controller
      */
     public function showRegistrationForm()
     {
+        /**
+         * @get('/register')
+         * @name('register')
+         * @middlewares('web', 'guest')
+         */
         if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
             self::addMessage(
                 'You cannot register new users.',
