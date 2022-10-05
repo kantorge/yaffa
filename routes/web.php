@@ -16,7 +16,7 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'dashboard')->name('home');
+Route::view('/', 'dashboard')->middleware('auth')->name('home');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
 Route::resource('account-entity', AccountEntityController::class)->except(['show']);
