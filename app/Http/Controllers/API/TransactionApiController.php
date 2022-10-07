@@ -510,6 +510,9 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
         }
 
+        // Load the transaction type relation, as it might be needed by the client
+        $transaction->load(['transactionType']);
+
         return response()->json(
             [
                 'transaction' => $transaction,

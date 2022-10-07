@@ -114,7 +114,7 @@
         methods: {
             // Determine, which account to use as a callback, if user wants to return to selected account
             getReturnAccount(accountType, transaction) {
-                if (accountType === 'primary' && transaction.transaction_type == 'deposit') {
+                if (accountType === 'primary' && transaction.transaction_type.name === 'deposit') {
                     return transaction.config.account_to_id;
                 }
 
