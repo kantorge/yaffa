@@ -8,6 +8,7 @@ use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class RegisterController extends Controller
 {
@@ -48,7 +49,13 @@ class RegisterController extends Controller
             return redirect()->route('login');
         }
 
-        return view('auth.register');
+        return view(
+            'auth.register',
+            [
+                'languages' => config('app.available_languages'),
+                'locales' => config('app.available_locales'),
+            ]
+        );
     }
 
     /**
@@ -77,9 +84,32 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'name' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users'
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed'
+            ],
+            'language' => [
+                'required',
+                Rule::in(array_keys(config('app.available_languages'))),
+            ],
+            'locale' => [
+                'required',
+                Rule::in(array_keys(config('app.available_locales'))),
+            ],
         ]);
     }
 
@@ -95,6 +125,8 @@ class RegisterController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'language' => $data['language'],
+            'locale' => $data['locale'],
         ]);
     }
 }

@@ -11,15 +11,15 @@ $(dataTableSelector).DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: __("Id"),
         },
         {
             data: "name",
-            title: "Name"
+            title: __("Name"),
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'investment-group.edit') +
                         genericDataTablesActionButton(data, 'delete');

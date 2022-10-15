@@ -1,12 +1,14 @@
 <template>
     <div class="box box-primary">
         <div class="box-header with-border">
-            <h3 class="box-title">Transaction items</h3>
+            <h3 class="box-title">
+                {{ __('Transaction items') }}
+            </h3>
             <div class="box-tools">
                 <div class="btn-group d-sm-none">
-                    <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand all items')" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
                 </div>
             </div>
         </div>
@@ -27,16 +29,18 @@
                     :currency="currency"
                 ></transaction-item>
             </div>
-            <div v-if="transactionItems.length === 0">No items added</div>
+            <div v-if="transactionItems.length === 0">
+                {{ __('No items added') }}
+            </div>
         </div>
         <!-- /.box-body -->
 
         <div class="box-footer d-sm-none" v-if="transactionItems.length > 0">
             <div class="box-tools pull-right">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand all items')" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
                 </div>
             </div>
         </div>

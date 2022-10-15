@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Categories')
+@section('title', __('Categories'))
 
-@section('content_header')
-    <h1>Categories</h1>
-@stop
+@section('content_header', __('Categories'))
 
 @section('content')
 
@@ -16,8 +14,8 @@
                 </div>
             </div>
             <div class="pull-right box-tools">
-                <a href="/categories/create" class="btn btn-success" title="New category"><i class="fa fa-plus"></i></a>
-                <a href="{{ route('categories.merge.form') }}" class="btn btn-primary" title="Merge categories"><i class="fa fa-random"></i></a>
+                <a href="/categories/create" class="btn btn-success" title="{{ __('New category') }}"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('categories.merge.form') }}" class="btn btn-primary" title="{{ __('Merge categories') }}"><i class="fa fa-random"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

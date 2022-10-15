@@ -51,12 +51,11 @@ function initializeChart() {
     });
 
     var series1 = chart.series.push(new am4charts.ColumnSeries());
-    //series1.columns.template.tooltipText = "{name}: {openDateX} - {dateX}";
     series1.columns.template.tooltipText = `[bold]{name}[/]
 ----
 {openDateX} - {dateX}
-Last quantity: {formatted_quantity}
-Estimated end value: {formatted_value}`
+${__('Last quantity')}: {formatted_quantity}
+${__('Estimated end value')}: {formatted_value}`
     series1.dataFields.openDateX = "start";
     series1.dataFields.dateX = "end";
     series1.dataFields.categoryY = "name";

@@ -5,7 +5,9 @@
     >
         <div class="row">
             <div class="col-xs-12 col-sm-4 form-group">
-                <label>Category</label>
+                <label>
+                    {{ __('Category') }}
+                </label>
                 <select
                     class="form-control category"
                     style="width:100%"
@@ -15,7 +17,7 @@
             </div>
             <div class="col-xs-12 col-sm-2 form-group">
                 <label class="control-label">
-                    Amount
+                    {{ __('Amount') }}
                     <span v-if="currency">({{currency}})</span>
                 </label>
                 <div class="input-group">
@@ -28,14 +30,16 @@
                         <button
                             type="button"
                             class="btn btn-info load_remainder"
-                            title="Assign remaining amount to this item"
+                            :title="__('Assign remaining amount to this item')"
                             @click="loadRemainder"
                         ><span class="fa fa-copy"></span></button>
                     </span>
                 </div>
             </div>
             <div class="col-xs-12 col-sm-3 form-group transaction_detail_container d-xs-none">
-                <label class="control-label">Tags</label>
+                <label class="control-label">
+                    {{ __('Tags') }}
+                </label>
                 <select
                     style="width: 100%"
                     class="form-control tag"
@@ -44,7 +48,9 @@
                 </select>
             </div>
             <div class="col-xs-12 col-sm-2 form-group transaction_detail_container d-xs-none">
-                <label class="control-label">Comment</label>
+                <label class="control-label">
+                    {{ __('Comment') }}
+                </label>
                 <input
                     class="form-control transaction_item_comment"
                     v-model="comment"
@@ -55,7 +61,7 @@
                 <button
                 type="button"
                 class="btn btn-sm btn-info d-sm-none"
-                title="Show item details"
+                :title="__('Show item details')"
                 @click="toggleItemDetails"
             ><span class="fa fa-edit"></span></button>
             <button
@@ -63,7 +69,7 @@
                 class="btn btn-sm btn-danger"
                 @click='removeItem'
                 style="margin-left: 10px;"
-                title="Remove transaction item"
+                :title="__('Remove transaction item')"
             ><span class="fa fa-minus"></span></button>
             </div>
         </div>
@@ -129,7 +135,7 @@
                     cache: true
                 },
                 selectOnClose: true,
-                placeholder: "Select category",
+                placeholder: __("Select category"),
                 allowClear: true
             })
             .on('select2:select', function (e) {
@@ -193,7 +199,7 @@
                     cache: true
                 },
                 //selectOnClose: true,
-                placeholder: "Select tag(s)",
+                placeholder: __('Select tag(s)'),
                 allowClear: true
             })
             .on('select2:select select2:unselect', function (e) {

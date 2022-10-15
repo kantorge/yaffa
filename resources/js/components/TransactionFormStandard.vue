@@ -478,7 +478,7 @@
 
             // Provide the base currency from the global scope for template
             baseCurrency() {
-                return window.baseCurrency;
+                return window.YAFFA.baseCurrency;
             },
 
             remainingAmountToPayeeDefault() {

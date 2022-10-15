@@ -15,6 +15,14 @@
   color: #666;
 }
 
+.ml-5 {
+  margin-left: 5px;
+}
+
+.mr-5 {
+  margin-right: 5px;
+}
+
 td.dt-nowrap {
   white-space: nowrap;
 }

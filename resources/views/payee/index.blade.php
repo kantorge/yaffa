@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Payees')
+@section('title', __('Payees'))
 
-@section('content_header')
-    <h1>Payees</h1>
-@stop
+@section('content_header', __('Payees'))
 
 @section('content')
 
@@ -16,8 +14,8 @@
                 </div>
             </div>
             <div class="pull-right box-tools">
-                <a href="{{ route('account-entity.create', ['type' => 'payee']) }}" class="btn btn-success" title="New payee"><i class="fa fa-plus"></i></a>
-                <a href="{{ route('payees.merge.form') }}" class="btn btn-primary" title="Merge payees"><i class="fa fa-random"></i></a>
+                <a href="{{ route('account-entity.create', ['type' => 'payee']) }}" class="btn btn-success" title="{{ __('New payee') }}"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('payees.merge.form') }}" class="btn btn-primary" title="{{ __('Merge payees') }}"><i class="fa fa-random"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

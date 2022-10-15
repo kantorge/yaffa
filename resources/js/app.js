@@ -182,6 +182,6 @@ $(function() {
 
     // Generally available cancel button with confirmation
     $(".cancel.confirm-needed").on("click", function() {
-        return confirm('Are you sure to abandon this form?');
+        return confirm(__('Are you sure to abandon this form?'));
     });
 });

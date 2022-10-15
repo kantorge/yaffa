@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Transactions by criteria')
+@section('title', __('Transactions by criteria'))
 
-@section('content_header')
-    <h1>Transactions by criteria</h1>
-@stop
+@section('content_header', __('Transactions by criteria'))
 
 @section('content')
 
@@ -12,9 +10,11 @@
         <div class="col-sm-9">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Transactions</h3>
+                    <h3 class="box-title">
+                        {{ __('Transactions') }}
+                    </h3>
                     <div class="box-tools pull-right">
-                        <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">Update</button>
+                        <button name="reload" type="button" id="reload" class="btn btn-primary pull-right">{{ __('Update') }}</button>
                     </div>
                 </div>
                 <div class="box-body">
@@ -27,18 +27,18 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">Date</h3>
                     <div class="box-tools pull-right">
-                        <button class="btn btn-xs btn-primary" id="clear_dates">Clear selection</button>
+                        <button class="btn btn-xs btn-primary" id="clear_dates">{{ __('Clear selection') }}</button>
                     </div>
                 </div>
                 <div class="box-body form-horizontal" id="dateRangePicker">
                     <div class="form-group">
-                        <label for="date_from" class="col-sm-4 control-label">Date from</label>
+                        <label for="date_from" class="col-sm-4 control-label">{{ __('Date from') }}</label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" name="date_from" id="date_from" placeholder="Select date" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="date_to" class="col-sm-4 control-label">Date to</label>
+                        <label for="date_to" class="col-sm-4 control-label">{{ __('Date to') }}</label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" name="date_to" id="date_to" placeholder="Select date" autocomplete="off">
                         </div>
@@ -48,9 +48,9 @@
 
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Category</h3>
+                    <h3 class="box-title">{{ __('Category') }}</h3>
                     <div class="box-tools pull-right">
-                        <button class="btn btn-xs btn-primary clear-select" data-target="select_category">Clear selection</button>
+                        <button class="btn btn-xs btn-primary clear-select" data-target="select_category">{{ __('Clear selection') }}</button>
                     </div>
                 </div>
                 <div class="box-body">
@@ -60,9 +60,9 @@
 
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Payee</h3>
+                    <h3 class="box-title">{{ __('Payee') }}</h3>
                     <div class="box-tools pull-right">
-                    <button class="btn btn-xs btn-primary clear-select" data-target="select_payee">Clear selection</button>
+                    <button class="btn btn-xs btn-primary clear-select" data-target="select_payee">{{ __('Clear selection') }}</button>
                     </div>
                 </div>
                 <div class="box-body">
@@ -72,9 +72,9 @@
 
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Account</h3>
+                    <h3 class="box-title">{{ __('Account') }}</h3>
                     <div class="box-tools pull-right">
-                        <button class="btn btn-xs btn-primary clear-select" data-target="select_account">Clear selection</button>
+                        <button class="btn btn-xs btn-primary clear-select" data-target="select_account">{{ __('Clear selection') }}</button>
                     </div>
                 </div>
                 <div class="box-body">
@@ -84,9 +84,9 @@
 
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Tag</h3>
+                    <h3 class="box-title">{{ __('Tag') }}</h3>
                     <div class="box-tools pull-right">
-                        <button class="btn btn-xs btn-primary clear-select" data-target="select_tag">Clear selection</button>
+                        <button class="btn btn-xs btn-primary clear-select" data-target="select_tag">{{ __('Clear selection') }}</button>
                     </div>
                 </div>
                 <div class="box-body">

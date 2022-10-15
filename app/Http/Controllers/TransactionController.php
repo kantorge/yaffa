@@ -234,7 +234,7 @@ class TransactionController extends Controller
          * @middlewares('web', 'auth')
          */
         $transaction->transactionSchedule->skipNextInstance();
-        self::addSimpleSuccessMessage('Transaction schedule instance skipped');
+        self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
 
         return redirect()->back();
     }

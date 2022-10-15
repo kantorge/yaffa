@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment details')
+@section('title', __('Investment details'))
 
 @section('content_header')
-    <h1>Investment details - {{ $investment->name }}</h1>
+    {{ __('Investment details') }} - {{ $investment->name }}
 @stop
 
 @section('content')
@@ -13,42 +13,44 @@
                 <div class="col-md-5">
                     <div class="box">
                         <div class="box-header with-border">
-                            <h3 class="box-title">Investment details</h3>
+                            <h3 class="box-title">
+                                {{ __('Investment details') }}
+                            </h3>
                         </div>
                         <!-- /.box-header -->
                         <div class="box-body">
                             <dl class="dl-horizontal">
-                                <dt>Name</dt>
+                                <dt>{{ __('Name') }}</dt>
                                 <dd>{{ $investment->name }}</dd>
-                                <dt>Symbol</dt>
+                                <dt>{{ __('Symbol') }}</dt>
                                 <dd>{{ $investment->symbol }}</dd>
-                                <dt>ISIN number</dt>
+                                <dt>{{ __('ISIN number') }}</dt>
                                 <dd>{!! ($investment->isin ? $investment->isin : '<span class="text-muted">Not set</span>') !!}</dd>
-                                <dt>Active</dt>
+                                <dt>{{ __('Active') }}</dt>
                                 <dd>
                                     @if($investment->active)
-                                        <i class="fa fa-check-square text-success" title="Yes"></i>
+                                        <i class="fa fa-check-square text-success" title="{{ __('Yes') }}"></i>
                                     @else
-                                        <i class="fa fa-square text-danger" title="No"></i>
+                                        <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
                                     @endif
                                 </dd>
-                                <dt>Group</dt>
+                                <dt>{{ __('Group') }}</dt>
                                 <dd>{{ $investment->investment_group->name }}</dd>
-                                <dt>Currency</dt>
+                                <dt>{{ __('Currency') }}</dt>
                                 <dd>{{ $investment->currency->name }}</dd>
                                 @if($investment->comment)
-                                    <dt>Comment</dt>
+                                    <dt>{{ __('Comment') }}</dt>
                                     <dd>{{ $investment->comment }}</dd>
                                 @endif
                                 @if($investment->investment_price_provider)
-                                    <dt>Price provider</dt>
+                                    <dt>{{ __('Price provider') }}</dt>
                                     <dd>{{ $investment->investment_price_provider_name }}</dd>
-                                    <dt>Auto update</dt>
+                                    <dt>{{ __('Automatic update') }}</dt>
                                     <dd>
                                         @if($investment->auto_update)
-                                            <i class="fa fa-check-square text-success" title="Yes"></i>
+                                            <i class="fa fa-check-square text-success" title="{{ __('Yes') }}"></i>
                                         @else
-                                            <i class="fa fa-square text-danger" title="No"></i>
+                                            <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
                                         @endif
                                     </dd>
                                 @endif
@@ -59,16 +61,16 @@
                     <!-- /.box -->
                     <div class="box">
                         <div class="box-header with-border">
-                            <h3 class="box-title">Current assets</h3>
+                            <h3 class="box-title">{{ __('Current assets') }}</h3>
                         </div>
                         <!-- /.box-header -->
                         <div class="box-body">
                             <dl class="dl-horizontal">
-                                <dt>Currently owned quantity</dt>
+                                <dt>{{ __('Currently owned quantity') }}</dt>
                                 <dd>{{ $investment->getCurrentQuantity() }}</dd>
-                                <dt>Latest price</dt>
+                                <dt>{{ __('Latest price') }}</dt>
                                 <dd>{{ $investment->getLatestPrice() }}</dd>
-                                <dt>Latest owned value</dt>
+                                <dt>{{ __('Latest owned value') }}</dt>
                                 <dd>{{ $investment->getCurrentQuantity() * $investment->getLatestPrice() }}</dd>
                             </dl>
                         </div>
@@ -79,20 +81,20 @@
                 <div class="col-md-7">
                     <div class="box box-default">
                         <div class="box-header with-border">
-                            <h3 class="box-title">Results</h3>
+                            <h3 class="box-title">{{ __('Results') }}</h3>
                             <div class="box-tools pull-right">
-                                <button class="btn btn-xs btn-primary" id="clear_dates">Clear selection</button>
+                                <button class="btn btn-xs btn-primary" id="clear_dates">{{ __('Clear selection') }}</button>
                             </div>
                             <!-- /.box-tools -->
                         </div>
                         <!-- /.box-header -->
                         <div class="box-body form-horizontal">
                             <div class="form-group">
-                                <label for="date_from" class="col-sm-2 control-label">Date from</label>
+                                <label for="date_from" class="col-sm-2 control-label">{{ __('Date from') }}</label>
                                 <div class="col-sm-4">
                                     <input type="text" class="form-control" id="date_from">
                                 </div>
-                                <label for="date_to" class="col-sm-2 control-label">Date to</label>
+                                <label for="date_to" class="col-sm-2 control-label">{{ __('Date to') }}</label>
                                 <div class="col-sm-4">
                                     <input type="text" class="form-control" id="date_to">
                                 </div>
@@ -100,34 +102,34 @@
                             <div class="row">
                                 <div class="col-sm-6">
                                     <dl class="dl-horizontal">
-                                        <dt>Buying cost</dt>
+                                        <dt>{{ __('Buying cost') }}</dt>
                                         <dd id="summaryBuying"></dd>
-                                        <dt>Added quantity</dt>
+                                        <dt>{{ __('Added quantity') }}</dt>
                                         <dd id="summaryAdded"></dd>
-                                        <dt>Removed quantity</dt>
+                                        <dt>{{ __('Removed quantity') }}</dt>
                                         <dd id="summaryRemoved"></dd>
-                                        <dt>Selling revenue</dt>
+                                        <dt>{{ __('Selling revenue') }}</dt>
                                         <dd id="summarySelling"></dd>
-                                        <dt>Dividend</dt>
+                                        <dt>{{ __('Dividend') }}</dt>
                                         <dd id="summaryDividend"></dd>
-                                        <dt>Commissions</dt>
+                                        <dt>{{ __('Commissions') }}</dt>
                                         <dd id="summaryCommission"></dd>
-                                        <dt>Taxes</dt>
+                                        <dt>{{ __('Taxes') }}</dt>
                                         <dd id="summaryTaxes"></dd>
-                                        <dt>Quantity</dt>
+                                        <dt>{{ __('Quantity') }}</dt>
                                         <dd id="summaryQuantity"></dd>
-                                        <dt>Value</dt>
+                                        <dt>{{ __('Value') }}</dt>
                                         <dd id="summaryValue"></dd>
                                     </dl>
                                 </div>
                                 <div class="col-sm-6">
                                     <dl class="dl-horizontal">
-                                        <dt>Result</dt>
+                                        <dt>{{ __('Result') }}</dt>
                                         <dd id="summaryResult"></dd>
-                                        <dt>ROI</dt>
+                                        <dt>{{ __('ROI') }}</dt>
                                         <dd id="summaryROI"></dd>
-                                        <dt>Annualized ROI</dt>
-                                        <dd id="summaryAROI">TBD</dd>
+                                        <dt>{{ __('Annualized ROI') }}</dt>
+                                        <dd id="summaryAROI">{{ __('TBD') }}</dd>
                                     </dl>
                                 </div>
                             </div>
@@ -137,9 +139,9 @@
             </div>
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Transaction history</h3>
+                    <h3 class="box-title">{{ __('Transaction history') }}</h3>
                     <div class="pull-right box-tools">
-                        <a href="{{route('transactions.createInvestment')}}" class="btn btn-success" title="New currency rate"><i class="fa fa-plus"></i></a>
+                        <a href="{{route('transactions.createInvestment')}}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-plus"></i></a>
                     </div>
                     <!-- /.box-tools -->
                 </div>
@@ -154,16 +156,16 @@
         <div class="col-md-5">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Price history</h3>
+                    <h3 class="box-title">{{ __('Price history') }}</h3>
                     <div class="box-tools pull-right">
-                        <span class="label label-danger hidden" id="priceChartNoData">No data available</span>
+                        <span class="label label-danger hidden" id="priceChartNoData">{{ __('No data available') }}</span>
                         @if($investment->investment_price_provider)
-                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-success" title="Load new price data">
+                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-success" title="{{ __('Load new price data') }}">
                                 <span class="fa fa-cloud-download"></span>
                             </a>
                         @endif
                         <a href="{{ route('investment-price.list', ['investment' =>  $investment->id ]) }}" class="btn btn-xs btn-primary">
-                            <span class="fa fa-search" title="List prices"></span>
+                            <span class="fa fa-search" title="{{ __('List prices') }}"></span>
                         </a>
                     </div>
                     <!-- /.box-tools -->
@@ -175,9 +177,9 @@
             </div>
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Quantity history</h3>
+                    <h3 class="box-title">{{ __('Quantity history') }}</h3>
                     <div class="box-tools pull-right">
-                        <span class="label label-danger hidden" id="quantityChartNoData">No data available</span>
+                        <span class="label label-danger hidden" id="quantityChartNoData">{{ __('No data available') }}</span>
                     </div>
                     <!-- /.box-tools -->
                 </div>

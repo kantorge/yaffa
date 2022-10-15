@@ -1,7 +1,9 @@
 <template>
     <div class="box">
         <div class="box-header">
-            <h3 class="box-title">Total value</h3>
+            <h3 class="box-title">
+                {{ __('Total value') }}
+            </h3>
             <div class="pull-right" v-show="ready">
                 {{ totalValue.toLocalCurrency(baseCurrency, false) }}
             </div>
@@ -46,7 +48,7 @@
         <div class="box-footer" v-show="ready">
             <div class="pull-right box-tools">
                 Closed accounts are <span class="text-muted" v-html="(withClosed ? 'included' : 'hidden')"></span>
-                <button class="btn btn-xs btn-default" style="margin-left: 1rem;" type="button" @click="toggleWithInactive" v-html="(withClosed ? 'Hide' : 'Show')">
+                <button class="btn btn-xs btn-default" style="margin-left: 1rem;" type="button" @click="toggleWithInactive" v-html="(withClosed ? __('Hide') : __('Show'))">
                 </button>
             </div>
         </div>
@@ -63,7 +65,7 @@ export default {
 
     data() {
         return {
-            baseCurrency: window.baseCurrency,
+            baseCurrency: window.YAFFA.baseCurrency,
             accountBalanceData: [],
             withClosed: false,
             account: null,

@@ -80,7 +80,7 @@ class TagController extends Controller
         $tag->user_id = Auth::user()->id;
         $tag->save();
 
-        self::addSimpleSuccessMessage('Tag added');
+        self::addSimpleSuccessMessage(__('Tag added'));
 
         return redirect()->route('tag.index');
     }
@@ -99,7 +99,7 @@ class TagController extends Controller
         $tag->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Tag updated');
+        self::addSimpleSuccessMessage(__('Tag updated'));
 
         return redirect()->route('tag.index');
     }
@@ -119,7 +119,7 @@ class TagController extends Controller
          */
         $tag->delete();
 
-        self::addSimpleSuccessMessage('Tag deleted');
+        self::addSimpleSuccessMessage(__('Tag deleted'));
 
         return redirect()->route('tag.index');
     }

@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Accounts')
+@section('title',  __('Accounts') )
 
 @section('content_header')
-    <h1>Accounts</h1>
+    <h1>{{ __('Accounts') }}</h1>
 @stop
 
 @section('content')
@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="pull-right box-tools">
-                <a href="{{ route('account-entity.create', ['type' => 'account']) }}" class="btn btn-success" title="New account"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('account-entity.create', ['type' => 'account']) }}" class="btn btn-success" title="{{ __('New account') }}"><i class="fa fa-plus"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

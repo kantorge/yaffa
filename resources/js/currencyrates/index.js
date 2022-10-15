@@ -17,15 +17,15 @@ $(dataTableSelector).DataTable({
     columns: [
     {
         data: "date",
-        title: "Date"
+        title: __("Date")
     },
     {
         data: "rate",
-        title: "Rate"
+        title: __("Rate")
     },
     {
         data: "id",
-        title: "Actions",
+        title: __("Actions"),
         render: function (data, _type, _row, _meta) {
             return genericDataTablesActionButton(data, 'delete');
         },

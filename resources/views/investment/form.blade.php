@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investments')
+@section('title', __('Investments'))
 
-@section('content_header')
-<h1>Investments</h1>
-@stop
+@section('content_header', __('Investments'))
 
 @section('content')
 
@@ -29,9 +27,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($investment->id))
-                    Modify investment
+                    {{ __('Modify investment') }}
                 @else
-                    Add new investment
+                    {{ __('Add new investment') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +37,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -54,7 +52,7 @@
 
             <div class="form-group">
                 <label for="active" class="control-label col-sm-3">
-                    Active
+                    {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -80,7 +78,7 @@
 
             <div class="form-group">
                 <label for="symbol" class="control-label col-sm-3">
-                    Symbol
+                    {{ __('Symbol') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -95,7 +93,7 @@
 
             <div class="form-group">
                 <label for="isin" class="control-label col-sm-3">
-                    ISIN number
+                    {{ __('ISIN number') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -110,7 +108,7 @@
 
             <div class="form-group">
                 <label for="comment" class="control-label col-sm-3">
-                    Comment
+                    {{ __('Comment') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -125,7 +123,7 @@
 
             <div class="form-group">
                 <label for="investment_group_id" class="control-label col-sm-3">
-                    Investment group
+                    {{ __('Investment group') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -158,7 +156,7 @@
 
             <div class="form-group">
                 <label for="currency_id" class="control-label col-sm-3">
-                    Currency
+                    {{ __('Currency') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -191,7 +189,7 @@
 
             <div class="form-group">
                 <label for="investment_price_provider" class="control-label col-sm-3">
-                    Price provider
+                    {{ __('Price provider') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -199,7 +197,7 @@
                         id="investment_price_provider"
                         name="investment_price_provider"
                     >
-                        <option value=''> < No price provider ></option>
+                        <option value=''>{{ __(' < No price provider > ') }}</option>
                         @forelse($allInvestmentPriceProviders as $id => $properties)
                             <option
                                 value="{{ $id }}"
@@ -225,7 +223,7 @@
 
             <div class="form-group">
                 <label for="auto_update" class="control-label col-sm-3">
-                    Auto update
+                    {{ __('Automatic update') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -252,14 +250,9 @@
         <!-- /.box-body -->
         <div class="box-footer">
             @csrf
-            <input
-                name="id"
-                type="hidden"
-                value="{{old('id', $investment->id ?? '' )}}"
-            >
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('investment.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('investment.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

@@ -79,7 +79,7 @@ class InvestmentPriceController extends Controller
 
         InvestmentPrice::create($validated);
 
-        self::addSimpleSuccessMessage('Investment price added');
+        self::addSimpleSuccessMessage(__('Investment price added'));
 
         return redirect()->route('investment-price.list', $investment);
     }
@@ -120,7 +120,7 @@ class InvestmentPriceController extends Controller
             ->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Investment price updated');
+        self::addSimpleSuccessMessage(__('Investment price updated'));
 
         return redirect()->route('investment-price.list', $request->investment_id);
     }
@@ -140,7 +140,7 @@ class InvestmentPriceController extends Controller
          */
         $investmentPrice->delete();
 
-        self::addSimpleSuccessMessage('Investment price deleted');
+        self::addSimpleSuccessMessage(__('Investment price deleted'));
 
         return redirect()->back();
     }

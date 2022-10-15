@@ -6,32 +6,34 @@
                 <div class="box box-primary">
                     <div class="box-header with-border">
                         <h3 class="box-title">
-                            Properties
+                            {{ __('Properties') }}
                         </h3>
                     </div>
                     <!-- /.box-header -->
 
                     <div class="box-body">
                         <dl class="row">
-                            <dt class="col-xs-4">Type</dt>
+                            <dt class="col-xs-4">
+                                {{ __('Type') }}
+                            </dt>
                             <dd class="col-xs-8">
                                 <span v-if="transaction.transaction_type.name == 'withdrawal'">
-                                    Withdrawal
+                                    {{ __('Withdrawal') }}
                                 </span>
                                 <span v-if="transaction.transaction_type.name == 'deposit'">
-                                    Deposit
+                                    {{ __('Deposit') }}
                                 </span>
                                 <span v-if="transaction.transaction_type.name == 'transfer'">
-                                    Transfer
+                                    {{ __('Transfer') }}
                                 </span>
                             </dd>
 
                             <dt class="col-xs-4">
-                                Date
+                                {{ __('Date') }}
                             </dt>
                             <dd class="col-xs-8">
                                 <span v-if="transaction.date">{{ formattedDate(transaction.date) }}</span>
-                                <span v-else class="text-muted text-italic">Not set</span>
+                                <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                             </dd>
 
                             <dt class="col-xs-4">
@@ -49,34 +51,34 @@
                             </dd>
 
                             <dt class="col-xs-4">
-                                Comment
+                                {{ __('Comment') }}
                             </dt>
                             <dd class="col-xs-8" :class="(transaction.comment ? '' : 'text-muted')">
                                 {{ transaction.comment || "Not set" }}
                             </dd>
 
                             <dt class="col-xs-4">
-                                Scheduled
+                                {{ __('Scheduled') }}
                             </dt>
                             <dd class="col-xs-8">
-                                <span v-if="transaction.schedule"><i class="fa fa-check text-success" title="Yes"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" title="No"></i></span>
+                                <span v-if="transaction.schedule"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
+                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
 
                             <dt class="col-xs-4">
-                                Budget
+                                {{ __('Budget') }}
                             </dt>
                             <dd class="col-xs-8">
-                                <span v-if="transaction.budget"><i class="fa fa-check text-success" title="Yes"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" title="No"></i></span>
+                                <span v-if="transaction.budget"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
+                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
 
                             <dt class="col-xs-4">
-                                Reconciled
+                                {{ __('Reconciled') }}
                             </dt>
                             <dd class="col-xs-8">
-                                <span v-if="transaction.reconciled"><i class="fa fa-check text-success" title="Yes"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" title="No"></i></span>
+                                <span v-if="transaction.reconciled"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
+                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
                         </dl>
                     </div>
@@ -86,7 +88,9 @@
 
                 <div class="box box-primary">
                     <div class="box-header with-border">
-                        <h3 class="box-title">Amounts</h3>
+                        <h3 class="box-title">
+                            {{ __('Amounts') }}
+                        </h3>
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
@@ -99,28 +103,28 @@
                             </dd>
 
                             <dt class="col-xs-4" v-if="exchangeRatePresent">
-                                Exchange rate
+                                {{ __('Exchange rate') }}
                             </dt>
                             <dd class="col-xs-8" v-if="exchangeRatePresent">
                                 {{ exchangeRate }}
                             </dd>
 
                             <dt class="col-xs-4" v-if="exchangeRatePresent">
-                                Amount to
+                                {{ __('Amount to') }}
                             </dt>
                             <dd class="col-xs-8" v-if="exchangeRatePresent">
                                 {{ transaction.config.amount_to.toLocalCurrency(transaction.config.account_to.config.currency, false) }}
                             </dd>
 
                             <dt class="col-xs-4">
-                                Total allocated
+                                {{ __('Total allocated') }}
                             </dt>
                             <dd class="col-xs-8">
                                 {{ allocatedAmount.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
 
                             <dt class="col-xs-4">
-                                Not allocated
+                                {{ __('Not allocated') }}
                             </dt>
                             <dd class="col-xs-8">
                                 {{ remainingAmountNotAllocated.toLocalCurrency(ammountFromCurrency, false) }}
@@ -174,16 +178,24 @@
         computed: {
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
-                return (this.transaction.transaction_type.name == 'withdrawal' || this.transaction.transaction_type.name == 'transfer' ? 'Account from' : 'Payee')
+                if (this.transaction.transaction_type.name == 'withdrawal' || this.transaction.transaction_type.name == 'transfer') {
+                    return __('Account from');
+                }
+
+                return __('Payee');
             },
 
             accountToFieldLabel() {
-                return (this.transaction.transaction_type.name == 'deposit' || this.transaction.transaction_type.name == 'transfer' ? 'Account to' : 'Payee')
+                if (this.transaction.transaction_type.name == 'deposit' || this.transaction.transaction_type.name == 'transfer') {
+                    return __('Account to');
+                }
+
+                return __('Payee');
             },
 
             // Amount from label is different for transfer
             ammountFromFieldLabel() {
-                return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
+                return (this.exchangeRatePresent ? __('Amount from') : __('Amount'))
             },
 
             // Amound from currency is dependent on transaction type

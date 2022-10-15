@@ -1,19 +1,17 @@
 @extends('template.layouts.page')
 
-@section('title', 'Currency rates')
+@section('title', __('Currency rates'))
 
-@section('content_header')
-    <h1>Currency rates</h1>
-@stop
+@section('content_header', __('Currency rates'))
 
 @section('content')
     <div class="row">
         <div class="col-md-4">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Currency rate values</h3>
+                    <h3 class="box-title">{{ __('Currency rate values') }}</h3>
                     <div class="pull-right box-tools">
-                        <a href="{{ route('currencyrate.retreiveMissing', ['currency' =>  $from->id ]) }}" class="btn btn-success" title="Load new currency rates">
+                        <a href="{{ route('currencyrate.retreiveMissing', ['currency' =>  $from->id ]) }}" class="btn btn-success" title="{{ __('Load new currency rates') }}">
                             <span class="fa fa-cloud-download"></span>
                         </a>
                     </div>

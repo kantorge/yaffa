@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Currencies')
+@section('title', __('Currencies'))
 
-@section('content_header')
-<h1>Currencies</h1>
-@stop
+@section('content_header', __('Currencies'))
 
 @section('content')
 
@@ -29,9 +27,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($currency->id))
-                    Modify currency
+                    {{ __('Modify currency') }}
                 @else
-                    Add currency
+                    {{ __('Add currency') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +37,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -54,7 +52,7 @@
 
             <div class="form-group">
                 <label for="iso_code" class="control-label col-sm-3">
-                    ISO Code
+                    {{ __('ISO Code') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -68,7 +66,7 @@
             </div>
             <div class="form-group">
                 <label for="num_digits" class="control-label col-sm-3">
-                    Number of decimal digits to handle
+                    {{ __('Number of decimal digits to display') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -82,7 +80,7 @@
             </div>
             <div class="form-group">
                 <label for="suffix" class="control-label col-sm-3">
-                    Suffix
+                    {{ __('Suffix') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -96,7 +94,7 @@
             </div>
             <div class="form-group">
                 <label for="base" class="control-label col-sm-3">
-                    Base currency
+                    {{ __('Base currency') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -121,7 +119,7 @@
             </div>
             <div class="form-group">
                 <label for="auto_update" class="control-label col-sm-3">
-                    Automatic update
+                    {{ __('Automatic update') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -146,8 +144,8 @@
         <!-- /.box-body -->
         <div class="box-footer">
             @csrf
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

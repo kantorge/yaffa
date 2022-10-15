@@ -80,7 +80,7 @@ class InvestmentGroupController extends Controller
         $investmentGroup->user_id = Auth::user()->id;
         $investmentGroup->save();
 
-        self::addSimpleSuccessMessage('Investment group added');
+        self::addSimpleSuccessMessage(__('Investment group added'));
 
         return redirect()->route('investment-group.index');
     }
@@ -99,7 +99,7 @@ class InvestmentGroupController extends Controller
             ->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Investment group updated');
+        self::addSimpleSuccessMessage(__('Investment group updated'));
 
         return redirect()->route('investment-group.index');
     }
@@ -119,14 +119,14 @@ class InvestmentGroupController extends Controller
          */
         try {
             $investmentGroup->delete();
-            self::addSimpleSuccessMessage('Investment group deleted');
+            self::addSimpleSuccessMessage(__('Investment group deleted'));
 
             return redirect()->route('investment-group.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                self::addSimpleDangerMessage('Investment group is in use, cannot be deleted');
+                self::addSimpleDangerMessage(__('Investment group is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();

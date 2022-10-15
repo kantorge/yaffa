@@ -4,16 +4,16 @@
             <h3 class="box-title">Transaction items</h3>
             <div class="box-tools">
                 <div class="btn-group d-sm-none">
-                    <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand all items')" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
                 </div>
                 <button
                     type="button"
                     class="btn btn-sm btn-success"
                     style="margin-left: 10px;"
                     @click="this.$emit('addTransactionItem')"
-                    title="New transaction item"><i class="fa fa-plus"></i></button>
+                    :title="__('New transaction item')"><i class="fa fa-plus"></i></button>
             </div>
         </div>
         <!-- /.box-header -->
@@ -47,16 +47,16 @@
         <div class="box-footer"  v-if="transactionItems.length > 0">
             <div class="box-tools pull-right">
                 <div class="btn-group d-sm-none">
-                    <button type="button" class="btn btn-sm btn-info" title="Collapse all items" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand items with data" @click="itemListShow"><i class="fa fa-expand"></i></button>
-                    <button type="button" class="btn btn-sm btn-info" title="Expand all items" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
+                    <button type="button" class="btn btn-sm btn-info" :title="__('Expand all items')" @click="itemListExpand"><i class="fa fa-arrows-alt"></i></button>
                 </div>
                 <button
                     type="button"
                     class="btn btn-sm btn-success"
                     style="margin-left: 10px;"
                     @click="this.$emit('addTransactionItem')"
-                    title="New transaction item"><span class="fa fa-plus"></span></button>
+                    :title="__('New transaction item')"><span class="fa fa-plus"></span></button>
             </div>
         </div>
     </div>

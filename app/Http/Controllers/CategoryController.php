@@ -96,7 +96,7 @@ class CategoryController extends Controller
         $category->user_id = Auth::user()->id;
         $category->save();
 
-        self::addSimpleSuccessMessage('Category added');
+        self::addSimpleSuccessMessage(__('Category added'));
 
         return redirect()->route('categories.index');
     }
@@ -136,7 +136,7 @@ class CategoryController extends Controller
         $category->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Category updated');
+        self::addSimpleSuccessMessage(__('Category updated'));
 
         return redirect()->route('categories.index');
     }
@@ -156,14 +156,14 @@ class CategoryController extends Controller
          */
         try {
             $category->delete();
-            self::addSimpleSuccessMessage('Category deleted');
+            self::addSimpleSuccessMessage(__('Category deleted'));
 
             return redirect()->route('categories.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                self::addSimpleDangerMessage('Category is in use, cannot be deleted');
+                self::addSimpleDangerMessage(__('Category is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -230,10 +230,10 @@ class CategoryController extends Controller
             }
 
             DB::commit();
-            self::addSimpleSuccessMessage('Categories merged');
+            self::addSimpleSuccessMessage(__('Categories merged'));
         } catch (\Exception $e) {
             DB::rollback();
-            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+            self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
         return redirect()->route('categories.index');

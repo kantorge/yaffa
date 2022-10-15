@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Tags')
+@section('title', __('Tags'))
 
 @section('content_header')
-<h1>Tags</h1>
+    {{ __('Tags') }}
 @stop
 
 @section('content')
@@ -29,9 +29,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($tag->id))
-                    Modify tag
+                    {{ __('Modify tag') }}
                 @else
-                    Add tag
+                    {{ __('Add tag') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +39,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -53,7 +53,7 @@
             </div>
             <div class="form-group">
                 <label for="active" class="control-label col-sm-3">
-                    Active
+                    {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -81,8 +81,8 @@
         <div class="box-footer">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('tag.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('tag.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

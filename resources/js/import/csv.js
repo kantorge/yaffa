@@ -811,11 +811,13 @@ fetch('/api/transactions/get_scheduled_items/schedule')
 
 // Initialize Vue for the quick view
 import { createApp } from 'vue'
+const app = createApp({})
+
+// Add global translator function
+app.config.globalProperties.__ = window.__;
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
-
-const app = createApp({})
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-modal', TransactionCreateModal)
 

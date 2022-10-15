@@ -28,7 +28,7 @@ const config = {
         cache: true
     },
     selectOnClose: true,
-    placeholder: "Select category",
+    placeholder: __('Select category'),
     allowClear: true
 };
 

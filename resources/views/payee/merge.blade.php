@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Merge payees')
+@section('title', __('Merge payees'))
 
-@section('content_header')
-<h1>Merge payees</h1>
-@stop
+@section('content_header', __('Merge payees'))
 
 @section('content')
 
@@ -18,7 +16,7 @@
         <div class="box box-primary">
             <div class="box-header">
                 <h3 class="box-title">
-                    Select payees to merge
+                    {{ __('Select payees to merge') }}
                 </h3>
             </div>
             <!-- /.box-header -->
@@ -27,7 +25,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="payee_source">
-                                Payee to be merged
+                                {{ __('Payee to be merged') }}
                             </label>
                             <select
                                 class="form-control"
@@ -39,7 +37,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="payee_target">
-                                Where to merge payee
+                                {{ __('Where to merge payee') }}
                             </label>
                             <select
                                 class="form-control"
@@ -53,32 +51,32 @@
                     <div class="col-md-6">
                         <div class="form-group form-horizontal">
                             <label>
-                                After merging
+                                {{ __('After merging') }}
                             </label>
                             <div class="radio">
                                 <label class="radio-inline">
                                     <input type="radio" name="action" value="delete" checked="checked">
-                                    Delete payee
+                                    {{ __('Delete merged payee') }}
                                 </label>
                                 <label class="radio-inline">
                                     <input type="radio" name="action" value="close" checked="">
-                                    Set payee to inactive
+                                    {{ __('Set merged payee to inactive') }}
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group has-error">
-                            <span class="help-block">This action cannot be undone. Proceed with caution.</span>
+                            <span class="help-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
                             @csrf
                             <button
                                 class="btn btn-sm btn-default"
                                 type="button"
                                 id="cancel"
                             >
-                                Cancel
+                                {{ __('Cancel') }}
                             </button>
-                            <input class="btn btn-primary" type="submit" value="Merge payees">
+                            <input class="btn btn-primary" type="submit" value="{{ __('Merge payees') }}">
                         </div>
                     </div>
                 </div>

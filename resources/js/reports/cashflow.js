@@ -52,7 +52,7 @@ $(function () {
     seriesMonhtly.dataFields.valueY = "value";
     seriesMonhtly.yAxis = valueAxis;
     seriesMonhtly.dataFields.dateX = "month";
-    seriesMonhtly.name = 'Monthly change';
+    seriesMonhtly.name = __('Monthly change');
     seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
 
     // Running total line
@@ -60,7 +60,7 @@ $(function () {
     seriesTotal.dataFields.valueY = "runningTotal";
     seriesTotal.dataFields.dateX = "month";
     seriesTotal.strokeWidth = 2;
-    seriesTotal.name = 'Running total';
+    seriesTotal.name = __('Running total');
     seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
 
     if (!singleAxes) {

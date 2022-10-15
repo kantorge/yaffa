@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Budget chart')
+@section('title', __('Budget chart'))
 
-@section('content_header')
-    <h1>Budget chart</h1>
-@stop
+@section('content_header', __('Budget chart'))
 
 @section('content')
 
@@ -22,7 +20,7 @@
                     <a
                         class="btn {{($byYears ? 'btn-primary' : 'btn-info') }}"
                         href="{{ route('reports.budgetchart', ['byYears' => ($byYears ? '' : 'byYears')]) }}"
-                        title="{{($byYears ? 'Switch to monthly view' : 'Switch to yearly view') }}">
+                        title="{{($byYears ? __('Switch to monthly view') : __('Switch to yearly view') ) }}">
                         <i class="fa fa-calendar"></i>
                     </a>
                 </div>
@@ -40,7 +38,7 @@
                 <div class="box">
                     <div class="box-header">
                         <h3 class="box-title">
-                            Select categories to display
+                            {{ __('Select categories to display') }}
                         </h3>
                     </div>
                     <div class="box-body">
@@ -48,9 +46,9 @@
                     </div>
                     <div class="box-footer">
                         <div class="box-tools pull-right">
-                            <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">Clear selection</button>
-                            <button name="reload" type="button" id="all" class="btn btn-default btn-sm">Select all</button>
-                            <button name="reload" type="button" id="reload" class="btn btn-primary">Load data</button>
+                            <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">{{ __('Clear selection') }}</button>
+                            <button name="reload" type="button" id="all" class="btn btn-default btn-sm">{{ __('Select all') }}</button>
+                            <button name="reload" type="button" id="reload" class="btn btn-primary">{{ __('Load data') }}</button>
                         </div>
                     </div>
                 </div>
@@ -64,7 +62,7 @@
         <div class="box">
             <div class="box-header">
                 <h3 class="box-title">
-                    Scheduled and budgeted transactions for selected categories
+                    {{ __('Scheduled and budgeted transactions for selected categories') }}
                 </h3>
             </div>
             <!-- /.box-header -->

@@ -12,40 +12,40 @@ $(dataTableSelector).DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: __("Id"),
         },
         {
             data: "name",
-            title: "Name"
+            title: __("Name"),
         },
         {
             data: "iso_code",
-            title: "ISO Code"
+            title: __("ISO Code"),
         },
         {
             data: "num_digits",
-            title: "Number of decimal digits displayed"
+            title: __("Number of decimal digits displayed"),
         },
         {
             data: "suffix",
-            title: "Suffix displayed"
+            title: __("Suffix displayed"),
         },
         {
             data: "base",
-            title: "Base currency",
+            title: __("Base currency"),
             render: function (data, type) {
                 if (type == 'filter') {
-                    return (data ? 'Yes' : 'No');
+                    return (data ? __('Yes') : __('No'));
                 }
                 return (data
-                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
+                    ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
                     : '');
             },
             className: "text-center",
         },
         {
             data: "auto_update",
-            title: "Auto update",
+            title: __("Automatic update"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -61,7 +61,7 @@ $(dataTableSelector).DataTable({
                 if (!row.latest_rate) {
                     return "Not available";
                 }
-                return "1 " + row.suffix + " = " + parseFloat(row.latest_rate).toLocalCurrency({iso_code: baseCurrency.iso_code, num_digits: 4}, false);
+                return "1 " + row.suffix + " = " + parseFloat(row.latest_rate).toLocalCurrency({iso_code: window.YAFFA.baseCurrency.iso_code, num_digits: 4}, false);
             },
             className: "dt-nowrap",
         },
@@ -75,7 +75,7 @@ $(dataTableSelector).DataTable({
                 if (!row.latest_rate) {
                     return "Not available";
                 }
-                return "1 " + baseCurrency.iso_code + " = " + (1 / parseFloat(row.latest_rate)).toLocalCurrency({iso_code: row.iso_code, num_digits: 4}, false);
+                return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + (1 / parseFloat(row.latest_rate)).toLocalCurrency({iso_code: row.iso_code, num_digits: 4}, false);
             },
             className: "dt-nowrap",
         },
@@ -86,7 +86,7 @@ $(dataTableSelector).DataTable({
                 return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
-                        ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
+                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
                           genericDataTablesActionButton(data, 'delete') +
                           '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
                         : '');

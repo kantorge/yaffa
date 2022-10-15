@@ -80,7 +80,7 @@ class AccountGroupController extends Controller
         $accountGroup->user_id = Auth::user()->id;
         $accountGroup->save();
 
-        self::addSimpleSuccessMessage('Account group added');
+        self::addSimpleSuccessMessage(__('Account group added'));
 
         return redirect()->route('account-group.index');
     }
@@ -98,7 +98,7 @@ class AccountGroupController extends Controller
         $accountGroup->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Account group updated');
+        self::addSimpleSuccessMessage(__('Account group updated'));
 
         return redirect()->route('account-group.index');
     }
@@ -118,14 +118,14 @@ class AccountGroupController extends Controller
          */
         try {
             $accountGroup->delete();
-            self::addSimpleSuccessMessage('Account group deleted');
+            self::addSimpleSuccessMessage(__('Account group deleted'));
 
             return redirect()->route('account-group.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                self::addSimpleDangerMessage('Account group is in use, cannot be deleted');
+                self::addSimpleDangerMessage(__('Account group is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') .' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();

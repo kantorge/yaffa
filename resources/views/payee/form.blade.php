@@ -1,16 +1,18 @@
 @extends('template.layouts.page')
 
-@section('title', 'Payees')
+@section('title', __('Payees'))
 
 @section('content_header')
-<h1>Payees</h1>
-
-@if(isset($payee->id))
-    <h2>Modify payee</h2>
-@else
-    <h2>Add new payee</h2>
-@endif
-
+    <h1>
+        {{ __('Payees') }}
+    </h1>
+    <h2>
+        @if(isset($payee->id))
+            {{ __('Modify payee') }}
+        @else
+            {{ __('Add new payee') }}
+        @endif
+    </h2>
 @stop
 
 @section('content')
@@ -37,14 +39,14 @@
             <div class="box box-primary">
                 <div class="box-header">
                     <h3 class="box-title">
-                        Payee details
+                        {{ __('Payee details') }}
                     </h3>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body form-horizontal">
                     <div class="form-group">
                         <label for="name" class="control-label col-sm-3">
-                            Name
+                            {{ __('Name') }}
                         </label>
                         <div class="col-sm-9">
                             <input
@@ -59,7 +61,7 @@
 
                     <div class="form-group">
                         <label for="active" class="control-label col-sm-3">
-                            Active
+                            {{ __('Active') }}
                         </label>
                         <div class="col-sm-9">
                             <input
@@ -85,7 +87,7 @@
 
                     <div class="form-group">
                         <label for="category_id" class="control-label col-sm-3">
-                            Default category
+                            {{ __('Default category') }}
                         </label>
                         <div class="col-sm-9">
                             <select
@@ -93,7 +95,7 @@
                                 id="category_id"
                                 name="config[category_id]"
                             >
-                                <option value=''>< No default category ></option>
+                                <option value=''>{{ __(' < No default category > ') }}</option>
                                 @forelse($categories as $id => $name)
                                     <option
                                         value="{{ $id }}"
@@ -119,7 +121,7 @@
 
                     <div class="form-group">
                         <label for="import_alias" class="control-label col-sm-3">
-                            Import alias
+                            {{ __('Import alias') }}
                         </label>
                         <div class="col-sm-9">
                             <textarea
@@ -133,14 +135,10 @@
                 <!-- /.box-body -->
                 <div class="box-footer">
                     @csrf
-                    <input
-                        name="config_type"
-                        type="hidden"
-                        value="{{old('config_type', 'payee' )}}"
-                    >
+                    <input name="config_type" type="hidden" value="payee">
 
-                    <input class="btn btn-primary" type="submit" value="Save">
-                    <a href="{{ route('account-entity.index', ['type' => 'payee']) }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+                    <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+                    <a href="{{ route('account-entity.index', ['type' => 'payee']) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
                 </div>
                 <!-- /.box-footer -->
             </div>
@@ -151,14 +149,14 @@
             <div class="box box-primary">
                 <div class="box-header">
                     <h3 class="box-title">
-                        Category preferences
+                        {{ __('Category preferences') }}
                     </h3>
                 </div>
                 <!-- /.box-header -->
                 <div class="box-body">
-                    <h3>Preferred categories for payee</h3>
+                    <h3>{{ __('Preferred categories for payee') }}</h3>
                     <select class="form-control" id="preferred" name="config[preferred][]" data-other-select="#not_preferred"></select>
-                    <h3>Excluded categories for payee</h3>
+                    <h3>{{ __('Excluded categories for payee') }}</h3>
                     <select class="form-control" id="not_preferred" name="config[not_preferred][]" data-other-select="#preferred"></select>
                 </div>
             </div>

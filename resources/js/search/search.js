@@ -1,5 +1,3 @@
-const pluralize = require('pluralize');
-
 // Import dataTable helper functions, used to display transaction icons
 import * as dataTableHelpers from './../components/dataTableHelper'
 
@@ -21,9 +19,11 @@ var getTransactionCount = function (element) {
   .then(response => response.json())
   .then(data => {
     if (data.count === 0) {
-      element.innerHTML = '<span class="label label-default">No transactions</span>';
+      element.innerHTML = '<span class="label label-default">' + __('No transactions') + '</span>';
     } else {
-      element.innerHTML = '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="View transactions" class="label label-info">' + pluralize('transaction', data.count, true)  + '</a>';
+      element.innerHTML =   '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="' + __('View transactions') + '" class="label label-info">' +
+                                (data.count === 1 ? __('transaction') : __('transactions'))
+                            '</a>';
     }
     element.classList.remove('hidden');
   })
@@ -53,7 +53,12 @@ document.querySelectorAll('#transactions td.transactionIcon').forEach(function (
 
 // Transaction quick view modal
 import { createApp } from 'vue'
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 const app = createApp({})
+
+// Add global translator function
+app.config.globalProperties.__ = window.__;
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
+
 app.mount('#app')

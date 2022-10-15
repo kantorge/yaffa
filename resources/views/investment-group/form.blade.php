@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment groups')
+@section('title', __('Investment groups'))
 
-@section('content_header')
-<h1>Investment groups</h1>
-@stop
+@section('content_header', __('Investment groups'))
 
 @section('content')
 
@@ -29,9 +27,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($investmentGroup['id']))
-                    Modify investment group
+                    {{ __('Modify investment group') }}
                 @else
-                    Add investment group
+                    {{ __('Add investment group') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +37,7 @@
         <div class="box-body">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -56,8 +54,8 @@
         <div class="box-footer">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('investment-group.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('investment-group.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

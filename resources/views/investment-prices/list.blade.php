@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment prices')
+@section('title', __('Investment prices'))
 
 @section('content_header')
-    <h1>Investment prices - {{$investment->name}}</h1>
+    {{ __('Investment prices') }} - {{$investment->name}}
 @stop
 
 @section('content')
@@ -11,7 +11,9 @@
         <div class="col-md-4">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Investment price data</h3>
+                    <h3 class="box-title">
+                        {{ __('Investment price data') }}
+                    </h3>
                     <div class="pull-right box-tools">
                         <a href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success"><i class="fa fa-plus"></i></a>
                     </div>

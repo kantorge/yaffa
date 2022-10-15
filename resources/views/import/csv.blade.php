@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Import CSV')
+@section('title', __('Import CSV'))
 
-@section('content_header')
-    <h1>Import CSV</h1>
-@stop
+@section('content_header', __('Import CSV'))
 
 @section('content')
     <div class="row">
@@ -13,11 +11,11 @@
                 <div class="box-body">
                     <div class="row">
                         <div class="col-md-4 form-group">
-                            <label for="account">Select account</label>
+                            <label for="account">{{ __('Select account') }}</label>
                             <select name="account" id="account" class="form-control"></select>
                         </div>
                         <div class="col-md-6 form-group">
-                            <label for="csv_file">File</label>
+                            <label for="csv_file">{{ __('File') }}</label>
                             <input type="file" class="form-control-file" id="csv_file" name="file" disabled>
                         </div>
                         <div class="col-md-2 form-group">
@@ -34,14 +32,14 @@
         <div class="col-sm-12">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">Identified transactions</h3>
+                    <h3 class="box-title">{{ __('Identified transactions') }}</h3>
                 </div>
                 <div class="box-body">
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="form-group d-inline-block">
                                 <label class="control-label">
-                                    Has similar transaction
+                                    {{ __('Has similar transaction') }}
                                 </label>
                                 <div>
                                     <div class="btn-group" data-toggle="buttons">
@@ -63,7 +61,7 @@
                             </div>
                             <div class="form-group d-inline-block">
                                 <label class="control-label">
-                                    Already handled
+                                    {{ __('Already handled') }}
                                 </label>
                                 <div>
                                     <div class="btn-group" data-toggle="buttons">
@@ -96,7 +94,7 @@
         <div class="col-xs-12">
             <div class="box box-default collapsed-box">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Unmatched rows</h3>
+                    <h3 class="box-title">{{ __('Unmatched rows') }}</h3>
                     <div class="box-tools pull-right">
                         <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
                         </button>

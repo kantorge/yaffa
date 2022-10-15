@@ -1,5 +1,3 @@
-window._ = require('lodash');
-
 /**
  * We'll load jQuery and the Bootstrap jQuery plugin which provides support
  * for JavaScript based Bootstrap features such as modals and tabs. This
@@ -7,7 +5,6 @@ window._ = require('lodash');
  */
 
 try {
-    window.Popper = require('popper.js').default;
     window.$ = window.jQuery = require('jquery');
 
     require('bootstrap');
@@ -25,19 +22,22 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 // Get CSRF Token from meta tag
 window.csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-/**
- * Next we will register the CSRF Token as a common header with Axios so that
- * all outgoing HTTP requests automatically have it attached. This is just
- * a simple convenience so we don't have to attach every token manually.
- */
-
- let token = document.head.querySelector('meta[name="csrf-token"]');
-
- if (token) {
-     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
- } else {
-     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
- }
+if (window.csrfToken) {
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = window.csrfToken;
+} else {
+    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+}
 
 require('overlayscrollbars');
 require('../../vendor/almasaeed2010/adminlte/dist/js/adminlte');
+
+// Custom translation function
+window.__ = function (key, replace) {
+    var translation = window.YAFFA.translations[key] ? window.YAFFA.translations[key] : key;
+
+    for (const [key, value] of Object.entries(replace || {})) {
+        translation = translation.replace(':' + key, value);
+    }
+
+    return translation;
+  };

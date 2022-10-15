@@ -30,19 +30,19 @@ window.table = $(dataTableSelector).DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: __("Id")
         },
         {
             data: "name",
-            title: "Name"
+            title: __("Name")
         },
         {
             data: "parent.name",
-            title: "Parent category"
+            title: __("Parent category")
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -51,7 +51,7 @@ window.table = $(dataTableSelector).DataTable({
         {
             // Display count of associated transactions
             data: "transactions_count",
-            title: "Transactions",
+            title: __("Transactions"),
             render: function(data, type) {
                 if (type === 'display') {
                     return (data > 0 ? data : 'Never used');
@@ -62,7 +62,7 @@ window.table = $(dataTableSelector).DataTable({
         {
             // Display first transaction date
             data: "transactions_min_date",
-            title: "First transaction",
+            title: __("First transaction"),
             render: function(data, type) {
                 if (type === 'display') {
                     return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
@@ -74,7 +74,7 @@ window.table = $(dataTableSelector).DataTable({
         {
             // Display last transaction date
             data: "transactions_max_date",
-            title: "Last transaction",
+            title: __("Last transaction"),
             render: function(data, type) {
                 if (type === 'display') {
                     return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
@@ -85,7 +85,7 @@ window.table = $(dataTableSelector).DataTable({
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'categories.edit') +
                         genericDataTablesActionButton(data, 'delete') +
@@ -142,7 +142,7 @@ window.table = $(dataTableSelector).DataTable({
                         detail: {
                             notification: {
                                 type: 'danger',
-                                message: 'Error while changing category active state',
+                                message: () => __('Error while changing category active state'),
                                 title: null,
                                 icon: null,
                                 dismissable: true,

@@ -1,22 +1,24 @@
+// TODO: better handle __() function, which is now assumed to be present in global scope
+
 export function dataTablesActionButton(id, action, transactionType) {
     var functions = {
         delete: function() {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
         },
         standardQuickView: function() {
-            return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+            return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="' + __('Quick view') + '"></i></button> ';
         },
         standardShow: function() {
-            return '<a href="' + route('transactions.open.standard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View details"></i></a> ';
+            return '<a href="' + route('transactions.open.standard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View details') + '"></i></a> ';
         },
         edit: function(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ';
         },
         clone(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ';
         },
         replace(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="Edit and create new schedule"></i></a> ';
+            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="' + __('Edit and create new schedule') + '"></i></a> ';
         }
     }
 
@@ -26,10 +28,10 @@ export function dataTablesActionButton(id, action, transactionType) {
 export function genericDataTablesActionButton(id, action, route) {
     var functions = {
         delete: function(id) {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
         },
         edit: function(id, route) {
-            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ';
+            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ';
         },
     }
 
@@ -40,7 +42,7 @@ export function initializeDeleteButtonListener(tableSelector, route) {
     // Generate click listener for the table element provided
     $(tableSelector).on("click", ".data-delete", function () {
         // Confirm the action with the user
-        if (!confirm('Are you sure to want to delete this item?')) {
+        if (!confirm(__('Are you sure to want to delete this item?'))) {
             return;
         }
 
@@ -82,7 +84,7 @@ export function commentIcon(comment, type) {
 
 export function initializeDeleteButton(selector) {
     $(selector).on("click", ".data-delete", function() {
-        if (!confirm('Are you sure to want to delete this item?')) {
+        if (!confirm(__('Are you sure to want to delete this item?'))) {
             return;
         }
 
@@ -105,22 +107,22 @@ export function booleanToTableIcon (data, type) {
         return  (data ? 'Yes' : 'No');
     }
     return (  data
-            ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-            : '<i class="fa fa-square text-danger" title="No"></i>');
+            ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
+            : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
 }
 
 export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'standard') {
         if (name === 'withdrawal') {
-            customTitle = customTitle || "Withdrawal";
+            customTitle = customTitle || __("Withdrawal");
             return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
-            customTitle = customTitle || "Deposit";
+            customTitle = customTitle || __("Deposit");
             return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
-            customTitle = customTitle || "Transfer";
+            customTitle = customTitle || __("Transfer");
             return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'investment') {

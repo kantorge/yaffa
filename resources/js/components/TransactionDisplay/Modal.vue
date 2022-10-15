@@ -6,7 +6,9 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
-                    <h4 class="modal-title">Details of transaction #{{transaction.id}}</h4>
+                    <h4 class="modal-title">
+                        {{ __('Details of transaction #:transaction', {transaction: transaction.id}) }}
+                    </h4>
                 </div>
                 <div class="modal-body">
                     <transaction-show-standard
@@ -15,11 +17,11 @@
                 </div>
                 <div class="modal-footer">
                     <div class="pull-right" v-if="transaction.id">
-                        <button v-if="controls.skip && transaction.schedule" class="btn btn-warning" @click="skipInstance" title="Skip schedule instance"><i class="fa fa-fw fa-fast-forward"></i> Skip instance</button>
-                        <button v-if="controls.enter && transaction.schedule" class="btn btn-success enter" @click="enterInstance" title="Enter schedule instance"><i class="fa fa-fw fa-pencil"></i> Enter instance</button>
-                        <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" title="View details"><i class="fa fa-fw fa-search"></i> Open</a>
-                        <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i> Edit</a>
-                        <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i> Clone</a>
+                        <button v-if="controls.skip && transaction.schedule" class="btn btn-warning" @click="skipInstance" :title="__('Skip schedule instance')"><i class="fa fa-fw fa-fast-forward"></i> {{ __('Skip instance') }}</button>
+                        <button v-if="controls.enter && transaction.schedule" class="btn btn-success enter" @click="enterInstance" :title="__('Enter schedule instance')"><i class="fa fa-fw fa-pencil"></i> {{ __('Enter instance') }}</button>
+                        <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" :title="__('View details')"><i class="fa fa-fw fa-search"></i> {{ __('Open') }}</a>
+                        <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" :title="__('Edit')"><i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}</a>
+                        <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" :title="__('Clone')"><i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}</a>
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>

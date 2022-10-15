@@ -4,6 +4,7 @@
 /public/storage
 /storage
 /vendor
+/resources/google
 .env
 .env.backup
 .phpunit.result.cache

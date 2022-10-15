@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Categories')
+@section('title', __('Categories'))
 
-@section('content_header')
-<h1>Categories</h1>
-@stop
+@section('content_header', __('Categories'))
 
 @section('content')
 
@@ -29,9 +27,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($category->id))
-                    Modify category
+                    {{ __('Modify category') }}
                 @else
-                    Add new category
+                    {{ __('Add new category') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +37,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -54,7 +52,7 @@
 
             <div class="form-group">
                 <label for="active" class="control-label col-sm-3">
-                    Active
+                    {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -80,7 +78,7 @@
 
             <div class="form-group">
                 <label for="parent_id" class="control-label col-sm-3">
-                    Parent
+                    {{ __('Parent category') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -115,8 +113,8 @@
         <div class="box-footer">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('categories.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('categories.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

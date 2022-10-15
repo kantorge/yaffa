@@ -28,10 +28,12 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
         "imanghafoori/laravel-microscope": "^1.0",
+        "kkomelin/laravel-translatable-string-exporter": "^1.17",
         "laravel/pint": "^1.1",
         "laravel/telescope": "^4.6",
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
+        "nikaia/translation-sheet": "^1.5",
         "nunomaduro/collision": "^6.1",
         "nunomaduro/larastan": "^2.0",
         "nunomaduro/phpinsights": "^2.0",

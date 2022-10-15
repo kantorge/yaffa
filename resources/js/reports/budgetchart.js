@@ -7,6 +7,7 @@ import * as dataTableHelpers from './../components/dataTableHelper'
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
 import { RRule } from 'rrule';
+import { toFormattedCurrency } from '../helpers';
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
@@ -51,12 +52,12 @@ am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
 
-chart.numberFormatter.intlLocales = "hu-HU";
+chart.numberFormatter.intlLocales = window.YAFFA.locale;
 chart.numberFormatter.numberFormat = {
     style: 'currency',
-    currency: baseCurrency.iso_code,
-    minimumFractionDigits: baseCurrency.num_digits,
-    maximumFractionDigits: baseCurrency.num_digits
+    currency: window.YAFFA.baseCurrency.iso_code,
+    minimumFractionDigits: window.YAFFA.baseCurrency.num_digits,
+    maximumFractionDigits: window.YAFFA.baseCurrency.num_digits
 };
 
 var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
@@ -67,23 +68,23 @@ var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 var seriesActual = chart.series.push(new am4charts.ColumnSeries());
 seriesActual.dataFields.valueY = "actual";
 seriesActual.dataFields.dateX = "date";
-seriesActual.name = "Actual";
-seriesActual.tooltipText = "[bold]Actual:[/] {valueY}";
+seriesActual.name = __("Actual");
+seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
 
 var seriesBudget = chart.series.push(new am4charts.LineSeries());
 seriesBudget.strokeWidth = 3;
 seriesBudget.strokeDasharray = "8,4";
 seriesBudget.dataFields.valueY = "budget";
 seriesBudget.dataFields.dateX = "date";
-seriesBudget.name = "Budget";
-seriesBudget.tooltipText = "[bold]Budget:[/] {valueY}";
+seriesBudget.name = __("Budget");
+seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
 
 var seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
 seriesMovingAverage.strokeWidth = 3;
 seriesMovingAverage.dataFields.valueY = "movingAverage";
 seriesMovingAverage.dataFields.dateX = "date";
-seriesMovingAverage.name = "Moving average";
-seriesMovingAverage.tooltipText = "[bold]Moving average:[/] {valueY}";
+seriesMovingAverage.name = __("Moving average");
+seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
 
 var scrollbarX = new am4charts.XYChartScrollbar();
 scrollbarX.series.push(seriesBudget);
@@ -195,7 +196,7 @@ window.table = $('#table').DataTable({
     columns: [
         {
             data: "schedule_config.start_date",
-            title: "Start date",
+            title: __("Start date"),
             render: function (data) {
                 return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
             },
@@ -203,7 +204,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "schedule_config.rule",
-            title: "Schedule",
+            title: __("Schedule"),
             render: function (data) {
                 // Return human readable format
                 return data.toText();
@@ -211,7 +212,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "schedule_config.next_date",
-            title: "Next date",
+            title: __("Next date"),
             render: function (data) {
                 if (!data) {
                     return '';
@@ -223,7 +224,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "schedule",
-            title: "Schedule",
+            title: __("Schedule"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -231,7 +232,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "budget",
-            title: "Budget",
+            title: __("Budget"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -239,7 +240,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "schedule_config.active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -247,19 +248,19 @@ window.table = $('#table').DataTable({
         },
         {
             data: "transaction_config_type",
-            title: "Type",
+            title: __("Type"),
             render: function (data, type) {
                 if (type == 'filter') {
                     return  data;
                 }
                 return (  data === 'standard'
-                        ? '<i class="fa fa-money text-primary" title="Standard"></i>'
-                        : '<i class="fa fa-line-chart text-primary" title="Investment"></i>');
+                        ? '<i class="fa fa-money text-primary" title="' + __('Standard') + '"></i>'
+                        : '<i class="fa fa-line-chart text-primary" title="' + __('Investment') + '"></i>');
             },
             className: "text-center",
         },
         {
-            title: 'Payee',
+            title: __('Payee'),
             render: function (_data, _type, row) {
                 if (row.transaction_config_type === 'standard') {
                     if (row.transaction_type.name === 'withdrawal' && row.config.account_to) {
@@ -269,10 +270,10 @@ window.table = $('#table').DataTable({
                         return row.config.account_from.name;
                     }
                     if (row.transaction_type.name === 'transfer') {
-                        if (row.transaction_operator === 'minus') {
-                            return 'Transfer to ' + row.config.account_to.name;
+                        if (row.transactionOperator === 'minus') {
+                            return __('Transfer to :account', {account: row.account_to_name});
                         } else {
-                            return 'Transfer from ' + row.config.account_from.name;
+                            return __('Transfer from :account', {account: row.account_from_name});
                         }
                     }
                 }
@@ -284,12 +285,12 @@ window.table = $('#table').DataTable({
             },
         },
         {
-            title: "Category",
+            title: __("Category"),
             render: function (_data, _type, row) {
                 //standard transaction
                 if (row.transaction_config_type === 'standard') {
                     if (row.categories.length > 1) {
-                        return 'Split transaction';
+                        return __('Split transaction');
                     }
                     if (row.categories.length === 1) {
                         return row.categories[0];
@@ -314,7 +315,7 @@ window.table = $('#table').DataTable({
             orderable: false
         },
         {
-            title: "Amount",
+            title: __("Amount"),
             render: function (_data, type, row) {
                 if (type === 'display') {
                     let prefix = '';
@@ -324,7 +325,7 @@ window.table = $('#table').DataTable({
                     if (row.transaction_operator == 'plus') {
                         prefix = '+ ';
                     }
-                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
+                    return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.currency);
                 }
 
                 return row.config.amount_to;
@@ -333,7 +334,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: 'comment',
-            title: "Comment",
+            title: __("Comment"),
             render: function (data, type) {
                 return dataTableHelpers.commentIcon(data, type);
             },
@@ -341,7 +342,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "tags",
-            title: "Tags",
+            title: __("Tags"),
             render: function (data, type) {
                 return dataTableHelpers.tagIcon(data, type);
             },
@@ -349,15 +350,15 @@ window.table = $('#table').DataTable({
         },
         {
             data: 'id',
-            title: "Actions",
+            title: __("Actions"),
             render: function (data, _type, row) {
                 return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_config_type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'delete') +
-                    (row.schedule
-                        ? '<a href="' + (row.transaction_config_type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                        '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> '
+                       dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
+                       dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
+                       dataTableHelpers.dataTablesActionButton(data, 'delete') +
+                       (row.schedule
+                        ? '<a href="' + (row.transaction_config_type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') + '"></i></a> ' +
+                          '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> '
                         : '');
             },
             orderable: false
@@ -436,7 +437,7 @@ $('#category_tree')
                         return {
                             id: category.id,
                             parent: category.parent_id || '#',
-                            text: (category.active ? category.name : '<span class="text-muted" title="Inactive">' + category.name + '</span>'),
+                            text: (category.active ? category.name : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>'),
                             full_name: category.full_name,
                             icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
                             state: {

@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Accounts')
+@section('title',  __('Accounts') )
 
 @section('content_header')
-    <h1>Accounts</h1>
+    <h1>{{ __('Accounts') }}</h1>
 @stop
 
 @section('content')
@@ -29,9 +29,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($account->id))
-                    Modify account
+                    {{ __('Modify account') }}
                 @else
-                    Add new account
+                    {{ __('Add new account') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +39,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -54,7 +54,7 @@
 
             <div class="form-group">
                 <label for="active" class="control-label col-sm-3">
-                    Active
+                    {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -80,7 +80,7 @@
 
             <div class="form-group">
                 <label for="opening_balance" class="control-label col-sm-3">
-                    Opening balance
+                    {{ __('Opening balance') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -95,7 +95,7 @@
 
             <div class="form-group">
                 <label for="account_group_id" class="control-label col-sm-3">
-                    Account group
+                    {{ __('Account group') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -128,7 +128,7 @@
 
             <div class="form-group">
                 <label for="currency_id" class="control-label col-sm-3">
-                    Currency
+                    {{ __('Currency') }}
                 </label>
                 <div class="col-sm-9">
                     <select
@@ -162,14 +162,10 @@
         <!-- /.box-body -->
         <div class="box-footer">
             @csrf
-            <input
-                name="config_type"
-                type="hidden"
-                value="{{old('config_type', 'account' )}}"
-            >
+            <input name="config_type" type="hidden" value="account">
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('account-entity.index', ['type' => 'account']) }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('account-entity.index', ['type' => 'account']) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

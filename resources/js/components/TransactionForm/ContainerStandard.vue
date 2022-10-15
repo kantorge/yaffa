@@ -12,7 +12,9 @@
             <div class="box-body">
                 <div class="row">
                     <div class="hidden-xs col-sm-10">
-                        <label class="control-label block-label">After saving</label>
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <div class="btn-group">
                             <button
                                 v-for="item in activeCallbackOptions"
@@ -28,7 +30,9 @@
                         </div>
                     </div>
                     <div class="col-xs-12 d-sm-none">
-                        <label class="control-label block-label">After saving</label>
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <select
                             class="form-control"
                             v-model="callback"
@@ -79,32 +83,32 @@
                 callbackOptions: [
                     {
                         value: 'new',
-                        label: 'Add an other transaction',
+                        label: __('Add an other transaction'),
                         enabled: true,
                     },
                     {
                         value: 'clone',
-                        label: 'Clone this transaction',
+                        label: __('Clone this transaction'),
                         enabled: true,
                     },
                     {
                         value: 'returnToPrimaryAccount',
-                        label: 'Return to selected account',
+                        label: __('Return to selected account'),
                         enabled: true,
                     },
                     {
                         value: 'returnToSecondaryAccount',
-                        label: 'Return to target account',
+                        label: __('Return to target account'),
                         enabled: false,
                     },
                     {
                         value: 'returnToDashboard',
-                        label: 'Return to dashboard',
+                        label: __('Return to dashboard'),
                         enabled: true,
                     },
                     {
                         value: 'back',
-                        label: 'Return to previous page',
+                        label: __('Return to previous page'),
                         enabled: true,
                     },
                 ]

@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Account groups')
+@section('title', __('Account groups'))
 
-@section('content_header')
-    <h1>Account groups</h1>
-@stop
+@section('content_header', __('Account groups'))
 
 @section('content')
 
@@ -29,9 +27,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($accountGroup->id))
-                    Modify account group
+                    {{ __('Modify account group') }}
                 @else
-                    Add account group
+                    {{ __('Add account group') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +37,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="name" class="control-label col-sm-3">
-                    Name
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -56,8 +54,8 @@
         <div class="box-footer">
             @csrf
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('account-group.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('account-group.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

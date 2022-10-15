@@ -16,15 +16,15 @@ $(dataTableSelector).DataTable({
     columns: [
         {
             data: "date",
-            title: "Date"
+            title: __("Date"),
         },
         {
             data: "price",
-            title: "Price"
+            title: __("Price"),
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'investment-price.edit') +
                         genericDataTablesActionButton(data);

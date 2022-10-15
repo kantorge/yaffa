@@ -5,28 +5,28 @@
     layout-footer-fixed
 @endsection
 
-@section('title', 'Transaction')
+@section('title', __('Transaction'))
 
 @section('content_header')
     @switch($action)
         @case('create')
-            Add new transaction
+            {{ __('Add new transaction') }}
             @break
 
         @case('edit')
-            Modify existing transaction
+            {{ __('Modify existing transaction') }}
             @break
 
         @case('clone')
-            Clone existing transaction
+            {{ __('Clone existing transaction') }}
             @break
 
         @case('enter')
-            Enter scheduled transaction instance
+            {{ __('Enter scheduled transaction instance') }}
             @break
 
         @case('replace')
-            Clone scheduled transaction and close base item
+            {{ __('Clone scheduled transaction and close base item') }}
             @break
 
     @endswitch

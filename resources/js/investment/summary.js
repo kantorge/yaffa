@@ -8,18 +8,18 @@ $('#investmentSummary').DataTable({
     columns: [
         {
             data: "name",
-            title: "Name",
+            title: __("Name"),
             render: function (data, type, row) {
-                return '<a href="' + route('investment.show', row.id) + '" class="" title="View investment details">' + data + '</a>';
+                return '<a href="' + route('investment.show', row.id) + '" class="" title="' + __('View investment details') + '">' + data + '</a>';
             },
         },
         {
             data: "investment_group.name",
-            title: "Group",
+            title: __("Group"),
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -27,31 +27,31 @@ $('#investmentSummary').DataTable({
         },
         {
             data: "quantity",
-            title: "Quantity",
+            title: __("Quantity"),
             render: function (data) {
                 return numberRenderer(data);
             },
         },
         {
             data: "price",
-            title: "Latest price",
-            render: function (data, type, row) {
+            title: __("Latest price"),
+            render: function (data, _type, row) {
                 return $.fn.dataTable.render.number('&nbsp;', ',', 4, '', '&nbsp;' + row.currency.suffix).display(data);
             },
         },
         {
             data: "price",
-            title: "Value",
-            render: function (data, type, row) {
+            title: __("Value"),
+            render: function (_data, _type, row) {
                 return $.fn.dataTable.render.number('&nbsp;', ',', row.currency.num_digits, '', '&nbsp;' + row.currency.suffix).display(row.quantity * row.price);
             },
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
-                return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="View investment details"></i></a> ' +
-                    '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="View investment price list"></i></a> ';
+                return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
+                       '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ';
             },
             orderable: false
         }
@@ -78,7 +78,7 @@ $('#investmentSummary').DataTable({
                     investments.filter(investment => investment.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
-                    alert('Error changing investment active state');
+                    alert(__('Error changing investment active state'));
                 },
                 complete: function (_data) {
                     // Re-render row

@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Tags')
+@section('title', __('Tags'))
 
 @section('content_header')
-    <h1>Tags</h1>
+    {{ __('Tags') }}
 @stop
 
 @section('content')
@@ -11,7 +11,7 @@
     <div class="box">
         <div class="box-header">
             <div class="pull-right box-tools">
-                <a href="{{ route('tag.create') }}" class="btn btn-success" title="New tag"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('tag.create') }}" class="btn btn-success" title="{{ __('New tag') }}"><i class="fa fa-plus"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

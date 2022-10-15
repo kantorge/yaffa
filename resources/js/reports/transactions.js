@@ -2,6 +2,7 @@
 import 'datatables.net-bs';
 import 'select2';
 import { DateRangePicker } from 'vanillajs-datepicker';
+import { toFormattedCurrency } from '../helpers';
 
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
@@ -77,7 +78,7 @@ window.table = $("#dataTable").DataTable({
     columns: [
         {
             data: "date",
-            title: 'Date',
+            title: __('Date'),
             render: function (data) {
                 if (!data) {
                     return data;
@@ -87,32 +88,32 @@ window.table = $("#dataTable").DataTable({
             className : "dt-nowrap",
         },
         {
-            title: 'Type',
+            title: __('Type'),
             render: function(_data, _type, row) {
                 return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type);
             },
             className: "text-center",
         },
         {
-            title: 'From',
+            title: __('From'),
             data: 'config.account_from.name',
         },
         {
-            title: 'To',
+            title: __('To'),
             data: 'config.account_to.name',
         },
         {
-            title: "Category",
-            render: function (data, type, row) {
+            title: __("Category"),
+            render: function (_data, _type, row) {
                 // Standard transaction
                 if (row.transaction_config_type === 'standard') {
                     // Empty
                     if (row.categories.length === 0) {
-                        return 'Not set';
+                        return __('Not set');
                     }
 
                     if (row.categories.length > 1) {
-                        return 'Split transaction';
+                        return __('Split transaction');
                     } else {
                         return row.categories[0];
                     }
@@ -129,23 +130,23 @@ window.table = $("#dataTable").DataTable({
                     return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
                 }
 
-                return 'Not set';
+                return __('Not set');
             },
             orderable: false
         },
         {
-            title: 'Amount',
-            render: function (data, type, row) {
+            title: __('Amount'),
+            render: function (_data, _type, row) {
                 // Standard transaction
                 if (row.transaction_config_type === 'standard') {
                     let prefix = '';
-                    if (row.transaction_operator == 'minus') {
+                    if (row.transaction_operator === 'minus') {
                         prefix = '- ';
                     }
-                    if (row.transaction_operator == 'plus') {
+                    if (row.transaction_operator === 'plus') {
                         prefix = '+ ';
                     }
-                    return prefix + row.config.amount_to.toLocalCurrency(row.currency);
+                    return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.currency);
                 }
                 // Investment transaction
                 /* not implemented yet
@@ -166,7 +167,7 @@ window.table = $("#dataTable").DataTable({
             className : "dt-nowrap",
         },
         {
-            title: "Extra",
+            title: __("Extra"),
             render: function (_data, type, row) {
                 return dataTableHelpers.commentIcon(row.comment, type) + dataTableHelpers.tagIcon(row.tags, type);
             },
@@ -175,7 +176,7 @@ window.table = $("#dataTable").DataTable({
         },
         {
             data: 'id',
-            title: "Actions",
+            title: __("Actions"),
             render: function(data, _type, row) {
                 if (row.transaction_config_type === 'standard') {
                     return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
@@ -307,7 +308,7 @@ $(elementAccountSelector).select2({
         },
         cache: true
     },
-    placeholder: "Select account",
+    placeholder: __("Select account"),
     allowClear: true
 });
 
@@ -364,7 +365,7 @@ $(elementPayeeSelector).select2({
         cache: true
     },
     selectOnClose: true,
-    placeholder: "Select payee",
+    placeholder: __("Select payee"),
     allowClear: true
 });
 
@@ -421,7 +422,7 @@ $(elementCategorySelectSelector).select2({
         cache: true
     },
     selectOnClose: true,
-    placeholder: "Select category",
+    placeholder: __("Select category"),
     allowClear: true
 });
 
@@ -477,7 +478,7 @@ $(elementTagSelector).select2({
         },
         cache: true
     },
-    placeholder: "Select tag(s)",
+    placeholder: __("Select tag(s)"),
     allowClear: true
 });
 
@@ -546,10 +547,12 @@ $(elementTagSelector).on('select2:unselect', rebuildUrl);
 
 
 import { createApp } from 'vue'
-
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 const app = createApp({})
 
+// Add global translator function
+app.config.globalProperties.__ = window.__;
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
 
 app.mount('#app')

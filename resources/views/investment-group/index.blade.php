@@ -1,17 +1,15 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment groups')
+@section('title', __('Investment groups'))
 
-@section('content_header')
-    <h1>Investment groups</h1>
-@stop
+@section('content_header', __('Investment groups'))
 
 @section('content')
 
     <div class="box">
         <div class="box-header">
             <div class="pull-right box-tools">
-                <a href="{{ route('investment-group.create') }}" class="btn btn-success" title="New investment group"><i class="fa fa-plus"></i></a>
+                <a href="{{ route('investment-group.create') }}" class="btn btn-success" title="{{ __('New investment group') }}"><i class="fa fa-plus"></i></a>
             </div>
             <!-- /.box-tools -->
         </div>

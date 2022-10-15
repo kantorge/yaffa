@@ -1,6 +1,6 @@
 <template>
     <div>
-        <AlertErrors :form="form" message="There were some problems with your input." />
+        <AlertErrors :form="form" :message="__('There were some problems with your input.')" />
 
         <!-- form start -->
         <form
@@ -11,7 +11,7 @@
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">
-                        Transaction properties
+                        {{ __('Transaction properties') }}
                     </h3>
                 </div>
                 <!-- /.box-header -->
@@ -22,7 +22,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group valid">
-                                        <label for="transaction_type" class="control-label">Transaction type</label>
+                                        <label for="transaction_type" class="control-label">
+                                            {{ __('Transaction type') }}
+                                        </label>
                                         <select id="transaction_type" class="form-control" v-model="form.transaction_type" @change="transactionTypeChanged($event)">
                                             <option
                                                 v-for="item in transactionTypes"
@@ -34,7 +36,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="account" class="control-label">Account</label>
+                                        <label for="account" class="control-label">
+                                            {{ __('Account') }}
+                                        </label>
                                         <select
                                             class="form-control"
                                             id="account"
@@ -46,7 +50,9 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="date" class="control-label">Date</label>
+                                        <label for="date" class="control-label">
+                                            {{ __('Date') }}
+                                        </label>
                                         <Datepicker
                                             id="date"
                                             v-model="form.date"
@@ -71,14 +77,18 @@
                                         <label
                                             for="entry_type_schedule"
                                             class="control-label"
-                                            :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
+                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
                                             :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                        >Scheduled</label>
+                                        >
+                                            {{ __('Scheduled') }}
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="investment" class="control-label">Investment</label>
+                                        <label for="investment" class="control-label">
+                                            {{ __('Investment') }}
+                                        </label>
                                         <select
                                             class="form-control"
                                             id="investment"
@@ -90,7 +100,9 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="comment" class="control-label">Comment</label>
+                                        <label for="comment" class="control-label">
+                                            {{ __('Comment') }}
+                                        </label>
                                         <input
                                             class="form-control"
                                             id="comment"
@@ -106,7 +118,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_quantity" class="control-label">Quantity</label>
+                                        <label for="transaction_quantity" class="control-label">
+                                            {{ __('Quantity') }}
+                                        </label>
                                         <MathInput
                                             class="form-control"
                                             id="transaction_quantity"
@@ -117,7 +131,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_price" class="control-label">Price</label>
+                                        <label for="transaction_price" class="control-label">
+                                            {{ __('Price') }}
+                                        </label>
                                         <MathInput
                                             class="form-control"
                                             id="transaction_price"
@@ -130,7 +146,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_commission" class="control-label">Commission</label>
+                                        <label for="transaction_commission" class="control-label">
+                                            {{ __('Commission') }}
+                                        </label>
                                         <MathInput
                                             class="form-control"
                                             id="transaction_commission"
@@ -140,7 +158,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_tax" class="control-label">Tax</label>
+                                        <label for="transaction_tax" class="control-label">
+                                            {{ __('Tax') }}
+                                        </label>
                                         <MathInput
                                             class="form-control"
                                             id="transaction_tax"
@@ -152,7 +172,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_dividend" class="control-label">Dividend</label>
+                                        <label for="transaction_dividend" class="control-label">
+                                            {{ __('Dividend') }}
+                                        </label>
                                         <MathInput
                                             class="form-control"
                                             id="transaction_dividend"
@@ -164,7 +186,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_total" class="control-label">
-                                            Total
+                                            {{ __('Total') }}
                                             <span v-if="currency">({{currency}})</span>
                                         </label>
                                         <input type="text" :value="total" class="form-control" disabled="disabled">
@@ -192,7 +214,7 @@
         <transaction-schedule
             v-if="form.schedule && action === 'replace'"
             :withCheckbox = "true"
-            title = "Update base schedule"
+            :title = "__('Update base schedule')"
             :allowCustomization = "false"
             ref = "scheduleOriginal"
 
@@ -206,7 +228,9 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="hidden-xs col-sm-8">
-                        <label class="control-label block-label">After saving</label>
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <div class="btn-group">
                             <button
                                 v-for="item in activeCallbackOptions"
@@ -229,13 +253,15 @@
                                 style="margin-left: 10px; margin-bottom: 5px;"
                                 @click="onCancel"
                             >
-                                Cancel
+                                {{ __('Cancel') }}
                             </button>
-                            <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
+                            <Button class="btn btn-primary" :disabled="form.busy" :form="form">{{ __('Save') }}</Button>
                         </div>
                     </div>
                     <div class="col-xs-12 d-sm-none">
-                        <label class="control-label block-label">After saving</label>
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <select
                             class="form-control"
                             v-model="callback"
@@ -317,27 +343,27 @@
             data.callbackOptions = [
                 {
                     value: 'new',
-                    label: 'Add an other transaction',
+                    label: __('Add an other transaction'),
                     enabled: true,
                 },
                 {
                     value: 'clone',
-                    label: 'Clone this transaction',
+                    label: __('Clone this transaction'),
                     enabled: true,
                 },
                 {
                     value: 'returnToPrimaryAccount',
-                    label: 'Return to selected account',
+                    label: __('Return to selected account'),
                     enabled: true,
                 },
                 {
                     value: 'returnToDashboard',
-                    label: 'Return to dashboard',
+                    label: __('Return to dashboard'),
                     enabled: true,
                 },
                 {
                     value: 'back',
-                    label: 'Return to previous page',
+                    label: __('Return to previous page'),
                     enabled: true,
                 },
             ]
@@ -505,7 +531,7 @@
                         cache: true
                     },
                     selectOnClose: true,
-                    placeholder: "Select account",
+                    placeholder: __("Select account"),
                     allowClear: true
                 })
                 .on('select2:select', function (e) {
@@ -573,7 +599,7 @@
                     cache: true
                 },
                 selectOnClose: true,
-                placeholder: "Select investment",
+                placeholder: __("Select investment"),
                 allowClear: true
             })
             .on('select2:select', function (e) {
@@ -671,7 +697,7 @@
             },
 
             onCancel() {
-                if(confirm('Are you sure you want to discard any changes?')) {
+                if(confirm(__('Are you sure you want to discard any changes?'))) {
                     window.history.back();
                 }
                 return false;

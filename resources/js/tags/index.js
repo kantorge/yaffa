@@ -13,15 +13,15 @@ $(dataTableSelector).DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: __("Id")
         },
         {
             data: "name",
-            title: "Name"
+            title: __("Name")
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -29,7 +29,7 @@ $(dataTableSelector).DataTable({
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'tag.edit') +
                         genericDataTablesActionButton(data, 'delete');

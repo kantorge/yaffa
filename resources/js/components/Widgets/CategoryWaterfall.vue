@@ -1,7 +1,9 @@
 <template>
     <div class="box">
         <div class="box-header">
-            <h3 class="box-title">Monthly overview for top-level categories</h3>
+            <h3 class="box-title">
+                {{ __('Monthly overview for top-level categories') }}
+            </h3>
             <div class="pull-right" v-show="ready">
                 <button class="btn btn-xs btn-info" type="button" @click="previousMonth" title="Previous month"><span class="fa fa-fw fa-caret-left"></span></button>
                 {{ dateLabel }}
@@ -40,7 +42,8 @@ export default {
     },
     data() {
         return {
-            baseCurrency: window.baseCurrency,
+            baseCurrency: window.YAFFA.baseCurrency,
+            locale: window.YAFFA.locale,
             rawData: [],
             year: new Date().getFullYear(),
             month: new Date().getMonth() + 1,
@@ -55,12 +58,12 @@ export default {
         chart.hiddenState.properties.opacity = 0;
 
         // Set up number formatting
-        chart.numberFormatter.intlLocales = "hu-HU";
+        chart.numberFormatter.intlLocales = this.locale;
         chart.numberFormatter.numberFormat = {
             style: 'currency',
-            currency: baseCurrency.iso_code,
-            minimumFractionDigits: baseCurrency.num_digits,
-            maximumFractionDigits: baseCurrency.num_digits
+            currency: this.baseCurrency.iso_code,
+            minimumFractionDigits: this.baseCurrency.num_digits,
+            maximumFractionDigits: this.baseCurrency.num_digits
         };
 
         chart.data = this.chartData;

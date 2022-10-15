@@ -1,10 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', 'Cash flow')
+@section('title', __('Cash flow'))
 
-@section('content_header')
-    <h1>Cash flow</h1>
-@stop
+@section('content_header', __('Cash flow'))
 
 @section('content')
 
@@ -13,19 +11,19 @@
         <div class="box">
             <div class="box-header">
                 <h3 class="box-title">
-                    Cash flow
+                    {{ __('Cash flow') }}
                 </h3>
                 <div class="pull-right box-tools">
                     <a
                         class="btn {{($singleAxes ? 'btn-primary' : 'btn-info') }}"
                         href="{{ route('reports.cashflow', ['withForecast' => ($withForecast ? 'withForecast' : ''), 'singleAxes' => ($singleAxes ? '' : 'singleAxes')]) }}"
-                        title="{{($singleAxes ? 'Show on two axes' : 'Show on same axes') }}">
+                        title="{{($singleAxes ? __('Show on two axes') : __('Show on same axes')) }}">
                         <i class="fa fa-lock"></i>
                     </a>
                     <a
                         class="btn {{($withForecast ? 'btn-primary' : 'btn-info') }}"
                         href="{{ route('reports.cashflow', ['withForecast' => ($withForecast ? '' : 'withForecast'), 'singleAxes' => ($singleAxes ? 'singleAxes' : '')]) }}"
-                        title="{{($withForecast ? 'Without forecast' : 'With forecast') }}">
+                        title="{{($withForecast ? __('Without forecast') : __('With forecast')) }}">
                         <i class="fa fa-calendar"></i>
                     </a>
                 </div>

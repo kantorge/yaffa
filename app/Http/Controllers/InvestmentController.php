@@ -78,7 +78,7 @@ class InvestmentController extends Controller
         $investment->fill($validated);
         $investment->save();
 
-        self::addSimpleSuccessMessage('Investment updated');
+        self::addSimpleSuccessMessage(__('Investment updated'));
 
         return redirect()->route('investment.index');
     }
@@ -106,7 +106,7 @@ class InvestmentController extends Controller
         $investment->user_id = Auth::user()->id;
         $investment->save();
 
-        self::addSimpleSuccessMessage('Investment added');
+        self::addSimpleSuccessMessage(__('Investment added'));
 
         return redirect()->route('investment.index');
     }
@@ -126,7 +126,7 @@ class InvestmentController extends Controller
          */
         $investment->delete();
 
-        self::addSimpleSuccessMessage('Investment deleted');
+        self::addSimpleSuccessMessage(__('Investment deleted'));
 
         return redirect()->route('investment.index');
     }

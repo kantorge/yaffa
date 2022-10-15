@@ -1,7 +1,9 @@
 <template>
     <div class="box box-info">
         <div class="box-header with-border">
-            <h3 class="box-title">Scheduled transaction instances</h3>
+            <h3 class="box-title">
+                {{ __('Scheduled transaction instances') }}
+            </h3>
 
             <div class="box-tools pull-right">
                 <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>

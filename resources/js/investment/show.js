@@ -92,7 +92,7 @@ window.table = $('#table').DataTable({
     columns: [
         {
             data: "date",
-            title: "Date",
+            title: __("Date"),
             render: function (data, type) {
                 if (type === 'display' && data) {
                     return data.toLocaleDateString('Hu-hu');
@@ -104,11 +104,11 @@ window.table = $('#table').DataTable({
         },
         {
             data: "transaction_type",
-            title: "Transaction",
+            title: __("Transaction"),
         },
         {
             data: "quantity",
-            title: "Quantity",
+            title: __("Quantity"),
             render: function(data) {
                 if (data !== null) {
                     return data.toLocaleString('hu-HU');
@@ -118,7 +118,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "price",
-            title: "Price",
+            title: __("Price"),
             render: function (data) {
                 if (data === null) {
                     return data;
@@ -129,7 +129,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "dividend",
-            title: "Dividend",
+            title: __("Dividend"),
             render: function (data) {
                 if (data === null) {
                     return data;
@@ -140,7 +140,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "commission",
-            title: "Commission",
+            title: __("Commission"),
             render: function (data) {
                 if (data === null) {
                     return data;
@@ -151,7 +151,7 @@ window.table = $('#table').DataTable({
         },
         {
             data: "tax",
-            title: "Tax",
+            title: __("Tax"),
             render: function (data) {
                 if (data === null) {
                     return data;
@@ -161,33 +161,31 @@ window.table = $('#table').DataTable({
             },
         },
         {
-            title: "Amount",
-            render: function (data, type, row) {
+            title: __("Amount"),
+            render: function (_data, _type, row) {
                 var operator = row.amount_operator;
                 if (!operator) {
                     return 0;
                 }
-                var result = (operator == 'minus'
-                        ? - row.price * row.quantity
-                        : row.dividend + row.price * row.quantity )
-                        - row.tax
-                        - row.commission;
+                var result = (  operator == 'minus'
+                              ? - row.price * row.quantity
+                              : row.dividend + row.price * row.quantity )
+                            - row.tax
+                            - row.commission;
 
                 return result.toLocalCurrency(investment.currency);
             }
         },
         {
             data: "id",
-            title: "Actions",
-            render: function (data, type, row) {
-                var actions = '' +
-                    '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="Make this the start date"></i></button> ' +
-                    '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="Make this the end date"></i></button> ';
+            title: __("Actions"),
+            render: function (data, _type, row) {
+                var actions = '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="' + __('Make this the start date') + '"></i></button> ' +
+                              '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="' + __('Make this the end date') + '"></i></button> ';
                 if (!row.schedule) {
-                    actions += '' +
-                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                    '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
-                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button> ';
+                    actions += '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                               '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
+                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
                 }
 
                 return actions;
@@ -204,7 +202,7 @@ window.table = $('#table').DataTable({
 });
 
 $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
-    if (!confirm('Are you sure to want to delete this item?')) {
+    if (!confirm(__('Are you sure to want to delete this item?'))) {
         return;
     }
 
@@ -314,12 +312,12 @@ window.calculateSummary = function() {
     window.summary.Value.value = window.summary.Quantity.value * lastPrice;
 
     // Final result
-    window.summary.Result.value =   window.summary.Selling.value
-                                    + window.summary.Dividend.value
-                                    + window.summary.Value.value
-                                    - window.summary.Buying.value
-                                    - window.summary.Commission.value
-                                    - window.summary.Taxes.value;
+    window.summary.Result.value = window.summary.Selling.value
+                                + window.summary.Dividend.value
+                                + window.summary.Value.value
+                                - window.summary.Buying.value
+                                - window.summary.Commission.value
+                                - window.summary.Taxes.value;
 
     // Calculate ROI
     var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);

@@ -1,4 +1,6 @@
 require('datatables.net-bs');
+import { toFormattedCurrency } from '../helpers';
+
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
@@ -12,7 +14,7 @@ window.table = $(dataTableSelector).DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: "Id"
         },
         {
             data: "name",
@@ -34,8 +36,9 @@ window.table = $(dataTableSelector).DataTable({
             data: "config.opening_balance",
             title: "Opening balance",
             render: function (data, _type, row) {
-                return data.toLocalCurrency(row.config.currency);
+                return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
             },
+            className: "dt-nowrap"
         },
         {
             data: "config.account_group.name",

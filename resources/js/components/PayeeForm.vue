@@ -16,16 +16,16 @@
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">×</span>
                         </button>
-                        <h4 class="modal-title" v-if="action == 'new'">Add new payee</h4>
-                        <h4 class="modal-title" v-if="action == 'edit'">Edit payee</h4>
+                        <h4 class="modal-title" v-if="action == 'new'">{{ __('Add new payee') }}</h4>
+                        <h4 class="modal-title" v-if="action == 'edit'">{{ __('Edit payee') }}</h4>
                     </div>
                     <div class="modal-body form-horizontal">
-                        <AlertErrors :form="form" message="There were some problems with your input." />
-                        <AlertSuccess :form="form" message="Your changes have been saved!" />
+                        <AlertErrors :form="form" :message="__('There were some problems with your input.')" />
+                        <AlertSuccess :form="form" :message="__('Your changes have been saved!')" />
 
                         <div class="form-group">
                             <label for="name" class="control-label col-sm-3">
-                                Name
+                                {{ __('Name') }}
                             </label>
                             <div class="col-sm-9">
                                 <input
@@ -41,7 +41,7 @@
 
                         <div class="form-group">
                             <label for="active" class="control-label col-sm-3">
-                                Active
+                                {{ __('Active') }}
                             </label>
                             <div class="col-sm-9">
                                 <input
@@ -56,7 +56,7 @@
 
                         <div class="form-group">
                             <label for="category_id" class="control-label col-sm-3">
-                                Default category
+                                {{ __('Default category') }}
                             </label>
                             <div class="col-sm-9">
                                 <select
@@ -70,7 +70,7 @@
                         <div class="form-group" v-show="similarPayees.length > 0">
                             <hr>
                             <label for="category_id" class="control-label col-sm-3">
-                                Are you looking for any of these payees?
+                                {{ __('Are you looking for any of these payees?') }}
                             </label>
                             <div class="col-sm-9">
                                 <ul class="list-unstyled">
@@ -81,7 +81,7 @@
                                     >
                                         <a href="#" @click.prevent="onSelectPayee(payee)">
                                             {{ payee.name }}
-                                            <span v-if="!payee.active">(inactive)</span>
+                                            <span v-if="!payee.active">({{ __('inactive') }})</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -89,8 +89,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default pull-left closeModal" data-dismiss="modal">Close</button>
-                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
+                        <button type="button" class="btn btn-default pull-left closeModal" data-dismiss="modal">{{ __('Close') }}</button>
+                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">{{ __('Save') }}</Button>
                     </div>
                 </form>
             </div>
@@ -156,7 +156,7 @@
                     cache: true
                 },
                 selectOnClose: true,
-                placeholder: "Select category",
+                placeholder: __("Select category"),
                 allowClear: true
             })
             .on('select2:select', function (e) {

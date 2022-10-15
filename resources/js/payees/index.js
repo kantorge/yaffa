@@ -20,7 +20,7 @@ window.table = $('#table').DataTable({
     columns: [
         {
             data: "id",
-            title: "ID"
+            title: "Id"
         },
         {
             data: "name",

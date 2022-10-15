@@ -1,16 +1,14 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment summary')
+@section('title', __('Investment summary'))
 
-@section('content_header')
-    <h1>Investment summary</h1>
-@stop
+@section('content_header', __('Investment summary'))
 
 @section('content')
 
     <div class="box">
         <div class="box-header">
-            <h3 class="box-title">Summary of investments</h3>
+            <h3 class="box-title">{{ __('Summary of investments') }}</h3>
             <!-- /.box-tools -->
         </div>
         <!-- /.box-header -->
@@ -28,28 +26,28 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
-                    <h4 class="modal-title">Investment prices</h4>
+                    <h4 class="modal-title">{{ __('Investment prices') }}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-success alert-dismissible hidden" id="alertSuccessTemplate">
                         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4><i class="icon fa fa-check"></i> Data saved</h4>
+                        <h4><i class="icon fa fa-check"></i> {{ __('Data saved') }}</h4>
                     </div>
                     <div class="alert alert-danger alert-dismissible hidden" id="alertErrorTemplate">
                         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4><i class="icon fa fa-check"></i> Error</h4>
+                        <h4><i class="icon fa fa-check"></i> {{ __('Error') }}</h4>
                     </div>
                     <table id="priceTable" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>
-                                    Date
+                                    {{ __('Date') }}
                                 </th>
                                 <th>
-                                    Price
+                                    {{ __('Price') }}
                                 </th>
                                 <th>
-                                    Actions
+                                    {{ __('Actions') }}
                                 </th>
                             </tr>
                         </thead>
@@ -59,11 +57,11 @@
                         <form id="formPrice" autocomplete="off">
                         <div class="row">
                             <div class="col-xs-6 form-group">
-                                <label for="date" class="form-control-label">Date</label>
+                                <label for="date" class="form-control-label">{{ __('Date') }}</label>
                                 <input type="text" name="date" class="form-control" id="date">
                             </div>
                             <div class="col-xs-6 form-group">
-                                <label for="price" class="form-control-label">Price</label>
+                                <label for="price" class="form-control-label">{{ __('Price') }}</label>
                                 <input type="text" name="price" class="form-control" id="price">
                             </div>
                         </div>
@@ -71,8 +69,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default pull-left closeModal" data-dismiss="modal">Close</button>
-                    <button type="submit" form="formPrice" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-default pull-left closeModal" data-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" form="formPrice" class="btn btn-primary">{{ __('Save') }}</button>
                 </div>
             </div>
             <!-- /.modal-content -->

@@ -7,7 +7,12 @@
     </div>
     <!-- /.login-logo -->
     <div class="login-box-body">
-        <p class="login-box-msg">Sign in to start your session</p>
+        <p class="login-box-msg text-right">
+            <a href="?language=hu" class="ml-5 mr-5"><img src=" {{ asset('images/flags/hu.png') }}"></a>
+            <a href="?language=en" class="ml-5 mr-5"><img src=" {{ asset('images/flags/en.png') }}"></a>
+        </p>
+
+        <p class="login-box-msg">{{ __('Sign in to start your session') }}</p>
 
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -17,7 +22,7 @@
                 <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
                  @error('email')
                     <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
+                        <strong>{{ __($message) }}</strong>
                     </span>
                 @enderror
             </div>
@@ -26,7 +31,7 @@
                 <span class="glyphicon glyphicon-lock form-control-feedback"></span>
                 @error('password')
                     <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
+                        <strong>{{ __($message) }}</strong>
                     </span>
                 @enderror
             </div>
@@ -42,16 +47,24 @@
                 </div>
                 <!-- /.col -->
                 <div class="col-xs-4">
-                    <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+                    <button type="submit" class="btn btn-primary btn-block btn-flat">{{ __('Sign In') }}</button>
                 </div>
                 <!-- /.col -->
             </div>
-            @if (Route::has('password.request'))
+        </form>
+        @if (Route::has('password.request'))
+            <p>
                 <a href="{{ route('password.request') }}">
                     {{ __('Forgot Your Password?') }}
                 </a>
-            @endif
-        </form>
+            </p>
+        @endif
+        <p>
+            {{ __('New to YAFFA?')}}
+            <a href="{{ route('register') }}">
+                {{ __('Register a new account') }}
+            </a>
+        </p>
     </div>
     <!-- /.login-box-body -->
 </div>

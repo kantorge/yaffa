@@ -333,7 +333,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Account added');
+            self::addSimpleSuccessMessage(__('Account added'));
 
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }
@@ -361,7 +361,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Payee added');
+            self::addSimpleSuccessMessage(__('Payee added'));
 
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
@@ -458,7 +458,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Account updated');
+            self::addSimpleSuccessMessage(__('Account updated'));
 
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }
@@ -486,7 +486,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Payee updated');
+            self::addSimpleSuccessMessage(__('Payee updated'));
 
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
@@ -527,7 +527,7 @@ class AccountEntityController extends Controller
                     __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->type)])
                 );
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -606,10 +606,10 @@ class AccountEntityController extends Controller
             }
 
             DB::commit();
-            self::addSimpleSuccessMessage('Payees merged');
+            self::addSimpleSuccessMessage(__('Payees merged'));
         } catch (\Exception $e) {
             DB::rollback();
-            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+            self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
         return redirect()->route('account-entity.index', ['type' => 'payee']);

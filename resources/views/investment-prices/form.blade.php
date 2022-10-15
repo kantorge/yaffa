@@ -1,9 +1,9 @@
 @extends('template.layouts.page')
 
-@section('title', 'Investment price')
+@section('title', __('Investment price'))
 
 @section('content_header')
-    <h1>Investment price - {{$investment->name}}</h1>
+    {{ __('Investment price') }} - {{$investment->name}}
 @stop
 
 @section('content')
@@ -29,9 +29,9 @@
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($investmentPrice->id))
-                    Modify investment price
+                    {{ __('Modify investment price') }}
                 @else
-                    Add new investment price
+                    {{ __('Add new investment price') }}
                 @endif
             </h3>
         </div>
@@ -39,7 +39,7 @@
         <div class="box-body form-horizontal">
             <div class="form-group">
                 <label for="date" class="control-label col-sm-3">
-                    Date
+                    {{ __('Date') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -54,7 +54,7 @@
 
             <div class="form-group">
                 <label for="price" class="control-label col-sm-3">
-                    Price
+                    {{ __('Price') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -83,8 +83,8 @@
                 value="{{ old('investment_id', $investment->id) }}"
             >
 
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('investment-price.list', ['investment' => $investment->id]) }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('investment-price.list', ['investment' => $investment->id]) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
         <!-- /.box-footer -->
     </div>

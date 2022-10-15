@@ -14,6 +14,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'dashboard')->middleware('auth')->name('home');
@@ -116,5 +117,9 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 // Route for the CSV import functionality
 Route::get('/import/csv', [ImportController::class, 'importCsv'])->name('import.csv');
+
+// User related routes
+Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
+Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
 
 Auth::routes();

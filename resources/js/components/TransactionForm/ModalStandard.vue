@@ -50,7 +50,7 @@
                     detail: {
                         notification: {
                             type: 'success',
-                            message: 'Transaction added (#' + transaction.id + ')',
+                            message: __('Transaction added (#:transactionId)', {transactionId: transaction.id}),
                             title: null,
                             icon: null,
                             dismissable: true,
@@ -99,11 +99,11 @@
             modalTitle() {
                 var titles = new Map(
                     [
-                        ['create', 'Add new transaction'],
-                        ['edit', 'Modify existing transaction'],
-                        ['clone', 'Clone existing transaction'],
-                        ['enter', 'Enter scheduled transaction instance'],
-                        ['replace', 'Clone scheduled transaction and close base item'],
+                        ['create', __('Add new transaction')],
+                        ['edit', __('Modify existing transaction')],
+                        ['clone', __('Clone existing transaction')],
+                        ['enter', __('Enter scheduled transaction instance')],
+                        ['replace', __('Clone scheduled transaction and close base item')],
                     ]
                 );
 
