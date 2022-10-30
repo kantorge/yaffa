@@ -11,7 +11,7 @@
         "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js"
     },
     "devDependencies": {
-        "@vue/compiler-sfc": "^3.2.39",
+        "@vue/compiler-sfc": "^3.2.41",
         "bootstrap": "^4.6.1",
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.1",
@@ -21,15 +21,15 @@
         "mini-css-extract-plugin": "^2.6.1",
         "node-sass": "^7.0.3",
         "popper.js": "^1.16.1",
-        "postcss": "^8.4.14",
+        "postcss": "^8.4.18",
         "resolve-url-loader": "^4.0.0",
         "sass": "^1.55.0",
         "sass-loader": "^12.6.0",
-        "vue": "^3.2.39"
+        "vue": "^3.2.41"
     },
     "dependencies": {
-        "@amcharts/amcharts4": "^4.10.28",
-        "@vuepic/vue-datepicker": "^3.4.8",
+        "@amcharts/amcharts4": "^4.10.29",
+        "@vuepic/vue-datepicker": "^3.5.2",
         "axios": "^0.27.2",
         "currency.js": "^2.0.4",
         "datatables.net": "^1.12.1",
