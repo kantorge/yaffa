@@ -281,7 +281,7 @@ class AccountEntityController extends Controller
         }
 
         // Get all currencies
-        $allCurrencies = Currency::pluck('name', 'id')->all();
+        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
 
         // Redirect to currency form, if empty
         if (count($allCurrencies) === 0) {
