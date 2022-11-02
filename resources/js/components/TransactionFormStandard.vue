@@ -542,13 +542,6 @@
         created() {
             // Copy values of existing transaction into component form data
             this.initializeTransaction();
-
-            // Check for various default values in URL
-            // TODO: this should be moved to container (parent) component
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('account_from')) {
-                this.form.config.account_from_id = urlParams.get('account_from');
-            }
         },
 
         mounted() {
@@ -594,7 +587,7 @@
                 });
 
             // Load default value for account FROM, based on transaction type
-            this.getDefaultAccountDetails(this.transaction?.config?.account_from, 'from');
+            this.getDefaultAccountDetails(this.transaction?.config?.account_from_id, 'from');
 
             // Account TO dropdown functionality
             $("#account_to")
@@ -636,7 +629,7 @@
                 });
 
             // Load default value for account TO
-            this.getDefaultAccountDetails(this.transaction?.config?.account_to, 'to');
+            this.getDefaultAccountDetails(this.transaction?.config?.account_to_id, 'to');
 
             // Initial sync between schedules, if applicable
             this.syncScheduleStartDate(this.form.schedule_config.start_date);
@@ -647,7 +640,7 @@
                 if (Object.keys(this.transaction).length > 0) {
                     // Populate form data with already known values
                     this.form.id = this.transaction.id
-                    this.form.transaction_type = this.transaction.transaction_type.name;
+                    this.form.transaction_type = this.transaction.transaction_type?.name;
 
                     // Populate date from source transaction, and ensure that it's a Date object
                     this.form.date = this.copyDateObject(this.transaction.date);
@@ -665,7 +658,7 @@
                     this.form.config.account_to_id = this.transaction.config.account_to_id;
 
                     // Copy items, and ensure that amount is number
-                    if (this.transaction.transaction_items.length > 0) {
+                    if (this.transaction.transaction_items?.length > 0) {
                         this.transaction.transaction_items
                             .map((item) => {
                                 //item.id = $vm.itemCounter++;
@@ -879,31 +872,28 @@
                 };
             },
 
-            getDefaultAccountDetails(account, type) {
-                if (!account || !account.id) {
+            getDefaultAccountDetails(account_id, type) {
+                if (!account_id) {
+                    return;
+                }
+
+                if (!['account', 'payee'].includes(this.getAccountType(type))) {
                     return;
                 }
 
                 const $vm = this;
                 const selector = '#account_' + type;
 
-                if (this.getAccountType(type) == 'account') {
-                    $.ajax({
-                        url:  '/api/assets/account/' + account.id,
-                        data: {
-                            _token: $vm.csrfToken,
-                        }
-                    })
-                    .done(data => {
-                        // Create the option and append to Select2
-                        $vm.addNewItemToSelect(selector, data.id, data.name);
-                    });
-                } else if (this.getAccountType(type) == 'payee') {
-                    const data = account;
+                $.ajax({
+                    url:  '/api/assets/' + this.getAccountType(type) + '/' + account_id,
+                    data: {
+                        _token: $vm.csrfToken,
+                    }
+                })
+                .done(data => {
                     // Create the option and append to Select2
                     $vm.addNewItemToSelect(selector, data.id, data.name);
-                }
-
+                });
             },
 
             onCancel() {
@@ -1006,8 +996,8 @@
                 this.onChangeTransactionType(transaction.transaction_type, true);
 
                 // Load default value for accounts
-                this.getDefaultAccountDetails(transaction.config.account_from, 'from');
-                this.getDefaultAccountDetails(transaction.config.account_to, 'to');
+                this.getDefaultAccountDetails(transaction.config.account_from_id, 'from');
+                this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
             }
         }
     }

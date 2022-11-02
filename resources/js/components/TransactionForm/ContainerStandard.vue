@@ -2,7 +2,7 @@
     <div>
         <transaction-form-standard
             :action = "action"
-            :transaction = "transaction"
+            :transaction = "transactionData"
             @cancel="onCancel"
             @success="onSuccess"
             @changeTransactionType="onTransactionTypeChange"
@@ -74,8 +74,10 @@
             },
         },
 
+        created() {},
+
         data() {
-            return {
+            var data = {
                 // TODO: adjust initial callback based on action
                 callback: 'new',
 
@@ -111,8 +113,30 @@
                         label: __('Return to previous page'),
                         enabled: true,
                     },
-                ]
+                ],
             };
+
+            // For new transactions set some default values
+            if (this.action === 'new') {
+                // Check for various default values in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('account_from')) {
+                    if (!data.transactionData.config) {
+                        data.transactionData.config = {};
+                    }
+                    data.transactionData.config.account_from_id = urlParams.get('account_from');
+                }
+
+                data.transactionData.date = new Date();
+                data.transactionData.transaction_type = {
+                    name: 'withdrawal',
+                };
+            } else {
+                // For all other cases (where we expect some data to be available), copy transaction from prop
+                data.transactionData = this.transaction;
+            }
+
+            return data;
         },
 
         methods: {
