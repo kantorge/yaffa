@@ -15,7 +15,7 @@ class InvestmentPriceController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function list(Investment $investment)
@@ -23,7 +23,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/list/{investment}')
          * @name('investment-price.list')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $this->authorize('view', $investment);
 
@@ -52,7 +52,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/create')
          * @name('investment-price.create')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->get('investment'));
         $this->authorize('view', $investment);
@@ -70,7 +70,7 @@ class InvestmentPriceController extends Controller
         /**
          * @post('/investment-price')
          * @name('investment-price.store')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->investment_id);
         $this->authorize('view', $investment);
@@ -95,7 +95,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/{investment_price}/edit')
          * @name('investment-price.edit')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         return view(
             'investment-prices.form',
@@ -112,7 +112,7 @@ class InvestmentPriceController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/investment-price/{investment_price}')
          * @name('investment-price.update')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validated();
 
@@ -136,7 +136,7 @@ class InvestmentPriceController extends Controller
         /**
          * @delete('/investment-price/{investment_price}')
          * @name('investment-price.destroy')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investmentPrice->delete();
 
@@ -150,7 +150,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/get/{investment}/{from?}')
          * @name('investment-price.retreive')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $refill = false;
 

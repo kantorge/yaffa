@@ -27,7 +27,7 @@ class MainController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function account_details(AccountEntity $account, $withForecast = null)
@@ -35,7 +35,7 @@ class MainController extends Controller
         /**
          * @get('/account/history/{account}/{withForecast?}')
          * @name('account.history')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $user = Auth::user();
 

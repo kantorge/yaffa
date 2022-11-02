@@ -1,6 +1,5 @@
 <?php
 
 return [
-    "failed" => "Helytelen belépési adatok.",
-    "throttle" => ""
+    "failed" => "Helytelen belépési adatok."
 ];

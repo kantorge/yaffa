@@ -29,11 +29,34 @@ class AccountGroupTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        $accountGroup = $this->create($this->base_model);
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+        $user = User::factory()->create();
+        $accountGroup = $this->createForUser($user, $this->base_model);
 
         $this->get(route("{$this->base_route}.edit", $accountGroup))->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", $accountGroup))->assertRedirect(route('login'));
         $this->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirect(route('login'));
+    }
+
+    /** @test */
+    public function unverified_user_cannot_access_resource()
+    {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
+        $user_unverified = User::factory()->create([
+            'email_verified_at' => null,
+        ]);
+
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
+
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+        $user = User::factory()->create();
+        $accountGroup = $this->createForUser($user, $this->base_model);
+
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $accountGroup))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $accountGroup))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirect(route('verification.notice'));
     }
 
     /** @test */

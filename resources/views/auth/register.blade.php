@@ -14,7 +14,7 @@
         </p>
 
         <p class="register-box-msg">{{ __('Register') }}</p>
-            <form method="POST" action="{{ route('register') }}">
+            <form method="POST" action="{{ route('register') }}" autocomplete="off">
                 @csrf
 
                 <div class="form-group has-feedback row">
@@ -114,6 +114,21 @@
                             </option>
                         @endforeach
                     </select>
+                    </div>
+                </div>
+
+                <div class="form-group has-feedback row">
+                    <div class="col-sm-offset-5 col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input name="tos" value="yes" type="checkbox"> {!! __('I accept the <a href=":toslink" target="_blank">terms of service</a>', ['toslink' => route('terms')]) !!}
+                            </label>
+                        </div>
+                        @error('tos')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                        @enderror
                     </div>
                 </div>
 

@@ -20,7 +20,7 @@ class ReportController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function cashFlow(Request $request)
@@ -28,7 +28,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/cashflow')
          * @name('reports.cashflow')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
 
         // Check if forecast is required
@@ -241,7 +241,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/budgetchart')
          * @name('reports.budgetchart')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
@@ -271,7 +271,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/transactions')
          * @name('reports.transactions')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         // Get preset filters from query string
         $filters = [];
@@ -300,7 +300,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/schedule')
          * @name('report.schedules')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         return view('reports.schedule');
     }

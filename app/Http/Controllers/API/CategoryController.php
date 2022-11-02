@@ -160,7 +160,7 @@ class CategoryController extends Controller
     public function updateActive(Category $category, $active)
     {
         /**
-         * @put('/assets/category/{category}/active/{active}')
+         * @put('/api/assets/category/{category}/active/{active}')
          * @name('api.category.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */

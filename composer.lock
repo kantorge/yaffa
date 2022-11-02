@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c1e9c611536048079e8824882e65c08a",
+    "content-hash": "a95d1361c22a2571f32a5352826cc6fe",
     "packages": [
         {
             "name": "almasaeed2010/adminlte",
@@ -8514,16 +8514,16 @@
         },
         {
             "name": "nikaia/translation-sheet",
-            "version": "v1.5.0",
+            "version": "dev-feature/config_empty_behavior",
             "source": {
                 "type": "git",
-                "url": "https://github.com/nikaia/translation-sheet.git",
-                "reference": "49d177b7a3af71ea62b62fed0e1902c436507bdd"
+                "url": "https://github.com/kantorge/translation-sheet.git",
+                "reference": "9d09a79caba3ff06c0ee2399b8870b856eb0e804"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikaia/translation-sheet/zipball/49d177b7a3af71ea62b62fed0e1902c436507bdd",
-                "reference": "49d177b7a3af71ea62b62fed0e1902c436507bdd",
+                "url": "https://api.github.com/repos/kantorge/translation-sheet/zipball/9d09a79caba3ff06c0ee2399b8870b856eb0e804",
+                "reference": "9d09a79caba3ff06c0ee2399b8870b856eb0e804",
                 "shasum": ""
             },
             "require": {
@@ -8552,7 +8552,34 @@
                     "Nikaia\\TranslationSheet\\": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Nikaia\\TranslationSheet\\Test\\": "tests"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "vendor/bin/phpunit"
+                ],
+                "release": [
+                    "npx standard-version release --no-verify"
+                ],
+                "release-dry": [
+                    "npx standard-version release --no-verify --dry-run"
+                ],
+                "release-patch": [
+                    "npx standard-version --release-as patch --no-verify"
+                ],
+                "release-minor": [
+                    "npx standard-version --release-as minor --no-verify"
+                ],
+                "release-major": [
+                    "npx standard-version --release-as major --no-verify"
+                ],
+                "release-first": [
+                    "npx standard-version --first-release --no-verify"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -8566,10 +8593,9 @@
             "description": "Laravel Translation via Google Spreadsheet",
             "homepage": "https://github.com/nikaia/translation-sheet",
             "support": {
-                "issues": "https://github.com/nikaia/translation-sheet/issues",
-                "source": "https://github.com/nikaia/translation-sheet/tree/v1.5.0"
+                "source": "https://github.com/kantorge/translation-sheet/tree/feature/config_empty_behavior"
             },
-            "time": "2022-03-23T10:13:57+00:00"
+            "time": "2022-11-01T23:17:28+00:00"
         },
         {
             "name": "nunomaduro/collision",
@@ -12004,7 +12030,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "nikaia/translation-sheet": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

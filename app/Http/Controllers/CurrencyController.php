@@ -14,7 +14,7 @@ class CurrencyController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(Currency::class);
     }
 
@@ -28,7 +28,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies')
          * @name('currencies.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
         $currencies = Auth::user()
@@ -54,7 +54,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/create')
          * @name('currencies.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
         return view('currencies.form');
     }
@@ -64,7 +64,7 @@ class CurrencyController extends Controller
         /**
          * @post('/currencies')
          * @name('currencies.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
         $validated = $request->validated();
 
@@ -88,7 +88,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/{currency}/edit')
          * @name('currencies.edit')
-         * @middlewares('web', 'auth', 'can:update,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         return view('currencies.form', ['currency' => $currency]);
     }
@@ -99,7 +99,7 @@ class CurrencyController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/currencies/{currency}')
          * @name('currencies.update')
-         * @middlewares('web', 'auth', 'can:update,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         $validated = $request->validated();
 
@@ -122,7 +122,7 @@ class CurrencyController extends Controller
         /**
          * @delete('/currencies/{currency}')
          * @name('currencies.destroy')
-         * @middlewares('web', 'auth', 'can:delete,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,currency')
          */
         // Base currency cannot be deleted
         if ($currency->base) {
@@ -153,7 +153,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/{currency}/setDefault')
          * @name('currencies.setDefault')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $baseCurrency = $this->getBaseCurrency();
 

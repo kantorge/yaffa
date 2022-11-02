@@ -11,7 +11,7 @@ class TagController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(Tag::class);
     }
 
@@ -25,7 +25,7 @@ class TagController extends Controller
         /**
          * @get('/tag')
          * @name('tag.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Tag')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
          */
         // Get all tags of the user from the database and return to view
         $tags = Auth::user()
@@ -46,7 +46,7 @@ class TagController extends Controller
         /**
          * @get('/tag/create')
          * @name('tag.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Tag')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
          */
         return view('tag.form');
     }
@@ -62,7 +62,7 @@ class TagController extends Controller
         /**
          * @get('/tag/{tag}/edit')
          * @name('tag.edit')
-         * @middlewares('web', 'auth', 'can:update,tag')
+         * @middlewares('web', 'auth', 'verified', 'can:update,tag')
          */
         return view('tag.form', ['tag' => $tag]);
     }
@@ -72,7 +72,7 @@ class TagController extends Controller
         /**
          * @post('/tag')
          * @name('tag.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Tag')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
          */
         $validated = $request->validated();
 
@@ -91,7 +91,7 @@ class TagController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/tag/{tag}')
          * @name('tag.update')
-         * @middlewares('web', 'auth', 'can:update,tag')
+         * @middlewares('web', 'auth', 'verified', 'can:update,tag')
          */
         // Retrieve the validated input data
         $validated = $request->validated();
@@ -115,7 +115,7 @@ class TagController extends Controller
         /**
          * @delete('/tag/{tag}')
          * @name('tag.destroy')
-         * @middlewares('web', 'auth', 'can:delete,tag')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,tag')
          */
         $tag->delete();
 

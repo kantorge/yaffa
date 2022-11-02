@@ -6,7 +6,6 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Currency;
 use App\Models\Payee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,7 +18,7 @@ class AccountEntityController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(AccountEntity::class);
     }
 
@@ -43,7 +42,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity')
          * @name('account-entity.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -251,7 +250,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity/create')
          * @name('account-entity.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -318,7 +317,7 @@ class AccountEntityController extends Controller
         /**
          * @post('/account-entity')
          * @name('account-entity.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -380,7 +379,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity/{account_entity}/edit')
          * @name('account-entity.edit')
-         * @middlewares('web', 'auth', 'can:update,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -444,7 +443,7 @@ class AccountEntityController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/account-entity/{account_entity}')
          * @name('account-entity.update')
-         * @middlewares('web', 'auth', 'can:update,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -505,7 +504,7 @@ class AccountEntityController extends Controller
         /**
          * @delete('/account-entity/{account_entity}')
          * @name('account-entity.destroy')
-         * @middlewares('web', 'auth', 'can:delete,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -545,7 +544,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/payees/merge/{payeeSource?}')
          * @name('payees.merge.form')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         if ($payeeSource) {
             JavaScriptFacade::put([
@@ -564,7 +563,7 @@ class AccountEntityController extends Controller
         /**
          * @post('/payees/merge')
          * @name('payees.merge.submit')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validate([
             'payee_source' => [

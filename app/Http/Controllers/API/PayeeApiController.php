@@ -19,14 +19,14 @@ class PayeeApiController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function getList(Request $request)
     {
         /**
          * @get('/api/assets/payee')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
             $payees = Auth::user()
@@ -96,7 +96,7 @@ class PayeeApiController extends Controller
     {
         /**
          * @get('/api/assets/get_default_category_suggestion')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $baseQueryFrom = DB::table('transaction_items')
             ->join(
@@ -235,7 +235,7 @@ class PayeeApiController extends Controller
     {
         /**
          * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('update', $accountEntity);
 
@@ -250,7 +250,7 @@ class PayeeApiController extends Controller
     {
         /**
          * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('update', $accountEntity);
 
@@ -266,7 +266,7 @@ class PayeeApiController extends Controller
         /**
          * @post('/api/assets/payee')
          * @name('api.payee.store')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('create', AccountEntity::class);
 
@@ -291,7 +291,7 @@ class PayeeApiController extends Controller
         /**
          * @get('/api/assets/payee/similar')
          * @name('api.payee.similar')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $query = Str::lower($request->get('query'));
         $withActive = $request->get('withActive');
@@ -332,7 +332,7 @@ class PayeeApiController extends Controller
     {
         /**
          * @get('/api/assets/payee/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('view', $accountEntity);
 

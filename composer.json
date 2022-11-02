@@ -33,7 +33,7 @@
         "laravel/telescope": "^4.6",
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
-        "nikaia/translation-sheet": "^1.5",
+        "nikaia/translation-sheet": "dev-feature/config_empty_behavior",
         "nunomaduro/collision": "^6.1",
         "nunomaduro/larastan": "^2.0",
         "nunomaduro/phpinsights": "^2.0",
@@ -82,5 +82,11 @@
         "post-update-cmd": [
             "Illuminate\\Foundation\\ComposerScripts::postUpdate"
         ]
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/kantorge/translation-sheet"
+        }
+    ]
 }

@@ -13,7 +13,8 @@ return [
         "config" => [
             "opening_balance" => "opening balance"
         ],
-        "name" => "name"
+        "name" => "name",
+        "tos" => "terms of service"
     ],
     "before" => "The :attribute must be a date before :date.",
     "before_or_equal" => "The :attribute must be a date before or equal to :date.",

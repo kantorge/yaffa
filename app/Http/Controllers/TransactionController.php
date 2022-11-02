@@ -25,7 +25,7 @@ class TransactionController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function createStandard()
@@ -33,8 +33,9 @@ class TransactionController extends Controller
         /**
          * @get('/transactions/standard/create')
          * @name('transactions.createStandard')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
+
         // Sanity check for necessary assets
         if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
             $this->addMessage(
@@ -58,8 +59,21 @@ class TransactionController extends Controller
         /**
          * @get('/transactions/investment/create')
          * @name('transactions.createInvestment')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
+
+        // Sanity check for necessary assets
+        if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
+            $this->addMessage(
+                'Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.',
+                'info',
+                'No accounts found',
+                'info-circle'
+            );
+
+            return redirect()->route('account-entity.create', ['type' => 'account']);
+        }
+
         return view(self::INVESTMENT_VIEW, [
             'transaction' => null,
             'action' => 'create',
@@ -71,7 +85,7 @@ class TransactionController extends Controller
         /**
          * @post('/transactions/investment')
          * @name('transactions.storeInvestment')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validated();
 
@@ -126,8 +140,9 @@ class TransactionController extends Controller
         /**
          * @get('/transactions/standard/{transaction}/{action}')
          * @name('transactions.open.standard')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
+
         // Load all relevant relations
         $transaction->loadStandardDetails();
 
@@ -159,7 +174,7 @@ class TransactionController extends Controller
         /**
          * @get('/transactions/investment/{transaction}/{action}')
          * @name('transactions.open.investment')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $transaction->load(self::INVESTMENT_RELATIONS);
 
@@ -184,7 +199,7 @@ class TransactionController extends Controller
         /**
          * @patch('/transactions/investment/{transaction}')
          * @name('transactions.updateInvestment')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validated();
 
@@ -217,7 +232,7 @@ class TransactionController extends Controller
         /**
          * @delete('/transactions/{transaction}')
          * @name('transactions.destroy')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $transaction->delete();
 
@@ -231,7 +246,7 @@ class TransactionController extends Controller
         /**
          * @patch('/transactions/{transaction}/skip')
          * @name('transactions.skipScheduleInstance')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));

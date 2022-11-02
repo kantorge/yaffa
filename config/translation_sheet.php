@@ -95,4 +95,19 @@ return [
         ]
         */
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | How to handle missing translations
+    |--------------------------------------------------------------------------
+    | You can control if missing translations are treated as valid strings,
+    | and as a result, need to be imported into PHP language files.
+    |
+    | false (default for legacy behavior) => empty strings are imported
+    | true => empty strings are skipped, and translator will use default string instead
+    |
+    | Important: this flag controls only PHP translations. JSON file skips empty regardless.
+    */
+
+    'skip_empty_for_php' => true,
 ];

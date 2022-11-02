@@ -24,14 +24,14 @@ class AccountController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function getList(Request $request)
     {
         /**
          * @get('/api/assets/account')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
             $accounts = Auth::user()
@@ -91,7 +91,7 @@ class AccountController extends Controller
     {
         /**
          * @get('/api/assets/account/standard')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
             $accounts = Auth::user()
@@ -152,7 +152,7 @@ class AccountController extends Controller
     {
         /**
          * @get('/api/assets/account/investment')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
             $accounts = Auth::user()
@@ -232,7 +232,7 @@ class AccountController extends Controller
     {
         /**
          * @get('/api/assets/account/currency/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('view', $accountEntity);
         $accountEntity->load('config');
@@ -250,7 +250,7 @@ class AccountController extends Controller
     {
         /**
          * @get('/api/assets/account/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('view', $accountEntity);
 
@@ -280,8 +280,8 @@ class AccountController extends Controller
     public function getAccountBalance(AccountEntity $accountEntity = null): JsonResponse
     {
         /**
-         * @get('/api/account/balance/{accountEntity?})
-         * @middlewares('api', 'auth:sanctum')
+         * @get('/api/account/balance/{accountEntity?}')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
         $baseCurrency = $this->getBaseCurrency();

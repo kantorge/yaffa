@@ -34,14 +34,14 @@ class TransactionApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function reconcile(Transaction $transaction, $newState)
     {
         /**
          * @put('/api/transaction/{transaction}/reconciled/{newState}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('update', $transaction);
 
@@ -60,7 +60,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @get('/api/transaction/{transaction}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $transaction->loadStandardDetails();
 
@@ -76,7 +76,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @get('/api/transactions/get_scheduled_items/{type}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
         // Return empty response if categories are required, but not set or empty
@@ -306,7 +306,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @get('/api/transactions')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
@@ -446,7 +446,7 @@ class TransactionApiController extends Controller
         /**
          * @post('/api/transactions/standard')
          * @name('api.transactions.storeStandard')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $validated = $request->validated();
 
@@ -525,7 +525,7 @@ class TransactionApiController extends Controller
         /**
          * @patch('/api/transactions/standard/{transaction}')
          * @name('api.transactions.updateStandard')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $validated = $request->validated();
 
@@ -618,7 +618,7 @@ class TransactionApiController extends Controller
         /**
          * @patch('/api/transactions/{transaction}/skip')
          * @name('api.transactions.skipScheduleInstance')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $transaction->transactionSchedule->skipNextInstance();
 

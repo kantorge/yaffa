@@ -110,6 +110,9 @@ class RegisterController extends Controller
                 'required',
                 Rule::in(array_keys(config('app.available_locales'))),
             ],
+            'tos' => [
+                'accepted'
+            ],
         ]);
     }
 

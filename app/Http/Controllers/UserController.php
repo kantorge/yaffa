@@ -9,11 +9,16 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function settings()
     {
+        /**
+         * @get('/user/settings')
+         * @name('user.settings')
+         * @middlewares('web', 'auth', 'verified')
+         */
         return view(
             'user.settings',
             [
@@ -25,6 +30,11 @@ class UserController extends Controller
 
     public function update(UserRequest $request)
     {
+        /**
+         * @patch('/user/settings')
+         * @name('user.update')
+         * @middlewares('web', 'auth', 'verified')
+         */
         $validated = $request->validated();
 
         Auth::user()->fill($validated)

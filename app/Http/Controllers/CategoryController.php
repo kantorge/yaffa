@@ -14,7 +14,7 @@ class CategoryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(Category::class);
     }
 
@@ -28,7 +28,7 @@ class CategoryController extends Controller
         /**
          * @get('/categories')
          * @name('categories.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Category')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Category')
          */
         // Show all categories of user from the database and return to view
         $categories = Auth::user()
@@ -78,7 +78,7 @@ class CategoryController extends Controller
         /**
          * @get('/categories/create')
          * @name('categories.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Category')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
         return view('categories.form');
     }
@@ -88,7 +88,7 @@ class CategoryController extends Controller
         /**
          * @post('/categories')
          * @name('categories.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Category')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
         $validated = $request->validated();
 
@@ -112,7 +112,7 @@ class CategoryController extends Controller
         /**
          * @get('/categories/{category}/edit')
          * @name('categories.edit')
-         * @middlewares('web', 'auth', 'can:update,category')
+         * @middlewares('web', 'auth', 'verified', 'can:update,category')
          */
         return view(
             'categories.form',
@@ -128,7 +128,7 @@ class CategoryController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/categories/{category}')
          * @name('categories.update')
-         * @middlewares('web', 'auth', 'can:update,category')
+         * @middlewares('web', 'auth', 'verified', 'can:update,category')
          */
         // Retrieve the validated input data
         $validated = $request->validated();
@@ -152,7 +152,7 @@ class CategoryController extends Controller
         /**
          * @delete('/categories/{category}')
          * @name('categories.destroy')
-         * @middlewares('web', 'auth', 'can:delete,category')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,category')
          */
         try {
             $category->delete();
@@ -181,7 +181,7 @@ class CategoryController extends Controller
         /**
          * @get('/categories/merge/{categorySource?}')
          * @name('categories.merge.form')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         if ($categorySource) {
             JavaScriptFacade::put([
@@ -200,7 +200,7 @@ class CategoryController extends Controller
         /**
          * @post('/categories/merge')
          * @name('categories.merge.submit')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         // Retrieve the validated input data
         $validated = $request->validated();

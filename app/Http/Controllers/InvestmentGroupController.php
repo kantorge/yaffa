@@ -11,7 +11,7 @@ class InvestmentGroupController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(InvestmentGroup::class);
     }
 
@@ -25,7 +25,7 @@ class InvestmentGroupController extends Controller
         /**
          * @get('/investment-group')
          * @name('investment-group.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\InvestmentGroup')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\InvestmentGroup')
          */
         // Get all investment groups of the user from the database and return to view
         $investmentGroups = Auth::user()
@@ -46,7 +46,7 @@ class InvestmentGroupController extends Controller
         /**
          * @get('/investment-group/create')
          * @name('investment-group.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\InvestmentGroup')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
          */
         return view('investment-group.form');
     }
@@ -62,7 +62,7 @@ class InvestmentGroupController extends Controller
         /**
          * @get('/investment-group/{investment_group}/edit')
          * @name('investment-group.edit')
-         * @middlewares('web', 'auth', 'can:update,investment_group')
+         * @middlewares('web', 'auth', 'verified', 'can:update,investment_group')
          */
         return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
     }
@@ -72,7 +72,7 @@ class InvestmentGroupController extends Controller
         /**
          * @post('/investment-group')
          * @name('investment-group.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\InvestmentGroup')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
          */
         $validated = $request->validated();
 
@@ -91,7 +91,7 @@ class InvestmentGroupController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/investment-group/{investment_group}')
          * @name('investment-group.update')
-         * @middlewares('web', 'auth', 'can:update,investment_group')
+         * @middlewares('web', 'auth', 'verified', 'can:update,investment_group')
          */
         $validated = $request->validated();
 
@@ -115,7 +115,7 @@ class InvestmentGroupController extends Controller
         /**
          * @delete('/investment-group/{investment_group}')
          * @name('investment-group.destroy')
-         * @middlewares('web', 'auth', 'can:delete,investment_group')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,investment_group')
          */
         try {
             $investmentGroup->delete();

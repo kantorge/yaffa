@@ -26,7 +26,7 @@ class ReportApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     /**
@@ -39,7 +39,7 @@ class ReportApiController extends Controller
     {
         /**
          * @get('/api/budgetchart')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
         // Get requested aggregation period
@@ -204,8 +204,8 @@ class ReportApiController extends Controller
     public function getCategoryWaterfallData(string $type, int $year, int $month = null)
     {
         /**
-         * @get('/api/budgetchart')
-         * @middlewares('api', 'auth:sanctum')
+         * @get('/api/reports/waterfall/{type}/{year}/{month?}')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
         // Get monthly average currency rate for all currencies against base currency
