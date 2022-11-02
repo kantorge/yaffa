@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Commands;
+namespace Tests\Unit\Console\Commands;
 
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
