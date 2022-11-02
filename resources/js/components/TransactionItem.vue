@@ -78,6 +78,11 @@
 
 <script>
     require('select2');
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
 
     import MathInput from './MathInput.vue'
 

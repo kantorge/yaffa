@@ -5,9 +5,9 @@
                 {{ __('Monthly overview for top-level categories') }}
             </h3>
             <div class="pull-right" v-show="ready">
-                <button class="btn btn-xs btn-info" type="button" @click="previousMonth" title="Previous month"><span class="fa fa-fw fa-caret-left"></span></button>
+                <button class="btn btn-xs btn-info" type="button" @click="previousMonth" :title="__('Previous month')"><span class="fa fa-fw fa-caret-left"></span></button>
                 {{ dateLabel }}
-                <button class="btn btn-xs btn-info" type="button" @click="nextMonth" title="Next month"><span class="fa fa-fw fa-caret-right"></span></button>
+                <button class="btn btn-xs btn-info" type="button" @click="nextMonth" :title="__('Next month')"><span class="fa fa-fw fa-caret-right"></span></button>
             </div>
         </div>
         <!-- /.box-header -->
@@ -134,7 +134,7 @@ export default {
         noDataMessagecontainer.layout = 'vertical';
 
         const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
-        messageLabel.text = 'There is no data to show on this chart.';
+        messageLabel.text = __('There is no data to show on this chart.');
         messageLabel.textAlign = 'middle';
         messageLabel.maxWidth = 300;
         messageLabel.wrap = true;

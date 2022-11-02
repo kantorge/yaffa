@@ -1,7 +1,9 @@
 <template>
     <div class="box box-primary">
         <div class="box-header with-border">
-            <h3 class="box-title">Transaction items</h3>
+            <h3 class="box-title">
+                {{ __('Transaction items') }}
+            </h3>
             <div class="box-tools">
                 <div class="btn-group d-sm-none">
                     <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
@@ -40,7 +42,9 @@
                     :payee="payee"
                 ></transaction-item>
             </div>
-            <div v-if="transactionItems.length === 0">No items added</div>
+            <div v-if="transactionItems.length === 0">
+                {{ __('No items added') }}
+            </div>
         </div>
         <!-- /.box-body -->
 

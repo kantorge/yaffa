@@ -1,4 +1,9 @@
 require('select2');
+$.fn.select2.amd.define(
+    'select2/i18n/' + window.YAFFA.language,
+    [],
+    require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+);
 
 // Add select2 functionality to payee_source select
 $('#payee_source').select2({

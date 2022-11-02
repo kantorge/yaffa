@@ -23,6 +23,7 @@ class JavaScriptVariablesComposer
         JavaScriptFacade::put([
             'YAFFA' => [
                 'baseCurrency' => $this->getBaseCurrency(),
+                'language' => Auth::user()->language,
                 'locale' => Auth::user()->locale,
                 'translations' => $this->getTranslations(),
             ]

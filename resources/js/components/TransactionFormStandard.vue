@@ -31,7 +31,7 @@
                                 <div class="row">
                                     <div class="form-group col-xs-12 col-sm-6">
                                         <label class="block-label">
-                                            Type
+                                            {{ __('Type') }}
                                         </label>
                                         <div class="btn-group">
                                             <button
@@ -41,7 +41,7 @@
                                                 value="withdrawal"
                                                 @click="changeTransactionType"
                                             >
-                                                Withdrawal
+                                                {{ __('Withdrawal') }}
                                             </button>
                                             <button
                                                 class="btn btn-primary"
@@ -50,7 +50,7 @@
                                                 value="deposit"
                                                 @click="changeTransactionType"
                                             >
-                                                Deposit
+                                                {{ __('Deposit') }}
                                             </button>
                                             <button
                                                 class="btn btn-primary"
@@ -60,7 +60,7 @@
                                                 @click="changeTransactionType"
                                                 :disabled="form.budget"
                                             >
-                                                Transfer
+                                                {{ __('Transfer') }}
                                             </button>
                                         </div>
                                     </div>
@@ -69,7 +69,7 @@
                                         :class="form.errors.has('date') ? 'has-error' : ''"
                                     >
                                         <label class="block-label" for="date">
-                                            Date
+                                            {{ __('Date') }}
                                         </label>
                                         <Datepicker
                                             id="date"
@@ -135,7 +135,7 @@
                                         :class="form.errors.has('comment') ? 'has-error' : ''"
                                     >
                                         <label for="comment" class="control-label block-label">
-                                            Comment
+                                            {{ __('Comment') }}
                                         </label>
                                         <input
                                             class="form-control"
@@ -159,7 +159,7 @@
                                                     value="1"
                                                     v-model="form.schedule"
                                                 >
-                                                Scheduled
+                                                {{ __('Scheduled') }}
                                             </label>
                                         </div>
                                         <div class="col-xs-4 checkbox" v-if="!simplified">
@@ -173,7 +173,7 @@
                                                     value="1"
                                                     v-model="form.budget"
                                                 >
-                                                Budget
+                                                {{ __('Budget') }}
                                             </label>
                                         </div>
                                         <div class="col-xs-4 checkbox">
@@ -184,7 +184,7 @@
                                                     value="1"
                                                     v-model="form.reconciled"
                                                 >
-                                                Reconciled
+                                                {{ __('Reconciled') }}
                                             </label>
                                         </div>
                                     </div>
@@ -197,7 +197,9 @@
 
                         <div class="box box-primary">
                             <div class="box-header with-border">
-                                <h3 class="box-title">Amounts</h3>
+                                <h3 class="box-title">
+                                    {{ __('Amounts') }}
+                                </h3>
                             </div>
                             <!-- /.box-header -->
                             <div class="box-body">
@@ -227,7 +229,9 @@
                                     <div
                                         v-show="exchangeRatePresent"
                                         class="col-xs-4">
-                                        <span class="block-label">Exchange rate</span>
+                                        <span class="block-label">
+                                            {{ __('Exchange rate') }}
+                                        </span>
                                         {{ exchangeRate }}
                                     </div>
                                     <div
@@ -236,7 +240,7 @@
                                         :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
                                     >
                                         <label for="transaction_amount_slave" class="control-label">
-                                            Amount to
+                                            {{ __('Amount to') }}
                                             <span v-if="to.account_currency">({{to.account_currency}})</span>
                                         </label>
                                         <MathInput
@@ -249,18 +253,22 @@
                                 <div class="row">
                                     <div class="col-xs-12">
                                         <dl class="dl-horizontal">
-                                            <dt>Total amount:</dt>
+                                            <dt>
+                                                {{ __('Total amount') }}:
+                                            </dt>
                                             <dd>
                                                 {{ form.config.amount_from || 0 }}
                                                 <span v-if="from.account_currency">{{from.account_currency}}</span>
                                             </dd>
-                                            <dt>Total allocated:</dt>
+                                            <dt>
+                                                {{ __('Total allocated') }}:
+                                            </dt>
                                             <dd>
                                                 {{ allocatedAmount }}
                                                 <span v-if="from.account_currency">{{from.account_currency}}</span>
                                             </dd>
                                             <dt v-show="payeeCategory.id">
-                                                Remaining amount to
+                                                {{ __('Remaining amount to') }}
                                                 <span class="notbold"><br>{{ payeeCategory.text }}</span>:
                                             </dt>
                                             <dd v-show="payeeCategory.id">
@@ -268,7 +276,7 @@
                                                 <span v-if="from.account_currency">{{from.account_currency}}</span>
                                             </dd>
                                             <dt v-show="!payeeCategory.id">
-                                                Not allocated:
+                                                {{ __('Not allocated') }}:
                                             </dt>
                                             <dd v-show="!payeeCategory.id">
                                                 {{ remainingAmountNotAllocated }}
@@ -332,7 +340,7 @@
                                         style="margin-left: 10px; margin-bottom: 5px;"
                                         type="button"
                                     >
-                                        Cancel
+                                        {{ __('Cancel') }}
                                     </button>
                                     <Button
                                         class="btn btn-primary"
@@ -340,7 +348,7 @@
                                         :form="form"
                                         style="margin-left: 10px; margin-bottom: 5px;"
                                     >
-                                        Save
+                                        {{ __('Save') }}
                                     </Button>
                                 </div>
                             </div>
@@ -354,6 +362,11 @@
 
 <script>
     require('select2');
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
 
     import MathInput from './MathInput.vue'
 
@@ -444,21 +457,21 @@
         computed: {
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
-                return (this.form.transaction_type == 'withdrawal' || this.form.transaction_type == 'transfer' ? 'Account from' : 'Payee')
+                return (['withdrawal', 'transfer'].includes(this.form.transaction_type) ? __('Account from') : __('Payee'))
             },
 
             accountToFieldLabel() {
-                return (this.form.transaction_type == 'deposit' || this.form.transaction_type == 'transfer' ? 'Account to' : 'Payee')
+                return (['deposit', 'transfer'].includes(this.form.transaction_type) ? __('Account to') : __('Payee'))
             },
 
             // Amount from label is different for transfer
             ammountFromFieldLabel() {
-                return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
+                return (this.exchangeRatePresent ? __('Amount from') : __('Amount'))
             },
 
             // Amount from currency is dependent on many other data
             ammountFromCurrencyLabel() {
-                if (this.form.transaction_type === 'withdrawal' || this.form.transaction_type === 'transfer') {
+                if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
                     return this.from.account_currency;
                 }
 
@@ -735,7 +748,7 @@
                 }
 
                 // Confirm transaction type change with user
-                if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+                if (!confirm(__("Are you sure, you want to change the transaction type? Some data might get lost."))) {
                     event.currentTarget.blur();
                     return false;
                 }
@@ -827,10 +840,10 @@
             },
 
             getPlaceholder(type) {
-                if (this.getAccountType(type) == 'account') {
-                    return 'Select account';
+                if (this.getAccountType(type) === 'account') {
+                    return __('Select account');
                 }
-                return 'Select payee';
+                return __('Select payee');
             },
 
             getAccountSelectConfig (type) {
@@ -838,6 +851,7 @@
                 let otherType = (type == 'from' ? 'to' : 'from');
 
                 return {
+                    language: window.YAFFA.language,
                     ajax: {
                         url: $vm.getAccountApiUrl(type),
                         dataType: 'json',
@@ -897,7 +911,7 @@
             },
 
             onCancel() {
-                if(confirm('Are you sure you want to discard any changes?')) {
+                if(confirm(__('Are you sure you want to discard any changes?'))) {
                     this.$emit('cancel');
                 }
                 return false;

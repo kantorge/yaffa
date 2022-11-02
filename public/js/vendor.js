@@ -33129,6 +33129,3356 @@ S2.define('jquery.select2',[
 
 /***/ }),
 
+/***/ "./node_modules/select2/src/js/select2/i18n/af.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/af.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // English
+  return {
+    errorLoading: function () {
+      return 'Die resultate kon nie gelaai word nie.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Verwyders asseblief ' + overChars + ' character';
+
+      if (overChars != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Voer asseblief ' + remainingChars + ' of meer karakters';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Meer resultate word gelaai…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Kies asseblief net ' + args.maximum + ' item';
+
+      if (args.maximum != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Geen resultate gevind';
+    },
+    searching: function () {
+      return 'Besig…';
+    },
+    removeAllItems: function () {
+      return 'Verwyder alle items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ar.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ar.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Arabic
+  return {
+    errorLoading: function () {
+      return 'لا يمكن تحميل النتائج';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'الرجاء حذف ' + overChars + ' عناصر';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'الرجاء إضافة ' + remainingChars + ' عناصر';
+    },
+    loadingMore: function () {
+      return 'جاري تحميل نتائج إضافية...';
+    },
+    maximumSelected: function (args) {
+      return 'تستطيع إختيار ' + args.maximum + ' بنود فقط';
+    },
+    noResults: function () {
+      return 'لم يتم العثور على أي نتائج';
+    },
+    searching: function () {
+      return 'جاري البحث…';
+    },
+     removeAllItems: function () {
+      return 'قم بإزالة كل العناصر';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/az.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/az.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Azerbaijani
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return overChars + ' simvol silin';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return remainingChars + ' simvol daxil edin';
+    },
+    loadingMore: function () {
+      return 'Daha çox nəticə yüklənir…';
+    },
+    maximumSelected: function (args) {
+      return 'Sadəcə ' + args.maximum + ' element seçə bilərsiniz';
+    },
+    noResults: function () {
+      return 'Nəticə tapılmadı';
+    },
+    searching: function () {
+      return 'Axtarılır…';
+    },
+     removeAllItems: function () {
+      return 'Bütün elementləri sil';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/bg.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/bg.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Bulgarian
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Моля въведете с ' + overChars + ' по-малко символ';
+
+      if (overChars > 1) {
+        message += 'a';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Моля въведете още ' + remainingChars + ' символ';
+
+      if (remainingChars > 1) {
+        message += 'a';
+      }
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Зареждат се още…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Можете да направите до ' + args.maximum + ' ';
+
+      if (args.maximum > 1) {
+        message += 'избора';
+      } else {
+        message += 'избор';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Няма намерени съвпадения';
+    },
+    searching: function () {
+      return 'Търсене…';
+    },
+    removeAllItems: function () {
+      return 'Премахнете всички елементи';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/bn.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/bn.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+    // Bangla
+    return {
+      errorLoading: function () {
+        return 'ফলাফলগুলি লোড করা যায়নি।';
+      },
+      inputTooLong: function (args) {
+        var overChars = args.input.length - args.maximum;
+  
+        var message = 'অনুগ্রহ করে ' + overChars + ' টি অক্ষর মুছে দিন।';
+  
+        if (overChars != 1) {
+          message = 'অনুগ্রহ করে ' + overChars + ' টি অক্ষর মুছে দিন।';
+        }
+  
+        return message;
+      },
+      inputTooShort: function (args) {
+        var remainingChars = args.minimum - args.input.length;
+  
+        var message = remainingChars + ' টি অক্ষর অথবা অধিক অক্ষর লিখুন।';
+  
+        return message;
+      },
+      loadingMore: function () {
+        return 'আরো ফলাফল লোড হচ্ছে ...';
+      },
+      maximumSelected: function (args) {
+        var message = args.maximum + ' টি আইটেম নির্বাচন করতে পারবেন।';
+  
+        if (args.maximum != 1) {
+          message = args.maximum + ' টি আইটেম নির্বাচন করতে পারবেন।';
+        }
+  
+        return message;
+      },
+      noResults: function () {
+        return 'কোন ফলাফল পাওয়া যায়নি।';
+      },
+      searching: function () {
+        return 'অনুসন্ধান করা হচ্ছে ...';
+      }
+    };
+  }).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+  
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/bs.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/bs.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Bosnian
+  function ending (count, one, some, many) {
+    if (count % 10 == 1 && count % 100 != 11) {
+      return one;
+    }
+
+    if (count % 10 >= 2 && count % 10 <= 4 &&
+      (count % 100 < 12 || count % 100 > 14)) {
+        return some;
+    }
+
+    return many;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Preuzimanje nije uspijelo.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Obrišite ' + overChars + ' simbol';
+
+      message += ending(overChars, '', 'a', 'a');
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Ukucajte bar još ' + remainingChars + ' simbol';
+
+      message += ending(remainingChars, '', 'a', 'a');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Preuzimanje još rezultata…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Možete izabrati samo ' + args.maximum + ' stavk';
+
+      message += ending(args.maximum, 'u', 'e', 'i');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Ništa nije pronađeno';
+    },
+    searching: function () {
+      return 'Pretraga…';
+    },
+    removeAllItems: function () {
+      return 'Uklonite sve stavke';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ca.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ca.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Catalan
+  return {
+    errorLoading: function () {
+      return 'La càrrega ha fallat';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Si us plau, elimina ' + overChars + ' car';
+
+      if (overChars == 1) {
+        message += 'àcter';
+      } else {
+        message += 'àcters';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Si us plau, introdueix ' + remainingChars + ' car';
+
+      if (remainingChars == 1) {
+        message += 'àcter';
+      } else {
+        message += 'àcters';
+      }
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Carregant més resultats…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Només es pot seleccionar ' + args.maximum + ' element';
+
+      if (args.maximum != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'No s\'han trobat resultats';
+    },
+    searching: function () {
+      return 'Cercant…';
+    },
+    removeAllItems: function () {
+      return 'Treu tots els elements';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/cs.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/cs.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Czech
+  function small (count, masc) {
+    switch(count) {
+      case 2:
+        return masc ? 'dva' : 'dvě';
+      case 3:
+        return 'tři';
+      case 4:
+        return 'čtyři';
+    }
+    return '';
+  }
+  return {
+    errorLoading: function () {
+      return 'Výsledky nemohly být načteny.';
+    },
+    inputTooLong: function (args) {
+      var n = args.input.length - args.maximum;
+
+      if (n == 1) {
+        return 'Prosím, zadejte o jeden znak méně.';
+      } else if (n <= 4) {
+        return 'Prosím, zadejte o ' + small(n, true) + ' znaky méně.';
+      } else {
+        return 'Prosím, zadejte o ' + n + ' znaků méně.';
+      }
+    },
+    inputTooShort: function (args) {
+      var n = args.minimum - args.input.length;
+
+      if (n == 1) {
+        return 'Prosím, zadejte ještě jeden znak.';
+      } else if (n <= 4) {
+        return 'Prosím, zadejte ještě další ' + small(n, true) + ' znaky.';
+      } else {
+        return 'Prosím, zadejte ještě dalších ' + n + ' znaků.';
+      }
+    },
+    loadingMore: function () {
+      return 'Načítají se další výsledky…';
+    },
+    maximumSelected: function (args) {
+      var n = args.maximum;
+
+      if (n == 1) {
+        return 'Můžete zvolit jen jednu položku.';
+      } else if (n <= 4) {
+        return 'Můžete zvolit maximálně ' + small(n, false) + ' položky.';
+      } else {
+        return 'Můžete zvolit maximálně ' + n + ' položek.';
+      }
+    },
+    noResults: function () {
+      return 'Nenalezeny žádné položky.';
+    },
+    searching: function () {
+      return 'Vyhledávání…';
+    },
+    removeAllItems: function () {
+      return 'Odstraňte všechny položky';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/da.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/da.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Danish
+  return {
+    errorLoading: function () {
+      return 'Resultaterne kunne ikke indlæses.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Angiv venligst ' + overChars + ' tegn mindre';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Angiv venligst ' + remainingChars + ' tegn mere';
+    },
+    loadingMore: function () {
+      return 'Indlæser flere resultater…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Du kan kun vælge ' + args.maximum + ' emne';
+
+      if (args.maximum != 1) {
+        message += 'r';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Ingen resultater fundet';
+    },
+    searching: function () {
+      return 'Søger…';
+    },
+    removeAllItems: function () {
+      return 'Fjern alle elementer';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/de.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/de.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // German
+  return {
+    errorLoading: function () {
+      return 'Die Ergebnisse konnten nicht geladen werden.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Bitte ' + overChars + ' Zeichen weniger eingeben';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Bitte ' + remainingChars + ' Zeichen mehr eingeben';
+    },
+    loadingMore: function () {
+      return 'Lade mehr Ergebnisse…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Sie können nur ' + args.maximum + ' Element';
+
+      if (args.maximum != 1) {
+        message += 'e';
+      }
+
+      message += ' auswählen';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Keine Übereinstimmungen gefunden';
+    },
+    searching: function () {
+      return 'Suche…';
+    },
+    removeAllItems: function () {
+      return 'Entferne alle Elemente';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/dsb.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/dsb.js ***!
+  \*********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Lower Sorbian
+  var charsWords = ['znamuško', 'znamušce', 'znamuška','znamuškow'];
+  var itemsWords = ['zapisk', 'zapiska', 'zapiski','zapiskow'];
+
+  var pluralWord = function pluralWord(numberOfChars, words) {
+    if (numberOfChars === 1) {
+        return words[0];
+    } else if (numberOfChars === 2) {
+      return words[1];
+    }  else if (numberOfChars > 2 && numberOfChars <= 4) {
+      return words[2];
+    } else if (numberOfChars >= 5) {
+      return words[3];
+    }
+  };
+  
+  return {
+    errorLoading: function () {
+      return 'Wuslědki njejsu se dali zacytaś.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Pšosym lašuj ' + overChars + ' ' + 
+        pluralWord(overChars, charsWords);
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+      
+      return 'Pšosym zapódaj nanejmjenjej ' + remainingChars + ' ' +
+        pluralWord(remainingChars, charsWords);
+    },
+    loadingMore: function () {
+      return 'Dalšne wuslědki se zacytaju…';
+    },
+    maximumSelected: function (args) {
+      return 'Móžoš jano ' + args.maximum + ' ' +
+        pluralWord(args.maximum, itemsWords) + 'wubraś.';
+    },
+    noResults: function () {
+      return 'Žedne wuslědki namakane';
+    },
+    searching: function () {
+      return 'Pyta se…';
+    },
+    removeAllItems: function () {
+      // To DO : in Lower Sorbian.
+      return 'Remove all items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/el.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/el.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Greek (el)
+  return {
+    errorLoading: function () {
+      return 'Τα αποτελέσματα δεν μπόρεσαν να φορτώσουν.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Παρακαλώ διαγράψτε ' + overChars + ' χαρακτήρ';
+
+      if (overChars == 1) {
+        message += 'α';
+      }
+      if (overChars != 1) {
+        message += 'ες';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Παρακαλώ συμπληρώστε ' + remainingChars +
+        ' ή περισσότερους χαρακτήρες';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Φόρτωση περισσότερων αποτελεσμάτων…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Μπορείτε να επιλέξετε μόνο ' + args.maximum + ' επιλογ';
+
+      if (args.maximum == 1) {
+        message += 'ή';
+      }
+
+      if (args.maximum != 1) {
+        message += 'ές';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Δεν βρέθηκαν αποτελέσματα';
+    },
+    searching: function () {
+      return 'Αναζήτηση…';
+    },
+    removeAllItems: function () {
+      return 'Καταργήστε όλα τα στοιχεία';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/en.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/en.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // English
+  return {
+    errorLoading: function () {
+      return 'The results could not be loaded.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Please delete ' + overChars + ' character';
+
+      if (overChars != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Please enter ' + remainingChars + ' or more characters';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Loading more results…';
+    },
+    maximumSelected: function (args) {
+      var message = 'You can only select ' + args.maximum + ' item';
+
+      if (args.maximum != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'No results found';
+    },
+    searching: function () {
+      return 'Searching…';
+    },
+    removeAllItems: function () {
+      return 'Remove all items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/es.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/es.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Spanish
+  return {
+    errorLoading: function () {
+      return 'No se pudieron cargar los resultados';
+    },
+    inputTooLong: function (args) {
+      var remainingChars = args.input.length - args.maximum;
+
+      var message = 'Por favor, elimine ' + remainingChars + ' car';
+
+      if (remainingChars == 1) {
+        message += 'ácter';
+      } else {
+        message += 'acteres';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Por favor, introduzca ' + remainingChars + ' car';
+
+      if (remainingChars == 1) {
+        message += 'ácter';
+      } else {
+        message += 'acteres';
+      }
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Cargando más resultados…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Sólo puede seleccionar ' + args.maximum + ' elemento';
+
+      if (args.maximum != 1) {
+        message += 's';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'No se encontraron resultados';
+    },
+    searching: function () {
+      return 'Buscando…';
+    },
+    removeAllItems: function () {
+      return 'Eliminar todos los elementos';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/et.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/et.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Estonian
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Sisesta ' + overChars + ' täht';
+
+      if (overChars != 1) {
+        message += 'e';
+      }
+
+      message += ' vähem';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Sisesta ' + remainingChars + ' täht';
+
+      if (remainingChars != 1) {
+        message += 'e';
+      }
+
+      message += ' rohkem';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Laen tulemusi…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Saad vaid ' + args.maximum + ' tulemus';
+
+      if (args.maximum == 1) {
+        message += 'e';
+      } else {
+        message += 't';
+      }
+
+      message += ' valida';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Tulemused puuduvad';
+    },
+    searching: function () {
+      return 'Otsin…';
+    },
+    removeAllItems: function () {
+      return 'Eemalda kõik esemed';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/eu.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/eu.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Basque
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Idatzi ';
+
+      if (overChars == 1) {
+        message += 'karaktere bat';
+      } else {
+        message += overChars + ' karaktere';
+      }
+
+      message += ' gutxiago';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Idatzi ';
+
+      if (remainingChars == 1) {
+        message += 'karaktere bat';
+      } else {
+        message += remainingChars + ' karaktere';
+      }
+
+      message += ' gehiago';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Emaitza gehiago kargatzen…';
+    },
+    maximumSelected: function (args) {
+      if (args.maximum === 1) {
+        return 'Elementu bakarra hauta dezakezu';
+      } else {
+        return args.maximum + ' elementu hauta ditzakezu soilik';
+      }
+    },
+    noResults: function () {
+      return 'Ez da bat datorrenik aurkitu';
+    },
+    searching: function () {
+      return 'Bilatzen…';
+    },
+    removeAllItems: function () {
+      return 'Kendu elementu guztiak';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/fa.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/fa.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/* jshint -W100 */
+/* jslint maxlen: 86 */
+!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Farsi (Persian)
+  return {
+    errorLoading: function () {
+      return 'امکان بارگذاری نتایج وجود ندارد.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'لطفاً ' + overChars + ' کاراکتر را حذف نمایید';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'لطفاً تعداد ' + remainingChars + ' کاراکتر یا بیشتر وارد نمایید';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'در حال بارگذاری نتایج بیشتر...';
+    },
+    maximumSelected: function (args) {
+      var message = 'شما تنها می‌توانید ' + args.maximum + ' آیتم را انتخاب نمایید';
+
+      return message;
+    },
+    noResults: function () {
+      return 'هیچ نتیجه‌ای یافت نشد';
+    },
+    searching: function () {
+      return 'در حال جستجو...';
+    },
+    removeAllItems: function () {
+      return 'همه موارد را حذف کنید';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/fi.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/fi.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Finnish
+  return {
+    errorLoading: function () {
+      return 'Tuloksia ei saatu ladattua.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Ole hyvä ja anna ' + overChars + ' merkkiä vähemmän';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Ole hyvä ja anna ' + remainingChars + ' merkkiä lisää';
+    },
+    loadingMore: function () {
+      return 'Ladataan lisää tuloksia…';
+    },
+    maximumSelected: function (args) {
+      return 'Voit valita ainoastaan ' + args.maximum + ' kpl';
+    },
+    noResults: function () {
+      return 'Ei tuloksia';
+    },
+    searching: function () {
+      return 'Haetaan…';
+    },
+    removeAllItems: function () {
+      return 'Poista kaikki kohteet';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/fr.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/fr.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // French
+  return {
+    errorLoading: function () {
+      return 'Les résultats ne peuvent pas être chargés.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Supprimez ' + overChars + ' caractère' +
+        ((overChars > 1) ? 's' : '');
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Saisissez au moins ' + remainingChars + ' caractère' +
+        ((remainingChars > 1) ? 's' : '');
+    },
+    loadingMore: function () {
+      return 'Chargement de résultats supplémentaires…';
+    },
+    maximumSelected: function (args) {
+      return 'Vous pouvez seulement sélectionner ' + args.maximum +
+        ' élément' + ((args.maximum > 1) ? 's' : '');
+    },
+    noResults: function () {
+      return 'Aucun résultat trouvé';
+    },
+    searching: function () {
+      return 'Recherche en cours…';
+    },
+    removeAllItems: function () {
+      return 'Supprimer tous les éléments';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/gl.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/gl.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Galician
+  return {
+    errorLoading: function () {
+      return 'Non foi posíbel cargar os resultados.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      if (overChars === 1) {
+        return 'Elimine un carácter';
+      }
+      return 'Elimine ' + overChars + ' caracteres';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      if (remainingChars === 1) {
+        return 'Engada un carácter';
+      }
+      return 'Engada ' + remainingChars + ' caracteres';
+    },
+    loadingMore: function () {
+      return 'Cargando máis resultados…';
+    },
+    maximumSelected: function (args) {
+      if (args.maximum === 1) {
+        return 'Só pode seleccionar un elemento';
+      }
+      return 'Só pode seleccionar ' + args.maximum + ' elementos';
+    },
+    noResults: function () {
+      return 'Non se atoparon resultados';
+    },
+    searching: function () {
+      return 'Buscando…';
+    },
+    removeAllItems: function () {
+      return 'Elimina todos os elementos';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/he.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/he.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Hebrew
+  return {
+    errorLoading: function () {
+      return 'שגיאה בטעינת התוצאות';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'נא למחוק ';
+
+      if (overChars === 1) {
+        message += 'תו אחד';
+      } else {
+        message += overChars + ' תווים';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'נא להכניס ';
+
+      if (remainingChars === 1) {
+        message += 'תו אחד';
+      } else {
+        message += remainingChars + ' תווים';
+      }
+
+      message += ' או יותר';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'טוען תוצאות נוספות…';
+    },
+    maximumSelected: function (args) {
+      var message = 'באפשרותך לבחור עד ';
+
+      if (args.maximum === 1) {
+        message += 'פריט אחד';
+      } else {
+        message += args.maximum + ' פריטים';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'לא נמצאו תוצאות';
+    },
+    searching: function () {
+      return 'מחפש…';
+    },
+    removeAllItems: function () {
+      return 'הסר את כל הפריטים';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/hi.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/hi.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Hindi
+  return {
+    errorLoading: function () {
+      return 'परिणामों को लोड नहीं किया जा सका।';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message =  overChars + ' अक्षर को हटा दें';
+
+      if (overChars > 1) {
+        message = overChars + ' अक्षरों को हटा दें ';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'कृपया ' + remainingChars + ' या अधिक अक्षर दर्ज करें';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'अधिक परिणाम लोड हो रहे है...';
+    },
+    maximumSelected: function (args) {
+      var message = 'आप केवल ' + args.maximum + ' आइटम का चयन कर सकते हैं';
+      return message;
+    },
+    noResults: function () {
+      return 'कोई परिणाम नहीं मिला';
+    },
+    searching: function () {
+      return 'खोज रहा है...';
+    },
+    removeAllItems: function () {
+      return 'सभी वस्तुओं को हटा दें';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/hr.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/hr.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Croatian
+  function character (n) {
+    var message = ' ' + n + ' znak';
+
+    if (n % 10 < 5 && n % 10 > 0 && (n % 100 < 5 || n % 100 > 19)) {
+      if (n % 10 > 1) {
+        message += 'a';
+      }
+    } else {
+      message += 'ova';
+    }
+
+    return message;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Preuzimanje nije uspjelo.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Unesite ' + character(overChars);
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Unesite još ' + character(remainingChars);
+    },
+    loadingMore: function () {
+      return 'Učitavanje rezultata…';
+    },
+    maximumSelected: function (args) {
+      return 'Maksimalan broj odabranih stavki je ' + args.maximum;
+    },
+    noResults: function () {
+      return 'Nema rezultata';
+    },
+    searching: function () {
+      return 'Pretraga…';
+    },
+    removeAllItems: function () {
+      return 'Ukloni sve stavke';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/hsb.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/hsb.js ***!
+  \*********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Upper Sorbian
+  var charsWords = ['znamješko', 'znamješce', 'znamješka','znamješkow'];
+  var itemsWords = ['zapisk', 'zapiskaj', 'zapiski','zapiskow'];
+
+  var pluralWord = function pluralWord(numberOfChars, words) {
+    if (numberOfChars === 1) {
+        return words[0];
+    } else if (numberOfChars === 2) {
+      return words[1];
+    }  else if (numberOfChars > 2 && numberOfChars <= 4) {
+      return words[2];
+    } else if (numberOfChars >= 5) {
+      return words[3];
+    }
+  };
+  
+  return {
+    errorLoading: function () {
+      return 'Wuslědki njedachu so začitać.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Prošu zhašej ' + overChars + ' ' + 
+        pluralWord(overChars, charsWords);
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+      
+      return 'Prošu zapodaj znajmjeńša ' + remainingChars + ' ' +
+        pluralWord(remainingChars, charsWords);
+    },
+    loadingMore: function () {
+      return 'Dalše wuslědki so začitaja…';
+    },
+    maximumSelected: function (args) {
+      return 'Móžeš jenož ' + args.maximum + ' ' +
+        pluralWord(args.maximum, itemsWords) + 'wubrać';
+    },
+    noResults: function () {
+      return 'Žane wuslědki namakane';
+    },
+    searching: function () {
+      return 'Pyta so…';
+    },
+    removeAllItems: function () {
+      // To DO : in Upper Sorbian.
+      return 'Remove all items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/hu.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/hu.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Hungarian
+  return {
+    errorLoading: function () {
+      return 'Az eredmények betöltése nem sikerült.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Túl hosszú. ' + overChars + ' karakterrel több, mint kellene.';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Túl rövid. Még ' + remainingChars + ' karakter hiányzik.';
+    },
+    loadingMore: function () {
+      return 'Töltés…';
+    },
+    maximumSelected: function (args) {
+      return 'Csak ' + args.maximum + ' elemet lehet kiválasztani.';
+    },
+    noResults: function () {
+      return 'Nincs találat.';
+    },
+    searching: function () {
+      return 'Keresés…';
+    },
+    removeAllItems: function () {
+      return 'Távolítson el minden elemet';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/hy.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/hy.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Armenian
+  return {
+    errorLoading: function () {
+      return 'Արդյունքները հնարավոր չէ բեռնել։';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Խնդրում ենք հեռացնել ' + overChars + ' նշան';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Խնդրում ենք մուտքագրել ' + remainingChars +
+        ' կամ ավել նշաններ';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Բեռնվում են նոր արդյունքներ․․․';
+    },
+    maximumSelected: function (args) {
+      var message = 'Դուք կարող եք ընտրել առավելագույնը ' + args.maximum +
+        ' կետ';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Արդյունքներ չեն գտնվել';
+    },
+    searching: function () {
+      return 'Որոնում․․․';
+    },
+    removeAllItems: function () {
+      return 'Հեռացնել բոլոր տարրերը';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/id.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/id.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Indonesian
+  return {
+    errorLoading: function () {
+      return 'Data tidak boleh diambil.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Hapuskan ' + overChars + ' huruf';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Masukkan ' + remainingChars + ' huruf lagi';
+    },
+    loadingMore: function () {
+      return 'Mengambil data…';
+    },
+    maximumSelected: function (args) {
+      return 'Anda hanya dapat memilih ' + args.maximum + ' pilihan';
+    },
+    noResults: function () {
+      return 'Tidak ada data yang sesuai';
+    },
+    searching: function () {
+      return 'Mencari…';
+    },
+    removeAllItems: function () {
+      return 'Hapus semua item';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/is.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/is.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Icelandic
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Vinsamlegast styttið texta um ' + overChars + ' staf';
+
+      if (overChars <= 1) {
+        return message;
+      }
+
+      return message + 'i';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Vinsamlegast skrifið ' + remainingChars + ' staf';
+
+      if (remainingChars > 1) {
+        message += 'i';
+      }
+
+      message += ' í viðbót';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Sæki fleiri niðurstöður…';
+    },
+    maximumSelected: function (args) {
+      return 'Þú getur aðeins valið ' + args.maximum + ' atriði';
+    },
+    noResults: function () {
+      return 'Ekkert fannst';
+    },
+    searching: function () {
+      return 'Leita…';
+    },
+    removeAllItems: function () {
+      return 'Fjarlægðu öll atriði';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/it.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/it.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Italian
+  return {
+    errorLoading: function () {
+      return 'I risultati non possono essere caricati.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Per favore cancella ' + overChars + ' caratter';
+
+      if (overChars !== 1) {
+        message += 'i';
+      } else {
+        message += 'e';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Per favore inserisci ' +remainingChars+ ' o più caratteri';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Caricando più risultati…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Puoi selezionare solo ' + args.maximum + ' element';
+
+      if (args.maximum !== 1) {
+        message += 'i';
+      } else {
+        message += 'o';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Nessun risultato trovato';
+    },
+    searching: function () {
+      return 'Sto cercando…';
+    },
+    removeAllItems: function () {
+      return 'Rimuovi tutti gli oggetti';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ja.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ja.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Japanese
+  return {
+    errorLoading: function () {
+      return '結果が読み込まれませんでした';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = overChars + ' 文字を削除してください';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = '少なくとも ' + remainingChars + ' 文字を入力してください';
+
+      return message;
+    },
+    loadingMore: function () {
+      return '読み込み中…';
+    },
+    maximumSelected: function (args) {
+      var message = args.maximum + ' 件しか選択できません';
+
+      return message;
+    },
+    noResults: function () {
+      return '対象が見つかりません';
+    },
+    searching: function () {
+      return '検索しています…';
+    },
+    removeAllItems: function () {
+      return 'すべてのアイテムを削除';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ka.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ka.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Georgian
+  return {
+    errorLoading: function () {
+      return 'მონაცემების ჩატვირთვა შეუძლებელია.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'გთხოვთ აკრიფეთ ' + overChars + ' სიმბოლოთი ნაკლები';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'გთხოვთ აკრიფეთ ' + remainingChars + ' სიმბოლო ან მეტი';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'მონაცემების ჩატვირთვა…';
+    },
+    maximumSelected: function (args) {
+      var message = 'თქვენ შეგიძლიათ აირჩიოთ არაუმეტეს ' + args.maximum +
+        ' ელემენტი';
+
+      return message;
+    },
+    noResults: function () {
+      return 'რეზულტატი არ მოიძებნა';
+    },
+    searching: function () {
+      return 'ძიება…';
+    },
+    removeAllItems: function () {
+      return 'ამოიღე ყველა ელემენტი';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/km.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/km.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Khmer
+  return {
+    errorLoading: function () {
+      return 'មិនអាចទាញយកទិន្នន័យ';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'សូមលុបចេញ  ' + overChars + ' អក្សរ';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'សូមបញ្ចូល' + remainingChars + ' អក្សរ រឺ ច្រើនជាងនេះ';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'កំពុងទាញយកទិន្នន័យបន្ថែម...';
+    },
+    maximumSelected: function (args) {
+      var message = 'អ្នកអាចជ្រើសរើសបានតែ ' + args.maximum + ' ជម្រើសប៉ុណ្ណោះ';
+
+      return message;
+    },
+    noResults: function () {
+      return 'មិនមានលទ្ធផល';
+    },
+    searching: function () {
+      return 'កំពុងស្វែងរក...';
+    },
+    removeAllItems: function () {
+      return 'លុបធាតុទាំងអស់';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ko.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ko.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Korean
+  return {
+    errorLoading: function () {
+      return '결과를 불러올 수 없습니다.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = '너무 깁니다. ' + overChars + ' 글자 지워주세요.';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = '너무 짧습니다. ' + remainingChars + ' 글자 더 입력해주세요.';
+
+      return message;
+    },
+    loadingMore: function () {
+      return '불러오는 중…';
+    },
+    maximumSelected: function (args) {
+      var message = '최대 ' + args.maximum + '개까지만 선택 가능합니다.';
+
+      return message;
+    },
+    noResults: function () {
+      return '결과가 없습니다.';
+    },
+    searching: function () {
+      return '검색 중…';
+    },
+    removeAllItems: function () {
+      return '모든 항목 삭제';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/lt.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/lt.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // rules from
+  // http://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html#lt
+  function ending(count, one, few, other) {
+    if (count % 10 === 1 && (count % 100 < 11 || count % 100 > 19)) {
+      return one;
+    } else if (
+      (count % 10 >= 2 && count % 10 <= 9) &&
+      (count % 100 < 11 || count % 100 > 19)) {
+      return few;
+    } else {
+      return other;
+    }
+  }
+
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Pašalinkite ' + overChars + ' simbol';
+
+      message += ending(overChars, 'į', 'ius', 'ių');
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Įrašykite dar ' + remainingChars + ' simbol';
+
+      message += ending(remainingChars, 'į', 'ius', 'ių');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Kraunama daugiau rezultatų…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Jūs galite pasirinkti tik ' + args.maximum + ' element';
+
+      message += ending(args.maximum, 'ą', 'us', 'ų');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Atitikmenų nerasta';
+    },
+    searching: function () {
+      return 'Ieškoma…';
+    },
+    removeAllItems: function () {
+      return 'Pašalinti visus elementus';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/lv.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/lv.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Latvian
+  function ending (count, eleven, singular, other) {
+    if (count === 11) {
+      return eleven;
+    }
+
+    if (count % 10 === 1) {
+      return singular;
+    }
+
+    return other;
+  }
+
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Lūdzu ievadiet par  ' + overChars;
+
+      message += ' simbol' + ending(overChars, 'iem', 'u', 'iem');
+
+      return message + ' mazāk';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Lūdzu ievadiet vēl ' + remainingChars;
+
+      message += ' simbol' + ending(remainingChars, 'us', 'u', 'us');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Datu ielāde…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Jūs varat izvēlēties ne vairāk kā ' + args.maximum;
+
+      message += ' element' + ending(args.maximum, 'us', 'u', 'us');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Sakritību nav';
+    },
+    searching: function () {
+      return 'Meklēšana…';
+    },
+    removeAllItems: function () {
+      return 'Noņemt visus vienumus';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/mk.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/mk.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Macedonian
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Ве молиме внесете ' + args.maximum + ' помалку карактер';
+
+      if (args.maximum !== 1) {
+        message += 'и';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Ве молиме внесете уште ' + args.maximum + ' карактер';
+
+      if (args.maximum !== 1) {
+        message += 'и';
+      }
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Вчитување резултати…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Можете да изберете само ' + args.maximum + ' ставк';
+
+      if (args.maximum === 1) {
+        message += 'а';
+      } else {
+        message += 'и';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Нема пронајдено совпаѓања';
+    },
+    searching: function () {
+      return 'Пребарување…';
+    },
+    removeAllItems: function () {
+      return 'Отстрани ги сите предмети';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ms.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ms.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Malay
+  return {
+    errorLoading: function () {
+      return 'Keputusan tidak berjaya dimuatkan.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Sila hapuskan ' + overChars + ' aksara';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Sila masukkan ' + remainingChars + ' atau lebih aksara';
+    },
+    loadingMore: function () {
+      return 'Sedang memuatkan keputusan…';
+    },
+    maximumSelected: function (args) {
+      return 'Anda hanya boleh memilih ' + args.maximum + ' pilihan';
+    },
+    noResults: function () {
+      return 'Tiada padanan yang ditemui';
+    },
+    searching: function () {
+      return 'Mencari…';
+    },
+    removeAllItems: function () {
+      return 'Keluarkan semua item';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/nb.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/nb.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Norwegian (Bokmål)
+  return {
+    errorLoading: function () {
+      return 'Kunne ikke hente resultater.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Vennligst fjern ' + overChars + ' tegn';
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      return 'Vennligst skriv inn ' + remainingChars + ' tegn til';
+    },
+    loadingMore: function () {
+      return 'Laster flere resultater…';
+    },
+    maximumSelected: function (args) {
+      return 'Du kan velge maks ' + args.maximum + ' elementer';
+    },
+    noResults: function () {
+      return 'Ingen treff';
+    },
+    searching: function () {
+      return 'Søker…';
+    },
+    removeAllItems: function () {
+      return 'Fjern alle elementer';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ne.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ne.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+    // Nepali
+    return {
+      errorLoading: function () {
+        return 'नतिजाहरु देखाउन सकिएन।';
+      },
+      inputTooLong: function (args) {
+        var overChars = args.input.length - args.maximum;
+
+        var message = 'कृपया ' + overChars + ' अक्षर मेटाउनुहोस्।';
+
+        if (overChars != 1) {
+          message += 'कृपया ' + overChars + ' अक्षरहरु मेटाउनुहोस्।';
+        }
+
+        return message;
+      },
+      inputTooShort: function (args) {
+        var remainingChars = args.minimum - args.input.length;
+
+        var message = 'कृपया बाँकी रहेका ' + remainingChars +
+          ' वा अरु धेरै अक्षरहरु भर्नुहोस्।';
+
+        return message;
+      },
+      loadingMore: function () {
+        return 'अरु नतिजाहरु भरिँदैछन् …';
+      },
+      maximumSelected: function (args) {
+        var message = 'तँपाई ' + args.maximum +
+          ' वस्तु मात्र छान्न पाउँनुहुन्छ।';
+
+        if (args.maximum != 1) {
+          message = 'तँपाई ' + args.maximum +
+            ' वस्तुहरु मात्र छान्न पाउँनुहुन्छ।';
+        }
+
+        return message;
+      },
+      noResults: function () {
+        return 'कुनै पनि नतिजा भेटिएन।';
+      },
+      searching: function () {
+        return 'खोजि हुँदैछ…';
+      }
+    };
+  }).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/nl.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/nl.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Dutch
+  return {
+    errorLoading: function () {
+      return 'De resultaten konden niet worden geladen.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Gelieve ' + overChars + ' karakters te verwijderen';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Gelieve ' + remainingChars +
+        ' of meer karakters in te voeren';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Meer resultaten laden…';
+    },
+    maximumSelected: function (args) {
+      var verb = args.maximum == 1 ? 'kan' : 'kunnen';
+      var message = 'Er ' + verb + ' maar ' + args.maximum + ' item';
+
+      if (args.maximum != 1) {
+        message += 's';
+      }
+      message += ' worden geselecteerd';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Geen resultaten gevonden…';
+    },
+    searching: function () {
+      return 'Zoeken…';
+    },
+    removeAllItems: function () {
+      return 'Verwijder alle items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/pl.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/pl.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Polish
+  var charsWords = ['znak', 'znaki', 'znaków'];
+  var itemsWords = ['element', 'elementy', 'elementów'];
+
+  var pluralWord = function pluralWord(numberOfChars, words) {
+    if (numberOfChars === 1) {
+        return words[0];
+    } else if (numberOfChars > 1 && numberOfChars <= 4) {
+      return words[1];
+    } else if (numberOfChars >= 5) {
+      return words[2];
+    }
+  };
+  
+  return {
+    errorLoading: function () {
+      return 'Nie można załadować wyników.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      return 'Usuń ' + overChars + ' ' + pluralWord(overChars, charsWords);
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+      
+      return 'Podaj przynajmniej ' + remainingChars + ' ' +
+        pluralWord(remainingChars, charsWords);
+    },
+    loadingMore: function () {
+      return 'Trwa ładowanie…';
+    },
+    maximumSelected: function (args) {
+      return 'Możesz zaznaczyć tylko ' + args.maximum + ' ' +
+        pluralWord(args.maximum, itemsWords);
+    },
+    noResults: function () {
+      return 'Brak wyników';
+    },
+    searching: function () {
+      return 'Trwa wyszukiwanie…';
+    },
+    removeAllItems: function () {
+      return 'Usuń wszystkie przedmioty';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ps.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ps.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/* jslint maxlen: 87 */
+!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Pashto (پښتو)
+  return {
+    errorLoading: function () {
+      return 'پايلي نه سي ترلاسه کېدای';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'د مهربانۍ لمخي ' + overChars + ' توری ړنګ کړئ';
+
+      if (overChars != 1) {
+        message = message.replace('توری', 'توري');
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'لږ تر لږه ' + remainingChars + ' يا ډېر توري وليکئ';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'نوري پايلي ترلاسه کيږي...';
+    },
+    maximumSelected: function (args) {
+      var message = 'تاسو يوازي ' + args.maximum + ' قلم په نښه کولای سی';
+
+      if (args.maximum != 1) {
+        message = message.replace('قلم', 'قلمونه');
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'پايلي و نه موندل سوې';
+    },
+    searching: function () {
+      return 'لټول کيږي...';
+    },
+    removeAllItems: function () {
+      return 'ټول توکي لرې کړئ';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/pt-BR.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/pt-BR.js ***!
+  \***********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Brazilian Portuguese
+  return {
+    errorLoading: function () {
+      return 'Os resultados não puderam ser carregados.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Apague ' + overChars + ' caracter';
+
+      if (overChars != 1) {
+        message += 'es';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Digite ' + remainingChars + ' ou mais caracteres';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Carregando mais resultados…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Você só pode selecionar ' + args.maximum + ' ite';
+
+      if (args.maximum == 1) {
+        message += 'm';
+      } else {
+        message += 'ns';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Nenhum resultado encontrado';
+    },
+    searching: function () {
+      return 'Buscando…';
+    },
+    removeAllItems: function () {
+      return 'Remover todos os itens';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/pt.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/pt.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // European Portuguese
+  return {
+    errorLoading: function () {
+      return 'Os resultados não puderam ser carregados.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Por favor apague ' + overChars + ' ';
+
+      message += overChars != 1 ? 'caracteres' : 'caractere';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Introduza ' + remainingChars + ' ou mais caracteres';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'A carregar mais resultados…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Apenas pode seleccionar ' + args.maximum + ' ';
+
+      message += args.maximum != 1 ? 'itens' : 'item';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Sem resultados';
+    },
+    searching: function () {
+      return 'A procurar…';
+    },
+    removeAllItems: function () {
+      return 'Remover todos os itens';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ro.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ro.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Romanian
+  return {
+    errorLoading: function () {
+      return 'Rezultatele nu au putut fi incărcate.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Vă rugăm să ștergeți' + overChars + ' caracter';
+
+      if (overChars !== 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Vă rugăm să introduceți ' + remainingChars +
+        ' sau mai multe caractere';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Se încarcă mai multe rezultate…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Aveți voie să selectați cel mult ' + args.maximum;
+      message += ' element';
+
+      if (args.maximum !== 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Nu au fost găsite rezultate';
+    },
+    searching: function () {
+      return 'Căutare…';
+    },
+    removeAllItems: function () {
+      return 'Eliminați toate elementele';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/ru.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/ru.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Russian
+  function ending (count, one, couple, more) {
+    if (count % 10 < 5 && count % 10 > 0 &&
+        count % 100 < 5 || count % 100 > 20) {
+      if (count % 10 > 1) {
+        return couple;
+      }
+    } else {
+      return more;
+    }
+
+    return one;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Невозможно загрузить результаты';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Пожалуйста, введите на ' + overChars + ' символ';
+
+      message += ending(overChars, '', 'a', 'ов');
+
+      message += ' меньше';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Пожалуйста, введите ещё хотя бы ' + remainingChars +
+        ' символ';
+
+      message += ending(remainingChars, '', 'a', 'ов');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Загрузка данных…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Вы можете выбрать не более ' + args.maximum + ' элемент';
+
+      message += ending(args.maximum, '', 'a', 'ов');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Совпадений не найдено';
+    },
+    searching: function () {
+      return 'Поиск…';
+    },
+    removeAllItems: function () {
+      return 'Удалить все элементы';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sk.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sk.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Slovak
+
+  // use text for the numbers 2 through 4
+  var smallNumbers = {
+    2: function (masc) { return (masc ? 'dva' : 'dve'); },
+    3: function () { return 'tri'; },
+    4: function () { return 'štyri'; }
+  };
+
+  return {
+    errorLoading: function () {
+      return 'Výsledky sa nepodarilo načítať.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      if (overChars == 1) {
+        return 'Prosím, zadajte o jeden znak menej';
+      } else if (overChars >= 2 && overChars <= 4) {
+        return 'Prosím, zadajte o ' + smallNumbers[overChars](true) +
+          ' znaky menej';
+      } else {
+        return 'Prosím, zadajte o ' + overChars + ' znakov menej';
+      }
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      if (remainingChars == 1) {
+        return 'Prosím, zadajte ešte jeden znak';
+      } else if (remainingChars <= 4) {
+        return 'Prosím, zadajte ešte ďalšie ' +
+          smallNumbers[remainingChars](true) + ' znaky';
+      } else {
+        return 'Prosím, zadajte ešte ďalších ' + remainingChars + ' znakov';
+      }
+    },
+    loadingMore: function () {
+      return 'Načítanie ďalších výsledkov…';
+    },
+    maximumSelected: function (args) {
+      if (args.maximum == 1) {
+        return 'Môžete zvoliť len jednu položku';
+      } else if (args.maximum >= 2 && args.maximum <= 4) {
+        return 'Môžete zvoliť najviac ' + smallNumbers[args.maximum](false) +
+          ' položky';
+      } else {
+        return 'Môžete zvoliť najviac ' + args.maximum + ' položiek';
+      }
+    },
+    noResults: function () {
+      return 'Nenašli sa žiadne položky';
+    },
+    searching: function () {
+      return 'Vyhľadávanie…';
+    },
+    removeAllItems: function () {
+      return 'Odstráňte všetky položky';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sl.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sl.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Slovene
+  return {
+    errorLoading: function () {
+      return 'Zadetkov iskanja ni bilo mogoče naložiti.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Prosim zbrišite ' + overChars + ' znak';
+
+      if (overChars == 2) {
+        message += 'a';
+      } else if (overChars != 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Prosim vpišite še ' + remainingChars + ' znak';
+
+      if (remainingChars == 2) {
+        message += 'a';
+      } else if (remainingChars != 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Nalagam več zadetkov…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Označite lahko največ ' + args.maximum + ' predmet';
+
+      if (args.maximum == 2) {
+        message += 'a';
+      } else if (args.maximum != 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Ni zadetkov.';
+    },
+    searching: function () {
+      return 'Iščem…';
+    },
+    removeAllItems: function () {
+      return 'Odstranite vse elemente';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sq.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sq.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Albanian
+  return {
+    errorLoading: function () {
+      return 'Rezultatet nuk mund të ngarkoheshin.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Të lutem fshi ' + overChars + ' karakter';
+
+      if (overChars != 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Të lutem shkruaj ' + remainingChars + 
+          ' ose më shumë karaktere';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Duke ngarkuar më shumë rezultate…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Mund të zgjedhësh vetëm ' + args.maximum + ' element';
+
+      if (args.maximum != 1) {
+        message += 'e';
+      }
+
+      return message;
+    },
+    noResults: function () {
+      return 'Nuk u gjet asnjë rezultat';
+    },
+    searching: function () {
+      return 'Duke kërkuar…';
+    },
+    removeAllItems: function () {
+      return 'Hiq të gjitha sendet';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sr-Cyrl.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sr-Cyrl.js ***!
+  \*************************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Serbian Cyrilic
+  function ending (count, one, some, many) {
+    if (count % 10 == 1 && count % 100 != 11) {
+      return one;
+    }
+
+    if (count % 10 >= 2 && count % 10 <= 4 &&
+      (count % 100 < 12 || count % 100 > 14)) {
+        return some;
+    }
+
+    return many;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Преузимање није успело.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Обришите ' + overChars + ' симбол';
+
+      message += ending(overChars, '', 'а', 'а');
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Укуцајте бар још ' + remainingChars + ' симбол';
+
+      message += ending(remainingChars, '', 'а', 'а');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Преузимање још резултата…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Можете изабрати само ' + args.maximum + ' ставк';
+
+      message += ending(args.maximum, 'у', 'е', 'и');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Ништа није пронађено';
+    },
+    searching: function () {
+      return 'Претрага…';
+    },
+    removeAllItems: function () {
+      return 'Уклоните све ставке';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sr.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sr.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Serbian
+  function ending (count, one, some, many) {
+    if (count % 10 == 1 && count % 100 != 11) {
+      return one;
+    }
+
+    if (count % 10 >= 2 && count % 10 <= 4 &&
+      (count % 100 < 12 || count % 100 > 14)) {
+        return some;
+    }
+
+    return many;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Preuzimanje nije uspelo.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Obrišite ' + overChars + ' simbol';
+
+      message += ending(overChars, '', 'a', 'a');
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Ukucajte bar još ' + remainingChars + ' simbol';
+
+      message += ending(remainingChars, '', 'a', 'a');
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Preuzimanje još rezultata…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Možete izabrati samo ' + args.maximum + ' stavk';
+
+      message += ending(args.maximum, 'u', 'e', 'i');
+
+      return message;
+    },
+    noResults: function () {
+      return 'Ništa nije pronađeno';
+    },
+    searching: function () {
+      return 'Pretraga…';
+    },
+    removeAllItems: function () {
+      return 'Уклоните све ставке';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/sv.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/sv.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Swedish
+  return {
+    errorLoading: function () {
+      return 'Resultat kunde inte laddas.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Vänligen sudda ut ' + overChars + ' tecken';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Vänligen skriv in ' + remainingChars +
+                    ' eller fler tecken';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Laddar fler resultat…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Du kan max välja ' + args.maximum + ' element';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Inga träffar';
+    },
+    searching: function () {
+      return 'Söker…';
+    },
+    removeAllItems: function () {
+      return 'Ta bort alla objekt';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/th.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/th.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Thai
+  return {
+    errorLoading: function () {
+      return 'ไม่สามารถค้นข้อมูลได้';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'โปรดลบออก ' + overChars + ' ตัวอักษร';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'โปรดพิมพ์เพิ่มอีก ' + remainingChars + ' ตัวอักษร';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'กำลังค้นข้อมูลเพิ่ม…';
+    },
+    maximumSelected: function (args) {
+      var message = 'คุณสามารถเลือกได้ไม่เกิน ' + args.maximum + ' รายการ';
+
+      return message;
+    },
+    noResults: function () {
+      return 'ไม่พบข้อมูล';
+    },
+    searching: function () {
+      return 'กำลังค้นข้อมูล…';
+    },
+    removeAllItems: function () {
+      return 'ลบรายการทั้งหมด';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/tk.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/tk.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Turkmen
+  return {
+    errorLoading: function (){
+      return 'Netije ýüklenmedi.';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = overChars + ' harp bozuň.';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Ýene-de iň az ' + remainingChars + ' harp ýazyň.';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Köpräk netije görkezilýär…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Diňe ' + args.maximum + ' sanysyny saýlaň.';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Netije tapylmady.';
+    },
+    searching: function () {
+      return 'Gözlenýär…';
+    },
+    removeAllItems: function () {
+      // TO DO : add in turkmen,
+      return 'Remove all items';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/tr.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/tr.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Turkish
+  return {
+    errorLoading: function (){
+      return 'Sonuç yüklenemedi';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = overChars + ' karakter daha girmelisiniz';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'En az ' + remainingChars + ' karakter daha girmelisiniz';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Daha fazla…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Sadece ' + args.maximum + ' seçim yapabilirsiniz';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Sonuç bulunamadı';
+    },
+    searching: function () {
+      return 'Aranıyor…';
+    },
+    removeAllItems: function () {     
+      return 'Tüm öğeleri kaldır';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/uk.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/uk.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Ukrainian
+  function ending (count, one, couple, more) {
+    if (count % 100 > 10 && count % 100 < 15) {
+      return more;
+    }
+    if (count % 10 === 1) {
+      return one;
+    }
+    if (count % 10 > 1 && count % 10 < 5) {
+      return couple;
+    }
+    return more;
+  }
+
+  return {
+    errorLoading: function () {
+      return 'Неможливо завантажити результати';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+      return 'Будь ласка, видаліть ' + overChars + ' ' +
+        ending(args.maximum, 'літеру', 'літери', 'літер');
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+      return 'Будь ласка, введіть ' + remainingChars + ' або більше літер';
+    },
+    loadingMore: function () {
+      return 'Завантаження інших результатів…';
+    },
+    maximumSelected: function (args) {
+      return 'Ви можете вибрати лише ' + args.maximum + ' ' +
+        ending(args.maximum, 'пункт', 'пункти', 'пунктів');
+    },
+    noResults: function () {
+      return 'Нічого не знайдено';
+    },
+    searching: function () {
+      return 'Пошук…';
+    },
+    removeAllItems: function () {     
+      return 'Видалити всі елементи';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/vi.js":
+/*!********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/vi.js ***!
+  \********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Vietnamese
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = 'Vui lòng xóa bớt ' + overChars + ' ký tự';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = 'Vui lòng nhập thêm từ ' + remainingChars +
+                    ' ký tự trở lên';
+
+      return message;
+    },
+    loadingMore: function () {
+      return 'Đang lấy thêm kết quả…';
+    },
+    maximumSelected: function (args) {
+      var message = 'Chỉ có thể chọn được ' + args.maximum + ' lựa chọn';
+
+      return message;
+    },
+    noResults: function () {
+      return 'Không tìm thấy kết quả';
+    },
+    searching: function () {
+      return 'Đang tìm…';
+    },
+    removeAllItems: function () {
+      return 'Xóa tất cả các mục';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/zh-CN.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/zh-CN.js ***!
+  \***********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Chinese (Simplified)
+  return {
+    errorLoading: function () {
+      return '无法载入结果。';
+    },
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = '请删除' + overChars + '个字符';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = '请再输入至少' + remainingChars + '个字符';
+
+      return message;
+    },
+    loadingMore: function () {
+      return '载入更多结果…';
+    },
+    maximumSelected: function (args) {
+      var message = '最多只能选择' + args.maximum + '个项目';
+
+      return message;
+    },
+    noResults: function () {
+      return '未找到结果';
+    },
+    searching: function () {
+      return '搜索中…';
+    },
+    removeAllItems: function () {     
+      return '删除所有项目';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
+/***/ "./node_modules/select2/src/js/select2/i18n/zh-TW.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/select2/src/js/select2/i18n/zh-TW.js ***!
+  \***********************************************************/
+/***/ ((module, exports, __webpack_require__) => {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+  // Chinese (Traditional)
+  return {
+    inputTooLong: function (args) {
+      var overChars = args.input.length - args.maximum;
+
+      var message = '請刪掉' + overChars + '個字元';
+
+      return message;
+    },
+    inputTooShort: function (args) {
+      var remainingChars = args.minimum - args.input.length;
+
+      var message = '請再輸入' + remainingChars + '個字元';
+
+      return message;
+    },
+    loadingMore: function () {
+      return '載入中…';
+    },
+    maximumSelected: function (args) {
+      var message = '你只能選擇最多' + args.maximum + '項';
+
+      return message;
+    },
+    noResults: function () {
+      return '沒有找到相符的項目';
+    },
+    searching: function () {
+      return '搜尋中…';
+    },
+    removeAllItems: function () {     
+      return '刪除所有項目';
+    }
+  };
+}).call(exports, __webpack_require__, exports, module),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+
 /***/ "./node_modules/mathjs/lib/cjs/constants.js":
 /*!**************************************************!*\
   !*** ./node_modules/mathjs/lib/cjs/constants.js ***!
