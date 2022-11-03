@@ -74,11 +74,7 @@ class InvestmentGroupController extends Controller
          * @name('investment-group.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
          */
-        $validated = $request->validated();
-
-        $investmentGroup = InvestmentGroup::make($validated);
-        $investmentGroup->user_id = Auth::user()->id;
-        $investmentGroup->save();
+        InvestmentGroup::create($request->validated());
 
         self::addSimpleSuccessMessage(__('Investment group added'));
 

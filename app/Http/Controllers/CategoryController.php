@@ -90,11 +90,7 @@ class CategoryController extends Controller
          * @name('categories.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
-        $validated = $request->validated();
-
-        $category = Category::make($validated);
-        $category->user_id = Auth::user()->id;
-        $category->save();
+        Category::create($request->validated());
 
         self::addSimpleSuccessMessage(__('Category added'));
 

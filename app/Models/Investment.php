@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +13,7 @@ use Illuminate\Support\Arr;
 
 class Investment extends Model
 {
-    use HasFactory;
+    use HasFactory, ModelOwnedByUserTrait;
 
     protected $guarded = [];
 
@@ -45,7 +46,6 @@ class Investment extends Model
         'investment_group_id',
         'currency_id',
         'investment_price_provider',
-        'user_id',
     ];
 
     protected $casts = [

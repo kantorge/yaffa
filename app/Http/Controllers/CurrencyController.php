@@ -66,11 +66,7 @@ class CurrencyController extends Controller
          * @name('currencies.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        $validated = $request->validated();
-
-        $currency = Currency::make($validated);
-        $currency->user_id = Auth::user()->id;
-        $currency->save();
+        Currency::create($request->validated());
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
