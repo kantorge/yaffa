@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\Random;
 
-use App\Models\Tag;
+//use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;

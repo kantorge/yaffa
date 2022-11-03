@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use Carbon\Carbon;

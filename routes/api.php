@@ -42,7 +42,6 @@ Route::get('/assets/tag/{tag}', 'App\Http\Controllers\API\TagApiController@getIt
 
 Route::get('/budgetchart', 'App\Http\Controllers\API\ReportApiController@budgetChart');
 Route::get('/reports/waterfall/{type}/{year}/{month?}', [ReportApiController::class, 'getCategoryWaterfallData'])->where('type', 'budget|result|all');
-Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportApiController@scheduledTransactions');
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 

@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use DebugBar\DebugBar;
 use Illuminate\Http\Request;
 
 class SetLocale
