@@ -17,7 +17,7 @@ class CategoryMergeRequest extends FormRequest
             'category_source' => [
                 'required',
                 'exists:categories,id',
-                new CategoryMergeValidSource,
+                new CategoryMergeValidSource(),
             ],
             'action' => [
                 'required',

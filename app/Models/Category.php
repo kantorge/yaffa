@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
-use App\Models\AccountEntity;
-use App\Models\Transaction;
-use App\Models\TransactionItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

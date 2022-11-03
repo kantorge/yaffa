@@ -317,7 +317,8 @@ class TransactionApiController extends Controller
             'accounts',
             'categories',
             'payees',
-            'tags', ])) {
+            'tags',
+        ])) {
             return response()->json(
                 [
                     'data' => [],

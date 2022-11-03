@@ -4,9 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +32,7 @@ class CategoryController extends Controller
                 })
                 // Exclude not preferred categories even when searching for them
                 ->when($request->has('payee'), function ($query) use ($request) {
-                    $query->whereDoesntHave (
+                    $query->whereDoesntHave(
                         'payeesNotPreferring',
                         function (Builder $query) use ($request) {
                             $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
