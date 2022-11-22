@@ -29,7 +29,7 @@
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.29",
-        "@vuepic/vue-datepicker": "^3.5.2",
+        "@vuepic/vue-datepicker": "^3.5.3",
         "axios": "^0.27.2",
         "currency.js": "^2.0.4",
         "datatables.net": "^1.12.1",
