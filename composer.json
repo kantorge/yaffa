@@ -10,7 +10,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.0",
-        "almasaeed2010/adminlte": "~2.4",
         "amrshawky/laravel-currency": "^5.0",
         "enlightn/enlightn": "^2.1",
         "fakerphp/faker": "^1.13",

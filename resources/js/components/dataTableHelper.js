@@ -1,9 +1,11 @@
 // TODO: better handle __() function, which is now assumed to be present in global scope
 
+import * as helpers from "../helpers";
+
 export function dataTablesActionButton(id, action, transactionType) {
     var functions = {
         delete: function() {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
         },
         standardQuickView: function() {
             return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button"><i class="fa fa-fw fa-eye" title="' + __('Quick view') + '"></i></button> ';
@@ -28,10 +30,10 @@ export function dataTablesActionButton(id, action, transactionType) {
 export function genericDataTablesActionButton(id, action, route) {
     var functions = {
         delete: function(id) {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
         },
         edit: function(id, route) {
-            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ';
+            return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-pencil"></i></a> ';
         },
     }
 
@@ -53,6 +55,12 @@ export function initializeDeleteButtonListener(tableSelector, route) {
         // Ziggy route helper is expected to exist at global scope
         form.action = window.route(route, this.dataset.id);
         form.submit();
+    });
+}
+
+export function initializeFilterButtonsActive(table, column) {
+    $('input[name=active]').on("change", function() {
+        table.column(column).search(this.value).draw();
     });
 }
 
@@ -82,6 +90,18 @@ export function commentIcon(comment, type) {
     return ' <i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
 }
 
+export function toFormattedCurrency(type, input, locale, currency) {
+    if (type === 'filter' || type === 'sort') {
+        return input;
+    }
+
+    if (isNaN(input) || input === null) {
+        return input;
+    }
+
+    return helpers.toFormattedCurrency(input, locale, currency);
+}
+
 export function initializeDeleteButton(selector) {
     $(selector).on("click", ".data-delete", function() {
         if (!confirm(__('Are you sure to want to delete this item?'))) {
@@ -103,8 +123,8 @@ export function initializeSkipInstanceButton(selector) {
 }
 
 export function booleanToTableIcon (data, type) {
-    if (type == 'filter') {
-        return  (data ? 'Yes' : 'No');
+    if (type === 'filter') {
+        return  (data ? __('Yes') : __('No'));
     }
     return (  data
             ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
@@ -136,5 +156,41 @@ export function transactionTypeIcon(type, name, customTitle) {
 export function muteCellWithValue(column, mutedValue) {
     if (column.text() === mutedValue) {
         column.addClass('text-muted text-italic');
+    }
+}
+
+export let transactionColumnDefiniton = {
+    dateFromCustomField: function(fieldName, title, locale) {
+        return {
+            data: fieldName,
+            title: title,
+            render: function (data, type) {
+                if (type === 'display' && data && data.toLocaleDateString) {
+                    return data.toLocaleDateString(locale);
+                }
+
+                return data;
+            },
+            className: "dt-nowrap",
+            type: 'date',
+        }
+    },
+    comment: {
+        data: 'comment',
+        title: __('Comment'),
+        defaultContent: '',
+        class: 'text-truncate',
+        createdCell: function (td, cellData) {
+            $(td).prop('title', cellData);
+        }
+    },
+
+    tags: {
+        data: 'tags',
+        title: __('Tags'),
+        defaultContent: '',
+        render: function (data) {
+            return data.join(', ');
+        }
     }
 }

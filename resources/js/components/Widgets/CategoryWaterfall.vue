@@ -1,31 +1,25 @@
 <template>
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
                 {{ __('Monthly overview for top-level categories') }}
-            </h3>
-            <div class="pull-right" v-show="ready">
-                <button class="btn btn-xs btn-info" type="button" @click="previousMonth" :title="__('Previous month')"><span class="fa fa-fw fa-caret-left"></span></button>
+            </div>
+            <div v-show="ready">
+                <button class="btn btn-sm btn-info" type="button" @click="previousMonth" :title="__('Previous month')"><span class="fa fa-fw fa-caret-left"></span></button>
                 {{ dateLabel }}
-                <button class="btn btn-xs btn-info" type="button" @click="nextMonth" :title="__('Next month')"><span class="fa fa-fw fa-caret-right"></span></button>
+                <button class="btn btn-sm btn-info" type="button" @click="nextMonth" :title="__('Next month')"><span class="fa fa-fw fa-caret-right"></span></button>
             </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <Skeletor
-                width="100%"
-                v-if="!ready"
-            />
+        <div class="card-body">
+            <p aria-hidden="true" v-if="!ready" class="placeholder-glow">
+                <span class="placeholder col-12"></span>
+            </p>
             <div id="categoryWaterfallChart" ref="chartdiv" v-show="ready"></div>
         </div>
-        <!-- /.box-body -->
     </div>
-    <!-- /.box -->
 </template>
 
 <script>
-import { Skeletor } from 'vue-skeletor';
-
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
@@ -33,7 +27,6 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 export default {
-    components: { Skeletor },
     props: {
         categoryAxisVisible: {
             type: Boolean,
@@ -233,7 +226,14 @@ export default {
         },
 
         dateLabel() {
-            return this.year + ' ' + this.month;
+            var date = new Date(this.year, this.month, 1);
+            return date.toLocaleDateString(
+                window.YAFFA.locale,
+                {
+                    year: 'numeric',
+                    month: 'long',
+                }
+            );
         },
     },
     beforeDestroy() {

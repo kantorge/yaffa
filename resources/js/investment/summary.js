@@ -1,17 +1,20 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
-$('#investmentSummary').DataTable({
+var table = $('#investmentSummary').DataTable({
     data: investments,
     columns: [
         {
             data: "name",
             title: __("Name"),
-            render: function (data, type, row) {
+            render: function (data, _type, row) {
                 return '<a href="' + route('investment.show', row.id) + '" class="" title="' + __('View investment details') + '">' + data + '</a>';
             },
+            type: "html",
         },
         {
             data: "investment_group.name",
@@ -53,10 +56,15 @@ $('#investmentSummary').DataTable({
                 return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
                        '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[0, 'asc']],
+    order: [
+        [0, 'asc']
+    ],
+    responsive: true,
     initComplete: function (settings) {
         $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
             var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
@@ -88,10 +96,13 @@ $('#investmentSummary').DataTable({
         });
     },
     deferRender: true,
-    scrollY: '400px',
+    scrollY: '500px',
     scrollCollapse: true,
     scroller: true,
     stateSave: true,
     processing: true,
     paging: false,
 });
+
+// Listeners for button filter(s)
+dataTableHelpers.initializeFilterButtonsActive(table, 2);

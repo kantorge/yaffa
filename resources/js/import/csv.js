@@ -3,7 +3,7 @@
  * The array of objects is then run throug a rule engine, to create a list of possible transactions.
  */
 
-import 'datatables.net-bs';
+import 'datatables.net-bs5';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
 
@@ -418,7 +418,7 @@ window.table = $("#dataTable").DataTable({
 
                 var html = '';
                 data.forEach(function (similarTransaction) {
-                    html += '<button class="btn btn-xs ' + (similarTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-similar transaction-basic transaction-quickview" data-id="' + similarTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+                    html += '<button class="btn btn-sm ' + (similarTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-similar transaction-basic transaction-quickview" data-id="' + similarTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
                 })
 
                 return html;
@@ -445,7 +445,7 @@ window.table = $("#dataTable").DataTable({
 
                 var html = '';
                 data.forEach(function (relatedTransaction) {
-                    html += '<button class="btn btn-xs ' + (relatedTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-related transaction-quickview" data-draft="' + row.draftId + '" data-id="' + relatedTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+                    html += '<button class="btn btn-sm ' + (relatedTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-related transaction-quickview" data-draft="' + row.draftId + '" data-id="' + relatedTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
                 })
 
                 return html;
@@ -463,9 +463,9 @@ window.table = $("#dataTable").DataTable({
             data: 'draftId',
             orderable: false,
             render: function (data, _type, row) {
-                return '<button class="btn btn-xs btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-plus" title="Quick create"></i></button> ' +
-                       (row.quickRecordingPossible ? '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' : '') +
-                       '<button class="btn btn-xs btn-info handled" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-check" title="Mark as handled"></i></button> ';
+                return '<button class="btn btn-sm btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-plus" title="Quick create"></i></button> ' +
+                       (row.quickRecordingPossible ? '<button class="btn btn-sm btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' : '') +
+                       '<button class="btn btn-sm btn-info handled" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-check" title="Mark as handled"></i></button> ';
             }
         }
     ],

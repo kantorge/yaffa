@@ -8,10 +8,10 @@
             @changeTransactionType="onTransactionTypeChange"
         ></transaction-form-standard>
 
-        <div class="box box-primary">
-            <div class="box-body">
+        <div class="card mb-3">
+            <div class="card-body">
                 <div class="row">
-                    <div class="hidden-xs col-sm-10">
+                    <div class="d-none d-md-block col-md-10">
                         <label class="control-label block-label">
                             {{ __('After saving') }}
                         </label>
@@ -19,8 +19,8 @@
                             <button
                                 v-for="item in activeCallbackOptions"
                                 :key="item.id"
-                                class="btn btn-default"
-                                :class="callback == item.value ? 'active' : ''"
+                                class="btn btn-outline-dark"
+                                :class="{ 'active': callback === item.value }"
                                 type="button"
                                 :value="item.value"
                                 @click="callback = $event.currentTarget.getAttribute('value')"
@@ -29,7 +29,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-xs-12 d-sm-none">
+                    <div class="col-12 d-block d-md-none">
                         <label class="control-label block-label">
                             {{ __('After saving') }}
                         </label>
@@ -218,9 +218,6 @@
     @media (min-width: 576px) {
         .block-label {
             display: block;
-        }
-        .d-sm-none {
-            display: none;
         }
     }
 </style>

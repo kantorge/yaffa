@@ -1,35 +1,36 @@
 <template>
-    <div class="box">
-        <div class="box-header with-border">
-            <h3 class="box-title" v-html="title"></h3>
-            <div class="box-tools pull-right" v-if="withCheckbox">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <div
+                class="card-title"
+                v-html="title"></div>
+            <div v-if="withCheckbox">
                 <div class="checkbox">
                     <label>
                         <input
                             type="checkbox"
                             value="1"
-                            v-model="allowCustomization"
+                            v-model="allowCustomizationData"
                         >
                         {{ __('Customize') }}
                     </label>
                 </div>
             </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body" id="">
+        <div class="card-body">
             <div class="row">
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
                     <label for="schedule_frequency" class="control-label">
                         {{ __('Frequency') }}
                     </label>
                     <select
-                        class="form-control"
+                        class="form-select"
                         id="schedule_frequency"
                         v-model="schedule.frequency"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     >
                         <option value="DAILY">{{ __('Daily') }}</option>
                         <option value="WEEKLY">{{ __('Weekly') }}</option>
@@ -38,21 +39,21 @@
                     </select>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
                     <label for="schedule_interval" class="control-label">
                         {{ __('Interval') }}
                     </label>
                     <MathInput
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         class="form-control"
                         id="schedule_interval"
                         v-model="schedule.interval"
                     ></MathInput>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.start_date') ? 'has-error' : ''"
                 >
                     <label
@@ -62,7 +63,7 @@
                     <Datepicker
                         :id="'schedule_start_' + this.$.vnode.key"
                         v-model="schedule.start_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -70,7 +71,7 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.next_date') ? 'has-error' : ''"
                     v-if="isSchedule"
                 >
@@ -84,7 +85,7 @@
                     <Datepicker
                         id="schedule_next"
                         v-model="schedule.next_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -92,7 +93,7 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
                 >
                     <label for="schedule_count" class="control-label">
@@ -102,11 +103,11 @@
                         class="form-control"
                         id="schedule_count"
                         v-model="schedule.count"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     ></MathInput>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
                     <label for="schedule_end" class="control-label">
@@ -115,7 +116,7 @@
                     <Datepicker
                         id="schedule_end"
                         v-model="schedule.end_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -123,7 +124,7 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.inflation') ? 'has-error' : ''"
                     v-if="isBudget"
                 >
@@ -136,12 +137,11 @@
                         v-model="schedule.inflation"
                         type="number"
                         step=".01"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     >
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
     </div>
 </template>
 
@@ -177,6 +177,8 @@
 
         data() {
             let data = {};
+
+            data.allowCustomizationData = this.allowCustomization;
 
             // Date picker settings
             data.dataPickerLanguage = {

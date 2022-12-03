@@ -1,0 +1,121 @@
+td.dt-nowrap {
+    white-space: nowrap;
+}
+
+.hidden {
+    display: none;
+}
+
+.notbold {
+    font-weight: normal;
+}
+
+.text-italic {
+    font-style: italic;
+}
+
+.reconcile {
+    cursor: pointer;
+}
+
+.d-inline-block {
+    display: inline-block;
+}
+
+/* Dynamic, clickable icons in DataTables */
+table.dataTable td.activeIcon > i:not(.fa-spinner) {
+    cursor: pointer;
+}
+
+/* Font Awesome Icons as bullet list for search result */
+ul.custom-fa-bullet-list {
+    list-style: none;
+}
+
+ul.search-result-list li {
+    margin: 5px 0;
+}
+
+ul.search-result-list li.active:before {
+    font-family: 'Font Awesome 6 Free';
+    content: '\f111';
+    margin:0 5px 0 -15px;
+    color: #00a65a;
+}
+
+ul.search-result-list li.inactive:before {
+    font-family: 'Font Awesome 6 Free';
+    content: '\f10c';
+    margin:0 5px 0 -15px;
+    color: #d33724;
+}
+
+// Workaround for dataTables length select, and generic search placement
+.dataTables_length .form-select,
+.dataTables_filter .form-control{
+    display: inherit !important;
+    width: inherit !important;
+}
+
+.dataTables_length, .dataTables_filter {
+    padding-bottom: 1rem;
+}
+
+.dataTables_filter {
+    text-align: right;
+}
+
+.sidebar-brand a {
+    color: $sidebar-brand-color;
+    text-decoration: none;
+}
+
+// Workaround for dataTable scroll header space
+.dataTables_scrollHead .table {
+    margin-bottom: 0px !important;
+}
+
+// Sidebar form settings
+.sidebar-brand-form {
+    padding: .75rem;
+}
+
+.sidebar-brand-form input,
+.sidebar-brand-form select {
+    background-color: var(--cui-sidebar-nav-link-active-bg);
+    color: var(--cui-input-placeholder-color, #8a93a2);
+    opacity: 1;
+}
+
+.sidebar-brand-form select {
+    option {
+        color: black; // color of all the other options
+    }
+}
+
+// XS buttons
+.btn-xs,
+.btn-group-xs > .btn {
+    --cui-btn-padding-y: 0.25rem;
+    --cui-btn-padding-x: 0.425rem;
+    --cui-btn-font-size: 0.65rem;
+    --cui-btn-border-radius: 0.25rem;
+}
+
+// Adjust regular card title style
+div.card-header > div.card-title {
+    margin-bottom: 0;
+    font-weight: bold;
+    font-size: 1.15em;
+}
+
+// Caret icon for transaction search card header
+.card-title.collapse-control * {
+    cursor: pointer;
+}
+.card-header .fa {
+    transition: .3s transform ease-in-out;
+}
+.card-header .collapsed .fa {
+    transform: rotate(-90deg);
+}

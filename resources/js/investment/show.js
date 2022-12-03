@@ -1,5 +1,8 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
 
+import * as dataTableHelpers from '../components/dataTableHelper';
+import { toFormattedCurrency } from '../helpers';
 import Datepicker from 'vanillajs-datepicker/Datepicker';
 
 import * as am4core from "@amcharts/amcharts4/core";
@@ -90,20 +93,9 @@ window.summary = {
 window.table = $('#table').DataTable({
     data: transactions,
     columns: [
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
-            data: "date",
-            title: __("Date"),
-            render: function (data, type) {
-                if (type === 'display' && data) {
-                    return data.toLocaleDateString('Hu-hu');
-                }
-
-                return data
-            },
-            className: "dt-nowrap",
-        },
-        {
-            data: "transaction_type",
+            data: "transaction_type.name",
             title: __("Transaction"),
         },
         {
@@ -111,7 +103,7 @@ window.table = $('#table').DataTable({
             title: __("Quantity"),
             render: function(data) {
                 if (data !== null) {
-                    return data.toLocaleString('hu-HU');
+                    return data.toLocaleString(window.YAFFA.locale);
                 }
                 return null;
             }
@@ -124,73 +116,74 @@ window.table = $('#table').DataTable({
                     return data;
                 }
 
-                return data.toLocalCurrency(investment.currency);
+                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
             },
         },
         {
             data: "dividend",
+            defaultContent: '',
             title: __("Dividend"),
             render: function (data) {
                 if (data === null) {
                     return data;
                 }
 
-                return data.toLocalCurrency(investment.currency);
+                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
             },
         },
         {
             data: "commission",
+            defaultContent: '',
             title: __("Commission"),
-            render: function (data) {
-                if (data === null) {
-                    return data;
-                }
-
-                return data.toLocalCurrency(investment.currency);
+            render: function (data, type) {
+                dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency)
             },
         },
         {
             data: "tax",
+            defaultContent: '',
             title: __("Tax"),
             render: function (data) {
                 if (data === null) {
                     return data;
                 }
 
-                return data.toLocalCurrency(investment.currency);
+                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
             },
         },
         {
+            defaultContent: '',
             title: __("Amount"),
             render: function (_data, _type, row) {
                 var operator = row.amount_operator;
                 if (!operator) {
                     return 0;
                 }
-                var result = (  operator == 'minus'
+                var result = (  operator === 'minus'
                               ? - row.price * row.quantity
                               : row.dividend + row.price * row.quantity )
                             - row.tax
                             - row.commission;
-
-                return result.toLocalCurrency(investment.currency);
+                return toFormattedCurrency(result, window.YAFFA.locale, investment.currency);
             }
         },
         {
             data: "id",
             title: __("Actions"),
             render: function (data, _type, row) {
-                var actions = '<button class="btn btn-xs btn-default set-date" data-type="from" data-date="' + row.date + '"><i class="fa fa-fw fa-toggle-left" title="' + __('Make this the start date') + '"></i></button> ' +
-                              '<button class="btn btn-xs btn-default set-date" data-type="to" data-date="' + row.date + '"><i class="fa fa-fw  fa-toggle-right" title="' + __('Make this the end date') + '"></i></button> ';
+                var actions = '<button class="btn btn-sm btn-outline-dark set-date" data-type="from" data-date="' + row.date + '" title="' + __('Make this the start date') + '"><i class="fa fa-fw fa-caret-left"></i></button> ' +
+                              '<button class="btn btn-sm btn-outline-dark set-date" data-type="to" data-date="' + row.date + '" title="' + __('Make this the end date') + '"><i class="fa fa-fw  fa-caret-right"></i></button> ';
                 if (!row.schedule) {
-                    actions += '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                               '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
-                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
+                    actions += '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                               '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
+                               '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
                 }
 
                 return actions;
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function (row, data) {
@@ -198,10 +191,13 @@ window.table = $('#table').DataTable({
             $(row).addClass('text-muted text-italic');
         }
     },
-    order: [[ 0, 'asc' ]]
+    order: [
+        [ 0, 'asc' ]
+    ],
+    responsive: true,
 });
 
-$("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
+$("#table").on("click", ".data-delete", function() {
     if (!confirm(__('Are you sure to want to delete this item?'))) {
         return;
     }
@@ -211,7 +207,7 @@ $("#historyTable, #scheduleTable").on("click", ".data-delete", function() {
     form.submit();
 });
 
-$("#table").on("click", ".set-date", function(event) {
+$("#table").on("click", ".set-date", function(_event) {
     //TODO: catch invalid combinations
     if (this.dataset.type === 'from') {
         datepickerFrom.setDate(

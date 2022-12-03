@@ -1,75 +1,17 @@
-// Sidebar select fix
-.skin-blue .sidebar-form select {
-    box-shadow: none;
-    background-color: #374850;
-    border: 1px solid transparent;
-    height: 35px;
-    color: #666;
-    border-top-left-radius: 2px;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 2px;
-}
-.skin-blue .sidebar-form select:focus {
-    background-color: #fff;
-    color: #666;
-}
+// Override some CoreUI variables
+@import "variables";
 
-.ml-5 {
-    margin-left: 5px;
-}
-.mr-5 {
-    margin-right: 5px;
-}
+$enable-ltr: true; /* stylelint-disable-line scss/dollar-variable-default */
+$enable-rtl: false; /* stylelint-disable-line scss/dollar-variable-default */
 
-td.dt-nowrap {
-    white-space: nowrap;
-}
+// Import styles
+@import "@coreui/coreui/scss/coreui";
 
-.hidden {
-    display: none;
-}
+@import "layout";
 
-.notbold {
-    font-weight: normal;
-}
+// Custom CSS
+@import "custom";
 
-.text-italic {
-    font-style: italic;
-}
-
-.reconcile {
-    cursor: pointer;
-}
-
-.d-inline-block {
-    display: inline-block;
-}
-
-/* Dynamic, clickable icons in DataTables */
-table.dataTable td.activeIcon > i:not(.fa-spinner) {
-    cursor: pointer;
-}
-
-/* Font Awesome Icons as bullet list for search result */
-ul.custom-fa-bullet-list {
-    list-style: none;
-}
-
-ul.search-result-list li {
-    margin: 5px 0;
-}
-
-ul.search-result-list li.active:before {
-    font-family: 'FontAwesome';
-    content: '\f111';
-    margin:0 5px 0 -15px;
-    color: #00a65a;
-}
-
-ul.search-result-list li.inactive:before {
-    font-family: 'FontAwesome';
-    content: '\f10c';
-    margin:0 5px 0 -15px;
-    color: #d33724;
-}
+//Select2
+@import 'select2/dist/css/select2';
+@import 'select2-bootstrap-5-theme/src/include-all';

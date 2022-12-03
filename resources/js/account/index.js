@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import { toFormattedCurrency } from '../helpers';
 
 import {
@@ -13,16 +15,12 @@ window.table = $(dataTableSelector).DataTable({
     data: accounts,
     columns: [
         {
-            data: "id",
-            title: "Id"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __('Name')
         },
         {
             data: "active",
-            title: "Active",
+            title: __('Active'),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -30,33 +28,42 @@ window.table = $(dataTableSelector).DataTable({
         },
         {
             data: "config.currency.name",
-            title: "Currency"
+            title: __("Currency")
         },
         {
             data: "config.opening_balance",
-            title: "Opening balance",
-            render: function (data, _type, row) {
+            title: __("Opening balance"),
+            render: function (data, type, row) {
+                // Raw number is returned for sorting
+                if (type === 'sort') {
+                    return data;
+                }
                 return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
             },
-            className: "dt-nowrap"
+            className: "dt-nowrap",
+            searchable: false,
+            type: 'num',
         },
         {
             data: "config.account_group.name",
-            title: "Account group"
+            title: __("Account group"),
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
-                return  '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
+                return  '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
                         genericDataTablesActionButton(data, 'delete');
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     order: [
-        [ 1, 'asc' ]
+        [ 0, 'asc' ]
     ],
+    responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
@@ -106,9 +113,10 @@ window.table = $(dataTableSelector).DataTable({
     }
 });
 
-// TODO: can the type parameter be incorporated into the initializeDeleteButtonListener function?
+// Setup listener for delete button
+// https://github.com/kantorge/yaffa/issues/37
 $(dataTableSelector).on("click", ".data-delete", function() {
-    if (!confirm('Are you sure to want to delete this item?')) {
+    if (!confirm(__('Are you sure to want to delete this item?'))) {
         return;
     }
 
@@ -119,5 +127,5 @@ $(dataTableSelector).on("click", ".data-delete", function() {
 
 // Listeners for button filter(s)
 $('input[name=active]').on("change", function() {
-    table.column(2).search(this.value).draw();
+    table.column(1).search(this.value).draw();
 });

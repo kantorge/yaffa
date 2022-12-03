@@ -1,12 +1,12 @@
 <template>
     <div
-        class="alert"
+        class="alert fade show"
         :class="[
-            dismissable ? 'alert-dismissable' : '',
+            { 'alert-dismissible' : dismissable },
             'alert-' + type,
         ]"
+        role="alert"
     >
-        <button v-if="dismissable" type="button" class="close" data-dismiss="alert" aria-hidden="true">X</button>
         <h4
             v-if="title || icon"
             class="alert-heading"
@@ -15,6 +15,7 @@
             <span v-html="title"></span>
         </h4>
         <span v-html="message"></span>
+        <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>
     </div>
 </template>
 

@@ -125,17 +125,22 @@ class LoginTest extends TestCase
 
         $response->assertRedirect($this->loginGetRoute());
         $response->assertSessionHasErrors('email');
+
+        /** @var string $throttleError */
+        $throttleError = collect(
+            $response
+                ->baseResponse
+                ->getSession()
+                ->get('errors')
+                ->getBag('default')
+                ->get('email')
+        )->first();
+
         $this->assertMatchesRegularExpression(
             $this->getTooManyLoginAttemptsMessage(),
-            collect(
-                $response
-                    ->baseResponse
-                    ->getSession()
-                    ->get('errors')
-                    ->getBag('default')
-                    ->get('email')
-            )->first()
+            $throttleError
         );
+
         $this->assertTrue(session()->hasOldInput('email'));
         $this->assertFalse(session()->hasOldInput('password'));
         $this->assertGuest();

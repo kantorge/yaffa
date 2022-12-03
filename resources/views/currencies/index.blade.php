@@ -1,27 +1,23 @@
 @extends('template.layouts.page')
 
-@section('title', __('Currencies'))
+@section('title_postfix',  __('Currencies'))
+
+@section('content_container_classes', 'container-fluid')
 
 @section('content_header', __('Currencies'))
 
 @section('content')
-
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">{{ __('List of currencies') }}</h3>
-            <div class="pull-right box-tools">
-                <a href="/currencies/create" class="btn btn-success" title="{{ __('New currency') }}"><i class="fa fa-plus"></i></a>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">{{ __('List of currencies') }}</div>
+            <div class="btn-toolbar">
+                <a href="/currencies/create" class="btn btn-sm btn-success" title="{{ __('New currency') }}"><i class="fa fa-plus"></i></a>
             </div>
-            <!-- /.box-tools -->
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <table class="table table-bordered table-hover dataTable" role="grid" id="table"></table>
+        <div class="card-body">
+            <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
         </div>
-        <!-- /.box-body -->
     </div>
-    <!-- /.box -->
 
-    @include('template.components.model-delete-form')
-
+@include('template.components.model-delete-form')
 @stop

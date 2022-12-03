@@ -1,32 +1,33 @@
 @extends('template.layouts.page')
 
-@section('title', __('Investment timeline'))
+@section('title_postfix', __('Investment timeline'))
+
+@section('content_container_classes', 'container-fluid')
 
 @section('content_header', __('Investment timeline'))
 
 @section('content')
-
-<div class="box">
-    <div class="box-body">
+<div class="card">
+    <div class="card-body">
         <div class="row" id="filters">
             <div class="col-lg-12">
                 @include('template.components.tablefilter-active')
-                <div class="form-group d-inline-block">
-                    <label class="control-label">
+                <div class="d-inline-block">
+                    <label>
                         {{ __('Open') }}
                     </label>
                     <div>
-                        <div class="btn-group" data-toggle="buttons">
+                        <div class="btn-group" role="group" data-toggle="buttons">
                             <label class="btn btn-primary" title="{{ __('Yes') }}">
-                                <input type="radio" name="open" value="Yes" class="radio-inline">
+                                <input type="radio" class="btn-check" name="open" value="{{ __('Yes') }}">
                                 <span class="fa fa-fw fa-check"></span>
                             </label>
                             <label class="btn btn-primary active" title="{{ __('Any') }}">
-                                <input type="radio" name="open" value="All" class="radio-inline" checked="checked">
-                                <span class="fa fa-fw fa-circle-o"></span>
+                                <input type="radio" name="open" value="" class="btn-check" checked="checked">
+                                <span class="fa fa-fw fa-circle"></span>
                             </label>
                             <label class="btn btn-primary" title="{{ __('No') }}">
-                                <input type="radio" name="open" value="No" class="radio-inline">
+                                <input type="radio" class="btn-check" name="open" value="{{ __('No') }}">
                                 <span class="fa fa-fw fa-close"></span>
                             </label>
                         </div>
@@ -37,5 +38,4 @@
         <div id="chart" style="width: 100%; height: 700px"></div>
     </div>
 </div>
-
 @stop

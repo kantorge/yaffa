@@ -168,6 +168,10 @@ if (window.location.pathname === '/import/csv') {
     require('./import/csv');
 }
 
+if (window.location.pathname === '/register') {
+    require('./auth/register');
+}
+
 // Notifications
 require('./notifications');
 

@@ -1,28 +1,23 @@
 @extends('template.layouts.page')
 
-@section('title', __('Tags'))
+@section('title_postfix',  __('Tags'))
 
-@section('content_header')
-    {{ __('Tags') }}
-@stop
+@section('content_container_classes', 'container-lg')
+
+@section('content_header', __('Tags'))
 
 @section('content')
-
-    <div class="box">
-        <div class="box-header">
-            <div class="pull-right box-tools">
-                <a href="{{ route('tag.create') }}" class="btn btn-success" title="{{ __('New tag') }}"><i class="fa fa-plus"></i></a>
-            </div>
-            <!-- /.box-tools -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        @include('template.components.tablefilter-active')
+        <div>
+            <a href="{{ route('tag.create') }}" class="btn btn-success" title="{{ __('New tag') }}"><i class="fa fa-plus"></i></a>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <table class="table table-bordered table-hover dataTable" role="grid" id="table"></table>
-        </div>
-        <!-- /.box-body -->
     </div>
-    <!-- /.box -->
+    <div class="card-body">
+        <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
+    </div>
+</div>
 
-    @include('template.components.model-delete-form')
-
+@include('template.components.model-delete-form')
 @stop

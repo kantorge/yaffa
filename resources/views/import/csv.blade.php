@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <div class="box box-default">
                 <div class="box-body">
                     <div class="row">
@@ -38,7 +38,7 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="form-group d-inline-block">
-                                <label class="control-label">
+                                <label class="col-form-label">
                                     {{ __('Has similar transaction') }}
                                 </label>
                                 <div>
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                             <div class="form-group d-inline-block">
-                                <label class="control-label">
+                                <label class="col-form-label">
                                     {{ __('Already handled') }}
                                 </label>
                                 <div>
@@ -91,12 +91,12 @@
     </div>
 
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <div class="box box-default collapsed-box">
-                <div class="box-header with-border">
+                <div class="box-header">
                     <h3 class="box-title">{{ __('Unmatched rows') }}</h3>
                     <div class="box-tools pull-right">
-                        <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+                        <button type="button" class="btn btn-sm" data-widget="collapse"><i class="fa fa-plus"></i>
                         </button>
                     </div>
                 </div>

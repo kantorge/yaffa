@@ -203,8 +203,7 @@ class TransactionApiController extends Controller
         return [
             'id' => $transaction->id,
             'date' => $transaction->date,  // Change compared to schedule controller
-            'transaction_type' => $transaction->transactionType->name,
-            'transaction_config_type' => $transaction->transactionType->type,
+            'transaction_type' => $transaction->transactionType->toArray(),
             'config_type' => $transaction->config_type,
             'schedule_config' => $schedule,
             'schedule' => $transaction->schedule,

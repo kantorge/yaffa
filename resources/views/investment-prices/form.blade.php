@@ -25,7 +25,7 @@
         >
     @endif
 
-    <div class="box box-primary">
+    <div class="box">
         <div class="box-header">
             <h3 class="box-title">
                 @if(isset($investmentPrice->id))
@@ -36,9 +36,9 @@
             </h3>
         </div>
         <!-- /.box-header -->
-        <div class="box-body form-horizontal">
+        <div class="box-body">
             <div class="form-group">
-                <label for="date" class="control-label col-sm-3">
+                <label for="date" class="col-form-label col-sm-3">
                     {{ __('Date') }}
                 </label>
                 <div class="col-sm-9">
@@ -53,7 +53,7 @@
             </div>
 
             <div class="form-group">
-                <label for="price" class="control-label col-sm-3">
+                <label for="price" class="col-form-label col-sm-3">
                     {{ __('Price') }}
                 </label>
                 <div class="col-sm-9">

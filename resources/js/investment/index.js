@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 const dataTableSelector = '#table';
@@ -6,10 +8,6 @@ const dataTableSelector = '#table';
 window.table = $(dataTableSelector).DataTable({
     data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
     columns: [
-        {
-            data: "id",
-            title: __("Id"),
-        },
         {
             data: "name",
             title: __("Name"),
@@ -57,10 +55,15 @@ window.table = $(dataTableSelector).DataTable({
                 return '<a href="' + route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="' + __('Delete') + '"></i></button> ';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[1, 'asc']],
+    order: [
+        [0, 'asc']
+    ],
+    responsive: true,
     initComplete: function (settings) {
         $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
             var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
@@ -97,5 +100,5 @@ dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'investment.d
 
 // Listeners for button filter(s)
 $('input[name=active]').on("change", function() {
-    table.column(2).search(this.value).draw();
+    table.column(1).search(this.value).draw();
 });

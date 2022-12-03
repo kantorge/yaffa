@@ -198,8 +198,7 @@ class InvestmentController extends Controller
                 $commonData =
                     [
                         'id' => $transaction->id,
-                        'transaction_type' => $transaction->transactionType->name,
-                        'transaction_config_type' => $transaction->transactionType->type,
+                        'transaction_type' => $transaction->transactionType->toArray(),
                         'amount_operator' => $transaction->transactionType->amount_operator,
                         'quantity_operator' => $transaction->transactionType->quantity_operator,
 

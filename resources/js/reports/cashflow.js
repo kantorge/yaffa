@@ -4,7 +4,7 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 $(function () {
-    var localeString = "hu-HU";
+    var localeString = window.YAFFA.locale;
 
     var chart = am4core.create("chartdiv", am4charts.XYChart);
     chart.data = transactionDataHistory;

@@ -1,33 +1,32 @@
 <template>
-    <div class="box" v-show="isVisible">
-        <div class="box-header with-border">
-            <h3 class="box-title">
+    <div class="card mb-3" v-show="isVisible">
+        <div class="card-header">
+            <div class="card-title">
                 {{ __('Schedule') }}
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body" id="">
+        <div class="card-body">
             <div class="row">
-                <div class="col-xs-6 col-sm-4 form-group">
+                <div class="col-6 col-sm-4 mb-2">
                     <label for="schedule_frequency" class="control-label">
                         {{ __('Frequency') }}
                     </label>
                     {{ schedule.frequency }}
                 </div>
-                <div class="col-xs-6 col-sm-4 form-group">
+                <div class="col-6 col-sm-4 mb-2">
                     <label for="schedule_interval" class="control-label">
                         {{ __('Interval') }}
                     </label>
                     {{ schedule.interval }}
                 </div>
-                <div class="col-xs-6 col-sm-4 form-group">
+                <div class="col-6 col-sm-4 mb-2">
                     <label for="schedule_start" class="control-label">
                         {{ __('Start date') }}
                     </label>
                     {{ formattedDate(schedule.start_date) }}
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     v-if="isSchedule"
                 >
                     <label for="schedule_next" class="control-label">
@@ -38,7 +37,7 @@
                     <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                 >
                     <label for="schedule_count" class="control-label">
                         {{ __('Count') }}
@@ -46,7 +45,7 @@
                     {{ schedule.count }}
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                 >
                     <label for="schedule_end" class="control-label">
                         {{ __('End date') }}
@@ -56,7 +55,7 @@
                     <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     v-if="isBudget"
                 >
                     <label for="schedule_inflation" class="control-label">
@@ -68,7 +67,6 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
     </div>
 </template>
 
@@ -81,6 +79,10 @@
             isSchedule: Boolean,
             isBudget: Boolean,
             schedule: Object,
+            locale: {
+                type: String,
+                default: window.YAFFA.locale,
+            }
         },
 
         data() {
@@ -95,7 +97,7 @@
 
                 const newDate = new Date(date);
 
-                return newDate.toLocaleDateString('Hu-hu');
+                return newDate.toLocaleDateString(this.locale);
             },
         }
     }

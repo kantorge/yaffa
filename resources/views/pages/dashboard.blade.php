@@ -1,6 +1,8 @@
 @extends('template.layouts.page')
 
-@section('title', __('YAFFA - Dashboard'))
+@section('title_postfix', __('Dashboard'))
+
+@section('content_container_classes', 'container-lg')
 
 @section('content_header', __('Welcome to your YAFFA dashboard!'))
 

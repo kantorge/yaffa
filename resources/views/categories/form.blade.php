@@ -1,42 +1,42 @@
 @extends('template.layouts.page')
 
-@section('title', __('Categories'))
+@section('title_postfix',  __('Categories'))
+
+@section('content_container_classes', 'container-lg')
 
 @section('content_header', __('Categories'))
 
 @section('content')
+@if(isset($category))
+<form
+    accept-charset="UTF-8"
+    action="{{ route('categories.update', $category->id) }}"
+    autocomplete="off"
+    method="POST"
+>
+<input name="_method" type="hidden" value="PATCH">
+@else
+<form
+    accept-charset="UTF-8"
+    action="{{ route('categories.store') }}"
+    autocomplete="off"
+    method="POST"
+>
+@endif
 
-    @if(isset($category))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('categories.update', $category->id) }}"
-            autocomplete="off"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
-    @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('categories.store') }}"
-            autocomplete="off"
-            method="POST"
-        >
-    @endif
-
-    <div class="box box-primary">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
                 @if(isset($category->id))
                     {{ __('Modify category') }}
                 @else
                     {{ __('Add new category') }}
                 @endif
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body form-horizontal">
-            <div class="form-group">
-                <label for="name" class="control-label col-sm-3">
+        <div class="card-body">
+            <div class="row mb-3">
+                <label for="name" class="col-form-label col-sm-3">
                     {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
@@ -50,14 +50,14 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="active" class="control-label col-sm-3">
+            <div class="row mb-3">
+                <label for="active" class="col-form-label col-sm-3">
                     {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
                         id="active"
-                        class="checkbox-inline"
+                        class="form-check-input"
                         name="active"
                         type="checkbox"
                         value="1"
@@ -76,8 +76,8 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="parent_id" class="control-label col-sm-3">
+            <div class="row mb-3">
+                <label for="parent_id" class="col-form-label col-sm-3">
                     {{ __('Parent category') }}
                 </label>
                 <div class="col-sm-9">
@@ -109,17 +109,12 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
-        <div class="box-footer">
+        <div class="card-footer">
             @csrf
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('categories.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
-        <!-- /.box-footer -->
     </div>
-    <!-- /.box -->
-
-    </form>
-
+</form>
 @stop

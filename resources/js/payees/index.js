@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 // Loop payees and prepare data for datatable
@@ -15,20 +17,18 @@ window.payees = window.payees.map(function(payee) {
     return payee;
 });
 
-window.table = $('#table').DataTable({
+const dataTableSelector = '#table';
+
+window.table = $(dataTableSelector).DataTable({
     data: payees,
     columns: [
         {
-            data: "id",
-            title: "Id"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __('Name')
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -36,82 +36,91 @@ window.table = $('#table').DataTable({
         },
         {
             data: "category_full_name",
-            title: "Default category",
+            title: __("Default category"),
             render: function(data) {
-                return (data ? data : 'Not set');
+                return (data ? data : __('Not set'));
             }
         },
         {
             // Display count of associated transactions
             data: "transactions_count",
-            title: "Transactions",
+            title: __("Transactions"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data > 0 ? data : 'Never used');
+                    return (data > 0 ? data : __('Never used'));
                 }
                 return data;
-            }
+            },
+            type: 'num',
         },
         {
             // Display first transaction date
             data: "transactions_min_date",
-            title: "First transaction",
+            title: __("First transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
                 }
 
-                return (data ? data.toISOString() : null);
-            }
+                return data || null;
+            },
+            type: 'date',
         },
         {
             // Display last transaction date
             data: "transactions_max_date",
-            title: "Last transaction",
+            title: __("Last transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
                 }
 
-                return (data ? data.toISOString() : null);
-            }
+                return data || null;
+            },
+            type: 'date',
         },
         {
             data: 'import_alias',
-            title: 'Import alias',
+            title: __('Import alias'),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.replace('\n', '<br>') : 'Not set');
+                    return (data ? data.replace('\n', '<br>') : __('Not set'));
                 }
                 return data;
             }
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function(data) {
-                return  '<a href="' + route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ' +
-                        '<a href="' + route('payees.merge.form', {payeeSource: data}) + '" class="btn btn-xs btn-primary"><i class="fa fa-random" title="Merge into an other payee"></i></a> ';
+                return  '<a href="' + route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-sm btn-primary" title="' + __('Edit') + '"><i class="fa fa-edit"></i></a> ' +
+                        '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button" title="' + __('Delete') + '"><i class="fa fa-trash"></i></button> ' +
+                        '<a href="' + route('payees.merge.form', {payeeSource: data}) + '" class="btn btn-sm btn-primary" title="' + __('Merge into an other payee') + '"><i class="fa fa-random"></i></a> ';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function(row, data) {
         if (!data.category_full_name) {
-            $('td:eq(3)', row).addClass("text-muted text-italic");
+            $('td:eq(2)', row).addClass("text-muted text-italic");
         }
         if (data.transactions_count === 0) {
-            $('td:eq(4)', row).addClass("text-muted text-italic");
+            $('td:eq(3)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_min_date) {
-            $('td:eq(5)', row).addClass("text-muted text-italic");
+            $('td:eq(4)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_max_date) {
+            $('td:eq(5)', row).addClass("text-muted text-italic");
+        }
+        if (!data.import_alias) {
             $('td:eq(6)', row).addClass("text-muted text-italic");
         }
     },
-    order: [[ 1, 'asc' ]],
+    order: [[ 0, 'asc' ]],
+    responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
@@ -149,7 +158,7 @@ window.table = $('#table').DataTable({
     }
 });
 
-$("#table").on("click", ".data-delete", function() {
+$(dataTableSelector).on("click", ".data-delete", function() {
     if (!confirm('Are you sure to want to delete this item?')) {
         return;
     }
@@ -161,5 +170,5 @@ $("#table").on("click", ".data-delete", function() {
 
 // Listeners for button filter(s)
 $('input[name=active]').on("change", function() {
-    table.column(2).search(this.value).draw();
+    table.column(1).search(this.value).draw();
 });

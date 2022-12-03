@@ -1,114 +1,102 @@
 @extends('template.master')
 
-@section('meta_tags')
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-@stop
-
-@section('adminlte_css')
-    @stack('css')
-    @yield('css')
-@stop
-
-@section('classes_body')
-    {{ (App::isProduction() ? 'skin-blue' : 'skin-red' ) }}
-    sidebar-mini
-@endsection
-
 @section('body')
-    <div class="wrapper">
-
-        <!-- Main Header -->
-        <header class="main-header">
-
-            <!-- Logo -->
-            <a href="{{ route('home') }} " class="logo">
-                <!-- mini logo for sidebar mini 50x50 pixels -->
-                <span class="logo-mini"><b>Y</b></span>
-                <!-- logo for regular state and mobile devices -->
-                <span class="logo-lg"><b>Y</b>affa</span>
+<div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
+    <div class="sidebar-brand d-none d-md-flex">
+        <div class="sidebar-brand-full">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
+                YAFFA
             </a>
+        </div>
+        <div class="sidebar-brand-narrow">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
+            </a>
+        </div>
+    </div>
 
-            <!-- Header Navbar -->
-            <nav class="navbar navbar-static-top" role="navigation">
-                <!-- Sidebar toggle button-->
-                <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
-                    <span class="sr-only">{{ __('Toggle navigation') }}</span>
-                </a>
-                <!-- Navbar Right Menu -->
-                <div class="navbar-custom-menu">
-                    <ul class="nav navbar-nav">
+    <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
+        <form action="{{ route('search') }}" method="get" class="sidebar-brand-full">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="{{ __('Search...') }}" autocomplete="off">
+                <button type="submit" id="search-btn" class="btn btn-outline-secondary"><i class="cil-search"></i></button>
+            </div>
+        </form>
+    </div>
+    <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
+        @if(isset($accountsForNavbar) && count($accountsForNavbar) > 0)
+        <form action="#" method="get" class="sidebar-brand-full">
+            <div class="input-group">
+                <select name="jump_to_account" id="jump_to_account" class="form-select">
+                    <option value="">{{ __('Select account to open') }}</option>
+                    @foreach($accountsForNavbar as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </form>
+        @endif
+    </div>
 
-                        <!-- Notifications Menu -->
-                        <li class="dropdown notifications-menu">
-                            <!-- Menu toggle button -->
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <i class="fa fa-bell-o"></i>
+    @include('template.components.navigation')
+
+    <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
+</div>
+
+{{-- @include('template.components.right-sidebar') --}}
+
+<div class="wrapper d-flex flex-column min-vh-100 bg-light">
+    <header class="header header-sticky mb-4">
+        <div class="container-fluid">
+            <button class="header-toggler px-md-0 me-md-3" type="button"
+                onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+                <i class="cil-menu"></i>
+            </button>
+            <a class="header-brand d-md-none" href="{{ route('home') }} ">
+                <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
+                YAFFA
+            </a>
+            <ul class="header-nav ms-auto"></ul>
+            <ul class="header-nav ms-3 me-4">
+                <li class="nav-item dropdown">
+                    <a class="nav-link py-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-user me-1"></i>
+                        {{ Auth::user()->name }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end pt-0">
+                        <a class="dropdown-item" href="{{ route('user.settings') }}">
+                            <i class="cil-user me-2"></i>
+                            {{ __('My profile') }}
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <a class="dropdown-item" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); this.closest('form').submit();">
+                                <i class="cil-account-logout me-2"></i>
+                                {{ __('Logout') }}
                             </a>
-                        </li>
-                        <!-- User Menu -->
-                        <li class="dropdown user user-menu">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                <span class="fa fa-user"></span>
-                                <span class="hidden-xs">{{ Auth::user()->name }}</span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li class="user-footer">
-                                    <div class="pull-left">
-                                        <a href="{{ route('user.settings') }}" class="btn btn-default btn-flat">{{ __('Settings') }}</a>
-                                    </div>
-                                    <div class="pull-right">
-                                        <a class="btn btn-default btn-flat" href="{{ route('logout') }}"
-                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                            {{ __('Logout') }}
-                                        </a>
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                            @csrf
-                                        </form>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <!-- Control Sidebar Toggle Button -->
-                        <li>
-                            <a href="#" data-toggle="control-sidebar"><i class="fa fa-bolt"></i></a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
-
-    @include('template.components.left-sidebar')
-
-    <!-- Content Wrapper. Contains page content -->
-    <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <section class="content-header">
-            <h1>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+            {{--
+            <button class="header-toggler px-md-0 me-md-3" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#aside')).show()">
+                <i class="fa fa-bolt"></i>
+            </button>
+            --}}
+        </div>
+    </header>
+    <div class="body flex-grow-1 px-3">
+        <div class="@yield('content_container_classes', 'container-fluid')">
+            <h2 class="mb-3">
                 @yield('content_header')
-            </h1>
-        </section>
-
-        <!-- Main content -->
-        <section class="content container-fluid">
+            </h2>
 
             @include('template.components.notifications')
 
             @yield('content')
-
-        </section>
-        <!-- /.content -->
+        </div>
     </div>
-    <!-- /.content-wrapper -->
-
-    @include('template.components.right-sidebar')
-
 </div>
-<!-- ./wrapper -->
-
-@stop
-
-@section('adminlte_js')
-    @stack('js')
-    @yield('js')
 @stop

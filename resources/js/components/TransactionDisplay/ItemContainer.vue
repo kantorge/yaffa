@@ -1,10 +1,10 @@
 <template>
-    <div class="box box-primary">
-        <div class="box-header with-border">
-            <h3 class="box-title">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
                 {{ __('Transaction items') }}
-            </h3>
-            <div class="box-tools">
+            </div>
+            <div>
                 <div class="btn-group d-sm-none">
                     <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
                     <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
@@ -12,9 +12,7 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-header -->
-
-        <div class="box-body" id="transaction_item_container">
+        <div class="card-body" id="transaction_item_container">
             <div
                 class="list-group"
                 v-for="(item) in transactionItems"
@@ -33,10 +31,8 @@
                 {{ __('No items added') }}
             </div>
         </div>
-        <!-- /.box-body -->
-
-        <div class="box-footer d-sm-none" v-if="transactionItems.length > 0">
-            <div class="box-tools pull-right">
+        <div class="card-footer d-sm-none" v-if="transactionItems.length > 0">
+            <div class="text-end">
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-info" :title="__('Collapse all items')" @click="itemListCollapse"><i class="fa fa-compress"></i></button>
                     <button type="button" class="btn btn-sm btn-info" :title="__('Expand items with data')" @click="itemListShow"><i class="fa fa-expand"></i></button>
@@ -67,31 +63,23 @@
         methods: {
             // Item list collapse and expand functionality
             itemListCollapse() {
-                $(".transaction_item_row").find(".transaction_detail_container").addClass('d-xs-none');
+                $(".transaction_item_row").find(".transaction_detail_container").addClass('d-none');
             },
 
             itemListShow() {
                 // Loop all transaction item components and show or hide if data-has-details attribute is true or false
                 $(".transaction_item_row").each(function() {
                     if ($(this).data('has-details')) {
-                        $(this).find(".transaction_detail_container").removeClass('d-xs-none');
+                        $(this).find(".transaction_detail_container").removeClass('d-none');
                     } else {
-                        $(this).find(".transaction_detail_container").addClass('d-xs-none');
+                        $(this).find(".transaction_detail_container").addClass('d-none');
                     }
                 });
             },
 
             itemListExpand() {
-                $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-xs-none');
+                $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-none');
             }
         }
     }
 </script>
-
-<style scoped>
-    @media (min-width: 576px) {
-        .d-sm-none {
-            display: none;
-        }
-    }
-</style>

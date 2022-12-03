@@ -1,31 +1,23 @@
 @extends('template.layouts.page')
 
-@section('title', __('Investments'))
+@section('title_postfix', __('Investments'))
+
+@section('content_container_classes', 'container-fluid')
 
 @section('content_header', __('Investments'))
 
 @section('content')
-
-    <div class="box">
-        <div class="box-header">
-            <div class="row">
-                <div class="col-lg-12">
-                    @include('template.components.tablefilter-active')
-                </div>
-            </div>
-            <div class="pull-right box-tools">
-                <a href="{{ route('investment.create') }}" class="btn btn-success" title="{{ __('New investment') }}"><i class="fa fa-plus"></i></a>
-            </div>
-            <!-- /.box-tools -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        @include('template.components.tablefilter-active')
+        <div>
+            <a href="{{ route('investment.create') }}" class="btn btn-success" title="{{ __('New investment') }}"><i class="fa fa-plus"></i></a>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <table class="table table-bordered table-hover dataTable" role="grid" id="table"></table>
-        </div>
-        <!-- /.box-body -->
     </div>
-    <!-- /.box -->
+    <div class="card-body">
+        <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
+    </div>
+</div>
 
-    @include('template.components.model-delete-form')
-
+@include('template.components.model-delete-form')
 @stop

@@ -75,19 +75,19 @@ function filterData() {
     chart.data = window.chartData
                     // Filter by active flag
                     .filter(function(item) {
-                        if (filterActive === 'All') {
+                        if (filterActive === '') {
                             return true;
                         }
-                        return item.active === (filterActive === 'Yes');
+                        return item.active === (filterActive === __('Yes'));
                     })
                     // Filter by open status
                     .filter(function(item) {
-                        if (filterOpen === 'All') {
+                        if (filterOpen === '') {
                             return true;
                         }
                         let end = new Date(item.end);
                         end.setHours(0,0,0,0);
-                        if (filterOpen === 'Yes') {
+                        if (filterOpen === __('Yes')) {
                             return end >= today;
                         } else {
                             return end < today;

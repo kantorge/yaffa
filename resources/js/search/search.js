@@ -19,10 +19,10 @@ var getTransactionCount = function (element) {
   .then(response => response.json())
   .then(data => {
     if (data.count === 0) {
-      element.innerHTML = '<span class="label label-default">' + __('No transactions') + '</span>';
+      element.innerHTML = '<span class="badge text-bg-light">' + __('No transactions') + '</span>';
     } else {
-      element.innerHTML =   '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="' + __('View transactions') + '" class="label label-info">' +
-                                (data.count === 1 ? __('transaction') : __('transactions'))
+      element.innerHTML =   '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="' + __('View transactions') + '" class="badge text-bg-info">' +
+                                data.count + ' ' + (data.count === 1 ? __('transaction') : __('transactions'))
                             '</a>';
     }
     element.classList.remove('hidden');
@@ -33,19 +33,19 @@ var getTransactionCount = function (element) {
 }
 
 // Loop the span placeholder for all the account results, and get the number of associated transactions for each account.
-document.querySelectorAll('#accounts td.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#table-search-results-accounts td.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the payee results, and get the number of associated transactions for each payee.
-document.querySelectorAll('#payees td.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#table-search-results-payees td.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the tag results, and get the number of associated transactions for each tag.
-document.querySelectorAll('#tags span.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#list-search-results-tags span.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the category results, and get the number of associated transactions for each category.
-document.querySelectorAll('#categories span.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#list-search-results-categories span.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for transactions, and display the view and quick view icons for each transaction.
-document.querySelectorAll('#transactions td.transactionIcon').forEach(function (element) {
+document.querySelectorAll('#table-search-results-transactions td.transactionIcon').forEach(function (element) {
     const id = element.dataset.id;
     element.innerHTML = dataTableHelpers.dataTablesActionButton(id, 'standardQuickView') + dataTableHelpers.dataTablesActionButton(id, 'standardShow');
     element.classList.remove('hidden');

@@ -28,8 +28,8 @@ if (window.csrfToken) {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
 
-require('overlayscrollbars');
-require('../../vendor/almasaeed2010/adminlte/dist/js/adminlte');
+import * as coreui from '@coreui/coreui';
+window.coreui = coreui;
 
 // Custom translation function
 window.__ = function (key, replace) {

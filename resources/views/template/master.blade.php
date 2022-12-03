@@ -9,39 +9,34 @@
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','{{ config('yaffa.gtm_container_id') }}');</script>
         <!-- End Google Tag Manager -->
-
     @endif
 
     {{-- Base Meta Tags --}}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Tell the browser to be responsive to screen width -->
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Custom Meta Tags --}}
     @yield('meta_tags')
 
     {{-- Title --}}
     <title>
-        @yield('title_prefix', '')
         @yield('title', 'YAFFA')
-        @yield('title_postfix', '')
+        @hasSection('title_postfix')
+            - @yield('title_postfix')
+        @endif
     </title>
 
-    {{-- Custom stylesheets (pre AdminLTE) --}}
-    @yield('adminlte_css_pre')
-
-    <link rel="stylesheet" href="{{ mix(config('adminlte.laravel_mix_css_path', 'css/app.css')) }}">
-    <link rel="stylesheet" href="{{ mix(config('adminlte.laravel_mix_css_path', 'css/vendor.css')) }}">
-
-    {{-- Custom Stylesheets (post AdminLTE) --}}
-    @yield('adminlte_css')
+    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+    <link rel="stylesheet" href="{{ mix('css/vendor.css') }}">
 
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}" />
 
 </head>
 
-<body class="hold-transition @yield('classes_body')">
+<body @yield('classes_body')">
     @if(config('yaffa.gtm_container_id') && preg_match( '/^GTM-[A-Z0-9]+/', config('yaffa.gtm_container_id') ))
         <!-- Google Tag Manager (noscript) -->
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ config('yaffa.gtm_container_id') }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>

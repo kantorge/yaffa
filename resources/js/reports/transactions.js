@@ -1,7 +1,16 @@
 // Import external libraries
-import 'datatables.net-bs';
-import 'select2';
-import { DateRangePicker } from 'vanillajs-datepicker';
+require ('datatables.net-bs5');
+require('datatables.net-responsive-bs5');
+
+import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
+
+require('select2');
+
+// TODO: translate daterangpicker
+// TODO: how to make this dynamic, loading only current language?
+//import drpLangHu from 'vanillajs-datepicker/locales/hu';
+//Object.assign(DateRangePicker.locales, drpLangHu);
+
 import { toFormattedCurrency } from '../helpers';
 
 // Import dataTable helper functions
@@ -44,6 +53,7 @@ const dateRangePicker = new DateRangePicker(
         todayBtn: true,
         todayBtnMode: 1,
         todayHighlight: true,
+        language: window.YAFFA.language,
         format: 'yyyy-mm-dd',
         autohide: true,
         buttonClass: 'btn',
@@ -76,37 +86,31 @@ window.table = $("#dataTable").DataTable({
         processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
     },
     columns: [
-        {
-            data: "date",
-            title: __('Date'),
-            render: function (data) {
-                if (!data) {
-                    return data;
-                }
-                return data.toLocaleDateString('Hu-hu');
-            },
-            className : "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             title: __('Type'),
+            defaultContent: '',
             render: function(_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type);
+                return dataTableHelpers.transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
             },
             className: "text-center",
         },
         {
             title: __('From'),
+            defaultContent: '',
             data: 'config.account_from.name',
         },
         {
             title: __('To'),
+            defaultContent: '',
             data: 'config.account_to.name',
         },
         {
             title: __("Category"),
+            defaultContent: '',
             render: function (_data, _type, row) {
                 // Standard transaction
-                if (row.transaction_config_type === 'standard') {
+                if (row.transaction_type.type === 'standard') {
                     // Empty
                     if (row.categories.length === 0) {
                         return __('Not set');
@@ -118,8 +122,8 @@ window.table = $("#dataTable").DataTable({
                         return row.categories[0];
                     }
                 }
-                //investment transaction
-                if (row.transaction_config_type === 'investment') {
+                // Investment transaction
+                if (row.transaction_type.type === 'investment') {
                     if (!row.quantityOperator) {
                         return row.transaction_type;
                     }
@@ -136,9 +140,10 @@ window.table = $("#dataTable").DataTable({
         },
         {
             title: __('Amount'),
+            defaultContent: '',
             render: function (_data, _type, row) {
                 // Standard transaction
-                if (row.transaction_config_type === 'standard') {
+                if (row.transaction_type.type === 'standard') {
                     let prefix = '';
                     if (row.transaction_operator === 'minus') {
                         prefix = '- ';
@@ -150,7 +155,7 @@ window.table = $("#dataTable").DataTable({
                 }
                 // Investment transaction
                 /* not implemented yet
-                if (row.transaction_config_type === 'investment') {
+                if (row.transaction_type.type === 'investment') {
                     if (!row.quantityOperator) {
                         return row.transaction_type;
                     }
@@ -168,6 +173,7 @@ window.table = $("#dataTable").DataTable({
         },
         {
             title: __("Extra"),
+            defaultContent: '',
             render: function (_data, type, row) {
                 return dataTableHelpers.commentIcon(row.comment, type) + dataTableHelpers.tagIcon(row.tags, type);
             },
@@ -176,9 +182,10 @@ window.table = $("#dataTable").DataTable({
         },
         {
             data: 'id',
+            defaultContent: '',
             title: __("Actions"),
             render: function(data, _type, row) {
-                if (row.transaction_config_type === 'standard') {
+                if (row.transaction_type.type === 'standard') {
                     return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
                             dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
                             dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
@@ -186,15 +193,21 @@ window.table = $("#dataTable").DataTable({
                             dataTableHelpers.dataTablesActionButton(data, 'delete');
                 }
 
-                /* Not implemnted yet
-                return '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                            '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
-                            '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
+                /* Not implemented yet
+                return '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
+                            '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
+                            '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
                 */
             },
+            className: "dt-nowrap",
             orderable: false,
+            searchable: false,
         }
-    ]
+    ],
+    order: [
+        [0, "asc"]
+    ],
+    responsive: true,
 });
 
 // Delete transaction icon functionality
@@ -290,6 +303,7 @@ $(".clear-select").on('click', function() {
 
 // Account filter select2 functionality
 $(elementAccountSelector).select2({
+    theme: "bootstrap-5",
     multiple: true,
     ajax: {
         url: '/api/assets/account',
@@ -346,6 +360,7 @@ if (filters.accounts) {
 
 // Payee select2 functionality
 $(elementPayeeSelector).select2({
+    theme: "bootstrap-5",
     multiple: true,
     ajax: {
         url: '/api/assets/payee',
@@ -403,6 +418,7 @@ if (filters.payees) {
 
 // Category select2 functionality
 $(elementCategorySelectSelector).select2({
+    theme: "bootstrap-5",
     multiple: true,
     ajax: {
         url: '/api/assets/category',
@@ -460,6 +476,7 @@ if (filters.categories) {
 
 // Tag select2 functionality
 $(elementTagSelector).select2({
+    theme: "bootstrap-5",
     multiple: true,
     ajax: {
         url:  '/api/assets/tag',

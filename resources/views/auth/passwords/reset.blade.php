@@ -1,63 +1,33 @@
 @extends('template.layouts.auth')
 
 @section('content')
-<div class="login-box">
-    <div class="login-logo">
-        <a href="/"><b>Y</b>affa</a>
-    </div>
-    <!-- /.login-logo -->
-    <div class="login-box-body">
-        <div class="card-header">{{ __('Reset Password') }}</div>
+<div class="bg-light min-vh-100 d-flex flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card mb-4 mx-4">
+                    <div class="card-body p-4">
+                        @include('template.components.flag-bar')
 
-            <form method="POST" action="{{ route('password.update') }}">
-                @csrf
+                        <h2>{{ __('Reset Password') }}</h2>
 
-                <input type="hidden" name="token" value="{{ $token }}">
+                        <form method="POST" action="{{ route('password.update') }}">
+                            @csrf
 
-                        <div class="form-group row">
-                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
+                            <input type="hidden" name="token" value="{{ $token }}">
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
+                            @include('auth.components.email', ['autofocus' => true])
 
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+                            @include('auth.components.password')
 
-                        <div class="form-group row">
-                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+                            @include('auth.components.password_confirmation')
 
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Reset Password') }}
-                                </button>
-                            </div>
-                        </div>
-            </form>
+                            <button type="submit" class="btn btn-primary">
+                                {{ __('Reset Password') }}
+                            </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

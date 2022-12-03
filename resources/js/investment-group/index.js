@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
@@ -6,13 +8,9 @@ import {
 
 const dataTableSelector = '#table';
 
-$(dataTableSelector).DataTable({
+window.table = $(dataTableSelector).DataTable({
     data: investmentGroups,
     columns: [
-        {
-            data: "id",
-            title: __("Id"),
-        },
         {
             data: "name",
             title: __("Name"),
@@ -24,10 +22,15 @@ $(dataTableSelector).DataTable({
                 return  genericDataTablesActionButton(data, 'edit', 'investment-group.edit') +
                         genericDataTablesActionButton(data, 'delete');
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[1, 'asc']]
+    order: [
+        [0, 'asc']
+    ],
+    responsive: true,
 });
 
 initializeDeleteButtonListener(dataTableSelector, 'investment-group.destroy')

@@ -1,47 +1,42 @@
-<!-- Control Sidebar -->
-<aside class="control-sidebar control-sidebar-dark">
-    <!-- Create the tabs -->
-    <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
-      <li class="active"><a href="#control-sidebar-home-tab" data-toggle="tab" aria-expanded="true">{{ __('Quick actions') }}</a></li>
-    </ul>
-    <!-- Tab panes -->
-    <div class="tab-content">
-      <!-- Home tab content -->
-      <div class="tab-pane active" id="control-sidebar-home-tab">
-        <ul class="control-sidebar-menu">
-          <li>
-            <a href="{{ route('transactions.createStandard') }}">
-              <i class="menu-icon fa fa-cart-plus bg-green"></i>
-
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">{{ __('New transaction') }}</h4>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('transactions.createInvestment') }}">
-              <i class="menu-icon fa fa-line-chart bg-green"></i>
-
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">{{ __('New investment transaction') }}</h4>
-              </div>
-            </a>
-          </li>
-          <li>
-            <a href="{{ route('import.csv') }}">
-              <i class="menu-icon fa fa-upload bg-green"></i>
-
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">{{ __('Import transactions') }}</h4>
-              </div>
-            </a>
-          </li>
-        </ul>
-        <!-- /.control-sidebar-menu -->
-      </div>
-      <!-- /.tab-pane -->
+<div class="sidebar sidebar-light sidebar-end sidebar-overlaid hide" id="aside">
+    <div class="sidebar-header bg-transparent p-0">
+        <button class="sidebar-close" type="button" data-coreui-close="sidebar">
+            <i class="fa fa-xmark"></i>
+        </button>
     </div>
-  </aside>
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
+
+    <div class="tab-content">
+        <div class="tab-pane p-3 active" id="settings" role="tabpanel">
+            <h6>{{ __('Quick actions') }}</h6>
+            <ul class="control-sidebar-menu">
+                <li>
+                    <a href="{{ route('transactions.createStandard') }}">
+                        <i class="menu-icon fa fa-cart-plus bg-green"></i>
+
+                        <div class="menu-info">
+                            <h4 class="control-sidebar-subheading">{{ __('New transaction') }}</h4>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('transactions.createInvestment') }}">
+                        <i class="menu-icon fa fa-line-chart bg-green"></i>
+
+                        <div class="menu-info">
+                            <h4 class="control-sidebar-subheading">{{ __('New investment transaction') }}</h4>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('import.csv') }}">
+                        <i class="menu-icon fa fa-upload bg-green"></i>
+
+                        <div class="menu-info">
+                            <h4 class="control-sidebar-subheading">{{ __('Import transactions') }}</h4>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

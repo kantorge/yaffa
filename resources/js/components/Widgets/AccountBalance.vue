@@ -1,66 +1,79 @@
 <template>
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
                 {{ __('Total value') }}
-            </h3>
-            <div class="pull-right" v-show="ready">
+            </div>
+            <div v-show="ready">
                 {{ totalValue.toLocalCurrency(baseCurrency, false) }}
             </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <div class="box-group" id="accordion">
-                <div v-if="!ready">
-                    <Skeletor
-                        width="100%"
-                        v-for="i in 5"
-                    />
+        <ul class="list-group list-group-flush" id="accordionAccountBalance" v-if="!ready">
+            <li
+                aria-hidden="true"
+                class="list-group-item placeholder-glow"
+                v-for="i in 5"
+                v-bind:key="i"
+            >
+                <span class="placeholder col-12"></span>
+            </li>
+        </ul>
+        <ul class="list-group list-group-flush" id="accordionAccountBalance" v-if="ready">
+            <li
+                class="list-group-item"
+                v-for="(accountGroup, accountGroupId) in accountBalanceDataByGroups"
+                v-bind:key="accountGroupId"
+            >
+                <div class="d-flex justify-content-between">
+                    <span
+                        data-toggle="collapse"
+                        data-parent="#accordionAccountBalance"
+                        :href="'#collapse_' + accountGroupId"
+                        :aria-controls="'#collapse_' + accountGroupId"
+                        class="collapsed"
+                        aria-expanded="false"
+                        role="button"
+                    >
+                        <i class="fa fa-angle-right"></i>
+                        <i class="fa fa-angle-down"></i>
+                        {{ accountGroup.name }}
+                    </span>
+                    <span :class="{ 'text-danger' : accountGroup.sum < 0}">
+                        {{ accountGroup.sum.toLocalCurrency(baseCurrency, false) }}
+                    </span>
                 </div>
-                <div class="panel box box-primary" v-for="(accountGroup, accountGroupId) in accountBalanceDataByGroups" v-bind:key="accountGroupId">
-                    <div class="box-header with-border">
-                        <h4 class="box-title">
-                            <a data-toggle="collapse" data-parent="#accordion" :href="'#collapse_' + accountGroupId" :aria-controls="'#collapse_' + accountGroupId" class="collapsed" aria-expanded="false">
-                                {{ accountGroup.name }}
-                            </a>
-                        </h4>
-                        <div class="pull-right" :class="(accountGroup.sum < 0 ? 'text-danger' : '')">
-                            {{ accountGroup.sum.toLocalCurrency(baseCurrency, false) }}
-                        </div>
-                    </div>
-                    <div :id="'collapse_' + accountGroupId" class="panel-collapse collapse" aria-expanded="false" style="height: 0px;">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item" v-for="(account, index) in accountGroup.accounts" v-bind:key="index">
-                                <a :href="getRoute(account)" class="product-title">
-                                    <span v-html="account.name"></span>
-                                    <span class="pull-right" :class="(account.sum < 0 ? 'text-danger' : '')">
-                                        <span v-if="account.hasOwnProperty('sum_foreign')">{{ account.sum_foreign.toLocalCurrency(account.currency, false) }} / </span>
-                                        {{ account.sum.toLocalCurrency(baseCurrency, false) }}
-                                    </span>
-                                </a>
-                            </li >
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- /.box-body -->
-        <div class="box-footer" v-show="ready">
-            <div class="pull-right box-tools">
-                Closed accounts are <span class="text-muted" v-html="(withClosed ? 'included' : 'hidden')"></span>
-                <button class="btn btn-xs btn-default" style="margin-left: 1rem;" type="button" @click="toggleWithInactive" v-html="(withClosed ? __('Hide') : __('Show'))">
-                </button>
+                <ul :id="'collapse_' + accountGroupId" class="list-group collapse mt-3" aria-expanded="false">
+                    <a
+                        class="list-group-item d-flex justify-content-between list-group-item-action"
+                        :href="getRoute(account)"
+                        v-for="(account, index) in accountGroup.accounts"
+                        v-bind:key="index"
+                    >
+                        <span>
+                            {{ account.name }}
+                        </span>
+                        <span :class="{ 'text-danger' : account.sum < 0 }">
+                            <span v-if="account.hasOwnProperty('sum_foreign')">{{ account.sum_foreign.toLocalCurrency(account.currency, false) }} / </span>
+                            {{ account.sum.toLocalCurrency(baseCurrency, false) }}
+                        </span>
+                    </a>
+                </ul>
+            </li>
+        </ul>
+        <div class="card-footer d-flex justify-content-between" v-show="ready">
+            <div></div>
+            <div>
+                <span v-if="withClosed" v-html="__('Closed accounts are <strong>included</strong>')"></span>
+                <span v-if="!withClosed" v-html="__('Closed accounts are <strong>hidden</strong>')"></span>
+
+                <button class="btn btn-sm btn-outline-dark ms-1" type="button" @click="toggleWithInactive" v-html="(withClosed ? __('Hide') : __('Show'))"></button>
             </div>
         </div>
     </div>
-    <!-- /.box -->
 </template>
 
 <script>
-import { Skeletor } from 'vue-skeletor';
-
 export default {
-    components: { Skeletor },
     props: {},
 
     data() {
@@ -130,3 +143,18 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+    #accordionAccountBalance span[data-toggle="collapse"].collapsed > i.fa-angle-right {
+        display: inline;
+    }
+    #accordionAccountBalance span[data-toggle="collapse"]:not(.collapsed) > i.fa-angle-right {
+        display: none;
+    }
+    #accordionAccountBalance span[data-toggle="collapse"].collapsed > i.fa-angle-down {
+        display: none;
+    }
+    #accordionAccountBalance span[data-toggle="collapse"]:not(.collapsed) > i.fa-angle-down {
+        display: inline;
+    }
+</style>

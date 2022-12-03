@@ -1,56 +1,58 @@
 <template>
-    <div class="list-group-item transaction_item_row" :data-has-details="tags.length > 0 || !!comment">
+    <div
+        class="list-group-item transaction_item_row"
+        :data-has-details="tags.length > 0 || !!comment"
+    >
         <div class="row">
-            <button
-                type="button"
-                class="btn btn-sm btn-info d-sm-none"
-                :title="__('Show item details')"
-                @click="toggleItemDetails"
-            ><span class="fa fa-eye"></span></button>
+            <div>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-info d-sm-none"
+                    :title="__('Show item details')"
+                    @click="toggleItemDetails"
+                ><span class="fa fa-eye"></span></button>
+            </div>
 
-            <div class="col-xs-12 col-sm-4">
-                <label>
+            <div class="col-12 col-sm-4">
+                <dt>
                     {{ __('Category') }}
-                </label>
-                <span class="ml-1" :class="(category.full_name ? '' : 'text-muted')">
-                    {{ category.full_name || "Not set" }}
-                </span>
+                </dt>
+                <dd :class="(category.full_name ? '' : 'text-muted')">
+                    {{ category.full_name || __("Not set") }}
+                </dd>
             </div>
-            <div class="col-xs-12 col-sm-2">
-                <label>
+            <div class="col-12 col-sm-2">
+                <dt>
                     {{ __('Amount') }}
-                </label>
-                <span class="ml-1">
+                </dt>
+                <dd>
                     {{ amount.toLocalCurrency(currency, false) }}
-                </span>
+                </dd>
             </div>
-            <div class="col-xs-12 col-sm-3 transaction_detail_container d-xs-none">
-                <label>
+            <div class="col-12 col-sm-3 transaction_detail_container d-none d-md-block">
+                <dt>
                     {{ __('Tags') }}
-                </label>
-                <span v-if="tags.length > 0">
+                </dt>
+                <dd v-if="tags.length > 0">
                     <span
-                        class="ml-1 label label-info"
+                        class="badge text-bg-info"
                         v-for="tag in tags"
                         :key="tag.id"
                     >
                         {{ tag.name }}
                     </span>
-                </span>
-                <span v-else class="text-muted">
+                </dd>
+                <dd v-else class="text-muted text-italic">
                     {{ __('Not set') }}
-                </span>
+                </dd>
             </div>
-            <div class="col-xs-12 col-sm-2 transaction_detail_container d-xs-none">
-                <label>
+            <div class="col-12 col-sm-2 transaction_detail_container d-none d-md-block">
+                <dt>
                     {{ __('Comment') }}
-                </label>
-                <span class="ml-1" :class="(comment ? '' : 'text-muted')">
-                    {{ comment || "Not set" }}
-                </span>
-            </div>
-            <div class="col-xs-12 col-sm-1">
-
+                </dt>
+                <dd :class="{ 'text-muted text-italic' : !comment }">
+                    {{ comment || __("Not set") }}
+                </dd>
             </div>
         </div>
     </div>
@@ -72,32 +74,13 @@
         methods: {
             // Toggle the visibility of event details (comment / tags)
             toggleItemDetails() {
-                $(this.$el).find(".transaction_detail_container").toggleClass('d-xs-none');
+                $(this.$el).find(".transaction_detail_container").toggleClass('d-none');
             },
         },
     }
 </script>
 
 <style scoped>
-    @media (min-width: 576px) {
-        .transaction_item_row label {
-            display: block;
-        }
-
-        .d-sm-none {
-            display: none;
-        }
-    }
-    @media (max-width: 575.98px) {
-        .d-xs-none {
-            display: none;
-        }
-
-        .ml-1 {
-            margin-left: .25em;
-        }
-    }
-
     /* Float show button to upper right corner of container */
     .transaction_item_row button {
         position: absolute;

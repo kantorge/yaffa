@@ -1,44 +1,42 @@
 @extends('template.layouts.page')
 
-@section('title', __('Tags'))
+@section('title_postfix',  __('Tags'))
 
-@section('content_header')
-    {{ __('Tags') }}
-@stop
+@section('content_container_classes', 'container-lg')
+
+@section('content_header',  __('Tags'))
 
 @section('content')
+@if(isset($tag))
+<form
+    accept-charset="UTF-8"
+    action="{{ route('tag.update', $tag) }}"
+    autocomplete="off"
+    method="POST"
+>
+<input name="_method" type="hidden" value="PATCH">
+@else
+<form
+    accept-charset="UTF-8"
+    action="{{ route('tag.store') }}"
+    autocomplete="off"
+    method="POST"
+>
+@endif
 
-    @if(isset($tag))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('tag.update', $tag) }}"
-            autocomplete="off"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
-    @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('tag.store') }}"
-            autocomplete="off"
-            method="POST"
-        >
-    @endif
-
-    <div class="box box-primary">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
                 @if(isset($tag->id))
                     {{ __('Modify tag') }}
                 @else
                     {{ __('Add tag') }}
                 @endif
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body form-horizontal">
-            <div class="form-group">
-                <label for="name" class="control-label col-sm-3">
+        <div class="card-body">
+            <div class="row mb-3">
+                <label for="name" class="col-form-label col-sm-3">
                     {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
@@ -51,14 +49,14 @@
                     >
                 </div>
             </div>
-            <div class="form-group">
-                <label for="active" class="control-label col-sm-3">
+            <div class="row mb-3">
+                <label for="active" class="col-form-label col-sm-3">
                     {{ __('Active') }}
                 </label>
                 <div class="col-sm-9">
                     <input
                         id="active"
-                        class="checkbox-inline"
+                        class="form-check-input"
                         name="active"
                         type="checkbox"
                         value="1"
@@ -77,17 +75,12 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
-        <div class="box-footer">
+        <div class="card-footer">
             @csrf
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('tag.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
-        <!-- /.box-footer -->
     </div>
-    <!-- /.box -->
-
-    </form>
-
+</form>
 @stop

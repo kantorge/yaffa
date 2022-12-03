@@ -2,7 +2,7 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
-require('datatables.net-bs');
+require('datatables.net-bs5');
 import * as dataTableHelpers from './../components/dataTableHelper'
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
@@ -194,14 +194,7 @@ window.table = $('#table').DataTable({
         },
     },
     columns: [
-        {
-            data: "schedule_config.start_date",
-            title: __("Start date"),
-            render: function (data) {
-                return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-            },
-            className: "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("schedule_config.start_date", __("Start date"), window.YAFFA.locale),
         {
             data: "schedule_config.rule",
             title: __("Schedule"),
@@ -210,18 +203,7 @@ window.table = $('#table').DataTable({
                 return data.toText();
             }
         },
-        {
-            data: "schedule_config.next_date",
-            title: __("Next date"),
-            render: function (data) {
-                if (!data) {
-                    return '';
-                }
-
-                return data.toLocaleDateString('hu-HU'); //TODO: make this dynamic
-            },
-            className: "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("schedule_config.next_date", __("Start date"), window.YAFFA.locale),
         {
             data: "schedule",
             title: __("Schedule"),
@@ -247,7 +229,7 @@ window.table = $('#table').DataTable({
             className: "text-center",
         },
         {
-            data: "transaction_config_type",
+            data: "transaction_type.type",
             title: __("Type"),
             render: function (data, type) {
                 if (type == 'filter') {
@@ -262,7 +244,7 @@ window.table = $('#table').DataTable({
         {
             title: __('Payee'),
             render: function (_data, _type, row) {
-                if (row.transaction_config_type === 'standard') {
+                if (row.transaction_type.type === 'standard') {
                     if (row.transaction_type.name === 'withdrawal' && row.config.account_to) {
                         return row.config.account_to.name;
                     }
@@ -277,7 +259,7 @@ window.table = $('#table').DataTable({
                         }
                     }
                 }
-                if (row.transaction_config_type === 'investment') {
+                if (row.transaction_type.type === 'investment') {
                     return row.investment_name;
                 }
 
@@ -288,7 +270,7 @@ window.table = $('#table').DataTable({
             title: __("Category"),
             render: function (_data, _type, row) {
                 //standard transaction
-                if (row.transaction_config_type === 'standard') {
+                if (row.transaction_type.type === 'standard') {
                     if (row.categories.length > 1) {
                         return __('Split transaction');
                     }
@@ -299,7 +281,7 @@ window.table = $('#table').DataTable({
                     return '';
                 }
                 //investment transaction
-                if (row.transaction_config_type === 'investment') {
+                if (row.transaction_type.type === 'investment') {
                     if (!row.quantity_operator) {
                         return row.transaction_type.name;
                     }
@@ -352,16 +334,18 @@ window.table = $('#table').DataTable({
             data: 'id',
             title: __("Actions"),
             render: function (data, _type, row) {
-                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_config_type) +
-                       dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_config_type) +
-                       dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_config_type) +
+                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
+                       dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
+                       dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
                        dataTableHelpers.dataTablesActionButton(data, 'delete') +
                        (row.schedule
-                        ? '<a href="' + (row.transaction_config_type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') + '"></i></a> ' +
+                        ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') + '"></i></a> ' +
                           '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> '
                         : '');
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function (row, data) {

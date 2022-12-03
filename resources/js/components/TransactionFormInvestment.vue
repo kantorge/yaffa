@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="content-fluid">
         <AlertErrors :form="form" :message="__('There were some problems with your input.')" />
 
         <!-- form start -->
@@ -8,24 +8,26 @@
             @submit.prevent="onSubmit"
             autocomplete="off"
         >
-            <div class="box box-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title">
-                        {{ __('Transaction properties') }}
-                    </h3>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="card-title">
+                        {{ __('Properties') }}
+                    </div>
                 </div>
-                <!-- /.box-header -->
-
-                <div class="box-body">
+                <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group valid">
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-group">
                                         <label for="transaction_type" class="control-label">
                                             {{ __('Transaction type') }}
                                         </label>
-                                        <select id="transaction_type" class="form-control" v-model="form.transaction_type" @change="transactionTypeChanged($event)">
+                                        <select
+                                            id="transaction_type"
+                                            class="form-select"
+                                            v-model="form.transaction_type" @change="transactionTypeChanged($event)"
+                                        >
                                             <option
                                                 v-for="item in transactionTypes"
                                                 :key="item.name"
@@ -34,21 +36,21 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="account" class="control-label">
                                             {{ __('Account') }}
                                         </label>
                                         <select
-                                            class="form-control"
+                                            class="form-select"
                                             id="account"
                                             v-model="form.config.account_id">
                                         </select>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3">
+                            <div class="row align-items-end">
+                                <div class="col-md-3 mb-2">
                                     <div class="form-group">
                                         <label for="date" class="control-label">
                                             {{ __('Date') }}
@@ -64,11 +66,11 @@
                                         ></Datepicker>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
+                                <div class="col-md-3 mb-2">
+                                    <div class="form-check align-self-baseline">
                                         <input
                                             id="entry_type_schedule"
-                                            class="checkbox-inline"
+                                            class="form-check-input"
                                             :disabled="form.reconciled || action == 'replace'"
                                             type="checkbox"
                                             value="1"
@@ -76,7 +78,7 @@
                                         >
                                         <label
                                             for="entry_type_schedule"
-                                            class="control-label"
+                                            class="form-check-label"
                                             :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
                                             :data-toggle="(action === 'replace' ? 'tooltip' : '')"
                                         >
@@ -84,7 +86,7 @@
                                         </label>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="investment" class="control-label">
                                             {{ __('Investment') }}
@@ -98,7 +100,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-12 mb-2">
                                     <div class="form-group">
                                         <label for="comment" class="control-label">
                                             {{ __('Comment') }}
@@ -116,7 +118,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_quantity" class="control-label">
                                             {{ __('Quantity') }}
@@ -129,7 +131,7 @@
                                         ></MathInput>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_price" class="control-label">
                                             {{ __('Price') }}
@@ -144,7 +146,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_commission" class="control-label">
                                             {{ __('Commission') }}
@@ -156,7 +158,7 @@
                                         ></MathInput>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_tax" class="control-label">
                                             {{ __('Tax') }}
@@ -170,7 +172,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_dividend" class="control-label">
                                             {{ __('Dividend') }}
@@ -183,7 +185,7 @@
                                         ></MathInput>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_total" class="control-label">
                                             {{ __('Total') }}
@@ -195,89 +197,85 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
-                <!-- /.box-body -->
-
-        <!-- /.box-footer -->
-    </div>
-    <!-- /.box -->
-
-        <transaction-schedule
-            v-if="form.schedule"
-            :isSchedule="form.schedule"
-            :isBudget="false"
-            :schedule="form.schedule_config"
-            :form="form"
-        ></transaction-schedule>
-
-        <transaction-schedule
-            v-if="form.schedule && action === 'replace'"
-            :withCheckbox = "true"
-            :title = "__('Update base schedule')"
-            :allowCustomization = "false"
-            ref = "scheduleOriginal"
-
-            :isSchedule = "form.schedule"
-            :isBudget = "false"
-            :schedule = "form.original_schedule_config"
-            :form = "form"
-        ></transaction-schedule>
-
-        <footer class="main-footer navbar-fixed-bottom hidden">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="hidden-xs col-sm-8">
-                        <label class="control-label block-label">
-                            {{ __('After saving') }}
-                        </label>
-                        <div class="btn-group">
-                            <button
-                                v-for="item in activeCallbackOptions"
-                                :key="item.id"
-                                class="btn btn-default"
-                                :class="callback == item.value ? 'active' : ''"
-                                type="button"
-                                :value="item.value"
-                                @click="callback = $event.currentTarget.getAttribute('value')"
-                            >
-                                {{ item.label }}
-                            </button>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="d-none d-md-block col-md-8">
+                            <label class="control-label block-label">
+                                {{ __('After saving') }}
+                            </label>
+                            <div class="btn-group">
+                                <button
+                                    v-for="item in activeCallbackOptions"
+                                    :key="item.id"
+                                    class="btn btn-outline-dark"
+                                    :class="{ active: callback === item.value }"
+                                    type="button"
+                                    :value="item.value"
+                                    @click="callback = $event.currentTarget.getAttribute('value')"
+                                >
+                                    {{ item.label }}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-4">
-                        <div class="pull-right">
-                            <button
-                                class="btn btn-sm btn-default"
-                                type="button"
-                                style="margin-left: 10px; margin-bottom: 5px;"
-                                @click="onCancel"
-                            >
-                                {{ __('Cancel') }}
-                            </button>
-                            <Button class="btn btn-primary" :disabled="form.busy" :form="form">{{ __('Save') }}</Button>
+                        <div class="col-12 col-md-4">
+                            <div class="text-end">
+                                <button
+                                    class="btn btn-sm btn-default me-3"
+                                    type="button"
+                                    @click="onCancel"
+                                >
+                                    {{ __('Cancel') }}
+                                </button>
+                                <Button
+                                    class="btn btn-primary"
+                                    :disabled="form.busy"
+                                    :form="form"
+                                >
+                                    {{ __('Save') }}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-xs-12 d-sm-none">
-                        <label class="control-label block-label">
-                            {{ __('After saving') }}
-                        </label>
-                        <select
-                            class="form-control"
-                            v-model="callback"
-                        >
-                            <option
-                                v-for="item in activeCallbackOptions"
-                                :key="item.id"
-                                :value="item.value"
+                        <div class="col-12 d-block d-md-none">
+                            <label class="control-label block-label">
+                                {{ __('After saving') }}
+                            </label>
+                            <select
+                                class="form-control"
+                                v-model="callback"
                             >
-                                {{ item.label }}
-                            </option>
-                        </select>
+                                <option
+                                    v-for="item in activeCallbackOptions"
+                                    :key="item.id"
+                                    :value="item.value"
+                                >
+                                    {{ item.label }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
-        </footer>
+
+            <transaction-schedule
+                v-if="form.schedule"
+                :isSchedule="form.schedule"
+                :isBudget="false"
+                :schedule="form.schedule_config"
+                :form="form"
+            ></transaction-schedule>
+
+            <transaction-schedule
+                v-if="form.schedule && action === 'replace'"
+                :withCheckbox = "true"
+                :title = "__('Update base schedule')"
+                :allowCustomization = "false"
+                ref = "scheduleOriginal"
+                :isSchedule = "form.schedule"
+                :isBudget = "false"
+                :schedule = "form.original_schedule_config"
+                :form = "form"
+            ></transaction-schedule>
 
         </form>
     </div>
@@ -285,6 +283,11 @@
 
 <script>
     require('select2');
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
 
     import MathInput from './MathInput.vue'
 
@@ -532,7 +535,8 @@
                     },
                     selectOnClose: true,
                     placeholder: __("Select account"),
-                    allowClear: true
+                    allowClear: true,
+                    theme: 'bootstrap-5',
                 })
                 .on('select2:select', function (e) {
                     const event = new Event("change", { bubbles: true, cancelable: true });
@@ -600,7 +604,8 @@
                 },
                 selectOnClose: true,
                 placeholder: __("Select investment"),
-                allowClear: true
+                allowClear: true,
+                theme: 'bootstrap-5',
             })
             .on('select2:select', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
@@ -642,11 +647,6 @@
 
             // Initial sync between schedules, if applicable
             this.syncScheduleStartDate(this.form.schedule_config.start_date);
-
-            // Display fixed footer
-            setTimeout(function() {
-                $("footer").removeClass("hidden");
-            }, 1000);
         },
 
         methods: {
@@ -752,10 +752,6 @@
     @media (min-width: 576px) {
         .block-label {
             display: block;
-        }
-
-        .d-sm-none {
-            display: none;
         }
     }
     @media (max-width: 575.98px) {

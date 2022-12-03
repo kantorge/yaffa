@@ -1,17 +1,14 @@
 <template>
-    <div class="box box-info">
-        <div class="box-header with-border">
-            <h3 class="box-title">
+    <div class="card mb-4" id="widgetScheduleCalendar">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
                 {{ __('Scheduled transaction instances') }}
-            </h3>
-
-            <div class="box-tools pull-right">
-                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
             </div>
-            <!-- /.box-tools -->
+            <div>
+                <button type="button" class="btn-close" aria-label="Close" data-dismiss="alert" data-target="#widgetScheduleCalendar"></button>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
+        <div class="card-body">
             <Calendar
                 class="custom-calendar max-w-full"
                 :masks="masks"
@@ -32,7 +29,7 @@
                             v-for="item in attributes"
                             :key="item.key"
                             style="margin: 0 1px;"
-                            :href="getTransactionLink(item.customData.transaction_config_type, item.customData.id)"
+                            :href="getTransactionLink(item.customData.transaction_type.type, item.customData.id)"
                             v-html="getTransactionTypeIcon(item.customData)"
                         ></a>
                     </div>
@@ -55,7 +52,7 @@ export default {
 
     methods: {
         getTransactionTypeIcon: function(transaction) {
-            return dataTableHelpers.transactionTypeIcon(transaction.transaction_config_type, transaction.transaction_type, this.getTransactionLabel(transaction));
+            return dataTableHelpers.transactionTypeIcon(transaction.transaction_type.type, transaction.transaction_type.name, this.getTransactionLabel(transaction));
         },
         getTransactionLink: function(type, id) {
             if (type === 'standard') {
@@ -68,9 +65,9 @@ export default {
             return route('home');
         },
         getTransactionLabel: function(transaction) {
-            if (transaction.transaction_config_type === 'standard') {
+            if (transaction.transaction_type.type === 'standard') {
                 // Capitalize first letter of transaction type
-                const type = transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1);
+                const type = transaction.transaction_type.name.charAt(0).toUpperCase() + transaction.transaction_type.name.slice(1);
                 // Return constructed label
                 return type + ' ' + transaction.config.amount_to.toLocalCurrency(transaction.currency) + ' from ' + transaction.config.account_from.name + ' to ' + transaction.config.account_to.name;
             }

@@ -1,6 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
 
-import { toFormattedCurrency } from './../helpers';
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 // Table data transformation
@@ -25,6 +25,7 @@ var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 // Define some settings, that are common for the two tables
 var dtColumnSettingPayee = {
     title: __('Payee'),
+    defaultContent: '',
     render: function (_data, _type, row) {
         if (row.transaction_type.type === 'standard') {
             if (row.transaction_type.name === 'withdrawal') {
@@ -40,9 +41,11 @@ var dtColumnSettingPayee = {
                     return __('Transfer from :account', {account: row.account_from_name});
                 }
             }
-        } else if (row.transaction_type.type === 'investment') {
+        }
+        if (row.transaction_type.type === 'investment') {
             return row.account_to_name;
-        } else if (row.transaction_type.type === 'Opening balance') {
+        }
+        if (row.transaction_type.type === 'Opening balance') {
             return __('Opening balance');
         }
         return null;
@@ -50,6 +53,7 @@ var dtColumnSettingPayee = {
 };
 var dtColumnSettingCategories = {
     title: __('Category'),
+    defaultContent: '',
     render: function (_data, _type, row) {
         // Standard transaction
         if (row.transaction_type.type === 'standard') {
@@ -80,43 +84,11 @@ var dtColumnSettingCategories = {
     },
     orderable: false
 };
-var dtColumnSettingComment = {
-    data: 'comment',
-    title: __('Comment'),
-    render: function (data, type) {
-        if (type === 'display') {
-            data = truncateString(data, 20);
-        }
-
-        return data;
-    },
-    createdCell: function (td, cellData) {
-        $(td).prop('title', cellData);
-    }
-};
-
-var dtColumnSettingTags = {
-    data: 'tags',
-    title: __('Tags'),
-    render: function (data) {
-        return data.join(', ');
-    }
-}
 
 $('#historyTable').DataTable({
     data: transactionData,
     columns: [
-        {
-            data: "date",
-            title: __('Date'),
-            render: function (data) {
-                if (!data) {
-                    return data;
-                }
-                return data.toLocaleDateString(window.YAFFA.locale);
-            },
-            className: "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -147,23 +119,32 @@ $('#historyTable').DataTable({
         dtColumnSettingCategories,
         {
             title: __('Withdrawal'),
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'minus' ?  toFormattedCurrency(row.amount_from, window.YAFFA.locale, currency) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'minus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
             },
             className: 'dt-nowrap',
         },
         {
             title: __('Deposit'),
-            render: function (_data, _type, row) {
-                return (row.transactionOperator === 'plus' ? toFormattedCurrency(row.amount_to, window.YAFFA.locale, currency) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'plus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
             },
             className: 'dt-nowrap',
         },
         {
             data: 'running_total',
             title: __('Running total'),
-            render: function (data) {
-                return toFormattedCurrency(data, window.YAFFA.locale, currency);
+            defaultContent: '',
+            render: function (data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, currency);
             },
             className: 'dt-nowrap',
             createdCell: function (td, cellData) {
@@ -172,8 +153,8 @@ $('#historyTable').DataTable({
                 }
             }
         },
-        dtColumnSettingComment,
-        dtColumnSettingTags,
+        dataTableHelpers.transactionColumnDefiniton.comment,
+        dataTableHelpers.transactionColumnDefiniton.tags,
         {
             data: 'id',
             title: __("Actions"),
@@ -203,7 +184,9 @@ $('#historyTable').DataTable({
                        '<a href="' + route('transactions.open.investment', { transaction: data, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
                        '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button>';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function (row, data) {
@@ -214,6 +197,7 @@ $('#historyTable').DataTable({
     order: [
         [0, "asc"]
     ],
+    responsive: true,
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -226,32 +210,33 @@ $('#historyTable').DataTable({
 $('#scheduleTable').DataTable({
     data: scheduleData,
     columns: [
-        {
-            data: "transaction_schedule.next_date",
-            title: "Next date",
-            render: function (data) {
-                if (!data) {
-                    return data;
-                }
-                return data.toLocaleDateString(window.YAFFA.locale).replace(/\s/g, '&nbsp;');
-            }
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dtColumnSettingPayee,
         dtColumnSettingCategories,
         {
             title: "Withdrawal",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'minus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap'
         },
         {
             title: "Deposit",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'plus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap'
         },
-        dtColumnSettingComment,
-        dtColumnSettingTags,
+        dataTableHelpers.transactionColumnDefiniton.comment,
+        dataTableHelpers.transactionColumnDefiniton.tags,
         {
             data: 'id',
             title: __("Actions"),
@@ -278,6 +263,7 @@ $('#scheduleTable').DataTable({
     order: [
         [0, "asc"]
     ],
+    responsive: true,
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -323,12 +309,6 @@ $("#historyTable").on("click", "i.reconcile", function () {
         }
     });
 });
-
-// DataTables helper: truncate a string
-function truncateString(str, max, add) {
-    add = add || '...';
-    return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
-}
 
 $('#historyTable').on('click', 'button.transaction-quickview', function () {
     let icon = this.querySelector('i');

@@ -1,9 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
 
-import {
-    genericDataTablesActionButton,
-    initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+import * as dataTableHelpers from './../components/dataTableHelper';
 
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
@@ -15,22 +12,24 @@ const dataTableSelector = '#table';
 $(dataTableSelector).DataTable({
     data: currencyRates,
     columns: [
-    {
-        data: "date",
-        title: __("Date")
-    },
-    {
-        data: "rate",
-        title: __("Rate")
-    },
-    {
-        data: "id",
-        title: __("Actions"),
-        render: function (data, _type, _row, _meta) {
-            return genericDataTablesActionButton(data, 'delete');
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        {
+            data: "rate",
+            title: __("Rate"),
+            render: function(data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, window.YAFFA.baseCurrency)
+            }
         },
-        orderable: false
-    }
+        {
+            data: "id",
+            title: __("Actions"),
+            render: function (data, _type, _row, _meta) {
+                return dataTableHelpers.genericDataTablesActionButton(data, 'delete');
+            },
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
+        }
     ],
     order: [
         [ 0, 'desc' ]
@@ -54,4 +53,4 @@ var scrollbarX = new am4charts.XYChartScrollbar();
 scrollbarX.series.push(series);
 chart.scrollbarX = scrollbarX;
 
-initializeDeleteButtonListener(dataTableSelector, 'currency-rate.destroy');
+dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'currency-rate.destroy');

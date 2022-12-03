@@ -1,138 +1,131 @@
 <template>
     <div v-if="transaction.id">
         <div class="row">
-            <!-- left column -->
-            <div class="col-md-5">
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="card-title">
                             {{ __('Properties') }}
-                        </h3>
+                        </div>
                     </div>
-                    <!-- /.box-header -->
-
-                    <div class="box-body">
+                    <div class="card-body">
                         <dl class="row">
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Type') }}
                             </dt>
-                            <dd class="col-xs-8">
-                                <span v-if="transaction.transaction_type.name == 'withdrawal'">
+                            <dd class="col-6">
+                                <span v-if="transaction.transaction_type.name === 'withdrawal'">
                                     {{ __('Withdrawal') }}
                                 </span>
-                                <span v-if="transaction.transaction_type.name == 'deposit'">
+                                <span v-if="transaction.transaction_type.name === 'deposit'">
                                     {{ __('Deposit') }}
                                 </span>
-                                <span v-if="transaction.transaction_type.name == 'transfer'">
+                                <span v-if="transaction.transaction_type.name === 'transfer'">
                                     {{ __('Transfer') }}
                                 </span>
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Date') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 <span v-if="transaction.date">{{ formattedDate(transaction.date) }}</span>
                                 <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ accountFromFieldLabel }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 {{ transaction.config.account_from.name }}
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ accountToFieldLabel }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 {{ transaction.config.account_to.name }}
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Comment') }}
                             </dt>
-                            <dd class="col-xs-8" :class="(transaction.comment ? '' : 'text-muted')">
+                            <dd class="col-6" :class="(transaction.comment ? '' : 'text-muted')">
                                 {{ transaction.comment || "Not set" }}
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Scheduled') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 <span v-if="transaction.schedule"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
                                 <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Budget') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 <span v-if="transaction.budget"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
                                 <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Reconciled') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 <span v-if="transaction.reconciled"><i class="fa fa-check text-success" :title="__('Yes')"></i></span>
                                 <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
                             </dd>
                         </dl>
                     </div>
-                    <!-- /.box-body -->
                 </div>
-                <!-- /.box -->
 
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="card-title">
                             {{ __('Amounts') }}
-                        </h3>
+                        </div>
                     </div>
-                    <!-- /.box-header -->
-                    <div class="box-body">
+                    <div class="card-body">
                         <dl class="row">
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ ammountFromFieldLabel }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 {{ transaction.config.amount_from.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
 
-                            <dt class="col-xs-4" v-if="exchangeRatePresent">
+                            <dt class="col-6" v-if="exchangeRatePresent">
                                 {{ __('Exchange rate') }}
                             </dt>
-                            <dd class="col-xs-8" v-if="exchangeRatePresent">
+                            <dd class="col-6" v-if="exchangeRatePresent">
                                 {{ exchangeRate }}
                             </dd>
 
-                            <dt class="col-xs-4" v-if="exchangeRatePresent">
+                            <dt class="col-6" v-if="exchangeRatePresent">
                                 {{ __('Amount to') }}
                             </dt>
-                            <dd class="col-xs-8" v-if="exchangeRatePresent">
+                            <dd class="col-6" v-if="exchangeRatePresent">
                                 {{ transaction.config.amount_to.toLocalCurrency(transaction.config.account_to.config.currency, false) }}
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Total allocated') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 {{ allocatedAmount.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
 
-                            <dt class="col-xs-4">
+                            <dt class="col-6">
                                 {{ __('Not allocated') }}
                             </dt>
-                            <dd class="col-xs-8">
+                            <dd class="col-6">
                                 {{ remainingAmountNotAllocated.toLocalCurrency(ammountFromCurrency, false) }}
                             </dd>
                         </dl>
                     </div>
                 </div>
-                <!-- /.box -->
 
                 <transaction-schedule
                     :isVisible="transaction.schedule || transaction.budget"
@@ -142,19 +135,14 @@
                 ></transaction-schedule>
 
             </div>
-            <!--/.col (left) -->
 
-            <!-- right column -->
-            <div class="col-md-7">
+            <div class="col-md-8">
                 <transaction-item-container
                     :transactionItems="transaction.transaction_items"
                     :currency="ammountFromCurrency"
                 ></transaction-item-container>
             </div>
-            <!--/.col (right) -->
-
         </div>
-        <!-- /.row -->
     </div>
 </template>
 
@@ -178,7 +166,7 @@
         computed: {
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
-                if (this.transaction.transaction_type.name == 'withdrawal' || this.transaction.transaction_type.name == 'transfer') {
+                if (this.transaction.transaction_type.name === 'withdrawal' || this.transaction.transaction_type.name === 'transfer') {
                     return __('Account from');
                 }
 
@@ -186,7 +174,7 @@
             },
 
             accountToFieldLabel() {
-                if (this.transaction.transaction_type.name == 'deposit' || this.transaction.transaction_type.name == 'transfer') {
+                if (this.transaction.transaction_type.name === 'deposit' || this.transaction.transaction_type.name === 'transfer') {
                     return __('Account to');
                 }
 
@@ -247,10 +235,3 @@
         }
     }
 </script>
-
-<style scoped>
-    dl.row {
-        display: flex;
-        flex-wrap: wrap;
-    }
-</style>

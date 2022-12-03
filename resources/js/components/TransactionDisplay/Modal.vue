@@ -1,34 +1,28 @@
 <template>
-    <div class="modal fade" id="modal-quickview" style="display: none;">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade" id="modal-quickview" data-coreui-backdrop="static">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                    <h4 class="modal-title">
+                    <h5 class="modal-title">
                         {{ __('Details of transaction #:transaction', {transaction: transaction.id}) }}
-                    </h4>
+                    </h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <transaction-show-standard
                         :transaction = transaction
                     ></transaction-show-standard>
                 </div>
-                <div class="modal-footer">
-                    <div class="pull-right" v-if="transaction.id">
-                        <button v-if="controls.skip && transaction.schedule" class="btn btn-warning" @click="skipInstance" :title="__('Skip schedule instance')"><i class="fa fa-fw fa-fast-forward"></i> {{ __('Skip instance') }}</button>
-                        <button v-if="controls.enter && transaction.schedule" class="btn btn-success enter" @click="enterInstance" :title="__('Enter schedule instance')"><i class="fa fa-fw fa-pencil"></i> {{ __('Enter instance') }}</button>
-                        <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" :title="__('View details')"><i class="fa fa-fw fa-search"></i> {{ __('Open') }}</a>
-                        <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" :title="__('Edit')"><i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}</a>
-                        <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" :title="__('Clone')"><i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}</a>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
+                <div class="modal-footer d-grid gap-2 d-md-block justify-content-md-end" v-if="transaction.id">
+                    <button v-if="controls.skip && transaction.schedule" class="btn btn-warning" @click="skipInstance" :title="__('Skip schedule instance')"><i class="fa fa-fw fa-fast-forward"></i> {{ __('Skip instance') }}</button>
+                    <button v-if="controls.enter && transaction.schedule" class="btn btn-success enter" @click="enterInstance" :title="__('Enter schedule instance')"><i class="fa fa-fw fa-pencil"></i> {{ __('Enter instance') }}</button>
+                    <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" :title="__('View details')"><i class="fa fa-fw fa-search"></i> {{ __('Open') }}</a>
+                    <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" :title="__('Edit')"><i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}</a>
+                    <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" :title="__('Clone')"><i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}</a>
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
                 </div>
             </div>
-            <!-- /.modal-content -->
         </div>
-        <!-- /.modal-dialog -->
     </div>
 </template>
 

@@ -1,37 +1,34 @@
 @extends('template.layouts.page')
 
-@section('title', __('User settings'))
+@section('title_postfix',  __('User settings'))
 
-@section('content_header')
-    {{ __('User settings') }}
-@stop
+@section('content_container_classes', 'container-md')
+
+@section('content_header', __('User settings'))
 
 @section('content')
+<form
+    accept-charset="UTF-8"
+    action="{{ route('user.update') }}"
+    autocomplete="off"
+    method="POST"
+>
+<input name="_method" type="hidden" value="PATCH">
 
-
-    <form
-        accept-charset="UTF-8"
-        action="{{ route('user.update') }}"
-        autocomplete="off"
-        method="POST"
-    >
-    <input name="_method" type="hidden" value="PATCH">
-
-    <div class="box box-primary">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
                 {{ __('Update user settings') }}
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body form-horizontal">
-            <div class="form-group">
-                <label for="name" class="control-label col-sm-3">
+        <div class="card-body">
+            <div class="row mb-3">
+                <label for="name" class="col-form-label col-sm-3">
                     {{ __('Language') }}
                 </label>
                 <div class="col-sm-9">
                     <select
-                        class="form-control"
+                        class="form-select"
                         id="language"
                         name="language"
                     >
@@ -50,13 +47,13 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="name" class="control-label col-sm-3">
+            <div class="row mb-3">
+                <label for="name" class="col-form-label col-sm-3">
                     {{ __('Locale') }}
                 </label>
                 <div class="col-sm-9">
                     <select
-                        class="form-control"
+                        class="form-select"
                         id="locale"
                         name="locale"
                     >
@@ -76,16 +73,11 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
-        <div class="box-footer">
+        <div class="card-footer">
             @csrf
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
         </div>
-        <!-- /.box-footer -->
     </div>
-    <!-- /.box -->
-
-    </form>
-
+</form>
 @stop

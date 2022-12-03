@@ -1,51 +1,48 @@
 @extends('template.layouts.page')
 
-@section('title', __('Payees'))
+@section('title_postfix',  __('Payees'))
 
-@section('content_header')
-    <h1>
-        {{ __('Payees') }}
-    </h1>
-    <h2>
-        @if(isset($payee->id))
-            {{ __('Modify payee') }}
-        @else
-            {{ __('Add new payee') }}
-        @endif
-    </h2>
-@stop
+@section('content_container_classes', 'container-fluid')
+
+@section('content_header', __('Payees'))
 
 @section('content')
-
-    @if(isset($payee))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('account-entity.update', ['type' => 'payee', 'account_entity' => $payee->id]) }}"
-            autocomplete="off"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
+<h2>
+    @if(isset($payee->id))
+        {{ __('Modify payee') }}
     @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('account-entity.store', ['type' => 'payee']) }}"
-            autocomplete="off"
-            method="POST"
-        >
+        {{ __('Add new payee') }}
     @endif
+</h2>
 
-    <div class="row">
+@if(isset($payee))
+<form
+    accept-charset="UTF-8"
+    action="{{ route('account-entity.update', ['type' => 'payee', 'account_entity' => $payee->id]) }}"
+    autocomplete="off"
+    method="POST"
+>
+<input name="_method" type="hidden" value="PATCH">
+@else
+<form
+    accept-charset="UTF-8"
+    action="{{ route('account-entity.store', ['type' => 'payee']) }}"
+    autocomplete="off"
+    method="POST"
+>
+@endif
+
+<div class="row">
         <div class="col-md-6">
-            <div class="box box-primary">
-                <div class="box-header">
-                    <h3 class="box-title">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
                         {{ __('Payee details') }}
-                    </h3>
+                    </div>
                 </div>
-                <!-- /.box-header -->
-                <div class="box-body form-horizontal">
-                    <div class="form-group">
-                        <label for="name" class="control-label col-sm-3">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <label for="name" class="col-form-label col-sm-3">
                             {{ __('Name') }}
                         </label>
                         <div class="col-sm-9">
@@ -59,14 +56,14 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="active" class="control-label col-sm-3">
+                    <div class="row mb-3">
+                        <label for="active" class="col-form-label col-sm-3">
                             {{ __('Active') }}
                         </label>
                         <div class="col-sm-9">
                             <input
                                 id="active"
-                                class="checkbox-inline"
+                                class="form-check-input"
                                 name="active"
                                 type="checkbox"
                                 value="1"
@@ -85,13 +82,13 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="category_id" class="control-label col-sm-3">
+                    <div class="row mb-3">
+                        <label for="category_id" class="col-form-label col-sm-3">
                             {{ __('Default category') }}
                         </label>
                         <div class="col-sm-9">
                             <select
-                                class="form-control"
+                                class="form-select"
                                 id="category_id"
                                 name="config[category_id]"
                             >
@@ -119,8 +116,8 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="import_alias" class="control-label col-sm-3">
+                    <div class="row mb-3">
+                        <label for="import_alias" class="col-form-label col-sm-3">
                             {{ __('Import alias') }}
                         </label>
                         <div class="col-sm-9">
@@ -132,36 +129,35 @@
                         </div>
                     </div>
                 </div>
-                <!-- /.box-body -->
-                <div class="box-footer">
+                <div class="card-footer">
                     @csrf
                     <input name="config_type" type="hidden" value="payee">
 
                     <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
                     <a href="{{ route('account-entity.index', ['type' => 'payee']) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
                 </div>
-                <!-- /.box-footer -->
             </div>
-
-            <!-- /.box -->
         </div>
         <div class="col-md-6">
-            <div class="box box-primary">
-                <div class="box-header">
-                    <h3 class="box-title">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
                         {{ __('Category preferences') }}
-                    </h3>
+                    </div>
                 </div>
-                <!-- /.box-header -->
-                <div class="box-body">
-                    <h3>{{ __('Preferred categories for payee') }}</h3>
-                    <select class="form-control" id="preferred" name="config[preferred][]" data-other-select="#not_preferred"></select>
-                    <h3>{{ __('Excluded categories for payee') }}</h3>
-                    <select class="form-control" id="not_preferred" name="config[not_preferred][]" data-other-select="#preferred"></select>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="preferred" class="form-label">{{ __('Preferred categories for payee') }}</label>
+                        <select class="form-select" id="preferred" name="config[preferred][]" data-other-select="#not_preferred"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="not_preferred" class="form-label">{{ __('Excluded categories for payee') }}</label>
+                        <select class="form-select" id="not_preferred" name="config[not_preferred][]" data-other-select="#preferred"></select>
+                    </div>
                 </div>
             </div>
         </div>
-
-    </form>
+    </div>
+</form>
 
 @stop

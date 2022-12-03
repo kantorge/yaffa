@@ -1,11 +1,8 @@
 @extends('template.layouts.page')
 
-@section('classes_body')
-    @parent
-    layout-footer-fixed
-@endsection
-
 @section('title', __('Transaction'))
+
+@section('content_container_classes', 'container-fluid')
 
 @section('content_header')
     @switch($action)
