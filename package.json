@@ -33,7 +33,7 @@
         "axios": "^0.27.2",
         "currency.js": "^2.0.4",
         "datatables.net": "^1.12.1",
-        "datatables.net-bs": "^1.12.1",
+        "datatables.net-bs": "^1.13.1",
         "jquery-csv": "^1.0.21",
         "json-rules-engine": "^6.1.2",
         "jstree": "^3.3.12",
