@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Prepare The Environment
-        run: cp .env.example .env
+        run: cp .env.dusk.ci .env
       - name: Create Database
         run: |
           sudo systemctl start mysql
