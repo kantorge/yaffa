@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class CurrencySeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class CurrencySeeder extends Seeder
      *
      * @return void
      */
-    public function run(?User $user, $count = 5)
+    public function run(?User $user, $count = 3)
     {
         if ($user) {
             $users = new Collection([$user]);
@@ -40,8 +41,8 @@ class CurrencySeeder extends Seeder
                     if ($i > $maxRetries) {
                         throw new \OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
                     }
-                } while (array_key_exists(serialize($res), $uniques));
-                $uniques[serialize($res)] = null;
+                } while (in_array(serialize($res->toArray()), $uniques, true));
+                $uniques[] = serialize($res->toArray());
                 $res->save();
             }
 

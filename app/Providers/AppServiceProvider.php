@@ -42,8 +42,12 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
 
-        Blade::directive('NiceNumber', function ($expression) {
-            return "<?php echo str_replace(' ', '&nbsp;', number_format(intval(${expression}), 0, ',', ' ')); ?>";
+        Blade::directive('dusk', function($expression) {
+            if (!\App::environment('testing')) {
+                return '';
+            }
+
+            return "<?php echo('dusk={$expression}'); ?>";
         });
     }
 }

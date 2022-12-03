@@ -25,8 +25,6 @@ class AddIndexToTransactionDetailsStandardTable extends Migration
      */
     public function down()
     {
-        Schema::table('transaction_details_standard', function (Blueprint $table) {
-            $table->dropIndex(['account_from_id', 'account_to_id']);
-        });
+        //
     }
 }

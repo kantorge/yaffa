@@ -24,7 +24,7 @@ class TransactionSeeder extends Seeder
 
         // Create standard withdrawals
         Transaction::factory()
-            ->count(rand(50, 100))
+            ->count(rand(10, 20))
             ->withdrawal()
             ->create([
                 'user_id' => $user->id,
@@ -35,7 +35,7 @@ class TransactionSeeder extends Seeder
 
         // Create deposits
         Transaction::factory()
-            ->count(rand(50, 100))
+            ->count(rand(10, 20))
             ->deposit()
             ->create([
                 'user_id' => $user->id,
@@ -46,7 +46,7 @@ class TransactionSeeder extends Seeder
 
         // Create transfers
         Transaction::factory()
-            ->count(rand(20, 50))
+            ->count(rand(5, 10))
             ->transfer()
             ->create([
                 'user_id' => $user->id,
@@ -67,7 +67,7 @@ class TransactionSeeder extends Seeder
 
         // Investments - buy
         Transaction::factory()
-                ->count(rand(10, 50))
+                ->count(rand(5, 10))
                 ->buy()
                 ->create([
                     'user_id' => $user->id,
