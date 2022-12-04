@@ -119,3 +119,8 @@ div.card-header > div.card-title {
 .card-header .collapsed .fa {
     transform: rotate(-90deg);
 }
+
+// Header color for non-production environments
+.header-local-mode {
+    background-color: #d33724;
+}
