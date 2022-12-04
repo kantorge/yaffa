@@ -85,7 +85,7 @@ var dtColumnSettingCategories = {
     orderable: false
 };
 
-$('#historyTable').DataTable({
+var dtHistory = $('#historyTable').DataTable({
     data: transactionData,
     columns: [
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
@@ -193,6 +193,13 @@ $('#historyTable').DataTable({
         if (data.schedule) {
             $(row).addClass('text-muted text-italic');
         }
+    },
+    initComplete: function() {
+        // Get the Datatable API instance
+        var api = this.api();
+        setTimeout(function() {
+            api.columns.adjust().draw();
+        }, 2000);
     },
     order: [
         [0, "asc"]
