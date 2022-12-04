@@ -226,7 +226,7 @@ export default {
         },
 
         dateLabel() {
-            var date = new Date(this.year, this.month, 1);
+            var date = new Date(this.year, this.month - 1, 1);
             return date.toLocaleDateString(
                 window.YAFFA.locale,
                 {
