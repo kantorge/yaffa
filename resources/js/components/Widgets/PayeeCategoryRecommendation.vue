@@ -31,7 +31,6 @@
             <span class="text-danger" v-if="error">{{ __('Something failed') }}</span>
             <span class="text-success" v-if="success">{{ __('Saved successfully') }}</span>
         </div>
-        <!-- box-footer -->
     </div>
 </template>
 

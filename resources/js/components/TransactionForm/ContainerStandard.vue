@@ -54,7 +54,7 @@
 
 <script>
     import TransactionFormStandard from './../TransactionFormStandard.vue'
-    import {Button} from 'vform/src/components/bootstrap4'
+    import {Button} from 'vform/src/components/bootstrap5'
 
     export default {
         name: 'TransactionContainerStandard',
@@ -79,12 +79,12 @@
         data() {
             var data = {
                 // TODO: adjust initial callback based on action
-                callback: 'new',
+                callback: 'create',
 
                 // Various callback options
                 callbackOptions: [
                     {
-                        value: 'new',
+                        value: 'create',
                         label: __('Add an other transaction'),
                         enabled: true,
                     },
@@ -117,13 +117,18 @@
             };
 
             // For new transactions set some default values
-            if (this.action === 'new') {
+            if (this.action === 'create') {
+                if (!data.transactionData) {
+                    data.transactionData = {};
+                }
+                if (!data.transactionData.config) {
+                    data.transactionData.config = {};
+                }
+
                 // Check for various default values in URL
                 const urlParams = new URLSearchParams(window.location.search);
+
                 if (urlParams.get('account_from')) {
-                    if (!data.transactionData.config) {
-                        data.transactionData.config = {};
-                    }
                     data.transactionData.config.account_from_id = urlParams.get('account_from');
                 }
 
@@ -161,7 +166,7 @@
                     return;
                 }
 
-                if (this.callback === 'new') {
+                if (this.callback === 'create') {
                     location.href = route('transactions.createStandard');
                     return;
                 }

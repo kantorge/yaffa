@@ -292,7 +292,7 @@
     import MathInput from './MathInput.vue'
 
     import Form from 'vform'
-    import {Button, AlertErrors} from 'vform/src/components/bootstrap4'
+    import {Button, AlertErrors} from 'vform/src/components/bootstrap5'
 
     import Datepicker from '@vuepic/vue-datepicker';
     import '@vuepic/vue-datepicker/dist/main.css'

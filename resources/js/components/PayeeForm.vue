@@ -2,7 +2,7 @@
     <div
         class="modal"
         tabindex="-1"
-        id="modalPayeeForm"
+        :id="id"
     >
         <div class="modal-dialog">
             <div class="modal-content">
@@ -105,7 +105,7 @@
     );
 
     import Form from 'vform'
-    import {Button, AlertErrors, AlertSuccess} from 'vform/src/components/bootstrap4'
+    import {Button, AlertErrors, AlertSuccess} from 'vform/src/components/bootstrap5'
 
     export default {
         components: {
@@ -115,6 +115,10 @@
         props: {
             action: String,
             payee: Object,
+            id: {
+                type: String,
+                default: 'newPayeeModal'
+            }
         },
 
         data() {
@@ -158,7 +162,8 @@
                 },
                 selectOnClose: true,
                 placeholder: __("Select category"),
-                allowClear: true
+                allowClear: true,
+                dropdownParent: $('#' + this.id)
             })
             .on('select2:select', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });

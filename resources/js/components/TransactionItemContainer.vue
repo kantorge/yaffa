@@ -43,7 +43,6 @@
                 {{ __('No items added') }}
             </div>
         </div>
-        <!-- /.box-body -->
 
         <div class="card-footer" v-if="transactionItems.length > 0">
             <div class="text-end">

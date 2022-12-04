@@ -12600,6 +12600,10 @@ div.card-header > div.card-title {
   transform: rotate(-90deg);
 }
 
+.header-local-mode {
+  background-color: #d33724;
+}
+
 .select2-container {
   box-sizing: border-box;
   display: inline-block;
