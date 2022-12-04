@@ -567,6 +567,9 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
         }
 
+        // Not needed for the store procedure, but can be required for the client
+        $transaction->load(['transactionType']);
+
         return response()->json(
             [
                 'transaction' => $transaction,
