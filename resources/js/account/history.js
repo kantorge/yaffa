@@ -262,9 +262,9 @@ $('#scheduleTable').DataTable({
     createdRow: function (row, data) {
         var nextDate = new Date(data.transaction_schedule.next_date);
         if (nextDate < new Date(new Date().setHours(0, 0, 0, 0))) {
-            $(row).addClass('danger');
+            $(row).addClass('table-danger');
         } else if (nextDate < new Date(new Date().setHours(24, 0, 0, 0))) {
-            $(row).addClass('warning');
+            $(row).addClass('table-warning');
         }
     },
     order: [
