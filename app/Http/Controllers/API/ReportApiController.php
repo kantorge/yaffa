@@ -201,7 +201,7 @@ class ReportApiController extends Controller
      * @param int  $month
      * @return \Illuminate\Http\Response
      */
-    public function getCategoryWaterfallData(string $type, int $year, int $month = null)
+    public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int $month = null)
     {
         /**
          * @get('/api/reports/waterfall/{type}/{year}/{month?}')
@@ -212,99 +212,103 @@ class ReportApiController extends Controller
         $baseCurrency = $this->getBaseCurrency();
         $allRates = $this->allCurrencyRatesByMonth(true, true)->sortByDesc('date_from');
 
-        // Get all standard transactions with related categories
-        $standardTransactions = TransactionItem::with([
-            'category',
-            'transaction',
-            'transaction.transactionType',
-            'transaction.config.accountFrom.config',
-            'transaction.config.accountTo.config',
-        ])
-        ->whereHas('transaction', function ($query) use($year, $month) {
-            $query->where('user_id', Auth::user()->id)
-                ->when(is_null($month), function($query) use ($year) {
+        // Final result placeholder
+        $dataByCategory = [];
+
+        if ($transactionType === 'all' || $transactionType === 'standard') {
+            // Get all standard transactions with related categories
+            $standardTransactions = TransactionItem::with([
+                'category',
+                'transaction',
+                'transaction.transactionType',
+                'transaction.config.accountFrom.config',
+                'transaction.config.accountTo.config',
+            ])
+            ->whereHas('transaction', function ($query) use($year, $month) {
+                $query->where('user_id', Auth::user()->id)
+                    ->when(is_null($month), function($query) use ($year) {
+                    return $query->whereRaw('YEAR(date) = ?', [$year]);
+                })
+                ->when($year && $month, function($query) use ($year, $month) {
+                    return $query->whereRaw('YEAR(date) = ?', [$year])
+                                ->whereRaw('MONTH(date) = ?', [$month]);
+                })
+                ->byScheduleType('none')
+                ->where('config_type', 'transaction_detail_standard')
+                ->where(
+                    'transaction_type_id',
+                    '!=',
+                    TransactionType::where('name', '=', 'transfer')->first()->id
+                );
+            })
+            ->get();
+
+            $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRates) {
+                // Determine the category group. This should be the top level category ideally.
+                $category = $item->category?->parent?->name ?? $item->category?->name ?? 'No category assigned';
+
+                // Ensure that we have an array element for the category
+                if (! array_key_exists($category, $dataByCategory)) {
+                    $dataByCategory[$category] = 0;
+                }
+
+                // Get the currency and determine currency rate
+                $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
+                if ($currency_id !== $baseCurrency->id) {
+                    $rate = $allRates
+                        ->where('from_id', $currency_id)
+                        ->firstWhere('date_from', '<=', $item->transaction->date);
+                } else {
+                    $rate = null;
+                }
+
+                $dataByCategory[$category] += ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount * ($rate ? $rate->rate : 1);
+            });
+        }
+
+        if ($transactionType === 'all' || $transactionType === 'investment') {
+            // Add investment transaction results
+            $investmentTransactions = Transaction::with([
+                'transactionType',
+                'config.account.config',
+            ])
+            //->where('config_type', 'transaction_detail_investment')
+            ->whereIn(
+                'transaction_type_id',
+                TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
+            )
+            ->where('user_id', Auth::user()->id)
+            ->when(is_null($month), function($query) use ($year) {
                 return $query->whereRaw('YEAR(date) = ?', [$year]);
             })
             ->when($year && $month, function($query) use ($year, $month) {
                 return $query->whereRaw('YEAR(date) = ?', [$year])
                             ->whereRaw('MONTH(date) = ?', [$month]);
             })
-            ->byScheduleType('none')
-            ->where('config_type', 'transaction_detail_standard')
-            ->where(
-                'transaction_type_id',
-                '!=',
-                TransactionType::where('name', '=', 'transfer')->first()->id
-            );
-        })
-        ->get();
+            ->get();
 
-        // Summarize items, applying currency rate
-        $dataByCategory = [];
+            $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRates) {
+                // Determine the category group. This should be the top level category ideally.
+                $category = ($transaction->transactionType->amount_operator === 'plus' ? 'Investment income' : 'Investment payment');
 
-        $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRates) {
-            // Determine the category group. This should be the top level category ideally.
-            $category = $item->category?->parent?->name ?? $item->category?->name ?? 'No category assigned';
+                // Ensure that we have an array element for the category
+                if (! array_key_exists($category, $dataByCategory)) {
+                    $dataByCategory[$category] = 0;
+                }
 
-            // Ensure that we have an array element for the category
-            if (! array_key_exists($category, $dataByCategory)) {
-                $dataByCategory[$category] = 0;
-            }
+                // Get the currency and determine currency rate
+                $currency_id = $transaction->config->account->config->currency_id;
+                if ($currency_id !== $baseCurrency->id) {
+                    $rate = $allRates
+                        ->where('from_id', $currency_id)
+                        ->firstWhere('date_from', '<=', $transaction->date);
+                } else {
+                    $rate = null;
+                }
 
-            // Get the currency and determine currency rate
-            $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
-            if ($currency_id !== $baseCurrency->id) {
-                $rate = $allRates
-                    ->where('from_id', $currency_id)
-                    ->firstWhere('date_from', '<=', $item->transaction->date);
-            } else {
-                $rate = null;
-            }
-
-            $dataByCategory[$category] += ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount * ($rate ? $rate->rate : 1);
-        });
-
-        // Add investment transaction results
-        $investmentTransactions = Transaction::with([
-            'transactionType',
-            'config.account.config',
-        ])
-        //->where('config_type', 'transaction_detail_investment')
-        ->whereIn(
-            'transaction_type_id',
-            TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
-        )
-        ->where('user_id', Auth::user()->id)
-        ->when(is_null($month), function($query) use ($year) {
-            return $query->whereRaw('YEAR(date) = ?', [$year]);
-        })
-        ->when($year && $month, function($query) use ($year, $month) {
-            return $query->whereRaw('YEAR(date) = ?', [$year])
-                        ->whereRaw('MONTH(date) = ?', [$month]);
-        })
-        ->get();
-
-        $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRates) {
-            // Determine the category group. This should be the top level category ideally.
-            $category = ($transaction->transactionType->amount_operator === 'plus' ? 'Investment income' : 'Investment payment');
-
-            // Ensure that we have an array element for the category
-            if (! array_key_exists($category, $dataByCategory)) {
-                $dataByCategory[$category] = 0;
-            }
-
-            // Get the currency and determine currency rate
-            $currency_id = $transaction->config->account->config->currency_id;
-            if ($currency_id !== $baseCurrency->id) {
-                $rate = $allRates
-                    ->where('from_id', $currency_id)
-                    ->firstWhere('date_from', '<=', $transaction->date);
-            } else {
-                $rate = null;
-            }
-
-            $dataByCategory[$category] += $transaction->cashflowValue() * ($rate ? $rate->rate : 1);
-        });
+                $dataByCategory[$category] += $transaction->cashflowValue() * ($rate ? $rate->rate : 1);
+            });
+        }
 
 
         $result = [];

@@ -16,6 +16,48 @@
             </p>
             <div id="categoryWaterfallChart" ref="chartdiv" v-show="ready"></div>
         </div>
+        <div class="card-footer text-end">
+            <div class="btn-group" role="group" aria-label="Transaction type selector for category waterfall chart">
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_All"
+                    value="all"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_All">All transactions</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_Standard"
+                    value="standard"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_Standard">Only standard</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_Investment"
+                    value="investment"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_Investment">Only investment</label>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -31,15 +73,21 @@ export default {
         categoryAxisVisible: {
             type: Boolean,
             default: false,
+        },
+        transactionType: {
+            type: String,
+            default: 'all',
         }
     },
     data() {
         return {
+            busy: false,
             baseCurrency: window.YAFFA.baseCurrency,
             locale: window.YAFFA.locale,
             rawData: [],
             year: new Date().getFullYear(),
             month: new Date().getMonth() + 1,
+            transactionTypeData: this.transactionType,
             ready: false,
         }
     },
@@ -157,12 +205,27 @@ export default {
         },
 
         refreshData() {
+            if (this.busy) {
+                return;
+            }
+
+            this.busy = true;
             this.ready = false;
             let $vm = this;
 
-            axios.get('/api/reports/waterfall/result/' + this.year + '/' + this.month)
-                .then(function(response) {
-                    $vm.rawData = response.data.chartData;
+            let url = '/api/reports/waterfall/' + this.transactionTypeData + '/result/' + this.year + '/' + this.month;
+            let options = {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json;charset=UTF-8",
+                },
+            };
+
+            fetch(url, options)
+                .then((response) => response.json())
+                .then((data) => {
+                    $vm.rawData = data.chartData;
 
                     if (!$vm.rawData || $vm.rawData.length === 0) {
                         $vm.noDataMessagecontainer.show();
@@ -172,10 +235,11 @@ export default {
 
                     $vm.ready = true;
                 })
+                .finally(() => $vm.busy = false)
                 .catch(function(error) {
                     console.log(error);
-                })
-            }
+                });
+        },
     },
     computed: {
         chartData() {
@@ -242,11 +306,13 @@ export default {
         }
     },
     updated() {
-        if (this.chart) {
-            // Update chart based on props
-            this.chart.data = this.chartData;
-            this.chart.validateData();
+        if (!this.chart) {
+            return;
         }
+
+        // Update chart based on props
+        this.chart.data = this.chartData;
+        this.chart.validateData();
     },
 }
 </script>
