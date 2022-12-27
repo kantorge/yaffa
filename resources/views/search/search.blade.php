@@ -28,8 +28,8 @@
             <div class="card border-top-3 mb-3 {{ $results['accounts']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-accounts" aria-expanded="true" aria-controls="collapse-search-results-accounts">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-accounts" aria-expanded="true" aria-controls="collapse-search-results-accounts">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Accounts') }} ({{$results['accounts']->count()}})
                         </span>
                     </div>
@@ -75,8 +75,8 @@
             <div class="card border-top-3 mb-3 {{ $results['payees']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-payees" aria-expanded="true" aria-controls="collapse-search-results-payees">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-payees" aria-expanded="true" aria-controls="collapse-search-results-payees">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Payees') }} ({{$results['payees']->count()}})
                         </span>
                     </div>
@@ -123,8 +123,8 @@
             <div class="card border-top-3 mb-3 {{ $results['investments']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-investments" aria-expanded="true" aria-controls="collapse-search-results-investments">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-investments" aria-expanded="true" aria-controls="collapse-search-results-investments">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Investments') }} ({{$results['investments']->count()}})
                         </span>
                     </div>
@@ -153,8 +153,8 @@
             <div class="card border-top-3 mb-3 {{ $results['tags']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-tags" aria-expanded="true" aria-controls="collapse-search-results-tags">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-tags" aria-expanded="true" aria-controls="collapse-search-results-tags">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Tags') }} ({{$results['tags']->count()}})
                         </span>
                     </div>
@@ -183,8 +183,8 @@
             <div class="card border-top-3 mb-3 {{ $results['categories']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-categories" aria-expanded="true" aria-controls="collapse-search-results-categories">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-categories" aria-expanded="true" aria-controls="collapse-search-results-categories">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Categories') }} ({{$results['categories']->count()}})
                         </span>
                     </div>
@@ -213,8 +213,8 @@
             <div class="card border-top-3 mb-3 {{ $results['transactions']->count() ? 'border-top-success' : 'border-top-default' }}">
                 <div class="card-header">
                     <div class="card-title collapse-control">
-                        <span class="collapsed" data-toggle="collapse" href="#collapse-search-results-transactions" aria-expanded="true" aria-controls="collapse-search-results-transactions">
-                            <i class="fa fa-chevron-down"></i>
+                        <span class="collapsed" data-coreui-toggle="collapse" href="#collapse-search-results-transactions" aria-expanded="true" aria-controls="collapse-search-results-transactions">
+                            <i class="fa fa-angle-down"></i>
                             {{ __('Transactions') }} ({{$results['transactions']->count()}})
                         </span>
                     </div>

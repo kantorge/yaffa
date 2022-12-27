@@ -52,7 +52,7 @@
         <ul class="nav-group-items">
             <li class="nav-item"><a class="nav-link" href="{{ route('transactions.createStandard') }}"><i class="nav-icon cil-cart"></i> {{ __('New transaction') }}</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('transactions.createInvestment') }}"><i class="nav-icon cil-chart-line"></i> {{ __('New investment transaction') }}</a></li>
-            {{-- <li class="nav-item"><a class="nav-link" href="{{ route('import.csv') }}"><i class="nav-icon cil-cloud-upload"></i> {{ __('Import transactions') }}</a></li> --}}
+            <li class="nav-item"><a class="nav-link" href="{{ route('import.csv') }}"><i class="nav-icon cil-cloud-upload"></i> {{ __('Import transactions') }}</a></li>
         </ul>
     </li>
 </ul>

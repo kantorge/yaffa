@@ -33,17 +33,18 @@
                     ><span class="fa fa-copy"></span></button>
                 </div>
             </div>
-            <div class="col-12 col-sm-3 form-group transaction_detail_container d-xs-none">
+            <div class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block">
                 <label class="control-label">
                     {{ __('Tags') }}
                 </label>
                 <select
                     class="form-select tag"
                     multiple="multiple"
+                    data-width="100%"
                     v-model="tagsData">
                 </select>
             </div>
-            <div class="col-12 col-sm-2 form-group transaction_detail_container d-xs-none">
+            <div class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block">
                 <label class="control-label">
                     {{ __('Comment') }}
                 </label>
@@ -144,7 +145,9 @@
                 },
                 selectOnClose: true,
                 placeholder: __("Select category"),
-                allowClear: true
+                allowClear: true,
+                // Component should not be aware where it is used, but we need to hint Select2
+                dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
             })
             .on('select2:select select2:unselect', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
@@ -206,9 +209,10 @@
                     },
                     cache: true
                 },
-                //selectOnClose: true,
                 placeholder: __('Select tag(s)'),
-                allowClear: true
+                allowClear: true,
+                // Component should not be aware where it is used, but we need to hint Select2
+                dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
             })
             .on('select2:select select2:unselect', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
@@ -264,7 +268,7 @@
 
             // Toggle the visibility of event details (comment / tags)
             toggleItemDetails() {
-                $(this.$el).find(".transaction_detail_container").toggleClass('d-xs-none');
+                $(this.$el).find(".transaction_detail_container").toggleClass('d-none d-md-block');
             },
 
             // Add the currently available remainder amount to this item
@@ -284,11 +288,3 @@
         }
     }
 </script>
-
-<style scoped>
-    @media (max-width: 575.98px) {
-        .d-xs-none {
-            display: none;
-        }
-    }
-</style>

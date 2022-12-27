@@ -26,7 +26,7 @@
             >
                 <div class="d-flex justify-content-between">
                     <span
-                        data-toggle="collapse"
+                        data-coreui-toggle="collapse"
                         data-parent="#accordionAccountBalance"
                         :href="'#collapse_' + accountGroupId"
                         :aria-controls="'#collapse_' + accountGroupId"
@@ -145,16 +145,16 @@ export default {
 </script>
 
 <style scoped>
-    #accordionAccountBalance span[data-toggle="collapse"].collapsed > i.fa-angle-right {
+    #accordionAccountBalance span[data-coreui-toggle="collapse"].collapsed > i.fa-angle-right {
         display: inline;
     }
-    #accordionAccountBalance span[data-toggle="collapse"]:not(.collapsed) > i.fa-angle-right {
+    #accordionAccountBalance span[data-coreui-toggle="collapse"]:not(.collapsed) > i.fa-angle-right {
         display: none;
     }
-    #accordionAccountBalance span[data-toggle="collapse"].collapsed > i.fa-angle-down {
+    #accordionAccountBalance span[data-coreui-toggle="collapse"].collapsed > i.fa-angle-down {
         display: none;
     }
-    #accordionAccountBalance span[data-toggle="collapse"]:not(.collapsed) > i.fa-angle-down {
+    #accordionAccountBalance span[data-coreui-toggle="collapse"]:not(.collapsed) > i.fa-angle-down {
         display: inline;
     }
 </style>

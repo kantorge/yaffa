@@ -22,11 +22,11 @@
                     <div class="row">
                         <div class="col-6">
                             <label for="date_from" class="form-label">{{ __('Date from') }}</label>
-                            <input type="text" class="form-control" name="date_from" id="date_from" placeholder="Select date" autocomplete="off">
+                            <input type="text" class="form-control" name="date_from" id="date_from" placeholder="{{ __('Select date') }}" autocomplete="off">
                         </div>
                         <div class="col-6">
                             <label for="date_to" class="form-label">{{ __('Date to') }}</label>
-                            <input type="text" class="form-control" name="date_to" id="date_to" placeholder="Select date" autocomplete="off">
+                            <input type="text" class="form-control" name="date_to" id="date_to" placeholder="{{ __('Select date') }}" autocomplete="off">
                         </div>
                     </div>
                 </div>

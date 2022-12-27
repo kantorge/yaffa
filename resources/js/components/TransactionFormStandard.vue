@@ -998,7 +998,8 @@
 
     // Initialize tooltips
     // TODO: how to better support dynamic icons?
-    $('[data-toggle="tooltip"]').tooltip();
+    const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]');
+    Array.from(tooltipTriggerList).map(tooltipTriggerEl => new coreui.Tooltip(tooltipTriggerEl));
 </script>
 
 <style scoped>
