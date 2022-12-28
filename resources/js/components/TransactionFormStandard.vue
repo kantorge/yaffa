@@ -863,6 +863,8 @@
                     placeholder: this.getPlaceholder(type),
                     allowClear: true,
                     width: 'resolve',
+                    // Component should not be aware where it is used, but we need to hint Select2
+                    dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
                 };
             },
 
