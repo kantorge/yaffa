@@ -238,22 +238,35 @@ class TransactionApiController extends Controller
             });
 
         // Get investment transactions matching any provided criteria
-        $investmentQuery = Transaction::where('user_id', $user->id)
+        // This part of the query is run only if relevant search criteria is provided
+        if ($request->hasAny([
+            'date_from',
+            'date_to',
+            'accounts',
+        ])) {
+            $investmentQuery = Transaction::where('user_id', $user->id)
+                ->byScheduleType('none')
+                ->where('config_type', 'transaction_detail_investment')
+                ->when($request->has('date_from'), function ($query) use ($request) {
+                    $query->where('date', '>=', $request->get('date_from'));
+                })
+                ->when($request->has('date_to'), function ($query) use ($request) {
+                    $query->where('date', '<=', $request->get('date_to'));
+                })
+                ->when($request->has('accounts') && $request->get('accounts'), function ($query) use ($request) {
+                    $query->whereIn('config_id', function ($query) use ($request) {
+                        $query->select('id')
+                            ->from('transaction_details_investment')
+                            ->whereIn('account_id', $request->get('accounts'));
+                    });
+                });
+        } else {
+            $investmentQuery = Transaction::where('user_id', $user->id)
             ->byScheduleType('none')
             ->where('config_type', 'transaction_detail_investment')
-            ->when($request->has('date_from'), function ($query) use ($request) {
-                $query->where('date', '>=', $request->get('date_from'));
-            })
-            ->when($request->has('date_to'), function ($query) use ($request) {
-                $query->where('date', '<=', $request->get('date_to'));
-            })
-            ->when($request->has('accounts') && $request->get('accounts'), function ($query) use ($request) {
-                $query->whereIn('config_id', function ($query) use ($request) {
-                    $query->select('id')
-                        ->from('transaction_details_investment')
-                        ->whereIn('account_id', $request->get('accounts'));
-                });
-            });
+            // TODO: How to create a a query with no results in a more simple way?
+            ->where('id', null);
+        }
 
         // Return only count of transactions if requested
         if ($onlyCount) {
