@@ -106,7 +106,13 @@ fetch(url)
         window.chartData = data.map(function(item) {
             item.value = item.quantity * item.last_price;
 
-            item.formatted_quantity = item.quantity.toLocalQuantity(4, false);
+            item.formatted_quantity = item.quantity.toLocaleString(
+                window.YAFFA.locale,
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4,
+                }
+            );
             item.formatted_value = item.value.toLocalCurrency(item.currency, false);
 
             return item;

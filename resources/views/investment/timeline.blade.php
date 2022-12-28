@@ -17,17 +17,19 @@
                         {{ __('Open') }}
                     </label>
                     <div>
-                        <div class="btn-group" role="group" data-toggle="buttons">
-                            <label class="btn btn-primary" title="{{ __('Yes') }}">
-                                <input type="radio" class="btn-check" name="open" value="{{ __('Yes') }}">
+                        <div class="btn-group" role="group" aria-label="Toggle button group for open">
+                            <input type="radio" class="btn-check" name="open" id="open_yes" value="{{ __('Yes') }}">
+                            <label class="btn btn-outline-primary" for="open_yes" title="{{ __('Yes') }}">
                                 <span class="fa fa-fw fa-check"></span>
                             </label>
-                            <label class="btn btn-primary active" title="{{ __('Any') }}">
-                                <input type="radio" name="open" value="" class="btn-check" checked="checked">
+
+                            <input type="radio" class="btn-check" name="open" id="open_any" value="" checked>
+                            <label class="btn btn-outline-primary" for="open_any" title="{{ __('Any') }}">
                                 <span class="fa fa-fw fa-circle"></span>
                             </label>
-                            <label class="btn btn-primary" title="{{ __('No') }}">
-                                <input type="radio" class="btn-check" name="open" value="{{ __('No') }}">
+
+                            <input type="radio" class="btn-check" name="open" id="open_no" value="{{ __('No') }}">
+                            <label class="btn btn-outline-primary" for="open_no" title="{{ __('No') }}">
                                 <span class="fa fa-fw fa-close"></span>
                             </label>
                         </div>

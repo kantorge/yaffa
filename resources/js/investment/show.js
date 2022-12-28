@@ -275,14 +275,14 @@ window.calculateSummary = function() {
         return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
     });
 
-    window.summary.Buying.value = filtered.filter(trx => trx.transaction_type == 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-    window.summary.Added.value = filtered.filter(trx => trx.transaction_type == 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Removed.value = filtered.filter(trx => trx.transaction_type == 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Selling.value = filtered.filter(trx => trx.transaction_type == 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Buying.value = filtered.filter(trx => trx.transaction_type.name === 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+    window.summary.Added.value = filtered.filter(trx => trx.transaction_type.name === 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Removed.value = filtered.filter(trx => trx.transaction_type.name === 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
+    window.summary.Selling.value = filtered.filter(trx => trx.transaction_type.name === 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
     window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
     window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
     window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);
-    window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
+    window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.transaction_type.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
 
     var lastPrice;
     if (prices.length > 0) {

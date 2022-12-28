@@ -49,7 +49,7 @@ Route::get('/transactions', [TransactionApiController::class, 'findTransactions'
 
 Route::get(
     '/transactions/get_scheduled_items/{type}',
-    'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
+    [TransactionApiController::class,'getScheduledItems']
 )
 ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
 Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])->name('api.transactions.storeStandard');
@@ -59,6 +59,8 @@ Route::patch('/transactions/{transaction}/skip', [TransactionApiController::clas
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
+
+Route::resource('transactions', TransactionApiController::class)->only(['destroy']);
 
 /*
 Route::post('/token', function (Request $request) {

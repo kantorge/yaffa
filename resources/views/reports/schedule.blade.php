@@ -16,17 +16,19 @@
                         {{ __('Schedule') }}
                     </label>
                     <div>
-                        <div class="btn-group" data-toggle="buttons">
-                            <label class="btn btn-primary" title="{{ __('Yes') }}">
-                                <input type="radio" name="schedule" value="{{ __('Yes') }}" class="btn-check">
+                        <div class="btn-group" role="group" aria-label="Toggle button group for schedules">
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_yes" value="{{ __('Yes') }}">
+                            <label class="btn btn-outline-primary" for="schedule_yes" title="{{ __('Yes') }}">
                                 <span class="fa fa-fw fa-check"></span>
                             </label>
-                            <label class="btn btn-primary active" title="{{ __('Any') }}">
-                                <input type="radio" name="schedule" value="" class="btn-check" checked="checked">
+
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_any" value="" checked>
+                            <label class="btn btn-outline-primary" for="schedule_any" title="{{ __('Any') }}">
                                 <span class="fa fa-fw fa-circle"></span>
                             </label>
-                            <label class="btn btn-primary" title="{{ __('No') }}">
-                                <input type="radio" name="schedule" value="{{ __('No') }}" class="btn-check">
+
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_no" value="{{ __('No') }}">
+                            <label class="btn btn-outline-primary" for="schedule_no" title="{{ __('No') }}">
                                 <span class="fa fa-fw fa-close"></span>
                             </label>
                         </div>
@@ -37,17 +39,19 @@
                         {{ __('Budget') }}
                     </label>
                     <div>
-                        <div class="btn-group" data-toggle="buttons">
-                            <label class="btn btn-primary" title="{{ __('Yes') }}">
-                                <input type="radio" name="budget" value="{{ __('Yes') }}" class="btn-check">
+                        <div class="btn-group" role="group" aria-label="Toggle button group for budgets">
+                            <input type="radio" class="btn-check" name="budget" id="budget_yes" value="{{ __('Yes') }}">
+                            <label class="btn btn-outline-primary" for="budget_yes" title="{{ __('Yes') }}">
                                 <span class="fa fa-fw fa-check"></span>
                             </label>
-                            <label class="btn btn-primary active" title="{{ __('Any') }}">
-                                <input type="radio" name="budget" value="" class="btn-check" checked="checked">
+
+                            <input type="radio" class="btn-check" name="budget" id="budget_any" value="" checked>
+                            <label class="btn btn-outline-primary" for="budget_any" title="{{ __('Any') }}">
                                 <span class="fa fa-fw fa-circle"></span>
                             </label>
-                            <label class="btn btn-primary" title="{{ __('No') }}">
-                                <input type="radio" name="budget" value="{{ __('No') }}" class="btn-check">
+
+                            <input type="radio" class="btn-check" name="budget" id="budget_no" value="{{ __('No') }}">
+                            <label class="btn btn-outline-primary" for="budget_no" title="{{ __('No') }}">
                                 <span class="fa fa-fw fa-close"></span>
                             </label>
                         </div>

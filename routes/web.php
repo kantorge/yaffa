@@ -22,7 +22,7 @@ Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('hom
 Route::view('/terms', 'pages.terms')->name('terms');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
-Route::resource('account-entity', AccountEntityController::class)->except(['show']);
+Route::resource('account-entity', AccountEntityController::class);
 
 Route::get(
     '/account/history/{account}/{withForecast?}',

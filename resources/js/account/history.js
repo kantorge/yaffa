@@ -3,6 +3,9 @@ require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 
+const selectorScheduleTable = '#scheduleTable';
+const selectorHistoryTable = '#historyTable';
+
 // Table data transformation
 window.transactionData = window.transactionData.map(function (transaction) {
     if (transaction.date) {
@@ -48,7 +51,7 @@ var dtColumnSettingPayee = {
         if (row.transaction_type.type === 'Opening balance') {
             return __('Opening balance');
         }
-        return null;
+        return '';
     },
 };
 var dtColumnSettingCategories = {
@@ -85,7 +88,7 @@ var dtColumnSettingCategories = {
     orderable: false
 };
 
-var dtHistory = $('#historyTable').DataTable({
+$(selectorHistoryTable).DataTable({
     data: transactionData,
     columns: [
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
@@ -214,7 +217,7 @@ var dtHistory = $('#historyTable').DataTable({
     paging: false,
 });
 
-$('#scheduleTable').DataTable({
+$(selectorScheduleTable).DataTable({
     data: scheduleData,
     columns: [
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
@@ -282,12 +285,13 @@ $('#scheduleTable').DataTable({
 
 dataTableHelpers.initializeSkipInstanceButton("#historyTable, #scheduleTable");
 dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
+dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
 
 $('input[name=reconciled]').on("change", function () {
-    $('#historyTable').DataTable().column(1).search(this.value).draw();
+    $(selectorHistoryTable).DataTable().column(1).search(this.value).draw();
 });
 
-$("#historyTable").on("click", "i.reconcile", function () {
+$(selectorHistoryTable).on("click", "i.reconcile", function () {
     if ($(this).hasClass("fa-spinner")) {
         return false;
     }
@@ -304,76 +308,14 @@ $("#historyTable").on("click", "i.reconcile", function () {
         },
         dataType: "json",
         context: this,
-        success: function (data) {
-            if (data.success) {
-                currentState = !currentState;
-            }
+        success: function (_data) {
+            currentState = !currentState;
 
             $(this).removeClass()
                 .addClass('fa reconcile')
                 .addClass((currentState ? "fa-check-circle text-success" : "fa-circle text-info"))
                 .data("reconciled", currentState);
         }
-    });
-});
-
-$('#historyTable').on('click', 'button.transaction-quickview', function () {
-    let icon = this.querySelector('i');
-    // If spinner is displayed, do not initiate another request
-    if (icon.classList.contains("fa-spinner")) {
-        return false;
-    }
-
-    const originalIconClass = icon.className;
-    icon.className = "fa fa-fw fa-spin fa-spinner";
-
-    fetch('/api/transaction/' + this.dataset.id)
-    .then(function(response) {
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        return response;
-    }).then(response => response.json())
-    .then(function(data) {
-        let transaction = data.transaction;
-
-        // Convert dates to Date objects
-        if (transaction.date) {
-            transaction.date = new Date(transaction.date);
-        }
-        if (transaction.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
-            }
-            if (transaction.transaction_schedule.end_date) {
-                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-            }
-            if (transaction.transaction_schedule.next_date) {
-                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-            }
-        }
-
-        // Emit global event for modal to display
-        let event = new CustomEvent('showTransactionQuickviewModal', {
-            detail: {
-                transaction: transaction,
-                controls: {
-                    show: true,
-                    edit: true,
-                    clone: true,
-                    skip: true,
-                    enter: true,
-                    delete: true,
-                }
-            }
-        });
-        window.dispatchEvent(event);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
-    .finally(() => {
-        icon.className = originalIconClass;
     });
 });
 

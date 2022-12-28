@@ -105,72 +105,8 @@ window.table = $("#dataTable").DataTable({
             defaultContent: '',
             data: 'config.account_to.name',
         },
-        {
-            title: __("Category"),
-            defaultContent: '',
-            render: function (_data, _type, row) {
-                // Standard transaction
-                if (row.transaction_type.type === 'standard') {
-                    // Empty
-                    if (row.categories.length === 0) {
-                        return __('Not set');
-                    }
-
-                    if (row.categories.length > 1) {
-                        return __('Split transaction');
-                    } else {
-                        return row.categories[0];
-                    }
-                }
-                // Investment transaction
-                if (row.transaction_type.type === 'investment') {
-                    if (!row.quantityOperator) {
-                        return row.transaction_type;
-                    }
-                    if (!row.transactionOperator) {
-                        return row.transaction_type + " " + row.quantity;
-                    }
-
-                    return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
-                }
-
-                return __('Not set');
-            },
-            orderable: false
-        },
-        {
-            title: __('Amount'),
-            defaultContent: '',
-            render: function (_data, _type, row) {
-                // Standard transaction
-                if (row.transaction_type.type === 'standard') {
-                    let prefix = '';
-                    if (row.transaction_operator === 'minus') {
-                        prefix = '- ';
-                    }
-                    if (row.transaction_operator === 'plus') {
-                        prefix = '+ ';
-                    }
-                    return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.currency);
-                }
-                // Investment transaction
-                /* not implemented yet
-                if (row.transaction_type.type === 'investment') {
-                    if (!row.quantityOperator) {
-                        return row.transaction_type;
-                    }
-                    if (!row.transactionOperator) {
-                        return row.transaction_type + " " + row.quantity;
-                    }
-
-                    return row.transaction_type + " " + row.quantity + " @ " + numberRenderer(row.price);
-                }
-                */
-
-                return '';
-            },
-            className : "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefiniton.amount,
         {
             title: __("Extra"),
             defaultContent: '',
@@ -212,6 +148,7 @@ window.table = $("#dataTable").DataTable({
 
 // Delete transaction icon functionality
 dataTableHelpers.initializeDeleteButton('#dataTable');
+dataTableHelpers.initializeQuickViewButton('#dataTable');
 
 // Function to reload table data
 function reloadTable() {
@@ -227,69 +164,6 @@ function reloadTable() {
 // Reload button functionality
 $("#reload").on('click', reloadTable);
 
-// Quick view button functionality
-// TODO: this could be unified accross the app, with some flexibility on the table selector and control settings
-// TODO: can we rely on some cases, where the transaction data is available, and no API call is necessary?
-$('#dataTable').on('click', 'button.transaction-quickview', function () {
-    let icon = this.querySelector('i');
-    // If spinner is displayed, do not initiate another request
-    if (icon.classList.contains("fa-spinner")) {
-        return false;
-    }
-
-    const originalIconClass = icon.className;
-    icon.className = "fa fa-fw fa-spin fa-spinner";
-
-    fetch('/api/transaction/' + this.dataset.id)
-    .then(function(response) {
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        return response;
-    }).then(response => response.json())
-    .then(function(data) {
-        let transaction = data.transaction;
-
-        // Convert dates to Date objects
-        if (transaction.date) {
-            transaction.date = new Date(transaction.date);
-        }
-        if (transaction.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
-            }
-            if (transaction.transaction_schedule.end_date) {
-                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-            }
-            if (transaction.transaction_schedule.next_date) {
-                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-            }
-        }
-
-        // Emit global event for modal to display
-        let event = new CustomEvent('showTransactionQuickviewModal', {
-            detail: {
-                transaction: transaction,
-                controls: {
-                    show: true,
-                    edit: true,
-                    clone: true,
-                    skip: true,
-                    enter: true,
-                    delete: true,
-                }
-            }
-        });
-        window.dispatchEvent(event);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
-    .finally(() => {
-        icon.className = originalIconClass;
-    });
-});
-
 $("#clear_dates").on('click', function() {
     dateRangePicker.setDates(
         {clear: true},
@@ -300,6 +174,24 @@ $("#clear_dates").on('click', function() {
 $(".clear-select").on('click', function() {
     $("#" + $(this).data("target")).val(null).trigger('change');
 })
+
+// Set initial dates
+if (filters.date_from || filters.date_to) {
+    const start = (filters.date_from ? filters.date_from : {clear: true});
+    const end = (filters.date_to ? filters.date_to : {clear: true});
+
+    dateRangePicker.setDates(
+        start,
+        end
+    );
+
+    presetFilters.date_from = true;
+    presetFilters.date_to = true;
+    // If all preset filters are ready, reload table data
+    if (presetFilters.ready()) {
+        reloadTable();
+    }
+}
 
 // Account filter select2 functionality
 $(elementAccountSelector).select2({
@@ -535,6 +427,17 @@ if (filters.tags) {
 let rebuildUrl = function () {
     let params = [];
 
+    const dates = dateRangePicker.getDates('yyyy-mm-dd');
+    // Date from
+    if (dates[0]) {
+        params.push('date_from=' + dates[0]);
+    }
+
+    // Date to
+    if (dates[1]) {
+        params.push('date_to=' + dates[1]);
+    }
+
     // Accounts
     const accounts = $(elementAccountSelector).val().map((item) => 'accounts[]=' + item);
     params.push(...accounts);
@@ -553,6 +456,7 @@ let rebuildUrl = function () {
 
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
 }
+
 $(elementAccountSelector).on('select2:select', rebuildUrl);
 $(elementAccountSelector).on('select2:unselect', rebuildUrl);
 $(elementCategorySelectSelector).on('select2:select', rebuildUrl);
@@ -561,7 +465,8 @@ $(elementPayeeSelector).on('select2:select', rebuildUrl);
 $(elementPayeeSelector).on('select2:unselect', rebuildUrl);
 $(elementTagSelector).on('select2:select', rebuildUrl);
 $(elementTagSelector).on('select2:unselect', rebuildUrl);
-
+document.getElementById('date_from').addEventListener('changeDate', rebuildUrl);
+document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
 
 import { createApp } from 'vue'
 const app = createApp({})

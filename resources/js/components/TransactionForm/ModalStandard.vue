@@ -1,12 +1,10 @@
 <template>
-    <div class="modal fade" id="modal-transaction-form-standard" style="display: none;">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade" id="modal-transaction-form-standard">
+        <div class="modal-dialog modal-xxl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                    <h4 class="modal-title" v-html="modalTitle"></h4>
+                    <h5 class="modal-title" v-html="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <transaction-form-standard
@@ -19,9 +17,7 @@
                     ></transaction-form-standard>
                 </div>
             </div>
-            <!-- /.modal-content -->
         </div>
-        <!-- /.modal-dialog -->
     </div>
 </template>
 
@@ -38,11 +34,12 @@
             return {
                 transaction: {},
                 action: '',
+                modal: undefined,
             };
         },
         methods: {
             onCancel() {
-                $('#modal-transaction-form-standard').modal('hide')
+                this.modal.hide();
             },
             onSuccess(transaction) {
                 // Emit a custom event to global scope about the new transaction to be displayed as a notification
@@ -69,17 +66,19 @@
                 window.dispatchEvent(transactionEvent);
 
                 // Hide the modal
-                $('#modal-transaction-form-standard').modal('hide')
+                this.modal.hide();
             },
             onInitiateEnterInstance(transaction) {
                 this.action = 'enter';
                 this.transaction = transaction;
-                $('#modal-transaction-form-standard').modal('show');
+
+                this.modal.show();
             },
             onInitiateCreateDraft(transaction) {
                 this.action = 'create';
                 this.transaction = transaction;
-                $('#modal-transaction-form-standard').modal('show');
+
+                this.modal.show();
             },
         },
         mounted() {
@@ -94,6 +93,9 @@
             window.addEventListener('initiateCreateFromDraft', function(event) {
                 $vm.onInitiateCreateDraft(event.detail.transaction);
             });
+
+            // Initialize modal
+            this.modal = new coreui.Modal(document.getElementById('modal-transaction-form-standard'));
         },
         computed: {
             modalTitle() {
@@ -114,8 +116,9 @@
 </script>
 
 <style scoped>
-    .modal-xl {
-        max-width: 90%;
-        width: auto !important;
+    @media (min-width: 1200px) {
+        .modal-xxl {
+            --cui-modal-width: 1800px;
+        }
     }
 </style>

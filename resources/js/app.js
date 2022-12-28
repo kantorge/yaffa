@@ -25,27 +25,6 @@ Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
     return result;
 };
 
-Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    maximumFractionDigits = maximumFractionDigits || 4;
-
-    var result = this.toLocaleString('hu-HU',
-        {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: maximumFractionDigits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};
-
 Date.prototype.datePart = function () {
     var d = new Date(this);
     d.setHours(0, 0, 0, 0);
@@ -78,6 +57,10 @@ if (   window.location.pathname === '/account-entity'
     && /type=payee/.test(window.location.search)) {
     require('./payees/index');
 }
+if (/^\/account-entity\/\d+/.test(window.location.pathname)) {
+    require('./account/show');
+}
+
 if (   /^\/account-entity\/(create|\d+\/edit)/.test(window.location.pathname)
     && /type=payee/.test(window.location.search)) {
     require('./payees/form');
@@ -181,7 +164,7 @@ $(function() {
         if (this.value == '') {
             return false;
         }
-        window.location.href = route('account.history', { account: this.value });
+        window.location.href = route('account-entity.show', { account_entity: this.value });
     });
 
     // Generally available cancel button with confirmation

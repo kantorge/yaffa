@@ -4,9 +4,6 @@ require("datatables.net-responsive-bs5");
 import * as dataTableHelpers from '../components/dataTableHelper';
 
 import { RRule } from 'rrule';
-import { toFormattedCurrency } from '../helpers';
-
-var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
 
 window.table = $('#table').DataTable({
     ajax: {
@@ -41,7 +38,7 @@ window.table = $('#table').DataTable({
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.start_date', __('Start date'), window.YAFFA.locale),
         {
             data: "schedule_config.rule",
-            title: __("Schedule"),
+            title: __("Schedule settings"),
             render: function (data) {
                 // Return human readable format of RRule
                 // TODO: translation
@@ -49,30 +46,9 @@ window.table = $('#table').DataTable({
             }
         },
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.start_date', __('Next date'), window.YAFFA.locale),
-        {
-            data: "schedule",
-            title: "Schedule",
-            render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
-            },
-            className: "text-center",
-        },
-        {
-            data: "budget",
-            title: __("Budget"),
-            render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
-            },
-            className: "text-center",
-        },
-        {
-            data: "schedule_config.active",
-            title: __("Active"),
-            render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
-            },
-            className: "text-center",
-        },
+        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule', __('Schedule')),
+        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('budget', __('Budget')),
+        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule_config.active', __('Active')),
         {
             data: "transaction_type.type",
             title: __("Type"),
@@ -87,83 +63,9 @@ window.table = $('#table').DataTable({
             },
             className: "text-center",
         },
-        {
-            title: 'Payee',
-            defaultContent: '',
-            render: function (_data, _type, row) {
-                if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type === 'withdrawal') {
-                        return row.config.account_to.name;
-                    }
-                    if (row.transaction_type === 'deposit') {
-                        return row.config.account_from.name;
-                    }
-                    if (row.transaction_type === 'transfer') {
-                        if (row.transaction_operator === 'minus') {
-                            return __('Transfer to :account', {account: row.config.account_to.name});
-                        } else {
-                            return __('Transfer from :account', {account: row.config.account_from.name});
-                        }
-                    }
-                } else if (row.transaction_type.type === 'investment') {
-                    return row.investment_name;
-                }
-
-                return null;
-            },
-        },
-        {
-            title: __("Category"),
-            defaultContent: '',
-            render: function (_data, _type, row) {
-                // Standard transaction
-                if (row.transaction_type.type === 'standard') {
-                    // Empty
-                    if (row.categories.length === 0) {
-                        return '';
-                    }
-
-                    if (row.categories.length > 1) {
-                        return 'Split transaction';
-                    } else {
-                        return row.categories[0];
-                    }
-                }
-                // Investment transaction
-                if (row.transaction_type.type === 'investment') {
-                    if (!row.quantity_operator) {
-                        return row.transaction_type.name;
-                    }
-                    if (!row.transaction_operator) {
-                        return row.transaction_type.name + " " + row.quantity;
-                    }
-
-                    return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
-                }
-
-                return '';
-            },
-            orderable: false
-        },
-        {
-            title: __("Amount"),
-            defaultContent: '',
-            render: function (_data, type, row) {
-                if (type === 'display') {
-                    let prefix = '';
-                    if (row.transaction_operator == 'minus') {
-                        prefix = '- ';
-                    }
-                    if (row.transaction_operator == 'plus') {
-                        prefix = '+ ';
-                    }
-                    return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.currency);
-                }
-
-                return row.config.amount_to;
-            },
-            className: 'dt-nowrap',
-        },
+        dataTableHelpers.transactionColumnDefiniton.payee,
+        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefiniton.amount,
         {
             data: 'comment',
             title: __("Comment"),

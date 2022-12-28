@@ -32,6 +32,36 @@ class AccountEntityController extends Controller
         }
     }
 
+    public function show(AccountEntity $accountEntity, Request $request)
+    {
+        // Load view for Accounts
+        if ($accountEntity->config_type === 'account') {
+            // Get preset filters from query string
+            $filters = [];
+            if ($request->has('date_from')) {
+                $filters['date_from'] = $request->get('date_from');
+            }
+            if ($request->has('date_to')) {
+                $filters['date_to'] = $request->get('date_to');
+            }
+
+            JavaScriptFacade::put([
+                'account' => $accountEntity,
+                'filters' => $filters,
+            ]);
+
+            return view(
+                'account.show',
+                [
+                    'account' => $accountEntity,
+                ]
+            );
+        }
+
+        // Currently no function for Payees, redirect back
+        return redirect()->back();
+    }
+
     /**
      * Display a listing of the resource.
      *

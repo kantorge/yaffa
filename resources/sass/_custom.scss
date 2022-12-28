@@ -22,6 +22,14 @@ td.dt-nowrap {
     display: inline-block;
 }
 
+// Hide/show spinner for busy/idle button in DataTables
+table.dataTable button:not(.busy) i.fa-spinner {
+    display: none;
+}
+table.dataTable button.busy i:not(.fa-spinner) {
+    display: none;
+}
+
 /* Dynamic, clickable icons in DataTables */
 table.dataTable td.activeIcon > i:not(.fa-spinner) {
     cursor: pointer;

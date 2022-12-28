@@ -1,5 +1,5 @@
 <template>
-    <div class="modal fade" id="modal-quickview" data-coreui-backdrop="static">
+    <div class="modal fade" id="modal-quickview">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -19,7 +19,7 @@
                     <a v-if="controls.show" :href=" getRoute('show') " class="btn btn-success" :title="__('View details')"><i class="fa fa-fw fa-search"></i> {{ __('Open') }}</a>
                     <a v-if="controls.edit" :href=" getRoute('edit') " class="btn btn-primary" :title="__('Edit')"><i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}</a>
                     <a v-if="controls.clone" :href=" getRoute('clone') " class="btn btn-primary" :title="__('Clone')"><i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}</a>
-                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal" data-coreui-target="#modal-quickview">Close</button>
                 </div>
             </div>
         </div>
@@ -30,7 +30,7 @@
     import ShowStandard from './ShowStandard.vue'
 
     export default {
-        name: 'TransactionModal',
+        name: 'QuickViewTransactionModal',
         components: {
             'transaction-show-standard': ShowStandard,
         },
@@ -51,6 +51,7 @@
             return {
                 transaction: {},
                 controls: this.initialControls,
+                modal: undefined,
             };
         },
         methods: {
@@ -66,14 +67,15 @@
                     method: 'PATCH',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'X-CSRF-TOKEN': window.csrfToken,
                     },
                 })
                 .then((response) => response.json())
                 .then((data) => {
                     // Update the transaction schedule next date from the response
                     this.transaction.transaction_schedule.next_date = new Date(data.transaction.transaction_schedule.next_date);
-                }).catch(error => {
+                })
+                .catch((error) => {
                     console.error(error);
                 });
             },
@@ -91,7 +93,6 @@
 
                 // Emit a custom event to global scope about the new transaction to be opened in modal editor
                 // TODO: how to avoid using global scope?
-
                 let event = new CustomEvent('initiateEnterInstance', {
                     detail: {
                         // Pass the entire transaction object to the event
@@ -105,7 +106,7 @@
                 this.transaction = transaction;
                 this.controls = controls;
 
-                $('#modal-quickview').modal('show');
+                this.modal.show();
             },
         },
         mounted() {
@@ -115,6 +116,9 @@
             window.addEventListener('showTransactionQuickviewModal', function(event) {
                 $vm.showTransaction(event.detail.transaction, event.detail.controls);
             });
+
+            // Initialize modal
+            this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
         },
     };
 </script>
