@@ -45,7 +45,7 @@ window.table = $('#table').DataTable({
                 return data.toText();
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.start_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.next_date', __('Next date'), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule_config.active', __('Active')),
