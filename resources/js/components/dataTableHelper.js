@@ -112,7 +112,7 @@ export function initializeDeleteButton(selector) {
         }
 
         let form = document.getElementById('form-delete');
-        form.action = route('transactions.destroy', {transaction: this.dataset.id});
+        form.action = route('api.transactions.destroy', {transaction: this.dataset.id});
         form.submit();
     });
 }

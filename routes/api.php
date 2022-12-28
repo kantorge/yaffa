@@ -60,7 +60,7 @@ Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionAp
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
 
-Route::resource('transactions', TransactionApiController::class)->only(['destroy']);
+Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])->name('api.transactions.destroy');
 
 /*
 Route::post('/token', function (Request $request) {
