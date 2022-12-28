@@ -51,6 +51,8 @@ document.querySelectorAll('#table-search-results-transactions td.transactionIcon
     element.classList.remove('hidden');
 });
 
+dataTableHelpers.initializeQuickViewButton('table');
+
 // Transaction quick view modal
 import { createApp } from 'vue'
 const app = createApp({})
