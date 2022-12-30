@@ -159,33 +159,32 @@ $(selectorHistoryTable).DataTable({
         dataTableHelpers.transactionColumnDefiniton.comment,
         dataTableHelpers.transactionColumnDefiniton.tags,
         {
-            data: 'id',
             title: __("Actions"),
-            render: function (data, _type, row) {
+            defaultContent: '',
+            render: function (_data, _type, row) {
                 if (row.transaction_type.type === 'Opening balance') {
                     return null;
                 }
                 if (row.schedule) {
                     if (row.schedule_first_instance) {
-                        data = row.originalId;
-                        return '<a href="' + route('transactions.open.standard', { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> ';
+                        return '<a href="' + route('transactions.open.standard', { transaction: row.originalId, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + row.originalId + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> ';
                     }
                     return null;
                 }
 
                 if (row.transaction_type.type === 'standard') {
-                    return dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
-                           dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                           dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(data, 'clone', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(data, 'delete');
+                    return dataTableHelpers.dataTablesActionButton(row.id, 'standardQuickView') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'standardShow') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'edit', 'standard') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'clone', 'standard') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'delete');
                 }
 
                 // Investment
-                return '<a href="' + route('transactions.open.investment', { transaction: data, action: 'edit' }) +  '" class="btn btn-xs btn-primary" title="' + __('Edit')  + '"><i class="fa fa-fw fa-edit"></i></a> ' +
-                       '<a href="' + route('transactions.open.investment', { transaction: data, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
-                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button>';
+                return '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'edit' }) +  '" class="btn btn-xs btn-primary" title="' + __('Edit')  + '"><i class="fa fa-fw fa-edit"></i></a> ' +
+                       '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
+                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button>';
             },
             className: "dt-nowrap",
             orderable: false,
