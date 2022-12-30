@@ -338,7 +338,7 @@ export function initializeAjaxDeleteButton(selector) {
                         message: 'Transaction deleted (#' + id + ')',
                         title: null,
                         icon: null,
-                        dismissable: true,
+                        dismissible: true,
                     }
                 },
             });

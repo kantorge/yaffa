@@ -711,7 +711,7 @@ $('#dataTable').on('click', 'button.record', function () {
                     message: 'Transaction added (#' + transaction.id + ')',
                     title: null,
                     icon: null,
-                    dismissable: true,
+                    dismissible: true,
                 }
             },
         });

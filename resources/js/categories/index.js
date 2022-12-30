@@ -149,7 +149,7 @@ window.table = $(dataTableSelector).DataTable({
                                 message: () => __('Error while changing category active state'),
                                 title: null,
                                 icon: null,
-                                dismissable: true,
+                                dismissible: true,
                             }
                         },
                     });
