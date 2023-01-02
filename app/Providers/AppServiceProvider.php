@@ -43,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         Blade::directive('dusk', function($expression) {
-            if (!\App::environment('testing')) {
+            if (\App::environment('production')) {
                 return '';
             }
 
