@@ -27,7 +27,7 @@ class AccountTest extends TestCase
     public function user_cannot_create_new_account_without_an_account_group()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Currency::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
@@ -38,7 +38,7 @@ class AccountTest extends TestCase
     public function user_cannot_create_new_account_without_a_currency()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
@@ -80,7 +80,7 @@ class AccountTest extends TestCase
     public function user_can_view_list_of_accounts()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         AccountEntity::factory()->for($user)->account($user)->count(5)->create();
@@ -95,7 +95,7 @@ class AccountTest extends TestCase
     public function user_can_access_create_form()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -111,7 +111,7 @@ class AccountTest extends TestCase
     public function user_cannot_create_an_account_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, AccountGroup::class);
         $currency = $this->createForUser($user, Currency::class);
         $response = $this
@@ -137,7 +137,7 @@ class AccountTest extends TestCase
     public function user_can_create_an_account()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
@@ -163,7 +163,7 @@ class AccountTest extends TestCase
     public function user_can_edit_an_existing_account()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -185,7 +185,7 @@ class AccountTest extends TestCase
     public function user_cannot_update_an_account_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -211,7 +211,7 @@ class AccountTest extends TestCase
     public function user_can_update_an_account_with_proper_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();
@@ -246,7 +246,7 @@ class AccountTest extends TestCase
     public function user_can_delete_an_existing_account()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
         $account = AccountEntity::factory()->for($user)->account($user)->create();

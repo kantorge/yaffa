@@ -23,7 +23,7 @@ class LogoutTest extends TestCase
     /** @test */
     public function test_user_can_logout()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $this->be($user);
 

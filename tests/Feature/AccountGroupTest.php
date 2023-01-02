@@ -29,7 +29,7 @@ class AccountGroupTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $accountGroup = $this->createForUser($user, $this->base_model);
 
@@ -50,7 +50,7 @@ class AccountGroupTest extends TestCase
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $accountGroup = $this->createForUser($user, $this->base_model);
 
@@ -76,7 +76,7 @@ class AccountGroupTest extends TestCase
     public function user_can_view_list_of_account_groups()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, $this->base_model, [], 5);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index"));
@@ -89,7 +89,7 @@ class AccountGroupTest extends TestCase
     public function user_can_access_create_form()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $response = $this
             ->actingAs($user)
             ->get(route("{$this->base_route}.create"));
@@ -102,7 +102,7 @@ class AccountGroupTest extends TestCase
     public function user_cannot_create_an_account_group_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $response = $this
             ->actingAs($user)
             ->postJson(
@@ -126,7 +126,7 @@ class AccountGroupTest extends TestCase
     public function user_can_edit_an_existing_account_group()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.edit", $accountGroup));
@@ -139,7 +139,7 @@ class AccountGroupTest extends TestCase
     public function user_cannot_update_an_account_group_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, $this->base_model);
 
         $response = $this
@@ -160,7 +160,7 @@ class AccountGroupTest extends TestCase
     public function user_can_update_an_account_group_with_proper_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, $this->base_model);
         $accountGroup2 = $this->rawForUser($user, $this->base_model);
 
@@ -190,7 +190,7 @@ class AccountGroupTest extends TestCase
     public function user_cannot_delete_account_group_with_attached_account()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $accountGroup = $this->createForUser($user, $this->base_model);
         $this->createForUser($user, Currency::class);
         AccountEntity::factory()->for($user)->account($user)->create();

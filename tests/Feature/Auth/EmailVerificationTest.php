@@ -62,7 +62,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_sees_the_verification_notice_when_not_verified()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -76,7 +76,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_verified_user_is_redirected_home_when_visiting_verification_notice_route()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -101,7 +101,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_cannot_verify_others()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -119,7 +119,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_is_redirected_to_correct_route_when_already_verified()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -132,7 +132,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_forbidden_is_returned_when_signature_is_invalid_in_verification_verify_route()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -145,7 +145,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_can_verify_themselves()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -167,7 +167,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_is_redirected_to_correct_route_if_already_verified()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -182,7 +182,7 @@ class EmailVerificationTest extends TestCase
     {
         Notification::fake();
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);

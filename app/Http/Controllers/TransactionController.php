@@ -131,9 +131,9 @@ class TransactionController extends Controller
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param  App\Model\Transaction  $transaction
+     * @param  \App\Models\Transaction  $transaction
      * @param  string  $action
-     * @return view
+     * @return \Illuminate\Contracts\View\View
      */
     public function openStandard(Transaction $transaction, string $action)
     {

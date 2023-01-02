@@ -55,7 +55,7 @@ class PayeeTest extends TestCase
     public function user_can_view_list_of_payees()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         AccountEntity::factory()->for($user)->payee($user)->count(5)->create();
 
@@ -69,7 +69,7 @@ class PayeeTest extends TestCase
     public function user_can_access_create_form()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $response = $this
             ->actingAs($user)
             ->get(route("{$this->base_route}.create", ['type' => 'payee']));
@@ -82,7 +82,7 @@ class PayeeTest extends TestCase
     public function user_cannot_create_a_payee_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $category = $this->createForUser($user, Category::class);
         $response = $this
             ->actingAs($user)
@@ -105,7 +105,7 @@ class PayeeTest extends TestCase
     public function user_can_create_a_payee()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
 
         $attributes = $baseAttributes = AccountEntity::factory()->for($user)->raw();
@@ -130,7 +130,7 @@ class PayeeTest extends TestCase
     public function user_can_edit_an_existing_payee()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -151,7 +151,7 @@ class PayeeTest extends TestCase
     public function user_cannot_update_a_payee_with_missing_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -176,7 +176,7 @@ class PayeeTest extends TestCase
     public function user_can_update_a_payee_with_proper_data()
     {
         $user = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->createForUser($user, Category::class);
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
 
@@ -208,7 +208,7 @@ class PayeeTest extends TestCase
     {
         $user = User::factory()->create();
         $this->createForUser($user, Category::class);
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $payee = AccountEntity::factory()->for($user)->payee($user)->create();
         $payeeConfig = $payee->config;
 

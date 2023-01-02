@@ -40,7 +40,7 @@ class ForgotPasswordTest extends TestCase
 
     public function test_user_can_view_an_email_password_form_when_authenticated()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->passwordRequestRoute());

@@ -326,7 +326,7 @@ class PayeeApiController extends Controller
      * Get the payee entity and main attributes for the given id
      *
      * @param  AccountEntity  $accountEntity
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getItem(AccountEntity $accountEntity)
     {

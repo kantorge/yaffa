@@ -547,7 +547,7 @@ class TransactionApiController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Transaction  $transaction
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Transaction $transaction)
     {

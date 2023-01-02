@@ -27,7 +27,7 @@ class TagTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -48,7 +48,7 @@ class TagTest extends TestCase
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -74,7 +74,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_view_list_of_tags()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model, [], 5);
 
@@ -87,7 +87,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $response = $this
@@ -101,7 +101,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_cannot_create_a_tag_with_missing_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $response = $this
             ->actingAs($user)
@@ -118,7 +118,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_create_a_tag()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
@@ -126,7 +126,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_tag()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -139,7 +139,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_cannot_update_a_tag_with_missing_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -160,7 +160,7 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_update_a_tag_with_proper_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
         $tag2 = $this->rawForUser($user, $this->base_model);

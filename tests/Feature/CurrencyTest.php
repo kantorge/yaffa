@@ -50,7 +50,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_view_list_of_currencies()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model);
 
@@ -63,7 +63,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $response = $this
@@ -77,7 +77,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_create_a_currency_with_missing_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $response = $this
@@ -102,7 +102,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_currency()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);
@@ -116,7 +116,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_update_a_currency_with_missing_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);
@@ -138,7 +138,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_update_a_currency_with_proper_data()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);

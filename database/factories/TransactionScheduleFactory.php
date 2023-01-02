@@ -31,7 +31,6 @@ class TransactionScheduleFactory extends Factory
             'frequency' => $this->faker->randomElement(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
             'interval' => $this->faker->numberBetween(1, 5),
             'count' => $this->faker->boolean(50) ? null : $this->faker->numberBetween(1, 5),
-            'interval' => 1,
         ];
     }
 }

@@ -54,7 +54,7 @@ class ResetPasswordTest extends TestCase
     /** @test */
     public function test_user_can_view_password_reset_form_when_authenticated()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get($this->passwordResetGetRoute($token = $this->getValidToken($user)));

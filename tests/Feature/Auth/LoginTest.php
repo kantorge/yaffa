@@ -42,7 +42,7 @@ class LoginTest extends TestCase
     /** @test */
     public function signed_visitor_cannot_access_the_login_form()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->loginGetRoute());
@@ -109,7 +109,7 @@ class LoginTest extends TestCase
     {
         $password = 'secret';
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+
         $user = User::factory()->create([
             'password' => bcrypt($password),
         ]);
