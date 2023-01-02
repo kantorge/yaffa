@@ -4,7 +4,7 @@
         :key="index"
     >
         <bootstrap-notification
-            :dismissable="item.dismissable"
+            :dismissible="item.dismissible"
             :type="item.type"
             :title="item.title"
             :message="item.message"
@@ -42,7 +42,7 @@
             // Set up a global event listener for the 'notification' event
             window.addEventListener('notification', function (event) {
                 // Add the notification to the list
-                // Notification is expected to contain the required properties: type, message, title, icon, dismissable
+                // Notification is expected to contain the required properties: type, message, title, icon, dismissible
                 this.notifications.push(event.detail.notification);
             }.bind(this));
         },

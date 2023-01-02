@@ -276,7 +276,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function() {
                         message: 'Schedule instance skipped (#' + id + ')',
                         title: null,
                         icon: null,
-                        dismissable: true,
+                        dismissible: true,
                     }
                 },
             });
@@ -292,7 +292,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function() {
                         message: 'Schedule instance skipped. (#' + id + '). This schedule has ended.',
                         title: null,
                         icon: null,
-                        dismissable: true,
+                        dismissible: true,
                     }
                 },
             });
@@ -513,7 +513,7 @@ window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', fun
                     message: 'Transaction added (#' + transaction.id + ')',
                     title: null,
                     icon: null,
-                    dismissable: true,
+                    dismissible: true,
                 }
             },
         });

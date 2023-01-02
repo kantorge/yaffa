@@ -98,7 +98,7 @@ window.table = $(dataTableSelector).DataTable({
                                 message: 'Error while changing account active state',
                                 title: null,
                                 icon: null,
-                                dismissable: true,
+                                dismissible: true,
                             }
                         },
                     });

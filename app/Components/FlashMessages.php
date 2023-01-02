@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 
 trait FlashMessages
 {
-    public static function addMessage($message, $type = 'info', $title = '', $icon = '', $dismissable = false): void
+    public static function addMessage($message, $type = 'info', $title = '', $icon = '', $dismissible = false): void
     {
         if (session()->has('notification_collection')) {
             $existingData = session()->get('notification_collection');
@@ -20,7 +20,7 @@ trait FlashMessages
             'title' => $title,
             'type' => $type,
             'icon' => $icon,
-            'dismissable' => $dismissable,
+            'dismissible' => $dismissible,
         ]);
 
         session()->flash('notification_collection', $existingData);

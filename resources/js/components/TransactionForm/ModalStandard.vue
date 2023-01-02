@@ -50,7 +50,7 @@
                             message: __('Transaction added (#:transactionId)', {transactionId: transaction.id}),
                             title: null,
                             icon: null,
-                            dismissable: true,
+                            dismissible: true,
                         }
                     },
                 });

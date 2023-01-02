@@ -41,8 +41,8 @@ class CurrencySeeder extends Seeder
                     if ($i > $maxRetries) {
                         throw new \OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
                     }
-                } while (in_array(serialize($res->toArray()), $uniques, true));
-                $uniques[] = serialize($res->toArray());
+                } while (in_array($res->name, $uniques, true));
+                $uniques[] = $res->name;
                 $res->save();
             }
 

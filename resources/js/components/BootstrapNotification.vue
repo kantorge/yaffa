@@ -2,7 +2,7 @@
     <div
         class="alert fade show"
         :class="[
-            { 'alert-dismissible' : dismissable },
+            { 'alert-dismissible' : dismissible },
             'alert-' + type,
         ]"
         role="alert"
@@ -15,7 +15,7 @@
             <span v-html="title"></span>
         </h4>
         <span v-html="message"></span>
-        <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>
+        <button v-if="dismissible" type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>
     </div>
 </template>
 
@@ -24,7 +24,7 @@
         name: 'BootstrapNotification',
         components: {},
         props: {
-            dismissable: {
+            dismissible: {
                 type: Boolean,
                 default: false,
             },
