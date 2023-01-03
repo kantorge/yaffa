@@ -17,7 +17,7 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text">
-                                    <i class="cil-user"></i>
+                                    <i class="fa-regular fa-user"></i>
                                 </span>
                                 <input
                                     class="form-control @error('name') is-invalid @enderror"
@@ -41,7 +41,7 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text">
-                                    <i class="cil-language me-2"></i>
+                                    <i class="fa-solid fa-language me-2"></i>
                                     {{ __('Language') }}
                                 </span>
                                 <select
@@ -78,7 +78,7 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text">
-                                    <i class="cil-flag-alt me-2"></i>
+                                    <i class="fa-solid fa-globe me-2"></i>
                                     {{ __('Locale') }}
                                 </span>
                                 <select

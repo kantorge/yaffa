@@ -20,7 +20,7 @@
         <form action="{{ route('search') }}" method="get" class="sidebar-brand-full">
             <div class="input-group">
                 <input type="text" name="q" class="form-control" placeholder="{{ __('Search...') }}" autocomplete="off">
-                <button type="submit" id="search-btn" class="btn btn-outline-secondary"><i class="cil-search"></i></button>
+                <button type="submit" id="search-btn" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </form>
     </div>
@@ -51,7 +51,7 @@
         <div class="container-fluid">
             <button class="header-toggler px-md-0 me-md-3" type="button"
                 onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
-                <i class="cil-menu"></i>
+                <i class="fa-solid fa-bars"></i>
             </button>
             <a class="header-brand d-md-none" href="{{ route('home') }} ">
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
@@ -61,19 +61,19 @@
             <ul class="header-nav ms-3 me-4">
                 <li class="nav-item dropdown">
                     <a class="nav-link py-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-user me-1"></i>
+                        <i class="fa-solid fa-user me-1"></i>
                         {{ Auth::user()->name }}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end pt-0">
                         <a class="dropdown-item" href="{{ route('user.settings') }}">
-                            <i class="cil-user me-2"></i>
+                            <i class="fa-solid fa-user me-2"></i>
                             {{ __('My profile') }}
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                onclick="event.preventDefault(); this.closest('form').submit();">
-                                <i class="cil-account-logout me-2"></i>
+                               <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>
                                 {{ __('Logout') }}
                             </a>
                         </form>

@@ -23,14 +23,13 @@
         "postcss-loader": "^7.0.2",
         "resolve-url-loader": "^4.0.0",
         "sass": "^1.57.1",
-        "sass-loader": "^12.6.0",
+        "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
         "vue": "^3.2.45"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.32",
         "@coreui/coreui": "^4.2.4",
-        "@coreui/icons": "^2.1.0",
         "@fortawesome/fontawesome-free": "^6.2.1",
         "@popperjs/core": "^2.11.6",
         "@vuepic/vue-datepicker": "^3.6.3",
