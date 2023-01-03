@@ -7,8 +7,6 @@ mix.js([
     .vue({ version: 3 })
     .extract([
         'datatables.net',
-        'datatables.net-bs5',
-        'datatables.net-responsive-bs5',
         'jquery',
         'mathjs',
         'select2'
