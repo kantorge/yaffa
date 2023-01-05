@@ -6,6 +6,8 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
+import { toFormattedCurrency } from "../helpers";
+
 window.chartData = [];
 let chart;
 
@@ -113,7 +115,7 @@ fetch(url)
                     maximumFractionDigits: 4,
                 }
             );
-            item.formatted_value = item.value.toLocalCurrency(item.currency, false);
+            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.locale, item.currency);
 
             return item;
         });

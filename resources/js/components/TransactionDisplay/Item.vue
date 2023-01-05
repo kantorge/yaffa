@@ -26,7 +26,7 @@
                     {{ __('Amount') }}
                 </dt>
                 <dd>
-                    {{ amount.toLocalCurrency(currency, false) }}
+                    {{ toFormattedCurrency(amount, locale, currency) }}
                 </dd>
             </div>
             <div class="col-12 col-sm-3 transaction_detail_container d-none d-md-block">
@@ -59,8 +59,12 @@
 </template>
 
 <script>
+    import * as helpers from '../../helpers';
+
     export default {
-        components: {},
+        components: {
+            helpers
+        },
 
         props: {
             id: Number,
@@ -69,6 +73,10 @@
             currency: Object,
             comment: String,
             tags: Array,
+            locale: {
+                type: String,
+                default: window.YAFFA.locale,
+            }
         },
 
         methods: {
@@ -76,6 +84,9 @@
             toggleItemDetails() {
                 $(this.$el).find(".transaction_detail_container").toggleClass('d-none');
             },
+            toFormattedCurrency(input, locale, currencySettings) {
+                return helpers.toFormattedCurrency(input, locale, currencySettings);
+            }
         },
     }
 </script>

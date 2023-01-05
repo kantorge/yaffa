@@ -7,6 +7,8 @@ import {
     initializeDeleteButtonListener
 } from './../components/dataTableHelper';
 
+import { toFormattedCurrency } from '../helpers';
+
 const dataTableSelector = '#table';
 
 $(dataTableSelector).DataTable({
@@ -67,7 +69,8 @@ $(dataTableSelector).DataTable({
                     return row.latest_rate;
                 }
                 // Formatted text is returned for display
-                return "1 " + row.suffix + " = " + parseFloat(row.latest_rate).toLocalCurrency({iso_code: window.YAFFA.baseCurrency.iso_code, num_digits: 4}, false);
+                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                return "1 " + row.suffix + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -89,7 +92,8 @@ $(dataTableSelector).DataTable({
                     return 1 / row.latest_rate;
                 }
                 // Formatted text is returned for display
-                return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + (1 / parseFloat(row.latest_rate)).toLocalCurrency({iso_code: row.iso_code, num_digits: 4}, false);
+                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
             searchable: false,

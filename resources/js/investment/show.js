@@ -325,7 +325,9 @@ window.calculateSummary = function() {
     // Assign calculated data to respective fields
     for (var prop in window.summary) {
         if (Object.prototype.hasOwnProperty.call(window.summary, prop)) {
-            document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency ? window.summary[prop].value.toLocalCurrency(investment.currency) : window.summary[prop].value.toLocaleString('hu-HU'));
+            document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency
+                                                                    ? toFormattedCurrency(window.summary[prop].value, window.YAFFA.locale, investment.currency)
+                                                                    : window.summary[prop].value.toLocaleString(window.YAFFA.locale));
         }
     }
 };

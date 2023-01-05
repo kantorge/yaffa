@@ -1,30 +1,5 @@
 require('./bootstrap');
 
-// Helper functions
-// TODO: find appropriate place for these custom functions
-Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    var result = this.toLocaleString(
-        'hu-HU',
-        {
-            style: 'currency',
-            currency: currency.iso_code,
-            currencyDisplay: 'narrowSymbol',
-            minimumFractionDigits: currency.num_digits,
-            maximumFractionDigits: currency.num_digits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};
-
 Date.prototype.datePart = function () {
     var d = new Date(this);
     d.setHours(0, 0, 0, 0);

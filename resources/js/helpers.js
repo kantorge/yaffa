@@ -1,7 +1,5 @@
-export function toFormattedCurrency(input, locale, currencySettings, nonBreakingSpaces) {
-    var nonBreakingSpaces = !!nonBreakingSpaces;
-
-    var result = input.toLocaleString(
+export function toFormattedCurrency(input, locale, currencySettings) {
+    return input.toLocaleString(
         locale,
         {
             style: 'currency',
@@ -11,10 +9,4 @@ export function toFormattedCurrency(input, locale, currencySettings, nonBreaking
             maximumFractionDigits: currencySettings.num_digits
         }
     );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
 }

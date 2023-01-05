@@ -42,12 +42,21 @@
 
 <script>
 import * as dataTableHelpers from '../dataTableHelper';
+import * as helpers from '../../helpers';
 import {Calendar} from 'v-calendar';
 
 export default {
     components: {
         dataTableHelpers,
+        helpers,
         Calendar,
+    },
+
+    props: {
+        locale: {
+            type: String,
+            default: window.YAFFA.locale,
+        }
     },
 
     methods: {
@@ -69,12 +78,15 @@ export default {
                 // Capitalize first letter of transaction type
                 const type = transaction.transaction_type.name.charAt(0).toUpperCase() + transaction.transaction_type.name.slice(1);
                 // Return constructed label
-                return type + ' ' + transaction.config.amount_to.toLocalCurrency(transaction.currency) + ' from ' + transaction.config.account_from.name + ' to ' + transaction.config.account_to.name;
+                return type + ' ' + helpers.toFormattedCurrency(transaction.config.amount_to, this.locale, transaction.currency) + ' from ' + transaction.config.account_from.name + ' to ' + transaction.config.account_to.name;
             }
         },
         refreshTooltip: function() {
             $('[data-toggle="tooltip"]').tooltip();
-        }
+        },
+        toFormattedCurrency(input, locale, currencySettings) {
+            return helpers.toFormattedCurrency(input, locale, currencySettings);
+        },
     },
 
     data() {

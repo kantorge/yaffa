@@ -6,6 +6,7 @@
 import 'datatables.net-bs5';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
+import { toFormattedCurrency } from '../helpers';
 
 // Import RRule library for handling schedules
 import { RRule } from 'rrule';
@@ -313,7 +314,7 @@ window.table = $("#dataTable").DataTable({
                 if (!data) {
                     return data;
                 }
-                return data.toLocaleDateString('Hu-hu');
+                return data.toLocaleDateString(window.YAFFA.locale);
             },
             className: "dt-nowrap",
         },
@@ -381,7 +382,7 @@ window.table = $("#dataTable").DataTable({
                 if (row.transaction_type.amount_operator == 'plus') {
                     prefix = '+ ';
                 }
-                return prefix + row.config.amount_to.toLocalCurrency(window.account_currency);
+                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);
             },
             className: "dt-nowrap",
         },

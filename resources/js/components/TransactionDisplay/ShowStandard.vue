@@ -93,7 +93,7 @@
                                 {{ ammountFromFieldLabel }}
                             </dt>
                             <dd class="col-6">
-                                {{ transaction.config.amount_from.toLocalCurrency(ammountFromCurrency, false) }}
+                                {{ toFormattedCurrency(transaction.config.amount_from, locale, ammountFromCurrency) }}
                             </dd>
 
                             <dt class="col-6" v-if="exchangeRatePresent">
@@ -107,21 +107,21 @@
                                 {{ __('Amount to') }}
                             </dt>
                             <dd class="col-6" v-if="exchangeRatePresent">
-                                {{ transaction.config.amount_to.toLocalCurrency(transaction.config.account_to.config.currency, false) }}
+                                {{ toFormattedCurrency(transaction.config.amount_to, ocale, transaction.config.account_to.config.currency) }}
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Total allocated') }}
                             </dt>
                             <dd class="col-6">
-                                {{ allocatedAmount.toLocalCurrency(ammountFromCurrency, false) }}
+                                {{ toFormattedCurrency(allocatedAmount, locale, ammountFromCurrency) }}
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Not allocated') }}
                             </dt>
                             <dd class="col-6">
-                                {{ remainingAmountNotAllocated.toLocalCurrency(ammountFromCurrency, false) }}
+                                {{ toFormattedCurrency(remainingAmountNotAllocated, locale, ammountFromCurrency) }}
                             </dd>
                         </dl>
                     </div>
@@ -149,17 +149,23 @@
 <script>
     import TransactionItemContainer from './ItemContainer.vue'
     import TransactionSchedule from './Schedule.vue'
+    import * as helpers from '../../helpers';
 
     export default {
         components: {
             'transaction-item-container': TransactionItemContainer,
             'transaction-schedule': TransactionSchedule,
+            helpers
         },
 
         props: {
             transaction: {
                 type: Object,
                 default: {}
+            },
+            locale: {
+                type: String,
+                default: window.YAFFA.locale,
             }
         },
 
@@ -230,8 +236,11 @@
 
                 const newDate = new Date(date);
 
-                return newDate.toLocaleDateString('Hu-hu');
+                return newDate.toLocaleDateString(this.locale);
             },
+            toFormattedCurrency(input, locale, currencySettings) {
+                return helpers.toFormattedCurrency(input, locale, currencySettings);
+            }
         }
     }
 </script>

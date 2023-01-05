@@ -5,7 +5,7 @@
                 {{ __('Total value') }}
             </div>
             <div v-show="ready">
-                {{ totalValue.toLocalCurrency(baseCurrency, false) }}
+                {{ toFormattedCurrency(totalValue, locale, baseCurrency) }}
             </div>
         </div>
         <ul class="list-group list-group-flush" id="accordionAccountBalance" v-if="!ready">
@@ -39,7 +39,7 @@
                         {{ accountGroup.name }}
                     </span>
                     <span :class="{ 'text-danger' : accountGroup.sum < 0}">
-                        {{ accountGroup.sum.toLocalCurrency(baseCurrency, false) }}
+                        {{ toFormattedCurrency(accountGroup.sum, locale, baseCurrency) }}
                     </span>
                 </div>
                 <ul :id="'collapse_' + accountGroupId" class="list-group collapse mt-3" aria-expanded="false">
@@ -53,8 +53,8 @@
                             {{ account.name }}
                         </span>
                         <span :class="{ 'text-danger' : account.sum < 0 }">
-                            <span v-if="account.hasOwnProperty('sum_foreign')">{{ account.sum_foreign.toLocalCurrency(account.currency, false) }} / </span>
-                            {{ account.sum.toLocalCurrency(baseCurrency, false) }}
+                            <span v-if="account.hasOwnProperty('sum_foreign')">{{ toFormattedCurrency(account.sum_foreign, locale, account.currency) }} / </span>
+                            {{ toFormattedCurrency(account.sum, locale, baseCurrency) }}
                         </span>
                     </a>
                 </ul>
@@ -73,8 +73,18 @@
 </template>
 
 <script>
+import * as helpers from '../../helpers';
 export default {
-    props: {},
+    components: {
+        helpers
+    },
+
+    props: {
+        locale: {
+            type: String,
+            default: window.YAFFA.locale,
+        }
+    },
 
     data() {
         return {
@@ -139,7 +149,11 @@ export default {
 
         toggleWithInactive: function() {
             this.withClosed = !this.withClosed;
-        }
+        },
+
+        toFormattedCurrency(input, locale, currencySettings) {
+            return helpers.toFormattedCurrency(input, locale, currencySettings);
+        },
     }
 }
 </script>
