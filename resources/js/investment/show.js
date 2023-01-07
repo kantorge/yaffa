@@ -111,24 +111,16 @@ window.table = $('#table').DataTable({
         {
             data: "price",
             title: __("Price"),
-            render: function (data) {
-                if (data === null) {
-                    return data;
-                }
-
-                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
+            render: function (data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             },
         },
         {
             data: "dividend",
             defaultContent: '',
             title: __("Dividend"),
-            render: function (data) {
-                if (data === null) {
-                    return data;
-                }
-
-                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
+            render: function (data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             },
         },
         {
@@ -136,25 +128,21 @@ window.table = $('#table').DataTable({
             defaultContent: '',
             title: __("Commission"),
             render: function (data, type) {
-                dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency)
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             },
         },
         {
             data: "tax",
             defaultContent: '',
             title: __("Tax"),
-            render: function (data) {
-                if (data === null) {
-                    return data;
-                }
-
-                return toFormattedCurrency(data, window.YAFFA.locale, investment.currency);
+            render: function (data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             },
         },
         {
             defaultContent: '',
             title: __("Amount"),
-            render: function (_data, _type, row) {
+            render: function (_data, type, row) {
                 var operator = row.amount_operator;
                 if (!operator) {
                     return 0;
@@ -164,7 +152,8 @@ window.table = $('#table').DataTable({
                               : row.dividend + row.price * row.quantity )
                             - row.tax
                             - row.commission;
-                return toFormattedCurrency(result, window.YAFFA.locale, investment.currency);
+
+                return dataTableHelpers.toFormattedCurrency(type, result, window.YAFFA.locale, investment.currency);
             }
         },
         {
