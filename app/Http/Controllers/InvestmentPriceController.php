@@ -158,7 +158,7 @@ class InvestmentPriceController extends Controller
 
         $response = $client->request('GET', 'https://www.alphavantage.co/query', [
             'query' => [
-                'function' => 'TIME_SERIES_DAILY',
+                'function' => 'TIME_SERIES_DAILY_ADJUSTED',
                 'datatype' => 'json',
                 'symbol' => $investment->symbol,
                 'apikey' => config('yaffa.alpha_vantage_key'),
