@@ -105,9 +105,9 @@ $(dataTableSelector).DataTable({
                 return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
-                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-sm btn-info" title="' + __('Rates') + '"><i class="cil-chart-line btn-icon"></i></a> ' +
+                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-sm btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-chart-line"></i></a> ' +
                           genericDataTablesActionButton(data, 'delete') +
-                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-sm btn-primary" title="' + __('Set as default') + '"><i class="cil-bank btn-icon"></i></a>'
+                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-sm btn-primary" title="' + __('Set as default') + '"><i class="fa-solid fa-building-columns"></i></a>'
                         : '');
             },
             className: "dt-nowrap",
