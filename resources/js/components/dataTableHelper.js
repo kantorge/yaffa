@@ -72,13 +72,14 @@ export function tagIcon(tags, type) {
         return '';
     }
 
+    // Currently just the name is used
+    tags = tags.map(tag => tag.name);
+
     if (type === 'filter') {
         return tags.join(', ');
     }
 
-    if (tags) {
-        return ' <i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
-    }
+    return ' <i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
 }
 
 export function commentIcon(comment, type) {
@@ -305,7 +306,11 @@ export let transactionColumnDefiniton = {
         title: __('Tags'),
         defaultContent: '',
         render: function (data) {
-            return data.join(', ');
+            if (!data || data.length === 0) {
+                return '';
+            }
+
+            return data.map(tag => tag.name).join(', ');
         }
     }
 }

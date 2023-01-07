@@ -416,13 +416,27 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         // Load all relevant relations
-        $transaction->load(['transactionItems']);
+        $transaction->load([
+            'transactionItems',
+            'transactionSchedule'
+        ]);
 
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
         if ($transaction->schedule || $transaction->budget) {
-            $transaction->transactionSchedule->fill($validated['schedule_config']);
+            // Update existing or create new
+            if ($transaction->transactionSchedule) {
+                $transaction->transactionSchedule->fill($validated['schedule_config']);
+            } else {
+                $transactionSchedule = new TransactionSchedule(
+                    [
+                        'transaction_id' => $transaction->id,
+                    ]
+                );
+                $transactionSchedule->fill($validated['schedule_config']);
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
         }
 
         // Replace exising transaction items with new array

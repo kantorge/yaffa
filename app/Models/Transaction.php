@@ -80,16 +80,13 @@ class Transaction extends Model
 
     public function tags()
     {
-        $tags = [];
-
-        $this->transactionItems()
-            ->each(function ($item) use (&$tags) {
-                $item->tags->each(function ($tag) use (&$tags) {
-                    $tags[$tag->id] = $tag->name;
-                });
-            });
-
-        return $tags;
+        return $this->transactionItems
+            ->pluck('tags')
+            ->collapse()
+            ->map(function ($tag) {
+                return $tag->withoutRelations();
+            })
+            ->unique('id');
     }
 
     public function categories()
@@ -135,34 +132,6 @@ class Transaction extends Model
         }
     }
 
-    //TODO: how this can be achieved without converting data to array AND without additional database queries
-    public function getTagsArray()
-    {
-        $transactionArray = $this->toArray();
-        $tags = [];
-        foreach ($transactionArray['transaction_items'] as $item) {
-            foreach ($item['tags'] as $tag) {
-                $tags[$tag['id']] = $tag['name'];
-            }
-        }
-
-        return $tags;
-    }
-
-    //TODO: how this can be achieved without converting data to array AND without additional database queries
-    public function getCategoriesArray()
-    {
-        $transactionArray = $this->toArray();
-        $categories = [];
-        foreach ($transactionArray['transaction_items'] as $item) {
-            if ($item['category']) {
-                $categories[$item['category_id']] = $item['category']['full_name'];
-            }
-        }
-
-        return $categories;
-    }
-
     /**
      * Override the default delete method to delete the transaction configuration as well
      *
@@ -179,7 +148,7 @@ class Transaction extends Model
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
      *
      * @param  \App\Models\AccountEntity  $account
-     * @return Numeric
+     * @return float
      */
     public function cashflowValue(AccountEntity $account = null)
     {
@@ -310,12 +279,15 @@ class Transaction extends Model
 
     private function transformDataStandard()
     {
-        $this->load([
-            'transactionItems'
-        ]);
+        if (!$this->transactionItems) {
+            $this->load([
+                'transactionItems',
+                'transactionItems.category',
+                'transactionItems.tags',
+            ]);
+        }
 
         // TODO: replace with eager loading
-        $allTags = Auth::user()->tags->pluck('name', 'id')->all();
         $allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
         $allAccounts = AccountEntity::where('user_id', Auth::user()->id)
             ->pluck('name', 'id')
@@ -324,14 +296,8 @@ class Transaction extends Model
         $transaction = $this;
         $transactionArray = $this->toArray();
 
-        $itemTags = [];
         $itemCategories = [];
         foreach ($transactionArray['transaction_items'] as $item) {
-            if (isset($item['tags'])) {
-                foreach ($item['tags'] as $tag) {
-                    $itemTags[$tag['id']] = $allTags[$tag['id']];
-                }
-            }
             if (isset($item['category_id'])) {
                 $itemCategories[$item['category_id']] = $allCategories[$item['category_id']];
             }
@@ -353,7 +319,7 @@ class Transaction extends Model
                 'amount_to' => $transaction->config->amount_to,
             ],
             'transaction_items' => $transactionArray['transaction_items'],
-            'tags' => array_values($itemTags),
+            'tags' => $this->tags()->values(),
             'categories' => array_values($itemCategories),
         ];
     }
