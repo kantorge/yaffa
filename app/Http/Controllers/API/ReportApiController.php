@@ -18,12 +18,6 @@ class ReportApiController extends Controller
     use CurrencyTrait;
     use ScheduleTrait;
 
-    private $allAccounts;
-
-    private $allTags;
-
-    private $allCategories;
-
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
@@ -33,7 +27,7 @@ class ReportApiController extends Controller
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function budgetChart(Request $request)
     {

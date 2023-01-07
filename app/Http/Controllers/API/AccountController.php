@@ -244,7 +244,7 @@ class AccountController extends Controller
      * Get the account entity for the given id.
      *
      * @param  AccountEntity  $accountEntity
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getItem(AccountEntity $accountEntity)
     {
