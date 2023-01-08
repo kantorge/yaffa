@@ -9,7 +9,6 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -98,7 +97,7 @@ class MainController extends Controller
         $transactions = $standardTransactions
         ->merge($investmentTransactions)
         // Add custom and pre-calculated attributes
-        ->map(function ($transaction) use ( $account) {
+        ->map(function ($transaction) use ($account) {
             if ($transaction->schedule) {
                 $transaction->load(['transactionSchedule']);
 
@@ -139,7 +138,7 @@ class MainController extends Controller
                 return true;
             }
 
-            return ! is_null($transaction->transactionSchedule->next_date);
+            return ($transaction->transactionSchedule->next_date !== null);
         });
 
         // Add schedule to history items, if needeed

@@ -24,82 +24,57 @@ Route::view('/terms', 'pages.terms')->name('terms');
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
 Route::resource('account-entity', AccountEntityController::class);
 
-Route::get(
-    '/account/history/{account}/{withForecast?}',
-    [MainController::class, 'account_details']
-)->name('account.history');
+Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
+    ->name('account.history');
 
 Route::resource('categories', CategoryController::class)->except(['show']);
 Route::resource('currencies', CurrencyController::class)->except(['show']);
-Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])->name('currencies.setDefault');
+Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
+    ->name('currencies.setDefault');
 
-Route::get(
-    '/currencyrates/missing/{currency}',
-    [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase']
-)->name('currencyrate.retreiveMissing');
+Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase'])
+    ->name('currencyrate.retreiveMissing');
 
-Route::get(
-    '/currencyrates/get/{currency}/{from?}',
-    [CurrencyRateController::class, 'retreiveCurrencyRateToBase']
-)->name('currencyrate.retreiveRate');
+Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retreiveCurrencyRateToBase'])
+    ->name('currencyrate.retreiveRate');
 
-Route::get(
-    '/currencyrates/{from}/{to}',
-    [CurrencyRateController::class, 'index']
-)->name('currency-rate.index');
+Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
+    ->name('currency-rate.index');
 
-Route::resource(
-    'currency-rate',
-    CurrencyRateController::class
-)->only(['destroy']);
+Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy']);
 
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
 Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
-Route::get(
-    '/investment-price/list/{investment}',
-    [InvestmentPriceController::class, 'list']
-)->name('investment-price.list');
+Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])->name('investment-price.list');
 
-Route::get(
-    '/investment-price/get/{investment}/{from?}',
-    [InvestmentPriceController::class, 'retreiveInvestmentPriceAlphaVantage']
-)->name('investment-price.retreive');
+Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPriceAlphaVantage'])
+    ->name('investment-price.retreive');
 
-Route::resource(
-    'investment-price',
-    InvestmentPriceController::class
-)->except(['index', 'show']);
+Route::resource('investment-price', InvestmentPriceController::class)
+    ->except(['index', 'show']);
 
-Route::resource('tag', TagController::class)->except(['show']);
+Route::resource('tag', TagController::class)
+    ->except(['show']);
 
 Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
 Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
 Route::post('/transactions/investment', [TransactionController::class, 'storeInvestment'])->name('transactions.storeInvestment');
 
-Route::get(
-    '/transactions/standard/{transaction}/{action}',
-    [TransactionController::class, 'openStandard']
-)
-->where('action', 'edit|clone|enter|show|replace')
-->name('transactions.open.standard');
+Route::get('/transactions/standard/{transaction}/{action}', [TransactionController::class, 'openStandard'])
+    ->where('action', 'edit|clone|enter|show|replace')
+    ->name('transactions.open.standard');
 
-Route::get(
-    '/transactions/investment/{transaction}/{action}',
-    [TransactionController::class, 'openInvestment']
-)
-->where('action', 'edit|clone|enter|replace')
-->name('transactions.open.investment');
+Route::get('/transactions/investment/{transaction}/{action}', [TransactionController::class, 'openInvestment'])
+    ->where('action', 'edit|clone|enter|replace')
+    ->name('transactions.open.investment');
 
 Route::patch('/transactions/investment/{transaction}', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])->name('transactions.skipScheduleInstance');
-Route::resource(
-    'transactions',
-    TransactionController::class
-)
-->only(['destroy']);
+Route::resource('transactions', TransactionController::class)
+    ->only(['destroy']);
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
@@ -125,6 +100,12 @@ Route::get('/user/settings', [UserController::class, 'settings'])->name('user.se
 Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
 
 Auth::routes();
-Route::get('/email/verify', [VerificationController::class, 'notice'])->middleware('auth')->name('verification.notice');
-Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware(['auth', 'signed'])->name('verification.verify');
-Route::post('/email/verification-notification', [VerificationController::class, 'send'])->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+Route::get('/email/verify', [VerificationController::class, 'notice'])
+    ->middleware('auth')
+    ->name('verification.notice');
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->middleware(['auth', 'signed'])
+    ->name('verification.verify');
+Route::post('/email/verification-notification', [VerificationController::class, 'send'])
+    ->middleware(['auth', 'throttle:6,1'])
+    ->name('verification.send');

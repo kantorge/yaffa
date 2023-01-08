@@ -233,7 +233,7 @@ class InvestmentApiController extends Controller
                     $startDate = new Carbon($transaction['schedule']->next_date);
                     $startDate->startOfDay();
 
-                    if (is_null($transaction['schedule']->end_date)) {
+                    if ($transaction['schedule']->end_date === null) {
                         $endDate = (new Carbon(config('yaffa.app_end_date')));
                     } else {
                         $endDate = new Carbon($transaction['schedule']->end_date);

@@ -119,7 +119,7 @@ class InvestmentGroupController extends Controller
 
             return redirect()->route('investment-group.index');
         } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->errorInfo[1] == 1451) {
+            if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Investment group is in use, cannot be deleted'));
             } else {
                 self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);

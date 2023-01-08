@@ -193,7 +193,7 @@ class ReportApiController extends Controller
      *
      * @param int  $year
      * @param int  $month
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int $month = null)
     {
@@ -220,7 +220,7 @@ class ReportApiController extends Controller
             ])
             ->whereHas('transaction', function ($query) use($year, $month) {
                 $query->where('user_id', Auth::user()->id)
-                    ->when(is_null($month), function($query) use ($year) {
+                    ->when($month === null, function($query) use ($year) {
                     return $query->whereRaw('YEAR(date) = ?', [$year]);
                 })
                 ->when($year && $month, function($query) use ($year, $month) {
@@ -272,7 +272,7 @@ class ReportApiController extends Controller
                 TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
             )
             ->where('user_id', Auth::user()->id)
-            ->when(is_null($month), function($query) use ($year) {
+            ->when($month === null, function($query) use ($year) {
                 return $query->whereRaw('YEAR(date) = ?', [$year]);
             })
             ->when($year && $month, function($query) use ($year, $month) {
@@ -303,7 +303,6 @@ class ReportApiController extends Controller
                 $dataByCategory[$category] += $transaction->cashflowValue() * ($rate ? $rate->rate : 1);
             });
         }
-
 
         $result = [];
         foreach ($dataByCategory as $category => $value) {

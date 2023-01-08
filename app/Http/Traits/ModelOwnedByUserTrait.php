@@ -6,7 +6,7 @@ trait ModelOwnedByUserTrait
 {
     public static function bootModelOwnedByUserTrait()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 

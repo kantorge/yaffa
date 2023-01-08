@@ -21,7 +21,7 @@ class CurrencyController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -76,8 +76,8 @@ class CurrencyController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  \App\Models\Currency  $currency
+     * @return \Illuminate\View\View
      */
     public function edit(Currency $currency)
     {
@@ -134,7 +134,7 @@ class CurrencyController extends Controller
 
             return redirect()->route('currencies.index');
         } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->errorInfo[1] == 1451) {
+            if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Currency is in use, cannot be deleted'));
             } else {
                 self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);

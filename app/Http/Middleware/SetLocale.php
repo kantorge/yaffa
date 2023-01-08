@@ -16,7 +16,6 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next)
     {
-
         // Locale is determined primarily by user setting
         if ($request->user() && $request->user()->language) {
             app()->setLocale($request->user()->language);

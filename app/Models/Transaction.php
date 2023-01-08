@@ -43,7 +43,7 @@ class Transaction extends Model
     ];
 
     protected $hidden = [
-        'config_id'
+        'config_id',
     ];
 
     /**
@@ -214,7 +214,6 @@ class Transaction extends Model
         ]);
     }
 
-    // TODO: This should ideally be removed, if client can read the source format
     public function transformToClient()
     {
         // Standard
@@ -223,7 +222,7 @@ class Transaction extends Model
                 $this->transformDataCommon(),
                 $this->transformDataStandard(),
                 [
-                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency()
+                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency(),
                 ]
             );
         }
@@ -234,7 +233,7 @@ class Transaction extends Model
                 $this->transformDataCommon(),
                 $this->transformDataInvestment(),
                 [
-                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency()
+                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency(),
                 ]
             );
         }
@@ -272,7 +271,7 @@ class Transaction extends Model
 
     private function transformDataStandard()
     {
-        if (!$this->transactionItems) {
+        if (! $this->transactionItems) {
             $this->load([
                 'transactionItems',
                 'transactionItems.category',
@@ -373,11 +372,11 @@ class Transaction extends Model
     {
         $scheduleInstances = new Collection();
 
-        if (is_null($maxLookAhead)) {
+        if ($maxLookAhead === null) {
             $maxLookAhead = (new Carbon(config('yaffa.app_end_date')));
         }
 
-        if (is_null($constraintStart)) {
+        if ($constraintStart === null) {
             $constraintStart = new Carbon($this->transactionSchedule->next_date);
         }
         $constraintStart->startOfDay();
@@ -405,7 +404,7 @@ class Transaction extends Model
         $transformerConfig->enableLastDayOfMonthFix();
         $transformer->setConfig($transformerConfig);
 
-        if (is_null($this->transactionSchedule->end_date)) {
+        if ($this->transactionSchedule->end_date === null) {
             $endDate = $maxLookAhead;
         } else {
             $endDate = new Carbon($this->transactionSchedule->end_date);

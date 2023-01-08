@@ -11,6 +11,7 @@ class IsFalsy implements Rule
      *
      * @param  string  $attribute
      * @param  mixed  $value
+     *
      * @return bool
      */
     public function passes($attribute, $value)
@@ -25,6 +26,6 @@ class IsFalsy implements Rule
      */
     public function message()
     {
-        return 'The :attribute must be unchecked.';
+        return __('The :attribute must be unchecked.');
     }
 }

@@ -47,11 +47,9 @@ Route::get('/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}', [R
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 
-Route::get(
-    '/transactions/get_scheduled_items/{type}',
-    [TransactionApiController::class,'getScheduledItems']
-)
-->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
+Route::get('/transactions/get_scheduled_items/{type}', [TransactionApiController::class,'getScheduledItems'])
+    ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
+
 Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])->name('api.transactions.storeStandard');
 Route::patch('/transactions/standard/{transaction}', [TransactionApiController::class, 'updateStandard'])->name('api.transactions.updateStandard');
 Route::patch('/transactions/{transaction}/skip', [TransactionApiController::class, 'skipScheduleInstance'])->name('api.transactions.skipScheduleInstance');

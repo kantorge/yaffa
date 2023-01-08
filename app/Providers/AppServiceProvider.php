@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
 
-        Blade::directive('dusk', function($expression) {
+        Blade::directive('dusk', function ($expression) {
             if (\App::environment('production')) {
                 return '';
             }

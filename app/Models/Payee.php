@@ -60,16 +60,16 @@ class Payee extends AccountEntity
         $account = $this;
 
         return Transaction::where('schedule', 0)
-        ->where('budget', 0)
-        ->whereHasMorph(
-            'config',
-            [TransactionDetailStandard::class],
-            function (Builder $query) use ($account) {
-                $query->Where('account_from_id', $account->id);
-                $query->orWhere('account_to_id', $account->id);
-            }
-        )
-        ->get();
+            ->where('budget', 0)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailStandard::class],
+                function (Builder $query) use ($account) {
+                    $query->Where('account_from_id', $account->id);
+                    $query->orWhere('account_to_id', $account->id);
+                }
+            )
+            ->get();
     }
 
     public function getLatestTransactionDateAttribute()

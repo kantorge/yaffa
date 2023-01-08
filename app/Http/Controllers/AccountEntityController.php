@@ -98,8 +98,8 @@ class AccountEntityController extends Controller
     private function indexPayee()
     {
         // Show all payees of user from the database and return to view
-        $payees = DB::select("
-            SELECT
+        $payees = DB::select(
+            "SELECT
                 base_data.id,
                 name,
                 active,
@@ -245,7 +245,8 @@ class AccountEntityController extends Controller
                 ) AS base_data
 
                 LEFT JOIN payees ON base_data.config_id = payees.id",
-            [Auth::user()->id]);
+            [Auth::user()->id]
+        );
 
         // Get categories to display name
         $categories = Category::with(['parent'])->get();
@@ -253,7 +254,7 @@ class AccountEntityController extends Controller
         // Load additional data and make further calculations
         array_map(function ($payee) use ($categories) {
             // Get full category name
-            if (is_null($payee->category_id)) {
+            if ($payee->category_id === null) {
                 $payee->category_full_name = '';
             } else {
                 $payee->category_full_name = $categories->find($payee->category_id)->full_name;
@@ -551,7 +552,7 @@ class AccountEntityController extends Controller
 
             return redirect()->route('account-entity.index', ['type' => $request->type]);
         } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->errorInfo[1] == 1451) {
+            if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(
                     __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->type)])
                 );
@@ -567,7 +568,7 @@ class AccountEntityController extends Controller
      * Display a form to merge two payees.
      *
      * @param  \App\Models\AccountEntity  $payeeSource
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
     {

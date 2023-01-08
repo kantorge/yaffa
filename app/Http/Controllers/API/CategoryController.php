@@ -36,7 +36,8 @@ class CategoryController extends Controller
                         'payeesNotPreferring',
                         function (Builder $query) use ($request) {
                             $query->where('account_entity_id', $request->get('payee'))->where('preferred', false);
-                        })->get();
+                        }
+                    )->get();
                 })
                 ->get()
                 ->filter(function ($category) use ($query) {

@@ -4,11 +4,6 @@ namespace App\Providers\Faker;
 
 class CurrencyData
 {
-    public static function getCurrencies(): array
-    {
-        return static::$currencies;
-    }
-
     protected static $currencies = [
         [
             'name' => 'US Dollar',
@@ -35,4 +30,9 @@ class CurrencyData
             'minorUnits' => '2',
         ],
     ];
+
+    public static function getCurrencies(): array
+    {
+        return static::$currencies;
+    }
 }

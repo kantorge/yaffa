@@ -101,7 +101,7 @@ class Investment extends Model
             [TransactionDetailInvestment::class],
             function (Builder $query) use ($investmentId, $account) {
                 $query->Where('investment_id', $investmentId);
-                if (! is_null($account)) {
+                if ($account !== null) {
                     $query->where('account_id', '=', $account->id);
                 }
             }

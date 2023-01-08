@@ -10,16 +10,15 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
 {
-
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
@@ -66,7 +65,7 @@ class TransactionApiController extends Controller
          */
 
         // Return empty response if categories are required, but not set or empty
-        if($request->has('category_required')) {
+        if ($request->has('category_required')) {
             if (! $request->has('categories') || ! $request->input('categories')) {
                 return response()->json([], Response::HTTP_OK);
             }
@@ -95,7 +94,7 @@ class TransactionApiController extends Controller
             'transaction_detail_standard'
         )
         // Optionally add account filter
-        ->when($request->has('account'), function($query) use ($request) {
+        ->when($request->has('account'), function ($query) use ($request) {
             $query->whereHasMorph(
                 'config',
                 [TransactionDetailStandard::class],
@@ -106,7 +105,7 @@ class TransactionApiController extends Controller
             );
         })
         // Optionally add category filter
-        ->when($categories->count() > 0, function($query) use ($categories) {
+        ->when($categories->count() > 0, function ($query) use ($categories) {
             $query->whereHas('transactionItems', function ($query) use ($categories) {
                 $query->whereIn('category_id', $categories->pluck('id'));
             });
@@ -134,7 +133,7 @@ class TransactionApiController extends Controller
                 'transaction_detail_investment'
             )
             // Optionally add account filter
-            ->when($request->has('account'), function($query) use ($request) {
+            ->when($request->has('account'), function ($query) use ($request) {
                 $query->whereHasMorph(
                     'config',
                     [TransactionDetailInvestment::class],
@@ -311,7 +310,8 @@ class TransactionApiController extends Controller
             ->map(function ($transaction) {
                 return $transaction->transformToClient();
             })
-            ->merge($investmentTransactions
+            ->merge(
+                $investmentTransactions
                 ->map(function ($transaction) {
                     return $transaction->transformToClient();
                 })
@@ -479,7 +479,7 @@ class TransactionApiController extends Controller
         $processedTransactionItems = [];
         foreach ($transactionItems as $item) {
             // Ignore item, if amount is missing
-            if (! array_key_exists('amount', $item) || is_null($item['amount'])) {
+            if (! array_key_exists('amount', $item) || $item['amount'] === null) {
                 continue;
             }
 
