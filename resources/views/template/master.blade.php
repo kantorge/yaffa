@@ -36,7 +36,7 @@
 
 </head>
 
-<body @yield('classes_body')">
+<body @yield('classes_body')>
     @if(config('yaffa.gtm_container_id') && preg_match( '/^GTM-[A-Z0-9]+/', config('yaffa.gtm_container_id') ))
         <!-- Google Tag Manager (noscript) -->
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ config('yaffa.gtm_container_id') }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
