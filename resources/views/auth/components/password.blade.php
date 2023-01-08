@@ -9,6 +9,7 @@
         placeholder="{{ __('Password') }}"
         required
         type="password"
+        value="demo"
     >
     @error('password')
         <span class="invalid-feedback" role="alert">

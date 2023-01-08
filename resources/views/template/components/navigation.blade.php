@@ -52,7 +52,8 @@
         <ul class="nav-group-items">
             <li class="nav-item"><a class="nav-link" href="{{ route('transactions.createStandard') }}"><i class="nav-icon fa-solid fa-cart-plus"></i> {{ __('New transaction') }}</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('transactions.createInvestment') }}"><i class="nav-icon fa-solid fa-chart-line"></i> {{ __('New investment transaction') }}</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('import.csv') }}"><i class="nav-icon fa-solid fa-upload"></i> {{ __('Import transactions') }}</a></li>
+            {{-- Hidden for DEMO --}}
+            {{-- <li class="nav-item"><a class="nav-link" href="{{ route('import.csv') }}"><i class="nav-icon fa-solid fa-upload"></i> {{ __('Import transactions') }}</a></li> --}}
         </ul>
     </li>
 </ul>

@@ -12,7 +12,7 @@
         placeholder="{{ __('Email') }}"
         required
         type="email"
-        value="{{ old('email') }}"
+        value="demo@yaffa.cc"
     >
     @error('email')
         <span class="invalid-feedback" role="alert">
