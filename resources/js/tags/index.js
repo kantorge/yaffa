@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
@@ -7,21 +9,17 @@ import {
 
 const dataTableSelector = '#table';
 
-$(dataTableSelector).DataTable({
+window.table = $(dataTableSelector).DataTable({
 
     data: tags,
     columns: [
         {
-            data: "id",
-            title: "ID"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __("Name")
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -29,15 +27,22 @@ $(dataTableSelector).DataTable({
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'tag.edit') +
                         genericDataTablesActionButton(data, 'delete');
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[1, 'asc']]
+    order: [[0, 'asc']]
 });
 
 initializeDeleteButtonListener(dataTableSelector, 'tag.destroy');
+
+// Listeners for button filter(s)
+$('input[name=active]').on("change", function() {
+    table.column(1).search(this.value).draw();
+});

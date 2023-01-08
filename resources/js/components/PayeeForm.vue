@@ -1,31 +1,28 @@
 <template>
     <div
-        class="modal fade"
-        id="modalPayeeForm"
-        transition="modal"
+        class="modal"
+        tabindex="-1"
+        :id="id"
     >
         <div class="modal-dialog">
             <div class="modal-content">
-                <!-- form start -->
                 <form
                     accept-charset="UTF-8"
                     @submit.prevent="onSubmit"
                     autocomplete="off"
                 >
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                        <h4 class="modal-title" v-if="action == 'new'">Add new payee</h4>
-                        <h4 class="modal-title" v-if="action == 'edit'">Edit payee</h4>
+                        <h5 class="modal-title" v-if="action == 'new'">{{ __('Add new payee') }}</h5>
+                        <h5 class="modal-title" v-if="action == 'edit'">{{ __('Edit payee') }}</h5>
+                        <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body form-horizontal">
-                        <AlertErrors :form="form" message="There were some problems with your input." />
-                        <AlertSuccess :form="form" message="Your changes have been saved!" />
+                    <div class="modal-body">
+                        <AlertErrors :form="form" :message="__('There were some problems with your input.')" />
+                        <AlertSuccess :form="form" :message="__('Your changes have been saved!')" />
 
-                        <div class="form-group">
+                        <div class="row mb-3">
                             <label for="name" class="control-label col-sm-3">
-                                Name
+                                {{ __('Name') }}
                             </label>
                             <div class="col-sm-9">
                                 <input
@@ -39,9 +36,9 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="row mb-3">
                             <label for="active" class="control-label col-sm-3">
-                                Active
+                                {{ __('Active') }}
                             </label>
                             <div class="col-sm-9">
                                 <input
@@ -54,23 +51,24 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="row mb-3">
                             <label for="category_id" class="control-label col-sm-3">
-                                Default category
+                                {{ __('Default category') }}
                             </label>
                             <div class="col-sm-9">
                                 <select
-                                    class="form-control category"
+                                    id="category_id"
+                                    class="form-select category"
                                     style="width:100%"
                                     v-model.number="form.config.category_id"
                                 >
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group" v-show="similarPayees.length > 0">
+                        <div class="row mb-3" v-show="similarPayees.length > 0">
                             <hr>
-                            <label for="category_id" class="control-label col-sm-3">
-                                Are you looking for any of these payees?
+                            <label class="control-label col-sm-3">
+                                {{ __('Are you looking for any of these payees?') }}
                             </label>
                             <div class="col-sm-9">
                                 <ul class="list-unstyled">
@@ -81,7 +79,7 @@
                                     >
                                         <a href="#" @click.prevent="onSelectPayee(payee)">
                                             {{ payee.name }}
-                                            <span v-if="!payee.active">(inactive)</span>
+                                            <span v-if="!payee.active">({{ __('inactive') }})</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -89,22 +87,25 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default pull-left closeModal" data-dismiss="modal">Close</button>
-                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">Save</Button>
+                        <button type="button" class="btn btn-default" data-coreui-dismiss="modal">{{ __('Close') }}</button>
+                        <Button class="btn btn-primary" :disabled="form.busy" :form="form">{{ __('Save') }}</Button>
                     </div>
                 </form>
             </div>
-            <!-- /.modal-content -->
         </div>
-        <!-- /.modal-dialog -->
     </div>
 </template>
 
 <script>
     require('select2');
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
 
     import Form from 'vform'
-    import {Button, AlertErrors, AlertSuccess} from 'vform/src/components/bootstrap4'
+    import {Button, AlertErrors, AlertSuccess} from 'vform/src/components/bootstrap5'
 
     export default {
         components: {
@@ -114,6 +115,10 @@
         props: {
             action: String,
             payee: Object,
+            id: {
+                type: String,
+                default: 'newPayeeModal'
+            }
         },
 
         data() {
@@ -156,8 +161,9 @@
                     cache: true
                 },
                 selectOnClose: true,
-                placeholder: "Select category",
-                allowClear: true
+                placeholder: __("Select category"),
+                allowClear: true,
+                dropdownParent: $('#' + this.id)
             })
             .on('select2:select', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
@@ -231,9 +237,3 @@
         }
     }
 </script>
-
-<style scoped>
-    .mt-2 {
-        margin-top: 5px;
-    }
-</style>

@@ -4,10 +4,10 @@
     @parent
 @endsection
 
-@section('title', 'Transaction')
+@section('title', __('Transaction'))
 
 @section('content_header')
-    Transaction details
+    {{ __('Transaction details') }}
 @endsection
 
 @section('content')

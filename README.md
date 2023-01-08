@@ -17,14 +17,12 @@ Yaffa is a personal finance web application, focusing on the support of long ter
 
 **Please note:** the application can be used in production, but it's still under development. There are several features planned to be implemented:
 * Automatic currency exchange rate updates from external sources.
-* Automatic stock price updates from external sources.
 * Further charts, reports and dashboards.
-* Account reconciliation view.
 * Handling multiple teams/families in one app instance.
 * Onboarding support or wizard
+* QIF/CSV file imports
 
 Several features are not likely to be introduced, which you might expect from such applications. If you are looking to have these, then Yaffa might not be the right choice for you.
-* QIF, CSV and other file imports
 * Downloading transaction data directly from banks
 * Mobile app version (although the web interface is more or less responsive for mobile browser support)
 

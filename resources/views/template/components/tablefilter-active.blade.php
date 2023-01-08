@@ -1,19 +1,21 @@
-<div class="form-group d-inline-block">
-    <label class="control-label">
-        Active
+<div class="d-inline-block">
+    <label>
+        {{ __('Active') }}
     </label>
     <div>
-        <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-primary" title="Yes">
-                <input type="radio" name="active" value="Yes" class="radio-inline">
+        <div class="btn-group" role="group" aria-label="Toggle button group for active">
+            <input type="radio" class="btn-check" name="active" id="active_yes" value="{{ __('Yes') }}">
+            <label class="btn btn-outline-primary" for="active_yes" title="{{ __('Yes') }}">
                 <span class="fa fa-fw fa-check"></span>
             </label>
-            <label class="btn btn-primary active" title="Any">
-                <input type="radio" name="active" value="" class="radio-inline" checked="checked">
-                <span class="fa fa-fw fa-circle-o"></span>
+
+            <input type="radio" class="btn-check" name="active" id="active_any" value="" checked>
+            <label class="btn btn-outline-primary" for="active_any" title="{{ __('Any') }}">
+                <span class="fa fa-fw fa-circle"></span>
             </label>
-            <label class="btn btn-primary" title="No">
-                <input type="radio" name="active" value="No" class="radio-inline">
+
+            <input type="radio" class="btn-check" name="active" id="active_no" value="{{ __('No') }}">
+            <label class="btn btn-outline-primary" for="active_no" title="{{ __('No') }}">
                 <span class="fa fa-fw fa-close"></span>
             </label>
         </div>

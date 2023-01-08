@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Traits\ModelOwnedByUserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Tag extends Model
 {
-    use HasFactory;
+    use HasFactory, ModelOwnedByUserTrait;
 
     /**
      * The table associated with the model.
@@ -26,7 +27,6 @@ class Tag extends Model
     protected $fillable = [
         'name',
         'active',
-        'user_id',
     ];
 
     /**

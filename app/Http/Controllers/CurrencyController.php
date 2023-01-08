@@ -14,7 +14,7 @@ class CurrencyController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(Currency::class);
     }
 
@@ -28,7 +28,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies')
          * @name('currencies.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
         $currencies = Auth::user()
@@ -54,7 +54,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/create')
          * @name('currencies.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
         return view('currencies.form');
     }
@@ -64,15 +64,11 @@ class CurrencyController extends Controller
         /**
          * @post('/currencies')
          * @name('currencies.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\Currency')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        $validated = $request->validated();
+        Currency::create($request->validated());
 
-        $currency = Currency::make($validated);
-        $currency->user_id = Auth::user()->id;
-        $currency->save();
-
-        self::addSimpleSuccessMessage('Currency added');
+        self::addSimpleSuccessMessage(__('Currency added'));
 
         return redirect()->route('currencies.index');
     }
@@ -88,7 +84,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/{currency}/edit')
          * @name('currencies.edit')
-         * @middlewares('web', 'auth', 'can:update,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         return view('currencies.form', ['currency' => $currency]);
     }
@@ -99,14 +95,14 @@ class CurrencyController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/currencies/{currency}')
          * @name('currencies.update')
-         * @middlewares('web', 'auth', 'can:update,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         $validated = $request->validated();
 
         $currency->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Currency updated');
+        self::addSimpleSuccessMessage(__('Currency updated'));
 
         return redirect()->route('currencies.index');
     }
@@ -122,11 +118,11 @@ class CurrencyController extends Controller
         /**
          * @delete('/currencies/{currency}')
          * @name('currencies.destroy')
-         * @middlewares('web', 'auth', 'can:delete,currency')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,currency')
          */
         // Base currency cannot be deleted
         if ($currency->base) {
-            self::addSimpleDangerMessage('Base currency cannot be deleted');
+            self::addSimpleDangerMessage(__('Base currency cannot be deleted'));
 
             return redirect()->back();
         }
@@ -134,14 +130,14 @@ class CurrencyController extends Controller
         //delete
         try {
             $currency->delete();
-            self::addSimpleSuccessMessage('Currency deleted');
+            self::addSimpleSuccessMessage(__('Currency deleted'));
 
             return redirect()->route('currencies.index');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->errorInfo[1] == 1451) {
-                self::addSimpleDangerMessage('Currency is in use, cannot be deleted');
+                self::addSimpleDangerMessage(__('Currency is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -153,7 +149,7 @@ class CurrencyController extends Controller
         /**
          * @get('/currencies/{currency}/setDefault')
          * @name('currencies.setDefault')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $baseCurrency = $this->getBaseCurrency();
 
@@ -166,7 +162,7 @@ class CurrencyController extends Controller
         $currency->base = true;
         $currency->save();
 
-        self::addSimpleSuccessMessage('Base currency changed');
+        self::addSimpleSuccessMessage(__('Base currency changed'));
 
         return redirect()->back();
     }

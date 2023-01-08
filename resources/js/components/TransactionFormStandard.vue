@@ -1,11 +1,11 @@
 <template>
-    <div>
+    <div id="transactionFormStandard">
         <AlertErrors :form="form" message="There were some problems with your input." />
 
         <payee-form
             action = "new"
             :payee = "{}"
-            ref="payeeModal"
+            id="newPayeeModal"
             @payeeSelected="setPayee"
         ></payee-form>
 
@@ -15,336 +15,322 @@
             @submit.prevent="onSubmit"
             autocomplete="off"
         >
-            <div>
-                <div class="row">
-                    <!-- left column -->
-                    <div class="col-md-4">
-                        <div class="box box-primary">
-                            <div class="box-header with-border">
-                                <h3 class="box-title">
-                                    Properties
-                                </h3>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Properties') }}
                             </div>
-                            <!-- /.box-header -->
-
-                            <div class="box-body">
-                                <div class="row">
-                                    <div class="form-group col-xs-12 col-sm-6">
-                                        <label class="block-label">
-                                            Type
-                                        </label>
-                                        <div class="btn-group">
-                                            <button
-                                                class="btn btn-primary"
-                                                :class="form.transaction_type == 'withdrawal' ? 'active' : ''"
-                                                type="button"
-                                                value="withdrawal"
-                                                @click="changeTransactionType"
-                                            >
-                                                Withdrawal
-                                            </button>
-                                            <button
-                                                class="btn btn-primary"
-                                                :class="form.transaction_type == 'deposit' ? 'active' : ''"
-                                                type="button"
-                                                value="deposit"
-                                                @click="changeTransactionType"
-                                            >
-                                                Deposit
-                                            </button>
-                                            <button
-                                                class="btn btn-primary"
-                                                :class="form.transaction_type == 'transfer' ? 'active' : ''"
-                                                type="button"
-                                                value="transfer"
-                                                @click="changeTransactionType"
-                                                :disabled="form.budget"
-                                            >
-                                                Transfer
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="form-group col-xs-12 col-sm-6"
-                                        :class="form.errors.has('date') ? 'has-error' : ''"
-                                    >
-                                        <label class="block-label" for="date">
-                                            Date
-                                        </label>
-                                        <Datepicker
-                                            id="date"
-                                            v-model="form.date"
-                                            :disabled="form.schedule || form.budget"
-                                            autoApply
-                                            format="yyyy. MM. dd."
-                                            :enableTimePicker="false"
-                                            utc="preserve"
-                                        ></Datepicker>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-12 col-sm-6">
+                                    <label class="block-label">
+                                        {{ __('Type') }}
+                                    </label>
+                                    <div class="btn-group">
+                                        <button
+                                            class="btn btn-primary"
+                                            :class="{ active : form.transaction_type === 'withdrawal'}"
+                                            type="button"
+                                            value="withdrawal"
+                                            @click="changeTransactionType"
+                                        >
+                                            {{ __('Withdrawal') }}
+                                        </button>
+                                        <button
+                                            class="btn btn-primary"
+                                            :class="{ active : form.transaction_type === 'deposit'}"
+                                            type="button"
+                                            value="deposit"
+                                            @click="changeTransactionType"
+                                        >
+                                            {{ __('Deposit') }}
+                                        </button>
+                                        <button
+                                            class="btn btn-primary"
+                                            :class="{ active : form.transaction_type === 'transfer'}"
+                                            type="button"
+                                            value="transfer"
+                                            @click="changeTransactionType"
+                                            :disabled="form.budget"
+                                        >
+                                            {{ __('Transfer') }}
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div
-                                        class="form-group col-xs-12 col-sm-6"
-                                        :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
-                                    >
-                                        <label class="control-label block-label">
-                                            {{ accountFromFieldLabel }}
-                                        </label>
+                                <div
+                                    class="col-12 col-sm-6"
+                                    :class="{ 'has-error' : form.errors.has('date')}"
+                                >
+                                    <label class="block-label" for="date">
+                                        {{ __('Date') }}
+                                    </label>
+                                    <Datepicker
+                                        id="date"
+                                        v-model="form.date"
+                                        :disabled="form.schedule || form.budget"
+                                        autoApply
+                                        format="yyyy. MM. dd."
+                                        :enableTimePicker="false"
+                                        utc="preserve"
+                                    ></Datepicker>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div
+                                    class="col-12 col-sm-6"
+                                    :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
+                                >
+                                    <label class="control-label block-label">
+                                        {{ accountFromFieldLabel }}
+                                    </label>
+                                    <div class="input-group">
                                         <select
-                                            class="form-control"
+                                            class="form-select"
                                             id="account_from"
-                                            style="width: 85%;"
                                             v-model="form.config.account_from_id">
                                         </select>
                                         <button
-                                            class="btn btn-xs btn-success"
-                                            @click="this.$refs.payeeModal.show()"
-                                            style="margin-left: 10px;"
-                                            title="Add a new payee"
+                                            class="btn btn-success"
+                                            style="padding: 0.05rem 0.25rem;"
+                                            :title="__('Add a new payee')"
                                             type="button"
-                                            v-show="form.transaction_type == 'deposit'"
-                                        ><span class="fa fa-plus"></span></button>
+                                            data-coreui-toggle="modal"
+                                            data-coreui-target="#newPayeeModal"
+                                            v-if="form.transaction_type === 'deposit'"
+                                        ><span class="fa fa-fw fa-plus"></span></button>
                                     </div>
+                                </div>
 
-                                    <div
-                                        class="form-group col-xs-12 col-sm-6"
-                                        :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
-                                    >
-                                        <label class="control-label block-label">
-                                            {{ accountToFieldLabel }}
-                                        </label>
+                                <div
+                                    class="col-12 col-sm-6"
+                                    :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
+                                >
+                                    <label class="control-label block-label">
+                                        {{ accountToFieldLabel }}
+                                    </label>
+                                    <div class="input-group">
                                         <select
-                                            class="form-control"
+                                            class="form-select"
                                             id="account_to"
-                                            style="width: 85%;"
                                             v-model="form.config.account_to_id">
                                         </select>
                                         <button
-                                            class="btn btn-xs btn-success"
-                                            @click="this.$refs.payeeModal.show()"
-                                            style="margin-left: 10px;"
-                                            title="Add a new payee"
+                                            class="btn btn-success"
+                                            style="padding: 0.05rem 0.25rem;"
+                                            :title="__('Add a new payee')"
                                             type="button"
-                                            v-show="form.transaction_type == 'withdrawal'"
-                                        ><span class="fa fa-plus"></span></button>
+                                            data-coreui-toggle="modal"
+                                            data-coreui-target="#newPayeeModal"
+                                            v-if="form.transaction_type === 'withdrawal'"
+                                        ><span class="fa fa-fw fa-plus"></span></button>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div
-                                        class="form-group col-xs-12"
-                                        :class="form.errors.has('comment') ? 'has-error' : ''"
+                            </div>
+                            <div class="row mb-3">
+                                <div
+                                    class="col-12"
+                                    :class="form.errors.has('comment') ? 'has-error' : ''"
+                                >
+                                    <label for="comment" class="control-label block-label">
+                                        {{ __('Comment') }}
+                                    </label>
+                                    <input
+                                        class="form-control"
+                                        id="comment"
+                                        maxlength="255"
+                                        type="text"
+                                        v-model="form.comment"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col" v-if="!simplified">
+                                    <label
+                                        :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
+                                        :data-toggle="(action === 'replace' ? 'tooltip' : '')"
                                     >
-                                        <label for="comment" class="control-label block-label">
-                                            Comment
-                                        </label>
                                         <input
-                                            class="form-control"
-                                            id="comment"
-                                            maxlength="255"
-                                            type="text"
-                                            v-model="form.comment"
-                                        />
-                                    </div>
+                                            :disabled="form.reconciled || action === 'replace'"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="form.schedule"
+                                        >
+                                        {{ __('Scheduled') }}
+                                    </label>
                                 </div>
-
-                                    <div class="form-group form-horizontal row">
-                                        <div class="col-xs-4 checkbox" v-if="!simplified">
-                                            <label
-                                                :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
-                                                :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                            >
-                                                <input
-                                                    :disabled="form.reconciled || action === 'replace'"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="form.schedule"
-                                                >
-                                                Scheduled
-                                            </label>
-                                        </div>
-                                        <div class="col-xs-4 checkbox" v-if="!simplified">
-                                            <label
-                                                :title="(action === 'replace' ? 'You cannot change schedule settings for this type of action' : '')"
-                                                :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                            >
-                                                <input
-                                                    :disabled="form.reconciled || form.transaction_type == 'transfer' || action === 'replace'"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="form.budget"
-                                                >
-                                                Budget
-                                            </label>
-                                        </div>
-                                        <div class="col-xs-4 checkbox">
-                                            <label>
-                                                <input
-                                                    :disabled="form.schedule || form.budget"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="form.reconciled"
-                                                >
-                                                Reconciled
-                                            </label>
-                                        </div>
-                                    </div>
-
-                            </div>
-                            <!-- /.box-body -->
-
-                        </div>
-                        <!-- /.box -->
-
-                        <div class="box box-primary">
-                            <div class="box-header with-border">
-                                <h3 class="box-title">Amounts</h3>
-                            </div>
-                            <!-- /.box-header -->
-                            <div class="box-body">
-                                <div class="row">
-                                    <div
-                                        class="form-group col-xs-4"
-                                        :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
+                                <div class="col" v-if="!simplified">
+                                    <label
+                                        :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
+                                        :data-toggle="(action === 'replace' ? 'tooltip' : '')"
                                     >
-                                        <label for="transaction_amount_from" class="control-label">
-                                            {{ ammountFromFieldLabel }}
-                                            <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
-                                            <span v-if="form.budget && !ammountFromCurrencyLabel">
-                                                ({{ baseCurrency.suffix }})
-                                                <span
-                                                    class="fa fa-info-circle text-primary"
-                                                    title="Budget is calculated using your base currency, unless you define an account with an other currency."
-                                                    data-toggle="tooltip"
-                                                ></span>
-                                            </span>
-                                        </label>
-                                        <MathInput
-                                            class="form-control"
-                                            id="transaction_amount_from"
-                                            v-model="form.config.amount_from"
-                                        ></MathInput>
-                                    </div>
-                                    <div
-                                        v-show="exchangeRatePresent"
-                                        class="col-xs-4">
-                                        <span class="block-label">Exchange rate</span>
-                                        {{ exchangeRate }}
-                                    </div>
-                                    <div
-                                        v-show="exchangeRatePresent"
-                                        class="form-group col-xs-4"
-                                        :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
-                                    >
-                                        <label for="transaction_amount_slave" class="control-label">
-                                            Amount to
-                                            <span v-if="to.account_currency">({{to.account_currency}})</span>
-                                        </label>
-                                        <MathInput
-                                            class="form-control"
-                                            id="transaction_amount_to"
-                                            v-model="form.config.amount_to"
-                                        ></MathInput>
-                                    </div>
+                                        <input
+                                            :disabled="form.reconciled || form.transaction_type == 'transfer' || action === 'replace'"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="form.budget"
+                                        >
+                                        {{ __('Budget') }}
+                                    </label>
                                 </div>
-                                <div class="row">
-                                    <div class="col-xs-12">
-                                        <dl class="dl-horizontal">
-                                            <dt>Total amount:</dt>
-                                            <dd>
-                                                {{ form.config.amount_from || 0 }}
-                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                            </dd>
-                                            <dt>Total allocated:</dt>
-                                            <dd>
-                                                {{ allocatedAmount }}
-                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                            </dd>
-                                            <dt v-show="payeeCategory.id">
-                                                Remaining amount to
-                                                <span class="notbold"><br>{{ payeeCategory.text }}</span>:
-                                            </dt>
-                                            <dd v-show="payeeCategory.id">
-                                                {{ remainingAmountToPayeeDefault }}
-                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                            </dd>
-                                            <dt v-show="!payeeCategory.id">
-                                                Not allocated:
-                                            </dt>
-                                            <dd v-show="!payeeCategory.id">
-                                                {{ remainingAmountNotAllocated }}
-                                                <span v-if="from.account_currency">{{from.account_currency}}</span>
-                                            </dd>
-                                        </dl>
-                                    </div>
+                                <div class="col">
+                                    <label>
+                                        <input
+                                            :disabled="form.schedule || form.budget"
+                                            type="checkbox"
+                                            value="1"
+                                            v-model="form.reconciled"
+                                        >
+                                        {{ __('Reconciled') }}
+                                    </label>
                                 </div>
                             </div>
                         </div>
-                        <!-- /.box -->
-
-                        <transaction-schedule
-                            v-if="form.schedule || form.budget"
-                            :isSchedule="form.schedule"
-                            :isBudget="form.budget"
-                            :schedule="form.schedule_config"
-                            :form="form"
-                            key="current"
-                        ></transaction-schedule>
-
-                        <transaction-schedule
-                            v-if="(form.schedule || form.budget) && action === 'replace'"
-                            :withCheckbox = "true"
-                            title = "Update base schedule"
-                            :allowCustomization = "false"
-
-                            :isSchedule = "form.schedule"
-                            :isBudget = "form.budget"
-                            :schedule = "form.original_schedule_config"
-                            :form = "form"
-                            ref = "scheduleOriginal"
-                            key="original"
-                        ></transaction-schedule>
-
                     </div>
-                    <!--/.col (left) -->
-
-                    <!-- right column -->
-                    <div class="col-md-8">
-                        <transaction-item-container
-                            @addTransactionItem="addTransactionItem"
-                            :transactionItems="form.items"
-                            :currency="from.account_currency"
-                            :payee="payeeId"
-                            :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
-                        ></transaction-item-container>
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Amounts') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div
+                                    class="col-4"
+                                    :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
+                                >
+                                    <label for="transaction_amount_from" class="control-label">
+                                        {{ ammountFromFieldLabel }}
+                                        <span v-if="ammountFromCurrencyLabel">({{ ammountFromCurrencyLabel }})</span>
+                                        <span v-if="form.budget && !ammountFromCurrencyLabel">
+                                            ({{ baseCurrency.suffix }})
+                                            <span
+                                                class="fa fa-info-circle text-primary"
+                                                :title="__('Budget is calculated using your base currency, unless you define an account with an other currency.')"
+                                                data-toggle="tooltip"
+                                            ></span>
+                                        </span>
+                                    </label>
+                                    <MathInput
+                                        class="form-control"
+                                        id="transaction_amount_from"
+                                        v-model="form.config.amount_from"
+                                    ></MathInput>
+                                </div>
+                                <div
+                                    v-show="exchangeRatePresent"
+                                    class="col-4">
+                                    <span class="block-label">
+                                        {{ __('Exchange rate') }}
+                                    </span>
+                                    {{ exchangeRate }}
+                                </div>
+                                <div
+                                    v-show="exchangeRatePresent"
+                                    class="col-4"
+                                    :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
+                                >
+                                    <label for="transaction_amount_slave" class="control-label">
+                                        {{ __('Amount to') }}
+                                        <span v-if="to.account_currency">({{to.account_currency}})</span>
+                                    </label>
+                                    <MathInput
+                                        class="form-control"
+                                        id="transaction_amount_to"
+                                        v-model="form.config.amount_to"
+                                    ></MathInput>
+                                </div>
+                            </div>
+                            <dl class="row">
+                                <dt class="col-sm-8">
+                                    {{ __('Total amount') }}:
+                                </dt>
+                                <dd class="col-sm-4">
+                                    {{ form.config.amount_from || 0 }}
+                                    <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                </dd>
+                                <dt class="col-sm-8">
+                                    {{ __('Total allocated') }}:
+                                </dt>
+                                <dd class="col-sm-4">
+                                    {{ allocatedAmount }}
+                                    <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                </dd>
+                                <dt class="col-sm-8" v-show="payeeCategory.id">
+                                    {{ __('Remaining amount to') }}
+                                    <span class="notbold"><br>{{ payeeCategory.text }}</span>:
+                                </dt>
+                                <dd class="col-sm-4" v-show="payeeCategory.id">
+                                    {{ remainingAmountToPayeeDefault }}
+                                    <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                </dd>
+                                <dt class="col-sm-8" v-show="!payeeCategory.id">
+                                    {{ __('Not allocated') }}:
+                                </dt>
+                                <dd class="col-sm-4" v-show="!payeeCategory.id">
+                                    {{ remainingAmountNotAllocated }}
+                                    <span v-if="from.account_currency">{{from.account_currency}}</span>
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
-                    <!--/.col (right) -->
+
+                    <transaction-schedule
+                        v-if="form.schedule || form.budget"
+                        :isSchedule="form.schedule"
+                        :isBudget="form.budget"
+                        :schedule="form.schedule_config"
+                        :form="form"
+                        key="current"
+                    ></transaction-schedule>
+
+                    <transaction-schedule
+                        v-if="(form.schedule || form.budget) && action === 'replace'"
+                        :withCheckbox = "true"
+                        title = "Update base schedule"
+                        :allowCustomization = "false"
+
+                        :isSchedule = "form.schedule"
+                        :isBudget = "form.budget"
+                        :schedule = "form.original_schedule_config"
+                        :form = "form"
+                        ref = "scheduleOriginal"
+                        key="original"
+                    ></transaction-schedule>
+
                 </div>
-                <!-- /.row -->
+                <div class="col-md-8">
+                    <transaction-item-container
+                        @addTransactionItem="addTransactionItem"
+                        :transactionItems="form.items"
+                        :currency="from.account_currency"
+                        :payee="payeeId"
+                        :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
+                    ></transaction-item-container>
+                </div>
+            </div>
 
-                <div class="box box-primary">
-                    <div class="box-body">
-                        <div class="row">
-                            <div class="col-xs-12">
-                                <div class="pull-right">
-                                    <button
-                                        class="btn btn-sm btn-default"
-                                        @click="onCancel"
-                                        style="margin-left: 10px; margin-bottom: 5px;"
-                                        type="button"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <Button
-                                        class="btn btn-primary"
-                                        :disabled="form.busy"
-                                        :form="form"
-                                        style="margin-left: 10px; margin-bottom: 5px;"
-                                    >
-                                        Save
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="text-end">
+                        <button
+                            class="btn btn-sm btn-default"
+                            @click="onCancel"
+                            type="button"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <Button
+                            class="btn btn-primary ms-2"
+                            :disabled="form.busy"
+                            :form="form"
+                            id="transactionFormStandard-Save"
+                        >
+                            {{ __('Save') }}
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -355,10 +341,16 @@
 <script>
     require('select2');
 
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
+
     import MathInput from './MathInput.vue'
 
     import Form from 'vform'
-    import {Button, AlertErrors} from 'vform/src/components/bootstrap4'
+    import {Button, AlertErrors} from 'vform/src/components/bootstrap5'
 
     import Datepicker from '@vuepic/vue-datepicker';
     import '@vuepic/vue-datepicker/dist/main.css'
@@ -444,21 +436,21 @@
         computed: {
             // Account TO and FROM labels based on transaction type
             accountFromFieldLabel() {
-                return (this.form.transaction_type == 'withdrawal' || this.form.transaction_type == 'transfer' ? 'Account from' : 'Payee')
+                return (['withdrawal', 'transfer'].includes(this.form.transaction_type) ? __('Account from') : __('Payee'))
             },
 
             accountToFieldLabel() {
-                return (this.form.transaction_type == 'deposit' || this.form.transaction_type == 'transfer' ? 'Account to' : 'Payee')
+                return (['deposit', 'transfer'].includes(this.form.transaction_type) ? __('Account to') : __('Payee'))
             },
 
             // Amount from label is different for transfer
             ammountFromFieldLabel() {
-                return (this.exchangeRatePresent ? 'Amount from' : 'Amount')
+                return (this.exchangeRatePresent ? __('Amount from') : __('Amount'))
             },
 
             // Amount from currency is dependent on many other data
             ammountFromCurrencyLabel() {
-                if (this.form.transaction_type === 'withdrawal' || this.form.transaction_type === 'transfer') {
+                if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
                     return this.from.account_currency;
                 }
 
@@ -478,7 +470,7 @@
 
             // Provide the base currency from the global scope for template
             baseCurrency() {
-                return window.baseCurrency;
+                return window.YAFFA.baseCurrency;
             },
 
             remainingAmountToPayeeDefault() {
@@ -542,13 +534,6 @@
         created() {
             // Copy values of existing transaction into component form data
             this.initializeTransaction();
-
-            // Check for various default values in URL
-            // TODO: this should be moved to container (parent) component
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('account_from')) {
-                this.form.config.account_from_id = urlParams.get('account_from');
-            }
         },
 
         mounted() {
@@ -594,7 +579,7 @@
                 });
 
             // Load default value for account FROM, based on transaction type
-            this.getDefaultAccountDetails(this.transaction?.config?.account_from, 'from');
+            this.getDefaultAccountDetails(this.transaction?.config?.account_from_id, 'from');
 
             // Account TO dropdown functionality
             $("#account_to")
@@ -636,7 +621,7 @@
                 });
 
             // Load default value for account TO
-            this.getDefaultAccountDetails(this.transaction?.config?.account_to, 'to');
+            this.getDefaultAccountDetails(this.transaction?.config?.account_to_id, 'to');
 
             // Initial sync between schedules, if applicable
             this.syncScheduleStartDate(this.form.schedule_config.start_date);
@@ -647,7 +632,7 @@
                 if (Object.keys(this.transaction).length > 0) {
                     // Populate form data with already known values
                     this.form.id = this.transaction.id
-                    this.form.transaction_type = this.transaction.transaction_type.name;
+                    this.form.transaction_type = this.transaction.transaction_type?.name;
 
                     // Populate date from source transaction, and ensure that it's a Date object
                     this.form.date = this.copyDateObject(this.transaction.date);
@@ -665,7 +650,7 @@
                     this.form.config.account_to_id = this.transaction.config.account_to_id;
 
                     // Copy items, and ensure that amount is number
-                    if (this.transaction.transaction_items.length > 0) {
+                    if (this.transaction.transaction_items?.length > 0) {
                         this.transaction.transaction_items
                             .map((item) => {
                                 //item.id = $vm.itemCounter++;
@@ -742,7 +727,7 @@
                 }
 
                 // Confirm transaction type change with user
-                if (!confirm("Are you sure, you want to change the transaction type? Some data might get lost.")) {
+                if (!confirm(__("Are you sure, you want to change the transaction type? Some data might get lost."))) {
                     event.currentTarget.blur();
                     return false;
                 }
@@ -834,10 +819,10 @@
             },
 
             getPlaceholder(type) {
-                if (this.getAccountType(type) == 'account') {
-                    return 'Select account';
+                if (this.getAccountType(type) === 'account') {
+                    return __('Select account');
                 }
-                return 'Select payee';
+                return __('Select payee');
             },
 
             getAccountSelectConfig (type) {
@@ -845,6 +830,8 @@
                 let otherType = (type == 'from' ? 'to' : 'from');
 
                 return {
+                    theme: 'bootstrap-5',
+                    language: window.YAFFA.language,
                     ajax: {
                         url: $vm.getAccountApiUrl(type),
                         dataType: 'json',
@@ -876,38 +863,37 @@
                     placeholder: this.getPlaceholder(type),
                     allowClear: true,
                     width: 'resolve',
+                    // Component should not be aware where it is used, but we need to hint Select2
+                    dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
                 };
             },
 
-            getDefaultAccountDetails(account, type) {
-                if (!account || !account.id) {
+            getDefaultAccountDetails(account_id, type) {
+                if (!account_id) {
+                    return;
+                }
+
+                if (!['account', 'payee'].includes(this.getAccountType(type))) {
                     return;
                 }
 
                 const $vm = this;
                 const selector = '#account_' + type;
 
-                if (this.getAccountType(type) == 'account') {
-                    $.ajax({
-                        url:  '/api/assets/account/' + account.id,
-                        data: {
-                            _token: $vm.csrfToken,
-                        }
-                    })
-                    .done(data => {
-                        // Create the option and append to Select2
-                        $vm.addNewItemToSelect(selector, data.id, data.name);
-                    });
-                } else if (this.getAccountType(type) == 'payee') {
-                    const data = account;
+                $.ajax({
+                    url:  '/api/assets/' + this.getAccountType(type) + '/' + account_id,
+                    data: {
+                        _token: $vm.csrfToken,
+                    }
+                })
+                .done(data => {
                     // Create the option and append to Select2
                     $vm.addNewItemToSelect(selector, data.id, data.name);
-                }
-
+                });
             },
 
             onCancel() {
-                if(confirm('Are you sure you want to discard any changes?')) {
+                if(confirm(__('Are you sure you want to discard any changes?'))) {
                     this.$emit('cancel');
                 }
                 return false;
@@ -1006,15 +992,16 @@
                 this.onChangeTransactionType(transaction.transaction_type, true);
 
                 // Load default value for accounts
-                this.getDefaultAccountDetails(transaction.config.account_from, 'from');
-                this.getDefaultAccountDetails(transaction.config.account_to, 'to');
+                this.getDefaultAccountDetails(transaction.config.account_from_id, 'from');
+                this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
             }
         }
     }
 
     // Initialize tooltips
     // TODO: how to better support dynamic icons?
-    $('[data-toggle="tooltip"]').tooltip();
+    const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]');
+    Array.from(tooltipTriggerList).map(tooltipTriggerEl => new coreui.Tooltip(tooltipTriggerEl));
 </script>
 
 <style scoped>
@@ -1026,19 +1013,6 @@
     @media (max-width: 575.98px) {
         .block-label {
             margin-right: 10px;
-        }
-
-        .dl-horizontal dt {
-            float: left;
-            width: 100px;
-            overflow: hidden;
-            clear: left;
-            text-align: right;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .dl-horizontal dd {
-            margin-left: 110px;
         }
     }
 </style>

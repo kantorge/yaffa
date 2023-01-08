@@ -7,7 +7,6 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
-use App\Models\Currency;
 use App\Models\Payee;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,7 +19,7 @@ class AccountEntityController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
         $this->authorizeResource(AccountEntity::class);
     }
 
@@ -34,6 +33,36 @@ class AccountEntityController extends Controller
         }
     }
 
+    public function show(AccountEntity $accountEntity, Request $request)
+    {
+        // Load view for Accounts
+        if ($accountEntity->config_type === 'account') {
+            // Get preset filters from query string
+            $filters = [];
+            if ($request->has('date_from')) {
+                $filters['date_from'] = $request->get('date_from');
+            }
+            if ($request->has('date_to')) {
+                $filters['date_to'] = $request->get('date_to');
+            }
+
+            JavaScriptFacade::put([
+                'account' => $accountEntity,
+                'filters' => $filters,
+            ]);
+
+            return view(
+                'account.show',
+                [
+                    'account' => $accountEntity,
+                ]
+            );
+        }
+
+        // Currently no function for Payees, redirect back
+        return redirect()->back();
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -44,7 +73,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity')
          * @name('account-entity.index')
-         * @middlewares('web', 'auth', 'can:viewAny,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -252,7 +281,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity/create')
          * @name('account-entity.create')
-         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -282,7 +311,7 @@ class AccountEntityController extends Controller
         }
 
         // Get all currencies
-        $allCurrencies = Currency::pluck('name', 'id')->all();
+        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
 
         // Redirect to currency form, if empty
         if (count($allCurrencies) === 0) {
@@ -319,7 +348,7 @@ class AccountEntityController extends Controller
         /**
          * @post('/account-entity')
          * @name('account-entity.store')
-         * @middlewares('web', 'auth', 'can:create,App\Models\AccountEntity')
+         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
 
@@ -334,7 +363,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Account added');
+            self::addSimpleSuccessMessage(__('Account added'));
 
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }
@@ -362,7 +391,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Payee added');
+            self::addSimpleSuccessMessage(__('Payee added'));
 
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
@@ -381,7 +410,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/account-entity/{account_entity}/edit')
          * @name('account-entity.edit')
-         * @middlewares('web', 'auth', 'can:update,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -445,7 +474,7 @@ class AccountEntityController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/account-entity/{account_entity}')
          * @name('account-entity.update')
-         * @middlewares('web', 'auth', 'can:update,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -459,7 +488,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Account updated');
+            self::addSimpleSuccessMessage(__('Account updated'));
 
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }
@@ -487,7 +516,7 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage('Payee updated');
+            self::addSimpleSuccessMessage(__('Payee updated'));
 
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
@@ -506,7 +535,7 @@ class AccountEntityController extends Controller
         /**
          * @delete('/account-entity/{account_entity}')
          * @name('account-entity.destroy')
-         * @middlewares('web', 'auth', 'can:delete,account_entity')
+         * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
          */
         $this->checkTypeParam($request);
 
@@ -528,7 +557,7 @@ class AccountEntityController extends Controller
                     __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->type)])
                 );
             } else {
-                self::addSimpleDangerMessage('Database error: '.$e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -546,7 +575,7 @@ class AccountEntityController extends Controller
         /**
          * @get('/payees/merge/{payeeSource?}')
          * @name('payees.merge.form')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         if ($payeeSource) {
             JavaScriptFacade::put([
@@ -565,7 +594,7 @@ class AccountEntityController extends Controller
         /**
          * @post('/payees/merge')
          * @name('payees.merge.submit')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validate([
             'payee_source' => [
@@ -607,10 +636,10 @@ class AccountEntityController extends Controller
             }
 
             DB::commit();
-            self::addSimpleSuccessMessage('Payees merged');
+            self::addSimpleSuccessMessage(__('Payees merged'));
         } catch (\Exception $e) {
             DB::rollback();
-            self::addSimpleDangerMessage('Database error: '.$e->getMessage());
+            self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
         return redirect()->route('account-entity.index', ['type' => 'payee']);

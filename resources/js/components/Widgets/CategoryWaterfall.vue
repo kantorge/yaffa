@@ -1,29 +1,67 @@
 <template>
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">Monthly overview for top-level categories</h3>
-            <div class="pull-right" v-show="ready">
-                <button class="btn btn-xs btn-info" type="button" @click="previousMonth" title="Previous month"><span class="fa fa-fw fa-caret-left"></span></button>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <div class="card-title">
+                {{ __('Monthly overview for top-level categories') }}
+            </div>
+            <div v-show="ready">
+                <button class="btn btn-sm btn-info" type="button" @click="previousMonth" :title="__('Previous month')"><span class="fa fa-fw fa-caret-left"></span></button>
                 {{ dateLabel }}
-                <button class="btn btn-xs btn-info" type="button" @click="nextMonth" title="Next month"><span class="fa fa-fw fa-caret-right"></span></button>
+                <button class="btn btn-sm btn-info" type="button" @click="nextMonth" :title="__('Next month')"><span class="fa fa-fw fa-caret-right"></span></button>
             </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <Skeletor
-                width="100%"
-                v-if="!ready"
-            />
+        <div class="card-body">
+            <p aria-hidden="true" v-if="!ready" class="placeholder-glow">
+                <span class="placeholder col-12"></span>
+            </p>
             <div id="categoryWaterfallChart" ref="chartdiv" v-show="ready"></div>
         </div>
-        <!-- /.box-body -->
+        <div class="card-footer text-end">
+            <div class="btn-group" role="group" aria-label="Transaction type selector for category waterfall chart">
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_All"
+                    value="all"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_All">All transactions</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_Standard"
+                    value="standard"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_Standard">Only standard</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="waterfallTransactionCategory"
+                    id="waterfallTransactionCategory_Investment"
+                    value="investment"
+                    autocomplete="off"
+                    v-model="transactionTypeData"
+                    @change="refreshData"
+                    :disabled="busy"
+                >
+                <label class="btn btn-sm btn-outline-primary" for="waterfallTransactionCategory_Investment">Only investment</label>
+            </div>
+        </div>
     </div>
-    <!-- /.box -->
 </template>
 
 <script>
-import { Skeletor } from 'vue-skeletor';
-
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
@@ -31,19 +69,25 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 export default {
-    components: { Skeletor },
     props: {
         categoryAxisVisible: {
             type: Boolean,
             default: false,
+        },
+        transactionType: {
+            type: String,
+            default: 'all',
         }
     },
     data() {
         return {
-            baseCurrency: window.baseCurrency,
+            busy: false,
+            baseCurrency: window.YAFFA.baseCurrency,
+            locale: window.YAFFA.locale,
             rawData: [],
             year: new Date().getFullYear(),
             month: new Date().getMonth() + 1,
+            transactionTypeData: this.transactionType,
             ready: false,
         }
     },
@@ -55,12 +99,12 @@ export default {
         chart.hiddenState.properties.opacity = 0;
 
         // Set up number formatting
-        chart.numberFormatter.intlLocales = "hu-HU";
+        chart.numberFormatter.intlLocales = this.locale;
         chart.numberFormatter.numberFormat = {
             style: 'currency',
-            currency: baseCurrency.iso_code,
-            minimumFractionDigits: baseCurrency.num_digits,
-            maximumFractionDigits: baseCurrency.num_digits
+            currency: this.baseCurrency.iso_code,
+            minimumFractionDigits: this.baseCurrency.num_digits,
+            maximumFractionDigits: this.baseCurrency.num_digits
         };
 
         chart.data = this.chartData;
@@ -131,7 +175,7 @@ export default {
         noDataMessagecontainer.layout = 'vertical';
 
         const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
-        messageLabel.text = 'There is no data to show on this chart.';
+        messageLabel.text = __('There is no data to show on this chart.');
         messageLabel.textAlign = 'middle';
         messageLabel.maxWidth = 300;
         messageLabel.wrap = true;
@@ -161,12 +205,27 @@ export default {
         },
 
         refreshData() {
+            if (this.busy) {
+                return;
+            }
+
+            this.busy = true;
             this.ready = false;
             let $vm = this;
 
-            axios.get('/api/reports/waterfall/result/' + this.year + '/' + this.month)
-                .then(function(response) {
-                    $vm.rawData = response.data.chartData;
+            let url = '/api/reports/waterfall/' + this.transactionTypeData + '/result/' + this.year + '/' + this.month;
+            let options = {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json;charset=UTF-8",
+                },
+            };
+
+            fetch(url, options)
+                .then((response) => response.json())
+                .then((data) => {
+                    $vm.rawData = data.chartData;
 
                     if (!$vm.rawData || $vm.rawData.length === 0) {
                         $vm.noDataMessagecontainer.show();
@@ -176,10 +235,11 @@ export default {
 
                     $vm.ready = true;
                 })
+                .finally(() => $vm.busy = false)
                 .catch(function(error) {
                     console.log(error);
-                })
-            }
+                });
+        },
     },
     computed: {
         chartData() {
@@ -230,7 +290,14 @@ export default {
         },
 
         dateLabel() {
-            return this.year + ' ' + this.month;
+            var date = new Date(this.year, this.month - 1, 1);
+            return date.toLocaleDateString(
+                window.YAFFA.locale,
+                {
+                    year: 'numeric',
+                    month: 'long',
+                }
+            );
         },
     },
     beforeDestroy() {
@@ -239,11 +306,13 @@ export default {
         }
     },
     updated() {
-        if (this.chart) {
-            // Update chart based on props
-            this.chart.data = this.chartData;
-            this.chart.validateData();
+        if (!this.chart) {
+            return;
         }
+
+        // Update chart based on props
+        this.chart.data = this.chartData;
+        this.chart.validateData();
     },
 }
 </script>

@@ -2,16 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\AccountEntity;
-use App\Models\Transaction;
-use App\Models\TransactionItem;
+use App\Http\Traits\ModelOwnedByUserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, ModelOwnedByUserTrait;
 
     protected $table = 'categories';
 
@@ -28,7 +26,6 @@ class Category extends Model
         'name',
         'active',
         'parent_id',
-        'user_id',
     ];
 
     protected $casts = [

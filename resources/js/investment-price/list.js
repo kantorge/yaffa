@@ -1,8 +1,6 @@
-require('datatables.net-bs');
-import {
-    genericDataTablesActionButton,
-    initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+require('datatables.net-bs5');
+
+import * as dataTableHelpers from './../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 
@@ -14,26 +12,27 @@ am4core.useTheme(am4themes_animated);
 $(dataTableSelector).DataTable({
     data: prices,
     columns: [
-        {
-            data: "date",
-            title: "Date"
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "price",
-            title: "Price"
+            title: __("Price"),
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
-                return  genericDataTablesActionButton(data, 'investment-price.edit') +
-                        genericDataTablesActionButton(data);
+                return  dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'investment-price.edit') +
+                        dataTableHelpers.genericDataTablesActionButton(data, 'delete');
 
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[0, 'asc']],
+    order: [
+        [0, 'asc']
+    ],
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -43,7 +42,7 @@ $(dataTableSelector).DataTable({
     paging: false,
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'investment-price.destroy');
+dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'investment-price.destroy');
 
 var chart = am4core.create("chartdiv", am4charts.XYChart);
 chart.data = prices;

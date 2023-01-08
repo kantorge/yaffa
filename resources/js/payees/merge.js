@@ -1,9 +1,13 @@
-
-require('select2');
+import 'select2';
+$.fn.select2.amd.define(
+    'select2/i18n/' + window.YAFFA.language,
+    [],
+    require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+);
 
 // Add select2 functionality to payee_source select
 $('#payee_source').select2({
-    placeholder: 'Select payee to be merged',
+    placeholder: __('Select payee to be merged'),
     allowClear: true,
     selectOnClose: false,
     ajax: {
@@ -44,7 +48,7 @@ if (payeeSource) {
 
 // Add select2 functionality to payee_target select
 $('#payee_target').select2({
-    placeholder: 'Select payee to be merged into',
+    placeholder: __('Select payee to be merged into'),
     allowClear: true,
     selectOnClose: false,
     ajax: {
@@ -84,13 +88,13 @@ $('#merge-payees-form').on('submit', function (e) {
 
     if (source.length == 0 || target.length == 0) {
         e.preventDefault();
-        alert('Please select payees to be merged');
+        alert(__('Please select payees to be merged'));
         return;
     } else {
         // Validate if both select2 inputs are not the same
         if (source[0].id == target[0].id) {
             e.preventDefault();
-            alert('Please select different payees to be merged');
+            alert(__('Please select different payees to be merged'));
             return;
         }
     }
@@ -99,18 +103,18 @@ $('#merge-payees-form').on('submit', function (e) {
     let action = $('input[name=action]:checked').val();
     if (action == undefined) {
         e.preventDefault();
-        alert('Please select an action');
+        alert(__('Please select an action'));
         return;
     }
 
-    if (!confirm('Are you sure you want to merge these payees?')) {
+    if (!confirm(__('Are you sure you want to merge these payees?'))) {
         e.preventDefault();
     }
 });
 
 // Cancel button behaviour
 $('#cancel').on('click', function (e) {
-    if (confirm('Are you sure you want to discard any changes?')) {
+    if (confirm(__('Are you sure you want to discard any changes?'))) {
         window.history.back();
     }
 });

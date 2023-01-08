@@ -3,9 +3,10 @@
  * The array of objects is then run throug a rule engine, to create a list of possible transactions.
  */
 
-import 'datatables.net-bs';
+import 'datatables.net-bs5';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
+import { toFormattedCurrency } from '../helpers';
 
 // Import RRule library for handling schedules
 import { RRule } from 'rrule';
@@ -95,9 +96,9 @@ document.getElementById('csv_file').addEventListener('change', function () {
                         // Does this draft transaction qualify for a quick recording?
                         // It needs: date, account_from, account_to, amount_from, amount_to, payee default category
                         if (rawTransaction.date && rawTransaction.config && rawTransaction.config.account_from && rawTransaction.config.account_to && rawTransaction.config.amount_from && rawTransaction.config.amount_to) {
-                            if (rawTransaction.transaction_type === 'withdrawal' && rawTransaction.config.account_to.config.category_id) {
+                            if (rawTransaction.transaction_type.name === 'withdrawal' && rawTransaction.config.account_to.config.category_id) {
                                 rawTransaction.quickRecordingPossible = true;
-                            } else if (rawTransaction.transaction_type === 'deposit' && rawTransaction.config.account_from.config.category_id) {
+                            } else if (rawTransaction.transaction_type.name === 'deposit' && rawTransaction.config.account_from.config.category_id) {
                                 rawTransaction.quickRecordingPossible = true;
                             }
                         }
@@ -155,7 +156,7 @@ function collectSimilarTransactions() {
                 // Calculate similarity between transactions using date, amount and accounts
 
                 // Transaction types must match
-                if (transaction.transaction_type !== existingTransaction.transaction_type) {
+                if (transaction.transaction_type.name !== existingTransaction.transaction_type.name) {
                     return
                 }
 
@@ -187,7 +188,7 @@ function collectSimilarTransactions() {
                 // Calculate similarity between transactions using amount and accounts
 
                 // Transaction types must match
-                if (transaction.transaction_type !== schedule.transaction_type) {
+                if (transaction.transaction_type.name !== schedule.transaction_type.name) {
                     return;
                 }
 
@@ -313,14 +314,14 @@ window.table = $("#dataTable").DataTable({
                 if (!data) {
                     return data;
                 }
-                return data.toLocaleDateString('Hu-hu');
+                return data.toLocaleDateString(window.YAFFA.locale);
             },
             className: "dt-nowrap",
         },
         {
             title: 'Type',
             render: function (_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type);
+                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type.name);
             },
             className: "text-center",
         },
@@ -348,12 +349,12 @@ window.table = $("#dataTable").DataTable({
             title: 'Default category',
             render: function (_data, _type, row) {
                 // No default category for transfers
-                if (row.transaction_type === 'transfer') {
+                if (row.transaction_type.name === 'transfer') {
                     return 'Not applicable';
                 }
 
                 // Set the relevant account type based on the transaction type
-                const accountType = row.transaction_type === 'deposit' ? 'account_from' : 'account_to';
+                const accountType = row.transaction_type.name === 'deposit' ? 'account_from' : 'account_to';
                 // Check if payee is set
                 if (!row.config[accountType]) {
                     return 'Not set';
@@ -375,13 +376,13 @@ window.table = $("#dataTable").DataTable({
                     return 'Not set';
                 }
                 let prefix = '';
-                if (row.transaction_operator == 'minus') {
+                if (row.transaction_type.amount_operator == 'minus') {
                     prefix = '- ';
                 }
-                if (row.transaction_operator == 'plus') {
+                if (row.transaction_type.amount_operator == 'plus') {
                     prefix = '+ ';
                 }
-                return prefix + row.config.amount_to.toLocalCurrency(window.account_currency);
+                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);
             },
             className: "dt-nowrap",
         },
@@ -418,7 +419,7 @@ window.table = $("#dataTable").DataTable({
 
                 var html = '';
                 data.forEach(function (similarTransaction) {
-                    html += '<button class="btn btn-xs ' + (similarTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-similar transaction-basic transaction-quickview" data-id="' + similarTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+                    html += '<button class="btn btn-sm ' + (similarTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-similar transaction-basic transaction-quickview" data-id="' + similarTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
                 })
 
                 return html;
@@ -445,7 +446,7 @@ window.table = $("#dataTable").DataTable({
 
                 var html = '';
                 data.forEach(function (relatedTransaction) {
-                    html += '<button class="btn btn-xs ' + (relatedTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-related transaction-quickview" data-draft="' + row.draftId + '" data-id="' + relatedTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
+                    html += '<button class="btn btn-sm ' + (relatedTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-related transaction-quickview" data-draft="' + row.draftId + '" data-id="' + relatedTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
                 })
 
                 return html;
@@ -463,9 +464,9 @@ window.table = $("#dataTable").DataTable({
             data: 'draftId',
             orderable: false,
             render: function (data, _type, row) {
-                return '<button class="btn btn-xs btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-plus" title="Quick create"></i></button> ' +
-                       (row.quickRecordingPossible ? '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' : '') +
-                       '<button class="btn btn-xs btn-info handled" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-check" title="Mark as handled"></i></button> ';
+                return '<button class="btn btn-sm btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-plus" title="Quick create"></i></button> ' +
+                       (row.quickRecordingPossible ? '<button class="btn btn-sm btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' : '') +
+                       '<button class="btn btn-sm btn-info handled" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-check" title="Mark as handled"></i></button> ';
             }
         }
     ],
@@ -683,14 +684,24 @@ $('#dataTable').on('click', 'button.record', function () {
 
     // Call the backend to create the transaction
     const url = route('api.transactions.storeStandard');
-    window.axios.post(url, transaction)
-    .then(response => {
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': window.csrfToken,
+        },
+        body: JSON.stringify(transaction)
+    })
+    .then((response) => {
         if (response.statusText !== 'OK') {
             throw new Error(response.statusText);
         }
 
+        response.json()
+    })
+    .then((data) => {
         // Get the new transaction from the response
-        let transaction = response.data.transaction;
+        let transaction = data.transaction;
 
         // TODO: This should be unified with the same modal behavior
         // Emit a custom event to global scope about the new transaction to be displayed as a notification
@@ -701,7 +712,7 @@ $('#dataTable').on('click', 'button.record', function () {
                     message: 'Transaction added (#' + transaction.id + ')',
                     title: null,
                     icon: null,
-                    dismissable: true,
+                    dismissible: true,
                 }
             },
         });
@@ -811,11 +822,13 @@ fetch('/api/transactions/get_scheduled_items/schedule')
 
 // Initialize Vue for the quick view
 import { createApp } from 'vue'
+const app = createApp({})
+
+// Add global translator function
+app.config.globalProperties.__ = window.__;
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
-
-const app = createApp({})
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-modal', TransactionCreateModal)
 

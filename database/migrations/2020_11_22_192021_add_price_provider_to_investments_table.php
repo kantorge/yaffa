@@ -27,6 +27,7 @@ class AddPriceProviderToInvestmentsTable extends Migration
     public function down()
     {
         Schema::table('investments', function (Blueprint $table) {
+            $table->dropForeign('investments_investment_price_provider_id_foreign');
             $table->dropColumn('investment_price_provider_id');
         });
     }

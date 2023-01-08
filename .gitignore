@@ -4,8 +4,10 @@
 /public/storage
 /storage
 /vendor
+/resources/google
 .env
 .env.backup
+.env.dusk.local
 .phpunit.result.cache
 .editorconfig
 Homestead.json

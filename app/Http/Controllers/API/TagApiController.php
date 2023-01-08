@@ -12,14 +12,14 @@ class TagApiController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function getList(Request $request)
     {
         /**
          * @get('/api/assets/tag')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $tags = Auth::user()
             ->tags()
@@ -42,7 +42,7 @@ class TagApiController extends Controller
     {
         /**
          * @get('/api/assets/tag/{tag}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('view', $tag);
 

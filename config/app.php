@@ -97,6 +97,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Available languages and locales
+    |--------------------------------------------------------------------------
+    |
+    | List all locales that your application works with
+    |
+    */
+    'available_languages' => [
+        'en' => 'English',
+        'hu' => 'Hungarian',
+    ],
+
+    'available_locales' => [
+        'hu-HU' => 'Hungarian',
+        'en-US' => 'English (United States)',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Faker Locale
     |--------------------------------------------------------------------------
     |

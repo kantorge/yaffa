@@ -6,6 +6,8 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
+import { toFormattedCurrency } from "../helpers";
+
 window.chartData = [];
 let chart;
 
@@ -51,12 +53,11 @@ function initializeChart() {
     });
 
     var series1 = chart.series.push(new am4charts.ColumnSeries());
-    //series1.columns.template.tooltipText = "{name}: {openDateX} - {dateX}";
     series1.columns.template.tooltipText = `[bold]{name}[/]
 ----
 {openDateX} - {dateX}
-Last quantity: {formatted_quantity}
-Estimated end value: {formatted_value}`
+${__('Last quantity')}: {formatted_quantity}
+${__('Estimated end value')}: {formatted_value}`
     series1.dataFields.openDateX = "start";
     series1.dataFields.dateX = "end";
     series1.dataFields.categoryY = "name";
@@ -76,19 +77,19 @@ function filterData() {
     chart.data = window.chartData
                     // Filter by active flag
                     .filter(function(item) {
-                        if (filterActive === 'All') {
+                        if (filterActive === '') {
                             return true;
                         }
-                        return item.active === (filterActive === 'Yes');
+                        return item.active === (filterActive === __('Yes'));
                     })
                     // Filter by open status
                     .filter(function(item) {
-                        if (filterOpen === 'All') {
+                        if (filterOpen === '') {
                             return true;
                         }
                         let end = new Date(item.end);
                         end.setHours(0,0,0,0);
-                        if (filterOpen === 'Yes') {
+                        if (filterOpen === __('Yes')) {
                             return end >= today;
                         } else {
                             return end < today;
@@ -107,8 +108,14 @@ fetch(url)
         window.chartData = data.map(function(item) {
             item.value = item.quantity * item.last_price;
 
-            item.formatted_quantity = item.quantity.toLocalQuantity(4, false);
-            item.formatted_value = item.value.toLocalCurrency(item.currency, false);
+            item.formatted_quantity = item.quantity.toLocaleString(
+                window.YAFFA.locale,
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4,
+                }
+            );
+            item.formatted_value = toFormattedCurrency(item.value, window.YAFFA.locale, item.currency);
 
             return item;
         });

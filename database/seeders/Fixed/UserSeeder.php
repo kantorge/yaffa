@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
     public function run($aliases = [])
     {
         foreach ($aliases as $alias) {
-            User::create([
+            User::factory()->create([
                 'name' => Str::ucfirst($alias).' User',
                 'email' => $alias.'@yaffa.cc',
                 'password' => Hash::make($alias),

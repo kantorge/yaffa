@@ -14,12 +14,15 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\VerificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'dashboard')->middleware('auth')->name('home');
+Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('home');
+Route::view('/terms', 'pages.terms')->name('terms');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
-Route::resource('account-entity', AccountEntityController::class)->except(['show']);
+Route::resource('account-entity', AccountEntityController::class);
 
 Route::get(
     '/account/history/{account}/{withForecast?}',
@@ -114,4 +117,17 @@ Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');
 
+// Route for the CSV import functionality
+Route::get('/import/csv', [ImportController::class, 'importCsv'])->name('import.csv');
+
+// User related routes
+Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
+Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
+
+Auth::routes();
+Route::get('/email/verify', [VerificationController::class, 'notice'])->middleware('auth')->name('verification.notice');
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware(['auth', 'signed'])->name('verification.verify');
+Route::post('/email/verification-notification', [VerificationController::class, 'send'])->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+// Settings for DEMO site
 Auth::routes(['reset' => false, 'register' => false, 'confirm' => false, 'verify' => false]);

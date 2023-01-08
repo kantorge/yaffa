@@ -1,9 +1,13 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     initializeDeleteButtonListener
 } from './../components/dataTableHelper';
+
+import { toFormattedCurrency } from '../helpers';
 
 const dataTableSelector = '#table';
 
@@ -11,90 +15,110 @@ $(dataTableSelector).DataTable({
     data: currencies,
     columns: [
         {
-            data: "id",
-            title: "ID"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __("Name"),
         },
         {
             data: "iso_code",
-            title: "ISO Code"
-        },
-        {
-            data: "num_digits",
-            title: "Number of decimal digits displayed"
-        },
-        {
-            data: "suffix",
-            title: "Suffix displayed"
+            title: __("ISO Code"),
         },
         {
             data: "base",
-            title: "Base currency",
+            title: __("Base currency"),
             render: function (data, type) {
-                if (type == 'filter') {
-                    return (data ? 'Yes' : 'No');
+                if (type === 'filter' || type === 'sort') {
+                    return (data ? __('Base currency') : '');
                 }
+
                 return (data
-                    ? '<i class="fa fa-check-square text-success" title="Yes"></i>'
-                    : '');
+                        ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
+                        : '');
             },
             className: "text-center",
         },
         {
+            data: "num_digits",
+            title: __("Number of decimal digits displayed"),
+        },
+        {
+            data: "suffix",
+            title: __("Suffix displayed"),
+        },
+        {
             data: "auto_update",
-            title: "Auto update",
+            title: __("Automatic update"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
             className: "text-center",
         },
         {
-            title: "Latest rate to base currency",
+            title: __('Latest rate to base currency'),
             defaultContent: "",
-            render: function (_data, _type, row) {
+            render: function (_data, type, row) {
+                // No data returned for base currency
                 if (row.base) {
                     return;
                 }
+                // Placeholder returned if no data is available
                 if (!row.latest_rate) {
-                    return "Not available";
+                    return __('Not available');
                 }
-                return "1 " + row.suffix + " = " + parseFloat(row.latest_rate).toLocalCurrency({iso_code: baseCurrency.iso_code, num_digits: 4}, false);
+                // Raw number is returned for sorting
+                if (type === 'sort') {
+                    return row.latest_rate;
+                }
+                // Formatted text is returned for display
+                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                return "1 " + row.suffix + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
+            searchable: false,
         },
         {
-            title: "Latest rate from base currency",
+            title: __('Latest rate from base currency'),
             defaultContent: "",
-            render: function (_data, _type, row) {
+            render: function (_data, type, row) {
+                // No data returned for base currency
                 if (row.base) {
                     return;
                 }
+                // Placeholder returned if no data is available
                 if (!row.latest_rate) {
-                    return "Not available";
+                    return __('Not available');
                 }
-                return "1 " + baseCurrency.iso_code + " = " + (1 / parseFloat(row.latest_rate)).toLocalCurrency({iso_code: row.iso_code, num_digits: 4}, false);
+                // Raw number is returned for sorting
+                if (type === 'sort') {
+                    return 1 / row.latest_rate;
+                }
+                // Formatted text is returned for display
+                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
+            searchable: false,
         },
         {
             data: "id",
-            title: "Actions",
+            title: __('Actions'),
             render: function (data, _type, row) {
                 return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
-                        ? '<a href="/currencyrates/' + data + '/' + baseCurrency.id + '" class="btn btn-xs btn-info"><i class="fa fa-line-chart" title="Rates"></i></a> ' +
+                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-sm btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-chart-line"></i></a> ' +
                           genericDataTablesActionButton(data, 'delete') +
-                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-bank" title="Set as default"></i></a>'
+                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-sm btn-primary" title="' + __('Set as default') + '"><i class="fa-solid fa-building-columns"></i></a>'
                         : '');
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[1, 'asc']]
+    order: [
+        [0, 'asc'] // Name
+    ],
+    responsive: true,
 });
 
 initializeDeleteButtonListener(dataTableSelector, 'currencies.destroy');

@@ -41,14 +41,15 @@ Route::get('/assets/tag', 'App\Http\Controllers\API\TagApiController@getList');
 Route::get('/assets/tag/{tag}', 'App\Http\Controllers\API\TagApiController@getItem');
 
 Route::get('/budgetchart', 'App\Http\Controllers\API\ReportApiController@budgetChart');
-Route::get('/reports/waterfall/{type}/{year}/{month?}', [ReportApiController::class, 'getCategoryWaterfallData'])->where('type', 'budget|result|all');
-Route::get('/scheduled_transactions', 'App\Http\Controllers\API\ReportApiController@scheduledTransactions');
+Route::get('/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}', [ReportApiController::class, 'getCategoryWaterfallData'])
+    ->where('transactionType', 'standard|investment|all')
+    ->where('type', 'budget|result|all');
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 
 Route::get(
     '/transactions/get_scheduled_items/{type}',
-    'App\Http\Controllers\API\TransactionApiController@getScheduledItems'
+    [TransactionApiController::class,'getScheduledItems']
 )
 ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
 Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])->name('api.transactions.storeStandard');
@@ -58,6 +59,8 @@ Route::patch('/transactions/{transaction}/skip', [TransactionApiController::clas
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
 Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
+
+Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])->name('api.transactions.destroy');
 
 /*
 Route::post('/token', function (Request $request) {

@@ -1,6 +1,10 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
 
-import * as dataTableHelpers from './../components/dataTableHelper'
+import * as dataTableHelpers from './../components/dataTableHelper';
+
+const selectorScheduleTable = '#scheduleTable';
+const selectorHistoryTable = '#historyTable';
 
 // Table data transformation
 window.transactionData = window.transactionData.map(function (transaction) {
@@ -19,116 +23,53 @@ window.scheduleData = window.scheduleData.map(function (transaction) {
     return transaction;
 });
 
-var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
-
 // Define some settings, that are common for the two tables
 var dtColumnSettingPayee = {
-    title: 'Payee',
+    title: __('Payee'),
+    defaultContent: '',
     render: function (_data, _type, row) {
-        if (row.transaction_type.type == 'standard') {
-            if (row.transaction_type.name == 'withdrawal') {
+        if (row.transaction_type.type === 'standard') {
+            if (row.transaction_type.name === 'withdrawal') {
                 return row.account_to_name;
             }
-            if (row.transaction_type.name == 'deposit') {
+            if (row.transaction_type.name === 'deposit') {
                 return row.account_from_name;
             }
-            if (row.transaction_type.name == 'transfer') {
-                if (row.transactionOperator == 'minus') {
-                    return 'Transfer to ' + row.account_to_name;
+            if (row.transaction_type.name === 'transfer') {
+                if (row.transactionOperator === 'minus') {
+                    return __('Transfer to :account', {account: row.account_to_name});
                 } else {
-                    return 'Transfer from ' + row.account_from_name;
+                    return __('Transfer from :account', {account: row.account_from_name});
                 }
             }
-        } else if (row.transaction_type.type === 'investment') {
-            return row.account_to_name;
-        } else if (row.transaction_type.type === 'Opening balance') {
-            return 'Opening balance';
         }
-        return null;
-    },
-};
-var dtColumnSettingCategories = {
-    title: "Category",
-    render: function (_data, _type, row) {
-        //standard transaction
-        if (row.transaction_type.type == 'standard') {
-            //empty
-            if (row.categories.length == 0) {
-                return '';
-            }
-
-            if (row.categories.length > 1) {
-                return 'Split transaction';
-            } else {
-                return row.categories[0];
-            }
-        }
-        //investment transaction
         if (row.transaction_type.type === 'investment') {
-            if (!row.quantityOperator) {
-                return row.transaction_type.name;
-            }
-            if (!row.transactionOperator) {
-                return row.transaction_type.name + " " + row.quantity;
-            }
-
-            return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
+            return row.account_to_name;
         }
-
+        if (row.transaction_type.type === 'Opening balance') {
+            return __('Opening balance');
+        }
         return '';
     },
-    orderable: false
-};
-var dtColumnSettingComment = {
-    data: "comment",
-    title: "Comment",
-    render: function (data, type) {
-        if (type === 'display') {
-            data = truncateString(data, 20);
-        }
-
-        return data;
-    },
-    createdCell: function (td, cellData) {
-        $(td).prop('title', cellData);
-    }
 };
 
-var dtColumnSettingTags = {
-    data: "tags",
-    title: "Tags",
-    render: function (data) {
-        return data.join(', ');
-    }
-}
-
-$('#historyTable').DataTable({
+$(selectorHistoryTable).DataTable({
     data: transactionData,
     columns: [
-        {
-            data: "date",
-            title: "Date",
-            render: function (data) {
-                if (!data) {
-                    return data;
-                }
-                return data.toLocaleDateString('Hu-hu');
-            },
-            className: "dt-nowrap",
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "reconciled",
-            title: '<span title="Reconciled">R</span>',
+            title: '<span title="' + __('Reconciled') + '">R</span>',
             className: "text-center",
             render: function (_data, type, row) {
-                if (type == 'filter') {
+                if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
                         ? (row.reconciled == 1
-                            ? 'Reconciled'
-                            : 'Uncleared'
+                            ? __('Reconciled')
+                            : __('Uncleared')
                         )
-                        : 'Unavailable'
+                        : __('Unavailable')
                     );
                 }
                 return (!row.schedule
@@ -137,69 +78,82 @@ $('#historyTable').DataTable({
                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
                     )
-                    : '<i class="fa fa-circle text-muted""></i>'
+                    : '<i class="fa fa-circle text-muted"></i>'
                 );
             },
             orderable: false,
         },
         dtColumnSettingPayee,
-        dtColumnSettingCategories,
+        dataTableHelpers.transactionColumnDefiniton.category,
         {
-            title: "Withdrawal",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
+            title: __('Withdrawal'),
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'minus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap',
         },
         {
-            title: "Deposit",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
+            title: __('Deposit'),
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'plus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap',
         },
         {
             data: 'running_total',
-            title: 'Running total',
-            render: function (data) {
-                return data.toLocalCurrency(currency, true);
+            title: __('Running total'),
+            defaultContent: '',
+            render: function (data, type) {
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap',
             createdCell: function (td, cellData) {
                 if (cellData < 0) {
                     $(td).addClass('text-danger');
                 }
             }
         },
-        dtColumnSettingComment,
-        dtColumnSettingTags,
+        dataTableHelpers.transactionColumnDefiniton.comment,
+        dataTableHelpers.transactionColumnDefiniton.tags,
         {
-            data: 'id',
-            title: "Actions",
-            render: function (data, _type, row) {
-                if (row.transaction_type.type == 'Opening balance') {
+            title: __("Actions"),
+            defaultContent: '',
+            render: function (_data, _type, row) {
+                if (row.transaction_type.type === 'Opening balance') {
                     return null;
                 }
                 if (row.schedule) {
                     if (row.schedule_first_instance) {
-                        data = row.originalId;
-                        return '<a href="' + route('transactions.open.standard', { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success" title="Edit and insert instance"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                            '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title=Skip current schedule"><i class="fa fa-fw fa-forward"></i></i></button> ';
+                        return '<a href="' + route('transactions.open.standard', { transaction: row.originalId, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + row.originalId + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> ';
                     }
                     return null;
                 }
 
                 if (row.transaction_type.type === 'standard') {
-                    return dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
-                        dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                        dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
-                        dataTableHelpers.dataTablesActionButton(data, 'clone', 'standard') +
-                        dataTableHelpers.dataTablesActionButton(data, 'delete');
+                    return dataTableHelpers.dataTablesActionButton(row.id, 'standardQuickView') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'standardShow') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'edit', 'standard') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'clone', 'standard') +
+                           dataTableHelpers.dataTablesActionButton(row.id, 'delete');
                 }
 
                 // Investment
-                return '<a href="' + route('transactions.open.investment', { transaction: data, action: 'edit' }) + '" class="btn btn-xs btn-primary" title="Edit"><i class="fa fa-fw fa-edit"></i></a> ' +
-                    '<a href="' + route('transactions.open.investment', { transaction: data, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="Clone"><i class="fa fa-fw fa-clone"></i></a> ' +
-                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button" title="Delete"><i class="fa fa-fw fa-trash"></i></button>';
+                return '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'edit' }) +  '" class="btn btn-xs btn-primary" title="' + __('Edit')  + '"><i class="fa fa-fw fa-edit"></i></a> ' +
+                       '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
+                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button>';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     createdRow: function (row, data) {
@@ -207,9 +161,17 @@ $('#historyTable').DataTable({
             $(row).addClass('text-muted text-italic');
         }
     },
+    initComplete: function() {
+        // Get the Datatable API instance
+        var api = this.api();
+        setTimeout(function() {
+            api.columns.adjust().draw();
+        }, 2000);
+    },
     order: [
         [0, "asc"]
     ],
+    responsive: true,
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -219,41 +181,42 @@ $('#historyTable').DataTable({
     paging: false,
 });
 
-$('#scheduleTable').DataTable({
+$(selectorScheduleTable).DataTable({
     data: scheduleData,
     columns: [
-        {
-            data: "transaction_schedule.next_date",
-            title: "Next date",
-            render: function (data) {
-                if (!data) {
-                    return data;
-                }
-                return data.toLocaleDateString('Hu-hu').replace(/\s/g, '&nbsp;');
-            }
-        },
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dtColumnSettingPayee,
-        dtColumnSettingCategories,
+        dataTableHelpers.transactionColumnDefiniton.category,
         {
             title: "Withdrawal",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'minus' ? row.amount_from.toLocalCurrency(currency, true) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'minus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap'
         },
         {
             title: "Deposit",
-            render: function (_data, _type, row) {
-                return (row.transactionOperator == 'plus' ? row.amount_to.toLocalCurrency(currency, true) : null);
+            defaultContent: '',
+            render: function (_data, type, row) {
+                if (row.transactionOperator !== 'plus') {
+                    return;
+                }
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
             },
+            className: 'dt-nowrap'
         },
-        dtColumnSettingComment,
-        dtColumnSettingTags,
+        dataTableHelpers.transactionColumnDefiniton.comment,
+        dataTableHelpers.transactionColumnDefiniton.tags,
         {
             data: 'id',
-            title: "Actions",
+            title: __("Actions"),
             render: function (data, _type, row) {
-                return '<a href="' + route('transactions.open.' + row.transaction_type.type, { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="Edit and insert instance"></i></a> ' +
-                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title=Skip current schedule"></i></i></button> ' +
+                return '<a href="' + route('transactions.open.' + row.transaction_type.type, { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
+                    '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> ' +
                     dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
                     dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
                     dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
@@ -266,14 +229,15 @@ $('#scheduleTable').DataTable({
     createdRow: function (row, data) {
         var nextDate = new Date(data.transaction_schedule.next_date);
         if (nextDate < new Date(new Date().setHours(0, 0, 0, 0))) {
-            $(row).addClass('danger');
+            $(row).addClass('table-danger');
         } else if (nextDate < new Date(new Date().setHours(24, 0, 0, 0))) {
-            $(row).addClass('warning');
+            $(row).addClass('table-warning');
         }
     },
     order: [
         [0, "asc"]
     ],
+    responsive: true,
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
@@ -285,12 +249,13 @@ $('#scheduleTable').DataTable({
 
 dataTableHelpers.initializeSkipInstanceButton("#historyTable, #scheduleTable");
 dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
+dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
 
 $('input[name=reconciled]').on("change", function () {
-    $('#historyTable').DataTable().column(1).search(this.value).draw();
+    $(selectorHistoryTable).DataTable().column(1).search(this.value).draw();
 });
 
-$("#historyTable").on("click", "i.reconcile", function () {
+$(selectorHistoryTable).on("click", "i.reconcile", function () {
     if ($(this).hasClass("fa-spinner")) {
         return false;
     }
@@ -307,10 +272,8 @@ $("#historyTable").on("click", "i.reconcile", function () {
         },
         dataType: "json",
         context: this,
-        success: function (data) {
-            if (data.success) {
-                currentState = !currentState;
-            }
+        success: function (_data) {
+            currentState = !currentState;
 
             $(this).removeClass()
                 .addClass('fa reconcile')
@@ -320,77 +283,13 @@ $("#historyTable").on("click", "i.reconcile", function () {
     });
 });
 
-// DataTables helper: truncate a string
-function truncateString(str, max, add) {
-    add = add || '...';
-    return (typeof str === 'string' && str.length > max ? str.substring(0, max) + add : str);
-}
-
-$('#historyTable').on('click', 'button.transaction-quickview', function () {
-    let icon = this.querySelector('i');
-    // If spinner is displayed, do not initiate another request
-    if (icon.classList.contains("fa-spinner")) {
-        return false;
-    }
-
-    const originalIconClass = icon.className;
-    icon.className = "fa fa-fw fa-spin fa-spinner";
-
-    fetch('/api/transaction/' + this.dataset.id)
-    .then(function(response) {
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        return response;
-    }).then(response => response.json())
-    .then(function(data) {
-        let transaction = data.transaction;
-
-        // Convert dates to Date objects
-        if (transaction.date) {
-            transaction.date = new Date(transaction.date);
-        }
-        if (transaction.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
-            }
-            if (transaction.transaction_schedule.end_date) {
-                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-            }
-            if (transaction.transaction_schedule.next_date) {
-                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-            }
-        }
-
-        // Emit global event for modal to display
-        let event = new CustomEvent('showTransactionQuickviewModal', {
-            detail: {
-                transaction: transaction,
-                controls: {
-                    show: true,
-                    edit: true,
-                    clone: true,
-                    skip: true,
-                    enter: true,
-                    delete: true,
-                }
-            }
-        });
-        window.dispatchEvent(event);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
-    .finally(() => {
-        icon.className = originalIconClass;
-    });
-});
-
 import { createApp } from 'vue'
-
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 const app = createApp({})
 
+// Add global translator function
+app.config.globalProperties.__ = window.__;
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
 
 app.mount('#app')

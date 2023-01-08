@@ -4,15 +4,15 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
-use App\Http\Traits\CurrencyTrait;
-use App\Models\AccountEntity;
 use App\Models\Tag;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,28 +20,16 @@ use Illuminate\Support\Facades\DB;
 class TransactionApiController extends Controller
 {
 
-    use CurrencyTrait;
-
-    private $allAccounts;
-
-    private $allAccountCurrencies;
-
-    private $allTags;
-
-    private $allCategories;
-
-    private $baseCurrency;
-
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function reconcile(Transaction $transaction, $newState)
     {
         /**
          * @put('/api/transaction/{transaction}/reconciled/{newState}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('update', $transaction);
 
@@ -49,9 +37,7 @@ class TransactionApiController extends Controller
         $transaction->save();
 
         return response()->json(
-            [
-                'success' => true,
-            ],
+            [],
             Response::HTTP_OK
         );
     }
@@ -60,7 +46,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @get('/api/transaction/{transaction}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $transaction->loadStandardDetails();
 
@@ -76,7 +62,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @get('/api/transactions/get_scheduled_items/{type}')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
         // Return empty response if categories are required, but not set or empty
@@ -85,28 +71,6 @@ class TransactionApiController extends Controller
                 return response()->json([], Response::HTTP_OK);
             }
         }
-
-        // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        // Get all tags
-        $this->allTags = Auth::user()->tags->pluck('name', 'id')->all();
-
-        // Get all categories
-        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
-
-        // Get all currencies
-        $this->allAccountCurrencies = Auth::user()->accounts()
-            ->with([
-                'config',
-                'config.currency',
-            ])
-            ->get();
-
-        // Load the base currency for the user
-        $this->baseCurrency = $this->getBaseCurrency();
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
@@ -119,6 +83,7 @@ class TransactionApiController extends Controller
                 'transactionType',
                 'transactionSchedule',
                 'transactionItems',
+                'transactionItems.category',
                 'transactionItems.tags',
             ]
         )
@@ -129,6 +94,18 @@ class TransactionApiController extends Controller
             '=',
             'transaction_detail_standard'
         )
+        // Optionally add account filter
+        ->when($request->has('account'), function($query) use ($request) {
+            $query->whereHasMorph(
+                'config',
+                [TransactionDetailStandard::class],
+                function (Builder $query) use ($request) {
+                    $query->Where('account_from_id', $request->get('account'));
+                    $query->orWhere('account_to_id', $request->get('account'));
+                }
+            );
+        })
+        // Optionally add category filter
         ->when($categories->count() > 0, function($query) use ($categories) {
             $query->whereHas('transactionItems', function ($query) use ($categories) {
                 $query->whereIn('category_id', $categories->pluck('id'));
@@ -156,25 +133,27 @@ class TransactionApiController extends Controller
                 '=',
                 'transaction_detail_investment'
             )
+            // Optionally add account filter
+            ->when($request->has('account'), function($query) use ($request) {
+                $query->whereHasMorph(
+                    'config',
+                    [TransactionDetailInvestment::class],
+                    function (Builder $query) use ($request) {
+                        $query->Where('account_id', $request->get('account'));
+                    }
+                );
+            })
             ->get();
         }
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
             ->map(function ($transaction) {
-                $commonData = $this->transformDataCommon($transaction);
-                $baseData = $this->transformDataStandard($transaction);
-                $currency = $this->getCurrency($transaction);
-
-                return array_merge($commonData, $baseData, $currency);
+                return $transaction->transformToClient();
             })
             ->merge($investmentTransactions
                 ->map(function ($transaction) {
-                    $commonData = $this->transformDataCommon($transaction);
-                    $baseData = $this->transformDataInvestment($transaction);
-                    $currency = $this->getCurrency($transaction);
-
-                    return array_merge($commonData, $baseData, $currency);
+                    return $transaction->transformToClient();
                 }));
 
         return response()->json(
@@ -185,128 +164,11 @@ class TransactionApiController extends Controller
         );
     }
 
-    private function transformDataCommon(Transaction $transaction)
-    {
-        // Prepare schedule related data if schedule is set
-        $schedule = null;
-        if ($transaction->transactionSchedule) {
-            $schedule = [
-                'start_date' => $transaction->transactionSchedule->start_date->toISOString(),
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->toISOString() : null),
-                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->toISOString() : null),
-                'frequency' => $transaction->transactionSchedule->frequency,
-                'count' => $transaction->transactionSchedule->count,
-                'interval' => $transaction->transactionSchedule->interval,
-            ];
-        }
-
-        return [
-            'id' => $transaction->id,
-            'date' => $transaction->date,  // Change compared to schedule controller
-            'transaction_type' => $transaction->transactionType->name,
-            'transaction_config_type' => $transaction->transactionType->type,
-            'config_type' => $transaction->config_type,
-            'schedule_config' => $schedule,
-            'schedule' => $transaction->schedule,
-            'budget' => $transaction->budget,
-            'comment' => $transaction->comment,
-            'reconciled' => $transaction->reconciled,
-        ];
-    }
-
-    private function transformDataStandard(Transaction $transaction)
-    {
-        $transactionArray = $transaction->toArray();
-
-        $itemTags = [];
-        $itemCategories = [];
-        foreach ($transactionArray['transaction_items'] as $item) {
-            if (isset($item['tags'])) {
-                foreach ($item['tags'] as $tag) {
-                    $itemTags[$tag['id']] = $this->allTags[$tag['id']];
-                }
-            }
-            if (isset($item['category_id'])) {
-                $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
-            }
-        }
-
-        return [
-            'transaction_operator' => $transaction->transactionType->amount_operator,
-            'config' => [
-                'account_from_id' => $transaction->config->account_from_id,
-                'account_from' => [
-                    'name' => $this->allAccounts[$transaction->config->account_from_id] ?? null,
-                    'id' => $transaction->config->account_from_id,
-                ],
-                'account_to_id' => $transaction->config->account_to_id,
-                'account_to' => [
-                    'name' => $this->allAccounts[$transaction->config->account_to_id] ?? null,
-                    'id' => $transaction->config->account_to_id,
-                ],
-                'amount_from' => $transaction->config->amount_from,
-                'amount_to' => $transaction->config->amount_to,
-            ],
-            'tags' => array_values($itemTags),
-            'categories' => array_values($itemCategories),
-        ];
-    }
-
-    private function transformDataInvestment(Transaction $transaction)
-    {
-        $amount = $transaction->cashflowValue();
-
-        return [
-            'transaction_operator' => $transaction->transactionType->amount_operator,
-            'quantity_operator' => $transaction->transactionType->quantity_operator,
-            'config' => [
-                'account_from_id' => $transaction->config->account_id,
-                'account_from' => [
-                    'name' => $this->allAccounts[$transaction->config->account_id],
-                    'id' => $transaction->config->account_id,
-                ],
-                'account_to_id' => $transaction->config->investment_id,
-                'account_to' => [
-                    'name' => $transaction->config->investment->name,
-                    'id' => $transaction->config->investment_id,
-                ],
-                'amount_from' => ($amount > 0 ? $amount : 0),
-                'amount_to' => ($amount > 0 ? $amount : 0),
-            ],
-            'tags' => [],
-
-            'investment_name' => $transaction->config->investment->name,
-            'quantity' => $transaction->config->quantity,
-            'price' => $transaction->config->price,
-        ];
-    }
-
-    private function getCurrency(Transaction $transaction)
-    {
-        $currency = null;
-
-        if ($transaction->transactionType->type === 'standard') {
-            if ($transaction->transactionType->name === 'withdrawal') {
-                $currency = $this->allAccountCurrencies->find($transaction->config->account_from_id);
-            } elseif ($transaction->transactionType->name === 'deposit') {
-                $currency = $this->allAccountCurrencies->find($transaction->config->account_to_id);
-            } elseif ($transaction->transactionType->name === 'transfer') {
-                $currency = $this->allAccountCurrencies->find($transaction->config->account_to_id);
-            }
-        } elseif ($transaction->transactionType->type === 'investment') {
-            $currency = $this->allAccountCurrencies->find($transaction->config->account_id);
-        }
-
-        return [
-            'currency' => $currency?->config->currency ?? $this->baseCurrency,
-        ];
-    }
-
     public function findTransactions(Request $request)
     {
         /**
          * @get('/api/transactions')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
@@ -317,7 +179,8 @@ class TransactionApiController extends Controller
             'accounts',
             'categories',
             'payees',
-            'tags', ])) {
+            'tags',
+        ])) {
             return response()->json(
                 [
                     'data' => [],
@@ -374,9 +237,40 @@ class TransactionApiController extends Controller
                 });
             });
 
+        // Get investment transactions matching any provided criteria
+        // This part of the query is run only if relevant search criteria is provided
+        if ($request->hasAny([
+            'date_from',
+            'date_to',
+            'accounts',
+        ])) {
+            $investmentQuery = Transaction::where('user_id', $user->id)
+                ->byScheduleType('none')
+                ->where('config_type', 'transaction_detail_investment')
+                ->when($request->has('date_from'), function ($query) use ($request) {
+                    $query->where('date', '>=', $request->get('date_from'));
+                })
+                ->when($request->has('date_to'), function ($query) use ($request) {
+                    $query->where('date', '<=', $request->get('date_to'));
+                })
+                ->when($request->has('accounts') && $request->get('accounts'), function ($query) use ($request) {
+                    $query->whereIn('config_id', function ($query) use ($request) {
+                        $query->select('id')
+                            ->from('transaction_details_investment')
+                            ->whereIn('account_id', $request->get('accounts'));
+                    });
+                });
+        } else {
+            $investmentQuery = Transaction::where('user_id', $user->id)
+            ->byScheduleType('none')
+            ->where('config_type', 'transaction_detail_investment')
+            // TODO: How to create a a query with no results in a more simple way?
+            ->where('id', null);
+        }
+
         // Return only count of transactions if requested
         if ($onlyCount) {
-            $count = $standardQuery->count();
+            $count = $standardQuery->count() + $investmentQuery->count();
 
             return response()->json(
                 [
@@ -390,47 +284,42 @@ class TransactionApiController extends Controller
         $standardTransactions = $standardQuery
             ->with([
                 'config',
+                'config.accountFrom',
+                'config.accountTo',
                 'transactionType',
                 'transactionItems',
                 'transactionItems.tags',
+                'transactionItems.category',
             ])
             ->get()
             ->loadMorph('config', [
                 TransactionDetailStandard::class => ['config'],
             ]);
 
-        // Preprocess data
-
-        // Get all accounts and payees so their name can be reused
-        $this->allAccounts = AccountEntity::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        $this->allAccountCurrencies = Auth::user()->accounts()
+        $investmentTransactions = $investmentQuery
             ->with([
                 'config',
-                'config.currency',
+                'transactionType',
             ])
-            ->get();
+            ->get()
+            ->loadMorph('config', [
+                TransactionDetailInvestment::class => ['config'],
+            ]);
 
-        // Get all tags
-        $this->allTags = Auth::user()->tags->pluck('name', 'id')->all();
-
-        // Get all categories
-        $this->allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
-
+        // Preprocess data
         $transactions = $standardTransactions
             ->map(function ($transaction) {
-                $commonData = $this->transformDataCommon($transaction);
-                $baseData = $this->transformDataStandard($transaction);
-                $currency = $this->getCurrency($transaction);
-
-                return array_merge($commonData, $baseData, $currency);
-            });
+                return $transaction->transformToClient();
+            })
+            ->merge($investmentTransactions
+                ->map(function ($transaction) {
+                    return $transaction->transformToClient();
+                })
+            );
 
         $data = $transactions
+            ->sortBy('date')
             ->sortByDesc('transactionType')
-            ->sortBy('start_date')
             ->values();
 
         return response()->json(
@@ -446,7 +335,7 @@ class TransactionApiController extends Controller
         /**
          * @post('/api/transactions/standard')
          * @name('api.transactions.storeStandard')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $validated = $request->validated();
 
@@ -512,7 +401,7 @@ class TransactionApiController extends Controller
 
         return response()->json(
             [
-                'transaction' => $transaction,
+                'transaction' => $transaction->transformToClient(),
             ]
         );
     }
@@ -522,18 +411,32 @@ class TransactionApiController extends Controller
         /**
          * @patch('/api/transactions/standard/{transaction}')
          * @name('api.transactions.updateStandard')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $validated = $request->validated();
 
         // Load all relevant relations
-        $transaction->load(['transactionItems']);
+        $transaction->load([
+            'transactionItems',
+            'transactionSchedule'
+        ]);
 
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
         if ($transaction->schedule || $transaction->budget) {
-            $transaction->transactionSchedule->fill($validated['schedule_config']);
+            // Update existing or create new
+            if ($transaction->transactionSchedule) {
+                $transaction->transactionSchedule->fill($validated['schedule_config']);
+            } else {
+                $transactionSchedule = new TransactionSchedule(
+                    [
+                        'transaction_id' => $transaction->id,
+                    ]
+                );
+                $transactionSchedule->fill($validated['schedule_config']);
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
         }
 
         // Replace exising transaction items with new array
@@ -559,14 +462,14 @@ class TransactionApiController extends Controller
         $transaction->push();
 
         // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way?
+        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
         if (! $validated['fromModal']) {
             self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
         }
 
         return response()->json(
             [
-                'transaction' => $transaction,
+                'transaction' => $transaction->transformToClient(),
             ]
         );
     }
@@ -615,13 +518,13 @@ class TransactionApiController extends Controller
         /**
          * @patch('/api/transactions/{transaction}/skip')
          * @name('api.transactions.skipScheduleInstance')
-         * @middlewares('api', 'auth:sanctum')
+         * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $transaction->transactionSchedule->skipNextInstance();
 
         return response()->json(
             [
-                'transaction' => $transaction,
+                'transaction' => $transaction->transformToClient(),
             ]
         );
     }
@@ -652,5 +555,23 @@ class TransactionApiController extends Controller
         });
 
         return $categories->unique('id');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  Transaction  $transaction
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy(Transaction $transaction)
+    {
+        /**
+         * @delete('/api/transactions/{transaction}')
+         * @name('transactions.destroy')
+         * @middlewares('web', 'auth', 'verified')
+         */
+        $transaction->delete();
+
+        return response()->json();
     }
 }

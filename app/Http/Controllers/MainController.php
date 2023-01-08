@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -19,15 +20,11 @@ class MainController extends Controller
 
     private $allAccounts;
 
-    private $allTags;
-
-    private $allCategories;
-
     private $currentAccount;
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function account_details(AccountEntity $account, $withForecast = null)
@@ -35,7 +32,7 @@ class MainController extends Controller
         /**
          * @get('/account/history/{account}/{withForecast?}')
          * @name('account.history')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $user = Auth::user();
 
@@ -49,12 +46,6 @@ class MainController extends Controller
         $this->allAccounts = AccountEntity::where('user_id', $user->id)
             ->pluck('name', 'id')
             ->all();
-
-        // Get all tags
-        $this->allTags = $user->tags->pluck('name', 'id')->all();
-
-        // Get all categories
-        $this->allCategories = $user->categories->pluck('full_name', 'id')->all();
 
         // Get standard transactions related to selected account (one-time AND scheduled)
         $standardTransactions = Transaction::where(function ($query) {
@@ -76,6 +67,7 @@ class MainController extends Controller
             'config',
             'transactionType',
             'transactionItems',
+            'transactionItems.category',
             'transactionItems.tags',
         ])
         ->get();
@@ -106,7 +98,7 @@ class MainController extends Controller
         $transactions = $standardTransactions
         ->merge($investmentTransactions)
         // Add custom and pre-calculated attributes
-        ->map(function ($transaction) {
+        ->map(function ($transaction) use ( $account) {
             if ($transaction->schedule) {
                 $transaction->load(['transactionSchedule']);
 
@@ -116,26 +108,13 @@ class MainController extends Controller
             }
 
             if ($transaction->config_type === 'transaction_detail_standard') {
-                $itemTags = [];
-                $itemCategories = [];
-                foreach ($transaction->transactionItems as $item) {
-                    if (isset($item['tags'])) {
-                        foreach ($item['tags'] as $tag) {
-                            $itemTags[$tag['id']] = $this->allTags[$tag['id']];
-                        }
-                    }
-                    if (isset($item['category_id'])) {
-                        $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
-                    }
-                }
-
                 $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
                 $transaction->amount_from = $transaction->config->amount_from;
                 $transaction->amount_to = $transaction->config->amount_to;
-                $transaction->tags = array_values($itemTags);
-                $transaction->categories = array_values($itemCategories);
+                $transaction->tags = $transaction->tags()->values();
+                $transaction->categories = $transaction->categories()->values();
             } elseif ($transaction->config_type === 'transaction_detail_investment') {
                 $amount = $transaction->cashflowValue();
 
@@ -149,6 +128,7 @@ class MainController extends Controller
                 $transaction->categories = [];
                 $transaction->quantity = $transaction->config->quantity;
                 $transaction->price = $transaction->config->price;
+                $transaction->currency = $account->config->currency;
             }
 
             return $transaction;

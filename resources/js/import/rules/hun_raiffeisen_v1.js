@@ -82,13 +82,13 @@ let ruleCardPayment = new Rule({
                     }
                 },
                 {
-                    transactionField: 'transaction_type',
+                    transactionField: 'transaction_type.name',
                     customFunction: function (_fact, _transaction) {
                         return 'withdrawal';
                     }
                 },
                 {
-                    transactionField: 'transaction_operator',
+                    transactionField: 'transaction_type.amount_operator',
                     customFunction: function (_fact, _transaction) {
                         return 'minus';
                     }
@@ -200,13 +200,13 @@ let ruleOutgoingWireTransfer = new Rule({
                     }
                 },
                 {
-                    transactionField: 'transaction_type',
+                    transactionField: 'transaction_type.name',
                     customFunction: function (_fact, _transaction) {
                         return 'withdrawal';
                     }
                 },
                 {
-                    transactionField: 'transaction_operator',
+                    transactionField: 'transaction_type.amount_operator',
                     customFunction: function (_fact, _transaction) {
                         return 'minus';
                     }
@@ -316,13 +316,13 @@ engine.addRule({
                     }
                 },
                 {
-                    transactionField: 'transaction_type',
+                    transactionField: 'transaction_type.name',
                     customFunction: function (_fact, _transaction) {
                         return 'deposit';
                     }
                 },
                 {
-                    transactionField: 'transaction_operator',
+                    transactionField: 'transaction_type.amount_operator',
                     customFunction: function (_fact, _transaction) {
                         return 'plus';
                     }
@@ -446,13 +446,13 @@ let ruleCashWithdrawal = new Rule({
                     }
                 },
                 {
-                    transactionField: 'transaction_type',
+                    transactionField: 'transaction_type.name',
                     customFunction: function (_fact, _transaction) {
                         return 'transfer';
                     }
                 },
                 {
-                    transactionField: 'transaction_operator',
+                    transactionField: 'transaction_type.amount_operator',
                     customFunction: function (_fact, _transaction) {
                         return '';
                     }

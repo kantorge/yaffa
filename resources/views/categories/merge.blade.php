@@ -1,10 +1,10 @@
 @extends('template.layouts.page')
 
-@section('title', 'Merge categories')
+@section('title', __('Merge categories'))
 
-@section('content_header')
-<h1>Merge categories</h1>
-@stop
+@section('content_container_classes', 'container-lg')
+
+@section('content_header', __('Merge categories'))
 
 @section('content')
 
@@ -15,22 +15,21 @@
         id="merge-categories-form"
         method="POST"
     >
-        <div class="box box-primary">
-            <div class="box-header">
-                <h3 class="box-title">
-                    Select categories to merge
-                </h3>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    {{ __('Select categories to merge') }}
+                </div>
             </div>
-            <!-- /.box-header -->
-            <div class="box-body">
-                <div class="row">
+            <div class="card-body">
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="category_source">
-                                Category to be merged
+                                {{ __('Category to be merged') }}
                             </label>
                             <select
-                                class="form-control"
+                                class="form-select"
                                 id="category_source"
                                 name="category_source"
                             ></select>
@@ -39,10 +38,10 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="category_target">
-                                Where to merge category
+                                {{ __('Where to merge category') }}
                             </label>
                             <select
-                                class="form-control"
+                                class="form-select"
                                 id="category_target"
                                 name="category_target"
                             ></select>
@@ -51,35 +50,37 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group form-horizontal">
+                        <div class="row mb-3">
                             <label>
-                                After merging
+                                {{ __('After merging') }}
                             </label>
-                            <div class="radio">
-                                <label class="radio-inline">
-                                    <input type="radio" name="action" value="delete" checked="checked">
-                                    Delete category
-                                </label>
-                                <label class="radio-inline">
-                                    <input type="radio" name="action" value="close" checked="">
-                                    Set category to inactive
-                                </label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="action" value="delete" checked="checked">
+                                    <label class="form-check-label">
+                                        {{ __('Delete merged category') }}
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="action" value="close" checked="">
+                                    <label class="form-check-label">
+                                        {{ __('Set merged category to inactive') }}
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group has-error">
-                            <span class="help-block">This action cannot be undone. Proceed with caution.</span>
-                            @csrf
-                            <button
-                                class="btn btn-sm btn-default"
-                                type="button"
-                                id="cancel"
-                            >
-                                Cancel
-                            </button>
-                            <input class="btn btn-primary" type="submit" value="Merge categories">
-                        </div>
+                        <span class="help-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
+                        @csrf
+                        <button
+                            class="btn btn-sm btn-outline-dark"
+                            type="button"
+                            id="cancel"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <input class="btn btn-primary" type="submit" value="{{ __('Merge categories') }}">
                     </div>
                 </div>
             </div>

@@ -15,7 +15,7 @@ class InvestmentPriceController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function list(Investment $investment)
@@ -23,7 +23,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/list/{investment}')
          * @name('investment-price.list')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $this->authorize('view', $investment);
 
@@ -52,7 +52,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/create')
          * @name('investment-price.create')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->get('investment'));
         $this->authorize('view', $investment);
@@ -70,7 +70,7 @@ class InvestmentPriceController extends Controller
         /**
          * @post('/investment-price')
          * @name('investment-price.store')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->investment_id);
         $this->authorize('view', $investment);
@@ -79,7 +79,7 @@ class InvestmentPriceController extends Controller
 
         InvestmentPrice::create($validated);
 
-        self::addSimpleSuccessMessage('Investment price added');
+        self::addSimpleSuccessMessage(__('Investment price added'));
 
         return redirect()->route('investment-price.list', $investment);
     }
@@ -95,7 +95,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/{investment_price}/edit')
          * @name('investment-price.edit')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         return view(
             'investment-prices.form',
@@ -112,7 +112,7 @@ class InvestmentPriceController extends Controller
          * @methods('PUT', PATCH')
          * @uri('/investment-price/{investment_price}')
          * @name('investment-price.update')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validated();
 
@@ -120,7 +120,7 @@ class InvestmentPriceController extends Controller
             ->fill($validated)
             ->save();
 
-        self::addSimpleSuccessMessage('Investment price updated');
+        self::addSimpleSuccessMessage(__('Investment price updated'));
 
         return redirect()->route('investment-price.list', $request->investment_id);
     }
@@ -136,11 +136,11 @@ class InvestmentPriceController extends Controller
         /**
          * @delete('/investment-price/{investment_price}')
          * @name('investment-price.destroy')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $investmentPrice->delete();
 
-        self::addSimpleSuccessMessage('Investment price deleted');
+        self::addSimpleSuccessMessage(__('Investment price deleted'));
 
         return redirect()->back();
     }
@@ -150,7 +150,7 @@ class InvestmentPriceController extends Controller
         /**
          * @get('/investment-price/get/{investment}/{from?}')
          * @name('investment-price.retreive')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         $refill = false;
 
@@ -158,7 +158,7 @@ class InvestmentPriceController extends Controller
 
         $response = $client->request('GET', 'https://www.alphavantage.co/query', [
             'query' => [
-                'function' => 'TIME_SERIES_DAILY',
+                'function' => 'TIME_SERIES_DAILY_ADJUSTED',
                 'datatype' => 'json',
                 'symbol' => $investment->symbol,
                 'apikey' => config('yaffa.alpha_vantage_key'),

@@ -1,51 +1,5 @@
 require('./bootstrap');
 
-// Helper functions
-// TODO: find appropriate place for these custom functions
-Number.prototype.toLocalCurrency = function(currency, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    var result = this.toLocaleString(
-        'hu-HU',
-        {
-            style: 'currency',
-            currency: currency.iso_code,
-            currencyDisplay: 'narrowSymbol',
-            minimumFractionDigits: currency.num_digits,
-            maximumFractionDigits: currency.num_digits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};
-
-Number.prototype.toLocalQuantity = function(maximumFractionDigits, nonBreakingSpaces) {
-    if (nonBreakingSpaces !== false) {
-        nonBreakingSpaces = true;
-    }
-
-    maximumFractionDigits = maximumFractionDigits || 4;
-
-    var result = this.toLocaleString('hu-HU',
-        {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: maximumFractionDigits
-        }
-    );
-
-    if (nonBreakingSpaces) {
-        result = result.replace(/\s/g, '&nbsp;');
-    }
-
-    return result;
-};
-
 Date.prototype.datePart = function () {
     var d = new Date(this);
     d.setHours(0, 0, 0, 0);
@@ -78,6 +32,10 @@ if (   window.location.pathname === '/account-entity'
     && /type=payee/.test(window.location.search)) {
     require('./payees/index');
 }
+if (/^\/account-entity\/\d+/.test(window.location.pathname)) {
+    require('./account/show');
+}
+
 if (   /^\/account-entity\/(create|\d+\/edit)/.test(window.location.pathname)
     && /type=payee/.test(window.location.search)) {
     require('./payees/form');
@@ -168,6 +126,10 @@ if (window.location.pathname === '/import/csv') {
     require('./import/csv');
 }
 
+if (window.location.pathname === '/register') {
+    require('./auth/register');
+}
+
 // Notifications
 require('./notifications');
 
@@ -177,11 +139,11 @@ $(function() {
         if (this.value == '') {
             return false;
         }
-        window.location.href = route('account.history', { account: this.value });
+        window.location.href = route('account-entity.show', { account_entity: this.value });
     });
 
     // Generally available cancel button with confirmation
     $(".cancel.confirm-needed").on("click", function() {
-        return confirm('Are you sure to abandon this form?');
+        return confirm(__('Are you sure to abandon this form?'));
     });
 });

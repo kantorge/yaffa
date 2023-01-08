@@ -1,62 +1,69 @@
 <template>
-    <div class="box">
-        <div class="box-header with-border">
-            <h3 class="box-title" v-html="title"></h3>
-            <div class="box-tools pull-right" v-if="withCheckbox">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between">
+            <div
+                class="card-title"
+                v-html="title"></div>
+            <div v-if="withCheckbox">
                 <div class="checkbox">
                     <label>
                         <input
                             type="checkbox"
                             value="1"
-                            v-model="allowCustomization"
+                            v-model="allowCustomizationData"
                         >
-                        Customize
+                        {{ __('Customize') }}
                     </label>
                 </div>
             </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body" id="">
+        <div class="card-body">
             <div class="row">
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
-                    <label for="schedule_frequency" class="control-label">Frequency</label>
+                    <label for="schedule_frequency" class="control-label">
+                        {{ __('Frequency') }}
+                    </label>
                     <select
-                        class="form-control"
+                        class="form-select"
                         id="schedule_frequency"
                         v-model="schedule.frequency"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     >
-                        <option value="DAILY">Daily</option>
-                        <option value="WEEKLY">Weekly</option>
-                        <option value="MONTHLY">Monthly</option>
-                        <option value="YEARLY">Yearly</option>
+                        <option value="DAILY">{{ __('Daily') }}</option>
+                        <option value="WEEKLY">{{ __('Weekly') }}</option>
+                        <option value="MONTHLY">{{ __('Monthly') }}</option>
+                        <option value="YEARLY">{{ __('Yearly') }}</option>
                     </select>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
-                    <label for="schedule_interval" class="control-label">Interval</label>
+                    <label for="schedule_interval" class="control-label">
+                        {{ __('Interval') }}
+                    </label>
                     <MathInput
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         class="form-control"
                         id="schedule_interval"
                         v-model="schedule.interval"
                     ></MathInput>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.start_date') ? 'has-error' : ''"
                 >
                     <label
-                        :for="'schedule_start_' + this.$.vnode.key" class="control-label">Start date</label>
+                        :for="'schedule_start_' + this.$.vnode.key" class="control-label">
+                        {{ __('Start date') }}
+                    </label>
                     <Datepicker
                         :id="'schedule_start_' + this.$.vnode.key"
                         v-model="schedule.start_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -64,21 +71,21 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.next_date') ? 'has-error' : ''"
                     v-if="isSchedule"
                 >
                     <label for="schedule_next" class="control-label">
-                            Next date
-                            <span
-                                class="fa"
-                                :class="!schedule.next_date ? 'fa-warning text-warning' : 'fa-info-circle text-info'"
-                                title="If next date is empty, then this schedule is considered to be finished"></span>
+                        {{ __('Next date') }}
+                        <span
+                            class="fa"
+                            :class="!schedule.next_date ? 'fa-warning text-warning' : 'fa-info-circle text-info'"
+                            :title="__('If next date is empty, then this schedule is considered to be finished')"></span>
                     </label>
                     <Datepicker
                         id="schedule_next"
                         v-model="schedule.next_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -86,26 +93,30 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
                 >
-                    <label for="schedule_count" class="control-label">Count</label>
+                    <label for="schedule_count" class="control-label">
+                        {{ __('Count') }}
+                    </label>
                     <MathInput
                         class="form-control"
                         id="schedule_count"
                         v-model="schedule.count"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     ></MathInput>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.end_date') ? 'has-error' : ''"
                 >
-                    <label for="schedule_end" class="control-label">End date</label>
+                    <label for="schedule_end" class="control-label">
+                        {{ __('End date') }}
+                    </label>
                     <Datepicker
                         id="schedule_end"
                         v-model="schedule.end_date"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                         autoApply
                         format="yyyy. MM. dd."
                         :enableTimePicker="false"
@@ -113,23 +124,24 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     :class="form.errors.has('schedule_config.inflation') ? 'has-error' : ''"
                     v-if="isBudget"
                 >
-                    <label for="schedule_inflation" class="control-label">Budget inflation, %</label>
+                    <label for="schedule_inflation" class="control-label">
+                        {{ __('Budget inflation, %') }}
+                    </label>
                     <input
                         class="form-control"
                         id="schedule_inflation"
                         v-model="schedule.inflation"
                         type="number"
                         step=".01"
-                        :disabled="!allowCustomization"
+                        :disabled="!allowCustomizationData"
                     >
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
     </div>
 </template>
 
@@ -165,6 +177,8 @@
 
         data() {
             let data = {};
+
+            data.allowCustomizationData = this.allowCustomization;
 
             // Date picker settings
             data.dataPickerLanguage = {

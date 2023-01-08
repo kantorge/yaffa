@@ -29,6 +29,8 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
+            'language' => $this->faker->randomElement(array_keys(config('app.available_languages'))),
+            'locale' => $this->faker->randomElement(array_keys(config('app.available_locales'))),
         ];
     }
 }

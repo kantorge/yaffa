@@ -1,56 +1,72 @@
 <template>
-    <div class="box" v-show="isVisible">
-        <div class="box-header with-border">
-            <h3 class="box-title">Schedule</h3>
+    <div class="card mb-3" v-show="isVisible">
+        <div class="card-header">
+            <div class="card-title">
+                {{ __('Schedule') }}
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body" id="">
+        <div class="card-body">
             <div class="row">
-                <div class="col-xs-6 col-sm-4 form-group">
-                    <label for="schedule_frequency" class="control-label">Frequency</label>
-                    {{ schedule.frequency}}
+                <div class="col-6 col-sm-4 mb-2">
+                    <label for="schedule_frequency" class="control-label">
+                        {{ __('Frequency') }}
+                    </label>
+                    {{ schedule.frequency }}
                 </div>
-                <div class="col-xs-6 col-sm-4 form-group">
-                    <label for="schedule_interval" class="control-label">Interval</label>
+                <div class="col-6 col-sm-4 mb-2">
+                    <label for="schedule_interval" class="control-label">
+                        {{ __('Interval') }}
+                    </label>
                     {{ schedule.interval }}
                 </div>
-                <div class="col-xs-6 col-sm-4 form-group">
-                    <label for="schedule_start" class="control-label">Start date</label>
+                <div class="col-6 col-sm-4 mb-2">
+                    <label for="schedule_start" class="control-label">
+                        {{ __('Start date') }}
+                    </label>
                     {{ formattedDate(schedule.start_date) }}
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     v-if="isSchedule"
                 >
-                    <label for="schedule_next" class="control-label">Next date</label>
+                    <label for="schedule_next" class="control-label">
+                        {{ __('Next date') }}
+                    </label>
+
                     <span v-if="schedule.next_date">{{ formattedDate(schedule.next_date) }}</span>
-                    <span v-else class="text-muted text-italic">Not set</span>
+                    <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                 >
-                    <label for="schedule_count" class="control-label">Count</label>
+                    <label for="schedule_count" class="control-label">
+                        {{ __('Count') }}
+                    </label>
                     {{ schedule.count }}
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                 >
-                    <label for="schedule_end" class="control-label">End date</label>
+                    <label for="schedule_end" class="control-label">
+                        {{ __('End date') }}
+                    </label>
+
                     <span v-if="schedule.end_date">{{ formattedDate(schedule.end_date) }}</span>
-                    <span v-else class="text-muted text-italic">Not set</span>
+                    <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                 </div>
                 <div
-                    class="col-xs-6 col-sm-4 form-group"
+                    class="col-6 col-sm-4 mb-2"
                     v-if="isBudget"
                 >
-                    <label for="schedule_inflation" class="control-label">Budget inflation</label>
+                    <label for="schedule_inflation" class="control-label">
+                        {{ __('Budget inflation') }}
+                    </label>
                     <span v-if="schedule.inflation">{{ schedule.inflation }} <span v-show="schedule.inflation">%</span></span>
                     <!-- TODO: account for 0 value -->
-                    <span v-else class="text-muted text-italic">Not set</span>
+                    <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
     </div>
 </template>
 
@@ -63,6 +79,10 @@
             isSchedule: Boolean,
             isBudget: Boolean,
             schedule: Object,
+            locale: {
+                type: String,
+                default: window.YAFFA.locale,
+            }
         },
 
         data() {
@@ -77,7 +97,7 @@
 
                 const newDate = new Date(date);
 
-                return newDate.toLocaleDateString('Hu-hu');
+                return newDate.toLocaleDateString(this.locale);
             },
         }
     }

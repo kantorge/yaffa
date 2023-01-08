@@ -2,23 +2,25 @@
     <div>
         <transaction-form-standard
             :action = "action"
-            :transaction = "transaction"
+            :transaction = "transactionData"
             @cancel="onCancel"
             @success="onSuccess"
             @changeTransactionType="onTransactionTypeChange"
         ></transaction-form-standard>
 
-        <div class="box box-primary">
-            <div class="box-body">
+        <div class="card mb-3">
+            <div class="card-body">
                 <div class="row">
-                    <div class="hidden-xs col-sm-10">
-                        <label class="control-label block-label">After saving</label>
+                    <div class="d-none d-md-block col-md-10">
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <div class="btn-group">
                             <button
                                 v-for="item in activeCallbackOptions"
                                 :key="item.id"
-                                class="btn btn-default"
-                                :class="callback == item.value ? 'active' : ''"
+                                class="btn btn-outline-dark"
+                                :class="{ 'active': callback === item.value }"
                                 type="button"
                                 :value="item.value"
                                 @click="callback = $event.currentTarget.getAttribute('value')"
@@ -27,8 +29,10 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-xs-12 d-sm-none">
-                        <label class="control-label block-label">After saving</label>
+                    <div class="col-12 d-block d-md-none">
+                        <label class="control-label block-label">
+                            {{ __('After saving') }}
+                        </label>
                         <select
                             class="form-control"
                             v-model="callback"
@@ -50,7 +54,7 @@
 
 <script>
     import TransactionFormStandard from './../TransactionFormStandard.vue'
-    import {Button} from 'vform/src/components/bootstrap4'
+    import {Button} from 'vform/src/components/bootstrap5'
 
     export default {
         name: 'TransactionContainerStandard',
@@ -70,51 +74,80 @@
             },
         },
 
+        created() {},
+
         data() {
-            return {
+            var data = {
                 // TODO: adjust initial callback based on action
-                callback: 'new',
+                callback: 'create',
 
                 // Various callback options
                 callbackOptions: [
                     {
-                        value: 'new',
-                        label: 'Add an other transaction',
+                        value: 'create',
+                        label: __('Add an other transaction'),
                         enabled: true,
                     },
                     {
                         value: 'clone',
-                        label: 'Clone this transaction',
+                        label: __('Clone this transaction'),
                         enabled: true,
                     },
                     {
                         value: 'returnToPrimaryAccount',
-                        label: 'Return to selected account',
+                        label: __('Return to selected account'),
                         enabled: true,
                     },
                     {
                         value: 'returnToSecondaryAccount',
-                        label: 'Return to target account',
+                        label: __('Return to target account'),
                         enabled: false,
                     },
                     {
                         value: 'returnToDashboard',
-                        label: 'Return to dashboard',
+                        label: __('Return to dashboard'),
                         enabled: true,
                     },
                     {
                         value: 'back',
-                        label: 'Return to previous page',
+                        label: __('Return to previous page'),
                         enabled: true,
                     },
-                ]
+                ],
             };
+
+            // For new transactions set some default values
+            if (this.action === 'create') {
+                if (!data.transactionData) {
+                    data.transactionData = {};
+                }
+                if (!data.transactionData.config) {
+                    data.transactionData.config = {};
+                }
+
+                // Check for various default values in URL
+                const urlParams = new URLSearchParams(window.location.search);
+
+                if (urlParams.get('account_from')) {
+                    data.transactionData.config.account_from_id = urlParams.get('account_from');
+                }
+
+                data.transactionData.date = new Date();
+                data.transactionData.transaction_type = {
+                    name: 'withdrawal',
+                };
+            } else {
+                // For all other cases (where we expect some data to be available), copy transaction from prop
+                data.transactionData = this.transaction;
+            }
+
+            return data;
         },
 
         methods: {
             // Determine, which account to use as a callback, if user wants to return to selected account
             getReturnAccount(accountType, transaction) {
-                if (accountType === 'primary' && transaction.transaction_type == 'deposit') {
+                if (accountType === 'primary' && transaction.transaction_type.name === 'deposit') {
                     return transaction.config.account_to_id;
                 }
 
@@ -133,7 +166,7 @@
                     return;
                 }
 
-                if (this.callback === 'new') {
+                if (this.callback === 'create') {
                     location.href = route('transactions.createStandard');
                     return;
                 }
@@ -190,9 +223,6 @@
     @media (min-width: 576px) {
         .block-label {
             display: block;
-        }
-        .d-sm-none {
-            display: none;
         }
     }
 </style>

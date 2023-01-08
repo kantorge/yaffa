@@ -1,77 +1,71 @@
 @extends('template.layouts.page')
 
-@section('title', 'Scheduled transactions')
+@section('title_postfix', __('Scheduled transactions'))
 
-@section('content_header')
-    <h1>Details of scheduled and budgeted transactions</h1>
-@stop
+@section('content_container_classes', 'container-fluid')
+
+@section('content_header', __('Scheduled and budgeted transactions'))
 
 @section('content')
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group d-inline-block">
+                    <label class="control-label">
+                        {{ __('Schedule') }}
+                    </label>
+                    <div>
+                        <div class="btn-group" role="group" aria-label="Toggle button group for schedules">
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_yes" value="{{ __('Yes') }}">
+                            <label class="btn btn-outline-primary" for="schedule_yes" title="{{ __('Yes') }}">
+                                <span class="fa fa-fw fa-check"></span>
+                            </label>
 
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">
-                Scheduled and budgeted transactions
-            </h3>
-        </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="form-group d-inline-block">
-                        <label class="control-label">
-                            Schedule
-                        </label>
-                        <div>
-                            <div class="btn-group" data-toggle="buttons">
-                                <label class="btn btn-primary" title="Yes">
-                                    <input type="radio" name="schedule" value="Yes" class="radio-inline">
-                                    <span class="fa fa-fw fa-check"></span>
-                                </label>
-                                <label class="btn btn-primary active" title="Any">
-                                    <input type="radio" name="schedule" value="" class="radio-inline" checked="checked">
-                                    <span class="fa fa-fw fa-circle-o"></span>
-                                </label>
-                                <label class="btn btn-primary" title="No">
-                                    <input type="radio" name="schedule" value="No" class="radio-inline">
-                                    <span class="fa fa-fw fa-close"></span>
-                                </label>
-                            </div>
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_any" value="" checked>
+                            <label class="btn btn-outline-primary" for="schedule_any" title="{{ __('Any') }}">
+                                <span class="fa fa-fw fa-circle"></span>
+                            </label>
+
+                            <input type="radio" class="btn-check" name="schedule" id="schedule_no" value="{{ __('No') }}">
+                            <label class="btn btn-outline-primary" for="schedule_no" title="{{ __('No') }}">
+                                <span class="fa fa-fw fa-close"></span>
+                            </label>
                         </div>
                     </div>
-                    <div class="form-group d-inline-block">
-                        <label class="control-label">
-                            Budget
-                        </label>
-                        <div>
-                            <div class="btn-group" data-toggle="buttons">
-                                <label class="btn btn-primary" title="Yes">
-                                    <input type="radio" name="budget" value="Yes" class="radio-inline">
-                                    <span class="fa fa-fw fa-check"></span>
-                                </label>
-                                <label class="btn btn-primary active" title="Any">
-                                    <input type="radio" name="budget" value="" class="radio-inline" checked="checked">
-                                    <span class="fa fa-fw fa-circle-o"></span>
-                                </label>
-                                <label class="btn btn-primary" title="No">
-                                    <input type="radio" name="budget" value="No" class="radio-inline">
-                                    <span class="fa fa-fw fa-close"></span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    @include('template.components.tablefilter-active')
                 </div>
+                <div class="form-group d-inline-block">
+                    <label class="control-label">
+                        {{ __('Budget') }}
+                    </label>
+                    <div>
+                        <div class="btn-group" role="group" aria-label="Toggle button group for budgets">
+                            <input type="radio" class="btn-check" name="budget" id="budget_yes" value="{{ __('Yes') }}">
+                            <label class="btn btn-outline-primary" for="budget_yes" title="{{ __('Yes') }}">
+                                <span class="fa fa-fw fa-check"></span>
+                            </label>
+
+                            <input type="radio" class="btn-check" name="budget" id="budget_any" value="" checked>
+                            <label class="btn btn-outline-primary" for="budget_any" title="{{ __('Any') }}">
+                                <span class="fa fa-fw fa-circle"></span>
+                            </label>
+
+                            <input type="radio" class="btn-check" name="budget" id="budget_no" value="{{ __('No') }}">
+                            <label class="btn btn-outline-primary" for="budget_no" title="{{ __('No') }}">
+                                <span class="fa fa-fw fa-close"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                @include('template.components.tablefilter-active')
             </div>
-
-            <table class="table table-bordered table-hover no-footer" id="table"></table>
         </div>
-        <!-- /.box-body -->
+
+        <table class="table table-bordered table-hover no-footer" id="table"></table>
     </div>
-    <!-- /.box -->
+</div>
 
-    @include('template.components.model-delete-form')
-
-    @include('template.components.transaction-skip-form')
+@include('template.components.model-delete-form')
+@include('template.components.transaction-skip-form')
 
 @stop

@@ -1,45 +1,44 @@
 @extends('template.layouts.page')
 
-@section('title', 'Currencies')
+@section('title_postfix',  __('Currencies'))
 
-@section('content_header')
-<h1>Currencies</h1>
-@stop
+@section('content_container_classes', 'container-sm')
+
+@section('content_header', __('Currencies'))
 
 @section('content')
 
-    @if(isset($currency))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('currencies.update', $currency->id) }}"
-            autocomplete="off"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
-    @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('currencies.store') }}"
-            autocomplete="off"
-            method="POST"
-        >
-    @endif
+@if(isset($currency))
+<form
+    accept-charset="UTF-8"
+    action="{{ route('currencies.update', $currency->id) }}"
+    autocomplete="off"
+    method="POST"
+>
+    <input name="_method" type="hidden" value="PATCH">
+@else
+<form
+    accept-charset="UTF-8"
+    action="{{ route('currencies.store') }}"
+    autocomplete="off"
+    method="POST"
+>
+@endif
 
-    <div class="box box-primary">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
                 @if(isset($currency->id))
-                    Modify currency
+                    {{ __('Modify currency') }}
                 @else
-                    Add currency
+                    {{ __('Add currency') }}
                 @endif
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body form-horizontal">
-            <div class="form-group">
-                <label for="name" class="control-label col-sm-3">
-                    Name
+        <div class="card-body">
+            <div class="row mb-3">
+                <label for="name" class="col-form-label col-sm-3">
+                    {{ __('Name') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -52,9 +51,9 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="iso_code" class="control-label col-sm-3">
-                    ISO Code
+            <div class="row mb-3">
+                <label for="iso_code" class="col-form-label col-sm-3">
+                    {{ __('ISO Code') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -66,9 +65,9 @@
                     >
                 </div>
             </div>
-            <div class="form-group">
-                <label for="num_digits" class="control-label col-sm-3">
-                    Number of decimal digits to handle
+            <div class="row mb-3">
+                <label for="num_digits" class="col-form-label col-sm-3">
+                    {{ __('Number of decimal digits to display') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -80,9 +79,9 @@
                     >
                 </div>
             </div>
-            <div class="form-group">
-                <label for="suffix" class="control-label col-sm-3">
-                    Suffix
+            <div class="row mb-3">
+                <label for="suffix" class="col-form-label col-sm-3">
+                    {{ __('Suffix') }}
                 </label>
                 <div class="col-sm-9">
                     <input
@@ -94,14 +93,14 @@
                     >
                 </div>
             </div>
-            <div class="form-group">
-                <label for="base" class="control-label col-sm-3">
-                    Base currency
+            <div class="row mb-3">
+                <label for="base" class="col-form-label col-sm-3">
+                    {{ __('Base currency') }}
                 </label>
                 <div class="col-sm-9">
                     <input
                         id="base"
-                        class="checkbox-inline"
+                        class="form-check-input"
                         name="base"
                         type="checkbox"
                         value="1"
@@ -119,14 +118,14 @@
                     >
                 </div>
             </div>
-            <div class="form-group">
-                <label for="auto_update" class="control-label col-sm-3">
-                    Automatic update
+            <div class="row mb-3">
+                <label for="auto_update" class="col-form-label col-sm-3">
+                    {{ __('Automatic update') }}
                 </label>
                 <div class="col-sm-9">
                     <input
                         id="auto_update"
-                        class="checkbox-inline"
+                        class="form-check-input"
                         name="auto_update"
                         type="checkbox"
                         value="1"
@@ -143,16 +142,11 @@
                 </div>
             </div>
         </div>
-        <!-- /.box-body -->
-        <div class="box-footer">
+        <div class="card-footer">
             @csrf
-            <input class="btn btn-primary" type="submit" value="Save">
-            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">Cancel</a>
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
+            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
-        <!-- /.box-footer -->
     </div>
-    <!-- /.box -->
-
-    </form>
-
+</form>
 @stop

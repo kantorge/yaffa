@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
@@ -29,20 +31,16 @@ window.table = $(dataTableSelector).DataTable({
     data: window.categories,
     columns: [
         {
-            data: "id",
-            title: "ID"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __("Name")
         },
         {
             data: "parent.name",
-            title: "Parent category"
+            title: __("Parent category")
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
@@ -51,64 +49,70 @@ window.table = $(dataTableSelector).DataTable({
         {
             // Display count of associated transactions
             data: "transactions_count",
-            title: "Transactions",
+            title: __("Transactions"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data > 0 ? data : 'Never used');
+                    return (data > 0 ? data : __('Never used'));
                 }
                 return data;
-            }
+            },
+            type: 'num',
         },
         {
             // Display first transaction date
             data: "transactions_min_date",
-            title: "First transaction",
+            title: __("First transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
                 }
 
-                return (data ? data.toISOString() : null);
-            }
+                return data || null;
+            },
+            type: 'date',
         },
         {
             // Display last transaction date
             data: "transactions_max_date",
-            title: "Last transaction",
+            title: __("Last transaction"),
             render: function(data, type) {
                 if (type === 'display') {
-                    return (data ? data.toLocaleDateString('Hu-hu') : 'Never used');
+                    return (data ? data.toLocaleDateString(window.YAFFA.locale) : __('Never used'));
                 }
 
-                return (data ? data.toISOString() : null);
-            }
+                return data || null;
+            },
+            type: 'date',
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'categories.edit') +
                         genericDataTablesActionButton(data, 'delete') +
-                        '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-xs btn-primary"><i class="fa fa-random" title="Merge into an other category"></i></a> ';
+                        '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-sm btn-primary" title="' + __('Merge into an other category') + '"><i class="fa fa-random"></i></a> ';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
     order: [
-        [1, 'asc']
+        [0, 'asc']
     ],
+    responsive: true,
     createdRow: function(row, data) {
         if (typeof data.parent.id === 'undefined') {
-            $('td:eq(2)', row).addClass("text-muted text-italic");
+            $('td:eq(1)', row).addClass("text-muted text-italic");
         }
         if (data.transactions_count === 0) {
-            $('td:eq(4)', row).addClass("text-muted text-italic");
+            $('td:eq(3)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_min_date) {
-            $('td:eq(5)', row).addClass("text-muted text-italic");
+            $('td:eq(4)', row).addClass("text-muted text-italic");
         }
         if (!data.transactions_max_date) {
-            $('td:eq(6)', row).addClass("text-muted text-italic");
+            $('td:eq(5)', row).addClass("text-muted text-italic");
         }
     },
     initComplete : function(settings) {
@@ -142,10 +146,10 @@ window.table = $(dataTableSelector).DataTable({
                         detail: {
                             notification: {
                                 type: 'danger',
-                                message: 'Error while changing category active state',
+                                message: () => __('Error while changing category active state'),
                                 title: null,
                                 icon: null,
-                                dismissable: true,
+                                dismissible: true,
                             }
                         },
                     });
@@ -164,5 +168,5 @@ initializeDeleteButtonListener(dataTableSelector, 'categories.destroy');
 
 // Listeners for button filter(s)
 $('input[name=active]').on("change", function() {
-    table.column(3).search(this.value).draw();
+    table.column(2).search(this.value).draw();
 });

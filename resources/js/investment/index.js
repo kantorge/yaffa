@@ -1,4 +1,6 @@
-require('datatables.net-bs');
+require('datatables.net-bs5');
+require("datatables.net-responsive-bs5");
+
 import * as dataTableHelpers from './../components/dataTableHelper';
 
 const dataTableSelector = '#table';
@@ -7,16 +9,12 @@ window.table = $(dataTableSelector).DataTable({
     data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
     columns: [
         {
-            data: "id",
-            title: "ID"
-        },
-        {
             data: "name",
-            title: "Name"
+            title: __("Name"),
         },
         {
             data: "active",
-            title: "Active",
+            title: __("Active"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -24,27 +22,27 @@ window.table = $(dataTableSelector).DataTable({
         },
         {
             data: "symbol",
-            title: "Symbol"
+            title: __("Symbol"),
         },
         {
             data: "isin",
-            title: "ISIN number"
+            title: __("ISIN number"),
         },
         {
             data: "investment_group.name",
-            title: "Investment group"
+            title: __("Investment group"),
         },
         {
             data: "currency.name",
-            title: "Currency"
+            title: __("Currency"),
         },
         {
             data: "investment_price_provider_name",
-            title: "Price provider"
+            title: __("Price provider"),
         },
         {
             data: "auto_update",
-            title: "Auto update",
+            title: __("Automatic update"),
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
             },
@@ -52,16 +50,20 @@ window.table = $(dataTableSelector).DataTable({
         },
         {
             data: "id",
-            title: "Actions",
+            title: __("Actions"),
             render: function (data) {
-                return '' +
-                    '<a href="' + route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="Edit"></i></a> ' +
-                    '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="Delete"></i></button> ';
+                return '<a href="' + route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="' + __('Delete') + '"></i></button> ';
             },
-            orderable: false
+            className: "dt-nowrap",
+            orderable: false,
+            searchable: false,
         }
     ],
-    order: [[1, 'asc']],
+    order: [
+        [0, 'asc']
+    ],
+    responsive: true,
     initComplete: function (settings) {
         $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
             var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
@@ -83,7 +85,7 @@ window.table = $(dataTableSelector).DataTable({
                     investments.filter(investment => investment.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
-                    alert('Error changing investment active state');
+                    alert(__('Error changing investment active state'));
                 },
                 complete: function (_data) {
                     // Re-render row
@@ -98,5 +100,5 @@ dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'investment.d
 
 // Listeners for button filter(s)
 $('input[name=active]').on("change", function() {
-    table.column(2).search(this.value).draw();
+    table.column(1).search(this.value).draw();
 });

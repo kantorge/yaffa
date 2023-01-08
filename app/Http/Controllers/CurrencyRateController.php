@@ -58,7 +58,7 @@ class CurrencyRateController extends Controller
          */
         $currencyRate->delete();
 
-        self::addSimpleSuccessMessage('Currency rate deleted');
+        self::addSimpleSuccessMessage(__('Currency rate deleted'));
 
         return redirect()->back();
     }

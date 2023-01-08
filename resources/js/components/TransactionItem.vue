@@ -1,61 +1,64 @@
 <template>
     <div
-        class="list-group-item transaction_item_row"
+        class="list-group-item mb-2 transaction_item_row"
         :id="'transaction_item_' + id"
     >
         <div class="row">
-            <div class="col-xs-12 col-sm-4 form-group">
-                <label>Category</label>
+            <div class="col-12 col-sm-4 form-group">
+                <label>
+                    {{ __('Category') }}
+                </label>
                 <select
-                    class="form-control category"
-                    style="width:100%"
-                    v-model.number="category_id"
+                    class="form-select category"
+                    v-model.number="categoryIdData"
                 >
                 </select>
             </div>
-            <div class="col-xs-12 col-sm-2 form-group">
+            <div class="col-12 col-sm-2 form-group">
                 <label class="control-label">
-                    Amount
+                    {{ __('Amount') }}
                     <span v-if="currency">({{currency}})</span>
                 </label>
                 <div class="input-group">
                     <MathInput
                         class="form-control transaction_item_amount"
-                        v-model="amount"
+                        v-model="amountData"
                     ></MathInput>
 
-                    <span class="input-group-btn">
-                        <button
-                            type="button"
-                            class="btn btn-info load_remainder"
-                            title="Assign remaining amount to this item"
-                            @click="loadRemainder"
-                        ><span class="fa fa-copy"></span></button>
-                    </span>
+                    <button
+                        type="button"
+                        class="btn btn-info load_remainder"
+                        :title="__('Assign remaining amount to this item')"
+                        @click="loadRemainder"
+                    ><span class="fa fa-copy"></span></button>
                 </div>
             </div>
-            <div class="col-xs-12 col-sm-3 form-group transaction_detail_container d-xs-none">
-                <label class="control-label">Tags</label>
+            <div class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block">
+                <label class="control-label">
+                    {{ __('Tags') }}
+                </label>
                 <select
-                    style="width: 100%"
-                    class="form-control tag"
+                    class="form-select tag"
                     multiple="multiple"
-                    v-model="tags">
+                    data-width="100%"
+                    v-model="tagsData">
                 </select>
             </div>
-            <div class="col-xs-12 col-sm-2 form-group transaction_detail_container d-xs-none">
-                <label class="control-label">Comment</label>
+            <div class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block">
+                <label class="control-label">
+                    {{ __('Comment') }}
+                </label>
                 <input
                     class="form-control transaction_item_comment"
-                    v-model="comment"
-                    @blur="updateComment"
+                    v-model="commentData"
+                    @blur="$emit('update:comment', $event.target.value)"
                     type="text">
             </div>
-            <div class="col-xs-12 col-sm-1">
+            <div class="col-12 col-sm-1">
                 <button
                 type="button"
                 class="btn btn-sm btn-info d-sm-none"
-                title="Show item details"
+                :title="__('Show item details')"
                 @click="toggleItemDetails"
             ><span class="fa fa-edit"></span></button>
             <button
@@ -63,7 +66,7 @@
                 class="btn btn-sm btn-danger"
                 @click='removeItem'
                 style="margin-left: 10px;"
-                title="Remove transaction item"
+                :title="__('Remove transaction item')"
             ><span class="fa fa-minus"></span></button>
             </div>
         </div>
@@ -72,6 +75,11 @@
 
 <script>
     require('select2');
+    $.fn.select2.amd.define(
+        'select2/i18n/' + window.YAFFA.language,
+        [],
+        require("select2/src/js/select2/i18n/" + window.YAFFA.language)
+    );
 
     import MathInput from './MathInput.vue'
 
@@ -93,15 +101,20 @@
         },
 
         emits: [
-            'updateItemAmount',
-            'updateItemCategory',
-            'updateItemComment',
-            'updateItemTag',
+            'update:amount',
+            'update:category_id',
+            'update:comment',
+            'update:tags',
             'removeItem',
         ],
 
         data() {
-            return {};
+            return {
+                categoryIdData: this.category_id,
+                amountData: this.amount,
+                tagsData: this.tags,
+                commentData: this.comment,
+            };
         },
 
         mounted() {
@@ -111,6 +124,8 @@
             let elementCategory = $('#transaction_item_' + this.id + ' select.category');
 
             elementCategory.select2({
+                language: window.YAFFA.language,
+                theme: 'bootstrap-5',
                 ajax: {
                     url: '/api/assets/category',
                     dataType: 'json',
@@ -129,14 +144,16 @@
                     cache: true
                 },
                 selectOnClose: true,
-                placeholder: "Select category",
-                allowClear: true
+                placeholder: __("Select category"),
+                allowClear: true,
+                // Component should not be aware where it is used, but we need to hint Select2
+                dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
             })
-            .on('select2:select', function (e) {
+            .on('select2:select select2:unselect', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
                 e.target.dispatchEvent(event);
 
-                $vm.$emit('updateItemCategory', event.target.value);
+                $vm.$emit('update:category_id', event.target.value);
             });
 
             // Load selected item for category select2
@@ -192,15 +209,16 @@
                     },
                     cache: true
                 },
-                //selectOnClose: true,
-                placeholder: "Select tag(s)",
-                allowClear: true
+                placeholder: __('Select tag(s)'),
+                allowClear: true,
+                // Component should not be aware where it is used, but we need to hint Select2
+                dropdownParent: $(document.getElementById("modal-transaction-form-standard") || document.querySelector('body'))
             })
             .on('select2:select select2:unselect', function (e) {
                 const event = new Event("change", { bubbles: true, cancelable: true });
                 e.target.dispatchEvent(event);
 
-                $vm.$emit('updateItemTag', $(e.target).select2('val'));
+                $vm.$emit('update:tags', $(e.target).select2('val'));
             });
 
             // Add already existing tags as labels
@@ -243,11 +261,6 @@
                 this.$emit('updateItemAmount', event.target.value);
             },
 
-            // Emmit an event to have the parent container update the value
-            updateComment: function (event) {
-                this.$emit('updateItemComment', event.target.value);
-            },
-
             // Emmit an event to instruct items container to remove this item
             removeItem() {
                 this.$emit('removeItem')
@@ -255,7 +268,7 @@
 
             // Toggle the visibility of event details (comment / tags)
             toggleItemDetails() {
-                $(this.$el).find(".transaction_detail_container").toggleClass('d-xs-none');
+                $(this.$el).find(".transaction_detail_container").toggleClass('d-none d-md-block');
             },
 
             // Add the currently available remainder amount to this item
@@ -264,27 +277,14 @@
                 var amount = (this.amount || 0) + this.remainingAmount;
 
                 element.val(amount);
-                this.$emit('updateItemAmount', amount);
+                this.$emit('update:amount', amount);
             }
         },
 
         watch: {
-            amount (newAmount) {
-                this.$emit('updateItemAmount', newAmount);
+            amountData (newAmount) {
+                this.$emit('update:amount', newAmount);
             }
         }
     }
 </script>
-
-<style scoped>
-    @media (min-width: 576px) {
-        .d-sm-none {
-            display: none;
-        }
-    }
-    @media (max-width: 575.98px) {
-        .d-xs-none {
-            display: none;
-        }
-    }
-</style>

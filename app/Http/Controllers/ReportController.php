@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use Carbon\Carbon;
@@ -20,7 +19,7 @@ class ReportController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth', 'verified']);
     }
 
     public function cashFlow(Request $request)
@@ -28,7 +27,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/cashflow')
          * @name('reports.cashflow')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
 
         // Check if forecast is required
@@ -241,7 +240,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/budgetchart')
          * @name('reports.budgetchart')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
@@ -264,14 +263,14 @@ class ReportController extends Controller
      * Display form for searching transactions. Pass any preset filters from query string.
      *
      * @param  Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\View\View
      */
     public function transactionsByCriteria(Request $request)
     {
         /**
          * @get('/reports/transactions')
          * @name('reports.transactions')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         // Get preset filters from query string
         $filters = [];
@@ -287,6 +286,12 @@ class ReportController extends Controller
         if ($request->has('tags')) {
             $filters['tags'] = $request->get('tags');
         }
+        if ($request->has('date_from')) {
+            $filters['date_from'] = $request->get('date_from');
+        }
+        if ($request->has('date_to')) {
+            $filters['date_to'] = $request->get('date_to');
+        }
 
         JavaScriptFacade::put([
             'filters' => $filters,
@@ -300,7 +305,7 @@ class ReportController extends Controller
         /**
          * @get('/reports/schedule')
          * @name('report.schedules')
-         * @middlewares('web', 'auth')
+         * @middlewares('web', 'auth', 'verified')
          */
         return view('reports.schedule');
     }

@@ -21,7 +21,7 @@ class InvestmentApiController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     public function getList(Request $request)
@@ -51,7 +51,7 @@ class InvestmentApiController extends Controller
     /**
      * Read and return the currency suffix of the currency associated to the provided investment
      *
-     * @param  App\Models\Investment  $investment
+     * @param  \App\Models\Investment  $investment
      * @return string
      */
     public function getCurrencySuffix(Investment $investment)
@@ -68,8 +68,8 @@ class InvestmentApiController extends Controller
     /**
      * Read and return the details of a selected investment
      *
-     * @param  App\Models\Investment  $investment
-     * @return App\Models\Investment
+     * @param  \App\Models\Investment  $investment
+     * @return \App\Models\Investment
      */
     public function getInvestmentDetails(Investment $investment)
     {
@@ -124,7 +124,7 @@ class InvestmentApiController extends Controller
     /**
      * Get all investments with timeline data
      *
-     * @return Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getInvestmentsWithTimeline()
     {
@@ -166,8 +166,7 @@ class InvestmentApiController extends Controller
                 $commonData =
                     [
                         'id' => $transaction->id,
-                        'transaction_type' => $transaction->transactionType->name,
-                        'transaction_config_type' => $transaction->transactionType->type,
+                        'transaction_type' => $transaction->transactionType->toArray(),
                         'amount_operator' => $transaction->transactionType->amount_operator,
                         'quantity_operator' => $transaction->transactionType->quantity_operator,
 
