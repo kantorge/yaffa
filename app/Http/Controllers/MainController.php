@@ -20,8 +20,6 @@ class MainController extends Controller
 
     private $allAccounts;
 
-    private $allCategories;
-
     private $currentAccount;
 
     public function __construct()
@@ -49,9 +47,6 @@ class MainController extends Controller
             ->pluck('name', 'id')
             ->all();
 
-        // Get all categories
-        $this->allCategories = $user->categories->pluck('full_name', 'id')->all();
-
         // Get standard transactions related to selected account (one-time AND scheduled)
         $standardTransactions = Transaction::where(function ($query) {
             $query->where('schedule', 1)
@@ -72,6 +67,7 @@ class MainController extends Controller
             'config',
             'transactionType',
             'transactionItems',
+            'transactionItems.category',
             'transactionItems.tags',
         ])
         ->get();
@@ -102,7 +98,7 @@ class MainController extends Controller
         $transactions = $standardTransactions
         ->merge($investmentTransactions)
         // Add custom and pre-calculated attributes
-        ->map(function ($transaction) {
+        ->map(function ($transaction) use ( $account) {
             if ($transaction->schedule) {
                 $transaction->load(['transactionSchedule']);
 
@@ -112,20 +108,13 @@ class MainController extends Controller
             }
 
             if ($transaction->config_type === 'transaction_detail_standard') {
-                $itemCategories = [];
-                foreach ($transaction->transactionItems as $item) {
-                    if (isset($item['category_id'])) {
-                        $itemCategories[$item['category_id']] = $this->allCategories[$item['category_id']];
-                    }
-                }
-
                 $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
                 $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                 $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
                 $transaction->amount_from = $transaction->config->amount_from;
                 $transaction->amount_to = $transaction->config->amount_to;
                 $transaction->tags = $transaction->tags()->values();
-                $transaction->categories = array_values($itemCategories);
+                $transaction->categories = $transaction->categories()->values();
             } elseif ($transaction->config_type === 'transaction_detail_investment') {
                 $amount = $transaction->cashflowValue();
 
@@ -139,6 +128,7 @@ class MainController extends Controller
                 $transaction->categories = [];
                 $transaction->quantity = $transaction->config->quantity;
                 $transaction->price = $transaction->config->price;
+                $transaction->currency = $account->config->currency;
             }
 
             return $transaction;

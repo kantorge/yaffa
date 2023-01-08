@@ -91,16 +91,9 @@ class Transaction extends Model
 
     public function categories()
     {
-        $categories = [];
-
-        $this->transactionItems()
-            ->each(function ($item) use (&$categories) {
-                if ($item->category) {
-                    $categories[$item->category_id] = $item->category->full_name;
-                }
-            });
-
-        return $categories;
+        return $this->transactionItems
+            ->pluck('category')
+            ->unique('id');
     }
 
     /**
@@ -288,20 +281,12 @@ class Transaction extends Model
         }
 
         // TODO: replace with eager loading
-        $allCategories = Auth::user()->categories->pluck('full_name', 'id')->all();
         $allAccounts = AccountEntity::where('user_id', Auth::user()->id)
             ->pluck('name', 'id')
             ->all();
 
         $transaction = $this;
         $transactionArray = $this->toArray();
-
-        $itemCategories = [];
-        foreach ($transactionArray['transaction_items'] as $item) {
-            if (isset($item['category_id'])) {
-                $itemCategories[$item['category_id']] = $allCategories[$item['category_id']];
-            }
-        }
 
         return [
             'config' => [
@@ -320,7 +305,7 @@ class Transaction extends Model
             ],
             'transaction_items' => $transactionArray['transaction_items'],
             'tags' => $this->tags()->values(),
-            'categories' => array_values($itemCategories),
+            'categories' => $this->categories()->values(),
         ];
     }
 

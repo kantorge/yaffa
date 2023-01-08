@@ -23,8 +23,6 @@ window.scheduleData = window.scheduleData.map(function (transaction) {
     return transaction;
 });
 
-var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
-
 // Define some settings, that are common for the two tables
 var dtColumnSettingPayee = {
     title: __('Payee'),
@@ -53,39 +51,6 @@ var dtColumnSettingPayee = {
         }
         return '';
     },
-};
-var dtColumnSettingCategories = {
-    title: __('Category'),
-    defaultContent: '',
-    render: function (_data, _type, row) {
-        // Standard transaction
-        if (row.transaction_type.type === 'standard') {
-            // Empty
-            if (row.categories.length === 0) {
-                return '';
-            }
-
-            if (row.categories.length > 1) {
-                return __('Split transaction');
-            } else {
-                return row.categories[0];
-            }
-        }
-        // Investment transaction
-        if (row.transaction_type.type === 'investment') {
-            if (!row.quantityOperator) {
-                return row.transaction_type.name;
-            }
-            if (!row.transactionOperator) {
-                return row.transaction_type.name + " " + row.quantity;
-            }
-
-            return row.transaction_type.name + " " + row.quantity + " @ " + numberRenderer(row.price);
-        }
-
-        return '';
-    },
-    orderable: false
 };
 
 $(selectorHistoryTable).DataTable({
@@ -119,7 +84,7 @@ $(selectorHistoryTable).DataTable({
             orderable: false,
         },
         dtColumnSettingPayee,
-        dtColumnSettingCategories,
+        dataTableHelpers.transactionColumnDefiniton.category,
         {
             title: __('Withdrawal'),
             defaultContent: '',
@@ -221,7 +186,7 @@ $(selectorScheduleTable).DataTable({
     columns: [
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dtColumnSettingPayee,
-        dtColumnSettingCategories,
+        dataTableHelpers.transactionColumnDefiniton.category,
         {
             title: "Withdrawal",
             defaultContent: '',

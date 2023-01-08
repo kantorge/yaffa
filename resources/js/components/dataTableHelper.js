@@ -242,8 +242,10 @@ export let transactionColumnDefiniton = {
 
                 if (row.categories.length > 1) {
                     return __('Split transaction');
-                } else {
-                    return row.categories[0];
+                }
+
+                if (row.categories[0]) {
+                    return row.categories[0].full_name;
                 }
             }
             // Investment transaction
@@ -261,7 +263,7 @@ export let transactionColumnDefiniton = {
                   }) + " @ " + helpers.toFormattedCurrency(row.price, window.YAFFA.locale, row.currency);
             }
 
-            return __('Not set');
+            return '';
         },
         orderable: false
     },
