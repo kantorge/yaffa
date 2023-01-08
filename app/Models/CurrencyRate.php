@@ -36,4 +36,14 @@ class CurrencyRate extends Model
         'date' => 'datetime:Y-m-d',
         // TODO: Add proper cast type for 'rate'
     ];
+
+    public function currencyFrom()
+    {
+        return $this->belongsTo(Currency::class, 'from_id');
+    }
+
+    public function currencyTo()
+    {
+        return $this->belongsTo(Currency::class, 'to_id');
+    }
 }

@@ -16,6 +16,7 @@ class CurrencyRateController extends Controller
 
     public function __construct(CurrencyRate $currencyRate)
     {
+        $this->middleware(['auth', 'verified']);
         $this->currencyRate = $currencyRate;
     }
 
@@ -26,6 +27,11 @@ class CurrencyRateController extends Controller
          * @name('currency-rate.index')
          * @middlewares('web')
          */
+
+        // Authorize user access to requested currencies
+        $this->authorize('view', $from);
+        $this->authorize('view', $to);
+
         $currencyRates = $this->currencyRate
                             ->where('from_id', $from->id)
                             ->where('to_id', $to->id)
@@ -56,6 +62,11 @@ class CurrencyRateController extends Controller
          * @name('currency-rate.destroy')
          * @middlewares('web')
          */
+
+        // Authorize user access to requested currencies
+        $this->authorize('view', $currencyRate->currencyFrom);
+        $this->authorize('view', $currencyRate->currencyTo);
+
         $currencyRate->delete();
 
         self::addSimpleSuccessMessage(__('Currency rate deleted'));
@@ -70,6 +81,10 @@ class CurrencyRateController extends Controller
          * @name('currencyrate.retreiveRate')
          * @middlewares('web')
          */
+
+        // Authorize user access to requested currency
+        $this->authorize('view', $currency);
+
         $currency->retreiveCurrencyRateToBase($from);
 
         return redirect()->back();
@@ -82,6 +97,9 @@ class CurrencyRateController extends Controller
          * @name('currencyrate.retreiveMissing')
          * @middlewares('web')
          */
+        // Authorize user access to requested currency
+        $this->authorize('view', $currency);
+
         $currency->retreiveMissingCurrencyRateToBase();
 
         return redirect()->back();

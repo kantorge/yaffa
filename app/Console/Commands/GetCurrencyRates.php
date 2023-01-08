@@ -44,6 +44,7 @@ class GetCurrencyRates extends Command
 
         // Get all currencies of all users, which are not base currencies, and has autotmatic currency rate retrieval enabled
         $currencies = Currency::notBase()
+            // Optionally apply currency filter
             ->when($requestedCurrencies, function ($query, $requestedCurrencies) {
                 $query->whereIn('iso_code', $requestedCurrencies);
             })
