@@ -17,11 +17,12 @@ class InvestmentSeeder extends Seeder
     {
         Investment::factory()
         ->create([
-            'name' => 'Magyar Telekom',
+            'name' => 'Microsoft',
             'active' => 1,
             'symbol' => 'MTEL',
             'investment_group_id' => $user->investmentGroups()->where('name', 'Stock')->first()->id,
-            'currency_id' => $user->currencies()->where('iso_code', 'HUF')->first()->id,
+            'currency_id' => $user->currencies()->where('iso_code', 'USD')->first()->id,
+            'investment_price_provider' => 'alpha_vantage',
             'user_id' => $user->id,
         ]
         );

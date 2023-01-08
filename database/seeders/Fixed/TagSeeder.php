@@ -20,7 +20,7 @@ class TagSeeder extends Seeder
             'user_id' => $user->id,
         ]);
         Tag::factory()->create([
-            'name' => 'Holiday 2021',
+            'name' => 'Family Holiday',
             'user_id' => $user->id,
         ]);
     }

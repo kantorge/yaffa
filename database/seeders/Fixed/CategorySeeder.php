@@ -15,19 +15,46 @@ class CategorySeeder extends Seeder
      */
     public function run(User $user)
     {
-        Category::create([
+        $parentFood = Category::create([
             'name' => 'Food',
             'parent_id' => null,
             'user_id' => $user->id,
         ]);
         Category::create([
             'name' => 'Groceries',
-            'parent_id' => Category::where('name', 'Food')->pluck('id')->first(),
+            'parent_id' => $parentFood->id,
             'user_id' => $user->id,
         ]);
         Category::create([
             'name' => 'Restaurants, eating out',
-            'parent_id' => Category::where('name', 'Food')->pluck('id')->first(),
+            'parent_id' => $parentFood->id,
+            'user_id' => $user->id,
+        ]);
+
+        $parentBills = Category::create([
+            'name' => 'Bills',
+            'parent_id' => null,
+            'user_id' => $user->id,
+        ]);
+        Category::create([
+            'name' => 'Electricity',
+            'parent_id' => $parentBills->id,
+            'user_id' => $user->id,
+        ]);
+        Category::create([
+            'name' => 'Water',
+            'parent_id' => $parentBills->id,
+            'user_id' => $user->id,
+        ]);
+
+        $parentIncome = Category::create([
+            'name' => 'Incomes',
+            'parent_id' => null,
+            'user_id' => $user->id,
+        ]);
+        Category::create([
+            'name' => 'Net wage',
+            'parent_id' => $parentIncome->id,
             'user_id' => $user->id,
         ]);
     }

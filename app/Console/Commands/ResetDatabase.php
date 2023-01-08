@@ -41,6 +41,7 @@ class ResetDatabase extends Command
         Artisan::call('down');
         Artisan::call('migrate:fresh', ['--force' => true]);
         Artisan::call('db:seed', ['--force' => true, '--class' => 'DemoSeeder']);
+        Artisan::call('app:investment-prices:get');
         Artisan::call('up');
 
         return Command::SUCCESS;

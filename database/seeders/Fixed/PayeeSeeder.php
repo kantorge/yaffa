@@ -17,14 +17,12 @@ class PayeeSeeder extends Seeder
      */
     public function run(User $user)
     {
-        $payeeConfig = Payee::create(
-            [
+        $payeeConfig = Payee::create([
                 'category_id' => Category::where('name', 'Groceries')->pluck('id')->first(),
-            ]
-        );
+        ]);
         AccountEntity::create(
             [
-                'name' => 'Auchan',
+                'name' => 'Costco',
                 'active' => 1,
                 'config_type' => 'payee',
                 'config_id' => $payeeConfig->id,
@@ -32,10 +30,25 @@ class PayeeSeeder extends Seeder
             ]
         );
 
-        $payeeConfig = Payee::create();
+        $payeeConfig = Payee::create([
+            'category_id' => Category::where('name', 'Groceries')->pluck('id')->first(),
+        ]);
         AccountEntity::create(
             [
-                'name' => 'CBA',
+                'name' => 'Walmart',
+                'active' => 1,
+                'config_type' => 'payee',
+                'config_id' => $payeeConfig->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $payeeConfig = Payee::create([
+            'category_id' => Category::where('name', 'Net wage')->pluck('id')->first(),
+        ]);
+        AccountEntity::create(
+            [
+                'name' => 'My Workplace',
                 'active' => 1,
                 'config_type' => 'payee',
                 'config_id' => $payeeConfig->id,

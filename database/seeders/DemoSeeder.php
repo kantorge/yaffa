@@ -20,7 +20,7 @@ class DemoSeeder extends Seeder
 
         $this->callWith(\Database\Seeders\Fixed\AccountGroupSeeder::class, ['user' => $demoUser]);
         $this->callWith(\Database\Seeders\Fixed\CurrencySeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Random\CurrencyRateSeeder::class, ['user' => $demoUser]);
+        // Currency rate is retreived from price provider by command
         $this->callWith(\Database\Seeders\Fixed\AccountSeeder::class, ['user' => $demoUser]);
         $this->callWith(\Database\Seeders\Fixed\CategorySeeder::class, ['user' => $demoUser]);
         $this->callWith(\Database\Seeders\Fixed\PayeeSeeder::class, ['user' => $demoUser]);
