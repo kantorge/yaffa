@@ -27,7 +27,10 @@ class Kernel extends ConsoleKernel
         }
 
         // Run the investment price retrieval command
-        $schedule->command('app:investment-prices:get')->dailyAt('04:00');
+        $schedule->command('app:investment-prices:get')->dailyAt('05:00');
+
+        // Run the currency rate retrieval command
+        $schedule->command('app:currency-rates:get')->dailyAt('06:00');
     }
 
     /**
