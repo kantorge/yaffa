@@ -64,6 +64,8 @@ services:
             - 'host.docker.internal:host-gateway'
         volumes:
             - '/dev/shm:/dev/shm'
+        ports:
+            - 4444:4444
         networks:
             - sail
 networks:
