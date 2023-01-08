@@ -77,6 +77,17 @@ class Currency extends Model
     }
 
     /**
+     * Create a scope for the query to only return currencies that are set to be automatically updated.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeAutoUpdate($query)
+    {
+        return $query->where('auto_update', true);
+    }
+
+    /**
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
      *
@@ -123,7 +134,6 @@ class Currency extends Model
         $baseCurrency = $this->baseCurrency();
 
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {
-            // TODO: is an exception needed?
             return;
         }
 
@@ -162,7 +172,6 @@ class Currency extends Model
         $baseCurrency = $this->baseCurrency();
 
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {
-            // TODO: is an exception needed?
             return;
         }
 

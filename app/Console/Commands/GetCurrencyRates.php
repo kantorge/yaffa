@@ -13,14 +13,14 @@ class GetCurrencyRates extends Command
      *
      * @var string
      */
-    protected $signature = 'app:currency-rates:get';
+    protected $signature = 'app:currency-rates:get {iso_codes?*}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Run retrieval of currency rates for all base currencies and their currency pairs.';
+    protected $description = 'Run retrieval of currency rates for all currencies against the base currency.';
 
     /**
      * Create a new command instance.
@@ -39,8 +39,16 @@ class GetCurrencyRates extends Command
      */
     public function handle()
     {
+        // Check if specific currencies are requested
+        $requestedCurrencies = $this->argument('iso_codes');
+
         // Get all currencies of all users, which are not base currencies, and has autotmatic currency rate retrieval enabled
-        $currencies = Currency::notBase()->where('auto_update', true)->get();
+        $currencies = Currency::notBase()
+            ->when($requestedCurrencies, function ($query, $requestedCurrencies) {
+                $query->whereIn('iso_code', $requestedCurrencies);
+            })
+            ->autoUpdate()
+            ->get();
 
         // Loop all currencies and invoke the currency rate retrieval job
         $currencies->each(function ($currency) {
