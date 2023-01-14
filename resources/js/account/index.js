@@ -7,12 +7,12 @@ import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     // initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+} from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 
 window.table = $(dataTableSelector).DataTable({
-    data: accounts,
+    data: window.accounts,
     columns: [
         {
             data: "name",
@@ -87,7 +87,7 @@ window.table = $(dataTableSelector).DataTable({
                 context: this,
                 success: function (data) {
                     // Update row in table data souerce
-                    accounts.filter(account => account.id === data.id)[0].active = data.active;
+                    window.accounts.filter(account => account.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
                     // Emit a custom event to global scope about the problem
@@ -121,7 +121,7 @@ $(dataTableSelector).on("click", ".data-delete", function() {
     }
 
     let form = document.getElementById('form-delete');
-    form.action = route('account-entity.destroy', {type: 'account', account_entity: this.dataset.id});
+    form.action = window.route('account-entity.destroy', {type: 'account', account_entity: this.dataset.id});
     form.submit();
 });
 

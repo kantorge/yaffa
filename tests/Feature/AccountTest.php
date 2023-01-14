@@ -70,7 +70,7 @@ class AccountTest extends TestCase
         $account = AccountEntity::factory()->for($user1)->account($user1)->create();
 
         $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
+
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);

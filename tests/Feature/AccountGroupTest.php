@@ -41,7 +41,6 @@ class AccountGroupTest extends TestCase
     /** @test */
     public function unverified_user_cannot_access_resource()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
         $user_unverified = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -66,7 +65,7 @@ class AccountGroupTest extends TestCase
         $accountGroup = $this->createForUser($user1, $this->base_model);
 
         $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
+
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
