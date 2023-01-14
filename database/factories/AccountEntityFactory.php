@@ -22,11 +22,11 @@ class AccountEntityFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             'name' => $this->faker->unique()->word(),
-            'active' => $this->faker->boolean(80) ? true : false,
+            'active' => $this->faker->boolean(80),
             'user_id' => User::inRandomOrder()->first()->id,
         ];
     }

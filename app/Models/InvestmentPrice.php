@@ -4,6 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\InvestmentPrice
+ *
+ * @property int $id
+ * @property \Illuminate\Support\Carbon $date
+ * @property int $investment_id
+ * @property float $price
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Investment $investment
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice query()
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereInvestmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice wherePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class InvestmentPrice extends Model
 {
     /**

@@ -10,11 +10,12 @@ trait ScheduleTrait
     /**
      * Get scheduled instances for a collection of transactions.
      *
-     * @param  Illuminate\Support\Collection  $transactions Collection of scheduled transactions to process.
-     * @param  string  $startType Indicate if instances are needed for entire period or only from next planned instance.
-     * @param  Carbon\Carbon  $maxLookAhead Latest date for calculation, if no end date is present in schedule rules.
-     * @param  int  $virtualLimit
-     * @return Illuminate\Support\Collection
+     * @param Collection $transactions Collection of scheduled transactions to process.
+     * @param string $startType Indicate if instances are needed for entire period or only from next planned instance.
+     * @param Carbon|null $customStart
+     * @param Carbon|null $maxLookAhead Latest date for calculation, if no end date is present in schedule rules.
+     * @param int|null $virtualLimit
+     * @return Collection
      */
     public function getScheduleInstances(Collection $transactions, string $startType, ?Carbon $customStart = null, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500): Collection
     {

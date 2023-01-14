@@ -12472,7 +12472,7 @@ ul.search-result-list li.inactive:before {
 }
 
 .dataTables_scrollHead .table {
-  margin-bottom: 0px !important;
+  margin-bottom: 0 !important;
 }
 
 .sidebar-brand-form {

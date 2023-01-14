@@ -11,10 +11,10 @@ class InvestmentPriceProviderListComposer
     /**
      * Bind list of all investment price providers to the view.
      *
-     * @param  \Illuminate\View\View  $view
+     * @param View $view
      * @return void
      */
-    public function compose(View $view)
+    public function compose(View $view): void
     {
         $investment = App::make(Investment::class);
         $allInvestmentPriceProviders = $investment->getAllInvestmentPriceProviders();

@@ -7,11 +7,14 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller
@@ -63,11 +66,14 @@ class AccountEntityController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource, for the type specified in request.
      *
-     * @return \Illuminate\Http\Response
+     * @uses indexAccount()
+     * @uses indexPayee()
+     * @param Request $request
+     * @return View
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         /**
          * @get('/account-entity')
@@ -79,7 +85,10 @@ class AccountEntityController extends Controller
         return $this->{'index'.Str::ucfirst($request->type)}();
     }
 
-    private function indexAccount()
+    /**
+     * @return View
+     */
+    private function indexAccount(): View
     {
         // Show all accounts of user from the database and return to view
         $accounts = Auth::user()
@@ -95,7 +104,10 @@ class AccountEntityController extends Controller
         return view('account.index');
     }
 
-    private function indexPayee()
+    /**
+     * @return View
+     */
+    private function indexPayee(): View
     {
         // Show all payees of user from the database and return to view
         $payees = DB::select(
@@ -119,7 +131,7 @@ class AccountEntityController extends Controller
 
             FROM (
                 select
-                    `account_entities` .*,
+                    `account_entities`.*,
                     (
                         select
                             count(*)
@@ -240,7 +252,6 @@ class AccountEntityController extends Controller
                         `account_entities`
                     where
                         `account_entities`.`user_id` = ?
-                        and `account_entities`.`user_id` is not null
                         and `config_type` = 'payee'
                 ) AS base_data
 

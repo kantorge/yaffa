@@ -4,6 +4,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * App\Models\TransactionDetailInvestment
+ *
+ * @property int $id
+ * @property int $account_id
+ * @property int $investment_id
+ * @property float|null $price
+ * @property float|null $quantity
+ * @property float|null $commission
+ * @property float|null $tax
+ * @property float|null $dividend
+ * @property-read \App\Models\AccountEntity $account
+ * @property-read \App\Models\Transaction|null $config
+ * @property-read \App\Models\Investment $investment
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction byScheduleType($type)
+ * @method static \Database\Factories\TransactionDetailInvestmentFactory factory(...$parameters)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment query()
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereAccountId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereCommission($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereDividend($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereInvestmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment wherePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereTax($value)
+ * @mixin \Eloquent
+ */
 class TransactionDetailInvestment extends Transaction
 {
     use HasFactory;

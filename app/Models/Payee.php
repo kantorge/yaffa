@@ -5,6 +5,38 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * App\Models\Payee
+ *
+ * @property int $id
+ * @property int|null $category_id
+ * @property \Illuminate\Support\Carbon|null $category_suggestion_dismissed
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $import_alias
+ * @property-read \App\Models\Category|null $category
+ * @property-read \App\Models\AccountEntity|null $config
+ * @property-read mixed $first_transaction_date
+ * @property-read mixed $latest_transaction_date
+ * @property-read mixed $transaction_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
+ * @property-read int|null $transactions_to_count
+ * @property-read \App\Models\User $user
+ * @method static Builder|AccountEntity accounts()
+ * @method static Builder|AccountEntity active()
+ * @method static \Database\Factories\PayeeFactory factory(...$parameters)
+ * @method static Builder|Payee newModelQuery()
+ * @method static Builder|Payee newQuery()
+ * @method static Builder|AccountEntity payees()
+ * @method static Builder|Payee query()
+ * @method static Builder|Payee whereCategoryId($value)
+ * @method static Builder|Payee whereCategorySuggestionDismissed($value)
+ * @method static Builder|Payee whereCreatedAt($value)
+ * @method static Builder|Payee whereId($value)
+ * @method static Builder|Payee whereImportAlias($value)
+ * @method static Builder|Payee whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class Payee extends AccountEntity
 {
     use HasFactory;

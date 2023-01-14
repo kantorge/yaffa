@@ -4,7 +4,7 @@ namespace App\Providers\Faker;
 
 class CurrencyData
 {
-    protected static $currencies = [
+    protected static array $currencies = [
         [
             'name' => 'US Dollar',
             'isoCode' => 'USD',

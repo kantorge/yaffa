@@ -283,8 +283,9 @@ class PayeeApiController extends Controller
         return $newPayee;
     }
 
-    /* Get existing payees that are similar to the given name
-     * Optionally limit search to active or inactive payees
+    /**
+     * Get existing payees that are similar to the given name.
+     * Optionally limit search to active or inactive payees.
      */
     public function getSimilarPayees(Request $request)
     {

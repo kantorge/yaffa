@@ -13,6 +13,45 @@ use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\BetweenConstraint;
 
+/**
+ * App\Models\Transaction
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon|null $date
+ * @property int $transaction_type_id
+ * @property bool $reconciled
+ * @property bool $schedule
+ * @property bool $budget
+ * @property string|null $comment
+ * @property string|null $config_type
+ * @property int|null $config_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read Model|\Eloquent $config
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read int|null $transaction_items_count
+ * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
+ * @property-read \App\Models\TransactionType $transactionType
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction byScheduleType($type)
+ * @method static \Database\Factories\TransactionFactory factory(...$parameters)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereBudget($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereComment($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereConfigId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereConfigType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereReconciled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereSchedule($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereTransactionTypeId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUserId($value)
+ * @mixin \Eloquent
+ */
 class Transaction extends Model
 {
     use HasFactory;

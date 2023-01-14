@@ -4,6 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\CurrencyRate
+ *
+ * @property int $id
+ * @property int $from_id
+ * @property int $to_id
+ * @property \Illuminate\Support\Carbon $date
+ * @property string $rate
+ * @property-read \App\Models\Currency $currencyFrom
+ * @property-read \App\Models\Currency $currencyTo
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate query()
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereFromId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereToId($value)
+ * @mixin \Eloquent
+ */
 class CurrencyRate extends Model
 {
     /**

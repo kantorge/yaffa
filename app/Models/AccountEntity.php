@@ -2,10 +2,55 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * App\Models\AccountEntity
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property bool $active
+ * @property string $config_type
+ * @property int $config_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
+ * @property-read int|null $category_preference_count
+ * @property-read Model|\Eloquent $config
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
+ * @property-read int|null $deferred_categories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $preferredCategories
+ * @property-read int|null $preferred_categories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardFrom
+ * @property-read int|null $transaction_detail_standard_from_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardTo
+ * @property-read int|null $transaction_detail_standard_to_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
+ * @property-read int|null $transactions_from_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
+ * @property-read int|null $transactions_to_count
+ * @property-read \App\Models\User $user
+ * @method static Builder|AccountEntity accounts()
+ * @method static Builder|AccountEntity active()
+ * @method static \Database\Factories\AccountEntityFactory factory(...$parameters)
+ * @method static Builder|AccountEntity newModelQuery()
+ * @method static Builder|AccountEntity newQuery()
+ * @method static Builder|AccountEntity payees()
+ * @method static Builder|AccountEntity query()
+ * @method static Builder|AccountEntity whereActive($value)
+ * @method static Builder|AccountEntity whereConfigId($value)
+ * @method static Builder|AccountEntity whereConfigType($value)
+ * @method static Builder|AccountEntity whereCreatedAt($value)
+ * @method static Builder|AccountEntity whereId($value)
+ * @method static Builder|AccountEntity whereName($value)
+ * @method static Builder|AccountEntity whereUpdatedAt($value)
+ * @method static Builder|AccountEntity whereUserId($value)
+ * @mixin \Eloquent
+ */
 class AccountEntity extends Model
 {
     use HasFactory;
@@ -46,8 +91,10 @@ class AccountEntity extends Model
         return $this->hasMany(TransactionDetailStandard::class, 'account_to_id');
     }
 
-    // Relationsip to categories indicating the category preference for this account entity.
-    // Relevant mainly for payees.
+    /**
+     * Relationship to categories indicating the category preference for this account entity.
+     * Relevant mainly for payees.
+     */
     public function categoryPreference()
     {
         return $this->belongsToMany(Category::class, 'account_entity_category_preference')->withPivot('preferred');
@@ -91,8 +138,8 @@ class AccountEntity extends Model
     /**
      * Scope a query to only include active entities.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -102,8 +149,8 @@ class AccountEntity extends Model
     /**
      * Scope a query to only include accounts.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeAccounts($query)
     {
@@ -113,8 +160,8 @@ class AccountEntity extends Model
     /**
      * Scope a query to only include payees.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePayees($query)
     {

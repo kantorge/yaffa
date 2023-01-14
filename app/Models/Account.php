@@ -2,10 +2,53 @@
 
 namespace App\Models;
 
+use Database\Factories\AccountFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * App\Models\Account
+ *
+ * @property int $id
+ * @property int $opening_balance
+ * @property int $account_group_id
+ * @property int $currency_id
+ * @property-read AccountGroup $accountGroup
+ * @property-read Collection|Category[] $categoryPreference
+ * @property-read int|null $category_preference_count
+ * @property-read AccountEntity|null $config
+ * @property-read Currency $currency
+ * @property-read Collection|Category[] $deferredCategories
+ * @property-read int|null $deferred_categories_count
+ * @property-read Collection|Category[] $preferredCategories
+ * @property-read int|null $preferred_categories_count
+ * @property-read Collection|TransactionDetailStandard[] $transactionDetailStandardFrom
+ * @property-read int|null $transaction_detail_standard_from_count
+ * @property-read Collection|TransactionDetailStandard[] $transactionDetailStandardTo
+ * @property-read int|null $transaction_detail_standard_to_count
+ * @property-read Collection|Transaction[] $transactionsFrom
+ * @property-read int|null $transactions_from_count
+ * @property-read Collection|Transaction[] $transactionsTo
+ * @property-read int|null $transactions_to_count
+ * @property-read User|null $user
+ * @method static Builder|AccountEntity accounts()
+ * @method static Builder|AccountEntity active()
+ * @method static AccountFactory factory(...$parameters)
+ * @method static Builder|Account newModelQuery()
+ * @method static Builder|Account newQuery()
+ * @method static Builder|AccountEntity payees()
+ * @method static Builder|Account query()
+ * @method static Builder|Account whereAccountGroupId($value)
+ * @method static Builder|Account whereCurrencyId($value)
+ * @method static Builder|Account whereId($value)
+ * @method static Builder|Account whereOpeningBalance($value)
+ * @mixin Eloquent
+ */
 class Account extends AccountEntity
 {
     use HasFactory;
@@ -44,12 +87,12 @@ class Account extends AccountEntity
         return $this->morphOne(AccountEntity::class, 'config');
     }
 
-    public function accountGroup()
+    public function accountGroup(): BelongsTo
     {
         return $this->belongsTo(AccountGroup::class);
     }
 
-    public function currency()
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }

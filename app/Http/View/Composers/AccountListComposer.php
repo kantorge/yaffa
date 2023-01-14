@@ -10,10 +10,10 @@ class AccountListComposer
     /**
      * Bind list of all accounts to the view.
      *
-     * @param  \Illuminate\View\View  $view
+     * @param View $view
      * @return void
      */
-    public function compose(View $view)
+    public function compose(View $view): void
     {
         $accounts = Auth::user()
             ->accounts()

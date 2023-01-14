@@ -6,7 +6,6 @@ use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 class CurrencySeeder extends Seeder
 {

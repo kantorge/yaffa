@@ -1,6 +1,5 @@
 <?php
 
-// TODO: majority of these items could be configured in the UI
 return [
     'admin_email' => env('ADMIN_EMAIL'),
     'alpha_vantage_key' => env('ALPHA_VANTAGE_KEY'),

@@ -9,6 +9,39 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * App\Models\Currency
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property string $iso_code
+ * @property int $num_digits
+ * @property string|null $suffix
+ * @property bool|null $base
+ * @property bool $auto_update
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency autoUpdate()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency base()
+ * @method static \Database\Factories\CurrencyFactory factory(...$parameters)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency notBase()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereAutoUpdate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereBase($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereIsoCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereNumDigits($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereSuffix($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency whereUserId($value)
+ * @mixin \Eloquent
+ */
 class Currency extends Model
 {
     use HasFactory, ModelOwnedByUserTrait;

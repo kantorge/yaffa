@@ -20,7 +20,7 @@ class AccountGroupFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             'name' => $this->faker->unique()->text(mt_rand(10, 50)),

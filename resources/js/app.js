@@ -1,11 +1,5 @@
 require('./bootstrap');
 
-Date.prototype.datePart = function () {
-    var d = new Date(this);
-    d.setHours(0, 0, 0, 0);
-    return d;
-}
-
 Date.prototype.isoDateString = function () {
     return this.toISOString().split('T')[0];
 }
@@ -136,7 +130,7 @@ require('./notifications');
 $(function() {
     // Generally available account selector
     $('#jump_to_account').on('change', function() {
-        if (this.value == '') {
+        if (this.value === '') {
             return false;
         }
         window.location.href = route('account-entity.show', { account_entity: this.value });

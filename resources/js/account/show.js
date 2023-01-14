@@ -542,6 +542,7 @@ document.getElementById('dateRangePickerPresets').addEventListener('change', fun
     const date = new Date();
     let start;
     let end;
+    let quarter;
 
     switch(preset) {
         case 'thisMonth':
@@ -549,7 +550,7 @@ document.getElementById('dateRangePickerPresets').addEventListener('change', fun
             end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
             break;
         case 'thisQuarter':
-            var quarter = Math.floor((date.getMonth() + 3) / 3);
+            quarter = Math.floor((date.getMonth() + 3) / 3);
             start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
             end = new Date(date.getFullYear(), quarter * 3, 0);
             break;
@@ -562,7 +563,7 @@ document.getElementById('dateRangePickerPresets').addEventListener('change', fun
             end = date;
             break;
         case 'thisQuarterToDate':
-            var quarter = Math.floor((date.getMonth() + 3) / 3);
+            quarter = Math.floor((date.getMonth() + 3) / 3);
             start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
             end = date;
             break;

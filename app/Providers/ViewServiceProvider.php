@@ -20,7 +20,7 @@ class ViewServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         // Account list for quick jump
         View::composer('template.layouts.page', AccountListComposer::class);
