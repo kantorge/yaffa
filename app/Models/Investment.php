@@ -11,6 +11,48 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 
+/**
+ * App\Models\Investment
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property string $symbol
+ * @property string|null $isin
+ * @property string|null $comment
+ * @property bool $active
+ * @property bool $auto_update
+ * @property string|null $investment_price_provider
+ * @property int $investment_group_id
+ * @property int $currency_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Currency $currency
+ * @property-read string|null $investment_price_provider_name
+ * @property-read \App\Models\InvestmentGroup $investmentGroup
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InvestmentPrice[] $investmentPrices
+ * @property-read int|null $investment_prices_count
+ * @property-read \App\Models\User $user
+ * @method static Builder|Investment active()
+ * @method static \Database\Factories\InvestmentFactory factory(...$parameters)
+ * @method static Builder|Investment newModelQuery()
+ * @method static Builder|Investment newQuery()
+ * @method static Builder|Investment query()
+ * @method static Builder|Investment whereActive($value)
+ * @method static Builder|Investment whereAutoUpdate($value)
+ * @method static Builder|Investment whereComment($value)
+ * @method static Builder|Investment whereCreatedAt($value)
+ * @method static Builder|Investment whereCurrencyId($value)
+ * @method static Builder|Investment whereId($value)
+ * @method static Builder|Investment whereInvestmentGroupId($value)
+ * @method static Builder|Investment whereInvestmentPriceProvider($value)
+ * @method static Builder|Investment whereIsin($value)
+ * @method static Builder|Investment whereName($value)
+ * @method static Builder|Investment whereSymbol($value)
+ * @method static Builder|Investment whereUpdatedAt($value)
+ * @method static Builder|Investment whereUserId($value)
+ * @mixin \Eloquent
+ */
 class Investment extends Model
 {
     use HasFactory, ModelOwnedByUserTrait;
@@ -60,10 +102,10 @@ class Investment extends Model
     /**
      * Scope a query to only include active investments.
      *
-     *  @param  Builder  $query
+     * @param Builder $query
      * @return Builder
      */
-    public function scopeActive(Builder $query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', true);
     }
@@ -73,7 +115,7 @@ class Investment extends Model
         return $this->hasMany(InvestmentPrice::class);
     }
 
-    public function investment_group()
+    public function investmentGroup(): BelongsTo
     {
         return $this->belongsTo(InvestmentGroup::class);
     }

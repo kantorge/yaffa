@@ -136,7 +136,7 @@ class InvestmentApiController extends Controller
             ->investments()
             ->with([
                 'currency',
-                'investment_group',
+                'investmentGroup',
             ])
             ->get();
 
@@ -297,7 +297,7 @@ class InvestmentApiController extends Controller
                         'name' => $investment->name,
                         'active' => $investment->active,
                         'currency' => $investment->currency,
-                        'investment_group' => $investment->investment_group,
+                        'investment_group' => $investment->investmentGroup,
                         'start' => $item['date'],
                         'quantity' => $item['schedule'],
                     ];

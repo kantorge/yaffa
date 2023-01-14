@@ -38,7 +38,7 @@
                                     @endif
                                 </dd>
                                 <dt class="col-4">{{ __('Group') }}</dt>
-                                <dd class="col-8">{{ $investment->investment_group->name }}</dd>
+                                <dd class="col-8">{{ $investment->investmentGroup->name }}</dd>
                                 <dt class="col-4">{{ __('Currency') }}</dt>
                                 <dd class="col-8">{{ $investment->currency->name }}</dd>
                                 @if($investment->comment)

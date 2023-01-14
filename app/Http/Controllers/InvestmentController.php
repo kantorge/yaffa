@@ -10,6 +10,7 @@ use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
@@ -27,9 +28,9 @@ class InvestmentController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         /**
          * @get('/investment')
@@ -41,7 +42,7 @@ class InvestmentController extends Controller
             ->investments()
             ->with([
                 'currency',
-                'investment_group',
+                'investmentGroup',
             ])
             ->get();
 
@@ -53,16 +54,25 @@ class InvestmentController extends Controller
         return view('investment.index');
     }
 
-    public function edit(Investment $investment)
+    /**
+     * Display form to edit the resource.
+     *
+     * @param Investment $investment
+     * @return View
+     */
+    public function edit(Investment $investment): View
     {
         /**
          * @get('/investment/{investment}/edit')
          * @name('investment.edit')
          * @middlewares('web', 'auth', 'verified', 'can:update,investment')
          */
-        return view('investment.form', [
-            'investment' => $investment,
-        ]);
+        return view(
+            'investment.form',
+            [
+                'investment' => $investment,
+            ]
+        );
     }
 
     public function update(InvestmentRequest $request, Investment $investment)
@@ -83,7 +93,12 @@ class InvestmentController extends Controller
         return redirect()->route('investment.index');
     }
 
-    public function create()
+    /**
+     * Display form to create new resource.
+     *
+     * @return View
+     */
+    public function create(): View
     {
         /**
          * @get('/investment/create')
@@ -110,10 +125,10 @@ class InvestmentController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param \App\Models\Investment
-     * @return \Illuminate\Http\Response
+     * @param Investment $investment
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Investment $investment)
+    public function destroy(Investment $investment): \Illuminate\Http\RedirectResponse
     {
         /**
          * @delete('/investment/{investment}')
@@ -139,7 +154,7 @@ class InvestmentController extends Controller
             ->investments()
             ->with([
                 'currency',
-                'investment_group',
+                'investmentGroup',
             ])
             ->get();
 
@@ -172,7 +187,7 @@ class InvestmentController extends Controller
 
         // Eager load investment details to be displayed
         $investment->load([
-            'investment_group',
+            'investmentGroup',
             'currency',
         ]);
 
@@ -326,7 +341,12 @@ class InvestmentController extends Controller
         ]);
     }
 
-    public function timeline()
+    /**
+     * Display view with timeline chart.
+     *
+     * @return View
+     */
+    public function timeline(): View
     {
         /**
          * @get('/investment/timeline')
