@@ -56,7 +56,7 @@ Route::patch('/transactions/{transaction}/skip', [TransactionApiController::clas
 
 Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionApiController@getItem');
 
-Route::put('/transaction/{transaction}/reconciled/{newState}', 'App\Http\Controllers\API\TransactionApiController@reconcile');
+Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiController::class, 'reconcile']);
 
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])->name('api.transactions.destroy');
 

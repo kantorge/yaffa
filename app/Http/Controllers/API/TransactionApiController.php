@@ -10,7 +10,9 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -24,7 +26,15 @@ class TransactionApiController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function reconcile(Transaction $transaction, $newState)
+    /**
+     * Change the reconciled flag of a transaction to a new value.
+     *
+     * @param Transaction $transaction
+     * @param string $newState
+     * @return JsonResponse
+     * @throws AuthorizationException
+     */
+    public function reconcile(Transaction $transaction, string $newState): JsonResponse
     {
         /**
          * @put('/api/transaction/{transaction}/reconciled/{newState}')
@@ -32,7 +42,7 @@ class TransactionApiController extends Controller
          */
         $this->authorize('update', $transaction);
 
-        $transaction->reconciled = $newState;
+        $transaction->reconciled = boolval($newState);
         $transaction->save();
 
         return response()->json(
@@ -41,7 +51,7 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function getItem(Transaction $transaction)
+    public function getItem(Transaction $transaction): JsonResponse
     {
         /**
          * @get('/api/transaction/{transaction}')
@@ -330,7 +340,7 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function storeStandard(TransactionRequest $request)
+    public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
          * @post('/api/transactions/standard')
@@ -340,7 +350,7 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::make($validated);
+            $transaction = new Transaction($validated);
             $transaction->user_id = Auth::user()->id;
             $transaction->save();
 
@@ -364,11 +374,7 @@ class TransactionApiController extends Controller
             $transaction->push();
 
             if ($transaction->schedule || $transaction->budget) {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
+                $transactionSchedule = new TransactionSchedule(['transaction_id' => $transaction->id]);
                 $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
@@ -561,7 +567,7 @@ class TransactionApiController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Transaction  $transaction
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy(Transaction $transaction)
     {

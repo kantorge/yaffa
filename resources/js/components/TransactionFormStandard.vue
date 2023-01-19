@@ -900,24 +900,25 @@
             },
 
             onSubmit() {
-                if (this.action === 'edit') {
-                    // Edit existing transaction
-                    this.form.patch(
-                            route('api.transactions.updateStandard', {transaction: this.form.id}),
-                            this.form
-                        )
-                        .then((response) => {
-                            this.$emit('success', response.data.transaction);
-                        });
-                } else {
-                    // Any type of new transaction
-                    this.form.post(
-                            route('api.transactions.storeStandard'), this.form
-                        )
-                        .then((response) => {
-                            this.$emit('success', response.data.transaction);
-                        });
-                }
+              // Editing an existing transaction needs PATCH method
+              if (this.action === 'edit') {
+                  this.form.patch(
+                          window.route('api.transactions.updateStandard', {transaction: this.form.id}),
+                          this.form
+                      )
+                      .then((response) => {
+                          this.$emit('success', response.data.transaction);
+                      });
+                  return;
+              }
+
+              // Any type of new transaction needs POST method
+              this.form.post(
+                  window.route('api.transactions.storeStandard'), this.form
+                  )
+                  .then((response) => {
+                      this.$emit('success', response.data.transaction);
+                  });
             },
 
             setPayee(payee) {
@@ -926,7 +927,7 @@
                     return;
                 }
 
-                var accountSelector = (this.form.transaction_type == 'withdrawal' ? '#account_to' : '#account_from');
+                const accountSelector = (this.form.transaction_type === 'withdrawal' ? '#account_to' : '#account_from');
 
                 this.addNewItemToSelect(accountSelector, payee.id, payee.name);
             },

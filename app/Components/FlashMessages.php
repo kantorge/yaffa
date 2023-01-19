@@ -14,7 +14,7 @@ trait FlashMessages
             $existingData = new Collection();
         }
 
-        //add new item
+        // Add new item
         $existingData->push([
             'message' => $message,
             'title' => $title,
@@ -31,27 +31,27 @@ trait FlashMessages
         return self::hasMessages() ? session()->get('notification_collection') : new Collection();
     }
 
-    public static function hasMessages()
+    public static function hasMessages(): bool
     {
         return session()->has('notification_collection');
     }
 
-    public static function addSimpleSuccessMessage($message)
+    public static function addSimpleSuccessMessage($message): void
     {
         self::addMessage($message, 'success');
     }
 
-    public static function addSimpleInfoMessage($message)
+    public static function addSimpleInfoMessage($message): void
     {
         self::addMessage($message, 'info');
     }
 
-    public static function addSimpleWarningMessage($message)
+    public static function addSimpleWarningMessage($message): void
     {
         self::addMessage($message, 'warning');
     }
 
-    public static function addSimpleDangerMessage($message)
+    public static function addSimpleDangerMessage($message): void
     {
         self::addMessage($message, 'danger');
     }

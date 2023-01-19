@@ -227,7 +227,14 @@ var dtSchedule = $(selectorScheduleTable).DataTable({
             $(row).addClass('table-warning');
         }
     },
-        order: [
+    initComplete: function() {
+        // Get the Datatable API instance
+        var api = this.api();
+        setTimeout(function() {
+            api.columns.adjust().draw();
+        }, 2000);
+    },
+    order: [
         // Next date is the first column
         [ 0, "asc" ]
     ],
