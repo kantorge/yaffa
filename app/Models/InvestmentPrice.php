@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * App\Models\InvestmentPrice
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $price
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Investment $investment
+ * @property-read Investment $investment
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice query()
@@ -55,7 +56,7 @@ class InvestmentPrice extends Model
         'price' => 'float',
     ];
 
-    public function investment()
+    public function investment(): BelongsTo
     {
         return $this->belongsTo(Investment::class);
     }

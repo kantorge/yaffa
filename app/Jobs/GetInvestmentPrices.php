@@ -13,7 +13,7 @@ class GetInvestmentPrices implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $investment;
+    public Investment $investment;
 
     /**
      * Create a new job instance.
@@ -30,7 +30,7 @@ class GetInvestmentPrices implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
         // Invoke provider's getInvestmentPrice method
         $this->investment->getInvestmentPriceFromProvider();

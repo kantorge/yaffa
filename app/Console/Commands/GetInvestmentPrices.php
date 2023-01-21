@@ -37,7 +37,7 @@ class GetInvestmentPrices extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(): int
     {
         // Get all active investments of all users, with a price provider and automatic price retrieval enabled
         $investments = Investment::where('auto_update', true)

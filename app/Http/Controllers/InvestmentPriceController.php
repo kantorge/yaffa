@@ -6,9 +6,10 @@ use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use Carbon\Carbon;
-use GuzzleHttp\Client as GuzzleClient;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentPriceController extends Controller
@@ -18,7 +19,7 @@ class InvestmentPriceController extends Controller
         $this->middleware(['auth', 'verified']);
     }
 
-    public function list(Investment $investment)
+    public function list(Investment $investment): View
     {
         /**
          * @get('/investment-price/list/{investment}')
@@ -47,7 +48,7 @@ class InvestmentPriceController extends Controller
         );
     }
 
-    public function create(Request $request)
+    public function create(Request $request): View
     {
         /**
          * @get('/investment-price/create')
@@ -65,7 +66,7 @@ class InvestmentPriceController extends Controller
         );
     }
 
-    public function store(InvestmentPriceRequest $request)
+    public function store(InvestmentPriceRequest $request): RedirectResponse
     {
         /**
          * @post('/investment-price')
@@ -88,9 +89,9 @@ class InvestmentPriceController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  InvestmentPrice  $investmentPrice
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function edit(InvestmentPrice $investmentPrice)
+    public function edit(InvestmentPrice $investmentPrice): View
     {
         /**
          * @get('/investment-price/{investment_price}/edit')
@@ -129,9 +130,9 @@ class InvestmentPriceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  InvestmentPrice  $investmentPrice
-     * @return \Illuminate\Http\Response
+     * @return RedirectResponse
      */
-    public function destroy(InvestmentPrice $investmentPrice)
+    public function destroy(InvestmentPrice $investmentPrice): RedirectResponse
     {
         /**
          * @delete('/investment-price/{investment_price}')
@@ -145,45 +146,19 @@ class InvestmentPriceController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveInvestmentPriceAlphaVantage(Investment $investment, ?Carbon $from = null)
+    public function retreiveInvestmentPrice(Investment $investment, ?Carbon $from = null): RedirectResponse
     {
         /**
          * @get('/investment-price/get/{investment}/{from?}')
          * @name('investment-price.retreive')
          * @middlewares('web', 'auth', 'verified')
          */
-        $refill = false;
 
-        $client = new GuzzleClient();
+        // Get latest known date of price date, so we can retrieve missing values
+        $lastPrice = $investment->investmentPrices->last('date');
+        $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
-        $response = $client->request('GET', 'https://www.alphavantage.co/query', [
-            'query' => [
-                'function' => 'TIME_SERIES_DAILY_ADJUSTED',
-                'datatype' => 'json',
-                'symbol' => $investment->symbol,
-                'apikey' => config('yaffa.alpha_vantage_key'),
-                'outputsize' => ($refill ? 'full' : 'compact'),
-            ],
-        ]);
-
-        $obj = json_decode($response->getBody());
-
-        foreach ($obj->{'Time Series (Daily)'} as $date => $daily_data) {
-            // If the date is before the from date, skip it
-            if ($from && $from->gt(Carbon::createFromFormat('Y-m-d', $date))) {
-                continue;
-            }
-
-            InvestmentPrice::updateOrCreate(
-                [
-                    'investment_id' => $investment->id,
-                    'date' => $date,
-                ],
-                [
-                    'price' => $daily_data->{'4. close'},
-                ]
-            );
-        }
+        $investment->getInvestmentPriceFromProvider($date);
 
         return redirect()->back();
     }

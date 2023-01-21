@@ -4,11 +4,16 @@ namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
+use Database\Factories\InvestmentFactory;
+use Eloquent;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 
 /**
@@ -27,14 +32,14 @@ use Illuminate\Support\Arr;
  * @property int $currency_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Currency $currency
+ * @property-read Currency $currency
  * @property-read string|null $investment_price_provider_name
- * @property-read \App\Models\InvestmentGroup $investmentGroup
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InvestmentPrice[] $investmentPrices
+ * @property-read InvestmentGroup $investmentGroup
+ * @property-read Collection|InvestmentPrice[] $investmentPrices
  * @property-read int|null $investment_prices_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static Builder|Investment active()
- * @method static \Database\Factories\InvestmentFactory factory(...$parameters)
+ * @method static InvestmentFactory factory(...$parameters)
  * @method static Builder|Investment newModelQuery()
  * @method static Builder|Investment newQuery()
  * @method static Builder|Investment query()
@@ -51,7 +56,7 @@ use Illuminate\Support\Arr;
  * @method static Builder|Investment whereSymbol($value)
  * @method static Builder|Investment whereUpdatedAt($value)
  * @method static Builder|Investment whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class Investment extends Model
 {
@@ -110,7 +115,7 @@ class Investment extends Model
         return $query->where('active', true);
     }
 
-    public function investmentPrices()
+    public function investmentPrices(): HasMany
     {
         return $this->hasMany(InvestmentPrice::class);
     }
@@ -234,7 +239,7 @@ class Investment extends Model
     /**
      * @var array
      */
-    protected $priceProviders = [
+    protected array $priceProviders = [
         'alpha_vantage' => [
             'name' => 'Alpha Vantage',
         ],
@@ -243,7 +248,7 @@ class Investment extends Model
     /**
      * @return string|null
      */
-    public function getInvestmentPriceProviderNameAttribute()
+    public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
         if (! $this->investment_price_provider) {
@@ -268,40 +273,55 @@ class Investment extends Model
         return $this->priceProviders;
     }
 
-    /*
+    /**
      * Common function to get price of investment from provider.
      * It invokes the provider's function and updates the price in the database.
+     *
+     * @param Carbon|null $from Optionnally specify the date to retrieve data from
+     * @param boolean $refill Future option to request reload of prices
+     * @return void
+     * @uses getInvestmentPriceFromAlphaVantage()
      */
-    public function getInvestmentPriceFromProvider(): void
+    public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
     {
         $providerSuffix = 'getInvestmentPriceFrom'.str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
-        $this->{$providerSuffix}();
+        $this->{$providerSuffix}($from, $refill);
     }
 
-    public function getInvestmentPriceFromAlphaVantage(): void
+    /**
+     * TODO: this should have a contract to have standard parameters
+     * @param Carbon|null $from Optionnally specify the date to retrieve data from
+     * @param boolean $refill Future option to request reload of prices
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void
     {
-        // Option for future: force to reload prices from provider
-        $refill = false;
-        // Opton for future: set earliest date to get prices from
-        $from = Carbon::now()->subDays(3);
+        // Get 3 days data by default, assuming that scheduler is running
+        if (! $from) {
+            $from = Carbon::now()->subDays(3);
+        }
 
         $client = new GuzzleClient();
 
-        $response = $client->request('GET', 'https://www.alphavantage.co/query', [
-            'query' => [
-                'function' => 'TIME_SERIES_DAILY',
-                'datatype' => 'json',
-                'symbol' => $this->symbol,
-                'apikey' => config('yaffa.alpha_vantage_key'),
-                'outputsize' => ($refill ? 'full' : 'compact'),
-            ],
-        ]);
+        $response = $client->request(
+            'GET',
+            'https://www.alphavantage.co/query',
+            [
+                'query' => [
+                    'function' => 'TIME_SERIES_DAILY_ADJUSTED',
+                    'datatype' => 'json',
+                    'symbol' => $this->symbol,
+                    'apikey' => config('yaffa.alpha_vantage_key'),
+                    'outputsize' => ($refill ? 'full' : 'compact'),
+                ],
+            ]
+        );
 
         $obj = json_decode($response->getBody());
 
         foreach ($obj->{'Time Series (Daily)'} as $date => $daily_data) {
-            // Option for future: if the date is before the from date, skip it
-            if ($from && $from->gt(Carbon::createFromFormat('Y-m-d', $date))) {
+            if ($from->gt(Carbon::createFromFormat('Y-m-d', $date))) {
                 continue;
             }
 

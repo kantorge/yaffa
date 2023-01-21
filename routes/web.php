@@ -50,7 +50,7 @@ Route::resource('investment', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])->name('investment-price.list');
 
-Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPriceAlphaVantage'])
+Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPrice'])
     ->name('investment-price.retreive');
 
 Route::resource('investment-price', InvestmentPriceController::class)
