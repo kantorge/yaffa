@@ -34,7 +34,7 @@ function initializeChart() {
     dateAxis.dateFormatter.dateFormat = "yyyy-MM-dd";
     dateAxis.renderer.minGridDistance = 70;
     dateAxis.baseInterval = { count: 1, timeUnit: "month" };
-    dateAxis.max = new Date(window.app_end_date).getTime();
+    dateAxis.max = new Date(window.YAFFA.end_date).getTime();
     dateAxis.strictMinMax = true;
     dateAxis.renderer.tooltipLocation = 0;
 

@@ -412,7 +412,7 @@ class Transaction extends Model
         $scheduleInstances = new Collection();
 
         if ($maxLookAhead === null) {
-            $maxLookAhead = (new Carbon(config('yaffa.app_end_date')));
+            $maxLookAhead = Auth::user()->end_date;
         }
 
         if ($constraintStart === null) {

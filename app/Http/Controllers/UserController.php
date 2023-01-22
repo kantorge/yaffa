@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
@@ -12,7 +14,10 @@ class UserController extends Controller
         $this->middleware(['auth', 'verified']);
     }
 
-    public function settings()
+    /**
+     * @return View
+     */
+    public function settings(): View
     {
         /**
          * @get('/user/settings')
@@ -28,7 +33,7 @@ class UserController extends Controller
         );
     }
 
-    public function update(UserRequest $request)
+    public function update(UserRequest $request): RedirectResponse
     {
         /**
          * @patch('/user/settings')
@@ -37,11 +42,12 @@ class UserController extends Controller
          */
         $validated = $request->validated();
 
-        Auth::user()->fill($validated)
+        Auth::user()
+            ->fill($validated)
             ->save();
 
         self::addSimpleSuccessMessage(__('User settings updated'));
 
-        return redirect()->back(); // TODO: where to return?
+        return redirect()->back(); // TODO: where to return the user?
     }
 }

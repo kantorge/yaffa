@@ -124,6 +124,10 @@ if (window.location.pathname === '/register') {
     require('./auth/register');
 }
 
+if (window.location.pathname === '/user/settings') {
+    require('./user/settings');
+}
+
 // Notifications
 require('./notifications');
 

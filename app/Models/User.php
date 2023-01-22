@@ -83,6 +83,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'language',
         'locale',
+        'start_date',
+        'end_date',
     ];
 
     /**
@@ -102,6 +104,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function accountGroups(): HasMany

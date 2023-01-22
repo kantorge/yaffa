@@ -14,18 +14,22 @@ class JavaScriptVariablesComposer
     /**
      * Bind data to the view.
      *
-     * @param  \Illuminate\View\View  $view
+     * @param View $view
      * @return void
      */
-    public function compose(View $view)
+    public function compose(View $view): void
     {
+        $user = Auth::user();
+
         // TODO: move these variables into a private object from global scope
         JavaScriptFacade::put([
             'YAFFA' => [
                 'baseCurrency' => $this->getBaseCurrency(),
-                'language' => Auth::user()->language,
-                'locale' => Auth::user()->locale,
+                'language' => $user->language,
+                'locale' => $user->locale,
                 'translations' => $this->getTranslations(),
+                'start_date' => $user->start_date,
+                'end_date' => $user->end_date,
             ]
         ]);
     }

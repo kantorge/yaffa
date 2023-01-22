@@ -281,7 +281,7 @@ class InvestmentController extends Controller
                 $startDate->startOfDay();
 
                 if ($transaction['schedule']->end_date === null) {
-                    $endDate = (new Carbon(config('yaffa.app_end_date')));
+                    $endDate = Auth::user()->end_date;
                 } else {
                     $endDate = new Carbon($transaction['schedule']->end_date);
                 }

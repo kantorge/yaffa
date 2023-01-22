@@ -11,7 +11,7 @@ class UserRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'language' => [
@@ -22,6 +22,17 @@ class UserRequest extends FormRequest
                 'required',
                 Rule::in(array_keys(config('app.available_locales'))),
             ],
+            'start_date' => [
+                'required',
+                'date',
+                'before:end_date',
+                'before:today',
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+            ]
         ];
     }
 }

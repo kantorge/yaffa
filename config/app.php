@@ -109,8 +109,8 @@ return [
     ],
 
     'available_locales' => [
-        'hu-HU' => 'Hungarian',
         'en-US' => 'English (United States)',
+        'hu-HU' => 'Hungarian',
     ],
 
     /*

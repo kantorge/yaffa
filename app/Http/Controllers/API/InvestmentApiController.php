@@ -234,7 +234,7 @@ class InvestmentApiController extends Controller
                     $startDate->startOfDay();
 
                     if ($transaction['schedule']->end_date === null) {
-                        $endDate = (new Carbon(config('yaffa.app_end_date')));
+                        $endDate = Auth::user()->end_date;
                     } else {
                         $endDate = new Carbon($transaction['schedule']->end_date);
                     }
@@ -323,7 +323,7 @@ class InvestmentApiController extends Controller
 
             // If period start was set but end date is missiong, set it to app config end date
             if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
-                $period['end'] = config('yaffa.app_end_date');
+                $period['end'] = Auth::user()->end_date;
                 $period['last_price'] = $investment->getLatestPrice('combined');
                 $positions[] = $period;
             }
