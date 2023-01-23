@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -44,7 +45,7 @@ class AccountGroupController extends Controller
         return view('account-group.index');
     }
 
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/account-group/create')
@@ -60,7 +61,7 @@ class AccountGroupController extends Controller
      * @param  AccountGroup  $accountGroup
      * @return View
      */
-    public function edit(AccountGroup $accountGroup)
+    public function edit(AccountGroup $accountGroup): View
     {
         /**
          * @get('/account-group/{account_group}/edit')
@@ -70,7 +71,7 @@ class AccountGroupController extends Controller
         return view('account-group.form', ['accountGroup' => $accountGroup]);
     }
 
-    public function store(AccountGroupRequest $request)
+    public function store(AccountGroupRequest $request): RedirectResponse
     {
         /**
          * @post('/account-group')

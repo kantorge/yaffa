@@ -1,6 +1,6 @@
 <div class="input-group mb-3">
     <span class="input-group-text">
-        <i class="fa-solid fa-lock"></i>
+        <i class="fa-solid fa-fw fa-lock"></i>
     </span>
     <input
         class="form-control @error('password') is-invalid @enderror"

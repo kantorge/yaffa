@@ -17,7 +17,7 @@
 
                             <div class="input-group mb-3">
                                 <span class="input-group-text">
-                                    <i class="fa-regular fa-user"></i>
+                                    <i class="fa-regular fa-fw fa-user"></i>
                                 </span>
                                 <input
                                     class="form-control @error('name') is-invalid @enderror"
