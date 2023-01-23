@@ -67,6 +67,10 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @method static Builder|User whereRememberToken($value)
  * @method static Builder|User whereUpdatedAt($value)
  * @mixin Eloquent
+ * @property Carbon $start_date
+ * @property Carbon $end_date
+ * @method static Builder|User whereEndDate($value)
+ * @method static Builder|User whereStartDate($value)
  */
 class User extends Authenticatable implements MustVerifyEmail
 {

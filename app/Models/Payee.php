@@ -36,6 +36,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @method static Builder|Payee whereImportAlias($value)
  * @method static Builder|Payee whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
+ * @property-read int|null $category_preference_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
+ * @property-read int|null $deferred_categories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $preferredCategories
+ * @property-read int|null $preferred_categories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardFrom
+ * @property-read int|null $transaction_detail_standard_from_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardTo
+ * @property-read int|null $transaction_detail_standard_to_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
+ * @property-read int|null $transactions_from_count
  */
 class Payee extends AccountEntity
 {

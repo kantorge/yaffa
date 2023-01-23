@@ -30,6 +30,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|TransactionDetailStandard whereAmountTo($value)
  * @method static Builder|TransactionDetailStandard whereId($value)
  * @mixin Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read int|null $transaction_items_count
+ * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
+ * @property-read \App\Models\TransactionType $transactionType
  */
 class TransactionDetailStandard extends Transaction
 {

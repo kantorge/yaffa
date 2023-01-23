@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Events\Registered;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
@@ -13,22 +14,22 @@ class RegisterTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function successfulRegistrationRoute()
+    protected function successfulRegistrationRoute(): string
     {
         return route('home');
     }
 
-    protected function registerGetRoute()
+    protected function registerGetRoute(): string
     {
         return route('register');
     }
 
-    protected function registerPostRoute()
+    protected function registerPostRoute(): string
     {
         return route('register');
     }
 
-    protected function guestMiddlewareRoute()
+    protected function guestMiddlewareRoute(): string
     {
         return route('home');
     }
@@ -71,6 +72,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         // Get newly created user by email address
@@ -83,6 +86,8 @@ class RegisterTest extends TestCase
         $this->assertEquals($userData->name, $user->name);
         $this->assertEquals($userData->email, $user->email);
         $this->assertTrue(Hash::check($password, $user->password));
+
+        // Registration generates event
         Event::assertDispatched(Registered::class, function ($e) use ($user) {
             return $e->user->id === $user->id;
         });
@@ -104,6 +109,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -132,6 +139,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -160,6 +169,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -187,6 +198,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -216,6 +229,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -245,6 +260,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => 'yes',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
@@ -273,6 +290,8 @@ class RegisterTest extends TestCase
             'language' => $userData->language,
             'locale' => $userData->locale,
             'tos' => '',
+            'default_data' => 'default',
+            'base_currency' => CurrencyData::getRandomIsoCode(),
         ]);
 
         $users = User::where('email', $userData->email)->get();
