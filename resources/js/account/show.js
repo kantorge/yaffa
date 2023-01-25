@@ -2,6 +2,7 @@ require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from '../components/dataTableHelper';
+import * as helpers from '../helpers';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
 
@@ -21,7 +22,7 @@ let presetFilters = {
 };
 
 // Loop filter object keys and populate presetFilters array.
-for (let key in filters) {
+for (let key in window.filters) {
     presetFilters[key] = false;
 }
 
@@ -614,6 +615,55 @@ let rebuildUrl = function () {
 
 document.getElementById('date_from').addEventListener('changeDate', rebuildUrl);
 document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
+
+// Get current balance
+axios.get('/api/account/balance/' + window.account.id)
+    .then(function(response) {
+        let balance = response.data.accountBalanceData[0];
+
+        let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
+        elementOpeningBalance.innerText = helpers.toFormattedCurrency(
+            balance.config.opening_balance,
+            window.YAFFA.locale,
+            balance.config.currency
+        );
+
+        let elementCurrentCash = document.getElementById('overviewCurrentCash');
+        elementCurrentCash.innerText = helpers.toFormattedCurrency(
+            balance.cash,
+            window.YAFFA.locale,
+            window.YAFFA.baseCurrency
+        );
+
+        if (balance.hasOwnProperty('cash_foreign')) {
+            elementCurrentCash.innerText += ' / ' + helpers.toFormattedCurrency(
+                balance.cash_foreign,
+                window.YAFFA.locale,
+                window.YAFFA.baseCurrency
+            );
+        }
+
+        let elementCurrentBalance = document.getElementById('overviewCurrentBalance');
+        elementCurrentBalance.innerText = helpers.toFormattedCurrency(
+            balance.sum,
+            window.YAFFA.locale,
+            window.YAFFA.baseCurrency
+        );
+
+        if (balance.hasOwnProperty('sum_foreign')) {
+            elementCurrentBalance.innerText += ' / ' + helpers.toFormattedCurrency(
+                balance.sum_foreign,
+                window.YAFFA.locale,
+                window.YAFFA.baseCurrency
+            );
+        }
+    })
+    .catch(function(error) {
+        document.getElementById('overviewOpeningBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
+        document.getElementById('overviewCurrentCash').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
+        document.getElementById('overviewCurrentBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
+        console.log(error)
+    })
 
 // Initialize Vue for the quick view
 import { createApp } from 'vue'

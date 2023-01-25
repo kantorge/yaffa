@@ -118,13 +118,15 @@ div.card-header > div.card-title {
 }
 
 // Caret icon for transaction search card header
-.card-title.collapse-control * {
+.collapse-control, .collapse-control * {
     cursor: pointer;
 }
-.card-header .fa {
+.card-header .fa,
+.collapse-control .fa {
     transition: .3s transform ease-in-out;
 }
-.card-header .collapsed .fa {
+.card-header .collapsed .fa,
+.collapse-control.collapsed .fa{
     transform: rotate(-90deg);
 }
 

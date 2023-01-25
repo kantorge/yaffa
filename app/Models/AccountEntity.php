@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * App\Models\AccountEntity
@@ -166,6 +167,17 @@ class AccountEntity extends Model
     public function scopePayees($query)
     {
         return $query->where('config_type', 'payee');
+    }
+
+    /**
+     * Scope a query to only include account entities of authenticated user.
+     *
+     * @param  Builder  $query
+     * @return Builder
+     */
+    public function scopeForCurrentUser($query)
+    {
+        return $query->where('user_id', Auth::user()->id);
     }
 
     public function user(): BelongsTo

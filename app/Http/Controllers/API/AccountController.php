@@ -27,7 +27,7 @@ class AccountController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/account')
@@ -87,7 +87,7 @@ class AccountController extends Controller
         return response()->json($accounts, Response::HTTP_OK);
     }
 
-    public function getStandardList(Request $request)
+    public function getStandardList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/account/standard')
@@ -148,7 +148,7 @@ class AccountController extends Controller
         return response()->json($accounts, Response::HTTP_OK);
     }
 
-    public function getAccountListForInvestments(Request $request)
+    public function getAccountListForInvestments(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/account/investment')
@@ -244,9 +244,9 @@ class AccountController extends Controller
      * Get the account entity for the given id.
      *
      * @param  AccountEntity  $accountEntity
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getItem(AccountEntity $accountEntity)
+    public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
          * @get('/api/assets/account/{accountEntity}')
@@ -275,7 +275,7 @@ class AccountController extends Controller
      * Transaction types table holds information of operators to be used, except transfer, which depends on direction
      *
      * @param  AccountEntity  $accountEntity
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getAccountBalance(AccountEntity $accountEntity = null): JsonResponse
     {
@@ -291,11 +291,11 @@ class AccountController extends Controller
             ->currencies()
             ->get();
 
-        // Load all accounts or the selected ones get current value
+        // Load all accounts or the selected one
         $accounts = Auth::user()
             ->accounts()
             ->when($accountEntity, function ($query) use ($accountEntity) {
-                return $query->findOrFail($accountEntity);
+                return $query->where('id', $accountEntity->id);
             })
             ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get()
@@ -349,7 +349,6 @@ class AccountController extends Controller
                             ->where('name', 'withdrawal');
                     })
                     ->where('transaction_details_standard.account_from_id', $account->id)
-                    ->get()
                     ->first();
 
                 $transactionsDepositValue = DB::table('transactions')
@@ -368,7 +367,6 @@ class AccountController extends Controller
                             ->where('name', 'deposit');
                     })
                     ->where('transaction_details_standard.account_to_id', $account->id)
-                    ->get()
                     ->first();
 
                 // Get summary for all investment transactions
@@ -396,7 +394,6 @@ class AccountController extends Controller
                             ->whereNotNull('amount_operator');
                     })
                     ->where('transaction_details_investment.account_id', $account->id)
-                    ->get()
                     ->first();
 
                 // Get summary of transfer transaction values
@@ -415,9 +412,12 @@ class AccountController extends Controller
                 // Add opening balance
                 $account['sum'] += $account->config->opening_balance;
 
+                // Store this result as cash value
+                $account['cash'] = $account['sum'];
+
                 // Add value of investments
                 $investments = $account->config->getAssociatedInvestmentsAndQuantity();
-                $account['sum'] += $investments->sum(function ($item) {
+                $account['investments'] = $investments->sum(function ($item) {
                     if ($item->quantity === 0) {
                         return 0;
                     }
@@ -427,10 +427,20 @@ class AccountController extends Controller
                     return $item->quantity * $investment->getLatestPrice();
                 });
 
+                $account['sum'] += $account['investments'];
+
                 // Apply currency exchange, if necesary
                 if ($account->config->currency_id !== $baseCurrency->id) {
+                    $rate = $currencies->find($account->config->currency_id)->rate();
+
                     $account['sum_foreign'] = $account['sum'];
-                    $account['sum'] *= $currencies->find($account->config->currency_id)->rate();
+                    $account['sum'] *= $rate;
+
+                    $account['cash_foreign'] = $account['cash'];
+                    $account['cash'] *= $rate;
+
+                    $account['investments_foreign'] = $account['investments'];
+                    $account['investments'] *= $rate;
                 }
                 $account['currency'] = $account->config->currency;
 

@@ -39,6 +39,11 @@ class AccountEntityController extends Controller
     {
         // Load view for Accounts
         if ($accountEntity->config_type === 'account') {
+            $accountEntity->load([
+               'config',
+               'config.currency',
+            ]);
+
             // Get preset filters from query string
             $filters = [];
             if ($request->has('date_from')) {

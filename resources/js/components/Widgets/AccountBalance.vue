@@ -144,7 +144,7 @@ export default {
 
     methods: {
         getRoute: function(account) {
-            return route('account.history', {account: account.id})
+            return route('account-entity.show', { account_entity: account.id })
         },
 
         toggleWithInactive: function() {
