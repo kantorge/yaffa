@@ -2,14 +2,14 @@ require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import {
-    genericDataTablesActionButton,
-    initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+  genericDataTablesActionButton,
+  initializeDeleteButtonListener
+} from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 
-window.table = $(dataTableSelector).DataTable({
-    data: investmentGroups,
+$(dataTableSelector).DataTable({
+    data: window.investmentGroups,
     columns: [
         {
             data: "name",
@@ -19,8 +19,8 @@ window.table = $(dataTableSelector).DataTable({
             data: "id",
             title: __("Actions"),
             render: function (data) {
-                return  genericDataTablesActionButton(data, 'edit', 'investment-group.edit') +
-                        genericDataTablesActionButton(data, 'delete');
+                return genericDataTablesActionButton(data, 'edit', 'investment-group.edit') +
+                       genericDataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
