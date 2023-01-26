@@ -63,6 +63,8 @@ jobs:
       env:
           DB_PORT_TEST: ${{ job.services.mysql.ports['3306'] }}
 
+    - name: Upload coverage to Codacy
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
