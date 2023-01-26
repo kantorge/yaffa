@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountController extends Controller
@@ -33,8 +32,10 @@ class AccountController extends Controller
          * @get('/api/assets/account')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        $user = $request->user();
+
         if ($request->get('q')) {
-            $accounts = Auth::user()
+            $accounts = $user
                 ->accounts()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
@@ -64,8 +65,8 @@ class AccountController extends Controller
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->where('account_entities.active', true);
                 })
-                ->where('transactions.user_id', Auth::user()->id)
-                ->where('account_entities.user_id', Auth::user()->id)
+                ->where('transactions.user_id', $user->id)
+                ->where('account_entities.user_id', $user->id)
                 ->groupBy("transaction_details_standard.account_{$type}_id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
@@ -73,7 +74,7 @@ class AccountController extends Controller
 
             // If no results were found, fallback to blank query
             if ($accounts->count() === 0) {
-                $accounts = Auth::user()
+                $accounts = $user
                     ->accounts()
                     ->select(['id', 'name AS text'])
                     ->active()
@@ -93,8 +94,10 @@ class AccountController extends Controller
          * @get('/api/assets/account/standard')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        $user = $request->user();
+
         if ($request->get('q')) {
-            $accounts = Auth::user()
+            $accounts = $user
                 ->accounts()
                 ->active()
                 ->select(['id', 'name AS text'])
@@ -120,8 +123,8 @@ class AccountController extends Controller
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
-                ->where('transactions.user_id', Auth::user()->id)
-                ->where('account_entities.user_id', Auth::user()->id)
+                ->where('transactions.user_id', $user->id)
+                ->where('account_entities.user_id', $user->id)
                 ->where(
                     'transaction_type_id',
                     '=',
@@ -134,7 +137,7 @@ class AccountController extends Controller
 
             // If no results were found, fallback to blank query
             if ($accounts->count() === 0) {
-                $accounts = Auth::user()
+                $accounts = $user
                     ->accounts()
                     ->select(['id', 'name AS text'])
                     ->active()
@@ -154,8 +157,10 @@ class AccountController extends Controller
          * @get('/api/assets/account/investment')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        $user = $request->user();
+
         if ($request->get('q')) {
-            $accounts = Auth::user()
+            $accounts = $user
                 ->accounts()
                 ->active()
                 ->when($request->get('currency_id'), function ($query) use ($request) {
@@ -190,8 +195,8 @@ class AccountController extends Controller
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
-                ->where('transactions.user_id', Auth::user()->id)
-                ->where('account_entities.user_id', Auth::user()->id)
+                ->where('transactions.user_id', $user->id)
+                ->where('account_entities.user_id', $user->id)
                 ->when($request->get('currency_id'), function ($query) use ($request) {
                     return $query
                         ->join(
@@ -274,25 +279,25 @@ class AccountController extends Controller
      *
      * Transaction types table holds information of operators to be used, except transfer, which depends on direction
      *
+     * @param  Request $request
      * @param  AccountEntity  $accountEntity
      * @return JsonResponse
      */
-    public function getAccountBalance(AccountEntity $accountEntity = null): JsonResponse
+    public function getAccountBalance(Request $request, AccountEntity $accountEntity = null): JsonResponse
     {
         /**
          * @get('/api/account/balance/{accountEntity?}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        $user = $request->user();
 
         $baseCurrency = $this->getBaseCurrency();
 
         // Get all currencies for rate calculation
-        $currencies = Auth::user()
-            ->currencies()
-            ->get();
+        $currencies = $user->currencies()->get();
 
         // Load all accounts or the selected one
-        $accounts = Auth::user()
+        $accounts = $user
             ->accounts()
             ->when($accountEntity, function ($query) use ($accountEntity) {
                 return $query->where('id', $accountEntity->id);
@@ -308,7 +313,7 @@ class AccountController extends Controller
         $transactionTypeTransfer = TransactionType::where('name', 'transfer')->first();
 
         $accounts
-            ->map(function ($account) use ($currencies, $baseCurrency, $transactionTypeTransfer) {
+            ->map(function ($account) use ($currencies, $baseCurrency, $transactionTypeTransfer, $user) {
                 // Get account group name for later grouping
                 $account['account_group'] = $account->config->accountGroup->name;
                 $account['account_group_id'] = $account->config->accountGroup->id;  //TODO: should we pass the entire object instead?
@@ -338,8 +343,8 @@ class AccountController extends Controller
                         DB::raw('sum(-transaction_details_standard.amount_from) AS amount')
                     )
                     ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
-                    ->where(function ($query) {
-                        $this->commonFilters($query);
+                    ->where(function ($query) use ($user) {
+                        $this->commonFilters($query, $user);
                     })
                     ->where('transactions.config_type', 'transaction_detail_standard')
                     ->whereIn('transactions.transaction_type_id', function ($query) {
@@ -356,8 +361,8 @@ class AccountController extends Controller
                         DB::raw('sum(transaction_details_standard.amount_to) AS amount')
                     )
                     ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
-                    ->where(function ($query) {
-                        $this->commonFilters($query);
+                    ->where(function ($query) use ($user)  {
+                        $this->commonFilters($query, $user);
                     })
                     ->where('transactions.config_type', 'transaction_detail_standard')
                     ->whereIn('transactions.transaction_type_id', function ($query) {
@@ -383,8 +388,8 @@ class AccountController extends Controller
                     )
                     ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
                     ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
-                    ->where(function ($query) {
-                        $this->commonFilters($query);
+                    ->where(function ($query) use ($user)  {
+                        $this->commonFilters($query, $user);
                     })
                     ->where('transactions.config_type', 'transaction_detail_investment')
                     ->whereIn('transactions.transaction_type_id', function ($query) {
@@ -457,9 +462,9 @@ class AccountController extends Controller
             );
     }
 
-    private function commonFilters($query)
+    private function commonFilters($query, $user)
     {
-        $query->where('transactions.user_id', Auth::user()->id)
+        $query->where('transactions.user_id', $user->id)
         ->where('transactions.schedule', 0)
         ->where('transactions.budget', 0);
     }

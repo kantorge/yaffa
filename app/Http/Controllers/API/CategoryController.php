@@ -5,9 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
@@ -17,16 +17,17 @@ class CategoryController extends Controller
         $this->middleware('auth:sanctum');
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/category')
          * @middlewares('api', 'auth:sanctum')
          */
+        $user = $request->user();
+
         $query = $request->get('q');
         if ($query && $query !== '*') {
-            $categories = Auth::user()
-                ->categories()
+            $categories = $user->categories()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
@@ -52,8 +53,7 @@ class CategoryController extends Controller
                 })
                 ->values();
         } elseif ($query === '*') {
-            $categories = Auth::user()
-                ->categories()
+            $categories = $user->categories()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
@@ -91,7 +91,7 @@ class CategoryController extends Controller
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->where('categories.active', true);
                 })
-                ->where('categories.user_id', Auth::user()->id)
+                ->where('categories.user_id', $user->id)
                 ->when($request->has('payee'), function ($query) use ($request) {
                     $query->whereRaw(
                         '(transaction_details_standard.account_from_id = ? OR transaction_details_standard.account_to_id = ?)',
@@ -105,15 +105,15 @@ class CategoryController extends Controller
                 ->toArray();
 
             $categories = Category::findMany($results)
-            ->sortBy(function ($category) use ($results) {
-                return array_search($category->getKey(), $results);
-            })
-            ->map(function ($category) {
-                $category->text = $category->full_name;
+                ->sortBy(function ($category) use ($results) {
+                    return array_search($category->getKey(), $results);
+                })
+                ->map(function ($category) {
+                    $category->text = $category->full_name;
 
-                return $category->only(['id', 'text']);
-            })
-            ->values();
+                    return $category->only(['id', 'text']);
+                })
+                ->values();
         }
 
         return response()
@@ -123,13 +123,13 @@ class CategoryController extends Controller
             );
     }
 
-    public function getFullList(Request $request)
+    public function getFullList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/categories')
          * @middlewares('api', 'auth:sanctum')
          */
-        $categories = Auth::user()
+        $categories = $request->user()
             ->categories()
             ->when($request->missing('withInactive'), function ($query) {
                 $query->active();
@@ -143,7 +143,7 @@ class CategoryController extends Controller
             );
     }
 
-    public function getItem(Category $category)
+    public function getItem(Category $category): JsonResponse
     {
         /**
          * @get('/api/assets/category/{category}')
@@ -158,7 +158,7 @@ class CategoryController extends Controller
             );
     }
 
-    public function updateActive(Category $category, $active)
+    public function updateActive(Category $category, $active): JsonResponse
     {
         /**
          * @put('/api/assets/category/{category}/active/{active}')
