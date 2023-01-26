@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AccountEntityRequest;
+use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\View\Factory;
+use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +37,7 @@ class AccountEntityController extends Controller
         }
     }
 
-    public function show(AccountEntity $accountEntity, Request $request)
+    public function show(AccountEntity $accountEntity, Request $request): View|RedirectResponse
     {
         // Load view for Accounts
         if ($accountEntity->config_type === 'account') {
@@ -87,7 +89,7 @@ class AccountEntityController extends Controller
          */
         $this->checkTypeParam($request);
 
-        return $this->{'index'.Str::ucfirst($request->type)}();
+        return $this->{'index'.Str::ucfirst($request->get('type'))}();
     }
 
     /**
@@ -290,9 +292,11 @@ class AccountEntityController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @uses createAccount
+     * @uses createPayee
+     * @return View|RedirectResponse
      */
-    public function create(Request $request)
+    public function create(Request $request): View|RedirectResponse
     {
         /**
          * @get('/account-entity/create')
@@ -304,7 +308,7 @@ class AccountEntityController extends Controller
         return $this->{'create'.Str::ucfirst($request->type)}();
     }
 
-    private function createAccount()
+    private function createAccount(): View|RedirectResponse
     {
         // Get all account groups
         $allAccountGroups = Auth::user()
@@ -344,7 +348,10 @@ class AccountEntityController extends Controller
         return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
     }
 
-    private function createPayee()
+    /**
+     * @return View
+     */
+    private function createPayee(): View
     {
         JavaScriptFacade::put([
             'categoryPreferences' => [],
@@ -356,10 +363,10 @@ class AccountEntityController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param AccountEntityRequest $request
+     * @return RedirectResponse
      */
-    public function store(AccountEntityRequest $request)
+    public function store(AccountEntityRequest $request): RedirectResponse
     {
         /**
          * @post('/account-entity')
@@ -412,16 +419,20 @@ class AccountEntityController extends Controller
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
 
-        // TODO: should the above two conditional parts be unified with dynamic model handling
+        // This redirect is theoretically not used
+        return redirect()->back();
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Http\Response
+     * @uses editAccount
+     * @uses editPayee
+     * @param Request $request
+     * @param AccountEntity $accountEntity
+     * @return View
      */
-    public function edit(Request $request, AccountEntity $accountEntity)
+    public function edit(Request $request, AccountEntity $accountEntity): View
     {
         /**
          * @get('/account-entity/{account_entity}/edit')
@@ -433,7 +444,7 @@ class AccountEntityController extends Controller
         return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
     }
 
-    private function editAccount(AccountEntity $accountEntity)
+    private function editAccount(AccountEntity $accountEntity): View
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
@@ -453,7 +464,7 @@ class AccountEntityController extends Controller
         );
     }
 
-    private function editPayee(AccountEntity $accountEntity)
+    private function editPayee(AccountEntity $accountEntity): View
     {
         $accountEntity->load(['config', 'categoryPreference']);
 
@@ -480,11 +491,11 @@ class AccountEntityController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Http\Response
+     * @param AccountEntityRequest $request
+     * @param AccountEntity $accountEntity
+     * @return RedirectResponse
      */
-    public function update(AccountEntityRequest $request, AccountEntity $accountEntity)
+    public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -537,16 +548,18 @@ class AccountEntityController extends Controller
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
 
-        // TODO: should the above two conditional parts be unified with dynamic model handling
+        // This redirect is theoretically not used
+        return redirect()->back();
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param AccountEntity $accountEntity
+     * @return RedirectResponse
      */
-    public function destroy(Request $request, AccountEntity $accountEntity)
+    public function destroy(Request $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
          * @delete('/account-entity/{account_entity}')
@@ -563,14 +576,14 @@ class AccountEntityController extends Controller
             });
 
             self::addSimpleSuccessMessage(
-                __(':type deleted', ['type' => Str::ucfirst($request->type)])
+                __(':type deleted', ['type' => Str::ucfirst($request->post('type'))])
             );
 
-            return redirect()->route('account-entity.index', ['type' => $request->type]);
-        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('account-entity.index', ['type' => $request->post('type')]);
+        } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(
-                    __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->type)])
+                    __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->post('type'))])
                 );
             } else {
                 self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
@@ -583,8 +596,8 @@ class AccountEntityController extends Controller
     /**
      * Display a form to merge two payees.
      *
-     * @param  \App\Models\AccountEntity  $payeeSource
-     * @return \Illuminate\View\View
+     * @param AccountEntity $payeeSource
+     * @return View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
     {
@@ -605,28 +618,14 @@ class AccountEntityController extends Controller
     /*
      * Merge two payees.
      */
-    public function mergePayees(Request $request)
+    public function mergePayees(MergePayeesRequest $request)
     {
         /**
          * @post('/payees/merge')
          * @name('payees.merge.submit')
          * @middlewares('web', 'auth', 'verified')
          */
-        $validated = $request->validate([
-            'payee_source' => [
-                'required',
-                'exists:account_entities,id,config_type,payee',
-            ],
-            'payee_target' => [
-                'required',
-                'exists:account_entities,id,config_type,payee',
-                'different:payee_source',
-            ],
-            'action' => [
-                'required',
-                'in:delete,close',
-            ],
-        ]);
+        $validated = $request->validated();
 
         // Wrap database transaction
         DB::beginTransaction();
@@ -653,7 +652,7 @@ class AccountEntityController extends Controller
 
             DB::commit();
             self::addSimpleSuccessMessage(__('Payees merged'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
         }
