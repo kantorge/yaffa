@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * App\Models\Payee
@@ -37,7 +38,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @method static Builder|Payee whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Payee extends AccountEntity
+class Payee extends Model
 {
     use HasFactory;
 

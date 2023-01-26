@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * App\Models\TransactionDetailInvestment
@@ -33,7 +34,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereTax($value)
  * @mixin \Eloquent
  */
-class TransactionDetailInvestment extends Transaction
+class TransactionDetailInvestment extends Model
 {
     use HasFactory;
 

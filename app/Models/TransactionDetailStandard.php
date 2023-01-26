@@ -6,6 +6,7 @@ use Database\Factories\TransactionDetailStandardFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -31,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|TransactionDetailStandard whereId($value)
  * @mixin Eloquent
  */
-class TransactionDetailStandard extends Transaction
+class TransactionDetailStandard extends Model
 {
     use HasFactory;
 
