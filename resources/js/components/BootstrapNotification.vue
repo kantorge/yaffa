@@ -11,8 +11,8 @@
             v-if="title || icon"
             class="alert-heading"
         >
-            <span v-if="icon" :class="'icon fa fa-' + icon"></span>
-            <span v-html="title"></span>
+            <span v-if="icon" :class="'me-1 icon fa fa-' + icon"></span>
+            <span v-html="title" class="align-text-bottom"></span>
         </h4>
         <span v-html="message"></span>
         <button v-if="dismissible" type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>

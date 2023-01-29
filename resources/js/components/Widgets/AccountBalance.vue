@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-4">
+  <div class="card mb-4" id="widgetAccountBalance" v-if="available">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
         {{ __('Total value') }}
@@ -8,7 +8,7 @@
         {{ toFormattedCurrency(totalValue, locale, baseCurrency) }}
       </div>
     </div>
-    <ul class="list-group list-group-flush" id="accordionAccountBalance" v-if="!ready">
+    <ul class="list-group list-group-flush" v-if="!ready">
       <li
           aria-hidden="true"
           class="list-group-item placeholder-glow"
@@ -95,6 +95,7 @@ export default {
 
   data() {
     return {
+      available: false,
       baseCurrency: window.YAFFA.baseCurrency,
       accountBalanceData: [],
       withClosed: false,
@@ -104,7 +105,14 @@ export default {
   },
 
   created() {
+    // Verify if base currency is set. Without this, the widget cannot be displayed.
+    if (!this.baseCurrency) {
+      return;
+    }
+
+    this.available = true;
     let $vm = this;
+
     axios.get('/api/account/balance/')
       .then(function (response) {
         $vm.accountBalanceData = response.data.accountBalanceData;
