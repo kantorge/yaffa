@@ -16,8 +16,10 @@ class SendLoginSuccessNotification
      */
     public function handle(Login $event): void
     {
-        if (config('yaffa.admin_email')) {
-            Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginSuccessNotification($event));
+        if (! config('yaffa.admin_email')) {
+            return;
         }
+
+        Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginSuccessNotification($event));
     }
 }

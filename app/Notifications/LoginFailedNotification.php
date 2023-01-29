@@ -2,12 +2,13 @@
 
 namespace App\Notifications;
 
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class LoginFailedNotification extends Notification
 {
-    protected $event;
+    protected Failed $event;
 
     /**
      * Create a new notification instance.
@@ -24,7 +25,7 @@ class LoginFailedNotification extends Notification
      *
      * @return array
      */
-    public function via()
+    public function via(): array
     {
         return ['mail'];
     }
@@ -32,12 +33,12 @@ class LoginFailedNotification extends Notification
     /**
      * Get the mail representation of the notification.
      *
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @return MailMessage
      */
-    public function toMail()
+    public function toMail(): MailMessage
     {
         return (new MailMessage())
             ->subject('YAFFA alert - failed login notification')
-            ->line('Failed login attempt at '.config('app.url'));
+            ->line('Failed login attempt at ' . config('app.url'));
     }
 }

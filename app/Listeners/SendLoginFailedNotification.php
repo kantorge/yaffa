@@ -11,15 +11,17 @@ class SendLoginFailedNotification
     /**
      * Handle the event.
      *
-     * @param  Failed  $event
+     * @param Failed $event
      * @return void
      */
     public function handle(Failed $event): void
     {
         logger()->alert('Failed login attempt', ['event' => $event]);
 
-        if (config('yaffa.admin_email')) {
-            Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginFailedNotification($event));
+        if (!config('yaffa.admin_email')) {
+            return;
         }
+        
+        Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginFailedNotification($event));
     }
 }

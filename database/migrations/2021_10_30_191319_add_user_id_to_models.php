@@ -12,14 +12,14 @@ class AddUserIdToModels extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
         // Ensure, that at least one row is available in users table. This is a support for users with existing data.
         if (DB::table('users')->count() < 1) {
             DB::table('users')->insert(
                 [
                     'name' => 'Default user',
-                    'email' => env('ADMIN_EMAIL', 'admin@yaffa.cc'),
+                    'email' => config('yaffa.admin_email'),
                     'password' => Hash::make('password'),
                 ]
             );
@@ -111,7 +111,7 @@ class AddUserIdToModels extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         //
     }
