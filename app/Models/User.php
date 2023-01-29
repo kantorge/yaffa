@@ -16,6 +16,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use Spatie\ModelFlags\Models\Concerns\HasFlags;
+use Spatie\Onboard\Concerns\GetsOnboarded;
+use Spatie\Onboard\Concerns\Onboardable;
 
 /**
  * App\Models\User
@@ -72,9 +75,10 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @method static Builder|User whereEndDate($value)
  * @method static Builder|User whereStartDate($value)
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, Onboardable
 {
     use HasApiTokens, HasFactory, Notifiable;
+    use GetsOnboarded, HasFlags;
 
     /**
      * The attributes that are mass assignable.
@@ -132,6 +136,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Currency::class);
     }
 
+    public function baseCurrency(): Currency|null
+    {
+        return $this->currencies()
+            ->where('base', true)
+            ->firstOr(function () {
+                return null;
+            });
+    }
+
     public function investmentGroups(): HasMany
     {
         return $this->hasMany(InvestmentGroup::class);
@@ -155,5 +168,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function transactionCount():int
+    {
+        return $this->hasMany(Transaction::class)->count();
     }
 }
