@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Providers\Faker\CurrencyData;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
@@ -25,13 +31,36 @@ class RegisterController extends Controller
 
     use RegistersUsers;
 
+    // Define ptions for default assets. (Translation happens in Blade view.)
+    private array $defaultAssetOptions = [
+        'default' => 'Default',
+        'basic' => 'Basic',
+        'none' => 'None',
+    ];
+
+    private array $availableCurrencies;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest');
+
+        foreach(CurrencyData::getCurrencies() as $currency) {
+            $this->availableCurrencies[$currency['isoCode']] = $currency['name'];
+        }
+    }
+
     /**
      * Show the application registration form.
      * Overwrite default behavior by limiting number of users allowed.
      *
-     * @return \Illuminate\View\View
+     * @return View|RedirectResponse
      */
-    public function showRegistrationForm()
+    public function showRegistrationForm(): View|RedirectResponse
     {
         /**
          * @get('/register')
@@ -54,6 +83,8 @@ class RegisterController extends Controller
             [
                 'languages' => config('app.available_languages'),
                 'locales' => config('app.available_locales'),
+                'defaultAssetOptions' => $this->defaultAssetOptions,
+                'availableCurrencies' => $this->availableCurrencies,
             ]
         );
     }
@@ -63,17 +94,8 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected string $redirectTo = RouteServiceProvider::HOME;
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest');
-    }
 
     /**
      * Get a validator for an incoming registration request.
@@ -113,6 +135,14 @@ class RegisterController extends Controller
             'tos' => [
                 'accepted'
             ],
+            'default_data' => [
+                'required',
+                Rule::in(array_keys($this->defaultAssetOptions)),
+            ],
+            'base_currency' => [
+                'required',
+                Rule::in(array_keys($this->availableCurrencies)),
+            ]
         ]);
     }
 
@@ -120,9 +150,9 @@ class RegisterController extends Controller
      * Create a new user instance after a valid registration.
      *
      * @param  array  $data
-     * @return \App\Models\User
+     * @return User
      */
-    protected function create(array $data)
+    protected function create(array $data): User
     {
         return User::create([
             'name' => $data['name'],
@@ -131,5 +161,37 @@ class RegisterController extends Controller
             'language' => $data['language'],
             'locale' => $data['locale'],
         ]);
+    }
+
+    /**
+     * Handle a registration request for the application.
+     * Overwrite default behavior by adding custom parameter to Registered event.
+     *
+     * @param Request $request
+     * @return RedirectResponse|JsonResponse
+     */
+    public function register(Request $request): JsonResponse|RedirectResponse
+    {
+        $this->validator($request->all())->validate();
+
+        event(
+            new Registered(
+                $user = $this->create($request->all()),
+                [
+                    'defaultData' => $request->post('default_data'),
+                    'baseCurrency' => $request->post('base_currency'),
+                ]
+            )
+        );
+
+        $this->guard()->login($user);
+
+        if ($response = $this->registered($request, $user)) {
+            return $response;
+        }
+
+        return $request->wantsJson()
+            ? new JsonResponse([], 201)
+            : redirect($this->redirectPath());
     }
 }

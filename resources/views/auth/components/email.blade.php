@@ -1,6 +1,6 @@
 <div class="input-group mb-3">
     <span class="input-group-text">
-        <i class="fa-regular fa-envelope"></i>
+        <i class="fa-regular fa-fw fa-envelope"></i>
     </span>
     <input
         @if ($autofocus)

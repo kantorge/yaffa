@@ -13,11 +13,17 @@ trait CurrencyTrait
     /**
      * Load a collection for all currencies, with an average rate by month
      *
-     * @param  bool  $onlyToBaseCurrency
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param bool $withCarbonDates
+     * @param bool $onlyToBaseCurrency
+     * @return Collection
      */
     public function allCurrencyRatesByMonth(bool $withCarbonDates = true, bool $onlyToBaseCurrency = true): Collection
     {
+        $baseCurrency = $this->getBaseCurrency();
+        if (! $baseCurrency) {
+            return new Collection();
+        }
+
         $rates = DB::table('currency_rates')
             ->select(
                 DB::raw('SUBDATE(`date`, (day(`date`)-1)) AS `month`'),
@@ -25,8 +31,8 @@ trait CurrencyTrait
                 'to_id',
                 DB::raw('avg(rate) as rate')
             )
-            ->when($onlyToBaseCurrency, function ($query) {
-                $query->where('to_id', '=', $this->getBaseCurrency()->id);
+            ->when($onlyToBaseCurrency, function ($query) use ($baseCurrency) {
+                $query->where('to_id', '=', $baseCurrency->id);
             })
             ->groupBy(DB::raw('SUBDATE(`date`, (day(`date`)-1))'))
             ->groupBy('from_id')

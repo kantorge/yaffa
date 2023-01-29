@@ -129,13 +129,19 @@ export default {
                 }
               })
 
-          // Set min and max dates
-          vue.minDate = vue.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
-            return (a < b ? a : b);
-          });
-          vue.maxDate = vue.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
-            return (a > b ? a : b);
-          });
+          // Set min and max dates or fall back to current month
+          if ($vm.attributes.length > 0) {
+            $vm.minDate = $vm.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
+              return (a < b ? a : b);
+            });
+            $vm.maxDate = $vm.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
+              return (a > b ? a : b);
+            });
+          } else {
+            const date = new Date();
+            $vm.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
+            $vm.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          }
         })
         .finally(function () {
           vue.busy = false;

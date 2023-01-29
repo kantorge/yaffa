@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Notifications\LoginFailedNotification;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Support\Facades\Notification;
 
 class SendLoginFailedNotification
@@ -10,10 +11,10 @@ class SendLoginFailedNotification
     /**
      * Handle the event.
      *
-     * @param  object  $event
+     * @param  Failed  $event
      * @return void
      */
-    public function handle($event)
+    public function handle(Failed $event): void
     {
         logger()->alert('Failed login attempt', ['event' => $event]);
 

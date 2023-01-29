@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Notifications\LoginSuccessNotification;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Notification;
 
 class SendLoginSuccessNotification
@@ -10,10 +11,10 @@ class SendLoginSuccessNotification
     /**
      * Handle the event.
      *
-     * @param  object  $event
+     * @param  Login  $event
      * @return void
      */
-    public function handle($event)
+    public function handle(Login $event): void
     {
         if (config('yaffa.admin_email')) {
             Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginSuccessNotification($event));

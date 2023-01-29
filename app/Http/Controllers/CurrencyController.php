@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyController extends Controller
@@ -21,9 +24,9 @@ class CurrencyController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         /**
          * @get('/currencies')
@@ -49,7 +52,7 @@ class CurrencyController extends Controller
         return view('currencies.index');
     }
 
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/currencies/create')
@@ -76,8 +79,8 @@ class CurrencyController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Currency  $currency
-     * @return \Illuminate\View\View
+     * @param Currency $currency
+     * @return View
      */
     public function edit(Currency $currency)
     {
@@ -111,7 +114,7 @@ class CurrencyController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(Currency $currency)
     {
@@ -133,7 +136,7 @@ class CurrencyController extends Controller
             self::addSimpleSuccessMessage(__('Currency deleted'));
 
             return redirect()->route('currencies.index');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Currency is in use, cannot be deleted'));
             } else {

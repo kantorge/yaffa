@@ -33,6 +33,10 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereTax($value)
  * @mixin \Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read int|null $transaction_items_count
+ * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
+ * @property-read \App\Models\TransactionType $transactionType
  */
 class TransactionDetailInvestment extends Model
 {

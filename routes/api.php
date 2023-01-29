@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AccountController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TransactionApiController;
@@ -59,6 +60,9 @@ Route::get('/transaction/{transaction}', 'App\Http\Controllers\API\TransactionAp
 Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiController::class, 'reconcile']);
 
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])->name('api.transactions.destroy');
+
+Route::get('/onboarding', [OnboardingApiController::class, 'getOnboardingData']);
+Route::put('/onboadding/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
 
 /*
 Route::post('/token', function (Request $request) {

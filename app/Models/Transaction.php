@@ -179,10 +179,10 @@ class Transaction extends Model
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
      *
-     * @param  \App\Models\AccountEntity  $account
-     * @return float
+     * @param AccountEntity|null $account
+     * @return float|int
      */
-    public function cashflowValue(AccountEntity $account = null)
+    public function cashflowValue(AccountEntity $account = null): float|int
     {
         if ($this->config_type === 'transaction_detail_standard') {
             $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');
@@ -278,7 +278,7 @@ class Transaction extends Model
         }
     }
 
-    private function transformDataCommon()
+    private function transformDataCommon(): array
     {
         $transaction = $this;
 
@@ -308,7 +308,7 @@ class Transaction extends Model
         ];
     }
 
-    private function transformDataStandard()
+    private function transformDataStandard(): array
     {
         if (! $this->transactionItems) {
             $this->load([
