@@ -7,7 +7,7 @@
 Yaffa is a personal finance web application, focusing on the support of long term financial planning. 
 By hosting your own app instance, your financial data is not uploaded to the cloud, and shared with any third parties.
 
-### Key features:
+### Key features
 * Support multiple currencies, and option to mark the default one to be used on dashboards and charts.
 * Support multiple accounts and account groups.
 * Track your income and spending by recording transactions.
@@ -34,8 +34,11 @@ If you are looking to have these, then Yaffa might not be the right choice for y
 ## Sandbox
 Take a look at the application at https://sandbox.yaffa.cc
 
-⚠️ **Important!** This is not a production environment or a free service. Use it only to test YAFFA functionality and UI. 
+⚠️ **Important!** This is not a production environment or a free service. Use it only to experiment with YAFFA functionality and UI. 
 The database is regulary wiped without prior notice.
+
+💡 **Tip:** use a disposable email address to sign up. You need to receive the email and verify your registration,
+but the email address is not required for testing the application. (Well, maybe except if you forget your password.)
 
 ## Gettings started
 Installation instructions and getting started steps will be added here.
