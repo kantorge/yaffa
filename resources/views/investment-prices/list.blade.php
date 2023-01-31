@@ -2,8 +2,11 @@
 
 @section('title_postfix',  __('Investment prices'))
 
+@section('content_container_classes', 'container-fluid')
+
 @section('content_header')
-    {{ __('Investment prices') }} - {{$investment->name}}
+    {{ __('Investment prices') }} -
+    <a href="{{ route('investment.show', $investment) }}">{{$investment->name}}</a>
 @stop
 
 @section('content')
@@ -11,13 +14,13 @@
     <div class="row">
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <span class="card-title">
-                        {{ __('Investment price data') }}
-                    </span>
-                    <div>
-                        <a href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success"><i class="fa fa-plus"></i></a>
-                    </div>
+                <div class="card-header text-end">
+                    @if($investment->investment_price_provider)
+                        <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Load new price data') }}">
+                            <span class="fa fa-cloud-download"></span>
+                        </a>
+                    @endif
+                    <a href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Add investment price manually') }}"><i class="fa fa-plus"></i></a>
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered table-hover" role="grid" id="table"></table>

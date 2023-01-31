@@ -146,7 +146,6 @@ export default {
     }
 
     var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-    var tooltipText = `[bold]{categoryX}[/]: {value}`;
 
     var columnSeries = chart.series.push(new am4charts.ColumnSeries());
     columnSeries.dataFields.categoryX = "category";
@@ -155,7 +154,7 @@ export default {
     columnSeries.fillOpacity = 0.8;
     columnSeries.sequencedInterpolation = true;
     columnSeries.interpolationDuration = 1500;
-    columnSeries.tooltipText = tooltipText;
+    columnSeries.tooltipText = `[bold]{categoryX}[/]: {value}`;
 
     var columnTemplate = columnSeries.columns.template;
     columnTemplate.strokeOpacity = 0;

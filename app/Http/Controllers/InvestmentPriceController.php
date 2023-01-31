@@ -6,6 +6,7 @@ use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,11 @@ class InvestmentPriceController extends Controller
         $this->middleware(['auth', 'verified']);
     }
 
+    /**
+     * @throws AuthorizationException
+     * @param Investment $investment
+     * @return View
+     */
     public function list(Investment $investment): View
     {
         /**
@@ -28,6 +34,9 @@ class InvestmentPriceController extends Controller
          */
         $this->authorize('view', $investment);
 
+        // Load currency details for JavaScript
+        $investment->load('currency');
+
         $pricesOrdered = DB::table('investment_prices')
             ->select('id', 'date', 'price')
             ->where('investment_id', $investment->id)
@@ -36,6 +45,7 @@ class InvestmentPriceController extends Controller
 
         // Pass data for DataTables
         JavaScriptFacade::put([
+            'investment' => $investment,
             'prices' => $pricesOrdered,
         ]);
 
@@ -107,7 +117,7 @@ class InvestmentPriceController extends Controller
         );
     }
 
-    public function update(InvestmentPriceRequest $request)
+    public function update(InvestmentPriceRequest $request): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -146,7 +156,7 @@ class InvestmentPriceController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveInvestmentPrice(Investment $investment, ?Carbon $from = null): RedirectResponse
+    public function retreiveInvestmentPrice(Investment $investment): RedirectResponse
     {
         /**
          * @get('/investment-price/get/{investment}/{from?}')
@@ -159,6 +169,8 @@ class InvestmentPriceController extends Controller
         $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
         $investment->getInvestmentPriceFromProvider($date);
+
+        self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
 
         return redirect()->back();
     }

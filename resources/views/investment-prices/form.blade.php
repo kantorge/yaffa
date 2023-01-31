@@ -2,42 +2,42 @@
 
 @section('title', __('Investment price'))
 
+@section('content_container_classes', 'container-lg')
+
 @section('content_header')
     {{ __('Investment price') }} - {{$investment->name}}
 @stop
 
 @section('content')
+@if(isset($investmentPrice))
+    <form
+        accept-charset="UTF-8"
+        action="{{ route('investment-price.update', $investmentPrice->id) }}"
+        autocomplete="off"
+        method="POST"
+    >
+        @method('PATCH')
+@else
+    <form
+        accept-charset="UTF-8"
+        action="{{ route('investment-price.store') }}"
+        autocomplete="off"
+        method="POST"
+    >
+@endif
 
-    @if(isset($investmentPrice))
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('investment-price.update', $investmentPrice->id) }}"
-            autocomplete="off"
-            method="POST"
-        >
-        <input name="_method" type="hidden" value="PATCH">
-    @else
-        <form
-            accept-charset="UTF-8"
-            action="{{ route('investment-price.store') }}"
-            autocomplete="off"
-            method="POST"
-        >
-    @endif
-
-    <div class="box">
-        <div class="box-header">
-            <h3 class="box-title">
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="card-title">
                 @if(isset($investmentPrice->id))
                     {{ __('Modify investment price') }}
                 @else
                     {{ __('Add new investment price') }}
                 @endif
-            </h3>
+            </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-            <div class="form-group">
+        <div class="card-body">
+            <div class="row mb-3">
                 <label for="date" class="col-form-label col-sm-3">
                     {{ __('Date') }}
                 </label>
@@ -52,7 +52,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="row mb-3">
                 <label for="price" class="col-form-label col-sm-3">
                     {{ __('Price') }}
                 </label>
@@ -66,11 +66,8 @@
                     >
                 </div>
             </div>
-
-
         </div>
-        <!-- /.box-body -->
-        <div class="box-footer">
+        <div class="card-footer">
             @csrf
             <input
                 name="id"
@@ -86,10 +83,6 @@
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
             <a href="{{ route('investment-price.list', ['investment' => $investment->id]) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
-        <!-- /.box-footer -->
     </div>
-    <!-- /.box -->
-
-    </form>
-
+</form>
 @stop
