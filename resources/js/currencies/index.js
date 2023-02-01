@@ -69,7 +69,7 @@ $(dataTableSelector).DataTable({
                     return row.latest_rate;
                 }
                 // Formatted text is returned for display
-                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                let currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
                 return "1 " + row.suffix + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
@@ -92,7 +92,7 @@ $(dataTableSelector).DataTable({
                     return 1 / row.latest_rate;
                 }
                 // Formatted text is returned for display
-                var currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                let currency = Object.assign({}, row, {num_digits: 4});
                 return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, currency);
             },
             className: "dt-nowrap",
