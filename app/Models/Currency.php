@@ -5,6 +5,9 @@ namespace App\Models;
 use AmrShawky\LaravelCurrency\Facade\Currency as CurrencyApi;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
+use Database\Factories\CurrencyFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,25 +25,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $auto_update
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|Currency autoUpdate()
- * @method static \Illuminate\Database\Eloquent\Builder|Currency base()
- * @method static \Database\Factories\CurrencyFactory factory(...$parameters)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Currency newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Currency notBase()
- * @method static \Illuminate\Database\Eloquent\Builder|Currency query()
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereAutoUpdate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereBase($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereIsoCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereNumDigits($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereSuffix($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Currency whereUserId($value)
- * @mixin \Eloquent
+ * @property-read User $user
+ * @method static Builder|Currency autoUpdate()
+ * @method static Builder|Currency base()
+ * @method static CurrencyFactory factory(...$parameters)
+ * @method static Builder|Currency newModelQuery()
+ * @method static Builder|Currency newQuery()
+ * @method static Builder|Currency notBase()
+ * @method static Builder|Currency query()
+ * @method static Builder|Currency whereAutoUpdate($value)
+ * @method static Builder|Currency whereBase($value)
+ * @method static Builder|Currency whereCreatedAt($value)
+ * @method static Builder|Currency whereId($value)
+ * @method static Builder|Currency whereIsoCode($value)
+ * @method static Builder|Currency whereName($value)
+ * @method static Builder|Currency whereNumDigits($value)
+ * @method static Builder|Currency whereSuffix($value)
+ * @method static Builder|Currency whereUpdatedAt($value)
+ * @method static Builder|Currency whereUserId($value)
+ * @mixin Eloquent
  */
 class Currency extends Model
 {
@@ -90,10 +93,10 @@ class Currency extends Model
     /**
      * Create a scope for the query to only return base currencies.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
-    public function scopeBase($query)
+    public function scopeBase(Builder $query): Builder
     {
         return $query->where('base', true);
     }
@@ -101,10 +104,10 @@ class Currency extends Model
     /**
      * Create a scope for the query to only return currencies that are not base currencies.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
-    public function scopeNotBase($query)
+    public function scopeNotBase(Builder $query): Builder
     {
         return $query->whereNull('base');
     }
@@ -112,10 +115,10 @@ class Currency extends Model
     /**
      * Create a scope for the query to only return currencies that are set to be automatically updated.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
-    public function scopeAutoUpdate($query)
+    public function scopeAutoUpdate(Builder $query): Builder
     {
         return $query->where('auto_update', true);
     }
@@ -215,7 +218,7 @@ class Currency extends Model
                                     ->first();
 
         $this->retreiveCurrencyRateToBase(
-            $rate?->date ?? Carbon::create('30 days ago') // Fallback to last 30 days
+            $rate?->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
         );
     }
 }
