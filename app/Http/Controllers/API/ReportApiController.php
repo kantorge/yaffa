@@ -8,7 +8,9 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionType;
+use App\Services\CategoryServices;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -18,18 +20,21 @@ class ReportApiController extends Controller
     use CurrencyTrait;
     use ScheduleTrait;
 
+    private CategoryServices $categoryServices;
+
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
+        $this->categoryServices = new CategoryServices();
     }
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function budgetChart(Request $request)
+    public function budgetChart(Request $request): JsonResponse
     {
         /**
          * @get('/api/budgetchart')
@@ -42,7 +47,7 @@ class ReportApiController extends Controller
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
-        $categories = $this->getChildCategories($request);
+        $categories = $this->categoryServices->getChildCategories($request);
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
@@ -191,11 +196,13 @@ class ReportApiController extends Controller
     /**
      * Collect actual transactions for the given interval.
      *
-     * @param int  $year
-     * @param int  $month
-     * @return \Illuminate\Http\JsonResponse
+     * @param string $transactionType
+     * @param string $dataType  Planned feature for budget. Currently actual transactions are supported.
+     * @param int $year
+     * @param int|null $month
+     * @return JsonResponse
      */
-    public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int $month = null)
+    public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int $month = null): JsonResponse
     {
         /**
          * @get('/api/reports/waterfall/{type}/{year}/{month?}')
@@ -319,34 +326,5 @@ class ReportApiController extends Controller
             ],
             Response::HTTP_OK
         );
-    }
-
-    // TODO: unify with TransactionApiController
-    private function getChildCategories(Request $request)
-    {
-        $categories = collect();
-
-        if ($request->missing('categories')) {
-            return $categories;
-        }
-
-        $requestedCategories = Auth::user()
-            ->categories()
-            ->whereIn('id', $request->get('categories'))
-            ->get();
-
-        $requestedCategories->each(function ($category) use (&$categories) {
-            if ($category->parent_id === null) {
-                $children = Auth::user()
-                    ->categories()
-                    ->where('parent_id', '=', $category->id)
-                    ->get();
-                $categories = $categories->merge($children);
-            }
-
-            $categories->push($category);
-        });
-
-        return $categories->unique('id');
     }
 }

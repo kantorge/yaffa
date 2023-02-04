@@ -10,6 +10,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use App\Services\CategoryServices;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -21,9 +22,12 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
 {
+    private CategoryServices $categoryServices;
+
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
+        $this->categoryServices = new CategoryServices();
     }
 
     /**
@@ -83,7 +87,7 @@ class TransactionApiController extends Controller
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
-        $categories = $this->getChildCategories($request);
+        $categories = $this->categoryServices->getChildCategories($request);
 
         // Get all standard transactions
         $standardTransactions = Transaction::with(
@@ -519,7 +523,7 @@ class TransactionApiController extends Controller
         return $processedTransactionItems;
     }
 
-    public function skipScheduleInstance(Transaction $transaction)
+    public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**
          * @patch('/api/transactions/{transaction}/skip')
@@ -535,41 +539,13 @@ class TransactionApiController extends Controller
         );
     }
 
-    private function getChildCategories(Request $request)
-    {
-        $categories = collect();
-
-        if ($request->missing('categories')) {
-            return $categories;
-        }
-
-        $requestedCategories = Auth::user()
-            ->categories()
-            ->whereIn('id', $request->get('categories'))
-            ->get();
-
-        $requestedCategories->each(function ($category) use (&$categories) {
-            if ($category->parent_id === null) {
-                $children = Auth::user()
-                    ->categories()
-                    ->where('parent_id', '=', $category->id)
-                    ->get();
-                $categories = $categories->merge($children);
-            }
-
-            $categories->push($category);
-        });
-
-        return $categories->unique('id');
-    }
-
     /**
      * Remove the specified resource from storage.
      *
      * @param  Transaction  $transaction
      * @return JsonResponse
      */
-    public function destroy(Transaction $transaction)
+    public function destroy(Transaction $transaction): JsonResponse
     {
         /**
          * @delete('/api/transactions/{transaction}')
