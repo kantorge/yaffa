@@ -118,7 +118,7 @@ export default {
           vue.attributes = response.data.transactions
               // Keep only the transactions with a next date set.
               // Note: the date values are not converted to JavaScript Date objects in general.
-              // TODO: is it a valid case for a returned schedule to not have a schedule_config set?
+              // Note: at this point, all items should have a schedule and next date, but a double-check is performed
               .filter((transaction) => transaction.schedule_config && transaction.schedule_config.next_date)
               // Map the data to the format required by the calendar component
               .map(function (transaction, index) {
@@ -130,17 +130,17 @@ export default {
               })
 
           // Set min and max dates or fall back to current month
-          if ($vm.attributes.length > 0) {
-            $vm.minDate = $vm.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
+          if (vue.attributes.length > 0) {
+            vue.minDate = vue.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
               return (a < b ? a : b);
             });
-            $vm.maxDate = $vm.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
+            vue.maxDate = vue.attributes.map((transaction) => transaction.dates).reduce(function (a, b) {
               return (a > b ? a : b);
             });
           } else {
             const date = new Date();
-            $vm.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
-            $vm.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            vue.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
+            vue.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
           }
         })
         .finally(function () {
