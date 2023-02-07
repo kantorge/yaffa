@@ -11,7 +11,7 @@ const selectorHistoryTable = '#historyTable';
 
 // Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
 let presetFilters = {
-    ready: function() {
+    ready: function () {
         for (let key in presetFilters) {
             if (presetFilters[key] === false) {
                 return false;
@@ -28,7 +28,7 @@ for (let key in window.filters) {
 
 // Disable table refresh, if any filters are preset
 if (!presetFilters.ready()) {
-    document.getElementById('reload').setAttribute('disabled','disabled');
+    document.getElementById('reload').setAttribute('disabled', 'disabled');
 }
 
 // Initialize date range picker
@@ -78,17 +78,17 @@ var dtHistory = $(selectorHistoryTable).DataTable({
                 },
             }
         )
-        .then((response) => response.json())
-        .then((data) => {
-            let result = data.data
-            .map(function(transaction) {
-                transaction.date = new Date(transaction.date);
+            .then((response) => response.json())
+            .then((data) => {
+                let result = data.data
+                    .map(function (transaction) {
+                        transaction.date = new Date(transaction.date);
 
-                return transaction;
+                        return transaction;
+                    });
+
+                callback({data: result});
             });
-
-            callback({data: result});
-        });
     },
     columns: [
         dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
@@ -100,20 +100,20 @@ var dtHistory = $(selectorHistoryTable).DataTable({
                 if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                        ? (row.reconciled == 1
-                            ? __('Reconciled')
-                            : __('Uncleared')
-                        )
-                        : __('Unavailable')
+                            ? (row.reconciled == 1
+                                    ? __('Reconciled')
+                                    : __('Uncleared')
+                            )
+                            : __('Unavailable')
                     );
                 }
                 return (!row.schedule
                     && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                    ? (row.reconciled == 1
-                        ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
-                        : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
-                    )
-                    : '<i class="fa fa-circle text-muted"></i>'
+                        ? (row.reconciled == 1
+                                ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
+                                : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
+                        )
+                        : '<i class="fa fa-circle text-muted"></i>'
                 );
             },
             orderable: false,
@@ -150,10 +150,10 @@ var dtHistory = $(selectorHistoryTable).DataTable({
             $(row).addClass('text-muted text-italic');
         }
     },
-    initComplete: function() {
+    initComplete: function () {
         // Get the Datatable API instance
         var api = this.api();
-        setTimeout(function() {
+        setTimeout(function () {
             api.columns.adjust().draw();
         }, 2000);
     },
@@ -174,20 +174,20 @@ var dtSchedule = $(selectorScheduleTable).DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/schedule?account=' + account.id,
         type: 'GET',
-        dataSrc: function(data) {
+        dataSrc: function (data) {
             return data.transactions
-            .map(function(transaction) {
-                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-                if (transaction.schedule_config.next_date) {
-                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-                }
-                if (transaction.schedule_config.end_date) {
-                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-                }
+                .map(function (transaction) {
+                    transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                    if (transaction.schedule_config.next_date) {
+                        transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
+                    }
+                    if (transaction.schedule_config.end_date) {
+                        transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
+                    }
 
-                return transaction;
-            })
-            .filter(transaction => transaction.schedule_config.next_date);
+                    return transaction;
+                })
+                .filter(transaction => transaction.schedule_config.next_date);
         },
         deferRender: true
     },
@@ -222,37 +222,37 @@ var dtSchedule = $(selectorScheduleTable).DataTable({
             return;
         }
 
-        if (data.schedule_config.next_date  < new Date(new Date().setHours(0,0,0,0)) ) {
+        if (data.schedule_config.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('table-danger');
-        } else if (data.schedule_config.next_date  < new Date(new Date().setHours(24,0,0,0)) ) {
+        } else if (data.schedule_config.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
             $(row).addClass('table-warning');
         }
     },
-    initComplete: function() {
+    initComplete: function () {
         // Get the Datatable API instance
         var api = this.api();
-        setTimeout(function() {
+        setTimeout(function () {
             api.columns.adjust().draw();
         }, 2000);
     },
     order: [
         // Next date is the first column
-        [ 0, "asc" ]
+        [0, "asc"]
     ],
     responsive: true,
-    deferRender:    true,
-    scrollY:        '500px',
+    deferRender: true,
+    scrollY: '500px',
     scrollCollapse: true,
-    scroller:       true,
-    stateSave:      false,
-    processing:     true,
-    paging:         false,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
 });
 
 dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
 
 // Skip instance via API
-$(selectorScheduleTable).on("click", "[data-skip]", function() {
+$(selectorScheduleTable).on("click", "[data-skip]", function () {
     // Prevent running multiple times in parallel
     if ($(this).hasClass("busy")) {
         return false;
@@ -263,53 +263,53 @@ $(selectorScheduleTable).on("click", "[data-skip]", function() {
     $(this).addClass('busy');
 
     axios.patch('/api/transactions/' + id + '/skip')
-    .then(function (response) {
-        // Find and update original row in schedule table
-        var row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
-            return data.id == id;
+        .then(function (response) {
+            // Find and update original row in schedule table
+            var row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
+                return data.id == id;
+            });
+
+            var data = row.data();
+            var newNextDate = response.data.transaction.schedule_config.next_date;
+            // If next date exists, update the row. Otherwise remove it.
+            if (newNextDate) {
+                data.schedule_config.next_date = new Date(newNextDate);
+                row.data(data).draw();
+
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('notification', {
+                    detail: {
+                        notification: {
+                            type: 'success',
+                            message: 'Schedule instance skipped (#' + id + ')',
+                            title: null,
+                            icon: null,
+                            dismissible: true,
+                        }
+                    },
+                });
+                window.dispatchEvent(notificationEvent);
+            } else {
+                row.remove().draw();
+
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('notification', {
+                    detail: {
+                        notification: {
+                            type: 'success',
+                            message: 'Schedule instance skipped. (#' + id + '). This schedule has ended.',
+                            title: null,
+                            icon: null,
+                            dismissible: true,
+                        }
+                    },
+                });
+                window.dispatchEvent(notificationEvent);
+            }
+
+            // The redraw will also remove the busy class
+            // TODO: is this reliable, or should there be an other flag, which needs to be reset manually?
         });
-
-        var data = row.data();
-        var newNextDate = response.data.transaction.schedule_config.next_date;
-        // If next date exists, update the row. Otherwise remove it.
-        if (newNextDate) {
-            data.schedule_config.next_date = new Date(newNextDate);
-            row.data(data).draw();
-
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
-                detail: {
-                    notification: {
-                        type: 'success',
-                        message: 'Schedule instance skipped (#' + id + ')',
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
-            });
-        window.dispatchEvent(notificationEvent);
-        } else {
-            row.remove().draw();
-
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
-                detail: {
-                    notification: {
-                        type: 'success',
-                        message: 'Schedule instance skipped. (#' + id + '). This schedule has ended.',
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
-            });
-            window.dispatchEvent(notificationEvent);
-        }
-
-        // The redraw will also remove the busy class
-        // TODO: is this reliable, or should there be an other flag, which needs to be reset manually?
-    });
 });
 
 // Delete instance via API
@@ -336,7 +336,7 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         dataType: "json",
         context: this,
         success: function (_data) {
-            var row = $(selectorHistoryTable).dataTable().api().row(function ( _idx, data, _node ) {
+            var row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
                 return data.id == currentId
             });
             var data = row.data()
@@ -356,8 +356,8 @@ $('input[name=reconciled]').on("change", function () {
 
 // Function to reload table data
 function reloadTable() {
-    document.getElementById('reload').setAttribute('disabled','disabled');
-    dtHistory.ajax.reload(function() {
+    document.getElementById('reload').setAttribute('disabled', 'disabled');
+    dtHistory.ajax.reload(function () {
         document.getElementById('reload').removeAttribute('disabled');
 
         // (Re-)Initialize tooltips in table
@@ -368,7 +368,7 @@ function reloadTable() {
 // Reload button functionality
 $("#reload").on('click', reloadTable);
 
-$("#clear_dates").on('click', function() {
+$("#clear_dates").on('click', function () {
     dateRangePicker.setDates(
         {clear: true},
         {clear: true}
@@ -426,7 +426,9 @@ $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', fun
     recentTransactionDraftId = $(this).data('draft');
 
     var transactions = [];
-    $(selectorScheduleTable).dataTable().api().data().each(function(d) { transactions.push(d)});
+    $(selectorScheduleTable).dataTable().api().data().each(function (d) {
+        transactions.push(d)
+    });
 
     // Retrieve the transaction draft based on stored (draft) ID
     const draft = transactions.find(transaction => transaction.id == recentTransactionDraftId);
@@ -458,7 +460,7 @@ window.addEventListener('transaction-created', function (event) {
     dtHistory.row.add(transaction).draw();
 
     // Adjust columns
-    setTimeout(function() {
+    setTimeout(function () {
         dtHistory.columns.adjust().draw();
     }, 2000);
 
@@ -473,7 +475,9 @@ window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', fun
     // TODO: Disable all the action buttons of this item
 
     var transactions = [];
-    $(selectorScheduleTable).dataTable().api().data().each(function(d) { transactions.push(d)});
+    $(selectorScheduleTable).dataTable().api().data().each(function (d) {
+        transactions.push(d)
+    });
 
     let transaction = transactions.find(transaction => transaction.id == $(this).data('draft'));
 
@@ -501,58 +505,58 @@ window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', fun
         },
         body: JSON.stringify(transaction)
     })
-    .then((response) => {
-        if (response.statusText !== 'OK') {
-            throw new Error(response.statusText);
-        }
-
-        response.json()
-    })
-    .then((data) => {
-        // Get the new transaction from the response
-        let transaction = data.transaction;
-
-        // TODO: This should be unified with the same modal behavior
-        // Emit a custom event to global scope about the new transaction to be displayed as a notification
-        let notificationEvent = new CustomEvent('notification', {
-            detail: {
-                notification: {
-                    type: 'success',
-                    message: 'Transaction added (#' + transaction.id + ')',
-                    title: null,
-                    icon: null,
-                    dismissible: true,
-                }
-            },
-        });
-        window.dispatchEvent(notificationEvent);
-
-        // Emit a custom event about the new transaction to be displayed
-        let transactionEvent = new CustomEvent('transaction-created', {
-            detail: {
-                // Pass the entire transaction object to the event
-                transaction: transaction,
+        .then((response) => {
+            if (response.statusText !== 'OK') {
+                throw new Error(response.statusText);
             }
+
+            response.json()
+        })
+        .then((data) => {
+            // Get the new transaction from the response
+            let transaction = data.transaction;
+
+            // TODO: This should be unified with the same modal behavior
+            // Emit a custom event to global scope about the new transaction to be displayed as a notification
+            let notificationEvent = new CustomEvent('notification', {
+                detail: {
+                    notification: {
+                        type: 'success',
+                        message: 'Transaction added (#' + transaction.id + ')',
+                        title: null,
+                        icon: null,
+                        dismissible: true,
+                    }
+                },
+            });
+            window.dispatchEvent(notificationEvent);
+
+            // Emit a custom event about the new transaction to be displayed
+            let transactionEvent = new CustomEvent('transaction-created', {
+                detail: {
+                    // Pass the entire transaction object to the event
+                    transaction: transaction,
+                }
+            });
+            window.dispatchEvent(transactionEvent);
+        })
+        .finally(() => {
+            // TODO: Re-enable all the action buttons of this item
+        })
+        .catch(error => {
+            console.error(error);
         });
-        window.dispatchEvent(transactionEvent);
-    })
-    .finally(() => {
-        // TODO: Re-enable all the action buttons of this item
-    })
-    .catch(error => {
-        console.error(error);
-    });
 });
 
 // Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function(event) {
+document.getElementById('dateRangePickerPresets').addEventListener('change', function (event) {
     const preset = this.options[this.selectedIndex].value;
     const date = new Date();
     let start;
     let end;
     let quarter;
 
-    switch(preset) {
+    switch (preset) {
         case 'thisMonth':
             start = new Date(date.getFullYear(), date.getMonth(), 1);
             end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -618,7 +622,7 @@ document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
 
 // Get current balance
 axios.get('/api/account/balance/' + window.account.id)
-    .then(function(response) {
+    .then(function (response) {
         let balance = response.data.accountBalanceData[0];
 
         let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
@@ -658,7 +662,7 @@ axios.get('/api/account/balance/' + window.account.id)
             );
         }
     })
-    .catch(function(error) {
+    .catch(function (error) {
         document.getElementById('overviewOpeningBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
         document.getElementById('overviewCurrentCash').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
         document.getElementById('overviewCurrentBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
@@ -666,7 +670,8 @@ axios.get('/api/account/balance/' + window.account.id)
     })
 
 // Initialize Vue for the quick view
-import { createApp } from 'vue'
+import {createApp} from 'vue'
+
 const app = createApp({})
 
 // Add global translator function

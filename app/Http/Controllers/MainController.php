@@ -58,7 +58,7 @@ class MainController extends Controller
             'config',
             [TransactionDetailStandard::class],
             function (Builder $query) use ($account) {
-                $query->Where('account_from_id', $account->id);
+                $query->where('account_from_id', $account->id);
                 $query->orWhere('account_to_id', $account->id);
             }
         )
@@ -83,7 +83,7 @@ class MainController extends Controller
             'config',
             [TransactionDetailInvestment::class],
             function (Builder $query) use ($account) {
-                $query->Where('account_id', $account->id);
+                $query->where('account_id', $account->id);
             }
         )
         ->with([

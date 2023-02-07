@@ -11,8 +11,6 @@ require('select2');
 //import drpLangHu from 'vanillajs-datepicker/locales/hu';
 //Object.assign(DateRangePicker.locales, drpLangHu);
 
-import { toFormattedCurrency } from '../helpers';
-
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
 

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-class CategoryController extends Controller
+class CategoryApiController extends Controller
 {
     public function __construct()
     {

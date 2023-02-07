@@ -533,7 +533,7 @@
                         },
                         cache: true
                     },
-                    selectOnClose: true,
+                    selectOnClose: false,
                     placeholder: __("Select account"),
                     allowClear: true,
                     theme: 'bootstrap-5',
@@ -602,7 +602,7 @@
                     },
                     cache: true
                 },
-                selectOnClose: true,
+                selectOnClose: false,
                 placeholder: __("Select investment"),
                 allowClear: true,
                 theme: 'bootstrap-5',

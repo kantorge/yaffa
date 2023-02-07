@@ -42,5 +42,6 @@ class TagTest extends TestCase
 
         // Compare returned element count
         $this->assertEquals($active->count(), $result->count());
+        $this->assertEquals($active->count(), $result->where('active', true)->count());
     }
 }

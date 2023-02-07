@@ -101,8 +101,7 @@ function filterData() {
 $('#filters input[type="radio"]').on('change', filterData);
 
 // Fetch API and calculate Gantt dates
-const url = '/api/assets/investment/timeline';
-fetch(url)
+fetch('/api/assets/investment/timeline')
     .then(response => response.json())
     .then(function(data) {
         window.chartData = data.map(function(item) {

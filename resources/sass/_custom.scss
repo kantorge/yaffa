@@ -18,10 +18,6 @@ td.dt-nowrap {
     cursor: pointer;
 }
 
-.d-inline-block {
-    display: inline-block;
-}
-
 // Hide/show spinner for busy/idle button in DataTables
 table button:not(.busy) i.fa-spinner {
     display: none;
