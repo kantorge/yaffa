@@ -7,13 +7,14 @@ use App\Models\AccountEntity;
 use App\Models\Payee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
 
 class AccountEntityFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var string
+     * @var class-string<Model|TModel>
      */
     protected $model = AccountEntity::class;
 
@@ -48,19 +49,29 @@ class AccountEntityFactory extends Factory
         });
     }
 
-    public function account(User $user = null)
+    /**
+     * @param User|null $user  Optionally pass the owner of the created asset. Selected by random from existing users if null.
+     * @param array $configAttributes  Optionally pass the properties to be used.
+     * @return AccountEntityFactory
+     */
+    public function account(User $user = null, array $configAttributes = []): AccountEntityFactory
     {
-        return $this->state(function (array $attributes) use ($user) {
+        return $this->state(function (array $attributes) use ($user, $configAttributes) {
             if (! $user) {
                 $user = User::find($attributes['user_id']);
             }
 
-            return [
-                'config_type' => 'account',
-                'config_id' => Account::factory()->create([
+            $configAttributes = array_merge(
+                [
                     'account_group_id' => $user->accountGroups()->inRandomOrder()->first()->id,
                     'currency_id' => $user->currencies()->inRandomOrder()->first()->id,
-                ])->id,
+                ],
+                $configAttributes
+            );
+
+            return [
+                'config_type' => 'account',
+                'config_id' => Account::factory()->create($configAttributes)->id,
             ];
         });
     }

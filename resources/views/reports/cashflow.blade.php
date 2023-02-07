@@ -7,25 +7,29 @@
 @section('content_header', __('Cash flow'))
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <div class="text-end">
-            <a
-                class="btn {{($singleAxes ? 'btn-primary' : 'btn-info') }}"
-                href="{{ route('reports.cashflow', ['withForecast' => ($withForecast ? 'withForecast' : ''), 'singleAxes' => ($singleAxes ? '' : 'singleAxes')]) }}"
-                title="{{($singleAxes ? __('Show on two axes') : __('Show on same axes')) }}">
-                <i class="fa fa-lock"></i>
-            </a>
-            <a
-                class="btn {{($withForecast ? 'btn-primary' : 'btn-info') }}"
-                href="{{ route('reports.cashflow', ['withForecast' => ($withForecast ? '' : 'withForecast'), 'singleAxes' => ($singleAxes ? 'singleAxes' : '')]) }}"
-                title="{{($withForecast ? __('Without forecast') : __('With forecast')) }}">
-                <i class="fa fa-calendar"></i>
-            </a>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <div class="col-6 col-sm-4">
+                    <select class="form-select" id="cashflowAccount"></select>
+                </div>
+                <div></div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-primary" id="btnReload">{{ __('Reload') }}</button>
+
+                    <input type="checkbox" class="btn-check" id="singleAxis" checked autocomplete="off">
+                    <label class="btn btn-outline-primary" for="singleAxis" title="{{ __('Show on same axis') }}"><i class="fa fa-lock"></i></label>
+
+                    <input type="checkbox" class="btn-check" id="withForecast" {{ $withForecast ? 'checked' : '' }} autocomplete="off">
+                    <label class="btn btn-outline-primary" for="withForecast" title="{{ __('With forecast') }}"><i class="fa fa-calendar"></i></label>
+                </div>
+            </div>
+            <div class="card-body">
+                <span class="placeholder-glow"><span id="placeholder" class="placeholder col-12 placeholder-lg"></span></span>
+                <div id="chartdiv" class="hidden" style="width:100%; height:500px;"></div>
+            </div>
         </div>
-    </div>
-    <div class="card-body">
-        <div id="chartdiv" style="width:100%;height:500px;"></div>
     </div>
 </div>
 @stop

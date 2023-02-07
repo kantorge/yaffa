@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Payee;
 use App\Models\TransactionType;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class PayeeApiController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/payee')
@@ -34,7 +35,6 @@ class PayeeApiController extends Controller
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
-                ->select(['id', 'name AS text'])
                 ->when($request->get('q'), function ($query) use ($request) {
                     $query->where('name', 'LIKE', '%'.$request->get('q').'%');
                 })
@@ -48,7 +48,7 @@ class PayeeApiController extends Controller
             $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
             $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
 
-            $payees = DB::table('transactions')
+            $payeeIds = DB::table('transactions')
                 ->join(
                     'transaction_details_standard',
                     'transaction_details_standard.id',
@@ -61,7 +61,7 @@ class PayeeApiController extends Controller
                     '=',
                     "transaction_details_standard.account_{$payeeDirection}_id"
                 )
-                ->select('account_entities.id', 'account_entities.name AS text')
+                ->select('account_entities.id')
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->where('account_entities.active', true);
                 })
@@ -83,7 +83,11 @@ class PayeeApiController extends Controller
                 ->groupBy("transaction_details_standard.account_{$payeeDirection}_id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
-                ->get();
+                ->get()
+                ->pluck('id');
+
+            // Hydrate models
+            $payees = AccountEntity::findMany($payeeIds);
         } else {
             // Set payees to be empty
             $payees = collect();
@@ -327,7 +331,7 @@ class PayeeApiController extends Controller
      * Get the payee entity and main attributes for the given id
      *
      * @param  AccountEntity  $accountEntity
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getItem(AccountEntity $accountEntity)
     {

@@ -142,9 +142,9 @@ class CreateDefaultAssetsForNewUser
 
         return Currency::forceCreate([
             'name' => $currencyData['name'],
-            'iso_code' => $currencyData['isoCode'],
-            'num_digits' => $currencyData['minorUnits'],
-            'suffix' => $currencyData['symbol'],
+            'iso_code' => $currencyData['iso_code'],
+            'num_digits' => $currencyData['num_digits'],
+            'suffix' => $currencyData['suffix'],
             'base' => ($base ? true : null),
             'auto_update' => true,
             'user_id' => $this->user->id,

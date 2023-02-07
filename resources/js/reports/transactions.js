@@ -207,7 +207,12 @@ $(elementAccountSelector).select2({
         },
         processResults: function (data) {
             return {
-                results: data,
+                results: data.map(function(account) {
+                    return {
+                        id: account.id,
+                        text: account.name,
+                    }
+                }),
             };
         },
         cache: true
@@ -264,7 +269,12 @@ $(elementPayeeSelector).select2({
         },
         processResults: function (data) {
             return {
-                results: data,
+                results: data.map(function(account) {
+                    return {
+                        id: account.id,
+                        text: account.name,
+                    }
+                }),
             };
         },
         cache: true

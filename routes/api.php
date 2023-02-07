@@ -11,12 +11,10 @@ use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/assets/account', 'App\Http\Controllers\API\AccountController@getList');
-Route::get('/assets/account/standard', 'App\Http\Controllers\API\AccountController@getStandardList');
-Route::get('/assets/account/investment', [AccountController::class, 'getAccountListForInvestments']);
-Route::get('/assets/account/{accountEntity}', [AccountController::class, 'getItem']);
-Route::get('/assets/account/currency/{accountEntity}', 'App\Http\Controllers\API\AccountController@getAccountCurrency');
-Route::get('/account/balance/{accountEntity?}', [AccountController::class, 'getAccountBalance']);
+Route::get('/assets/account', [AccountApiController::class, 'getList']);
+Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
+Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
+Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'getAccountBalance']);
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class,'updateActive'])->name('api.accountentity.updateActive');
 
@@ -48,6 +46,8 @@ Route::get('/budgetchart', [ReportApiController::class, 'budgetChart']);
 Route::get('/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}', [ReportApiController::class, 'getCategoryWaterfallData'])
     ->where('transactionType', 'standard|investment|all')
     ->where('type', 'budget|result|all');
+Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])->name('api.reports.cashflow');
+Route::get('/reports/account_history_by_month/{accountEntity}/{withForecast?}', [ReportApiController::class, 'getAccountHistoryByMonth']);
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 

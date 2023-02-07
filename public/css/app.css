@@ -12412,10 +12412,6 @@ td.dt-nowrap {
   cursor: pointer;
 }
 
-.d-inline-block {
-  display: inline-block;
-}
-
 table button:not(.busy) i.fa-spinner {
   display: none;
 }

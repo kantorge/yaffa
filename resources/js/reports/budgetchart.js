@@ -46,6 +46,7 @@ const computeMovingAverage = (baseData, period) => {
 }
 
 const elementRefreshButton = document.getElementById('reload');
+const treeSelector = '#category_tree';
 
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
@@ -113,7 +114,7 @@ let reloadData = function () {
     $.ajax({
         url: '/api/budgetchart',
         data: {
-            categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
+            categories: ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked') : []),
             byYears: (byYears ? 1 : 0),
         }
     })
@@ -146,8 +147,10 @@ elementRefreshButton.addEventListener('click', reloadData);
 
 // Initially we need to prevent dataTables from calling AJAX, as JStree will not be initialized
 let initialTableLoad = true;
+const tableSelector = '#table';
 
-window.table = $('#table').DataTable({
+
+window.table = $(tableSelector).DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
@@ -185,7 +188,7 @@ window.table = $('#table').DataTable({
             }
 
             return Object.assign({}, {
-                categories: ($('#category_tree').jstree() ? $('#category_tree').jstree('get_checked') : []),
+                categories: ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked') : []),
                 category_required: 1,
             });
         },
@@ -281,10 +284,11 @@ window.table = $('#table').DataTable({
     paging: false,
 });
 
-dataTableHelpers.initializeSkipInstanceButton("#table");
-dataTableHelpers.initializeDeleteButton("#table");
+dataTableHelpers.initializeSkipInstanceButton(tableSelector);
+dataTableHelpers.initializeDeleteButton(tableSelector);
 
-// Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
+// Initialize an object which checks if preset filters are populated.
+// This is used to trigger initial chart and table content.
 let presetFilters = {
     ready: function () {
         for (let key in presetFilters) {
@@ -297,24 +301,24 @@ let presetFilters = {
 };
 
 // Loop filter categories and populate presetFilters array.
-presetCategories.forEach(category => presetFilters[category] = false);
+window.presetCategories.forEach(category => presetFilters[category] = false);
 
-// Disable table refresh, if any filters are preset
+// Disable refresh, if any filters are preset, as an initial load will be performed
 if (!presetFilters.ready()) {
     elementRefreshButton.disabled = true;
 }
 
-// Attach event listener to category select2 for select and unselect events to update browser url, without reloading page.
+// Update URL params based on JS Tree selection
 let rebuildUrl = function () {
-    let params = $('#category_tree').jstree('get_checked').map((category) => 'categories[]=' + category);
+    let params = $(treeSelector).jstree('get_checked').map((category) => 'categories[]=' + category);
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
 
     // Finally, adjust reload button availability
-    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
+    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
 }
 
 // Initialize category tree view
-$('#category_tree')
+$(treeSelector)
 .jstree({
     core: {
         data: function (_obj, callback) {
@@ -353,18 +357,18 @@ $('#category_tree')
 .on('select_node.jstree', rebuildUrl)
 .on('deselect_node.jstree', rebuildUrl)
 .on('ready.jstree', function() {
-    elementRefreshButton.disabled = ($('#category_tree').jstree('get_checked').length === 0);
+    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
     reloadData();
 });
 
 // Select all button function
 document.getElementById('all').addEventListener('click', function() {
-    $('#category_tree').jstree('check_all');
+    $(treeSelector).jstree('check_all');
     rebuildUrl()
 });
 
 // Clear button function
 document.getElementById('clear').addEventListener('click', function() {
-    $('#category_tree').jstree('uncheck_all');
+    $(treeSelector).jstree('uncheck_all');
     rebuildUrl()
 });

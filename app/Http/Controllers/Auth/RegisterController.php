@@ -50,7 +50,7 @@ class RegisterController extends Controller
         $this->middleware('guest');
 
         foreach(CurrencyData::getCurrencies() as $currency) {
-            $this->availableCurrencies[$currency['isoCode']] = $currency['name'];
+            $this->availableCurrencies[$currency['iso_code']] = $currency['name'];
         }
     }
 

@@ -274,7 +274,12 @@ $('#account').select2({
         },
         processResults: function (data) {
             return {
-                results: data,
+                results: data.map(function(account) {
+                    return {
+                        id: account.id,
+                        text: account.name,
+                    }
+                }),
             };
         },
         cache: true
@@ -285,13 +290,13 @@ $('#account').select2({
 })
 .on('select2:select', function (e) {
     $.ajax({
-        url:  '/api/assets/account/currency/' + e.params.data.id,
+        url:  '/api/assets/account/' + e.params.data.id,
         data: {
             _token: csrfToken,
         }
     })
     .done(data => {
-        window.account_currency = data;
+        window.account_currency = data.config.currency;
 
         // Enable the file input
         document.getElementById('csv_file').disabled = false;

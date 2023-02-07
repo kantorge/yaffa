@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class AccountEntityApiController extends Controller
@@ -13,7 +15,10 @@ class AccountEntityApiController extends Controller
         $this->middleware('auth:sanctum');
     }
 
-    public function updateActive(AccountEntity $accountEntity, $active)
+    /**
+     * @throws AuthorizationException
+     */
+    public function updateActive(AccountEntity $accountEntity, $active): JsonResponse
     {
         /**
          * @put('/api/assets/accountentity/{accountEntity}/active/{active}')

@@ -548,13 +548,13 @@
 
                     if ($vm.getAccountType('from') == 'account') {
                         $.ajax({
-                            url:  '/api/assets/account/currency/' + e.params.data.id,
+                            url:  '/api/assets/account/' + e.params.data.id,
                             data: {
                                 _token: $vm.csrfToken,
                             }
                         })
                         .done(data => {
-                            $vm.from.account_currency = data.suffix;
+                            $vm.from.account_currency = data.config.currency.suffix;
                         });
                     } else {
                         $.ajax({
@@ -590,13 +590,13 @@
 
                     if ($vm.getAccountType('to') === 'account') {
                         $.ajax({
-                            url:  '/api/assets/account/currency/' + e.params.data.id,
+                            url:  '/api/assets/account/' + e.params.data.id,
                             data: {
                                 _token: $vm.csrfToken,
                             }
                         })
                         .done(data => {
-                            $vm.to.account_currency = data.suffix;
+                            $vm.to.account_currency = data.config.currency.suffix;
                         });
                     } else if ($vm.getAccountType('to') === 'payee') {
                         $.ajax({
@@ -800,7 +800,7 @@
 
             // Get url to payee or account list, based on source or target type
             getAccountApiUrl(type) {
-                const accountUrl = '/api/assets/account/standard';
+                const accountUrl = '/api/assets/account';
                 const payeeUrl = '/api/assets/payee';
 
                 return this.getAccountType(type) == 'account' ? accountUrl : payeeUrl;
@@ -852,9 +852,14 @@
                                 data = data.filter(item => item.id != otherAccountId);
                             }
 
-                            return {
-                                results: data,
-                            };
+                          return {
+                            results: data.map(function(account) {
+                              return {
+                                id: account.id,
+                                text: account.name,
+                              }
+                            }),
+                          };
                         },
                         cache: true
                     },

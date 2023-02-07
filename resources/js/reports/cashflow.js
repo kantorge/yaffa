@@ -1,79 +1,194 @@
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+
 am4core.useTheme(am4themes_animated);
+require('select2');
 
-$(function () {
-    var localeString = window.YAFFA.locale;
+window.chartData = [];
+let chart;
 
-    var chart = am4core.create("chartdiv", am4charts.XYChart);
-    chart.data = transactionDataHistory;
+chart = am4core.create("chartdiv", am4charts.XYChart);
 
-    chart.numberFormatter.intlLocales = localeString;
-    chart.dateFormatter.intlLocales = localeString;
+chart.numberFormatter.intlLocales = window.YAFFA.locale;
+chart.dateFormatter.intlLocales = window.YAFFA.locale;
 
-    chart.numberFormatter.numberFormat = {
-        style: 'currency',
-        currency: currency.iso_code,
-        currencyDisplay: 'narrowSymbol',
-        minimumFractionDigits: currency.num_digits,
-        maximumFractionDigits: currency.num_digits
-    };
+chart.numberFormatter.numberFormat = {
+    style: 'currency',
+    currency: window.YAFFA.baseCurrency.iso_code,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: window.YAFFA.baseCurrency.num_digits,
+    maximumFractionDigits: window.YAFFA.baseCurrency.num_digits
+};
 
-    chart.dateFormatter.dateFormat = {
-        "year": "numeric",
-        "month": "long",
-    };
+chart.dateFormatter.dateFormat = {
+    "year": "numeric",
+    "month": "long",
+};
 
-    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
-    dateAxis.dataFields.category = "month";
-    dateAxis.dateFormatter.intlLocales = localeString;
-    dateAxis.dateFormats.setKey("year", { "year": "numeric" });
-    dateAxis.dateFormats.setKey("month", { "year": "numeric", "month": "short" });
+let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+dateAxis.dataFields.category = "month";
+dateAxis.dateFormatter.intlLocales = window.YAFFA.locale;
+dateAxis.dateFormats.setKey("year", {"year": "numeric"});
+dateAxis.dateFormats.setKey("month", {"year": "numeric", "month": "short"});
 
-    // Set up event listener to date axis to highlight current month
-    dateAxis.events.on("datavalidated", function(ev) {
-        var axis = ev.target;
-        const now = new Date();
+// Set up event listener to date axis to highlight current month
+dateAxis.events.on("datavalidated", function (ev) {
+    let axis = ev.target;
+    const now = new Date();
 
-        // Create a range
-        var range = axis.axisRanges.create();
-        range.date = new Date(now.getFullYear(), now.getMonth(), 1);
-        range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        range.axisFill.fill = am4core.color("#396478");
-        range.axisFill.fillOpacity = 0.4;
-        range.grid.strokeOpacity = 0;
-    });
+    // Create a range
+    let range = axis.axisRanges.create();
+    range.date = new Date(now.getFullYear(), now.getMonth(), 1);
+    range.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    range.axisFill.fill = am4core.color("#396478");
+    range.axisFill.fillOpacity = 0.4;
+    range.grid.strokeOpacity = 0;
+});
 
-    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
-    // Monthly bars
-    var seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
-    seriesMonhtly.dataFields.valueY = "value";
-    seriesMonhtly.yAxis = valueAxis;
-    seriesMonhtly.dataFields.dateX = "month";
-    seriesMonhtly.name = __('Monthly change');
-    seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
+// Monthly bars
+let seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
+seriesMonhtly.dataFields.valueY = "value";
+seriesMonhtly.yAxis = valueAxis;
+seriesMonhtly.dataFields.dateX = "month";
+seriesMonhtly.name = __('Monthly change');
+seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
 
-    // Running total line
-    var seriesTotal = chart.series.push(new am4charts.LineSeries());
-    seriesTotal.dataFields.valueY = "runningTotal";
-    seriesTotal.dataFields.dateX = "month";
-    seriesTotal.strokeWidth = 2;
-    seriesTotal.name = __('Running total');
-    seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
+// Running total line
+let seriesTotal = chart.series.push(new am4charts.LineSeries());
+seriesTotal.dataFields.valueY = "runningTotal";
+seriesTotal.dataFields.dateX = "month";
+seriesTotal.strokeWidth = 2;
+seriesTotal.name = __('Running total');
+seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
 
-    if (!singleAxes) {
-        var valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
-        valueAxisTotal.renderer.opposite = true;
+let valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
+valueAxisTotal.renderer.opposite = true;
 
-        seriesTotal.yAxis = valueAxisTotal;
+let scrollbarX = new am4charts.XYChartScrollbar();
+scrollbarX.series.push(seriesMonhtly);
+chart.scrollbarX = scrollbarX;
+
+chart.legend = new am4charts.Legend();
+chart.cursor = new am4charts.XYCursor();
+
+
+function reloadData() {
+    // API endpoint depends on account being selected.
+    let url;
+    if ($(elementAccountSelector).val()) {
+        url = '/api/reports/account_history_by_month/' + $(elementAccountSelector).val() + '/' + document.getElementById('withForecast').checked;
+    } else {
+        url = window.route('api.reports.cashflow', {
+            withForecast: document.getElementById('withForecast').checked,
+        });
     }
 
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(seriesMonhtly);
-    chart.scrollbarX = scrollbarX;
+    document.getElementById('btnReload').disabled = true;
 
-    chart.legend = new am4charts.Legend();
-    chart.cursor = new am4charts.XYCursor();
+    fetch(url)
+        .then(response => response.json())
+        .then(function (data) {
+            chart.data = data.chartData;
+            chart.invalidateData();
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('chartdiv').classList.remove('hidden');
+        })
+        .catch(error => console.error(error))
+        .finally(() => {
+            document.getElementById('btnReload').disabled = false;
+        });
+}
+
+const elementAccountSelector = '#cashflowAccount';
+
+function rebuildUrl() {
+    let params = [];
+
+    // Accounts
+    if ($(elementAccountSelector).val()) {
+        params.push('account=' + $(elementAccountSelector).val());
+    }
+
+    // With forecast
+    if (document.getElementById('withForecast').checked) {
+        params.push('withForecast=1');
+    }
+
+    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+}
+
+// Account filter
+$(elementAccountSelector).select2({
+    theme: "bootstrap-5",
+    ajax: {
+        url: '/api/assets/account',
+        dataType: 'json',
+        delay: 150,
+        data: function (params) {
+            return {
+                q: params.term,
+                withInactive: true,
+            };
+        },
+        processResults: function (data) {
+            return {
+                results: data.map(function (account) {
+                    return {
+                        id: account.id,
+                        text: account.name,
+                    }
+                }),
+            };
+        },
+        cache: true
+    },
+    placeholder: __("Select account"),
+    allowClear: true
+})
+    .on('select2:select', rebuildUrl)
+    .on('select2:unselect', rebuildUrl);
+
+// Default account
+if (window.presetAccount) {
+    $.ajax({
+        url: '/api/assets/account/' + window.presetAccount,
+        data: {
+            _token: window.csrfToken,
+        }
+    })
+        .done(data => {
+            // Create the option and append to Select2
+            $(elementAccountSelector).append(new Option(data.name, data.id, true, true))
+                .trigger('change')
+                .trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: {
+                            id: data.id,
+                            name: data.name,
+                        }
+                    }
+                });
+        });
+}
+
+// Input event listeners
+document.getElementById('singleAxis').addEventListener('change', function(){
+    if (seriesTotal.yAxis == valueAxis) {
+        seriesTotal.yAxis = valueAxisTotal;
+
+        valueAxisTotal.disabled = false;
+    } else {
+        seriesTotal.yAxis = valueAxis;
+
+        valueAxisTotal.disabled = true;
+    }
 });
+document.getElementById('withForecast').addEventListener('change', rebuildUrl);
+document.getElementById('btnReload').addEventListener('click', reloadData);
+
+// Finally, load data
+reloadData();

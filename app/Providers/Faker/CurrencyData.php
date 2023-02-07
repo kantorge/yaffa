@@ -7,27 +7,27 @@ class CurrencyData
     protected static array $currencies = [
         [
             'name' => 'US Dollar',
-            'isoCode' => 'USD',
-            'symbol' => '$',
-            'minorUnits' => 2,
+            'iso_code' => 'USD',
+            'suffix' => '$',
+            'num_digits' => 2,
         ],
         [
             'name' => 'Hungarian Forint',
-            'isoCode' => 'HUF',
-            'symbol' => 'Ft',
-            'minorUnits' => 0,
+            'iso_code' => 'HUF',
+            'suffix' => 'Ft',
+            'num_digits' => 0,
         ],
         [
             'name' => 'Euro',
-            'isoCode' => 'EUR',
-            'symbol' => '€',
-            'minorUnits' => 2,
+            'iso_code' => 'EUR',
+            'suffix' => '€',
+            'num_digits' => 2,
         ],
         [
             'name' => 'Polish Złoty',
-            'isoCode' => 'PLN',
-            'symbol' => 'zł',
-            'minorUnits' => 2,
+            'iso_code' => 'PLN',
+            'suffix' => 'zł',
+            'num_digits' => 2,
         ],
     ];
 
@@ -40,7 +40,7 @@ class CurrencyData
     {
         foreach(static::getCurrencies() as $currency)
         {
-            if ($currency['isoCode'] === $isoCode )
+            if ($currency['iso_code'] === $isoCode )
                 return $currency;
         }
 
@@ -51,6 +51,6 @@ class CurrencyData
     {
         $currencies = CurrencyData::getCurrencies();
         $currency = array_rand($currencies);
-        return $currencies[$currency]['isoCode'];
+        return $currencies[$currency]['iso_code'];
     }
 }

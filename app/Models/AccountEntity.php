@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use Database\Factories\AccountEntityFactory;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -17,27 +24,27 @@ use Illuminate\Support\Facades\Auth;
  * @property bool $active
  * @property string $config_type
  * @property int $config_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection|Category[] $categoryPreference
  * @property-read int|null $category_preference_count
- * @property-read Model|\Eloquent $config
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
+ * @property-read Model|Eloquent $config
+ * @property-read Collection|Category[] $deferredCategories
  * @property-read int|null $deferred_categories_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $preferredCategories
+ * @property-read Collection|Category[] $preferredCategories
  * @property-read int|null $preferred_categories_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardFrom
+ * @property-read Collection|TransactionDetailStandard[] $transactionDetailStandardFrom
  * @property-read int|null $transaction_detail_standard_from_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardTo
+ * @property-read Collection|TransactionDetailStandard[] $transactionDetailStandardTo
  * @property-read int|null $transaction_detail_standard_to_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
+ * @property-read Collection|Transaction[] $transactionsFrom
  * @property-read int|null $transactions_from_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
+ * @property-read Collection|Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static Builder|AccountEntity accounts()
  * @method static Builder|AccountEntity active()
- * @method static \Database\Factories\AccountEntityFactory factory(...$parameters)
+ * @method static AccountEntityFactory factory(...$parameters)
  * @method static Builder|AccountEntity newModelQuery()
  * @method static Builder|AccountEntity newQuery()
  * @method static Builder|AccountEntity payees()
@@ -50,7 +57,7 @@ use Illuminate\Support\Facades\Auth;
  * @method static Builder|AccountEntity whereName($value)
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class AccountEntity extends Model
 {
@@ -77,17 +84,17 @@ class AccountEntity extends Model
         'active' => 'boolean',
     ];
 
-    public function config()
+    public function config(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function transactionDetailStandardFrom()
+    public function transactionDetailStandardFrom(): HasMany
     {
         return $this->hasMany(TransactionDetailStandard::class, 'account_from_id');
     }
 
-    public function transactionDetailStandardTo()
+    public function transactionDetailStandardTo(): HasMany
     {
         return $this->hasMany(TransactionDetailStandard::class, 'account_to_id');
     }
@@ -96,17 +103,17 @@ class AccountEntity extends Model
      * Relationship to categories indicating the category preference for this account entity.
      * Relevant mainly for payees.
      */
-    public function categoryPreference()
+    public function categoryPreference(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'account_entity_category_preference')->withPivot('preferred');
     }
 
-    public function preferredCategories()
+    public function preferredCategories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', true);
     }
 
-    public function deferredCategories()
+    public function deferredCategories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', false);
     }

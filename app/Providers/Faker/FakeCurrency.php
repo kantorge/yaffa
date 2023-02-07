@@ -5,7 +5,7 @@ namespace App\Providers\Faker;
 class FakeCurrency extends \Faker\Provider\Base
 {
     /*
-     * Get currency as array with all properties
+     * Get a random currency from the predefined pool as an array with all properties
      *
      * @return array
      */

@@ -26,9 +26,9 @@ class CurrencyFactory extends Factory
 
         return [
             'name' => $currency['name'],
-            'iso_code' => $currency['isoCode'],
-            'num_digits' => $currency['minorUnits'],
-            'suffix' => $currency['symbol'],
+            'iso_code' => $currency['iso_code'],
+            'num_digits' => $currency['num_digits'],
+            'suffix' => $currency['suffix'],
             'base' => null,
             'auto_update' => $this->faker->boolean,
             'user_id' => User::inRandomOrder()->first()->id,
