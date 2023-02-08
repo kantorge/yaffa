@@ -51,6 +51,7 @@
                             title: null,
                             icon: null,
                             dismissible: true,
+                            timeout: 10000,
                         }
                     },
                 });

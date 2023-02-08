@@ -107712,8 +107712,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
-/*! DataTables 1.13.1
- * ©2008-2022 SpryMedia Ltd - datatables.net/license
+/*! DataTables 1.13.2
+ * ©2008-2023 SpryMedia Ltd - datatables.net/license
  */
 
 
@@ -109034,7 +109034,12 @@ var _numToDecimal = function ( num, decimalPoint ) {
 
 
 var _isNumber = function ( d, decimalPoint, formatted ) {
-	var strType = typeof d === 'string';
+	let type = typeof d;
+	var strType = type === 'string';
+
+	if ( type === 'number' || type === 'bigint') {
+		return true;
+	}
 
 	// If empty return immediately so there must be a number if it is a
 	// formatted string (this stops the string "k", or "kr", etc being detected
@@ -114441,8 +114446,15 @@ function _fnCallbackFire( settings, callbackArr, eventName, args )
 
 	if ( eventName !== null ) {
 		var e = $.Event( eventName+'.dt' );
+		var table = $(settings.nTable);
 
-		$(settings.nTable).trigger( e, args );
+		table.trigger( e, args );
+
+		// If not yet attached to the document, trigger the event
+		// on the body directly to sort of simulate the bubble
+		if (table.parents('body').length === 0) {
+			$('body').trigger( e, args );
+		}
 
 		ret.push( e.result );
 	}
@@ -114908,7 +114920,7 @@ $.extend( _Api.prototype, {
 
 	pluck: function ( prop )
 	{
-		let fn = DataTable.util.get(prop);
+		var fn = DataTable.util.get(prop);
 
 		return this.map( function ( el ) {
 			return fn(el);
@@ -116005,10 +116017,9 @@ _api_register( 'row.add()', function ( row ) {
 
 $(document).on('plugin-init.dt', function (e, context) {
 	var api = new _Api( context );
-	
-	const namespace = 'on-plugin-init';
-	const stateSaveParamsEvent = `stateSaveParams.${namespace}`;
-	const destroyEvent = `destroy.${namespace}`;
+	var namespace = 'on-plugin-init';
+	var stateSaveParamsEvent = 'stateSaveParams.' + namespace;
+	var destroyEvent = 'destroy. ' + namespace;
 
 	api.on( stateSaveParamsEvent, function ( e, settings, d ) {
 		// This could be more compact with the API, but it is a lot faster as a simple
@@ -116027,7 +116038,7 @@ $(document).on('plugin-init.dt', function (e, context) {
 	});
 
 	api.on( destroyEvent, function () {
-		api.off(`${stateSaveParamsEvent} ${destroyEvent}`);
+		api.off(stateSaveParamsEvent + ' ' + destroyEvent);
 	});
 
 	var loaded = api.state.loaded();
@@ -117349,7 +117360,7 @@ _api_register( 'i18n()', function ( token, def, plural ) {
  *  @type string
  *  @default Version number
  */
-DataTable.version = "1.13.1";
+DataTable.version = "1.13.2";
 
 /**
  * Private data store, containing all of the settings objects that are
@@ -122482,10 +122493,17 @@ $.extend( true, DataTable.ext.renderer, {
 						}
 
 						if ( btnDisplay !== null ) {
-							node = $('<a>', {
+							var tag = settings.oInit.pagingTag || 'a';
+							var disabled = btnClass.indexOf(disabledClass) !== -1;
+		
+
+							node = $('<'+tag+'>', {
 									'class': classes.sPageButton+' '+btnClass,
 									'aria-controls': settings.sTableId,
+									'aria-disabled': disabled ? 'true' : null,
 									'aria-label': aria[ button ],
+									'aria-role': 'link',
+									'aria-current': btnClass === classes.sPageButtonActive ? 'page' : null,
 									'data-dt-idx': button,
 									'tabindex': tabIndex,
 									'id': idx === 0 && typeof button === 'string' ?
@@ -122616,6 +122634,12 @@ $.extend( DataTable.ext.type.search, {
 var __numericReplace = function ( d, decimalPlace, re1, re2 ) {
 	if ( d !== 0 && (!d || d === '-') ) {
 		return -Infinity;
+	}
+	
+	let type = typeof d;
+
+	if (type === 'number' || type === 'bigint') {
+		return d;
 	}
 
 	// If a decimal place other than `.` is used, it needs to be given to the

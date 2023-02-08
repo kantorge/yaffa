@@ -464,8 +464,8 @@ window.addEventListener('transaction-created', function (event) {
         dtHistory.columns.adjust().draw();
     }, 2000);
 
-    // Adjust the next date of the original scheduled item, accounting for a completed schedule
-    console.log(recentTransactionDraftId)
+    // TODO: Adjust the next date of the original scheduled item, accounting for a completed schedule
+    // console.log(recentTransactionDraftId)
 });
 
 
@@ -526,6 +526,7 @@ window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', fun
                         title: null,
                         icon: null,
                         dismissible: true,
+                        timeout: 10000,
                     }
                 },
             });
@@ -549,7 +550,7 @@ window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', fun
 });
 
 // Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function (event) {
+document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
     const preset = this.options[this.selectedIndex].value;
     const date = new Date();
     let start;
@@ -643,7 +644,7 @@ axios.get('/api/account/balance/' + window.account.id)
             elementCurrentCash.innerText += ' / ' + helpers.toFormattedCurrency(
                 balance.cash_foreign,
                 window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                balance.config.currency
             );
         }
 
@@ -658,7 +659,7 @@ axios.get('/api/account/balance/' + window.account.id)
             elementCurrentBalance.innerText += ' / ' + helpers.toFormattedCurrency(
                 balance.sum_foreign,
                 window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                balance.config.currency
             );
         }
     })
@@ -666,7 +667,7 @@ axios.get('/api/account/balance/' + window.account.id)
         document.getElementById('overviewOpeningBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
         document.getElementById('overviewCurrentCash').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
         document.getElementById('overviewCurrentBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
-        console.log(error)
+        console.error(error)
     })
 
 // Initialize Vue for the quick view
