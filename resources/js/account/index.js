@@ -16,7 +16,16 @@ window.table = $(dataTableSelector).DataTable({
     columns: [
         {
             data: "name",
-            title: __('Name')
+            title: __('Name'),
+            render: function (data, type, row) {
+                // Return name with link for display
+                if (type === 'display') {
+                    return '<a href="' + window.route('account-entity.show', {account_entity: row.id}) + '" title="' + __('Show details') + '">' + data + '</a>';
+                }
+
+                // Raw value is returned otherwise
+                return data;
+            },
         },
         {
             data: "active",
@@ -34,11 +43,10 @@ window.table = $(dataTableSelector).DataTable({
             data: "config.opening_balance",
             title: __("Opening balance"),
             render: function (data, type, row) {
-                // Raw number is returned for sorting
-                if (type === 'sort') {
-                    return data;
+                if (type === 'display') {
+                    return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
                 }
-                return toFormattedCurrency(data, window.YAFFA.locale, row.config.currency);
+                return data;
             },
             className: "dt-nowrap",
             searchable: false,
@@ -52,7 +60,8 @@ window.table = $(dataTableSelector).DataTable({
             data: "id",
             title: __("Actions"),
             render: function (data) {
-                return  '<a href="' + route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                return  '<a href="' + window.route('account-entity.show', {account_entity: data}) + '" class="btn btn-sm btn-success"><i class="fa fa-magnifying-glass" title="' + __('Show details') + '"></i></a> ' +
+                        '<a href="' + window.route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
                         genericDataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
