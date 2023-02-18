@@ -6,10 +6,18 @@ mix.js([
     ], 'public/js')
     .vue({ version: 3 })
     .extract([
+        'amcharts4',
         'datatables.net',
+        'datatables.net-bs5',
+        'datatables.net-responsive-bs5',
         'jquery',
+        'jquery-csv',
+        'json-rules-engine',
+        'jstree',
         'mathjs',
-        'select2'
+        'rrule',
+        'select2',
+        'select2-bootstrap-5-theme',
     ], 'public/js/vendor.js')
     .sass('resources/sass/app.scss', 'public/css')
     .sass('resources/sass/vendor.scss', 'public/css')
