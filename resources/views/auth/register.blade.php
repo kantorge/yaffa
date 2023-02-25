@@ -166,7 +166,7 @@
                                         <i class="fa fa-info-circle"></i>
                                     </span>
 
-                                    @error('locale')
+                                    @error('default_data')
                                     <span class="invalid-feedback" role="alert">
                                             <strong>{{ __($message) }}</strong>
                                         </span>
@@ -199,7 +199,7 @@
                                         <i class="fa fa-info-circle"></i>
                                     </span>
 
-                                    @error('locale')
+                                    @error('base_currency')
                                     <span class="invalid-feedback" role="alert">
                                             <strong>{{ __($message) }}</strong>
                                         </span>

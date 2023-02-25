@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,7 @@ class InvestmentApiController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment')
@@ -44,7 +45,6 @@ class InvestmentApiController extends Controller
             ->take(10)
             ->get();
 
-        // Return data
         return response()->json($investments, Response::HTTP_OK);
     }
 
@@ -85,7 +85,7 @@ class InvestmentApiController extends Controller
         return $investment;
     }
 
-    public function getPriceHistory(Investment $investment)
+    public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**
          * @get('/api/assets/investment/price/{investment}')
@@ -102,7 +102,7 @@ class InvestmentApiController extends Controller
         return response()->json($prices, Response::HTTP_OK);
     }
 
-    public function updateActive(Investment $investment, $active)
+    public function updateActive(Investment $investment, $active): JsonResponse
     {
         /**
          * @put('/api/assets/investment/{investment}/active/{active}')
@@ -124,9 +124,9 @@ class InvestmentApiController extends Controller
     /**
      * Get all investments with timeline data
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getInvestmentsWithTimeline()
+    public function getInvestmentsWithTimeline(): JsonResponse
     {
         /**
          * @get('/api/assets/investment/timeline')

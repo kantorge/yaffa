@@ -22,9 +22,6 @@ class TransactionFormStandardTest extends DuskTestCase
         }
     }
 
-    /**
-     * First test, contains loginAs step
-     */
     public function test_user_can_load_the_standard_transaction_form()
     {
         $user = User::firstWhere('email', 'demo@yaffa.cc');

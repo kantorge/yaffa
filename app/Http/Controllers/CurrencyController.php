@@ -6,6 +6,7 @@ use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -82,7 +83,7 @@ class CurrencyController extends Controller
      * @param Currency $currency
      * @return View
      */
-    public function edit(Currency $currency)
+    public function edit(Currency $currency): View
     {
         /**
          * @get('/currencies/{currency}/edit')
@@ -113,10 +114,10 @@ class CurrencyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return Response
+     * @param Currency $currency
+     * @return Response|RedirectResponse
      */
-    public function destroy(Currency $currency)
+    public function destroy(Currency $currency): Response|RedirectResponse
     {
         /**
          * @delete('/currencies/{currency}')
@@ -130,7 +131,6 @@ class CurrencyController extends Controller
             return redirect()->back();
         }
 
-        //delete
         try {
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));

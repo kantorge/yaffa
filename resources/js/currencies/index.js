@@ -1,40 +1,41 @@
 require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
+require('datatables.net-responsive-bs5');
 
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     initializeDeleteButtonListener
-} from './../components/dataTableHelper';
-
-import { toFormattedCurrency } from '../helpers';
+} from '../components/dataTableHelper';
+import {toFormattedCurrency} from '../helpers';
 
 const dataTableSelector = '#table';
 
 $(dataTableSelector).DataTable({
-    data: currencies,
+    data: window.currencies,
     columns: [
         {
             data: "name",
             title: __("Name"),
+            render: function (data, type, row) {
+                // Return name with optional base currency icon for display
+                if (type === 'display') {
+                    return data + (row.base ? ' <i class="fa fa-star text-primary" title="' + __('Base currency') + '"></i>' : '');
+                }
+
+                // Raw value is returned otherwise
+                return data;
+            },
+            className: 'dt-nowrap',
+            // Make the base class bold
+            createdCell: function (td, _cellData, rowData) {
+                if (rowData.base) {
+                    $(td).addClass('fw-bold');
+                }
+            },
         },
         {
             data: "iso_code",
             title: __("ISO Code"),
-        },
-        {
-            data: "base",
-            title: __("Base currency"),
-            render: function (data, type) {
-                if (type === 'filter' || type === 'sort') {
-                    return (data ? __('Base currency') : '');
-                }
-
-                return (data
-                        ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
-                        : '');
-            },
-            className: "text-center",
         },
         {
             data: "num_digits",
@@ -53,7 +54,7 @@ $(dataTableSelector).DataTable({
             className: "text-center",
         },
         {
-            title: __('Latest rate to base currency'),
+            title: __('Latest rate from base currency'),
             defaultContent: "",
             render: function (_data, type, row) {
                 // No data returned for base currency
@@ -76,7 +77,7 @@ $(dataTableSelector).DataTable({
             searchable: false,
         },
         {
-            title: __('Latest rate from base currency'),
+            title: __('Latest rate to base currency'),
             defaultContent: "",
             render: function (_data, type, row) {
                 // No data returned for base currency
@@ -105,9 +106,9 @@ $(dataTableSelector).DataTable({
                 return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
-                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-sm btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-chart-line"></i></a> ' +
-                          genericDataTablesActionButton(data, 'delete') +
-                          '<a href="' + route('currencies.setDefault', data) + '" class="btn btn-sm btn-primary" title="' + __('Set as default') + '"><i class="fa-solid fa-building-columns"></i></a>'
+                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-xs btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-fw fa-chart-line"></i></a> ' +
+                        genericDataTablesActionButton(data, 'delete') +
+                        '<a href="' + window.route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary" title="' + __('Set as default') + '"><i class="fa-solid fa-fw fa-building-columns"></i></a>'
                         : '');
             },
             className: "dt-nowrap",
