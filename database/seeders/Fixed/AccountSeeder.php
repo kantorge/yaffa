@@ -21,8 +21,8 @@ class AccountSeeder extends Seeder
         $accountConfig = Account::create(
             [
                 'opening_balance' => 1000,
-                'account_group_id' => AccountGroup::where('name', 'Cash')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Cash')->first()->id,
+                'currency_id' => Currency::where('iso_code', 'EUR')->first()->id,
             ]
         );
         AccountEntity::create(
@@ -38,8 +38,8 @@ class AccountSeeder extends Seeder
         $accountConfig = Account::create(
             [
                 'opening_balance' => 1000,
-                'account_group_id' => AccountGroup::where('name', 'Bank accounts')->pluck('id')->first(),
-                'currency_id' => Currency::where('iso_code', 'EUR')->pluck('id')->first(),
+                'account_group_id' => AccountGroup::where('name', 'Bank accounts')->first()->id,
+                'currency_id' => Currency::where('iso_code', 'EUR')->first()->id,
             ]
         );
         AccountEntity::create(

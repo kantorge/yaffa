@@ -194,7 +194,7 @@
                                             class="input-group-text btn btn-info"
                                             data-coreui-toggle="tooltip"
                                             data-coreui-placement="right"
-                                            title="{{ __('The currency that is generally used in reports, charts and summaries. You can add several other currencies to fit your needs.') }}"
+                                            title="{{ __('The currency that is generally used in reports, charts and summaries. You can add several other currencies to fit your needs, and change this setting later.') }}"
                                     >
                                         <i class="fa fa-info-circle"></i>
                                     </span>
