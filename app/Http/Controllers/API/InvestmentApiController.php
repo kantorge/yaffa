@@ -49,29 +49,12 @@ class InvestmentApiController extends Controller
     }
 
     /**
-     * Read and return the currency suffix of the currency associated to the provided investment
-     *
-     * @param  \App\Models\Investment  $investment
-     * @return string
-     */
-    public function getCurrencySuffix(Investment $investment)
-    {
-        /**
-         * @get('/api/assets/investment/suffix/{investment}')
-         * @middlewares('api', 'auth:sanctum')
-         */
-        $this->authorize('view', $investment);
-
-        return $investment->currency->suffix;
-    }
-
-    /**
      * Read and return the details of a selected investment
      *
-     * @param  \App\Models\Investment  $investment
-     * @return \App\Models\Investment
+     * @param Investment $investment
+     * @return JsonResponse
      */
-    public function getInvestmentDetails(Investment $investment)
+    public function getInvestmentDetails(Investment $investment): JsonResponse
     {
         /**
          * @get('/api/assets/investment/{investment}')
@@ -82,7 +65,7 @@ class InvestmentApiController extends Controller
 
         $investment->load(['currency']);
 
-        return $investment;
+        return response()->json($investment, Response::HTTP_OK);
     }
 
     public function getPriceHistory(Investment $investment): JsonResponse

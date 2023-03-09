@@ -75,46 +75,7 @@
                         id="num_digits"
                         name="num_digits"
                         type="text"
-                        value="{{old('num_digits', $currency->num_digits ?? '' )}}"
-                    >
-                </div>
-            </div>
-            <div class="row mb-3">
-                <label for="suffix" class="col-form-label col-sm-3">
-                    {{ __('Suffix') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="suffix"
-                        name="suffix"
-                        type="text"
-                        value="{{old('suffix', $currency->suffix ?? '' )}}"
-                    >
-                </div>
-            </div>
-            <div class="row mb-3">
-                <label for="base" class="col-form-label col-sm-3">
-                    {{ __('Base currency') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        id="base"
-                        class="form-check-input"
-                        name="base"
-                        type="checkbox"
-                        value="1"
-                        @if (old())
-                            @if (old('base') == '1')
-                                checked="checked"
-                            @endif
-                        @elseif(isset($currency))
-                            @if ($currency->base == '1')
-                                checked="checked"
-                            @endif
-                        @else
-                            checked="checked"
-                        @endif
+                        value="{{old('num_digits', $currency->num_digits ?? '0' )}}"
                     >
                 </div>
             </div>
@@ -129,14 +90,8 @@
                         name="auto_update"
                         type="checkbox"
                         value="1"
-                        @if (old())
-                            @if (old('auto_update') == '1')
-                                checked="checked"
-                            @endif
-                        @elseif(isset($currency))
-                            @if ($currency->auto_update == '1')
-                                checked="checked"
-                            @endif
+                        @if ((old() && old('auto_update') == '1') || (isset($currency) && $currency->auto_update == '1'))
+                            checked="checked"
                         @endif
                     >
                 </div>

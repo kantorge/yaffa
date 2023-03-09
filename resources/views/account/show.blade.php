@@ -24,13 +24,15 @@
                     <div class="collapse card-body show" aria-expanded="true" id="cardOverview">
                         <dl class="row mb-0">
                             <dt class="col-8">{{ __('Active') }}</dt>
-                            <dd class="col-4">@if ($account->active)
-                                    <i class="fa fa-check-square text-success" title="' . __('Yes') . '"></i>
+                            <dd class="col-4">
+                                @if ($account->active)
+                                    <i class="fa fa-check-square text-success" title="{{ __('Yes') }}"></i>
                                 @else
-                                    <i class="fa fa-square text-danger" title="' . __('No') . '"></i>
-                                @endif</dd>
+                                    <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
+                                @endif
+                            </dd>
                             <dt class="col-8">{{ __('Currency') }}</dt>
-                            <dd class="col-4">{{ $account->config->currency->suffix }}</dd>
+                            <dd class="col-4">{{ $account->config->currency->iso_code }}</dd>
                             <dt class="col-8">{{ __('Opening balance') }}</dt>
                             <dd class="col-4" id="overviewOpeningBalance"><i class="fa fa-spin fa-spinner"></i></dd>
                             <dt class="col-8">{{ __('Current cash value') }}</dt>

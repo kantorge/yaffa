@@ -45,18 +45,6 @@ class CurrencyRequest extends FormRequest
                 'numeric',
                 'between:0,4',
             ],
-            'suffix' => [
-                'string',
-                'nullable',
-                'max:5',
-            ],
-            'base' => [
-                'boolean',
-                'nullable',
-                Rule::unique('currencies')->where(function ($query) {
-                    return $query->where('user_id', $this->user()->id);
-                }),
-            ],
             'auto_update' => [
                 'boolean',
             ],

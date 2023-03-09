@@ -42,10 +42,6 @@ $(dataTableSelector).DataTable({
             title: __("Number of decimal digits displayed"),
         },
         {
-            data: "suffix",
-            title: __("Suffix displayed"),
-        },
-        {
             data: "auto_update",
             title: __("Automatic update"),
             render: function (data, type) {
@@ -69,9 +65,11 @@ $(dataTableSelector).DataTable({
                 if (type === 'sort') {
                     return row.latest_rate;
                 }
-                // Formatted text is returned for display
-                let currency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
-                return "1 " + row.suffix + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, currency);
+                // Formatted text is returned for display in a specific way
+                let sourceCurrency = Object.assign({}, row, {num_digits: 0});
+                let targetCurrency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+
+                return toFormattedCurrency(1, window.YAFFA.locale, sourceCurrency) + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -92,9 +90,11 @@ $(dataTableSelector).DataTable({
                 if (type === 'sort') {
                     return 1 / row.latest_rate;
                 }
-                // Formatted text is returned for display
-                let currency = Object.assign({}, row, {num_digits: 4});
-                return "1 " + window.YAFFA.baseCurrency.iso_code + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, currency);
+                // Formatted text is returned for display in a specific way
+                let sourceCurrency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 0});
+                let targetCurrency = Object.assign({}, row, {num_digits: 4});
+
+                return toFormattedCurrency(1, window.YAFFA.locale, sourceCurrency) + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,

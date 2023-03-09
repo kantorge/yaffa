@@ -2,17 +2,20 @@ require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
+import {toFormattedCurrency} from '../helpers';
 
-var numberRenderer = $.fn.dataTable.render.number('&nbsp;', ',', 0).display;
-
-var table = $('#investmentSummary').DataTable({
+let table = $('#investmentSummary').DataTable({
     data: investments,
     columns: [
         {
             data: "name",
             title: __("Name"),
-            render: function (data, _type, row) {
-                return '<a href="' + route('investment.show', row.id) + '" class="" title="' + __('View investment details') + '">' + data + '</a>';
+            render: function (data, type, row) {
+                if (type === 'display') {
+                    return '<a href="' + route('investment.show', row.id) + '" class="" title="' + __('View investment details') + '">' + data + '</a>';
+                }
+
+                return  data;
             },
             type: "html",
         },
@@ -31,23 +34,38 @@ var table = $('#investmentSummary').DataTable({
         {
             data: "quantity",
             title: __("Quantity"),
-            render: function (data) {
-                return numberRenderer(data);
+            render: function (data, type) {
+                if (type === 'display') {
+                    return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 2, useGrouping: true});
+                }
+                return data;
             },
         },
         {
             data: "price",
             title: __("Latest price"),
-            render: function (data, _type, row) {
-                return $.fn.dataTable.render.number('&nbsp;', ',', 4, '', '&nbsp;' + row.currency.suffix).display(data);
+            render: function (data, type, row) {
+                if (type === 'display') {
+                    return toFormattedCurrency(data, window.YAFFA.locale, row.currency);
+                }
+
+                return data;
             },
+            className: 'dt-nowrap',
         },
         {
-            data: "price",
+            defaultContent: "",
             title: __("Value"),
-            render: function (_data, _type, row) {
-                return $.fn.dataTable.render.number('&nbsp;', ',', row.currency.num_digits, '', '&nbsp;' + row.currency.suffix).display(row.quantity * row.price);
+            render: function (_data, type, row) {
+                const value = row.quantity * row.price;
+
+                if (type === 'display') {
+                    return toFormattedCurrency(value, window.YAFFA.locale, row.currency);
+                }
+
+                return value;
             },
+            className: 'dt-nowrap',
         },
         {
             data: "id",

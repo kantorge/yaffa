@@ -18192,6 +18192,34 @@
      
 }
 
+    namespace Laravel\Dusk { 
+            /**
+     * 
+     *
+     */ 
+        class Browser {
+                    /**
+         * Register simple macros for the Laravel Dusk.
+         * 
+         * $field - selector, or @element
+         * $value - option value, may be multiple, eg. ['foo', 'bar']
+         * $wait  - maximum count of seconds for ajax loading.
+         *
+         * @param mixed $field
+         * @param mixed $value
+         * @param mixed $wait
+         * @param mixed $suffix
+         * @static 
+         */ 
+        public static function select2($field, $value = null, $wait = 2, $suffix = ' + .select2')
+        {
+                        return \Laravel\Dusk\Browser::select2($field, $value, $wait, $suffix);
+        }
+         
+    }
+     
+}
+
     namespace Illuminate\Http { 
             /**
      * 

@@ -46,4 +46,37 @@ class TransactionFormStandardTest extends DuskTestCase
                 ->assertPresent('#transactionFormStandard .alert.alert-danger');
         });
     }
+
+    public function test_currency_displayed_correctly_for_various_settings()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transactions.createStandard')
+
+                // No currency should be visible
+                ->assertNotPresent('@label-amountFrom-currency');
+
+                // Select account from, currency symbol should be visible
+
+                // Remove account from, no currency symbol should be visible
+
+                // Select account from again, and swithc to deposit
+                // No currency should be visible
+
+                // Select account to, currency symbol should be visible
+
+                // Remove account to, no currency symbol should be visible
+
+                // Select account to again, and switch to transfer
+                // Account should remain, but no currency symbol should be visible
+
+                // Select account from with the same currency
+                // Currency of account from should be visible
+
+                // Select account fromj with different currency
+                // This new currency should be visible
+                // Secondary amount and currency symbol should be visible
+        });
+    }
 }

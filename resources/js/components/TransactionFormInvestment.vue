@@ -1,5 +1,5 @@
 <template>
-    <div class="content-fluid">
+    <div id="transactionFormInvestment">
         <AlertErrors :form="form" :message="__('There were some problems with your input.')" />
 
         <!-- form start -->
@@ -231,6 +231,7 @@
                                     class="btn btn-primary"
                                     :disabled="form.busy"
                                     :form="form"
+                                    id="transactionFormInvestment-Save"
                                 >
                                     {{ __('Save') }}
                                 </Button>
@@ -298,6 +299,8 @@
     import '@vuepic/vue-datepicker/dist/main.css'
 
     import TransactionSchedule from './TransactionSchedule.vue'
+
+    import { getCurrencySymbol } from "../helpers";
 
     export default {
         components: {
@@ -549,7 +552,7 @@
                         },
                     })
                     .done(data => {
-                        $vm.account_currency = data.config.currency.suffix;
+                        $vm.account_currency = getCurrencySymbol(window.YAFFA.locale, data.config.currency.iso_code);
                         $vm.account_currency_id = data.config.currency.id;
                     });
                 })
@@ -619,7 +622,7 @@
                 })
                 .done(function( data ) {
                     $vm.investment_currency_id = data.currency.id;
-                    $vm.investment_currency = data.currency.suffix;
+                    $vm.investment_currency = getCurrencySymbol(window.YAFFA.locale, data.currency.iso_code);
                 });
             }).on('select2:unselect', function (e) {
                 $vm.investment_id = null;

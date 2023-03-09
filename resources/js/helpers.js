@@ -17,3 +17,13 @@ export function toFormattedCurrency(input, locale, currencySettings) {
         }
     );
 }
+
+export function getCurrencySymbol(locale, iso_code) {
+    const numberFormat = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: iso_code,
+        currencyDisplay: 'narrowSymbol',
+    });
+    const symbol = numberFormat.format(0).match(/[^0-9,.\s]+/);
+    return symbol[0];
+}
