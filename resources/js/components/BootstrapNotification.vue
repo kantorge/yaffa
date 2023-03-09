@@ -27,7 +27,7 @@
       <button v-if="dismissible" type="button" class="btn-close" data-coreui-dismiss="alert"
               aria-label="Close"></button>
     </div>
-    <span class="notificationCountdownContainer">
+    <span class="notificationCountdownContainer" v-if="timer">
       <span class="notificationCountdownBar" :style="{ width: barWidth + '%' }"></span>
     </span>
   </div>
@@ -71,7 +71,7 @@ export default {
     }
   },
   mounted() {
-    if (!this.dismissible || this.timeout <= this.interval) {
+    if (!this.hasTimeout  || this.timeout <= this.interval) {
       return;
     }
 
@@ -95,8 +95,17 @@ export default {
       clearInterval(this.timer);
     },
     resumeTimer() {
+      if (!this.hasTimeout  || this.timeout <= this.interval) {
+        return;
+      }
+
       this.timer = setInterval(this.updateCountdown, this.interval);
     },
+  },
+  computed: {
+    hasTimeout() {
+      return this.dismissible && this.timeout > 0;
+    }
   }
 }
 </script>

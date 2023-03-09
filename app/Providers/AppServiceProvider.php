@@ -7,7 +7,6 @@ use App\Models\Payee;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         if ($this->app->environment('local')) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
@@ -31,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         Schema::defaultStringLength(191);
 
@@ -41,13 +40,5 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_standard' => TransactionDetailStandard::class,
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
-
-        Blade::directive('dusk', function ($expression) {
-            if (\App::environment('production')) {
-                return '';
-            }
-
-            return "<?php echo('dusk={$expression}'); ?>";
-        });
     }
 }

@@ -144,7 +144,6 @@ class CreateDefaultAssetsForNewUser
             'name' => $currencyData['name'],
             'iso_code' => $currencyData['iso_code'],
             'num_digits' => $currencyData['num_digits'],
-            'suffix' => $currencyData['suffix'],
             'base' => ($base ? true : null),
             'auto_update' => true,
             'user_id' => $this->user->id,

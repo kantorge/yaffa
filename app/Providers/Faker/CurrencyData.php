@@ -8,25 +8,21 @@ class CurrencyData
         [
             'name' => 'US Dollar',
             'iso_code' => 'USD',
-            'suffix' => '$',
             'num_digits' => 2,
         ],
         [
             'name' => 'Hungarian Forint',
             'iso_code' => 'HUF',
-            'suffix' => 'Ft',
             'num_digits' => 0,
         ],
         [
             'name' => 'Euro',
             'iso_code' => 'EUR',
-            'suffix' => '€',
             'num_digits' => 2,
         ],
         [
             'name' => 'Polish Złoty',
             'iso_code' => 'PLN',
-            'suffix' => 'zł',
             'num_digits' => 2,
         ],
     ];

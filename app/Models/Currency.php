@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * App\Models\Currency
@@ -20,7 +21,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property string $iso_code
  * @property int $num_digits
- * @property string|null $suffix
  * @property bool|null $base
  * @property bool $auto_update
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -40,7 +40,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|Currency whereIsoCode($value)
  * @method static Builder|Currency whereName($value)
  * @method static Builder|Currency whereNumDigits($value)
- * @method static Builder|Currency whereSuffix($value)
  * @method static Builder|Currency whereUpdatedAt($value)
  * @method static Builder|Currency whereUserId($value)
  * @mixin Eloquent
@@ -65,7 +64,6 @@ class Currency extends Model
         'name',
         'iso_code',
         'num_digits',
-        'suffix',
         'base',
         'auto_update',
     ];
@@ -138,9 +136,9 @@ class Currency extends Model
 
         // Get the last known currency rate for this currency, compared to the base currency.
         $rate = CurrencyRate::where('from_id', $this->id)
-                                    ->where('to_id', $baseCurrency->id)
-                                    ->latest('date')
-                                    ->first();
+            ->where('to_id', $baseCurrency->id)
+            ->latest('date')
+            ->first();
 
         return $rate instanceof CurrencyRate ? $rate->rate : null;
     }
@@ -162,7 +160,7 @@ class Currency extends Model
     /**
      * Get the currency rates for this currency.
      *
-     * @param  Carbon|null  $from
+     * @param Carbon|null $from
      * @return void
      */
     public function retreiveCurrencyRateToBase(?Carbon $from = null): void
@@ -174,7 +172,7 @@ class Currency extends Model
         }
 
         $date = Carbon::create('yesterday');
-        if (! $from) {
+        if (!$from) {
             $from = Carbon::create('yesterday');
         }
 
@@ -213,12 +211,36 @@ class Currency extends Model
 
         // Get the latest date for this currency, compared to the base currency.
         $rate = CurrencyRate::where('from_id', $this->id)
-                                    ->where('to_id', $baseCurrency->id)
-                                    ->latest('date')
-                                    ->first();
+            ->where('to_id', $baseCurrency->id)
+            ->latest('date')
+            ->first();
 
         $this->retreiveCurrencyRateToBase(
             $rate?->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
         );
+    }
+
+    public function setToBase(): bool
+    {
+        $baseCurrency = $this->baseCurrency();
+
+        if ($baseCurrency->id === $this->id) {
+            return false;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            Currency::where('user_id', $this->user->id)->update('base', null);
+            $this->base = true;
+            $this->save();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return false;
+        }
+
+        return true;
     }
 }

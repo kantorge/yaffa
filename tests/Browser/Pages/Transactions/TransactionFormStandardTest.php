@@ -22,9 +22,6 @@ class TransactionFormStandardTest extends DuskTestCase
         }
     }
 
-    /**
-     * First test, contains loginAs step
-     */
     public function test_user_can_load_the_standard_transaction_form()
     {
         $user = User::firstWhere('email', 'demo@yaffa.cc');
@@ -47,6 +44,39 @@ class TransactionFormStandardTest extends DuskTestCase
                 ->assertRouteIs('transactions.createStandard')
                 // Error messages should be displayed in Bootstrap alert
                 ->assertPresent('#transactionFormStandard .alert.alert-danger');
+        });
+    }
+
+    public function test_currency_displayed_correctly_for_various_settings()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transactions.createStandard')
+
+                // No currency should be visible
+                ->assertNotPresent('@label-amountFrom-currency');
+
+                // Select account from, currency symbol should be visible
+
+                // Remove account from, no currency symbol should be visible
+
+                // Select account from again, and swithc to deposit
+                // No currency should be visible
+
+                // Select account to, currency symbol should be visible
+
+                // Remove account to, no currency symbol should be visible
+
+                // Select account to again, and switch to transfer
+                // Account should remain, but no currency symbol should be visible
+
+                // Select account from with the same currency
+                // Currency of account from should be visible
+
+                // Select account fromj with different currency
+                // This new currency should be visible
+                // Secondary amount and currency symbol should be visible
         });
     }
 }

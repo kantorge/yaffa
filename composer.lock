@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c3b74e2f21686b413ec168b1e12f4321",
+    "content-hash": "85d42bf147e13af1eadccd70aaf142c5",
     "packages": [
         {
             "name": "amrshawky/currency",
@@ -10922,6 +10922,49 @@
                 "source": "https://github.com/bobthecow/psysh/tree/v0.11.12"
             },
             "time": "2023-01-29T21:24:40+00:00"
+        },
+        {
+            "name": "roquie/laravel-dusk-select2",
+            "version": "2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/roquie/laravel-dusk-select2.git",
+                "reference": "eb13801b753d77384948b8447ebe82beab76f5c5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/roquie/laravel-dusk-select2/zipball/eb13801b753d77384948b8447ebe82beab76f5c5",
+                "reference": "eb13801b753d77384948b8447ebe82beab76f5c5",
+                "shasum": ""
+            },
+            "require-dev": {
+                "laravel/dusk": "^5 || ^6",
+                "php": ">=7.1",
+                "phpunit/phpunit": "^8 || ^9",
+                "symfony/var-dumper": "^4 || ^5"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/macro.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "roquie",
+                    "email": "roquie0@gmail.com"
+                }
+            ],
+            "description": "Select2.js support for the Laravel Dusk testing.",
+            "support": {
+                "issues": "https://github.com/roquie/laravel-dusk-select2/issues",
+                "source": "https://github.com/roquie/laravel-dusk-select2/tree/2.1.0"
+            },
+            "time": "2020-09-03T12:55:45+00:00"
         },
         {
             "name": "sebastian/cli-parser",

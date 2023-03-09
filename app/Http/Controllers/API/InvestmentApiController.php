@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,7 @@ class InvestmentApiController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment')
@@ -44,34 +45,16 @@ class InvestmentApiController extends Controller
             ->take(10)
             ->get();
 
-        // Return data
         return response()->json($investments, Response::HTTP_OK);
-    }
-
-    /**
-     * Read and return the currency suffix of the currency associated to the provided investment
-     *
-     * @param  \App\Models\Investment  $investment
-     * @return string
-     */
-    public function getCurrencySuffix(Investment $investment)
-    {
-        /**
-         * @get('/api/assets/investment/suffix/{investment}')
-         * @middlewares('api', 'auth:sanctum')
-         */
-        $this->authorize('view', $investment);
-
-        return $investment->currency->suffix;
     }
 
     /**
      * Read and return the details of a selected investment
      *
-     * @param  \App\Models\Investment  $investment
-     * @return \App\Models\Investment
+     * @param Investment $investment
+     * @return JsonResponse
      */
-    public function getInvestmentDetails(Investment $investment)
+    public function getInvestmentDetails(Investment $investment): JsonResponse
     {
         /**
          * @get('/api/assets/investment/{investment}')
@@ -82,10 +65,10 @@ class InvestmentApiController extends Controller
 
         $investment->load(['currency']);
 
-        return $investment;
+        return response()->json($investment, Response::HTTP_OK);
     }
 
-    public function getPriceHistory(Investment $investment)
+    public function getPriceHistory(Investment $investment): JsonResponse
     {
         /**
          * @get('/api/assets/investment/price/{investment}')
@@ -102,7 +85,7 @@ class InvestmentApiController extends Controller
         return response()->json($prices, Response::HTTP_OK);
     }
 
-    public function updateActive(Investment $investment, $active)
+    public function updateActive(Investment $investment, $active): JsonResponse
     {
         /**
          * @put('/api/assets/investment/{investment}/active/{active}')
@@ -124,9 +107,9 @@ class InvestmentApiController extends Controller
     /**
      * Get all investments with timeline data
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getInvestmentsWithTimeline()
+    public function getInvestmentsWithTimeline(): JsonResponse
     {
         /**
          * @get('/api/assets/investment/timeline')

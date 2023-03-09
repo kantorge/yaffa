@@ -25,7 +25,7 @@
 
                                 <div class="row">
                                     <div class="col-5">
-                                        <button class="btn btn-primary px-4" type="submit" @dusk("login-button")>
+                                        <button class="btn btn-primary px-4" type="submit" dusk="login-button">
                                             {{ __('Login') }}
                                         </button>
                                     </div>

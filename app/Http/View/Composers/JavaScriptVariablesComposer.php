@@ -21,7 +21,6 @@ class JavaScriptVariablesComposer
     {
         $user = Auth::user();
 
-        // TODO: move these variables into a private object from global scope
         JavaScriptFacade::put([
             'YAFFA' => [
                 'baseCurrency' => $this->getBaseCurrency(),

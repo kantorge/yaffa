@@ -6,6 +6,7 @@ use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -62,14 +63,20 @@ class CurrencyController extends Controller
         return view('currencies.form');
     }
 
-    public function store(CurrencyRequest $request)
+    public function store(CurrencyRequest $request): RedirectResponse
     {
         /**
          * @post('/currencies')
          * @name('currencies.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        Currency::create($request->validated());
+        $currency = Currency::create($request->validated());
+
+        // The first currency created will be automatically set as the base currency
+        if ($request->user()->currencies->count() === 1) {
+            $currency->base = true;
+            $currency->save();
+        }
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
@@ -82,17 +89,25 @@ class CurrencyController extends Controller
      * @param Currency $currency
      * @return View
      */
-    public function edit(Currency $currency)
+    public function edit(Currency $currency): View
     {
         /**
          * @get('/currencies/{currency}/edit')
          * @name('currencies.edit')
          * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
-        return view('currencies.form', ['currency' => $currency]);
+
+        // Get all currencies, as base currency setting is defined based on this
+        $currencies = Auth::user()
+            ->currencies()
+            ->get();
+
+        return view('currencies.form')
+            ->with('currency', $currency)
+            ->with('currencies', $currencies);
     }
 
-    public function update(CurrencyRequest $request, Currency $currency)
+    public function update(CurrencyRequest $request, Currency $currency): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -113,10 +128,10 @@ class CurrencyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return Response
+     * @param Currency $currency
+     * @return Response|RedirectResponse
      */
-    public function destroy(Currency $currency)
+    public function destroy(Currency $currency): Response|RedirectResponse
     {
         /**
          * @delete('/currencies/{currency}')
@@ -130,7 +145,6 @@ class CurrencyController extends Controller
             return redirect()->back();
         }
 
-        //delete
         try {
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));
@@ -147,25 +161,18 @@ class CurrencyController extends Controller
         }
     }
 
-    public function setDefault(Currency $currency)
+    public function setDefault(Currency $currency): RedirectResponse
     {
         /**
          * @get('/currencies/{currency}/setDefault')
          * @name('currencies.setDefault')
          * @middlewares('web', 'auth', 'verified')
          */
-        $baseCurrency = $this->getBaseCurrency();
-
-        if ($currency->id === $baseCurrency->id) {
-            return redirect()->back();
+        if ($currency->setToBase()) {
+            self::addSimpleSuccessMessage(__('Base currency changed'));
+        } else {
+            self::addSimpleDangerMessage(__('Failed to change base currency'));
         }
-
-        $baseCurrency->base = null;
-        $baseCurrency->save();
-        $currency->base = true;
-        $currency->save();
-
-        self::addSimpleSuccessMessage(__('Base currency changed'));
 
         return redirect()->back();
     }
