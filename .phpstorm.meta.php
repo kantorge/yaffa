@@ -139,6 +139,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -349,6 +350,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -559,6 +561,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -769,6 +772,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -979,6 +983,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -1189,6 +1194,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -1399,6 +1405,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -1609,6 +1616,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -1819,6 +1827,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -2029,6 +2038,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -2239,6 +2249,7 @@ namespace PHPSTORM_META {
             'Illuminate\Session\Console\SessionTableCommand' => \Illuminate\Session\Console\SessionTableCommand::class,
             'Illuminate\Session\Middleware\StartSession' => \Illuminate\Session\Middleware\StartSession::class,
             'Illuminate\Testing\ParallelTesting' => \Illuminate\Testing\ParallelTesting::class,
+            'ImanGhafoori\ComposerJson\ComposerJson' => \ImanGhafoori\ComposerJson\ComposerJson::class,
             'Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter' => \Imanghafoori\LaravelMicroscope\ErrorReporters\ErrorPrinter::class,
             'JavaScript' => \Laracasts\Utilities\JavaScript\Transformers\Transformer::class,
             'Laravel\Telescope\Contracts\ClearableRepository' => \Laravel\Telescope\Storage\DatabaseEntriesRepository::class,
@@ -2321,6 +2332,10 @@ namespace PHPSTORM_META {
         ]));
 
 
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::mock(0), map(["" => "@&\Mockery\MockInterface"]));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::partialMock(0), map(["" => "@&\Mockery\MockInterface"]));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::instance(0), type(1));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::spy(0), map(["" => "@&\Mockery\MockInterface"]));
     override(\Illuminate\Support\Arr::add(0), type(0));
     override(\Illuminate\Support\Arr::except(0), type(0));
     override(\Illuminate\Support\Arr::first(0), elementType(0));
