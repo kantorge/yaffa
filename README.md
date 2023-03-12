@@ -43,5 +43,9 @@ but the email address is not required for testing the application. (Well, maybe 
 ## Gettings started
 Installation instructions and getting started steps will be added here.
 
+## Sponsors
+The project is supported by JetBrains under [Open Source Support Program](https://www.jetbrains.com/community/opensource/#support).
+![PhpStorm logo](https://resources.jetbrains.com/storage/products/company/brand/logos/PhpStorm.png)
+
 ## License
 Yaffa is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
