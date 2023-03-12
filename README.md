@@ -45,7 +45,7 @@ Installation instructions and getting started steps will be added here.
 
 ## Sponsors
 The project is supported by JetBrains under [Open Source Support Program](https://www.jetbrains.com/community/opensource/#support).
-![PhpStorm logo](https://resources.jetbrains.com/storage/products/company/brand/logos/PhpStorm.png)
+<br><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/PhpStorm.png" alt="PhpStorm logo" width="40%">
 
 ## License
 Yaffa is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
