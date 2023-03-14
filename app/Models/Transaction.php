@@ -253,7 +253,7 @@ class Transaction extends Model
         ]);
     }
 
-    public function transformToClient()
+    public function transformToClient(): array
     {
         // Standard
         if ($this->config_type === 'transaction_detail_standard') {
@@ -276,6 +276,8 @@ class Transaction extends Model
                 ]
             );
         }
+
+        return [];
     }
 
     private function transformDataCommon(): array
@@ -386,6 +388,8 @@ class Transaction extends Model
             if ($this->transaction_type === 'deposit') {
                 $this->load([
                     'config',
+                    'config.accountTo',
+                    'config.accountTo.config',
                     'config.accountTo.config.currency',
                 ]);
 
@@ -398,6 +402,8 @@ class Transaction extends Model
         if ($this->config_type === 'transaction_detail_investment') {
             $this->load([
                 'config',
+                'config.account',
+                'config.account.config',
                 'config.account.config.currency',
             ]);
 

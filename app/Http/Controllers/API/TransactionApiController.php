@@ -71,7 +71,7 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function getScheduledItems(string $type, Request $request)
+    public function getScheduledItems(string $type, Request $request): JsonResponse
     {
         /**
          * @get('/api/transactions/get_scheduled_items/{type}')
@@ -79,10 +79,8 @@ class TransactionApiController extends Controller
          */
 
         // Return empty response if categories are required, but not set or empty
-        if ($request->has('category_required')) {
-            if (! $request->has('categories') || ! $request->input('categories')) {
-                return response()->json([], Response::HTTP_OK);
-            }
+        if ($request->has('category_required') && (!$request->has('categories') || !$request->input('categories'))) {
+            return response()->json([], Response::HTTP_OK);
         }
 
         // Get list of requested categories
@@ -100,63 +98,61 @@ class TransactionApiController extends Controller
                 'transactionItems.tags',
             ]
         )
-        ->where('user_id', Auth::user()->id)
-        ->byScheduleType($type)
-        ->where(
-            'config_type',
-            '=',
-            'transaction_detail_standard'
-        )
-        // Optionally add account filter
-        ->when($request->has('account'), function ($query) use ($request) {
-            $query->whereHasMorph(
-                'config',
-                [TransactionDetailStandard::class],
-                function (Builder $query) use ($request) {
-                    $query->Where('account_from_id', $request->get('account'));
-                    $query->orWhere('account_to_id', $request->get('account'));
-                }
-            );
-        })
-        // Optionally add category filter
-        ->when($categories->count() > 0, function ($query) use ($categories) {
-            $query->whereHas('transactionItems', function ($query) use ($categories) {
-                $query->whereIn('category_id', $categories->pluck('id'));
-            });
-        })
-        ->get();
+            ->where('user_id', Auth::user()->id)
+            ->byScheduleType($type)
+            ->where(
+                'config_type',
+                '=',
+                'transaction_detail_standard'
+            )
+            // Optionally add account filter
+            ->when($request->has('account'), function ($query) use ($request) {
+                $query->whereHasMorph(
+                    'config',
+                    [TransactionDetailStandard::class],
+                    function (Builder $query) use ($request) {
+                        $query->where('account_from_id', $request->get('account'));
+                        $query->orWhere('account_to_id', $request->get('account'));
+                    }
+                );
+            })
+            // Optionally add category filter
+            ->when($categories->count() > 0, function ($query) use ($categories) {
+                $query->whereHas('transactionItems', function ($query) use ($categories) {
+                    $query->whereIn('category_id', $categories->pluck('id'));
+                });
+            })
+            ->get();
 
         // Return empty collection if categories are required
         if ($request->has('category_required')) {
             $investmentTransactions = new Collection();
         } else {
             // Get all investment transactions
-            $investmentTransactions = Transaction::with(
-                [
+            $investmentTransactions = Transaction::with([
                     'config',
                     'config.investment',
                     'transactionType',
                     'transactionSchedule',
-                ]
-            )
-            ->where('user_id', Auth::user()->id)
-            ->byScheduleType($type)
-            ->where(
-                'config_type',
-                '=',
-                'transaction_detail_investment'
-            )
-            // Optionally add account filter
-            ->when($request->has('account'), function ($query) use ($request) {
-                $query->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($request) {
-                        $query->Where('account_id', $request->get('account'));
-                    }
-                );
-            })
-            ->get();
+                ])
+                ->where('user_id', $request->user()->id)
+                ->byScheduleType($type)
+                ->where(
+                    'config_type',
+                    '=',
+                    'transaction_detail_investment'
+                )
+                // Optionally add account filter
+                ->when($request->has('account'), function ($query) use ($request) {
+                    $query->whereHasMorph(
+                        'config',
+                        [TransactionDetailInvestment::class],
+                        function (Builder $query) use ($request) {
+                            $query->Where('account_id', $request->get('account'));
+                        }
+                    );
+                })
+                ->get();
         }
 
         // Unify and merge two transaction types
@@ -164,7 +160,7 @@ class TransactionApiController extends Controller
             ->map(function ($transaction) {
                 return $transaction->transformToClient();
             })
-            ->merge($investmentTransactions
+            ->union($investmentTransactions
                 ->map(function ($transaction) {
                     return $transaction->transformToClient();
                 }));
@@ -186,7 +182,7 @@ class TransactionApiController extends Controller
         // Check if only count is requested
         $onlyCount = $request->has('only_count');
 
-        if (! $request->hasAny([
+        if (!$request->hasAny([
             'date_from',
             'date_to',
             'accounts',
@@ -275,10 +271,10 @@ class TransactionApiController extends Controller
                 });
         } else {
             $investmentQuery = Transaction::where('user_id', $user->id)
-            ->byScheduleType('none')
-            ->where('config_type', 'transaction_detail_investment')
-            // TODO: How to create a a query with no results in a more simple way?
-            ->where('id', null);
+                ->byScheduleType('none')
+                ->where('config_type', 'transaction_detail_investment')
+                // TODO: How to create a a query with no results in a more simple way?
+                ->where('id', null);
         }
 
         // Return only count of transactions if requested
@@ -326,9 +322,9 @@ class TransactionApiController extends Controller
             })
             ->merge(
                 $investmentTransactions
-                ->map(function ($transaction) {
-                    return $transaction->transformToClient();
-                })
+                    ->map(function ($transaction) {
+                        return $transaction->transformToClient();
+                    })
             );
 
         $data = $transactions
@@ -405,8 +401,8 @@ class TransactionApiController extends Controller
 
         // Create notification only if invoked from standalone view (not modal)
         // TODO: can this be done in a better way?
-        if (! $validated['fromModal']) {
-            self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
+        if (!$validated['fromModal']) {
+            self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
         return response()->json(
@@ -473,8 +469,8 @@ class TransactionApiController extends Controller
 
         // Create notification only if invoked from standalone view (not modal)
         // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
-        if (! $validated['fromModal']) {
-            self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
+        if (!$validated['fromModal']) {
+            self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
         return response()->json(
@@ -489,7 +485,7 @@ class TransactionApiController extends Controller
         $processedTransactionItems = [];
         foreach ($transactionItems as $item) {
             // Ignore item, if amount is missing
-            if (! array_key_exists('amount', $item) || $item['amount'] === null) {
+            if (!array_key_exists('amount', $item) || $item['amount'] === null) {
                 continue;
             }
 
@@ -510,7 +506,7 @@ class TransactionApiController extends Controller
 
                     // Confirm to user if item was currently created
                     if ($newTag->wasRecentlyCreated) {
-                        self::addMessage('Tag added ('.$newTag->name.')', 'success', '', '', true);
+                        self::addMessage('Tag added (' . $newTag->name . ')', 'success', '', '', true);
                     }
 
                     $newItem->tags()->attach($newTag);
@@ -542,7 +538,7 @@ class TransactionApiController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Transaction  $transaction
+     * @param Transaction $transaction
      * @return JsonResponse
      */
     public function destroy(Transaction $transaction): JsonResponse
