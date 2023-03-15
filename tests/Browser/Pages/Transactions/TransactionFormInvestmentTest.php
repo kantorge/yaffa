@@ -8,7 +8,7 @@ use Tests\DuskTestCase;
 
 class TransactionFormInvestmentTest extends DuskTestCase
 {
-    protected static $migrationRun = false;
+    protected static bool $migrationRun = false;
 
     public function setUp() :void
     {

@@ -6,7 +6,6 @@ use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -107,9 +106,9 @@ class AccountGroupController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  AccountGroup  $accountGroup
-     * @return Response
+     * @return RedirectResponse
      */
-    public function destroy(AccountGroup $accountGroup)
+    public function destroy(AccountGroup $accountGroup): RedirectResponse
     {
         /**
          * @delete('/account-group/{account_group}')
@@ -127,8 +126,8 @@ class AccountGroupController extends Controller
             } else {
                 self::addSimpleDangerMessage(__('Database error:') .' ' . $e->errorInfo[2]);
             }
-
-            return redirect()->back();
         }
+
+        return redirect()->back();
     }
 }
