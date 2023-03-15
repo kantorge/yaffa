@@ -208,11 +208,7 @@ export let transactionColumnDefiniton = {
                     return row.config.account_from.name;
                 }
                 if (row.transaction_type.name === 'transfer') {
-                    if (row.transactionOperator === 'minus') {
-                        return __('Transfer to :account', {account: row.config.account_to.name});
-                    } else {
-                        return __('Transfer from :account', {account: row.config.account_from.name});
-                    }
+                    return __('Transfer from :account_from to :account_to', {account_from: row.config.account_from.name, account_to: row.config.account_to.name});
                 }
             }
             if (row.transaction_type.type === 'investment') {
