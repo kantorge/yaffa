@@ -9,6 +9,8 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -126,20 +128,29 @@ class InvestmentController extends Controller
      * Remove the specified resource from storage.
      *
      * @param Investment $investment
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function destroy(Investment $investment): \Illuminate\Http\RedirectResponse
+    public function destroy(Investment $investment): RedirectResponse
     {
         /**
          * @delete('/investment/{investment}')
          * @name('investment.destroy')
          * @middlewares('web', 'auth', 'verified', 'can:delete,investment')
          */
-        $investment->delete();
+        try {
+            $investment->delete();
+            self::addSimpleSuccessMessage(__('Investment deleted'));
 
-        self::addSimpleSuccessMessage(__('Investment deleted'));
+            return redirect()->route('investment.index');
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] == 1451) {
+                self::addSimpleDangerMessage(__('Investment is in use, cannot be deleted'));
+            } else {
+                self::addSimpleDangerMessage(__('Database error:') .' ' . $e->errorInfo[2]);
+            }
+        }
 
-        return redirect()->route('investment.index');
+        return redirect()->back();
     }
 
     public function summary()
