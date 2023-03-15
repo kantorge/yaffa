@@ -26,6 +26,7 @@ Route::get('/assets/category/{category}', [CategoryApiController::class,'getItem
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);
 Route::get('/assets/investment/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])->name('investment.getDetails');
+Route::delete('/assets/investment/{investment}', [InvestmentApiController::class, 'destroy'])->name('api.investment.destroy');
 Route::get('/assets/investment/price/{investment}', [InvestmentApiController::class, 'getPriceHistory']);
 Route::put('/assets/investment/{investment}/active/{active}', [InvestmentApiController::class, 'updateActive'])->name('api.investment.updateActive');
 

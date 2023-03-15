@@ -10,7 +10,7 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
-use App\Services\CategoryServices;
+use App\Services\CategoryService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -22,12 +22,12 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
 {
-    private CategoryServices $categoryServices;
+    private CategoryService $categoryService;
 
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
-        $this->categoryServices = new CategoryServices();
+        $this->categoryService = new CategoryService();
     }
 
     /**
@@ -85,7 +85,7 @@ class TransactionApiController extends Controller
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
-        $categories = $this->categoryServices->getChildCategories($request);
+        $categories = $this->categoryService->getChildCategories($request);
 
         // Get all standard transactions
         $standardTransactions = Transaction::with(
@@ -545,7 +545,7 @@ class TransactionApiController extends Controller
     {
         /**
          * @delete('/api/transactions/{transaction}')
-         * @name('transactions.destroy')
+         * @name('api.transactions.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
         $transaction->delete();

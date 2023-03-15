@@ -5,12 +5,16 @@ import * as dataTableHelpers from './../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 
-window.table = $(dataTableSelector).DataTable({
+let table = $(dataTableSelector).DataTable({
     data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
     columns: [
         {
             data: "name",
             title: __("Name"),
+            render: function (data, _type, row) {
+                return `<a href="${window.route('investment.show', row.id)}">${data}</a>`;
+            },
+            type: "html"
         },
         {
             data: "active",
@@ -51,9 +55,9 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: "id",
             title: __("Actions"),
-            render: function (data) {
-                return '<a href="' + route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-trash" title="' + __('Delete') + '"></i></button> ';
+            render: function (data, _type, row) {
+                return '<a href="' + window.route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                       renderDeleteButton(row);
             },
             className: "dt-nowrap",
             orderable: false,
@@ -61,7 +65,7 @@ window.table = $(dataTableSelector).DataTable({
         }
     ],
     order: [
-        [0, 'asc']
+        [0, 'asc']  // Default ordering by name
     ],
     responsive: true,
     initComplete: function (settings) {
@@ -71,7 +75,7 @@ window.table = $(dataTableSelector).DataTable({
             // Change icon to spinner
             $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
 
-            // Send request to change payee active state
+            // Send request to change investment active state
             $.ajax({
                 type: 'PUT',
                 url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
@@ -82,7 +86,7 @@ window.table = $(dataTableSelector).DataTable({
                 context: this,
                 success: function (data) {
                     // Update row in table data souerce
-                    investments.filter(investment => investment.id === data.id)[0].active = data.active;
+                    window.investments.filter(investment => investment.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
                     alert(__('Error changing investment active state'));
@@ -93,12 +97,74 @@ window.table = $(dataTableSelector).DataTable({
                 }
             });
         });
+
+        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+            // Confirm the action with the user
+            if (!confirm(__('Are you sure to want to delete this item?'))) {
+                return;
+            }
+
+            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+
+            // Change icon to spinner
+            $(this).addClass('busy');
+            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
+
+            // Send request to change investment active state
+            $.ajax({
+                type: 'DELETE',
+                url: window.route('api.investment.destroy', + row.data().id),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data souerce
+                    window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
+                },
+                error: function (_data) {
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'danger',
+                                message: __('Error while trying to delete investment'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                },
+                complete: function (_data) {
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Investment deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                }
+            });
+        });
     }
 });
 
-dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'investment.destroy');
-
 // Listeners for button filter(s)
-$('input[name=active]').on("change", function() {
-    table.column(1).search(this.value).draw();
-});
+dataTableHelpers.initializeFilterButtonsActive(table, 1);
+
+// Listener for delete button
+function renderDeleteButton(row) {
+    if (row.transactions_count === 0) {
+        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> '
+    }
+
+    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + __('Investment is already used, it cannot be deleted') + '"><i class="fa fa-fw fa-trash"></i></button> '
+}

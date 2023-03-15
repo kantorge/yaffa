@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Traits\CurrencyTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -33,23 +34,23 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read int|null $transaction_items_count
  * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
  * @property-read \App\Models\TransactionType $transactionType
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction byScheduleType($type)
+ * @method static Builder|Transaction byScheduleType($type)
  * @method static \Database\Factories\TransactionFactory factory(...$parameters)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction query()
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereBudget($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereComment($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereConfigId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereConfigType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereReconciled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereSchedule($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereTransactionTypeId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUserId($value)
+ * @method static Builder|Transaction newModelQuery()
+ * @method static Builder|Transaction newQuery()
+ * @method static Builder|Transaction query()
+ * @method static Builder|Transaction whereBudget($value)
+ * @method static Builder|Transaction whereComment($value)
+ * @method static Builder|Transaction whereConfigId($value)
+ * @method static Builder|Transaction whereConfigType($value)
+ * @method static Builder|Transaction whereCreatedAt($value)
+ * @method static Builder|Transaction whereDate($value)
+ * @method static Builder|Transaction whereId($value)
+ * @method static Builder|Transaction whereReconciled($value)
+ * @method static Builder|Transaction whereSchedule($value)
+ * @method static Builder|Transaction whereTransactionTypeId($value)
+ * @method static Builder|Transaction whereUpdatedAt($value)
+ * @method static Builder|Transaction whereUserId($value)
  * @mixin \Eloquent
  */
 class Transaction extends Model
@@ -138,11 +139,11 @@ class Transaction extends Model
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $type
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @param string $type
+     * @return Builder
      */
-    public function scopeByScheduleType($query, $type)
+    public function scopeByScheduleType(Builder $query, string $type): Builder
     {
         switch ($type) {
             case 'schedule':

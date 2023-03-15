@@ -5,23 +5,20 @@ import * as dataTableHelpers from './../components/dataTableHelper';
 import {toFormattedCurrency} from '../helpers';
 
 let table = $('#investmentSummary').DataTable({
-    data: investments,
+    data: window.investments,
     columns: [
         {
             data: "name",
             title: __("Name"),
-            render: function (data, type, row) {
-                if (type === 'display') {
-                    return '<a href="' + route('investment.show', row.id) + '" class="" title="' + __('View investment details') + '">' + data + '</a>';
-                }
-
-                return  data;
+            render: function (data, _type, row) {
+                return `<a href="${window.route('investment.show', row.id)}" title="${__('View investment details')}">${data}</a>`;
             },
             type: "html",
         },
         {
             data: "investment_group.name",
             title: __("Group"),
+            type: "string"
         },
         {
             data: "active",
@@ -40,17 +37,20 @@ let table = $('#investmentSummary').DataTable({
                 }
                 return data;
             },
+            type: "num",
+            className: 'dt-nowrap',
         },
         {
             data: "price",
             title: __("Latest price"),
             render: function (data, type, row) {
-                if (type === 'display') {
+                if (type === 'display' && !isNaN(data) && typeof data === "number") {
                     return toFormattedCurrency(data, window.YAFFA.locale, row.currency);
                 }
 
                 return data;
             },
+            type: "num",
             className: 'dt-nowrap',
         },
         {
@@ -65,6 +65,7 @@ let table = $('#investmentSummary').DataTable({
 
                 return value;
             },
+            type: "num",
             className: 'dt-nowrap',
         },
         {
@@ -90,7 +91,7 @@ let table = $('#investmentSummary').DataTable({
             // Change icon to spinner
             $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
 
-            // Send request to change payee active state
+            // Send request to change investment active state
             $.ajax({
                 type: 'PUT',
                 url: '/api/assets/investment/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
@@ -101,7 +102,7 @@ let table = $('#investmentSummary').DataTable({
                 context: this,
                 success: function (data) {
                     // Update row in table data souerce
-                    investments.filter(investment => investment.id === data.id)[0].active = data.active;
+                    window.investments.filter(investment => investment.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
                     alert(__('Error changing investment active state'));

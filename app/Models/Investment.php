@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Arr;
 
 /**
@@ -113,6 +114,61 @@ class Investment extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', true);
+    }
+
+    public function transactionDetailInvestment(): HasMany
+    {
+        return $this->hasMany(TransactionDetailInvestment::class);
+    }
+
+    public function transactions(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailInvestment::class,
+            'investment_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->where(
+                'config_type',
+                'transaction_detail_investment'
+            );
+    }
+
+    public function transactionsBasic(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailInvestment::class,
+            'investment_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->byScheduleType('none')
+            ->where(
+                'config_type',
+                'transaction_detail_investment'
+            );
+    }
+
+    public function transactionsScheduled(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailInvestment::class,
+            'investment_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->byScheduleType('schedule')
+            ->where(
+                'config_type',
+                'transaction_detail_investment'
+            );
     }
 
     public function investmentPrices(): HasMany
@@ -268,7 +324,7 @@ class Investment extends Model
      *
      * @return array
      */
-    public function getAllInvestmentPriceProviders()
+    public function getAllInvestmentPriceProviders(): array
     {
         return $this->priceProviders;
     }

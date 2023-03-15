@@ -9,7 +9,7 @@ use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionType;
-use App\Services\CategoryServices;
+use App\Services\CategoryService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,12 +22,12 @@ class ReportApiController extends Controller
     use CurrencyTrait;
     use ScheduleTrait;
 
-    private CategoryServices $categoryServices;
+    private CategoryService $categoryService;
 
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
-        $this->categoryServices = new CategoryServices();
+        $this->categoryService = new CategoryService();
     }
 
     /**
@@ -49,7 +49,7 @@ class ReportApiController extends Controller
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
-        $categories = $this->categoryServices->getChildCategories($request);
+        $categories = $this->categoryService->getChildCategories($request);
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();

@@ -7,9 +7,9 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -21,10 +21,14 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class InvestmentController extends Controller
 {
+    protected InvestmentService $investmentService;
+
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
         $this->authorizeResource(Investment::class);
+
+        $this->investmentService = new InvestmentService();
     }
 
     /**
@@ -42,6 +46,9 @@ class InvestmentController extends Controller
         // Get all investments of the user from the database and return to view
         $investments = Auth::user()
             ->investments()
+            ->withCount('transactions')
+            ->withCount('transactionsBasic')
+            ->withCount('transactionsScheduled')
             ->with([
                 'currency',
                 'investmentGroup',
@@ -137,19 +144,15 @@ class InvestmentController extends Controller
          * @name('investment.destroy')
          * @middlewares('web', 'auth', 'verified', 'can:delete,investment')
          */
-        try {
-            $investment->delete();
-            self::addSimpleSuccessMessage(__('Investment deleted'));
 
+        $result = $this->investmentService->deleteInvestment($investment);
+
+        if ($result['success']) {
+            self::addSimpleSuccessMessage(__('Investment deleted'));
             return redirect()->route('investment.index');
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] == 1451) {
-                self::addSimpleDangerMessage(__('Investment is in use, cannot be deleted'));
-            } else {
-                self::addSimpleDangerMessage(__('Database error:') .' ' . $e->errorInfo[2]);
-            }
         }
 
+        self::addSimpleDangerMessage($result['error']);
         return redirect()->back();
     }
 
@@ -208,15 +211,15 @@ class InvestmentController extends Controller
                 'config',
                 'transactionType',
             ])
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investment) {
-                    $query->Where('investment_id', $investment->id);
-                }
-            )
-            ->orderBy('date')
-            ->get();
+                ->whereHasMorph(
+                    'config',
+                    [TransactionDetailInvestment::class],
+                    function (Builder $query) use ($investment) {
+                        $query->Where('investment_id', $investment->id);
+                    }
+                )
+                ->orderBy('date')
+                ->get();
 
         // Process data for table and chart
         $rawTransactions
@@ -322,7 +325,7 @@ class InvestmentController extends Controller
             ->sortBy('date')
             ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
                 $operator = $transaction['quantity_operator'];
-                if (! $operator) {
+                if (!$operator) {
                     $quantity = 0;
                 } else {
                     $quantity = ($operator === 'minus' ? -1 : 1) * $transaction['quantity'];

@@ -7,6 +7,7 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -20,9 +21,13 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class InvestmentApiController extends Controller
 {
+    protected InvestmentService $investmentService;
+
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'verified']);
+
+        $this->investmentService = new InvestmentService();
     }
 
     public function getList(Request $request): JsonResponse
@@ -316,6 +321,39 @@ class InvestmentApiController extends Controller
             ->json(
                 $positions,
                 Response::HTTP_OK
+            );
+    }
+
+    /**
+     * Remove the specified investment.
+     *
+     * @param Investment $investment
+     * @return JsonResponse
+     */
+    public function destroy(Investment $investment): JsonResponse
+    {
+        /**
+         * @delete('/api/investment/{investment}')
+         * @name('api.investment.destroy')
+         * @middlewares('web', 'auth', 'verified')
+         */
+        $result = $this->investmentService->deleteInvestment($investment);
+
+        if ($result['success']) {
+            return response()
+                ->json(
+                    ['investment' => $investment],
+                    Response::HTTP_OK
+                );
+        }
+
+        return response()
+            ->json(
+                [
+                    'investment' => $investment,
+                    'error' => $result['error'],
+                ],
+                Response::HTTP_INTERNAL_SERVER_ERROR
             );
     }
 }

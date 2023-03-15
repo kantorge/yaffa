@@ -2,8 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\TransactionDetailInvestmentFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * App\Models\TransactionDetailInvestment
@@ -16,27 +22,27 @@ use Illuminate\Database\Eloquent\Model;
  * @property float|null $commission
  * @property float|null $tax
  * @property float|null $dividend
- * @property-read \App\Models\AccountEntity $account
- * @property-read \App\Models\Transaction|null $config
- * @property-read \App\Models\Investment $investment
- * @method static \Illuminate\Database\Eloquent\Builder|Transaction byScheduleType($type)
- * @method static \Database\Factories\TransactionDetailInvestmentFactory factory(...$parameters)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment query()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereAccountId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereCommission($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereDividend($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereInvestmentId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment wherePrice($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereQuantity($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionDetailInvestment whereTax($value)
- * @mixin \Eloquent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read AccountEntity $account
+ * @property-read Transaction|null $config
+ * @property-read Investment $investment
+ * @method static Builder|Transaction byScheduleType($type)
+ * @method static TransactionDetailInvestmentFactory factory(...$parameters)
+ * @method static Builder|TransactionDetailInvestment newModelQuery()
+ * @method static Builder|TransactionDetailInvestment newQuery()
+ * @method static Builder|TransactionDetailInvestment query()
+ * @method static Builder|TransactionDetailInvestment whereAccountId($value)
+ * @method static Builder|TransactionDetailInvestment whereCommission($value)
+ * @method static Builder|TransactionDetailInvestment whereDividend($value)
+ * @method static Builder|TransactionDetailInvestment whereId($value)
+ * @method static Builder|TransactionDetailInvestment whereInvestmentId($value)
+ * @method static Builder|TransactionDetailInvestment wherePrice($value)
+ * @method static Builder|TransactionDetailInvestment whereQuantity($value)
+ * @method static Builder|TransactionDetailInvestment whereTax($value)
+ * @mixin Eloquent
+ * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
- * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
- * @property-read \App\Models\TransactionType $transactionType
+ * @property-read TransactionSchedule|null $transactionSchedule
+ * @property-read TransactionType $transactionType
  */
 class TransactionDetailInvestment extends Model
 {
@@ -54,7 +60,7 @@ class TransactionDetailInvestment extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'account_id',
@@ -76,17 +82,17 @@ class TransactionDetailInvestment extends Model
         'dividend' => 'float',
     ];
 
-    public function config()
+    public function config(): MorphOne
     {
         return $this->morphOne(Transaction::class, 'config');
     }
 
-    public function account()
+    public function account(): BelongsTo
     {
         return $this->belongsTo(AccountEntity::class, 'account_id');
     }
 
-    public function investment()
+    public function investment(): BelongsTo
     {
         return $this->belongsTo(Investment::class, 'investment_id');
     }
