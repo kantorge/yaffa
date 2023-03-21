@@ -49,11 +49,11 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property-read int|null $notifications_count
  * @property-read Collection|AccountEntity[] $payees
  * @property-read int|null $payees_count
- * @property-read Collection|Tag[] $tags
+ * @property-read Collection|array<Tag> $tags
  * @property-read int|null $tags_count
- * @property-read Collection|PersonalAccessToken[] $tokens
+ * @property-read Collection|array<PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
- * @property-read Collection|Transaction[] $transactions
+ * @property-read Collection|array<Transaction> $transactions
  * @property-read int|null $transactions_count
  * @method static UserFactory factory(...$parameters)
  * @method static Builder|User newModelQuery()

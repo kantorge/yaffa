@@ -94,7 +94,6 @@ class RegisterController extends Controller
      */
     protected string $redirectTo = RouteServiceProvider::HOME;
 
-
     /**
      * Get a validator for an incoming registration request.
      *
@@ -184,7 +183,8 @@ class RegisterController extends Controller
 
         $this->guard()->login($user);
 
-        if ($response = $this->registered($request, $user)) {
+        $response = $this->registered($request, $user);
+        if ($response) {
             return $response;
         }
 

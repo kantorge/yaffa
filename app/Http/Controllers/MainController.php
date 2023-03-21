@@ -132,14 +132,8 @@ class MainController extends Controller
 
                 return $transaction;
             })
-        // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(function ($transaction) {
-                if (! $transaction->schedule) {
-                    return true;
-                }
-
-                return ($transaction->transactionSchedule->next_date !== null);
-            });
+            // Drop scheduled transactions, which are not active (next date is empty)
+            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
 
         // Add schedule to history items, if needeed
         if ($withForecast) {

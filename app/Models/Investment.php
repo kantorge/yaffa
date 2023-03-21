@@ -335,7 +335,7 @@ class Investment extends Model
      * It invokes the provider's function and updates the price in the database.
      *
      * @param Carbon|null $from Optionnally specify the date to retrieve data from
-     * @param boolean $refill Future option to request reload of prices
+     * @param bool $refill Future option to request reload of prices
      * @uses getInvestmentPriceFromAlphaVantage()
      */
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
@@ -347,7 +347,7 @@ class Investment extends Model
     /**
      * TODO: this should have a contract to have standard parameters
      * @param Carbon|null $from Optionnally specify the date to retrieve data from
-     * @param boolean $refill Future option to request reload of prices
+     * @param bool $refill Future option to request reload of prices
      * @throws GuzzleException
      */
     public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void

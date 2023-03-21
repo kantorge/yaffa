@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Traits\CurrencyTrait;
 use Carbon\Carbon;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,6 @@ use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\BetweenConstraint;
-use Eloquent;
 
 /**
  * App\Models\Transaction

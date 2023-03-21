@@ -435,7 +435,7 @@ class ReportApiController extends Controller
                     'id' => $transaction->id,
                     'amount' => floatval($transaction->amount),
                     'account_id' => $transaction->account_id,
-                    'transaction_schedule' => (object)[
+                    'transaction_schedule' => (object) [
                         'start_date' => $transaction->start_date,
                         'next_date' => $transaction->next_date,
                         'end_date' => $transaction->end_date,
@@ -642,7 +642,7 @@ class ReportApiController extends Controller
                 $item = [
                     'id' => $transaction->id,
                     'amount' => floatval($transaction->amount),
-                    'transaction_schedule' => (object)[
+                    'transaction_schedule' => (object) [
                         'start_date' => $transaction->start_date,
                         'next_date' => $transaction->next_date,
                         'end_date' => $transaction->end_date,

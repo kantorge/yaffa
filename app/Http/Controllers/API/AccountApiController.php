@@ -37,7 +37,7 @@ class AccountApiController extends Controller
         $parameters = [
             'user' => $request->user(),
             'query' => $request->get('q'),
-            'limit' => (int)($request->get('limit') ?? 10),
+            'limit' => (int) ($request->get('limit') ?? 10),
             'withInactive' => $request->get('withInactive', null),
             'currency_id' => $request->get('currency_id', null),
         ];
