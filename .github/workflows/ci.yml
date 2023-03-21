@@ -9,8 +9,8 @@ jobs:
         image: mysql:8
         env:
           MYSQL_DATABASE: testing
-          MYSQL_USER: yaffa
-          MYSQL_PASSWORD: secret
+          MYSQL_USER: default
+          MYSQL_PASSWORD: password
           MYSQL_ROOT_PASSWORD: secretroot
 
         ports:
