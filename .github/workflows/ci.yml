@@ -64,16 +64,6 @@ jobs:
     - name: Upload coverage to Codacy
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        name: codecov-umbrella
-        fail_ci_if_error: true
-      env:
-          DB_PORT_TEST: ${{ job.services.mysql.ports['3306'] }}
-
 #  Suspended Dusk Tests due to unreliable Select2 testing
 #  dusk-php:
 #    runs-on: ubuntu-latest
