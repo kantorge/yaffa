@@ -57,7 +57,7 @@ jobs:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
     - name: Run Testsuite
-      run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml --testsuite NonDusk
+      run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml --testsuite AllNonDusk
       env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
