@@ -9,7 +9,6 @@ class CreateTransactionHeadersTable extends Migration
     /**
      * Run the migrations.
      *
-     * @return void
      */
     public function up()
     {
@@ -34,7 +33,6 @@ class CreateTransactionHeadersTable extends Migration
     /**
      * Reverse the migrations.
      *
-     * @return void
      */
     public function down()
     {

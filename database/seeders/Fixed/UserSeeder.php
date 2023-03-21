@@ -11,15 +11,13 @@ class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds by creating pre-defined values
-     *
-     * @return void
      */
     public function run($aliases = [])
     {
         foreach ($aliases as $alias) {
             User::factory()->create([
-                'name' => Str::ucfirst($alias).' User',
-                'email' => $alias.'@yaffa.cc',
+                'name' => Str::ucfirst($alias) . ' User',
+                'email' => $alias . '@yaffa.cc',
                 'password' => Hash::make($alias),
             ]);
         }

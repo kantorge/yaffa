@@ -36,15 +36,11 @@ class AccountEntityRequest extends FormRequest
                 ],
                 'config.account_group_id' => [
                     'required',
-                    Rule::exists('account_groups', 'id')->where(function ($query) {
-                        return $query->where('user_id', Auth::user()->id);
-                    }),
+                    Rule::exists('account_groups', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
                 ],
                 'config.currency_id' => [
                     'required',
-                    Rule::exists('currencies', 'id')->where(function ($query) {
-                        return $query->where('user_id', Auth::user()->id);
-                    }),
+                    Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
                 ],
             ]);
         }
@@ -53,9 +49,7 @@ class AccountEntityRequest extends FormRequest
             $rules = array_merge($rules, [
                 'config.category_id' => [
                     'nullable',
-                    Rule::exists('categories', 'id')->where(function ($query) {
-                        return $query->where('user_id', Auth::user()->id);
-                    }),
+                    Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
                 ],
                 'config.import_alias' => [
                     'nullable',
@@ -66,9 +60,7 @@ class AccountEntityRequest extends FormRequest
                     'array',
                 ],
                 'config.preferred.*' => [
-                    Rule::exists('categories', 'id')->where(function ($query) {
-                        return $query->where('user_id', Auth::user()->id);
-                    }),
+                    Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
                     // TODO: prevent items to be added from other select
                     Rule::notIn('config.not_preferred'),
                 ],
@@ -77,9 +69,7 @@ class AccountEntityRequest extends FormRequest
                     'array',
                 ],
                 'config.not_preferred.*' => [
-                    Rule::exists('categories', 'id')->where(function ($query) {
-                        return $query->where('user_id', Auth::user()->id);
-                    }),
+                    Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
                     // TODO: prevent items to be added from other select
                     Rule::notIn('config.preferred'),
                     'different:config.category_id',
@@ -92,8 +82,6 @@ class AccountEntityRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation()
     {

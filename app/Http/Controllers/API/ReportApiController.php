@@ -124,9 +124,7 @@ class ReportApiController extends Controller
         // Unify currencies and calculate amounts only for given categories
         $budgetTransactions->transform(function ($transaction) use ($categories) {
             $transaction->sum = $transaction->transactionItems
-                ->filter(function ($item) use ($categories) {
-                    return $categories->pluck('id')->contains($item->category_id);
-                })
+                ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
                 ->sum('amount');
 
             return $transaction;
@@ -187,9 +185,7 @@ class ReportApiController extends Controller
             ];
         }
 
-        usort($result, function ($a, $b) {
-            return $a['period'] <=> $b['period'];
-        });
+        usort($result, fn ($a, $b) => $a['period'] <=> $b['period']);
 
         // Return fetched and prepared data
         return response()->json($result, Response::HTTP_OK);
@@ -229,9 +225,7 @@ class ReportApiController extends Controller
             ])
                 ->whereHas('transaction', function ($query) use ($year, $month) {
                     $query->where('user_id', Auth::user()->id)
-                        ->when($month === null, function ($query) use ($year) {
-                            return $query->whereRaw('YEAR(date) = ?', [$year]);
-                        })
+                        ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                         ->when($year && $month, function ($query) use ($year, $month) {
                             return $query->whereRaw('YEAR(date) = ?', [$year])
                                 ->whereRaw('MONTH(date) = ?', [$month]);
@@ -281,9 +275,7 @@ class ReportApiController extends Controller
                     TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
                 )
                 ->where('user_id', Auth::user()->id)
-                ->when($month === null, function ($query) use ($year) {
-                    return $query->whereRaw('YEAR(date) = ?', [$year]);
-                })
+                ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, function ($query) use ($year, $month) {
                     return $query->whereRaw('YEAR(date) = ?', [$year])
                         ->whereRaw('MONTH(date) = ?', [$month]);
@@ -340,9 +332,7 @@ class ReportApiController extends Controller
         $allRates = $this->allCurrencyRatesByMonth(true, true);
 
         $firstRates = $allRates->groupBy('from_id')
-            ->map(function ($group) {
-                return $group->firstWhere('month', $group->min('month'));
-            });
+            ->map(fn ($group) => $group->firstWhere('month', $group->min('month')));
 
         // Get opening balance for all accounts or requested accounts
         $accounts = $request->user()
@@ -429,9 +419,7 @@ class ReportApiController extends Controller
 
         $transactionList = $standardTransactionsList->merge($investmentTransactionsList);
 
-        [$transactionsHistory, $transactionSchedule] = $transactionList->partition(function ($transaction) {
-            return !$transaction->schedule && !$transaction->budget;
-        });
+        [$transactionsHistory, $transactionSchedule] = $transactionList->partition(fn ($transaction) => !$transaction->schedule && !$transaction->budget);
 
         // Group standard transactions by month, and get all relevant details
         $compact = [];
@@ -515,9 +503,7 @@ class ReportApiController extends Controller
             ];
         }
 
-        usort($final, function ($a, $b) {
-            return $a['month'] <=> $b['month'];
-        });
+        usort($final, fn ($a, $b) => $a['month'] <=> $b['month']);
 
         return response()->json(
             [
@@ -643,9 +629,7 @@ class ReportApiController extends Controller
             ->concat($investmentTransactionsList)
             ->concat($transferToTransactionsList)
             ->concat($transferFromTransactionsList);
-        [$transactionsHistory, $transactionSchedule] = $transactionList->partition(function ($transaction) {
-            return !$transaction->schedule && !$transaction->budget;
-        });
+        [$transactionsHistory, $transactionSchedule] = $transactionList->partition(fn ($transaction) => !$transaction->schedule && !$transaction->budget);
 
         // Group standard transactions by month, and get all relevant details
         $compact = [];
@@ -707,9 +691,7 @@ class ReportApiController extends Controller
             ];
         }
 
-        usort($final, function ($a, $b) {
-            return $a['month'] <=> $b['month'];
-        });
+        usort($final, fn ($a, $b) => $a['month'] <=> $b['month']);
 
         return response()->json(
             [

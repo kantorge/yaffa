@@ -54,7 +54,6 @@ class ResetPasswordTest extends TestCase
     /** @test */
     public function test_user_can_view_password_reset_form_when_authenticated()
     {
-
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get($this->passwordResetGetRoute($token = $this->getValidToken($user)));
@@ -82,9 +81,7 @@ class ResetPasswordTest extends TestCase
         $this->assertEquals($user->email, $user->fresh()->email);
         $this->assertTrue(Hash::check($password, $user->fresh()->password));
         $this->assertAuthenticatedAs($user);
-        Event::assertDispatched(PasswordReset::class, function ($e) use ($user) {
-            return $e->user->id === $user->id;
-        });
+        Event::assertDispatched(PasswordReset::class, fn ($e) => $e->user->id === $user->id);
     }
 
     /** @test */
@@ -98,13 +95,13 @@ class ResetPasswordTest extends TestCase
         ]);
 
         $response = $this
-        ->from($this->passwordResetGetRoute($this->getInvalidToken()))
-        ->post($this->passwordResetPostRoute(), [
-            'token' => $this->getInvalidToken(),
-            'email' => $user->email,
-            'password' => $newPassword,
-            'password_confirmation' => $newPassword,
-        ]);
+            ->from($this->passwordResetGetRoute($this->getInvalidToken()))
+            ->post($this->passwordResetPostRoute(), [
+                'token' => $this->getInvalidToken(),
+                'email' => $user->email,
+                'password' => $newPassword,
+                'password_confirmation' => $newPassword,
+            ]);
 
         $response->assertRedirect($this->passwordResetGetRoute($this->getInvalidToken()));
         $this->assertEquals($user->email, $user->fresh()->email);
@@ -122,13 +119,13 @@ class ResetPasswordTest extends TestCase
         ]);
 
         $response = $this
-        ->from($this->passwordResetGetRoute($token = $this->getValidToken($user)))
-        ->post($this->passwordResetPostRoute(), [
-            'token' => $token,
-            'email' => $user->email,
-            'password' => '',
-            'password_confirmation' => '',
-        ]);
+            ->from($this->passwordResetGetRoute($token = $this->getValidToken($user)))
+            ->post($this->passwordResetPostRoute(), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => '',
+                'password_confirmation' => '',
+            ]);
 
         $response->assertRedirect($this->passwordResetGetRoute($token));
         $response->assertSessionHasErrors('password');

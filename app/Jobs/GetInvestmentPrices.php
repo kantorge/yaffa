@@ -11,14 +11,15 @@ use Illuminate\Queue\SerializesModels;
 
 class GetInvestmentPrices implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public Investment $investment;
 
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct(Investment $investment)
     {
@@ -27,8 +28,6 @@ class GetInvestmentPrices implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {

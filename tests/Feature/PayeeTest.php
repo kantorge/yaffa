@@ -121,7 +121,7 @@ class PayeeTest extends TestCase
 
         $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'payee']));
 
-        $model = new $this->base_model;
+        $model = new $this->base_model();
 
         $this->assertDatabaseHas($model->getTable(), $baseAttributes);
     }

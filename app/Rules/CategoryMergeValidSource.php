@@ -13,7 +13,7 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
      *
      * @var array
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * Set the data under validation.
@@ -37,7 +37,7 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
      *
      * @return bool
      */
-    public function passes($attribute, $value)
+    public function passes($attribute, $value): bool
     {
         // Fail if source category or target category is not set
         if (! isset($this->data['category_source']) || ! isset($this->data['category_target'])) {
@@ -51,11 +51,7 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
         $categoryTarget = Category::find($this->data['category_target']);
 
         // Check invalid combination, where source is a parent (it's parent is null) and target is a child (it's parent is not null)
-        if ($categorySource->parent_id === null && $categoryTarget->parent_id !== null) {
-            return false;
-        }
-
-        return true;
+        return ! ($categorySource->parent_id === null && $categoryTarget->parent_id !== null);
     }
 
     /**
@@ -63,8 +59,8 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
      *
      * @return string
      */
-    public function message()
+    public function message(): string
     {
-        return 'Cannot merge a parent category into a child category.';
+        return __('Cannot merge a parent category into a child category.');
     }
 }

@@ -6,9 +6,15 @@ use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
+use Exception;
+use Throwable;
 
 class CategoryController extends Controller
 {
@@ -21,7 +27,7 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function index()
     {
@@ -71,7 +77,7 @@ class CategoryController extends Controller
     /**
      * Display a form for adding new resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function create()
     {
@@ -101,7 +107,7 @@ class CategoryController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  Category  $category
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function edit(Category $category)
     {
@@ -141,7 +147,7 @@ class CategoryController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Category  $category
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(Category $category)
     {
@@ -155,7 +161,7 @@ class CategoryController extends Controller
             self::addSimpleSuccessMessage(__('Category deleted'));
 
             return redirect()->route('categories.index');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Category is in use, cannot be deleted'));
             } else {
@@ -169,8 +175,8 @@ class CategoryController extends Controller
     /**
      * Display a form to merge two categories.
      *
-     * @param  \App\Models\Category  $categorySource
-     * @return \Illuminate\View\View
+     * @param Category $categorySource
+     * @return View
      */
     public function mergeCategoriesForm(?Category $categorySource)
     {
@@ -191,7 +197,10 @@ class CategoryController extends Controller
     /*
      * Merge two categories.
      */
-    public function mergeCategories(CategoryMergeRequest $request)
+    /**
+     * @throws Throwable
+     */
+    public function mergeCategories(CategoryMergeRequest $request): RedirectResponse
     {
         /**
          * @post('/categories/merge')
@@ -206,13 +215,13 @@ class CategoryController extends Controller
         try {
             // Update all transaction detail items with source category to target category
             DB::table('transaction_items')
-            ->where('category_id', $validated['category_source'])
-            ->update(['category_id' => $validated['category_target']]);
+                ->where('category_id', $validated['category_source'])
+                ->update(['category_id' => $validated['category_target']]);
 
             // Update all child categories with source parent to target parent
             DB::table('categories')
-            ->where('parent_id', $validated['category_source'])
-            ->update(['parent_id' => $validated['category_target']]);
+                ->where('parent_id', $validated['category_source'])
+                ->update(['parent_id' => $validated['category_target']]);
 
             // Hydrate the source category
             $categorySource = Category::find($validated['category_source']);
@@ -227,7 +236,7 @@ class CategoryController extends Controller
 
             DB::commit();
             self::addSimpleSuccessMessage(__('Categories merged'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
         }

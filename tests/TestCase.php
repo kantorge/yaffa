@@ -55,7 +55,7 @@ abstract class TestCase extends BaseTestCase
         $response = $this->actingAs($user)->postJson(route($route), $attributes);
         $response->assertRedirect($this->base_route ? "{$this->base_route}" : $route);
 
-        $model = new $model;
+        $model = new $model();
 
         $this->assertDatabaseHas($model->getTable(), $attributes);
 

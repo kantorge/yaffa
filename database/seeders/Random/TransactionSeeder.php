@@ -15,8 +15,6 @@ class TransactionSeeder extends Seeder
 
     /**
      * Run the database seeds by creating random values with factory
-     *
-     * @return void
      */
     public function run(User $user)
     {
@@ -67,11 +65,11 @@ class TransactionSeeder extends Seeder
 
         // Investments - buy
         Transaction::factory()
-                ->count(rand(5, 10))
-                ->buy()
-                ->create([
-                    'user_id' => $user->id,
-                ]);
+            ->count(rand(5, 10))
+            ->buy()
+            ->create([
+                'user_id' => $user->id,
+            ]);
     }
 
     private function createTransactionSchedule(Transaction $transaction)
@@ -85,16 +83,16 @@ class TransactionSeeder extends Seeder
     private function createTransactionProperties(Transaction $transaction)
     {
         $newTransactionItems = TransactionItem::factory()
-                                    ->count(rand(1, 5))
-                                    /* TODO: this should be used, but new tags are created instead of using existing ones
-                                    ->has(
-                                        Tag::factory()
-                                        ->count(rand(0, 2))
-                                    )
-                                    */
-                                    ->create([
-                                        'transaction_id' => $transaction->id,
-                                    ]);
+            ->count(rand(1, 5))
+            /* TODO: this should be used, but new tags are created instead of using existing ones
+            ->has(
+                Tag::factory()
+                ->count(rand(0, 2))
+            )
+            */
+            ->create([
+                'transaction_id' => $transaction->id,
+            ]);
 
         $newTransactionItems->each(function ($item) {
             $item->tags()->attach(

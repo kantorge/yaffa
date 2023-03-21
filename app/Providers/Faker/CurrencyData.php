@@ -34,10 +34,10 @@ class CurrencyData
 
     public static function getCurrencyByIsoCode(string $isoCode): array|null
     {
-        foreach(static::getCurrencies() as $currency)
-        {
-            if ($currency['iso_code'] === $isoCode )
+        foreach (static::getCurrencies() as $currency) {
+            if ($currency['iso_code'] === $isoCode) {
                 return $currency;
+            }
         }
 
         return null;

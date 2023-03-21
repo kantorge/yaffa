@@ -42,8 +42,8 @@ class AccountEntityController extends Controller
         // Load view for Accounts
         if ($accountEntity->config_type === 'account') {
             $accountEntity->load([
-               'config',
-               'config.currency',
+                'config',
+                'config.currency',
             ]);
 
             // Get preset filters from query string
@@ -89,7 +89,7 @@ class AccountEntityController extends Controller
          */
         $this->checkTypeParam($request);
 
-        return $this->{'index'.Str::ucfirst($request->get('type'))}();
+        return $this->{'index' . Str::ucfirst($request->get('type'))}();
     }
 
     /**
@@ -305,7 +305,7 @@ class AccountEntityController extends Controller
          */
         $this->checkTypeParam($request);
 
-        return $this->{'create'.Str::ucfirst($request->type)}();
+        return $this->{'create' . Str::ucfirst($request->type)}();
     }
 
     private function createAccount(): View|RedirectResponse
@@ -441,7 +441,7 @@ class AccountEntityController extends Controller
          */
         $this->checkTypeParam($request);
 
-        return $this->{'edit'.Str::ucfirst($request->type)}($accountEntity);
+        return $this->{'edit' . Str::ucfirst($request->type)}($accountEntity);
     }
 
     private function editAccount(AccountEntity $accountEntity): View
@@ -632,8 +632,8 @@ class AccountEntityController extends Controller
         try {
             // Update all transaction detail items with source payee to target payee
             DB::table('transaction_details_standard')
-            ->where('account_from_id', $validated['payee_source'])
-            ->update(['account_from_id' => $validated['payee_target']]);
+                ->where('account_from_id', $validated['payee_source'])
+                ->update(['account_from_id' => $validated['payee_target']]);
 
             DB::table('transaction_details_standard')
                 ->where('account_to_id', $validated['payee_source'])

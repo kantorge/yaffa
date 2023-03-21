@@ -22,7 +22,7 @@ class TransactionScheduleFactory extends Factory
     public function definition()
     {
         $start = $this->faker->dateTimeBetween('-1 year', 'now');
-        $end = $this->faker->dateTimeBetween($start, $start->format('Y-m-d H:i:s').' 2 years');
+        $end = $this->faker->dateTimeBetween($start, $start->format('Y-m-d H:i:s') . ' 2 years');
 
         return [
             'start_date' => $start,

@@ -11,7 +11,6 @@ class CategoryParentListComposer
      * Bind list of all accounts to the view.
      *
      * @param  \Illuminate\View\View  $view
-     * @return void
      */
     public function compose(View $view)
     {

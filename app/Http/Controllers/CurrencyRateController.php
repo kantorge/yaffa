@@ -6,13 +6,15 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyRateController extends Controller
 {
     use CurrencyTrait;
 
-    protected $currencyRate;
+    protected CurrencyRate $currencyRate;
 
     public function __construct(CurrencyRate $currencyRate)
     {
@@ -33,10 +35,10 @@ class CurrencyRateController extends Controller
         $this->authorize('view', $to);
 
         $currencyRates = $this->currencyRate
-                            ->where('from_id', $from->id)
-                            ->where('to_id', $to->id)
-                            ->orderBy('date')
-                            ->get();
+            ->where('from_id', $from->id)
+            ->where('to_id', $to->id)
+            ->orderBy('date')
+            ->get();
 
         JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
@@ -52,10 +54,11 @@ class CurrencyRateController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  CurrencyRate  $currencyRate
-     * @return \Illuminate\Http\Response
+     * @param CurrencyRate $currencyRate
+     * @return RedirectResponse
+     * @throws AuthorizationException
      */
-    public function destroy(CurrencyRate $currencyRate)
+    public function destroy(CurrencyRate $currencyRate): RedirectResponse
     {
         /**
          * @delete('/currency-rate/{currency_rate}')
@@ -74,7 +77,7 @@ class CurrencyRateController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null)
+    public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null): RedirectResponse
     {
         /**
          * @get('/currencyrates/get/{currency}/{from?}')

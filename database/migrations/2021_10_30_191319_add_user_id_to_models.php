@@ -10,7 +10,6 @@ class AddUserIdToModels extends Migration
     /**
      * Run the migrations.
      *
-     * @return void
      */
     public function up(): void
     {
@@ -109,10 +108,8 @@ class AddUserIdToModels extends Migration
      * This migration cannot be reversed, as removing users is likely to result in duplicate entries violating unique constraints.
      * Theoretically we could remove all users and all their assets, except one, but that's not likely to be the requirement.
      *
-     * @return void
      */
     public function down(): void
     {
-        //
     }
 }

@@ -84,7 +84,7 @@ class AccountGroupController extends Controller
         return redirect()->route('account-group.index');
     }
 
-    public function update(AccountGroupRequest $request, AccountGroup $accountGroup)
+    public function update(AccountGroupRequest $request, AccountGroup $accountGroup): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -121,10 +121,10 @@ class AccountGroupController extends Controller
 
             return redirect()->route('account-group.index');
         } catch (QueryException $e) {
-            if ($e->errorInfo[1] == 1451) {
+            if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Account group is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage(__('Database error:') .' ' . $e->errorInfo[2]);
+                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
         }
 

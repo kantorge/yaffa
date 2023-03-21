@@ -15,7 +15,7 @@ class AccountApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    const BASE_ACCOUNT_NAME = 'Same account name';
+    private const BASE_ACCOUNT_NAME = 'Same account name';
 
     /** @test */
     public function test_account_list_with_query_applies_all_provided_filters()
@@ -89,7 +89,7 @@ class AccountApiControllerTest extends TestCase
         $response->assertJsonPath('0.config.currency_id', $currencies->first()->id);
 
         // Default limit is applied for number of results
-        for($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
             AccountEntity::factory()
                 ->for($user)
                 ->account($user)

@@ -12,8 +12,6 @@ class LoginFailedNotification extends Notification
 
     /**
      * Create a new notification instance.
-     *
-     * @return void
      */
     public function __construct($event)
     {

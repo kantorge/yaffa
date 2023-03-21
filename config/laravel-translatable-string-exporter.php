@@ -1,4 +1,5 @@
 <?php
+
 return [
     // Directories to search in.
     'directories'=> [

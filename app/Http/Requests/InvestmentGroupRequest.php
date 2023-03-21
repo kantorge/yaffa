@@ -22,9 +22,7 @@ class InvestmentGroupRequest extends FormRequest
                 Rule::unique('investment_groups')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->investmentGroup, function ($query) {
-                            return $query->where('id', '!=', $this->investmentGroup->id);
-                        });
+                        ->when($this->investmentGroup, fn ($query) => $query->where('id', '!=', $this->investmentGroup->id));
                 }),
             ],
         ];

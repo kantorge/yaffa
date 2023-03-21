@@ -25,9 +25,7 @@ class InvestmentRequest extends FormRequest
                 Rule::unique('investments')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->investment, function ($query) {
-                            return $query->where('id', '!=', $this->investment->id);
-                        });
+                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
                 }),
             ],
             'symbol' => [
@@ -37,9 +35,7 @@ class InvestmentRequest extends FormRequest
                 Rule::unique('investments')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->investment, function ($query) {
-                            return $query->where('id', '!=', $this->investment->id);
-                        });
+                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
                 }),
             ],
             'isin' => [
@@ -49,9 +45,7 @@ class InvestmentRequest extends FormRequest
                 Rule::unique('investments')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->investment, function ($query) {
-                            return $query->where('id', '!=', $this->investment->id);
-                        });
+                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
                 }),
             ],
             'comment' => [
@@ -66,15 +60,11 @@ class InvestmentRequest extends FormRequest
             ],
             'investment_group_id' => [
                 'required',
-                Rule::exists('investment_groups', 'id')->where(function ($query) {
-                    return $query->where('user_id', Auth::user()->id);
-                }),
+                Rule::exists('investment_groups', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
             'currency_id' => [
                 'required',
-                Rule::exists('currencies', 'id')->where(function ($query) {
-                    return $query->where('user_id', Auth::user()->id);
-                }),
+                Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
             'investment_price_provider' => [
                 'nullable',
@@ -85,8 +75,6 @@ class InvestmentRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation()
     {

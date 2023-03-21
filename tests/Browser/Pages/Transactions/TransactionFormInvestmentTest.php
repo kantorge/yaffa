@@ -10,12 +10,12 @@ class TransactionFormInvestmentTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp() :void
+    public function setUp(): void
     {
         parent::setUp();
 
         // Migrate and seed only once for this file
-        if(!static::$migrationRun){
+        if (!static::$migrationRun) {
             $this->artisan('migrate:fresh');
             $this->artisan('db:seed');
             static::$migrationRun = true;

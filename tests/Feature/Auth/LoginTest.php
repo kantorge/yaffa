@@ -42,7 +42,6 @@ class LoginTest extends TestCase
     /** @test */
     public function signed_visitor_cannot_access_the_login_form()
     {
-
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->loginGetRoute());
@@ -72,14 +71,14 @@ class LoginTest extends TestCase
         ]);
 
         $response = $this
-        ->from($this->loginGetRoute())
-        ->post(
-            $this->loginPostRoute(),
-            [
-                'email' => $user->email,
-                'password' => 'not' . $password,
-            ]
-        );
+            ->from($this->loginGetRoute())
+            ->post(
+                $this->loginPostRoute(),
+                [
+                    'email' => $user->email,
+                    'password' => 'not' . $password,
+                ]
+            );
 
         $response->assertRedirect($this->loginGetRoute());
         $response->assertSessionHasErrors('email');
@@ -91,11 +90,11 @@ class LoginTest extends TestCase
     public function user_cannot_log_in_with_email_that_does_not_exist()
     {
         $response = $this
-        ->from($this->loginGetRoute())
-        ->post($this->loginPostRoute(), [
-            'email' => 'nobody@example.com',
-            'password' => 'invalid-password',
-        ]);
+            ->from($this->loginGetRoute())
+            ->post($this->loginPostRoute(), [
+                'email' => 'nobody@example.com',
+                'password' => 'invalid-password',
+            ]);
 
         $response->assertRedirect($this->loginGetRoute());
         $response->assertSessionHasErrors('email');
@@ -116,11 +115,11 @@ class LoginTest extends TestCase
 
         foreach (range(0, 5) as $_) {
             $response = $this
-            ->from($this->loginGetRoute())
-            ->post($this->loginPostRoute(), [
-                'email' => $user->email,
-                'password' => 'not' . $password,
-            ]);
+                ->from($this->loginGetRoute())
+                ->post($this->loginPostRoute(), [
+                    'email' => $user->email,
+                    'password' => 'not' . $password,
+                ]);
         }
 
         $response->assertRedirect($this->loginGetRoute());

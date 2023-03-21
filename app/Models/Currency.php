@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
 /**
  * App\Models\Currency
@@ -46,7 +47,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Currency extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     /**
      * The table associated with the model.
@@ -150,18 +152,14 @@ class Currency extends Model
      */
     public function baseCurrency(): ?Currency
     {
-        return self::base()->where('user_id', $this->user_id)->firstOr(function () {
-            return self::where('user_id', $this->user_id)->orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
+        return self::base()->where('user_id', $this->user_id)
+            ->firstOr(fn () => self::where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
     }
 
     /**
      * Get the currency rates for this currency.
      *
      * @param Carbon|null $from
-     * @return void
      */
     public function retreiveCurrencyRateToBase(?Carbon $from = null): void
     {
@@ -198,8 +196,6 @@ class Currency extends Model
 
     /**
      * Get all the missing currency rates for this currency.
-     *
-     * @return void
      */
     public function retreiveMissingCurrencyRateToBase(): void
     {
@@ -236,7 +232,7 @@ class Currency extends Model
             $this->save();
 
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             return false;
         }

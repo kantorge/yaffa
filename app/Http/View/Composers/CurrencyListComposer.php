@@ -10,14 +10,14 @@ class CurrencyListComposer
     /**
      * Bind list of all currencies to the view.
      *
-     * @param  \Illuminate\View\View  $view
-     * @return void
+     * @param View $view
      */
     public function compose(View $view)
     {
         $allCurrencies = Auth::user()
-        ->currencies()
-        ->pluck('name', 'id')->all();
+            ->currencies()
+            ->pluck('name', 'id')
+            ->all();
 
         $view->with('allCurrencies', $allCurrencies);
     }

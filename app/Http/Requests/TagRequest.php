@@ -22,9 +22,7 @@ class TagRequest extends FormRequest
                 Rule::unique('tags')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->tag, function ($query) {
-                            return $query->where('id', '!=', $this->tag->id);
-                        });
+                        ->when($this->tag, fn ($query) => $query->where('id', '!=', $this->tag->id));
                 }),
             ],
             'active' => [
@@ -35,8 +33,6 @@ class TagRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation()
     {

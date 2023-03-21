@@ -218,8 +218,6 @@ class TransactionRequest extends FormRequest
 
     /**
      * Configure conditional rules for some items
-     *
-     * @return void
      */
     public function withValidator(Validator $validator): void
     {
@@ -227,16 +225,12 @@ class TransactionRequest extends FormRequest
         $validator->sometimes(
             ['schedule_config.next_date', 'schedule_config.start_date'],
             'before_or_equal:schedule_config.end_date',
-            function ($input) {
-                return ($input->schedule || $input->budget) && array_key_exists('end_date', $input->schedule_config) && $input->schedule_config['end_date'];
-            }
+            fn ($input) => ($input->schedule || $input->budget) && array_key_exists('end_date', $input->schedule_config) && $input->schedule_config['end_date']
         );
     }
 
     /**
      * Prepare the data for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation()
     {

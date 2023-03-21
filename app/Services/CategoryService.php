@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryService
 {
-
     public function getChildCategories(Request $request)
     {
         $categories = collect();

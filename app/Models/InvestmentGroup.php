@@ -29,7 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class InvestmentGroup extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     /**
      * The table associated with the model.

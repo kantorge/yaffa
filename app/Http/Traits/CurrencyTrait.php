@@ -53,14 +53,13 @@ trait CurrencyTrait
     /**
      * Get base currency, which is marked as base, or the first currency entered.
      *
-     * @return App\Models\Currency;
+     * @return Currency|null;
      */
     public function getBaseCurrency(): ?Currency
     {
-        return Auth::user()->currencies()->where('base', 1)->firstOr(function () {
-            return Auth::user()->currencies()->orderBy('id')->firstOr(function () {
-                return null;
-            });
-        });
+        return Auth::user()
+            ->currencies()
+            ->where('base', 1)
+            ->firstOr(fn () => Auth::user()->currencies()->orderBy('id')->firstOr(fn () => null));
     }
 }

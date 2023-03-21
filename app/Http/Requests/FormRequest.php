@@ -22,8 +22,6 @@ class FormRequest extends IlluminationFormRequest
 
     /**
      * Load validator error messages to standard notifications array
-     *
-     * @return void
      */
     public function withValidator(Validator $validator): void
     {

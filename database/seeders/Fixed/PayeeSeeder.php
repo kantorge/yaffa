@@ -12,8 +12,6 @@ class PayeeSeeder extends Seeder
 {
     /**
      * Run the database seeds by creating pre-defined values
-     *
-     * @return void
      */
     public function run(User $user)
     {

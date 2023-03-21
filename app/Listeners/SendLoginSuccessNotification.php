@@ -12,7 +12,6 @@ class SendLoginSuccessNotification
      * Handle the event.
      *
      * @param  Login  $event
-     * @return void
      */
     public function handle(Login $event): void
     {

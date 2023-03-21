@@ -44,7 +44,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Category extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     protected $table = 'categories';
 
@@ -85,9 +86,9 @@ class Category extends Model
         return $this->belongsTo(self::class);
     }
 
-    public function getFullNameAttribute()
+    public function getFullNameAttribute(): string
     {
-        return (isset($this->parent->name) ? $this->parent->name.' > ' : '').$this['name'];
+        return (isset($this->parent->name) ? $this->parent->name . ' > ' : '') . $this['name'];
     }
 
     /**

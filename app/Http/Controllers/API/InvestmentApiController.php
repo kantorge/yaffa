@@ -41,7 +41,7 @@ class InvestmentApiController extends Controller
             ->where('active', true)
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%'.$request->get('q').'%');
+                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
             })
             ->when($request->get('currency_id'), function ($query) use ($request) {
                 $query->where('currency_id', '=', $request->get('currency_id'));
@@ -138,54 +138,54 @@ class InvestmentApiController extends Controller
                 'config',
                 'transactionType',
             ])
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investment) {
-                    $query->Where('investment_id', $investment->id);
-                }
-            )
-            ->orderBy('date')
-            ->get();
+                ->whereHasMorph(
+                    'config',
+                    [TransactionDetailInvestment::class],
+                    function (Builder $query) use ($investment) {
+                        $query->Where('investment_id', $investment->id);
+                    }
+                )
+                ->orderBy('date')
+                ->get();
 
             // Process data for table and chart
             $rawTransactions
-            ->transform(function ($transaction) {
-                $commonData =
-                    [
-                        'id' => $transaction->id,
-                        'transaction_type' => $transaction->transactionType->toArray(),
-                        'amount_operator' => $transaction->transactionType->amount_operator,
-                        'quantity_operator' => $transaction->transactionType->quantity_operator,
+                ->transform(function ($transaction) {
+                    $commonData =
+                        [
+                            'id' => $transaction->id,
+                            'transaction_type' => $transaction->transactionType->toArray(),
+                            'amount_operator' => $transaction->transactionType->amount_operator,
+                            'quantity_operator' => $transaction->transactionType->quantity_operator,
 
-                        'reconciled' => $transaction->reconciled,
-                        'comment' => $transaction->comment,
+                            'reconciled' => $transaction->reconciled,
+                            'comment' => $transaction->comment,
+                        ];
+
+                    $baseData = [
+                        'quantity' => $transaction->config->quantity,
+                        'price' => $transaction->config->price,
+                        'dividend' => $transaction->config->dividend,
+                        'commission' => $transaction->config->commission,
+                        'tax' => $transaction->config->tax,
                     ];
 
-                $baseData = [
-                    'quantity' => $transaction->config->quantity,
-                    'price' => $transaction->config->price,
-                    'dividend' => $transaction->config->dividend,
-                    'commission' => $transaction->config->commission,
-                    'tax' => $transaction->config->tax,
-                ];
+                    if ($transaction->schedule) {
+                        $transaction->load(['transactionSchedule']);
 
-                if ($transaction->schedule) {
-                    $transaction->load(['transactionSchedule']);
+                        $dateData = [
+                            'schedule' => $transaction->transactionSchedule,
+                            'transaction_group' => 'schedule',
+                        ];
+                    } else {
+                        $dateData = [
+                            'date' => $transaction->date,
+                            'transaction_group' => 'history',
+                        ];
+                    }
 
-                    $dateData = [
-                        'schedule' => $transaction->transactionSchedule,
-                        'transaction_group' => 'schedule',
-                    ];
-                } else {
-                    $dateData = [
-                        'date' => $transaction->date,
-                        'transaction_group' => 'history',
-                    ];
-                }
-
-                return array_merge($commonData, $baseData, $dateData);
-            });
+                    return array_merge($commonData, $baseData, $dateData);
+                });
 
             // Get all historical transactions
             $transactions = $rawTransactions->where('transaction_group', 'history');
@@ -275,47 +275,47 @@ class InvestmentApiController extends Controller
 
             return $investment;
         })
-        ->each(function ($investment) use (&$positions) {
-            $start = true;
+            ->each(function ($investment) use (&$positions) {
+                $start = true;
 
-            foreach ($investment->quantities as $item) {
-                if ($start && $item['schedule'] > 0) {
-                    $period = [
-                        'id' => $investment->id,
-                        'name' => $investment->name,
-                        'active' => $investment->active,
-                        'currency' => $investment->currency,
-                        'investment_group' => $investment->investmentGroup,
-                        'start' => $item['date'],
-                        'quantity' => $item['schedule'],
-                    ];
+                foreach ($investment->quantities as $item) {
+                    if ($start && $item['schedule'] > 0) {
+                        $period = [
+                            'id' => $investment->id,
+                            'name' => $investment->name,
+                            'active' => $investment->active,
+                            'currency' => $investment->currency,
+                            'investment_group' => $investment->investmentGroup,
+                            'start' => $item['date'],
+                            'quantity' => $item['schedule'],
+                        ];
 
-                    $start = false;
+                        $start = false;
 
-                    continue;
+                        continue;
+                    }
+
+                    if (! $start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
+                        $period['end'] = $item['date'];
+                        $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
+                        $positions[] = $period;
+                        $period = [];
+
+                        $start = true;
+
+                        continue;
+                    }
+
+                    $period['quantity'] = $item['schedule'];
                 }
 
-                if (! $start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
-                    $period['end'] = $item['date'];
-                    $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
+                // If period start was set but end date is missiong, set it to app config end date
+                if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
+                    $period['end'] = Auth::user()->end_date;
+                    $period['last_price'] = $investment->getLatestPrice('combined');
                     $positions[] = $period;
-                    $period = [];
-
-                    $start = true;
-
-                    continue;
                 }
-
-                $period['quantity'] = $item['schedule'];
-            }
-
-            // If period start was set but end date is missiong, set it to app config end date
-            if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
-                $period['end'] = Auth::user()->end_date;
-                $period['last_price'] = $investment->getLatestPrice('combined');
-                $positions[] = $period;
-            }
-        });
+            });
 
         return response()
             ->json(

@@ -10,8 +10,7 @@ class InvestmentGroupListComposer
     /**
      * Bind list of all investment groups to the view.
      *
-     * @param  \Illuminate\View\View  $view
-     * @return void
+     * @param View $view
      */
     public function compose(View $view)
     {

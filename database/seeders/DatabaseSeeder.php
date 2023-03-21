@@ -3,18 +3,17 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Database\Seeders\Fixed\UserSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database with general purpose sample data
-     *
-     * @return void
      */
     public function run(): void
     {
-        $this->callWith(\Database\Seeders\Fixed\UserSeeder::class, ['aliases' => ['demo', 'other']]);
+        $this->callWith(UserSeeder::class, ['aliases' => ['demo', 'other']]);
 
         // Main user
         $demoUser = User::where('email', 'demo@yaffa.cc')->first();

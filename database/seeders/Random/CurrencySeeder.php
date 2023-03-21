@@ -6,13 +6,12 @@ use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
+use OverflowException;
 
 class CurrencySeeder extends Seeder
 {
     /**
      * Run the database seeds by creating random values with factory
-     *
-     * @return void
      */
     public function run(?User $user, $count = 3)
     {
@@ -38,7 +37,7 @@ class CurrencySeeder extends Seeder
                     $i++;
 
                     if ($i > $maxRetries) {
-                        throw new \OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
+                        throw new OverflowException(sprintf('Maximum retries of %d reached without finding a unique value', $maxRetries));
                     }
                 } while (in_array($res->name, $uniques, true));
                 $uniques[] = $res->name;

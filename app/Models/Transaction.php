@@ -13,6 +13,7 @@ use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\BetweenConstraint;
+use Eloquent;
 
 /**
  * App\Models\Transaction
@@ -29,11 +30,11 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int|null $config_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read Model|\Eloquent $config
+ * @property-read Model|Eloquent $config
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
- * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
- * @property-read \App\Models\TransactionType $transactionType
+ * @property-read TransactionSchedule|null $transactionSchedule
+ * @property-read TransactionType $transactionType
  * @method static Builder|Transaction byScheduleType($type)
  * @method static \Database\Factories\TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
@@ -55,8 +56,8 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  */
 class Transaction extends Model
 {
-    use HasFactory;
     use CurrencyTrait;
+    use HasFactory;
 
     /**
      * The table associated with the model.
@@ -123,9 +124,7 @@ class Transaction extends Model
         return $this->transactionItems
             ->pluck('tags')
             ->collapse()
-            ->map(function ($tag) {
-                return $tag->withoutRelations();
-            })
+            ->map(fn ($tag) => $tag->withoutRelations())
             ->unique('id');
     }
 

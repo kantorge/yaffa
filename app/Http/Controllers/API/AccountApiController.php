@@ -209,8 +209,8 @@ class AccountApiController extends Controller
                         );
                 })
                 ->where(
-                // TODO: fallback to query without this, if no results are found
-                // https://stackoverflow.com/questions/26160155/laravel-eloquent-change-query-if-no-results
+                    // TODO: fallback to query without this, if no results are found
+                    // https://stackoverflow.com/questions/26160155/laravel-eloquent-change-query-if-no-results
                     'transaction_type_id',
                     '=',
                     TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
@@ -280,9 +280,7 @@ class AccountApiController extends Controller
         // Load all accounts or the selected one
         $accounts = $user
             ->accounts()
-            ->when($accountEntity, function ($query) use ($accountEntity) {
-                return $query->where('id', $accountEntity->id);
-            })
+            ->when($accountEntity, fn ($query) => $query->where('id', $accountEntity->id))
             ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get()
             ->makeHidden([
@@ -384,9 +382,7 @@ class AccountApiController extends Controller
 
                 // Get summary of transfer transaction values
                 $account['sum'] = $standardTransactions
-                    ->sum(function ($transaction) use ($account) {
-                        return $transaction->cashflowValue($account);
-                    });
+                    ->sum(fn ($transaction) => $transaction->cashflowValue($account));
 
                 // Add standard transaction result
                 $account['sum'] += $transactionsWithdrawalValue->amount ?? 0;

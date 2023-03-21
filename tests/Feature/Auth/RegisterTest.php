@@ -46,7 +46,6 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_view_registration_form_when_authenticated()
     {
-
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->registerGetRoute());
@@ -63,18 +62,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => $userData->email,
-            'password' => $password,
-            'password_confirmation' => $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         // Get newly created user by email address
         $users = User::where('email', $userData->email)->get();
@@ -88,9 +87,7 @@ class RegisterTest extends TestCase
         $this->assertTrue(Hash::check($password, $user->password));
 
         // Registration generates event
-        Event::assertDispatched(Registered::class, function ($e) use ($user) {
-            return $e->user->id === $user->id;
-        });
+        Event::assertDispatched(Registered::class, fn ($e) => $e->user->id === $user->id);
     }
 
     /** @test */
@@ -100,18 +97,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => '',
-            'email' => $userData->email,
-            'password' => $password,
-            'password_confirmation' => $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => '',
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -130,18 +127,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => '',
-            'password' => $password,
-            'password_confirmation' => $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => '',
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -160,18 +157,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => 'invalid-email',
-            'password' => $password,
-            'password_confirmation' => $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => 'invalid-email',
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -189,18 +186,18 @@ class RegisterTest extends TestCase
         $userData = User::factory()->make();
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => $userData->email,
-            'password' => '',
-            'password_confirmation' => '',
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => '',
+                'password_confirmation' => '',
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -220,18 +217,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => $userData->email,
-            'password' => $password,
-            'password_confirmation' => '',
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => '',
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -251,18 +248,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => $userData->email,
-            'password' => $password,
-            'password_confirmation' => 'not' . $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => 'yes',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => 'not' . $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 
@@ -281,18 +278,18 @@ class RegisterTest extends TestCase
         $password = 'notasecret';
 
         $response = $this
-        ->from($this->registerGetRoute())
-        ->post($this->registerPostRoute(), [
-            'name' => $userData->name,
-            'email' => $userData->email,
-            'password' => $password,
-            'password_confirmation' => $password,
-            'language' => $userData->language,
-            'locale' => $userData->locale,
-            'tos' => '',
-            'default_data' => 'default',
-            'base_currency' => CurrencyData::getRandomIsoCode(),
-        ]);
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => '',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
 
         $users = User::where('email', $userData->email)->get();
 

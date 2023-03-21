@@ -118,7 +118,7 @@ class TransactionController extends Controller
             $sourceTransaction->transactionSchedule->skipNextInstance();
         }
 
-        self::addMessage('Transaction added (#'.$transaction->id.')', 'success', '', '', true);
+        self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -212,7 +212,7 @@ class TransactionController extends Controller
 
         $transaction->push();
 
-        self::addMessage('Transaction updated (#'.$transaction->id.')', 'success', '', '', true);
+        self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
 
         return response()->json(
             [
@@ -236,7 +236,7 @@ class TransactionController extends Controller
          */
         $transaction->delete();
 
-        self::addMessage('Transaction #'.$transaction->id.' deleted', 'success', '', '', true);
+        self::addMessage('Transaction #' . $transaction->id . ' deleted', 'success', '', '', true);
 
         return redirect()->back();
     }

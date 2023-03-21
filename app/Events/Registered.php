@@ -12,7 +12,9 @@ use Illuminate\Queue\SerializesModels;
 
 class Registered extends OriginalRegistered
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public $user;
     public array $context;
@@ -22,7 +24,6 @@ class Registered extends OriginalRegistered
      *
      * @param User $user
      * @param array $context
-     * @return void
      */
     public function __construct(User $user, array $context)
     {

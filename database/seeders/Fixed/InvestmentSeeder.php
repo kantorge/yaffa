@@ -12,12 +12,12 @@ class InvestmentSeeder extends Seeder
      * Run the database seeds by creating pre-defined values
      *
      * @param User $user
-     * @return void
      */
     public function run(User $user): void
     {
         Investment::factory()
-            ->create([
+            ->create(
+                [
                     'name' => 'Magyar Telekom',
                     'active' => 1,
                     'symbol' => 'MTEL',
@@ -28,7 +28,8 @@ class InvestmentSeeder extends Seeder
             );
 
         Investment::factory()
-            ->create([
+            ->create(
+                [
                     'name' => 'Disney',
                     'active' => 1,
                     'symbol' => 'DIS',
@@ -40,7 +41,8 @@ class InvestmentSeeder extends Seeder
             );
 
         Investment::factory()
-            ->create([
+            ->create(
+                [
                     'name' => 'Euro investment',
                     'active' => 1,
                     'symbol' => 'E',
@@ -51,7 +53,8 @@ class InvestmentSeeder extends Seeder
             );
 
         Investment::factory()
-            ->create([
+            ->create(
+                [
                     'name' => 'Test investment USD',
                     'active' => 1,
                     'symbol' => 'TIUSD',
@@ -63,7 +66,8 @@ class InvestmentSeeder extends Seeder
             );
 
         Investment::factory()
-            ->create([
+            ->create(
+                [
                     'name' => 'Test investment EUR',
                     'active' => 1,
                     'symbol' => 'TIEUR',

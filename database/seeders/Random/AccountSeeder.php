@@ -11,8 +11,6 @@ class AccountSeeder extends Seeder
 {
     /**
      * Run the database seeds by creating random values
-     *
-     * @return void
      */
     public function run(User $user, int $count = 5)
     {

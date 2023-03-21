@@ -53,23 +53,23 @@ class MainController extends Controller
                     $query->byScheduleType('none');
                 });
         })
-        ->where('user_id', $user->id)
-        ->whereHasMorph(
-            'config',
-            [TransactionDetailStandard::class],
-            function (Builder $query) use ($account) {
-                $query->where('account_from_id', $account->id);
-                $query->orWhere('account_to_id', $account->id);
-            }
-        )
-        ->with([
-            'config',
-            'transactionType',
-            'transactionItems',
-            'transactionItems.category',
-            'transactionItems.tags',
-        ])
-        ->get();
+            ->where('user_id', $user->id)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailStandard::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_from_id', $account->id);
+                    $query->orWhere('account_to_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'transactionType',
+                'transactionItems',
+                'transactionItems.category',
+                'transactionItems.tags',
+            ])
+            ->get();
 
         // Get all investment transactions related to selected account (one-time AND scheduled)
         $investmentTransactions = Transaction::where(function ($query) {
@@ -78,77 +78,75 @@ class MainController extends Controller
                     $query->byScheduleType('none');
                 });
         })
-        ->where('user_id', $user->id)
-        ->whereHasMorph(
-            'config',
-            [TransactionDetailInvestment::class],
-            function (Builder $query) use ($account) {
-                $query->where('account_id', $account->id);
-            }
-        )
-        ->with([
-            'config',
-            'config.investment',
-            'transactionType',
-        ])
-        ->get();
+            ->where('user_id', $user->id)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'config.investment',
+                'transactionType',
+            ])
+            ->get();
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
-        ->merge($investmentTransactions)
+            ->merge($investmentTransactions)
         // Add custom and pre-calculated attributes
-        ->map(function ($transaction) use ($account) {
-            if ($transaction->schedule) {
-                $transaction->load(['transactionSchedule']);
+            ->map(function ($transaction) use ($account) {
+                if ($transaction->schedule) {
+                    $transaction->load(['transactionSchedule']);
 
-                $transaction->transactionGroup = 'schedule';
-            } else {
-                $transaction->transactionGroup = 'history';
-            }
+                    $transaction->transactionGroup = 'schedule';
+                } else {
+                    $transaction->transactionGroup = 'history';
+                }
 
-            if ($transaction->config_type === 'transaction_detail_standard') {
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
-                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
-                $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
-                $transaction->amount_from = $transaction->config->amount_from;
-                $transaction->amount_to = $transaction->config->amount_to;
-                $transaction->tags = $transaction->tags()->values();
-                $transaction->categories = $transaction->categories()->values();
-            } elseif ($transaction->config_type === 'transaction_detail_investment') {
-                $amount = $transaction->cashflowValue();
+                if ($transaction->config_type === 'transaction_detail_standard') {
+                    $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
+                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
+                    $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
+                    $transaction->amount_from = $transaction->config->amount_from;
+                    $transaction->amount_to = $transaction->config->amount_to;
+                    $transaction->tags = $transaction->tags()->values();
+                    $transaction->categories = $transaction->categories()->values();
+                } elseif ($transaction->config_type === 'transaction_detail_investment') {
+                    $amount = $transaction->cashflowValue();
 
-                $transaction->transactionOperator = $transaction->transactionType->amount_operator;
-                $transaction->quantityOperator = $transaction->transactionType->quantity_operator;
-                $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
-                $transaction->account_to_name = $transaction->config->investment->name;
-                $transaction->amount_from = ($amount < 0 ? -$amount : null);
-                $transaction->amount_to = ($amount > 0 ? $amount : null);
-                $transaction->tags = [];
-                $transaction->categories = [];
-                $transaction->quantity = $transaction->config->quantity;
-                $transaction->price = $transaction->config->price;
-                $transaction->currency = $account->config->currency;
-            }
+                    $transaction->transactionOperator = $transaction->transactionType->amount_operator;
+                    $transaction->quantityOperator = $transaction->transactionType->quantity_operator;
+                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
+                    $transaction->account_to_name = $transaction->config->investment->name;
+                    $transaction->amount_from = ($amount < 0 ? -$amount : null);
+                    $transaction->amount_to = ($amount > 0 ? $amount : null);
+                    $transaction->tags = [];
+                    $transaction->categories = [];
+                    $transaction->quantity = $transaction->config->quantity;
+                    $transaction->price = $transaction->config->price;
+                    $transaction->currency = $account->config->currency;
+                }
 
-            return $transaction;
-        })
+                return $transaction;
+            })
         // Drop scheduled transactions, which are not active (next date is empty)
-        ->filter(function ($transaction) {
-            if (! $transaction->schedule) {
-                return true;
-            }
+            ->filter(function ($transaction) {
+                if (! $transaction->schedule) {
+                    return true;
+                }
 
-            return ($transaction->transactionSchedule->next_date !== null);
-        });
+                return ($transaction->transactionSchedule->next_date !== null);
+            });
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
             $transactions = $transactions->concat(
                 $this->getScheduleInstances(
                     $transactions
-                    ->filter(function ($transaction) {
-                        return $transaction->schedule;
-                    }),
+                        ->filter(fn ($transaction) => $transaction->schedule),
                     'next',
                 )
             );
@@ -158,9 +156,7 @@ class MainController extends Controller
         $subTotal = 0;
 
         $data = $transactions
-            ->filter(function ($transaction) {
-                return $transaction->transactionGroup === 'history' || $transaction->transactionGroup === 'forecast';
-            })
+            ->filter(fn ($transaction) => $transaction->transactionGroup === 'history' || $transaction->transactionGroup === 'forecast')
             ->sortByDesc('transactionType')
             ->sortBy('date')
             // Add opening item to beginning of transaction list
@@ -177,9 +173,7 @@ class MainController extends Controller
             'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
-                ->filter(function ($transaction) {
-                    return $transaction->transactionGroup === 'schedule';
-                })
+                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
                 ->values(),
         ]);
 

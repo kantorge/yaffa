@@ -77,8 +77,11 @@ use Spatie\Onboard\Concerns\Onboardable;
  */
 class User extends Authenticatable implements MustVerifyEmail, Onboardable
 {
-    use HasApiTokens, HasFactory, Notifiable;
-    use GetsOnboarded, HasFlags;
+    use GetsOnboarded;
+    use HasApiTokens;
+    use HasFactory;
+    use HasFlags;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -140,9 +143,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     {
         return $this->currencies()
             ->where('base', true)
-            ->firstOr(function () {
-                return null;
-            });
+            ->firstOr(fn () => null);
     }
 
     public function investmentGroups(): HasMany
@@ -170,7 +171,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(Transaction::class);
     }
 
-    public function transactionCount():int
+    public function transactionCount(): int
     {
         return $this->hasMany(Transaction::class)->count();
     }

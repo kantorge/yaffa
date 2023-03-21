@@ -22,9 +22,7 @@ class AccountGroupRequest extends FormRequest
                 Rule::unique('account_groups')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->account_group, function ($query) {
-                            return $query->where('id', '!=', $this->account_group->id);
-                        });
+                        ->when($this->account_group, fn ($query) => $query->where('id', '!=', $this->account_group->id));
                 }),
             ],
         ];

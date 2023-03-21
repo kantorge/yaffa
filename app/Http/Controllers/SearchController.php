@@ -56,7 +56,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->accounts()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('name');
     }
@@ -71,7 +71,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->payees()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('name');
     }
@@ -86,7 +86,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->tags()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('name');
     }
@@ -101,7 +101,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->categories()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('full_name');
     }
@@ -116,7 +116,7 @@ class SearchController extends Controller
     {
         return Auth::user()
             ->investments()
-            ->whereRaw('UPPER(`name`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('name');
     }
@@ -132,7 +132,7 @@ class SearchController extends Controller
         return Auth::user()
             ->transactions()
             ->byScheduleType('none')
-            ->whereRaw('UPPER(`comment`) LIKE ?', ['%'.strtoupper($searchTerm).'%'])
+            ->whereRaw('UPPER(`comment`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('date');
     }

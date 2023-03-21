@@ -35,7 +35,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Tag extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     /**
      * The table associated with the model.

@@ -9,8 +9,6 @@ class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds by creating random values with factory
-     *
-     * @return void
      */
     public function run()
     {

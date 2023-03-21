@@ -29,6 +29,6 @@ class OnboardingApiController extends Controller
     {
         $request->user()->flag('dismissOnboardingDashboardWidget');
 
-        return response('',Response::HTTP_OK);
+        return response('', Response::HTTP_OK);
     }
 }

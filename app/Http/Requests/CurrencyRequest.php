@@ -23,9 +23,7 @@ class CurrencyRequest extends FormRequest
                 Rule::unique('currencies')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->currency, function ($query) {
-                            return $query->where('id', '!=', $this->currency->id);
-                        });
+                        ->when($this->currency, fn ($query) => $query->where('id', '!=', $this->currency->id));
                 }),
             ],
             'iso_code' => [
@@ -35,9 +33,7 @@ class CurrencyRequest extends FormRequest
                 Rule::unique('currencies')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
-                        ->when($this->currency, function ($query) {
-                            return $query->where('id', '!=', $this->currency->id);
-                        });
+                        ->when($this->currency, fn ($query) => $query->where('id', '!=', $this->currency->id));
                 }),
             ],
             'num_digits' => [
@@ -53,8 +49,6 @@ class CurrencyRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation()
     {

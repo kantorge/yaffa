@@ -61,7 +61,8 @@ use Illuminate\Support\Arr;
  */
 class Investment extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     protected $guarded = [];
 
@@ -197,19 +198,19 @@ class Investment extends Model
                 'transactionType',
             ]
         )
-        ->byScheduleType('none')
-        ->where('config_type', 'transaction_detail_investment')
-        ->whereHasMorph(
-            'config',
-            [TransactionDetailInvestment::class],
-            function (Builder $query) use ($investmentId, $account) {
-                $query->Where('investment_id', $investmentId);
-                if ($account !== null) {
-                    $query->where('account_id', '=', $account->id);
+            ->byScheduleType('none')
+            ->where('config_type', 'transaction_detail_investment')
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($investmentId, $account) {
+                    $query->Where('investment_id', $investmentId);
+                    if ($account !== null) {
+                        $query->where('account_id', '=', $account->id);
+                    }
                 }
-            }
-        )
-        ->get();
+            )
+            ->get();
 
         return $transactions->sum(function ($transaction) {
             $operator = $transaction->transactionType->quantity_operator;
@@ -240,21 +241,21 @@ class Investment extends Model
                     'config',
                 ]
             )
-            ->byScheduleType('none')
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investmentId) {
-                    $query
-                        ->Where('investment_id', $investmentId)
-                        ->WhereNotNull('price');
-                }
-            )
-            ->when($onOrBefore, function ($query) use ($onOrBefore) {
-                $query->where('date', '<=', $onOrBefore);
-            })
-            ->latest('date')
-            ->first();
+                ->byScheduleType('none')
+                ->whereHasMorph(
+                    'config',
+                    [TransactionDetailInvestment::class],
+                    function (Builder $query) use ($investmentId) {
+                        $query
+                            ->Where('investment_id', $investmentId)
+                            ->WhereNotNull('price');
+                    }
+                )
+                ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                    $query->where('date', '<=', $onOrBefore);
+                })
+                ->latest('date')
+                ->first();
         }
 
         if ($type === 'stored') {
@@ -335,12 +336,11 @@ class Investment extends Model
      *
      * @param Carbon|null $from Optionnally specify the date to retrieve data from
      * @param boolean $refill Future option to request reload of prices
-     * @return void
      * @uses getInvestmentPriceFromAlphaVantage()
      */
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
     {
-        $providerSuffix = 'getInvestmentPriceFrom'.str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
+        $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
         $this->{$providerSuffix}($from, $refill);
     }
 
@@ -348,7 +348,6 @@ class Investment extends Model
      * TODO: this should have a contract to have standard parameters
      * @param Carbon|null $from Optionnally specify the date to retrieve data from
      * @param boolean $refill Future option to request reload of prices
-     * @return void
      * @throws GuzzleException
      */
     public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void

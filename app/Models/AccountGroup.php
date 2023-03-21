@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 
 /**
  * App\Models\AccountGroup
@@ -13,9 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $user_id
  * @property string $name
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
  * @method static \Database\Factories\AccountGroupFactory factory(...$parameters)
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup newQuery()
@@ -25,11 +27,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class AccountGroup extends Model
 {
-    use HasFactory, ModelOwnedByUserTrait;
+    use HasFactory;
+    use ModelOwnedByUserTrait;
 
     /**
      * The table associated with the model.
@@ -41,7 +44,7 @@ class AccountGroup extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'name',

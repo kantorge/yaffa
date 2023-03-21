@@ -18,8 +18,6 @@ class GetCurrencyRates extends TestCase
     /**
      * Base currency is not queued for currency rate retrieval.
      *
-     * @return void
-     *
      * @test
      */
     public function base_currency_is_not_queued_for_currency_rate_retrieval()
@@ -42,8 +40,6 @@ class GetCurrencyRates extends TestCase
 
     /**
      * Currency rate retrieval is not queued for currencies with auto_update set to false.
-     *
-     * @return void
      *
      * @test
      */
@@ -68,8 +64,6 @@ class GetCurrencyRates extends TestCase
     /**
      * Currency rate retrieval is queued for currencies with auto_update set to true.
      *
-     * @return void
-     *
      * @test
      */
     public function currency_rate_retrieval_is_queued_for_currencies_with_auto_update_set_to_true()
@@ -87,8 +81,6 @@ class GetCurrencyRates extends TestCase
         $this->artisan(self::COMMAND_SIGNATURE)->assertExitCode(0);
 
         // Assert that the job was queued
-        $queue->assertPushed(GetCurrencyRatesJob::class, function ($job) use ($currency) {
-            return $job->currency->id === $currency->id;
-        });
+        $queue->assertPushed(GetCurrencyRatesJob::class, fn ($job) => $job->currency->id === $currency->id);
     }
 }

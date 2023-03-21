@@ -3,6 +3,8 @@
 namespace Tests;
 
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Artisan;
 
 trait CreatesApplication
 {
@@ -11,16 +13,16 @@ trait CreatesApplication
      *
      * @var bool
      */
-    protected static $createApplicationHasRunOnce = false;
+    protected static bool $createApplicationHasRunOnce = false;
 
     /**
      * Creates the application.
      *
-     * @return \Illuminate\Foundation\Application
+     * @return Application
      */
-    public function createApplication()
+    public function createApplication(): Application
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
+        $app = require __DIR__ . '/../bootstrap/app.php';
 
         $app->make(Kernel::class)->bootstrap();
 
@@ -34,11 +36,11 @@ trait CreatesApplication
     /**
      * Clears Laravel Cache.
      */
-    protected function clearCache()
+    protected function clearCache(): void
     {
         $commands = ['clear-compiled', 'cache:clear', 'view:clear', 'config:clear', 'route:clear'];
         foreach ($commands as $command) {
-            \Illuminate\Support\Facades\Artisan::call($command);
+            Artisan::call($command);
         }
 
         static::$createApplicationHasRunOnce = true;

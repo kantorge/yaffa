@@ -23,7 +23,6 @@ class LogoutTest extends TestCase
     /** @test */
     public function test_user_can_logout()
     {
-
         $user = User::factory()->create();
         $this->be($user);
 

@@ -41,9 +41,7 @@ class CategoryApiController extends Controller
                     )->get();
                 })
                 ->get()
-                ->filter(function ($category) use ($query) {
-                    return stripos($category->full_name, $query) !== false;
-                })
+                ->filter(fn ($category) => mb_stripos($category->full_name, $query) !== false)
                 ->sortBy('full_name')
                 ->take(10)
                 ->map(function ($category) {
@@ -105,9 +103,7 @@ class CategoryApiController extends Controller
                 ->toArray();
 
             $categories = Category::findMany($results)
-                ->sortBy(function ($category) use ($results) {
-                    return array_search($category->getKey(), $results);
-                })
+                ->sortBy(fn ($category) => array_search($category->getKey(), $results))
                 ->map(function ($category) {
                     $category->text = $category->full_name;
 

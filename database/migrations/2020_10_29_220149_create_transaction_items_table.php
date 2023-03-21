@@ -9,7 +9,6 @@ class CreateTransactionItemsTable extends Migration
     /**
      * Run the migrations.
      *
-     * @return void
      */
     public function up()
     {
@@ -29,7 +28,6 @@ class CreateTransactionItemsTable extends Migration
     /**
      * Reverse the migrations.
      *
-     * @return void
      */
     public function down()
     {

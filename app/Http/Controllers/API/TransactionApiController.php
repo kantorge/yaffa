@@ -130,11 +130,11 @@ class TransactionApiController extends Controller
         } else {
             // Get all investment transactions
             $investmentTransactions = Transaction::with([
-                    'config',
-                    'config.investment',
-                    'transactionType',
-                    'transactionSchedule',
-                ])
+                'config',
+                'config.investment',
+                'transactionType',
+                'transactionSchedule',
+            ])
                 ->where('user_id', $request->user()->id)
                 ->byScheduleType($type)
                 ->where(
@@ -157,13 +157,9 @@ class TransactionApiController extends Controller
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
-            ->map(function ($transaction) {
-                return $transaction->transformToClient();
-            })
+            ->map(fn ($transaction) => $transaction->transformToClient())
             ->union($investmentTransactions
-                ->map(function ($transaction) {
-                    return $transaction->transformToClient();
-                }));
+                ->map(fn ($transaction) => $transaction->transformToClient()));
 
         return response()->json(
             [
@@ -317,14 +313,10 @@ class TransactionApiController extends Controller
 
         // Preprocess data
         $transactions = $standardTransactions
-            ->map(function ($transaction) {
-                return $transaction->transformToClient();
-            })
+            ->map(fn ($transaction) => $transaction->transformToClient())
             ->merge(
                 $investmentTransactions
-                    ->map(function ($transaction) {
-                        return $transaction->transformToClient();
-                    })
+                    ->map(fn ($transaction) => $transaction->transformToClient())
             );
 
         $data = $transactions

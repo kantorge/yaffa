@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use DateTime;
 
 /**
  * App\Models\TransactionSchedule
@@ -79,13 +80,13 @@ class TransactionSchedule extends Model
 
     public function getNextInstance()
     {
-        $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new \DateTime($this->next_date), false);
+        $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new DateTime($this->next_date), false);
         $rule = new \Recurr\Rule();
 
-        $rule->setStartDate(new \DateTime($this->start_date));
+        $rule->setStartDate(new DateTime($this->start_date));
 
         if ($this->end_date) {
-            $rule->setUntil(new \DateTime($this->end_date));
+            $rule->setUntil(new DateTime($this->end_date));
         }
 
         $rule->setFreq($this->frequency);

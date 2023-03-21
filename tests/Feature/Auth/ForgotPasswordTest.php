@@ -40,7 +40,6 @@ class ForgotPasswordTest extends TestCase
 
     public function test_user_can_view_an_email_password_form_when_authenticated()
     {
-
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->passwordRequestRoute());
@@ -57,20 +56,18 @@ class ForgotPasswordTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this
-        ->from($this->passwordEmailGetRoute())
-        ->post(
-            $this->passwordEmailPostRoute(),
-            [
-                'email' => $user->email,
-            ]
-        );
+            ->from($this->passwordEmailGetRoute())
+            ->post(
+                $this->passwordEmailPostRoute(),
+                [
+                    'email' => $user->email,
+                ]
+            );
 
         $token = DB::table('password_resets')->where('email', $user->email)->first();
         $this->assertNotNull($token);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification, $channels) use ($token) {
-            return Hash::check($notification->token, $token->token) === true;
-        });
+        Notification::assertSentTo($user, ResetPassword::class, fn ($notification, $channels) => Hash::check($notification->token, $token->token) === true);
     }
 
     /** @test */
@@ -81,13 +78,13 @@ class ForgotPasswordTest extends TestCase
         $email = 'nobody@example.com';
 
         $response = $this
-        ->from($this->passwordEmailGetRoute())
-        ->post(
-            $this->passwordEmailPostRoute(),
-            [
-                'email' => $email,
-            ]
-        );
+            ->from($this->passwordEmailGetRoute())
+            ->post(
+                $this->passwordEmailPostRoute(),
+                [
+                    'email' => $email,
+                ]
+            );
 
         $response->assertRedirect($this->passwordEmailGetRoute());
         $response->assertSessionHasErrors('email');
@@ -107,13 +104,13 @@ class ForgotPasswordTest extends TestCase
     public function test_email_needs_to_be_valid_format()
     {
         $response = $this
-        ->from($this->passwordEmailGetRoute())
-        ->post(
-            $this->passwordEmailPostRoute(),
-            [
-                'email' => 'invalid-email',
-            ]
-        );
+            ->from($this->passwordEmailGetRoute())
+            ->post(
+                $this->passwordEmailPostRoute(),
+                [
+                    'email' => 'invalid-email',
+                ]
+            );
 
         $response->assertRedirect($this->passwordEmailGetRoute());
         $response->assertSessionHasErrors('email');

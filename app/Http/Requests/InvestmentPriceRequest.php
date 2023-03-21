@@ -30,9 +30,7 @@ class InvestmentPriceRequest extends FormRequest
             ],
             'investment_id' => [
                 'required',
-                Rule::exists('investments', 'id')->where(function ($query) {
-                    return $query->where('user_id', Auth::user()->id);
-                }),
+                Rule::exists('investments', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
         ];
     }

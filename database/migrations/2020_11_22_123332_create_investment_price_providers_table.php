@@ -9,7 +9,6 @@ class CreateInvestmentPriceProvidersTable extends Migration
     /**
      * Run the migrations.
      *
-     * @return void
      */
     public function up()
     {
@@ -28,7 +27,6 @@ class CreateInvestmentPriceProvidersTable extends Migration
     /**
      * Reverse the migrations.
      *
-     * @return void
      */
     public function down()
     {

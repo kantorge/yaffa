@@ -74,7 +74,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_view_list_of_tags()
     {
-
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model, [], 5);
 
@@ -87,7 +86,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
-
         $user = User::factory()->create();
 
         $response = $this
@@ -101,7 +99,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_cannot_create_a_tag_with_missing_data()
     {
-
         $user = User::factory()->create();
         $response = $this
             ->actingAs($user)
@@ -118,7 +115,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_create_a_tag()
     {
-
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
@@ -126,7 +122,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_tag()
     {
-
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -139,7 +134,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_cannot_update_a_tag_with_missing_data()
     {
-
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
@@ -160,7 +154,6 @@ class TagTest extends TestCase
     /** @test */
     public function user_can_update_a_tag_with_proper_data()
     {
-
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
         $tag2 = $this->rawForUser($user, $this->base_model);

@@ -11,12 +11,10 @@ class CurrencyRateSeeder extends Seeder
 {
     /**
      * Run the database seeds by creating random values with factory
-     *
-     * @return void
      */
     public function run($alias)
     {
-        $userId = User::where('email', $alias.'@yaffa.cc')->first()->id;
+        $userId = User::where('email', $alias . '@yaffa.cc')->first()->id;
 
         $currencies = User::find($userId)->currencies()->get();
 

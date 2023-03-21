@@ -143,9 +143,9 @@ class Account extends Model
             ->where('transactions.config_type', 'transaction_detail_investment')
             ->whereIn('transactions.transaction_type_id', function ($query) {
                 $query->from('transaction_types')
-                ->select('id')
-                ->where('type', 'investment')
-                ->whereNotNull('quantity_operator');
+                    ->select('id')
+                    ->where('type', 'investment')
+                    ->whereNotNull('quantity_operator');
             })
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();

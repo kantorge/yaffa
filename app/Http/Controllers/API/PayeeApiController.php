@@ -36,7 +36,7 @@ class PayeeApiController extends Controller
                     $query->active();
                 })
                 ->when($request->get('q'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%'.$request->get('q').'%');
+                    $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
                 })
                 ->orderBy('name')
                 ->take(10)
@@ -214,14 +214,10 @@ class PayeeApiController extends Controller
             })
             // Minimum required transactions to calculate with payee
             // TODO: make this dynamic, e.g based on average or mean
-            ->filter(function ($value) {
-                return $value['sum'] > 5;
-            })
+            ->filter(fn ($value) => $value['sum'] > 5)
             // Only where maximum is significant (at least half of all items)
             // TODO: make this dynamic
-            ->filter(function ($value) {
-                return $value['max'] / $value['sum'] > .5;
-            });
+            ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
             return response('', Response::HTTP_OK);
@@ -304,9 +300,7 @@ class PayeeApiController extends Controller
         // Get all payees of the user
         $payees = Auth::user()
             ->payees()
-            ->when($withActive, function ($query) {
-                return $query->where('active', true);
-            })
+            ->when($withActive, fn ($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);
 
         // Filter payees by similarity to query
@@ -316,12 +310,10 @@ class PayeeApiController extends Controller
 
             return $payee;
         })
-        ->filter(function ($payee) {
-            return true || $payee->percentage > 80;
-        })
-        ->sortByDesc('percentage')
-        ->take(5)
-        ->values();
+            ->filter(fn ($payee) => true || $payee->percentage > 80)
+            ->sortByDesc('percentage')
+            ->take(5)
+            ->values();
 
         // Return response with payees
         return response($payees, Response::HTTP_OK);

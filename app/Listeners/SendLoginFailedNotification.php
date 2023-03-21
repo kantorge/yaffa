@@ -12,7 +12,6 @@ class SendLoginFailedNotification
      * Handle the event.
      *
      * @param Failed $event
-     * @return void
      */
     public function handle(Failed $event): void
     {
@@ -21,7 +20,7 @@ class SendLoginFailedNotification
         if (!config('yaffa.admin_email')) {
             return;
         }
-        
+
         Notification::route('mail', config('yaffa.admin_email'))->notify(new LoginFailedNotification($event));
     }
 }
