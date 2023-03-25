@@ -8,7 +8,7 @@ use Tests\DuskTestCase;
 
 class TransactionFormStandardTest extends DuskTestCase
 {
-    protected static $migrationRun = false;
+    protected static bool $migrationRun = false;
 
     public function setUp(): void
     {
@@ -55,28 +55,64 @@ class TransactionFormStandardTest extends DuskTestCase
                 ->visitRoute('transactions.createStandard')
 
                 // No currency should be visible
-                ->assertNotPresent('@label-amountFrom-currency');
+                ->assertNotPresent('@label-amountFrom-currency')
 
-            // Select account from, currency symbol should be visible
+                // Select account from (EUR)
+                ->select2('#account_from', 'Investment account EUR', 10)
+                ->assertSeeIn('#account_from + .select2', 'Investment account EUR')
 
-            // Remove account from, no currency symbol should be visible
+                // Currency symbol should be visible, when Vue has updated the value from AJAX call
+                ->waitUntilVue('from.account_currency', '€', '@transaction-form-standard')
+                ->assertPresent('@label-amountFrom-currency')
+                ->assertSeeIn('@label-amountFrom-currency', '€')
 
-            // Select account from again, and swithc to deposit
-            // No currency should be visible
+                // Remove account from, no currency symbol should be visible
+                ->select2('#account_from', '')
+                ->assertNotPresent('@label-amountFrom-currency')
 
-            // Select account to, currency symbol should be visible
+                // Select account from again, and switch to deposit
+                ->select2('#account_from', 'Investment account EUR')
+                ->click('@transaction-type-deposit')
+                // Confirm alert
+                ->acceptDialog()
 
-            // Remove account to, no currency symbol should be visible
+                // No currency should be visible
+                ->assertNotPresent('@label-amountFrom-currency')
 
-            // Select account to again, and switch to transfer
-            // Account should remain, but no currency symbol should be visible
+                // Select account to, currency symbol should be visible
+                ->select2('#account_to', 'Investment account EUR')
 
-            // Select account from with the same currency
-            // Currency of account from should be visible
+                // Remove account to, no currency symbol should be visible
+                ->select2('#account_to', '')
+                ->assertNotPresent('@label-amountFrom-currency')
 
-            // Select account fromj with different currency
-            // This new currency should be visible
-            // Secondary amount and currency symbol should be visible
+                // Select account to again, and switch to transfer
+                ->select2('#account_to', 'Investment account EUR')
+                ->click('@transaction-type-transfer')
+                // Confirm alert
+                ->acceptDialog()
+
+                // Account in select2 should remain, but no currency symbol should be visible
+                ->assertSeeIn('#account_to + .select2', 'Investment account EUR')
+                ->assertNotPresent('@label-amountFrom-currency')
+
+                // Select a different account from with the same currency
+                ->select2('#accountFrom', 'Cash account EUR')
+
+                // Currency of account from should be visible
+                ->assertPresent('@label-amountFrom-currency')
+                ->assertSeeIn('@label-amountFrom-currency', '€')
+
+                // Select account from with different currency
+                ->select2('#account_from', 'Cash account USD')
+
+                // This new currency should be visible
+                ->assertPresent('@label-amountFrom-currency')
+                ->assertSeeIn('@label-amountFrom-currency', '$')
+
+                // Secondary amount and currency symbol should be visible
+                ->assertPresent('@label-amountTo-currency')
+                ->assertSeeIn('@label-amountTo-currency', '€');
         });
     }
 }

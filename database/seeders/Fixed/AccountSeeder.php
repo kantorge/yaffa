@@ -53,6 +53,40 @@ class AccountSeeder extends Seeder
         $accountConfig = Account::create(
             [
                 'opening_balance' => 1000,
+                'account_group_id' => AccountGroup::where('name', 'Cash')->first()->id,
+                'currency_id' => Currency::where('iso_code', 'EUR')->first()->id,
+            ]
+        );
+        AccountEntity::create(
+            [
+                'name' => 'Cash account EUR',
+                'active' => 1,
+                'config_type' => 'account',
+                'config_id' => $accountConfig->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $accountConfig = Account::create(
+            [
+                'opening_balance' => 1000,
+                'account_group_id' => AccountGroup::where('name', 'Cash')->first()->id,
+                'currency_id' => Currency::where('iso_code', 'USD')->first()->id,
+            ]
+        );
+        AccountEntity::create(
+            [
+                'name' => 'Cash account USD',
+                'active' => 1,
+                'config_type' => 'account',
+                'config_id' => $accountConfig->id,
+                'user_id' => $user->id,
+            ]
+        );
+
+        $accountConfig = Account::create(
+            [
+                'opening_balance' => 1000,
                 'account_group_id' => AccountGroup::where('name', 'Investments')->first()->id,
                 'currency_id' => Currency::where('iso_code', 'EUR')->first()->id,
             ]

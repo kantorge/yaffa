@@ -34,6 +34,7 @@
                     <button
                         class="btn btn-primary"
                         :class="{ active : form.transaction_type === 'withdrawal'}"
+                        dusk="transaction-type-withdrawal"
                         type="button"
                         value="withdrawal"
                         @click="changeTransactionType"
@@ -43,6 +44,7 @@
                     <button
                         class="btn btn-primary"
                         :class="{ active : form.transaction_type === 'deposit'}"
+                        dusk="transaction-type-deposit"
                         type="button"
                         value="deposit"
                         @click="changeTransactionType"
@@ -52,6 +54,7 @@
                     <button
                         class="btn btn-primary"
                         :class="{ active : form.transaction_type === 'transfer'}"
+                        dusk="transaction-type-transfer"
                         type="button"
                         value="transfer"
                         @click="changeTransactionType"
@@ -237,7 +240,7 @@
                 >
                   <label for="transaction_amount_slave" class="control-label">
                     {{ __('Amount to') }}
-                    <span v-if="to.account_currency">({{ to.account_currency }})</span>
+                    <span v-if="to.account_currency" dusk="label-amountTo-currency">({{ to.account_currency }})</span>
                   </label>
                   <MathInput
                       class="form-control"
