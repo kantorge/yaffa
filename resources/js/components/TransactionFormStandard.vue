@@ -32,7 +32,7 @@
                   </label>
                   <div class="btn-group">
                     <button
-                        class="btn btn-primary"
+                        class="btn btn-outline-primary"
                         :class="{ active : form.transaction_type === 'withdrawal'}"
                         dusk="transaction-type-withdrawal"
                         type="button"
@@ -42,7 +42,7 @@
                       {{ __('Withdrawal') }}
                     </button>
                     <button
-                        class="btn btn-primary"
+                        class="btn btn-outline-primary"
                         :class="{ active : form.transaction_type === 'deposit'}"
                         dusk="transaction-type-deposit"
                         type="button"
@@ -52,7 +52,7 @@
                       {{ __('Deposit') }}
                     </button>
                     <button
-                        class="btn btn-primary"
+                        class="btn btn-outline-primary"
                         :class="{ active : form.transaction_type === 'transfer'}"
                         dusk="transaction-type-transfer"
                         type="button"
