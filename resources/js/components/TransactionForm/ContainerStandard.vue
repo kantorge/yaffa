@@ -1,55 +1,10 @@
 <template>
-    <div>
-        <transaction-form-standard
-            :action = "action"
-            :transaction = "transactionData"
-            @cancel="onCancel"
-            @success="onSuccess"
-            @changeTransactionType="onTransactionTypeChange"
-        ></transaction-form-standard>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row">
-                    <div class="d-none d-md-block col-md-10">
-                        <label class="control-label block-label">
-                            {{ __('After saving') }}
-                        </label>
-                        <div class="btn-group">
-                            <button
-                                v-for="item in activeCallbackOptions"
-                                :key="item.id"
-                                class="btn btn-outline-dark"
-                                :class="{ 'active': callback === item.value }"
-                                type="button"
-                                :value="item.value"
-                                @click="callback = $event.currentTarget.getAttribute('value')"
-                            >
-                                {{ item.label }}
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-12 d-block d-md-none">
-                        <label class="control-label block-label">
-                            {{ __('After saving') }}
-                        </label>
-                        <select
-                            class="form-control"
-                            v-model="callback"
-                        >
-                            <option
-                                v-for="item in activeCallbackOptions"
-                                :key="item.id"
-                                :value="item.value"
-                            >
-                                {{ item.label }}
-                            </option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+      <transaction-form-standard
+          :action = "action"
+          :transaction = "transactionData"
+          @cancel="onCancel"
+          @success="onSuccess"
+      ></transaction-form-standard>
 </template>
 
 <script>
@@ -68,55 +23,17 @@
             transaction: Object,
         },
 
-        computed: {
-            activeCallbackOptions() {
-                return this.callbackOptions.filter(option => option.enabled);
-            },
-        },
+        computed: {},
 
         created() {},
 
         data() {
-            var data = {
-                // TODO: adjust initial callback based on action
-                callback: 'create',
-
-                // Various callback options
-                callbackOptions: [
-                    {
-                        value: 'create',
-                        label: __('Add an other transaction'),
-                        enabled: true,
-                    },
-                    {
-                        value: 'clone',
-                        label: __('Clone this transaction'),
-                        enabled: true,
-                    },
-                    {
-                        value: 'returnToPrimaryAccount',
-                        label: __('Return to selected account'),
-                        enabled: true,
-                    },
-                    {
-                        value: 'returnToSecondaryAccount',
-                        label: __('Return to target account'),
-                        enabled: false,
-                    },
-                    {
-                        value: 'returnToDashboard',
-                        label: __('Return to dashboard'),
-                        enabled: true,
-                    },
-                    {
-                        value: 'back',
-                        label: __('Return to previous page'),
-                        enabled: true,
-                    },
-                ],
+            let data = {
+              // Default callback is to create a new transaction
+              callback: 'create',
             };
 
-            // For new transactions set some default values
+            // Set some default values for new transactions
             if (this.action === 'create') {
                 if (!data.transactionData) {
                     data.transactionData = {};
@@ -200,29 +117,10 @@
             },
 
             // Actual form was submitted. We need to return to proceed as selected by user.
-            onSuccess(transaction) {
-                this.loadCallbackUrl(transaction);
-            },
-
-            onTransactionTypeChange(newState) {
-                // Update callback options
-                var foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
-                this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
-
-                // Ensure, that selected item is enabled. Otherwise, set to first enabled option
-                var selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
-                if (! this.callbackOptions[selectedCallbackIndex].enabled) {
-                    this.callback = this.callbackOptions.find(option => option.enabled)['value'];
-                }
+            onSuccess(transaction, options) {
+              this.callback = options.callback;
+              this.loadCallbackUrl(transaction);
             },
         },
     }
 </script>
-
-<style scoped>
-    @media (min-width: 576px) {
-        .block-label {
-            display: block;
-        }
-    }
-</style>

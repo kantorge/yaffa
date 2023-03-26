@@ -208,7 +208,9 @@
                 >
                   <label for="transaction_amount_from" class="control-label">
                     {{ ammountFromFieldLabel }}
-                    <span v-if="ammountFromCurrencyLabel" dusk="label-amountFrom-currency">({{ ammountFromCurrencyLabel }})</span>
+                    <span v-if="ammountFromCurrencyLabel" dusk="label-amountFrom-currency">({{
+                        ammountFromCurrencyLabel
+                      }})</span>
                     <span v-if="form.budget && !ammountFromCurrencyLabel">
                       ({{ getCurrencySymbol(locale, baseCurrency.iso_code) }})
                       <span
@@ -320,22 +322,63 @@
 
       <div class="card mb-3">
         <div class="card-body">
-          <div class="text-end">
-            <button
-                class="btn btn-sm btn-default"
-                @click="onCancel"
-                type="button"
-            >
-              {{ __('Cancel') }}
-            </button>
-            <Button
-                class="btn btn-primary ms-2"
-                :disabled="form.busy"
-                :form="form"
-                id="transactionFormStandard-Save"
-            >
-              {{ __('Save') }}
-            </Button>
+          <div class="row">
+            <div class="d-none d-md-block col-md-10">
+              <div v-show="!fromModal">
+                <label class="control-label block-label">
+                  {{ __('After saving') }}
+                </label>
+                <div class="btn-group">
+                  <button
+                      v-for="item in activeCallbackOptions"
+                      :key="item.id"
+                      class="btn btn-outline-dark"
+                      :class="{ 'active': callback === item.value }"
+                      type="button"
+                      :value="item.value"
+                      @click="callback = $event.currentTarget.getAttribute('value')"
+                  >
+                    {{ item.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 d-block d-md-none">
+              <div v-show="!fromModal">
+                <label class="control-label block-label">
+                  {{ __('After saving') }}
+                </label>
+                <select
+                    class="form-control"
+                    v-model="callback"
+                >
+                  <option
+                      v-for="item in activeCallbackOptions"
+                      :key="item.id"
+                      :value="item.value"
+                  >
+                    {{ item.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-2 text-end align-self-end">
+              <button
+                  class="btn btn-sm btn-default"
+                  @click="onCancel"
+                  type="button"
+              >
+                {{ __('Cancel') }}
+              </button>
+              <Button
+                  class="btn btn-primary ms-2"
+                  :disabled="form.busy"
+                  :form="form"
+                  id="transactionFormStandard-Save"
+              >
+                {{ __('Save') }}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -384,8 +427,10 @@ export default {
       default: false,
     },
     fromModal: {
-      // If true, the form is shown in a modal, which controls the notification behavior and availability of new payee button
-      // TODO: does the component need to be aware of this? Or can this be avoided?
+      // If true, the form is shown in a modal, which controls a few parts of the form
+      // - notification behavior
+      // - availability of new payee button
+      // - availability of callback options
       type: Boolean,
       default: false,
     },
@@ -435,6 +480,43 @@ export default {
     // Id counter for items
     data.itemCounter = 0;
 
+    // TODO: adjust initial callback based on action
+    data.callback = 'create';
+
+    // Various callback options
+    data.callbackOptions = [
+      {
+        value: 'create',
+        label: __('Add an other transaction'),
+        enabled: true,
+      },
+      {
+        value: 'clone',
+        label: __('Clone this transaction'),
+        enabled: true,
+      },
+      {
+        value: 'returnToPrimaryAccount',
+        label: __('Return to selected account'),
+        enabled: true,
+      },
+      {
+        value: 'returnToSecondaryAccount',
+        label: __('Return to target account'),
+        enabled: false,
+      },
+      {
+        value: 'returnToDashboard',
+        label: __('Return to dashboard'),
+        enabled: true,
+      },
+      {
+        value: 'back',
+        label: __('Return to previous page'),
+        enabled: true,
+      },
+    ];
+
     return data;
   },
 
@@ -446,6 +528,11 @@ export default {
 
     accountToFieldLabel() {
       return (['deposit', 'transfer'].includes(this.form.transaction_type) ? __('Account to') : __('Payee'))
+    },
+
+    // Return only those callback options, which are available based on the current form state
+    activeCallbackOptions() {
+      return this.callbackOptions.filter(option => option.enabled);
     },
 
     // Amount from label is different for transfer
@@ -747,6 +834,18 @@ export default {
       this.onChangeTransactionType(newState, false);
     },
 
+    onTransactionTypeChange(newState) {
+      // Update callback options
+      const foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
+      this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
+
+      // Ensure, that selected item is enabled. Otherwise, set to first enabled option
+      const selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
+      if (! this.callbackOptions[selectedCallbackIndex].enabled) {
+        this.callback = this.callbackOptions.find(option => option.enabled)['value'];
+      }
+    },
+
     /**
      * @param {string} newState
      * @param {boolean} forceUpdate
@@ -785,8 +884,15 @@ export default {
             .select2(this.getAccountSelectConfig('to'));
       }
 
-      // Emmit event, so that parent container can react on it
-      this.$emit('changeTransactionType', newState);
+      // Update callback options
+      const foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
+      this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
+
+      // Ensure, that selected item is enabled. Otherwise, set to first enabled option
+      const selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
+      if (! this.callbackOptions[selectedCallbackIndex].enabled) {
+        this.callback = this.callbackOptions.find(option => option.enabled)['value'];
+      }
     },
 
     // Add a new empty item to list of transaction items
@@ -923,7 +1029,13 @@ export default {
             this.form
         )
             .then((response) => {
-              this.$emit('success', response.data.transaction);
+              this.$emit(
+                  'success',
+                  response.data.transaction,
+                  {
+                    callback: this.callback,
+                  },
+              );
             });
         return;
       }
@@ -933,7 +1045,13 @@ export default {
           window.route('api.transactions.storeStandard'), this.form
       )
           .then((response) => {
-            this.$emit('success', response.data.transaction);
+            this.$emit(
+                'success',
+                response.data.transaction,
+                {
+                  callback: this.callback,
+                }
+            );
           });
     },
 
