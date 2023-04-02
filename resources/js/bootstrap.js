@@ -20,7 +20,7 @@ window.coreui = coreui;
 
 // Custom translation function
 window.__ = function (key, replace) {
-    var translation = window.YAFFA.translations[key] ? window.YAFFA.translations[key] : key;
+    let translation = window.YAFFA.translations[key] ? window.YAFFA.translations[key] : key;
 
     for (const [key, value] of Object.entries(replace || {})) {
         translation = translation.replace(':' + key, value);

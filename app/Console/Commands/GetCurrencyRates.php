@@ -23,14 +23,6 @@ class GetCurrencyRates extends Command
     protected $description = 'Run retrieval of currency rates for all currencies against the base currency.';
 
     /**
-     * Create a new command instance.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int
@@ -40,7 +32,8 @@ class GetCurrencyRates extends Command
         // Check if specific currencies are requested
         $requestedCurrencies = $this->argument('iso_codes');
 
-        // Get all currencies of all users, which are not base currencies, and has autotmatic currency rate retrieval enabled
+        // Get all currencies of all users, which are not base currencies,
+        // and has autotmatic currency rate retrieval enabled
         $currencies = Currency::notBase()->autoUpdate()
             // Optionally apply currency filter
             ->when($requestedCurrencies, function ($query, $requestedCurrencies) {
@@ -53,6 +46,6 @@ class GetCurrencyRates extends Command
             GetCurrencyRatesJob::dispatch($currency);
         });
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

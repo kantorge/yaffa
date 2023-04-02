@@ -10,12 +10,12 @@ use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    public function rules(): array
     {
         $rules = [
             'action' => 'required|in:create,edit,clone,enter,replace',
@@ -31,7 +31,7 @@ class TransactionRequest extends FormRequest
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled
-        $isBasic = (! $this->get('schedule') && ! $this->get('budget')) || $this->get('schedule');
+        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
 
         // Set date and schedule related rules
         if ($this->get('schedule') || $this->get('budget')) {
@@ -188,7 +188,7 @@ class TransactionRequest extends FormRequest
         return $rules;
     }
 
-    private function getInvestmentAmountRules($transactionTypeId)
+    private function getInvestmentAmountRules($transactionTypeId): array
     {
         // Buy OR Sell
         if ($transactionTypeId === 4 || $transactionTypeId === 5) {

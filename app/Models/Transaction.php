@@ -4,10 +4,15 @@ namespace App\Models;
 
 use App\Http\Traits\CurrencyTrait;
 use Carbon\Carbon;
+use Database\Factories\TransactionFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Recurr\Rule;
@@ -31,12 +36,12 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Model|Eloquent $config
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
  * @property-read TransactionType $transactionType
  * @method static Builder|Transaction byScheduleType($type)
- * @method static \Database\Factories\TransactionFactory factory(...$parameters)
+ * @method static TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
  * @method static Builder|Transaction newQuery()
  * @method static Builder|Transaction query()
@@ -52,7 +57,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereTransactionTypeId($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class Transaction extends Model
 {
@@ -69,7 +74,7 @@ class Transaction extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'date',
@@ -90,7 +95,7 @@ class Transaction extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'date' => 'datetime',

@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\Auth;
  * @method static Builder|AccountEntity whereName($value)
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
+ * @method static Builder|AccountEntity forCurrentUser()
  * @mixin Eloquent
  */
 class AccountEntity extends Model

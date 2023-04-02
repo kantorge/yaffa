@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Laracasts\Utilities\JavaScript\JavaScriptFacade;
+use Illuminate\View\View;
+use JavaScript;
 
 class TagController extends Controller
 {
@@ -18,9 +20,9 @@ class TagController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         /**
          * @get('/tag')
@@ -34,14 +36,14 @@ class TagController extends Controller
             ->get();
 
         // Pass data for DataTables
-        JavaScriptFacade::put([
+        JavaScript::put([
             'tags' => $tags,
         ]);
 
         return view('tag.index');
     }
 
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/tag/create')
@@ -55,9 +57,9 @@ class TagController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  Tag  $tag
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function edit(Tag $tag)
+    public function edit(Tag $tag): View
     {
         /**
          * @get('/tag/{tag}/edit')
@@ -67,7 +69,7 @@ class TagController extends Controller
         return view('tag.form', ['tag' => $tag]);
     }
 
-    public function store(TagRequest $request)
+    public function store(TagRequest $request): RedirectResponse
     {
         /**
          * @post('/tag')
@@ -81,7 +83,7 @@ class TagController extends Controller
         return redirect()->route('tag.index');
     }
 
-    public function update(TagRequest $request, Tag $tag)
+    public function update(TagRequest $request, Tag $tag): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -104,9 +106,9 @@ class TagController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Tag  $tag
-     * @return \Illuminate\Http\Response
+     * @return RedirectResponse
      */
-    public function destroy(Tag $tag)
+    public function destroy(Tag $tag): RedirectResponse
     {
         /**
          * @delete('/tag/{tag}')
