@@ -43,7 +43,7 @@ class InvestmentController extends Controller
          * @name('investment.index')
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
          */
-        // Get all investments of the user from the database and return to view
+        // Show all investments from the database and return to view
         $investments = Auth::user()
             ->investments()
             ->withCount('transactions')
@@ -54,6 +54,13 @@ class InvestmentController extends Controller
                 'investmentGroup',
             ])
             ->get();
+
+        $investments->map(function ($investment) {
+            $investment['price'] = $investment->getLatestPrice();
+            $investment['quantity'] = $investment->getCurrentQuantity();
+
+            return $investment;
+        });
 
         // Pass data for DataTables
         JavaScriptFacade::put([
@@ -156,38 +163,7 @@ class InvestmentController extends Controller
         return redirect()->back();
     }
 
-    public function summary()
-    {
-        /**
-         * @get('/investment/summary')
-         * @name('investment.summary')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        // Show all investments from the database and return to view
-        $investments = Auth::user()
-            ->investments()
-            ->with([
-                'currency',
-                'investmentGroup',
-            ])
-            ->get();
-
-        $investments->map(function ($investment) {
-            $investment['price'] = $investment->getLatestPrice();
-            $investment['quantity'] = $investment->getCurrentQuantity();
-
-            return $investment;
-        });
-
-        // Pass data for DataTables
-        JavaScriptFacade::put([
-            'investments' => $investments,
-        ]);
-
-        return view('investment.summary');
-    }
-
-    public function show(Investment $investment)
+    public function show(Investment $investment): View
     {
         /**
          * @get('/investment/{investment}')

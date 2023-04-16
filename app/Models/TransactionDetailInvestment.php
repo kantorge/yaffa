@@ -38,11 +38,11 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @method static Builder|TransactionDetailInvestment wherePrice($value)
  * @method static Builder|TransactionDetailInvestment whereQuantity($value)
  * @method static Builder|TransactionDetailInvestment whereTax($value)
- * @mixin Eloquent
  * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
  * @property-read TransactionType $transactionType
+ * @mixin Eloquent
  */
 class TransactionDetailInvestment extends Model
 {

@@ -244,13 +244,13 @@ window.table = $(tableSelector).DataTable({
             data: 'id',
             title: __("Actions"),
             render: function (data, _type, row) {
-                return dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                       dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                       dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                return dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                       dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                       dataTableHelpers.dataTablesActionButton(data, 'replace') +
                        dataTableHelpers.dataTablesActionButton(data, 'delete') +
                        (row.schedule
-                        ? '<a href="' + (row.transaction_type.type === 'standard' ? route('transactions.open.standard', { transaction: data, action: 'enter' }) : route('transactions.open.investment', { transaction: data, action: 'enter' })) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') + '"></i></a> ' +
-                          '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> '
+                        ? '<a href="' + window.route('transaction.open', { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                          '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
                         : '');
             },
             className: "dt-nowrap",

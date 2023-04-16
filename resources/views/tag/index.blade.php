@@ -2,22 +2,69 @@
 
 @section('title_postfix',  __('Tags'))
 
-@section('content_container_classes', 'container-lg')
+@section('content_container_classes', 'container-fluid')
 
 @section('content_header', __('Tags'))
 
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between">
-        @include('template.components.tablefilter-active')
-        <div>
-            <a href="{{ route('tag.create') }}" class="btn btn-success" title="{{ __('New tag') }}"><i class="fa fa-plus"></i></a>
+    <div class="row">
+        <div class="col-12 col-lg-3">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div
+                            class="card-title collapse-control"
+                            data-coreui-toggle="collapse"
+                            data-coreui-target="#cardActions"
+                    >
+                        <i class="fa fa-angle-down"></i>
+                        {{ __('Actions') }}
+                    </div>
+                </div>
+                <div class="card-body collapse show" aria-expanded="true" id="cardActions">
+                    <ul class="nav flex-column">
+                        <li class="nav-item d-flex justify-content-between align-items-center">
+                            {{ __('New tag') }}
+                            <a class="btn btn-success btn-sm"
+                               dusk="button-new-tag"
+                               href="{{ route('tag.create') }}" title="{{ __('New tag') }}"
+                            >
+                                <i class="fa fa-fw fa-plus" title="{{ __('New tag') }}"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div
+                            class="card-title collapse-control"
+                            data-coreui-toggle="collapse"
+                            data-coreui-target="#cardFilters"
+                    >
+                        <i class="fa fa-angle-down"></i>
+                        {{ __('Filters') }}
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                    @include('template.components.tablefilter-sidebar-active')
+                    @include('template.components.tablefilter-sidebar-search')
+                </ul>
+            </div>
+        </div>
+        <div class="col-12 col-lg-9">
+            <div class="card mb-3">
+                <div class="card-body no-datatable-search">
+                    <table
+                            class="table table-striped table-bordered table-hover"
+                            dusk="table-tags"
+                            id="table"
+                            role="grid"
+                    ></table>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
-    </div>
-</div>
 
-@include('template.components.model-delete-form')
+    @include('template.components.model-delete-form')
 @stop

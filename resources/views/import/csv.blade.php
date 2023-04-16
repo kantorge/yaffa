@@ -117,7 +117,7 @@
             :initial-controls="{ show: false, edit: false, delete: false, skip: false, enter: false, delete: false }"
         ></transaction-show-modal>
 
-        <transaction-create-modal></transaction-create-modal>
+        <transaction-create-standard-modal></transaction-create-standard-modal>
     </div>
 
 @stop

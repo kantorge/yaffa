@@ -2,154 +2,70 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\TransactionRequest;
+use App\Models\AccountEntity;
 use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionSchedule;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class TransactionController extends Controller
 {
-    private const STANDARD_VIEW = 'transactions.form_standard';
-
-    private const INVESTMENT_VIEW = 'transactions.form_investment';
-
-    private const INVESTMENT_RELATIONS = [
-        'config',
-        'config.account',
-        'config.investment',
-        'transactionSchedule',
-        'transactionType',
-    ];
-
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
     }
 
-    public function createStandard()
+    public function create(string $type): View|RedirectResponse
     {
         /**
-         * @get('/transactions/standard/create')
-         * @name('transactions.createStandard')
+         * @get('/transactions/create/{type}
+         * @name('transaction.create')
          * @middlewares('web', 'auth', 'verified')
          */
 
         // Sanity check for necessary assets
-        if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
+        if (AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
             $this->addMessage(
-                'Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.',
+                __('Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.'),
                 'info',
-                'No accounts found',
+                __('No accounts found'),
                 'info-circle'
             );
 
             return redirect()->route('account-entity.create', ['type' => 'account']);
         }
 
-        return view(self::STANDARD_VIEW, [
+        return view('transactions.form', [
             'transaction' => null,
             'action' => 'create',
+            'type' => $type,
         ]);
-    }
-
-    public function createInvestment()
-    {
-        /**
-         * @get('/transactions/investment/create')
-         * @name('transactions.createInvestment')
-         * @middlewares('web', 'auth', 'verified')
-         */
-
-        // Sanity check for necessary assets
-        if (\App\Models\AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
-            $this->addMessage(
-                'Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.',
-                'info',
-                'No accounts found',
-                'info-circle'
-            );
-
-            return redirect()->route('account-entity.create', ['type' => 'account']);
-        }
-
-        return view(self::INVESTMENT_VIEW, [
-            'transaction' => null,
-            'action' => 'create',
-        ]);
-    }
-
-    public function storeInvestment(TransactionRequest $request)
-    {
-        /**
-         * @post('/transactions/investment')
-         * @name('transactions.storeInvestment')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $validated = $request->validated();
-
-        $transaction = DB::transaction(function () use ($validated) {
-            $transaction = Transaction::make($validated);
-            $transaction->user_id = Auth::user()->id;
-
-            $transactionDetails = TransactionDetailInvestment::create($validated['config']);
-            $transaction->config()->associate($transactionDetails);
-
-            $transaction->push();
-
-            if ($transaction->schedule) {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
-                $transactionSchedule->fill($validated['schedule_config']);
-                $transaction->transactionSchedule()->save($transactionSchedule);
-            }
-
-            return $transaction;
-        });
-
-        // Adjust source transaction schedule, if needed
-        if ($validated['action'] === 'enter') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-            $sourceTransaction->transactionSchedule->skipNextInstance();
-        }
-
-        self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
-
-        return response()->json(
-            [
-                'transaction_id' => $transaction->id,
-            ]
-        );
     }
 
     /**
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param  \App\Models\Transaction  $transaction
-     * @param  string  $action
-     * @return \Illuminate\Contracts\View\View
+     * @param Transaction $transaction
+     * @param string $action
+     * @return View
      */
-    public function openStandard(Transaction $transaction, string $action)
+    public function openTransaction(Transaction $transaction, string $action): View
     {
         /**
-         * @get('/transactions/standard/{transaction}/{action}')
-         * @name('transactions.open.standard')
+         * @get('/transactions/{transaction}/{action}')
+         * @name('transaction.open')
          * @middlewares('web', 'auth', 'verified')
          */
 
         // Load all relevant relations
-        $transaction->loadStandardDetails();
+        $transaction->loadDetails();
 
         // Show is routed to special view, and also further data is needed
         if ($action === 'show') {
-            return view('transactions.show_standard', [
+            return view('transactions.show', [
                 'transaction' => $transaction,
+                'type' => $transaction->transactionType->type,
             ]);
         }
 
@@ -160,74 +76,28 @@ class TransactionController extends Controller
             $transaction->budget = false;
 
             // Date is next schedule date
-            $transaction->date = $transaction->transactionSchedule->next_date->format('Y-m-d');
+            $transaction->date = $transaction->transactionSchedule->next_date;
         }
 
-        return view(self::STANDARD_VIEW, [
+        // Pass transaction data to view as JavaScript object
+        JavaScript::put([
+            'transaction' => $transaction,
+        ]);
+
+        return view('transactions.form', [
             'transaction' => $transaction,
             'action' => $action,
+            'type' => $transaction->transactionType->type,
         ]);
-    }
-
-    public function openInvestment(Transaction $transaction, string $action)
-    {
-        /**
-         * @get('/transactions/investment/{transaction}/{action}')
-         * @name('transactions.open.investment')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $transaction->load(self::INVESTMENT_RELATIONS);
-
-        // Adjust date and schedule settings, if entering a recurring item
-        if ($action === 'enter') {
-            // Reset schedule and budget flags
-            $transaction->schedule = false;
-            $transaction->budget = false;
-
-            // Date is next schedule date
-            $transaction->date = $transaction->transactionSchedule->next_date->format('Y-m-d');
-        }
-
-        return view(self::INVESTMENT_VIEW, [
-            'transaction' => $transaction,
-            'action' => $action,
-        ]);
-    }
-
-    public function updateInvestment(TransactionRequest $request, Transaction $transaction)
-    {
-        /**
-         * @patch('/transactions/investment/{transaction}')
-         * @name('transactions.updateInvestment')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $validated = $request->validated();
-
-        $transaction->fill($validated);
-        $transaction->config->fill($validated['config']);
-
-        if ($transaction->schedule) {
-            $transaction->transactionSchedule->fill($validated['schedule_config']);
-        }
-
-        $transaction->push();
-
-        self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
-
-        return response()->json(
-            [
-                'transaction_id' => $transaction->id,
-            ]
-        );
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Transaction  $transaction
-     * @return \Illuminate\Http\Response
+     * @param Transaction $transaction
+     * @return RedirectResponse
      */
-    public function destroy(Transaction $transaction)
+    public function destroy(Transaction $transaction): RedirectResponse
     {
         /**
          * @delete('/transactions/{transaction}')
@@ -241,7 +111,7 @@ class TransactionController extends Controller
         return redirect()->back();
     }
 
-    public function skipScheduleInstance(Transaction $transaction)
+    public function skipScheduleInstance(Transaction $transaction): RedirectResponse
     {
         /**
          * @patch('/transactions/{transaction}/skip')

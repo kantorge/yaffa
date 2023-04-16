@@ -22,12 +22,12 @@
 </template>
 
 <script>
-import FormStandard from './../TransactionFormStandard.vue'
+import TransactionFormStandard from './../TransactionFormStandard.vue'
 
 export default {
-  name: 'CreateTransactionModal',
+  name: 'CreateStandardTransactionModal',
   components: {
-    'transaction-form-standard': FormStandard,
+    TransactionFormStandard,
   },
   props: {},
   data() {
@@ -87,11 +87,21 @@ export default {
 
     // Set up event listener for global scope about new schedule instance to be opened in modal editor
     window.addEventListener('initiateEnterInstance', function (event) {
+      // Validate that transaction type is standard
+      if (event.detail.type !== 'standard') {
+        return;
+      }
+
       $vm.onInitiateEnterInstance(event.detail.transaction);
     });
 
     // Set up event listener for global scope about new transaction draft to be opened in modal editor
     window.addEventListener('initiateCreateFromDraft', function (event) {
+      // Validate that transaction type is standard
+      if (event.detail.type !== 'standard') {
+        return;
+      }
+
       $vm.onInitiateCreateDraft(event.detail.transaction);
     });
 

@@ -80,7 +80,7 @@
         },
 
         methods: {
-            // Toggle the visibility of event details (comment / tags)
+            // Toggle the visibility of event details (comment / tag)
             toggleItemDetails() {
                 $(this.$el).find(".transaction_detail_container").toggleClass('d-none');
             },

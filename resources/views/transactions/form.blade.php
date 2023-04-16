@@ -29,10 +29,20 @@
 @endsection
 
 @section('content')
-    <div id="app">
-        <transaction-container-standard
-            action = "{{ $action }}"
-            :transaction = "{{ $transaction ?? '{}' }}"
-        ></transaction-container-standard>
-    </div>
+    {{-- display the form based on the type of the transaction --}}
+    @if ($type === 'standard')
+        <div id="app">
+            <transaction-container-standard
+                action = "{{ $action }}"
+                :transaction = "{{ $transaction ?? '{}' }}"
+            ></transaction-container-standard>
+        </div>
+    @elseif ($type === 'investment')
+        <div id="app">
+            <transaction-container-investment
+                action = "{{ $action }}"
+                :transaction = "{{ $transaction ?? '{}' }}"
+            ></transaction-container-investment>
+        </div>
+    @endif
 @endsection

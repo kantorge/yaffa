@@ -6,7 +6,7 @@
  * @type {string}
  */
 export function toFormattedCurrency(input, locale, currencySettings) {
-    return input.toLocaleString(
+    return input?.toLocaleString(
         locale,
         {
             style: 'currency',
@@ -26,4 +26,15 @@ export function getCurrencySymbol(locale, iso_code) {
     });
     const symbol = numberFormat.format(0).match(/[^0-9,.\s]+/);
     return symbol[0];
+}
+
+// Function to return just the ISO version of a date.
+export function toIsoDateString(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Function to create a new date in UTC
+export function todayInUTC() {
+    let date = new Date();
+    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
 }

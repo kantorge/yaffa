@@ -10,7 +10,7 @@
             <h6>{{ __('Quick actions') }}</h6>
             <ul class="control-sidebar-menu">
                 <li>
-                    <a href="{{ route('transactions.createStandard') }}">
+                    <a href="{{ route('transaction.create', ['type' => 'standard']) }}">
                         <i class="menu-icon fa fa-cart-plus bg-green"></i>
 
                         <div class="menu-info">
@@ -19,7 +19,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('transactions.createInvestment') }}">
+                    <a href="{{ route('transaction.create', ['type' => 'investment']) }}">
                         <i class="menu-icon fa fa-line-chart bg-green"></i>
 
                         <div class="menu-info">

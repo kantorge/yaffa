@@ -15,6 +15,20 @@ class TransactionRequest extends FormRequest
         return true;
     }
 
+    public function attributes(): array
+    {
+        return [
+            // Investment specific fields
+            'config.account_id' => __('account'),
+            'config.investment_id' => __('investment'),
+            'config.dividend' => __('dividend'),
+            'config.quantity' => __('quantity'),
+            'config.price' => __('price'),
+            'config.commission' => __('commission'),
+            'config.tax' => __('tax'),
+        ];
+    }
+
     public function rules(): array
     {
         $rules = [

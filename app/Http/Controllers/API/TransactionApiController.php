@@ -61,7 +61,7 @@ class TransactionApiController extends Controller
          * @get('/api/transaction/{transaction}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $transaction->loadStandardDetails();
+        $transaction->loadDetails();
 
         return response()->json(
             [
@@ -169,7 +169,7 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function findTransactions(Request $request)
+    public function findTransactions(Request $request): JsonResponse
     {
         /**
          * @get('/api/transactions')
@@ -352,7 +352,8 @@ class TransactionApiController extends Controller
             $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
             // Handle default payee amount, if present, by adding amount as an item
-            if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
+            if (array_key_exists('remaining_payee_default_amount', $validated)
+                && $validated['remaining_payee_default_amount'] > 0) {
                 $newItem = TransactionItem::create([
                     'transaction_id' => $transaction->id,
                     'amount' => $validated['remaining_payee_default_amount'],
@@ -404,7 +405,62 @@ class TransactionApiController extends Controller
         );
     }
 
-    public function updateStandard(TransactionRequest $request, Transaction $transaction)
+    public function storeInvestment(TransactionRequest $request): JsonResponse
+    {
+        /**
+         * @post('/api/transactions/investment')
+         * @name('api.transactions.storeInvestment')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        $validated = $request->validated();
+
+        $transaction = DB::transaction(function () use ($validated, $request) {
+            $transaction = new Transaction($validated);
+            $transaction->user_id = $request->user()->id;
+            $transaction->save();
+
+            $transactionDetails = TransactionDetailInvestment::create($validated['config']);
+            $transaction->config()->associate($transactionDetails);
+
+            $transaction->push();
+
+            if ($transaction->schedule) {
+                $transactionSchedule = new TransactionSchedule(
+                    [
+                        'transaction_id' => $transaction->id,
+                    ]
+                );
+                $transactionSchedule->fill($validated['schedule_config']);
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
+
+            return $transaction;
+        });
+
+        // Adjust source transaction schedule, if creating a new schedule clone
+        if ($validated['action'] === 'replace') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+
+            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+
+            $sourceTransaction->push();
+        }
+
+        // Create notification only if invoked from standalone view (not modal)
+        // TODO: can this be done in a better way?
+        if (!$validated['fromModal']) {
+            self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
+        }
+
+        return response()->json(
+            [
+                'transaction' => $transaction->transformToClient(),
+            ]
+        );
+    }
+
+    public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
          * @patch('/api/transactions/standard/{transaction}')
@@ -435,6 +491,9 @@ class TransactionApiController extends Controller
                 $transactionSchedule->fill($validated['schedule_config']);
                 $transaction->transactionSchedule()->save($transactionSchedule);
             }
+
+            // Ensure that the date of the transaction is not set
+            $transaction->date = null;
         }
 
         // Replace exising transaction items with new array
@@ -472,7 +531,53 @@ class TransactionApiController extends Controller
         );
     }
 
-    private function processTransactionItem($transactionItems, $transactionId)
+    public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
+    {
+        /**
+         * @patch('/api/transactions/investment/{transaction}')
+         * @name('api.transactions.updateInvestment')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        $validated = $request->validated();
+
+        $transaction->fill($validated);
+        $transaction->config->fill($validated['config']);
+
+        if ($transaction->schedule) {
+            // Update existing or create new
+            if ($transaction->transactionSchedule) {
+                $transaction->transactionSchedule->fill($validated['schedule_config']);
+            } else {
+                $transactionSchedule = new TransactionSchedule(
+                    [
+                        'transaction_id' => $transaction->id,
+                    ]
+                );
+                $transactionSchedule->fill($validated['schedule_config']);
+                $transaction->transactionSchedule()->save($transactionSchedule);
+            }
+
+            // Ensure that the date of the transaction is not set
+            $transaction->date = null;
+        }
+
+        // Save entire transaction
+        $transaction->push();
+
+        // Create notification only if invoked from standalone view (not modal)
+        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
+        if (!$validated['fromModal']) {
+            self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
+        }
+
+        return response()->json(
+            [
+                'transaction' => $transaction->transformToClient(),
+            ]
+        );
+    }
+
+    private function processTransactionItem($transactionItems, $transactionId): array
     {
         $processedTransactionItems = [];
         foreach ($transactionItems as $item) {
@@ -518,11 +623,12 @@ class TransactionApiController extends Controller
          * @name('api.transactions.skipScheduleInstance')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
         return response()->json(
             [
-                'transaction' => $transaction->transformToClient(),
+                'transaction' => $transaction,
             ]
         );
     }

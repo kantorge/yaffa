@@ -18,6 +18,11 @@ td.dt-nowrap {
     cursor: pointer;
 }
 
+// Hide the DataTables search box
+.no-datatable-search .dataTables_filter {
+    display: none;
+}
+
 // Hide/show spinner for busy/idle button in DataTables
 table button:not(.busy) i.fa-spinner {
     display: none;

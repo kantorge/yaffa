@@ -127,17 +127,10 @@ var dtHistory = $(selectorHistoryTable).DataTable({
             data: 'id',
             title: __("Actions"),
             render: function (data, _type, row) {
-                if (row.transaction_type.type === 'standard') {
-                    return dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
-                           dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                           dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(data, 'clone', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(data, 'delete');
-                }
-
-                // Investment
-                return '<a href="' + route('transactions.open.investment', { transaction: data, action: 'edit' }) +  '" class="btn btn-xs btn-primary" title="' + __('Edit')  + '"><i class="fa fa-fw fa-edit"></i></a> ' +
-                       '<a href="' + route('transactions.open.investment', { transaction: data, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
+                return dataTableHelpers.dataTablesActionButton(data, 'quickView') +
+                       dataTableHelpers.dataTablesActionButton(data, 'show') +
+                       dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                       dataTableHelpers.dataTablesActionButton(data, 'clone') +
                        dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
@@ -206,9 +199,9 @@ var dtSchedule = $(selectorScheduleTable).DataTable({
                 return  '<button class="btn btn-xs btn-success create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Adjust and enter instance') + '"><i class="fa fa-fw fa-pencil"></i></button> ' +
                         // TODO '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' +
                         dataTableHelpers.dataTablesActionButton(data, 'skip') +
-                        dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                        dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                        dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                        dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                        dataTableHelpers.dataTablesActionButton(data, 'replace') +
                         dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
@@ -393,12 +386,12 @@ if (filters.date_from || filters.date_to) {
     }
 }
 
-// Set up event listener for new transaction button
+// Set up event listener for new standard transaction button
 $('#create-standard-transaction-button').on('click', function () {
     // TODO: should this data passed back and forth instead of storing it?
     recentTransactionDraftId = undefined;
 
-    // Create transactiuon daft
+    // Create transaction daft
     const transaction = {};
 
     transaction.transaction_type = 'withdrawal';
@@ -411,7 +404,33 @@ $('#create-standard-transaction-button').on('click', function () {
     // Dispatch event
     const event = new CustomEvent('initiateCreateFromDraft', {
         detail: {
-            transaction: transaction
+            transaction: transaction,
+            type: 'standard',
+        }
+    });
+    window.dispatchEvent(event);
+});
+
+// Set up event listener for new investment transaction button
+$('#create-investment-transaction-button').on('click', function () {
+    // TODO: should this data passed back and forth instead of storing it?
+    recentTransactionDraftId = undefined;
+
+    // Create transaction daft
+    const transaction = {};
+
+    transaction.transaction_type = 'Buy';
+    transaction.schedule = false;
+    transaction.budget = false;
+    transaction.date = new Date();
+    transaction.config = {};
+    transaction.config.account_id = account.id;
+
+    // Dispatch event
+    const event = new CustomEvent('initiateCreateFromDraft', {
+        detail: {
+            transaction: transaction,
+            type: 'investment',
         }
     });
     window.dispatchEvent(event);
@@ -679,9 +698,11 @@ const app = createApp({})
 app.config.globalProperties.__ = window.__;
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
+import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
+import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
-app.component('transaction-create-modal', TransactionCreateModal)
+app.component('transaction-create-standard-modal', CreateStandardTransactionModal)
+app.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
 
 app.mount('#app')

@@ -19,7 +19,7 @@ class TransactionScheduleFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         $start = $this->faker->dateTimeBetween('-1 year', 'now');
         $end = $this->faker->dateTimeBetween($start, $start->format('Y-m-d H:i:s') . ' 2 years');

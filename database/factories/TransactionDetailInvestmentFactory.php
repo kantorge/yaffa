@@ -23,8 +23,10 @@ class TransactionDetailInvestmentFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
+        // Get all account currencies and investment currencies
+        // Make sure, that a common currency is used
         $accountCurrencies = Account::query()->distinct()->pluck('currency_id');
         $investmentCurrencies = Investment::query()->distinct()->pluck('currency_id');
         $currency = $accountCurrencies->intersect($investmentCurrencies)->random();
@@ -51,16 +53,17 @@ class TransactionDetailInvestmentFactory extends Factory
     /**
      * Transaction type is BUY
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function buy()
+    public function buy(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
                 'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
                 'quantity' => $this->faker->randomFloat(4, 1, 100),
                 'commission' => $this->faker->randomFloat(4, 0.0001, 100),
-                'dividend' => 0,
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => null,
             ];
         });
     }

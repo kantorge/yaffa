@@ -12412,6 +12412,10 @@ td.dt-nowrap {
   cursor: pointer;
 }
 
+.no-datatable-search .dataTables_filter {
+  display: none;
+}
+
 table button:not(.busy) i.fa-spinner {
   display: none;
 }

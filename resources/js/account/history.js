@@ -132,24 +132,17 @@ $(selectorHistoryTable).DataTable({
                 }
                 if (row.schedule) {
                     if (row.schedule_first_instance) {
-                        return '<a href="' + route('transactions.open.standard', { transaction: row.originalId, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                        return '<a href="' + route('transaction.open', { transaction: row.originalId, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
                                '<button class="btn btn-xs btn-warning data-skip" data-id="' + row.originalId + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> ';
                     }
                     return null;
                 }
 
-                if (row.transaction_type.type === 'standard') {
-                    return dataTableHelpers.dataTablesActionButton(row.id, 'standardQuickView') +
-                           dataTableHelpers.dataTablesActionButton(row.id, 'standardShow') +
-                           dataTableHelpers.dataTablesActionButton(row.id, 'edit', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(row.id, 'clone', 'standard') +
-                           dataTableHelpers.dataTablesActionButton(row.id, 'delete');
-                }
-
-                // Investment
-                return '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'edit' }) +  '" class="btn btn-xs btn-primary" title="' + __('Edit')  + '"><i class="fa fa-fw fa-edit"></i></a> ' +
-                       '<a href="' + route('transactions.open.investment', { transaction: row.id, action: 'clone' }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
-                       '<button class="btn btn-xs btn-danger data-delete" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button>';
+                return dataTableHelpers.dataTablesActionButton(row.id, 'quickView') +
+                       dataTableHelpers.dataTablesActionButton(row.id, 'show') +
+                       dataTableHelpers.dataTablesActionButton(row.id, 'edit') +
+                       dataTableHelpers.dataTablesActionButton(row.id, 'clone') +
+                       dataTableHelpers.dataTablesActionButton(row.id, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
@@ -215,11 +208,11 @@ $(selectorScheduleTable).DataTable({
             data: 'id',
             title: __("Actions"),
             render: function (data, _type, row) {
-                return '<a href="' + route('transactions.open.' + row.transaction_type.type, { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
+                return '<a href="' + route('transaction.open' , { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
                     '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> ' +
-                    dataTableHelpers.dataTablesActionButton(data, 'edit', row.transaction_type.type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'clone', row.transaction_type.type) +
-                    dataTableHelpers.dataTablesActionButton(data, 'replace', row.transaction_type.type) +
+                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
                     dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             orderable: false

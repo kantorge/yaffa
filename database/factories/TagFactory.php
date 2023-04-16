@@ -24,7 +24,7 @@ class TagFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->text(mt_rand(5, 15)),
-            'active' => 1,
+            'active' => true,
             'user_id' => User::inRandomOrder()->first()->getAttribute('id'),
         ];
     }

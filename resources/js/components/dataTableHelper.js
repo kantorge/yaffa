@@ -2,38 +2,38 @@
 
 import * as helpers from "../helpers";
 
-export function dataTablesActionButton(id, action, transactionType) {
-    var functions = {
+export function dataTablesActionButton(id, action) {
+    const functions = {
         delete: function() {
             return '<button class="btn btn-xs btn-danger data-delete" data-delete data-id="' + id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-trash"></i></button> ';
         },
-        standardQuickView: function() {
+        quickView: function() {
             return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button" title="' + __('Quick view') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-eye"></i></button> ';
         },
-        standardShow: function() {
-            return '<a href="' + route('transactions.open.standard', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View details') + '"></i></a> ';
+        show: function() {
+            return '<a href="' + route('transaction.open', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success" title="' + __('View details') + '"><i class="fa fa-fw fa-search"></i></a> ';
         },
-        edit: function(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ';
+        edit: function() {
+            return '<a href="' + route('transaction.open', {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-edit"></i></a> ';
         },
-        clone(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ';
+        clone() {
+            return '<a href="' + route('transaction.open', {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ';
         },
-        replace(transactionType) {
-            return '<a href="' + route('transactions.open.' + transactionType, {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-calendar" title="' + __('Edit and create new schedule') + '"></i></a> ';
+        replace() {
+            return '<a href="' + route('transaction.open', {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary" title="' + __('Edit and create new schedule') + '"><i class="fa fa-fw fa-calendar"></i></a> ';
         },
         skip: function() {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
         }
     }
 
-    return functions[action](transactionType);
+    return functions[action]();
 }
 
 export function genericDataTablesActionButton(id, action, route) {
     var functions = {
         delete: function(id) {
-            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type=submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
+            return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
         },
         edit: function(id, route) {
             return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-pencil"></i></a> ';
@@ -298,7 +298,7 @@ export let transactionColumnDefiniton = {
         }
     },
 
-    // Comma separated list of tags attached to transaction items
+    // Comma separated list of tag attached to transaction items
     tags: {
         data: 'tags',
         title: __('Tags'),

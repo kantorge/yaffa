@@ -104,22 +104,22 @@ class Transaction extends Model
         'budget' => 'boolean',
     ];
 
-    public function config()
+    public function config(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function transactionType()
+    public function transactionType(): BelongsTo
     {
         return $this->belongsTo(TransactionType::class);
     }
 
-    public function transactionItems()
+    public function transactionItems(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
     }
 
-    public function transactionSchedule()
+    public function transactionSchedule(): HasOne
     {
         return $this->hasOne(TransactionSchedule::class);
     }
@@ -127,7 +127,7 @@ class Transaction extends Model
     public function tags()
     {
         return $this->transactionItems
-            ->pluck('tags')
+            ->pluck('tag')
             ->collapse()
             ->map(fn ($tag) => $tag->withoutRelations())
             ->unique('id');
@@ -149,24 +149,16 @@ class Transaction extends Model
      */
     public function scopeByScheduleType(Builder $query, string $type): Builder
     {
-        switch ($type) {
-            case 'schedule':
-                return $query->where('schedule', true);
-            case 'schedule_only':
-                return $query->where('schedule', true)->where('budget', false);
-            case 'budget':
-                return $query->where('budget', true);
-            case 'budget_only':
-                return $query->where('budget', true)->where('schedule', false);
-            case 'both':
-                return $query->where('schedule', true)->where('budget', true);
-            case 'any':
-                return $query->where('schedule', true)->orWhere('budget', true);
-            case 'none':
-                return $query->where('schedule', false)->where('budget', false);
-            default:
-                return $query;
-        }
+        return match ($type) {
+            'schedule' => $query->where('schedule', true),
+            'schedule_only' => $query->where('schedule', true)->where('budget', false),
+            'budget' => $query->where('budget', true),
+            'budget_only' => $query->where('budget', true)->where('schedule', false),
+            'both' => $query->where('schedule', true)->where('budget', true),
+            'any' => $query->where('schedule', true)->orWhere('budget', true),
+            'none' => $query->where('schedule', false)->where('budget', false),
+            default => $query,
+        };
     }
 
     /**
@@ -176,7 +168,9 @@ class Transaction extends Model
      */
     public function delete(): bool|null
     {
+        // Remove the transaction configuration
         $this->config()->delete();
+
         return parent::delete();
     }
 
@@ -208,7 +202,17 @@ class Transaction extends Model
         return 0;
     }
 
-    public function loadStandardDetails()
+    // Generic function to load necessary relations, based on transaction type
+    public function loadDetails(): void
+    {
+        if ($this->transactionType->type === 'investment') {
+            $this->loadInvestmentDetails();
+        } else {
+            $this->loadStandardDetails();
+        }
+    }
+
+    private function loadStandardDetails(): void
     {
         $this->load([
             'config',
@@ -247,12 +251,14 @@ class Transaction extends Model
         }
     }
 
-    public function loadInvestmentDetails()
+    private function loadInvestmentDetails(): void
     {
         $this->load([
             'config',
             'config.account',
-            'config.account.currency',
+            'config.account.config',
+            'config.account.config.currency',
+            'config.investment',
             'transactionSchedule',
             'transactionType',
         ]);
@@ -354,7 +360,7 @@ class Transaction extends Model
         ];
     }
 
-    private function transformDataInvestment()
+    private function transformDataInvestment(): array
     {
         // TODO: replace with eager loading
         $allAccounts = AccountEntity::where('user_id', Auth::user()->id)
@@ -366,6 +372,15 @@ class Transaction extends Model
 
         return [
             'config' => [
+                'account' => [
+                    'name' => $allAccounts[$transaction->config->account_id],
+                    'id' => $transaction->config->account_id,
+                ],
+                'investment' => [
+                    'name' => $transaction->config->investment->name,
+                    'id' => $transaction->config->investment_id,
+                ],
+                // TODO: does this need to follow from-to convention?
                 'account_from_id' => $transaction->config->account_id,
                 'account_from' => [
                     'name' => $allAccounts[$transaction->config->account_id],

@@ -2,19 +2,18 @@ require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
+import {toFormattedCurrency} from '../helpers';
 
-const dataTableSelector = '#table';
-
-let table = $(dataTableSelector).DataTable({
-    data: window.investments.map(c => { c.investment_price_provider = c.investment_price_provider || { name: '' }; return c; }),
+let table = $('#investmentSummary').DataTable({
+    data: window.investments,
     columns: [
         {
             data: "name",
             title: __("Name"),
             render: function (data, _type, row) {
-                return `<a href="${window.route('investment.show', row.id)}">${data}</a>`;
+                return `<a href="${window.route('investment.show', row.id)}" title="${__('View investment details')}">${data}</a>`;
             },
-            type: "html"
+            type: "html",
         },
         {
             data: "active",
@@ -25,6 +24,11 @@ let table = $(dataTableSelector).DataTable({
             className: "text-center activeIcon",
         },
         {
+            data: "investment_group.name",
+            title: __("Group"),
+            type: "string"
+        },
+        {
             data: "symbol",
             title: __("Symbol"),
         },
@@ -33,31 +37,53 @@ let table = $(dataTableSelector).DataTable({
             title: __("ISIN number"),
         },
         {
-            data: "investment_group.name",
-            title: __("Investment group"),
-        },
-        {
-            data: "currency.name",
-            title: __("Currency"),
-        },
-        {
-            data: "investment_price_provider_name",
-            title: __("Price provider"),
-        },
-        {
-            data: "auto_update",
-            title: __("Automatic update"),
+            data: "quantity",
+            title: __("Quantity"),
             render: function (data, type) {
-                return dataTableHelpers.booleanToTableIcon(data, type);
+                if (type === 'display') {
+                    return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 2, useGrouping: true});
+                }
+                return data;
             },
-            className: "text-center",
+            type: "num",
+            className: 'dt-nowrap',
+        },
+        {
+            data: "price",
+            title: __("Latest price"),
+            render: function (data, type, row) {
+                if (type === 'display' && !isNaN(data) && typeof data === "number") {
+                    return toFormattedCurrency(data, window.YAFFA.locale, row.currency);
+                }
+
+                return data;
+            },
+            type: "num",
+            className: 'dt-nowrap',
+        },
+        {
+            defaultContent: "",
+            title: __("Value"),
+            render: function (_data, type, row) {
+                const value = row.quantity * row.price;
+
+                if (type === 'display') {
+                    return toFormattedCurrency(value, window.YAFFA.locale, row.currency);
+                }
+
+                return value;
+            },
+            type: "num",
+            className: 'dt-nowrap',
         },
         {
             data: "id",
             title: __("Actions"),
             render: function (data, _type, row) {
-                return '<a href="' + window.route('investment.edit', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                       renderDeleteButton(row);
+                return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
+                    '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ' +
+                    dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'investment.edit') +
+                    renderDeleteButton(row);
             },
             className: "dt-nowrap",
             orderable: false,
@@ -65,7 +91,7 @@ let table = $(dataTableSelector).DataTable({
         }
     ],
     order: [
-        [0, 'asc']  // Default ordering by name
+        [0, 'asc']
     ],
     responsive: true,
     initComplete: function (settings) {
@@ -113,7 +139,7 @@ let table = $(dataTableSelector).DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investment.destroy', + row.data().id),
+                url: window.route('api.investment.destroy', +row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -154,7 +180,14 @@ let table = $(dataTableSelector).DataTable({
                 }
             });
         });
-    }
+    },
+    deferRender: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: true,
+    processing: true,
+    paging: false,
 });
 
 // Listeners for button filter(s)

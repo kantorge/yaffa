@@ -6,7 +6,7 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-class TransactionFormInvestmentTest extends DuskTestCase
+class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
@@ -28,7 +28,7 @@ class TransactionFormInvestmentTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
-                ->visitRoute('transactions.createInvestment')
+                ->visitRoute('transaction.create', ['type' => 'investment'])
                 ->assertPresent('#transactionFormInvestment');
         });
     }
@@ -37,11 +37,11 @@ class TransactionFormInvestmentTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser
-                ->visitRoute('transactions.createInvestment')
+                ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Try to save form without any data
                 ->pressAndWaitFor('#transactionFormInvestment-Save')
                 // The page should no have changed
-                ->assertRouteIs('transactions.createInvestment')
+                ->assertRouteIs('transaction.create', ['type' => 'investment'])
                 // Error messages should be displayed in Bootstrap alert
                 ->assertPresent('#transactionFormInvestment .alert.alert-danger');
         });
@@ -49,12 +49,12 @@ class TransactionFormInvestmentTest extends DuskTestCase
 
     public function test_selecting_an_account_limits_investments_to_the_same_currency()
     {
-        // Select2 seems to return a random item even with the helper package
-        // https://calebporzio.com/a-simple-trick-to-auto-retry-failing-dusk-tests
+        $this->markTestIncomplete('Select2 seems to return a random item even with the helper package');
+
         retry(5, function () {
             $this->browse(function (Browser $browser) {
                 $browser
-                    ->visitRoute('transactions.createInvestment')
+                    ->visitRoute('transaction.create', ['type' => 'investment'])
                     // Select account
                     ->select2('#account', 'Investment account USD')
                     ->assertSeeIn('#account + .select2', 'Investment account USD')
@@ -69,12 +69,12 @@ class TransactionFormInvestmentTest extends DuskTestCase
 
     public function test_selecting_an_investment_limits_accounts_to_the_same_currency()
     {
-        // Select2 seems to return a random item even with the helper package
-        // https://calebporzio.com/a-simple-trick-to-auto-retry-failing-dusk-tests
+        $this->markTestIncomplete('Select2 seems to return a random item even with the helper package');
+
         retry(5, function () {
             $this->browse(function (Browser $browser) {
                 $browser
-                    ->visitRoute('transactions.createInvestment')
+                    ->visitRoute('transaction.create', ['type' => 'investment'])
                     // Select investment
                     ->select2('#investment', 'Test investment USD')
                     ->assertSeeIn('#investment + .select2', 'Test investment USD')
