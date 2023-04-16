@@ -305,9 +305,70 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         });
 });
 
+// Define and run a function to get the account balance
+let getAccountBalance = function() {
+    // Get the balance related elements
+    let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
+    let elementCurrentCash = document.getElementById('overviewCurrentCash');
+    let elementCurrentBalance = document.getElementById('overviewCurrentBalance');
+
+    // Ensure that spinner icon is shown for all elements
+    elementOpeningBalance.innerHTML =
+        elementCurrentCash.innerHTML =
+            elementCurrentBalance.innerHTML =
+                '<i class="fa fa-fw fa-spinner fa-spin"></i>';
+
+    axios.get('/api/account/balance/' + window.account.id)
+        .then(function (response) {
+            let balance = response.data.accountBalanceData[0];
+
+            elementOpeningBalance.innerText = helpers.toFormattedCurrency(
+                balance.config.opening_balance,
+                window.YAFFA.locale,
+                balance.config.currency
+            );
+
+            elementCurrentCash.innerText = helpers.toFormattedCurrency(
+                balance.cash,
+                window.YAFFA.locale,
+                window.YAFFA.baseCurrency
+            );
+
+            if (balance.hasOwnProperty('cash_foreign')) {
+                elementCurrentCash.innerText += ' / ' + helpers.toFormattedCurrency(
+                    balance.cash_foreign,
+                    window.YAFFA.locale,
+                    balance.config.currency
+                );
+            }
+
+            elementCurrentBalance.innerText = helpers.toFormattedCurrency(
+                balance.sum,
+                window.YAFFA.locale,
+                window.YAFFA.baseCurrency
+            );
+
+            if (balance.hasOwnProperty('sum_foreign')) {
+                elementCurrentBalance.innerText += ' / ' + helpers.toFormattedCurrency(
+                    balance.sum_foreign,
+                    window.YAFFA.locale,
+                    balance.config.currency
+                );
+            }
+        })
+        .catch(function (error) {
+            elementOpeningBalance.innerHTML =
+                elementCurrentCash.innerHTML =
+                    elementCurrentBalance.innerHTML =
+                        '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
+            console.error(error)
+        })
+}
+getAccountBalance();
+
 // Delete instance via API
+dataTableHelpers.initializeAjaxDeleteButton(selectorHistoryTable, getAccountBalance);
 dataTableHelpers.initializeAjaxDeleteButton(selectorScheduleTable);
-dataTableHelpers.initializeAjaxDeleteButton(selectorHistoryTable);
 
 // Reconciled button listener
 $(selectorHistoryTable).on("click", "i.reconcile", function () {
@@ -315,29 +376,28 @@ $(selectorHistoryTable).on("click", "i.reconcile", function () {
         return false;
     }
 
-    var currentState = $(this).data("reconciled");
-    var currentId = $(this).data("id");
+    const currentState = $(this).data("reconciled");
+    const currentId = Number($(this).data("id"));
 
     $(this).removeClass().addClass('fa fa-spinner fa-spin');
 
     $.ajax({
         type: 'PUT',
-        url: '/api/transaction/' + currentId + '/reconciled/' + (!currentState ? 1 : 0),
+        url: '/api/transaction/' + currentId + '/reconciled/' + (currentState ? 0 : 1),
         data: {
             "_token": csrfToken,
         },
         dataType: "json",
         context: this,
         success: function (_data) {
-            var row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
-                return data.id == currentId
+            let row = $(selectorHistoryTable).dataTable().api().row(function (_idx, data, _node) {
+                return data.id === currentId
             });
-            var data = row.data()
+            let data = row.data()
 
             data.reconciled = !currentState;
 
             row.data(data).draw();
-
         }
     });
 });
@@ -639,55 +699,6 @@ let rebuildUrl = function () {
 
 document.getElementById('date_from').addEventListener('changeDate', rebuildUrl);
 document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
-
-// Get current balance
-axios.get('/api/account/balance/' + window.account.id)
-    .then(function (response) {
-        let balance = response.data.accountBalanceData[0];
-
-        let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
-        elementOpeningBalance.innerText = helpers.toFormattedCurrency(
-            balance.config.opening_balance,
-            window.YAFFA.locale,
-            balance.config.currency
-        );
-
-        let elementCurrentCash = document.getElementById('overviewCurrentCash');
-        elementCurrentCash.innerText = helpers.toFormattedCurrency(
-            balance.cash,
-            window.YAFFA.locale,
-            window.YAFFA.baseCurrency
-        );
-
-        if (balance.hasOwnProperty('cash_foreign')) {
-            elementCurrentCash.innerText += ' / ' + helpers.toFormattedCurrency(
-                balance.cash_foreign,
-                window.YAFFA.locale,
-                balance.config.currency
-            );
-        }
-
-        let elementCurrentBalance = document.getElementById('overviewCurrentBalance');
-        elementCurrentBalance.innerText = helpers.toFormattedCurrency(
-            balance.sum,
-            window.YAFFA.locale,
-            window.YAFFA.baseCurrency
-        );
-
-        if (balance.hasOwnProperty('sum_foreign')) {
-            elementCurrentBalance.innerText += ' / ' + helpers.toFormattedCurrency(
-                balance.sum_foreign,
-                window.YAFFA.locale,
-                balance.config.currency
-            );
-        }
-    })
-    .catch(function (error) {
-        document.getElementById('overviewOpeningBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
-        document.getElementById('overviewCurrentCash').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
-        document.getElementById('overviewCurrentBalance').innerHTML = '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
-        console.error(error)
-    })
 
 // Initialize Vue for the quick view
 import {createApp} from 'vue'

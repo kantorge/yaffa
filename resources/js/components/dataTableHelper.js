@@ -4,25 +4,37 @@ import * as helpers from "../helpers";
 
 export function dataTablesActionButton(id, action) {
     const functions = {
-        delete: function() {
+        delete: function () {
             return '<button class="btn btn-xs btn-danger data-delete" data-delete data-id="' + id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-trash"></i></button> ';
         },
-        quickView: function() {
+        quickView: function () {
             return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button" title="' + __('Quick view') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-eye"></i></button> ';
         },
-        show: function() {
-            return '<a href="' + route('transaction.open', {transaction: id, action: 'show'}) + '" class="btn btn-xs btn-success" title="' + __('View details') + '"><i class="fa fa-fw fa-search"></i></a> ';
+        show: function () {
+            return '<a href="' + route('transaction.open', {
+                transaction: id,
+                action: 'show'
+            }) + '" class="btn btn-xs btn-success" title="' + __('View details') + '"><i class="fa fa-fw fa-search"></i></a> ';
         },
-        edit: function() {
-            return '<a href="' + route('transaction.open', {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-edit"></i></a> ';
+        edit: function () {
+            return '<a href="' + route('transaction.open', {
+                transaction: id,
+                action: 'edit'
+            }) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-edit"></i></a> ';
         },
         clone() {
-            return '<a href="' + route('transaction.open', {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ';
+            return '<a href="' + route('transaction.open', {
+                transaction: id,
+                action: 'clone'
+            }) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ';
         },
         replace() {
-            return '<a href="' + route('transaction.open', {transaction: id, action: 'replace'}) + '" class="btn btn-xs btn-primary" title="' + __('Edit and create new schedule') + '"><i class="fa fa-fw fa-calendar"></i></a> ';
+            return '<a href="' + route('transaction.open', {
+                transaction: id,
+                action: 'replace'
+            }) + '" class="btn btn-xs btn-primary" title="' + __('Edit and create new schedule') + '"><i class="fa fa-fw fa-calendar"></i></a> ';
         },
-        skip: function() {
+        skip: function () {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
         }
     }
@@ -32,10 +44,10 @@ export function dataTablesActionButton(id, action) {
 
 export function genericDataTablesActionButton(id, action, route) {
     var functions = {
-        delete: function(id) {
+        delete: function (id) {
             return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
         },
-        edit: function(id, route) {
+        edit: function (id, route) {
             return '<a href="' + window.route(route, id) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-pencil"></i></a> ';
         },
     }
@@ -62,7 +74,7 @@ export function initializeDeleteButtonListener(tableSelector, route) {
 }
 
 export function initializeFilterButtonsActive(table, column) {
-    $('input[name=active]').on("change", function() {
+    $('input[name=active]').on("change", function () {
         table.column(column).search(this.value).draw();
     });
 }
@@ -107,7 +119,7 @@ export function toFormattedCurrency(type, input, locale, currency) {
 }
 
 export function initializeDeleteButton(selector) {
-    $(selector).on("click", ".data-delete", function() {
+    $(selector).on("click", ".data-delete", function () {
         if (!confirm(__('Are you sure to want to delete this item?'))) {
             return;
         }
@@ -119,20 +131,20 @@ export function initializeDeleteButton(selector) {
 }
 
 export function initializeSkipInstanceButton(selector) {
-    $(selector).on("click", ".data-skip", function() {
+    $(selector).on("click", ".data-skip", function () {
         let form = document.getElementById('form-skip');
         form.action = route('transactions.skipScheduleInstance', {transaction: this.dataset.id});
         form.submit();
     });
 }
 
-export function booleanToTableIcon (data, type) {
+export function booleanToTableIcon(data, type) {
     if (type === 'filter') {
-        return  (data ? __('Yes') : __('No'));
+        return (data ? __('Yes') : __('No'));
     }
-    return (  data
-            ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
-            : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
+    return (data
+        ? '<i class="fa fa-check-square text-success" title="' + __('Yes') + '"></i>'
+        : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
 }
 
 export function transactionTypeIcon(type, name, customTitle) {
@@ -167,7 +179,7 @@ export function muteCellWithValue(column, mutedValue) {
 // The usage assumes that the underlying transaction object has also unified format
 export let transactionColumnDefiniton = {
     // Generic date field
-    dateFromCustomField: function(fieldName, title, locale) {
+    dateFromCustomField: function (fieldName, title, locale) {
         return {
             data: fieldName,
             title: title,
@@ -184,7 +196,7 @@ export let transactionColumnDefiniton = {
     },
 
     // Generic boolean field to icon
-    iconFromBooleanField: function(fieldName, title) {
+    iconFromBooleanField: function (fieldName, title) {
         return {
             data: fieldName,
             title: title,
@@ -208,7 +220,10 @@ export let transactionColumnDefiniton = {
                     return row.config.account_from.name;
                 }
                 if (row.transaction_type.name === 'transfer') {
-                    return __('Transfer from :account_from to :account_to', {account_from: row.config.account_from.name, account_to: row.config.account_to.name});
+                    return __('Transfer from :account_from to :account_to', {
+                        account_from: row.config.account_from.name,
+                        account_to: row.config.account_to.name
+                    });
                 }
             }
             if (row.transaction_type.type === 'investment') {
@@ -256,7 +271,7 @@ export let transactionColumnDefiniton = {
                 return row.transaction_type.name + " " + row.quantity.toLocaleString(window.YAFFA.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
-                  }) + " @ " + helpers.toFormattedCurrency(row.price, window.YAFFA.locale, row.currency);
+                }) + " @ " + helpers.toFormattedCurrency(row.price, window.YAFFA.locale, row.currency);
             }
 
             return '';
@@ -313,40 +328,62 @@ export let transactionColumnDefiniton = {
     }
 }
 
-export function initializeAjaxDeleteButton(selector) {
-    $(selector).on("click", "[data-delete]", function() {
+export function initializeAjaxDeleteButton(selector, successCallback) {
+    $(selector).on("click", "[data-delete]", function () {
         // Prevent running multiple times in parallel
         if ($(this).hasClass("busy")) {
             return false;
         }
 
-        let id = this.dataset.id;
+        let id = Number(this.dataset.id);
 
         $(this).addClass('busy');
 
-        axios.delete('/api/transactions/' + id)
-        .then(function (_response) {
-            // Find and remove original row in schedule table
-            var row = $(selector).dataTable().api().row(function (_idx, data, _node) {
-                return data.id == id;
-            });
+        axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+            .then(function (_response) {
+                // Find and remove original row in schedule table
+                let row = $(selector).dataTable().api().row(function (_idx, data, _node) {
+                    return data.id === id;
+                });
 
-            row.remove().draw();
+                row.remove().draw();
 
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
-                detail: {
-                    notification: {
-                        type: 'success',
-                        message: 'Transaction deleted (#' + id + ')',
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('notification', {
+                    detail: {
+                        notification: {
+                            type: 'success',
+                            message: 'Transaction deleted (#' + id + ')',
+                            title: null,
+                            icon: null,
+                            dismissible: true,
+                        }
+                    },
+                });
+                window.dispatchEvent(notificationEvent);
+
+                // Execute callback if provided
+                if (typeof successCallback === 'function') {
+                    successCallback();
+                }
+            })
+            .catch(function (error) {
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('notification', {
+                    detail: {
+                        notification: {
+                            type: 'danger',
+                            message: 'Error deleting transaction (#' + id + '): ' + error,
+                            title: null,
+                            icon: null,
+                            dismissible: true,
+                        }
+                    },
+                });
+                window.dispatchEvent(notificationEvent);
+
+                $(selector).find(".busy[data-delete]").removeClass('busy')
             });
-            window.dispatchEvent(notificationEvent);
-        });
     });
 }
 
@@ -362,47 +399,47 @@ export function initializeQuickViewButton(selector) {
         let el = $(this);
 
         fetch('/api/transaction/' + this.dataset.id)
-        .then(response => response.json())
-        .then(function(data) {
-            let transaction = data.transaction;
+            .then(response => response.json())
+            .then(function (data) {
+                let transaction = data.transaction;
 
-            // Convert dates to Date objects
-            if (transaction.date) {
-                transaction.date = new Date(transaction.date);
-            }
-            if (transaction.transaction_schedule) {
-                if (transaction.transaction_schedule.start_date) {
-                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                // Convert dates to Date objects
+                if (transaction.date) {
+                    transaction.date = new Date(transaction.date);
                 }
-                if (transaction.transaction_schedule.end_date) {
-                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-                }
-                if (transaction.transaction_schedule.next_date) {
-                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-                }
-            }
-
-            // Emit global event for modal to display
-            let event = new CustomEvent('showTransactionQuickviewModal', {
-                detail: {
-                    transaction: transaction,
-                    controls: {
-                        show: true,
-                        edit: true,
-                        clone: true,
-                        skip: true,
-                        enter: true,
-                        delete: true,
+                if (transaction.transaction_schedule) {
+                    if (transaction.transaction_schedule.start_date) {
+                        transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                    }
+                    if (transaction.transaction_schedule.end_date) {
+                        transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                    }
+                    if (transaction.transaction_schedule.next_date) {
+                        transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
                     }
                 }
+
+                // Emit global event for modal to display
+                let event = new CustomEvent('showTransactionQuickviewModal', {
+                    detail: {
+                        transaction: transaction,
+                        controls: {
+                            show: true,
+                            edit: true,
+                            clone: true,
+                            skip: true,
+                            enter: true,
+                            delete: true,
+                        }
+                    }
+                });
+                window.dispatchEvent(event);
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .finally(() => {
+                el.removeClass('busy');
             });
-            window.dispatchEvent(event);
-        })
-        .catch((error) => {
-            console.log(error);
-        })
-        .finally(() => {
-            el.removeClass('busy');
-        });
     });
 }
