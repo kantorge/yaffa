@@ -7,7 +7,7 @@ use Illuminate\Database\QueryException;
 
 class InvestmentService
 {
-    public function deleteInvestment(Investment $investment): array
+    public function delete(Investment $investment): array
     {
         $success = false;
         $error = null;

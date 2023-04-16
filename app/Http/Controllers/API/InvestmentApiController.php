@@ -337,7 +337,7 @@ class InvestmentApiController extends Controller
          * @name('api.investment.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
-        $result = $this->investmentService->deleteInvestment($investment);
+        $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {
             return response()

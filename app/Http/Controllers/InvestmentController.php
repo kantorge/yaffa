@@ -152,7 +152,7 @@ class InvestmentController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:delete,investment')
          */
 
-        $result = $this->investmentService->deleteInvestment($investment);
+        $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {
             self::addSimpleSuccessMessage(__('Investment deleted'));

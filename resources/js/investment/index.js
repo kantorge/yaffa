@@ -124,6 +124,7 @@ let table = $('#investmentSummary').DataTable({
             });
         });
 
+        // Listener for delete button
         $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
             // Confirm the action with the user
             if (!confirm(__('Are you sure to want to delete this item?'))) {
@@ -193,7 +194,6 @@ let table = $('#investmentSummary').DataTable({
 // Listeners for button filter(s)
 dataTableHelpers.initializeFilterButtonsActive(table, 1);
 
-// Listener for delete button
 function renderDeleteButton(row) {
     if (row.transactions_count === 0) {
         return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> '

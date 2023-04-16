@@ -18,6 +18,8 @@ Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'g
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class, 'updateActive'])
     ->name('api.accountentity.updateActive');
+Route::delete('/assets/accountentity/{accountEntity}', [AccountEntityApiController::class, 'destroy'])
+    ->name('api.accountentity.destroy');
 
 Route::get('/assets/category', [CategoryApiController::class, 'getList']);
 Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
@@ -88,12 +90,3 @@ Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'd
 
 Route::get('/onboarding', [OnboardingApiController::class, 'getOnboardingData']);
 Route::put('/onboadding/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
-
-/*
-Route::post('/token', function (Request $request) {
-    $user = \App\Models\User::first();
-    $token = $user->createToken('API token');
-
-    return ['token' => $token->plainTextToken];
-});
-*/

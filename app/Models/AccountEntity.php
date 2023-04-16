@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -90,14 +90,52 @@ class AccountEntity extends Model
         return $this->morphTo();
     }
 
-    public function transactionDetailStandardFrom(): HasMany
+    public function transactionsInvestment(): HasManyThrough
     {
-        return $this->hasMany(TransactionDetailStandard::class, 'account_from_id');
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailInvestment::class,
+            'account_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->where(
+                'config_type',
+                'transaction_detail_investment'
+            );
     }
 
-    public function transactionDetailStandardTo(): HasMany
+    public function transactionsStandardFrom(): HasManyThrough
     {
-        return $this->hasMany(TransactionDetailStandard::class, 'account_to_id');
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailStandard::class,
+            'account_from_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->where(
+                'config_type',
+                'transaction_detail_standard'
+            );
+    }
+
+    public function transactionsStandardTo(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionDetailStandard::class,
+            'account_to_id',
+            'config_id',
+            'id',
+            'id',
+        )
+            ->where(
+                'config_type',
+                'transaction_detail_standard'
+            );
     }
 
     /**

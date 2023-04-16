@@ -5,7 +5,7 @@ import { toFormattedCurrency } from '../helpers';
 
 import {
     booleanToTableIcon,
-    genericDataTablesActionButton,
+    genericDataTablesActionButton, initializeDeleteButtonListener,
     // initializeDeleteButtonListener
 } from '../components/dataTableHelper';
 
@@ -53,16 +53,27 @@ window.table = $(dataTableSelector).DataTable({
             type: 'num',
         },
         {
+            data: "transactions_count",
+            title: __("Transactions"),
+            render: function (data, type) {
+                if (type === 'display') {
+                    return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 0, useGrouping: true});
+                }
+                return data;
+            },
+            type: "num",
+        },
+        {
             data: "config.account_group.name",
             title: __("Account group"),
         },
         {
             data: "id",
             title: __("Actions"),
-            render: function (data) {
-                return  '<a href="' + window.route('account-entity.show', {account_entity: data}) + '" class="btn btn-sm btn-success"><i class="fa fa-magnifying-glass" title="' + __('Show details') + '"></i></a> ' +
-                        '<a href="' + window.route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-sm btn-primary"><i class="fa fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                        genericDataTablesActionButton(data, 'delete');
+            render: function (data, _type, row) {
+                return  '<a href="' + window.route('account-entity.show', {account_entity: data}) + '" class="btn btn-xs btn-success" title="' + __('Show details') + '"><i class="fa fa-magnifying-glass"></i></a> ' +
+                        '<a href="' + window.route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-edit"></i></a> ' +
+                        renderDeleteButton(row);
             },
             className: "dt-nowrap",
             orderable: false,
@@ -72,6 +83,13 @@ window.table = $(dataTableSelector).DataTable({
     order: [
         [ 0, 'asc' ]
     ],
+    deferRender: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
     responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
@@ -119,22 +137,81 @@ window.table = $(dataTableSelector).DataTable({
                 }
             });
         });
+
+        // Listener for delete button
+        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+            // Confirm the action with the user
+            if (!confirm(__('Are you sure to want to delete this item?'))) {
+                return;
+            }
+
+            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+
+            // Change icon to spinner
+            $(this).addClass('busy');
+            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
+
+            // Send request to change investment active state
+            $.ajax({
+                type: 'DELETE',
+                url: window.route('api.accountentity.destroy', +row.data().id),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data souerce
+                    window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
+                },
+                error: function (_data) {
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'danger',
+                                message: __('Error while trying to delete account'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                },
+                complete: function (_data) {
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Account deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                }
+            });
+        });
     }
 });
 
-// Setup listener for delete button
-// https://github.com/kantorge/yaffa/issues/37
-$(dataTableSelector).on("click", ".data-delete", function() {
-    if (!confirm(__('Are you sure to want to delete this item?'))) {
-        return;
+initializeDeleteButtonListener(dataTableSelector, 'account-entity.destroy');
+
+function renderDeleteButton(row) {
+    if (row.transactions_count === 0) {
+        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> '
     }
 
-    let form = document.getElementById('form-delete');
-    form.action = window.route('account-entity.destroy', {type: 'account', account_entity: this.dataset.id});
-    form.submit();
-});
+    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + __('Account is already used, it cannot be deleted') + '"><i class="fa fa-fw fa-trash"></i></button> '
+}
 
-// Listeners for button filter(s)
-$('input[name=active]').on("change", function() {
+// Listeners for filters
+$('input[name=table_filter_active]').on("change", function() {
     table.column(1).search(this.value).draw();
 });
+$('#table_filter_search_text').keyup(function(){
+    table.search($(this).val()).draw() ;
+})

@@ -8,8 +8,8 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
+use App\Services\AccountEntityService;
 use Exception;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,10 +21,14 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller
 {
+    protected AccountEntityService $accountEntityService;
+
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
         $this->authorizeResource(AccountEntity::class);
+
+        $this->accountEntityService = new AccountEntityService();
     }
 
     /*
@@ -32,7 +36,8 @@ class AccountEntityController extends Controller
      */
     private function checkTypeParam(Request $request)
     {
-        if (! app()->runningInConsole() && (! $request->has('type') || ! in_array($request->type, ['account', 'payee']))) {
+        if (!app()->runningInConsole()
+            && (!$request->has('type') || !in_array($request->type, ['account', 'payee']))) {
             abort(Response::HTTP_NOT_FOUND);
         }
     }
@@ -75,10 +80,10 @@ class AccountEntityController extends Controller
     /**
      * Display a listing of the resource, for the type specified in request.
      *
-     * @uses indexAccount()
-     * @uses indexPayee()
      * @param Request $request
      * @return View
+     * @uses indexAccount()
+     * @uses indexPayee()
      */
     public function index(Request $request): View
     {
@@ -100,8 +105,18 @@ class AccountEntityController extends Controller
         // Show all accounts of user from the database and return to view
         $accounts = Auth::user()
             ->accounts()
+            ->withCount('transactionsInvestment')
+            ->withCount('transactionsStandardFrom')
+            ->withCount('transactionsStandardTo')
             ->with(['config', 'config.accountGroup', 'config.currency'])
-            ->get();
+            ->get()
+            ->map(function (AccountEntity $account) {
+                $account->transactions_count = $account->transactions_investment_count
+                    + $account->transactions_standard_from_count
+                    + $account->transactions_standard_to_count;
+
+                return $account;
+            });
 
         // Pass data for DataTables
         JavaScriptFacade::put([
@@ -292,9 +307,9 @@ class AccountEntityController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @uses createAccount
-     * @uses createPayee
      * @return View|RedirectResponse
+     * @uses createPayee
+     * @uses createAccount
      */
     public function create(Request $request): View|RedirectResponse
     {
@@ -426,11 +441,11 @@ class AccountEntityController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @uses editAccount
-     * @uses editPayee
      * @param Request $request
      * @param AccountEntity $accountEntity
      * @return View
+     * @uses editPayee
+     * @uses editAccount
      */
     public function edit(Request $request, AccountEntity $accountEntity): View
     {
@@ -567,36 +582,24 @@ class AccountEntityController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
          */
         $this->checkTypeParam($request);
+        $result = $this->accountEntityService->delete($accountEntity);
 
-        try {
-            // Try to delete config as well
-            DB::transaction(function () use ($accountEntity) {
-                $accountEntity->delete();
-                $accountEntity->config->delete();
-            });
-
+        if ($result['success']) {
             self::addSimpleSuccessMessage(
-                __(':type deleted', ['type' => Str::ucfirst($request->post('type'))])
+                __(':type deleted', ['type' => Str::ucfirst($accountEntity->config_type)])
             );
 
-            return redirect()->route('account-entity.index', ['type' => $request->post('type')]);
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                self::addSimpleDangerMessage(
-                    __(':type is in use, cannot be deleted', ['type' => Str::ucfirst($request->post('type'))])
-                );
-            } else {
-                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
-            }
-
-            return redirect()->back();
+            return redirect()->route('account-entity.index', ['type' => $accountEntity->config_type]);
         }
+
+        self::addSimpleDangerMessage($result['error']);
+        return redirect()->back();
     }
 
     /**
      * Display a form to merge two payees.
      *
-     * @param AccountEntity $payeeSource
+     * @param AccountEntity|null $payeeSource
      * @return View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
@@ -615,7 +618,7 @@ class AccountEntityController extends Controller
         return view('payee.merge');
     }
 
-    /*
+    /**
      * Merge two payees.
      */
     public function mergePayees(MergePayeesRequest $request)
