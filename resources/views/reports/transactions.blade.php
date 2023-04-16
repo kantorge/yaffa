@@ -22,11 +22,25 @@
                     <div class="row">
                         <div class="col-6">
                             <label for="date_from" class="form-label">{{ __('Date from') }}</label>
-                            <input type="text" class="form-control" name="date_from" id="date_from" placeholder="{{ __('Select date') }}" autocomplete="off">
+                            <input
+                                    class="form-control"
+                                    name="date_from"
+                                    id="date_from"
+                                    placeholder="{{ __('Select date') }}"
+                                    autocomplete="off"
+                                    type="text"
+                            >
                         </div>
                         <div class="col-6">
                             <label for="date_to" class="form-label">{{ __('Date to') }}</label>
-                            <input type="text" class="form-control" name="date_to" id="date_to" placeholder="{{ __('Select date') }}" autocomplete="off">
+                            <input
+                                    class="form-control"
+                                    name="date_to"
+                                    id="date_to"
+                                    placeholder="{{ __('Select date') }}"
+                                    autocomplete="off"
+                                    type="text"
+                            >
                         </div>
                     </div>
                 </div>
@@ -38,7 +52,9 @@
                         {{ __('Category') }}
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-primary clear-select" data-target="select_category">{{ __('Clear selection') }}</button>
+                        <button class="btn btn-sm btn-primary clear-select" data-target="select_category">
+                            {{ __('Clear selection') }}
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -52,7 +68,9 @@
                         {{ __('Payee') }}
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-primary clear-select" data-target="select_payee">{{ __('Clear selection') }}</button>
+                        <button class="btn btn-sm btn-primary clear-select" data-target="select_payee">
+                            {{ __('Clear selection') }}
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -66,7 +84,9 @@
                         {{ __('Account') }}
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-primary clear-select" data-target="select_account">{{ __('Clear selection') }}</button>
+                        <button class="btn btn-sm btn-primary clear-select" data-target="select_account">
+                            {{ __('Clear selection') }}
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -80,7 +100,9 @@
                         {{ __('Tag') }}
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-primary clear-select" data-target="select_tag">{{ __('Clear selection') }}</button>
+                        <button class="btn btn-sm btn-primary clear-select" data-target="select_tag">
+                            {{ __('Clear selection') }}
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -95,7 +117,9 @@
                         {{ __('Transactions') }}
                     </div>
                     <div>
-                        <button name="reload" type="button" id="reload" class="btn btn-sm btn-primary">{{ __('Update') }}</button>
+                        <button name="reload" type="button" id="reload" class="btn btn-sm btn-primary">
+                            {{ __('Update') }}
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -105,10 +129,7 @@
         </div>
     </div>
 
-<div id="app">
-    <transaction-show-modal></transaction-show-modal>
-</div>
-
-@include('template.components.model-delete-form')
-
+    <div id="app">
+        <transaction-show-modal></transaction-show-modal>
+    </div>
 @stop

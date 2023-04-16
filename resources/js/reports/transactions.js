@@ -19,6 +19,7 @@ const elementAccountSelector = '#select_account';
 const elementCategorySelectSelector = '#select_category';
 const elementPayeeSelector = '#select_payee';
 const elementTagSelector = '#select_tag';
+const tableSelector = '#dataTable';
 
 // Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
 let presetFilters = {
@@ -58,7 +59,7 @@ const dateRangePicker = new DateRangePicker(
     }
 );
 
-window.table = $("#dataTable").DataTable({
+window.table = $(tableSelector).DataTable({
     ajax:  {
         url: '/api/transactions',
         data: function(d) {
@@ -137,8 +138,8 @@ window.table = $("#dataTable").DataTable({
 });
 
 // Delete transaction icon functionality
-dataTableHelpers.initializeDeleteButton('#dataTable');
-dataTableHelpers.initializeQuickViewButton('#dataTable');
+dataTableHelpers.initializeAjaxDeleteButton(tableSelector);
+dataTableHelpers.initializeQuickViewButton(tableSelector);
 
 // Function to reload table data
 function reloadTable() {
