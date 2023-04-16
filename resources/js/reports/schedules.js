@@ -94,7 +94,7 @@ window.table = $('#table').DataTable({
                         dataTableHelpers.dataTablesActionButton(data, 'replace') +
                         dataTableHelpers.dataTablesActionButton(data, 'delete') +
                         (row.schedule
-                            ? '<a href="' + route('transaction.open.' + row.transaction_type.type, {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                            ? '<a href="' + route('transaction.open', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
                               '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
                             : '');
             },
