@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class GetCurrencyRates extends TestCase
+class GetCurrencyRatesTest extends TestCase
 {
     use RefreshDatabase;
 

@@ -9,10 +9,10 @@ const ApiParameterNames = new Map([
 ]);
 
 // Common function to get transaction count for specific result types
-var getTransactionCount = function (element) {
-  var type = element.dataset.type;
-  var apiParameterName = ApiParameterNames.get(type) + '[]';
-  var id = element.dataset.id;
+function getTransactionCount (element) {
+  const type = element.dataset.type;
+  const apiParameterName = ApiParameterNames.get(type) + '[]';
+  const id = element.dataset.id;
 
   // Get the count from the API
   fetch(`/api/transactions/?only_count=1&${apiParameterName}=${id}`)
@@ -21,9 +21,11 @@ var getTransactionCount = function (element) {
     if (data.count === 0) {
       element.innerHTML = '<span class="badge text-bg-light">' + __('No transactions') + '</span>';
     } else {
-      element.innerHTML =   '<a href="' + route('reports.transactions', {[apiParameterName]: id}) + '" title="' + __('View transactions') + '" class="badge text-bg-info">' +
-                                data.count + ' ' + (data.count === 1 ? __('transaction') : __('transactions'))
-                            '</a>';
+      element.innerHTML = `<a href=" ${window.route('reports.transactions', {[apiParameterName]: id})}"
+                              title="${__('View transactions')}"
+                           >
+                              ${data.count} ${(data.count === 1 ? __('transaction') : __('transactions'))}
+                           </a>`;
     }
     element.classList.remove('hidden');
   })
@@ -39,7 +41,7 @@ document.querySelectorAll('#table-search-results-accounts td.transactionCount').
 document.querySelectorAll('#table-search-results-payees td.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the tag results, and get the number of associated transactions for each tag.
-document.querySelectorAll('#list-search-results-tags span.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#list-search-results-tag span.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the category results, and get the number of associated transactions for each category.
 document.querySelectorAll('#list-search-results-categories span.transactionCount').forEach(getTransactionCount);
@@ -47,7 +49,7 @@ document.querySelectorAll('#list-search-results-categories span.transactionCount
 // Loop the span placeholder for transactions, and display the view and quick view icons for each transaction.
 document.querySelectorAll('#table-search-results-transactions td.transactionIcon').forEach(function (element) {
     const id = element.dataset.id;
-    element.innerHTML = dataTableHelpers.dataTablesActionButton(id, 'standardQuickView') + dataTableHelpers.dataTablesActionButton(id, 'standardShow');
+    element.innerHTML = dataTableHelpers.dataTablesActionButton(id, 'quickView') + dataTableHelpers.dataTablesActionButton(id, 'show');
     element.classList.remove('hidden');
 });
 
@@ -60,7 +62,7 @@ const app = createApp({})
 // Add global translator function
 app.config.globalProperties.__ = window.__;
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-app.component('transaction-show-modal', TransactionShowModal)
+import QuickViewTransactionModal from './../components/TransactionDisplay/Modal.vue'
+app.component('transaction-show-modal', QuickViewTransactionModal)
 
 app.mount('#app')

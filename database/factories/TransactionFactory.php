@@ -23,7 +23,7 @@ class TransactionFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             'budget' => 0,
@@ -38,9 +38,9 @@ class TransactionFactory extends Factory
     /**
      * Transaction type is WITHDRAWAL
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function withdrawal()
+    public function withdrawal(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -54,9 +54,9 @@ class TransactionFactory extends Factory
     /**
      * Transaction type is WITHDRAWAL and has SCHEDULE
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function withdrawal_schedule()
+    public function withdrawal_schedule(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -71,9 +71,9 @@ class TransactionFactory extends Factory
     /**
      * Transaction type is DEPOSIT
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function deposit()
+    public function deposit(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -87,9 +87,9 @@ class TransactionFactory extends Factory
     /**
      * Transaction type is TRANSFER
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function transfer()
+    public function transfer(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -103,15 +103,17 @@ class TransactionFactory extends Factory
     /**
      * Transaction type is BUY investment
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @param array $config
+     * @return Factory
      */
-    public function buy()
+    public function buy(array $config = []): Factory
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes) use ($config) {
             return [
-                'transaction_type_id' => TransactionType::where('name', 'buy')->first()->id,
+                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
                 'config_type' => 'transaction_detail_investment',
-                'config_id' => TransactionDetailInvestment::factory()->buy()->create()->id,
+                'config_id' => TransactionDetailInvestment::factory()
+                    ->buy()->create($config)->id,
             ];
         });
     }

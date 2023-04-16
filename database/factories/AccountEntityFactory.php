@@ -35,7 +35,7 @@ class AccountEntityFactory extends Factory
     public function payee(User $user = null)
     {
         return $this->state(function (array $attributes) use ($user) {
-            if (! $user) {
+            if (!$user) {
                 $user = User::find($attributes['user_id']);
             }
 
@@ -50,14 +50,14 @@ class AccountEntityFactory extends Factory
     }
 
     /**
-     * @param User|null $user  Optionally pass the owner of the created asset. Selected by random from existing users if null.
-     * @param array $configAttributes  Optionally pass the properties to be used.
+     * @param User|null $user Optionally pass the owner of the created asset. Selected by random from existing users if null.
+     * @param array $configAttributes Optionally pass the properties to be used.
      * @return AccountEntityFactory
      */
     public function account(User $user = null, array $configAttributes = []): AccountEntityFactory
     {
         return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            if (! $user) {
+            if (!$user) {
                 $user = User::find($attributes['user_id']);
             }
 

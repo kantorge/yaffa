@@ -7,7 +7,7 @@ services:
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-                XDEBUG: '${APP_DEBUG:-false}'
+                XDEBUG: '${SAIL_XDEBUG_ENABLED:-false}'
                 XDEBUG_PORT: '${SAIL_XDEBUG_PORT:-9003}'
         image: sail-8.1/app
         extra_hosts:

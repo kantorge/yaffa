@@ -36,8 +36,8 @@
                     title="{{ $withForecast ? __('Without forecast') : __('With forecast') }}">
                     <i class="fa fa-calendar"></i>
                 </a>
-                <a href="{{ route('transactions.createStandard', ['account_from' => $account->id ]) }}" class="btn btn-success" title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
-                <a href="{{ route('transactions.createInvestment', ['account' => $account->id ]) }}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                <a href="{{ route('transaction.create', ['type' => 'standard', 'account_from' => $account->id ]) }}" class="btn btn-success" title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
+                <a href="{{ route('transaction.create', ['type' => 'investment', 'account' => $account->id ]) }}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
             </div>
         </div>
         <div class="card-body">

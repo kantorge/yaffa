@@ -37,12 +37,24 @@ window.table = $(dataTableSelector).DataTable({
             searchable: false,
         }
     ],
-    order: [[0, 'asc']]
+    order: [
+        [0, 'asc']
+    ],
+    deferRender: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
 });
 
 initializeDeleteButtonListener(dataTableSelector, 'tag.destroy');
 
-// Listeners for button filter(s)
-$('input[name=active]').on("change", function() {
+// Listeners for filters
+$('input[name=table_filter_active]').on("change", function() {
     table.column(1).search(this.value).draw();
 });
+$('#table_filter_search_text').keyup(function(){
+    table.search($(this).val()).draw() ;
+})

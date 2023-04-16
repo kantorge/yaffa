@@ -41,5 +41,11 @@
     "use_arrow_functions": true,
     "void_return": false,
     "yoda_style": false
-  }
+  },
+  "exclude": [
+    "vendor",
+    "public",
+    "storage",
+    "bootstrap"
+  ]
 }

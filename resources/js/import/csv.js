@@ -6,7 +6,7 @@
 import 'datatables.net-bs5';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
-import { toFormattedCurrency } from '../helpers';
+import {toFormattedCurrency, toIsoDateString} from '../helpers';
 
 // Import RRule library for handling schedules
 import { RRule } from 'rrule';
@@ -132,8 +132,8 @@ function collectSimilarTransactions() {
 
     // Get all standard transactions in the range of min and max date
     let url = new URL(window.location.origin + '/api/transactions');
-    url.searchParams.append('date_from', minDate.isoDateString());
-    url.searchParams.append('date_to', maxDate.isoDateString());
+    url.searchParams.append('date_from', toIsoDateString(minDate));
+    url.searchParams.append('date_to', toIsoDateString(maxDate));
 
     fetch(url)
     .then(function(response) {
@@ -164,7 +164,7 @@ function collectSimilarTransactions() {
                 let similarityCount = 0;
                 const maxSimilarity = 4;
 
-                if (transaction.date.isoDateString() === existingTransaction.date.isoDateString()) {
+                if (toIsoDateString(transaction.date) === toIsoDateString(existingTransaction.date)) {
                     similarityCount++;
                 }
                 if (transaction.config.amount_to == existingTransaction.config.amount_to) {
@@ -196,7 +196,7 @@ function collectSimilarTransactions() {
                 let similarityCount = 0;
                 const maxSimilarity = 4;
 
-                if (transaction.date.isoDateString() === schedule.schedule_config.next_date.isoDateString()) {
+                if (toIsoDateString(transaction.date) === toIsoDateString(schedule.schedule_config.next_date)) {
                     similarityCount++;
                 }
                 if (transaction.config.amount_to == schedule.config.amount_to) {
@@ -520,7 +520,8 @@ $('#dataTable').on('click', 'button.create-transaction-from-draft', function () 
     // Dispatch event
     const event = new CustomEvent('initiateCreateFromDraft', {
         detail: {
-            transaction: transaction
+            transaction: transaction,
+            type: 'standard'
         }
     });
     window.dispatchEvent(event);
@@ -835,6 +836,6 @@ app.config.globalProperties.__ = window.__;
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
 app.component('transaction-show-modal', TransactionShowModal)
-app.component('transaction-create-modal', TransactionCreateModal)
+app.component('transaction-create-standard-modal', TransactionCreateModal)
 
 app.mount('#app')

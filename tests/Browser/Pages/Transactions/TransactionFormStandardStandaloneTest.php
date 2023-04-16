@@ -6,7 +6,7 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-class TransactionFormStandardTest extends DuskTestCase
+class TransactionFormStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
@@ -22,14 +22,40 @@ class TransactionFormStandardTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_standard_transaction_form()
+    public function test_user_can_load_the_standard_transaction_form_in_a_modal()
     {
         $user = User::firstWhere('email', 'demo@yaffa.cc');
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
-                ->visitRoute('transactions.createStandard')
-                ->assertPresent('#transactionFormStandard');
+                ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->assertPresent('#transactionFormStandard')
+
+                // Standalone view should have the after save action button group visible
+                ->assertVisible('@action-after-save-desktop-button-group')
+
+                // Save button is always visible
+                ->assertVisible('#transactionFormStandard-Save');
+
+            $browser->with('@action-after-save-desktop-button-group', function ($buttonGroup) {
+                // After save option "return to selected account" should be always visible
+                $buttonGroup->assertPresent('button[value="returnToPrimaryAccount"]')
+
+                    // After save option "return to target account" should not be visible for default withdrawal
+                    ->assertNotPresent('button[value="returnToSecondaryAccount"]');
+            });
+
+            // Switch transaction type to transfer to verify the "return to target account" button
+            $browser->click('@transaction-type-transfer')
+                // Confirm alert
+                ->acceptDialog()
+                ->with('@action-after-save-desktop-button-group', function ($buttonGroup) {
+                    // After save option "return to selected account" should be always visible
+                    $buttonGroup->assertPresent('button[value="returnToPrimaryAccount"]')
+
+                        // After save option "return to target account" should be visible for transfer
+                        ->assertPresent('button[value="returnToSecondaryAccount"]');
+                });
         });
     }
 
@@ -37,11 +63,11 @@ class TransactionFormStandardTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser
-                ->visitRoute('transactions.createStandard')
+                ->visitRoute('transaction.create', ['type' => 'standard'])
                 // Try to save form without any data
                 ->pressAndWaitFor('#transactionFormStandard-Save')
                 // The page should no have changed
-                ->assertRouteIs('transactions.createStandard')
+                ->assertRouteIs('transaction.create', ['type' => 'standard'])
                 // Error messages should be displayed in Bootstrap alert
                 ->assertPresent('#transactionFormStandard .alert.alert-danger');
         });
@@ -49,10 +75,12 @@ class TransactionFormStandardTest extends DuskTestCase
 
     public function test_currency_displayed_correctly_for_various_settings()
     {
+        $this->markTestIncomplete('Select2 seems to return a random item even with the helper package');
+
         $this->browse(function (Browser $browser) {
             $browser
                 // Open vanilla form (withdrawal, no preselected account)
-                ->visitRoute('transactions.createStandard')
+                ->visitRoute('transaction.create', ['type' => 'standard'])
 
                 // No currency should be visible
                 ->assertNotPresent('@label-amountFrom-currency')

@@ -23,7 +23,7 @@ class TransactionSeeder extends Seeder
         // Create standard withdrawals
         Transaction::factory()
             ->count(rand(10, 20))
-            ->withdrawal()
+            ->withdrawal($user)
             ->create([
                 'user_id' => $user->id,
             ])

@@ -4,7 +4,7 @@ const app = createApp({})
 // Add global translator function
 app.config.globalProperties.__ = window.__;
 
-import TransactionFormInvestment from './../components/TransactionFormInvestment.vue'
-app.component('transaction-form-investment', TransactionFormInvestment)
+import TransactionContainerInvestment from './../components/TransactionForm/ContainerInvestment.vue';
+app.component('transaction-container-investment', TransactionContainerInvestment)
 
 app.mount('#app')

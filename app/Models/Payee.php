@@ -36,7 +36,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static Builder|Payee whereId($value)
  * @method static Builder|Payee whereImportAlias($value)
  * @method static Builder|Payee whereUpdatedAt($value)
- * @mixin \Eloquent
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
  * @property-read int|null $category_preference_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
@@ -49,6 +48,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int|null $transaction_detail_standard_to_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
  * @property-read int|null $transactions_from_count
+ * @mixin \Eloquent
  */
 class Payee extends Model
 {

@@ -1,147 +1,91 @@
 require('./bootstrap');
 
-Date.prototype.isoDateString = function () {
-    return this.toISOString().split('T')[0];
+const routeMap = new Map();
+routeMap.set('home', 'dashboard');
+routeMap.set('account-group.index', 'account-group/index');
+routeMap.set('payee.merge.form', 'payees/merge');
+routeMap.set('account.history', 'account/history');
+routeMap.set('categories.index', 'categories/index');
+routeMap.set('categories.merge.form', 'categories/merge');
+routeMap.set('currencies.index', 'currencies/index');
+routeMap.set('currency-rate.index', 'currencyrates/index');
+routeMap.set('investment-group.index', 'investment-group/index');
+routeMap.set('investment.index', 'investment/index');
+routeMap.set('investment.show', 'investment/show');
+routeMap.set('investment.timeline', 'investment/timeline');
+routeMap.set('investment-price.create', 'investment-price/form');
+routeMap.set('investment-price.edit', 'investment-price/form');
+routeMap.set('investment-price.list', 'investment-price/list');
+routeMap.set('tag.index', 'tag/index');
+routeMap.set('report.schedules', 'reports/schedules');
+routeMap.set('reports.cashflow', 'reports/cashflow');
+routeMap.set('reports.budgetchart', 'reports/budgetchart');
+routeMap.set('reports.transactions', 'reports/transactions');
+routeMap.set('search', 'search/search');
+routeMap.set('import.csv', 'import/csv');
+routeMap.set('register', 'auth/register');
+routeMap.set('user.settings', 'user/settings');
+
+// Generic loader based on map above
+// Check if current route exists in map. If yes, load the corresponding file.
+if (routeMap.has(route().current())) {
+    require('./' + routeMap.get(route().current()));
 }
 
-// Function to create a new date in UTC
-// TODO: where to put this function instead of global scope?
-window.todayInUTC = function () {
-    let date = new Date();
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+// More specific loaders
+// Index for accounts or payees. Type is verified and used to load the correct file.
+if (route().current() === 'account-entity.index'
+    && ['account', 'payee'].includes(route().params.type)) {
+    require(`./${route().params.type}/index`);
 }
 
-if (window.location.pathname === '/') {
-    require('./dashboard');
-}
-
-if (window.location.pathname === '/account-group') {
-    require('./account-group/index');
-}
-if (   window.location.pathname === '/account-entity'
-    && /type=account/.test(window.location.search)) {
-    require('./account/index');
-}
-if (   window.location.pathname === '/account-entity'
-    && /type=payee/.test(window.location.search)) {
-    require('./payees/index');
-}
-if (/^\/account-entity\/\d+/.test(window.location.pathname)) {
+// Show only for accounts.
+// Payees not supported yet. This should be handled by the controller.
+if (route().current() === 'account-entity.show') {
     require('./account/show');
 }
 
-if (   /^\/account-entity\/(create|\d+\/edit)/.test(window.location.pathname)
-    && /type=payee/.test(window.location.search)) {
-    require('./payees/form');
+// Create or edit payee
+// Accounts don't need extra JS
+if (route().current() === 'account-entity.create'
+    && route().params.type === 'payee') {
+    require('./payee/form');
 }
 
-if (/^\/payees\/merge/.test(window.location.pathname)) {
-    require('./payees/merge');
+// Create new transaction. Type is verified and used to load the correct file.
+if (route().current() === 'transaction.create'
+    && ['standard', 'investment'].includes(route().params.type)) {
+    require(`./transactions/${route().params.type}`);
 }
 
-if (/^\/account\/history\/\d+/.test(window.location.pathname)) {
-    require('./account/history');
-}
-if (window.location.pathname === '/categories') {
-    require('./categories/index');
-}
-if (/^\/categories\/merge/.test(window.location.pathname)) {
-    require('./categories/merge');
+// Edit, clone, enter or replace transaction.
+// Action type is verified and transaction type is used to load the correct file.
+if (route().current() === 'transaction.open'
+    && ['edit', 'clone', 'enter', 'replace'].includes(route().params.action)) {
+    // Load file based on type of transaction, which is expected to be available in a global variable.
+    require('./transactions/' + window.transaction.transaction_type.type);
 }
 
-if (window.location.pathname === '/currencies') {
-    require('./currencies/index');
-}
-if (/^\/currencyrates\/\d+\/\d+/.test(window.location.pathname)) {
-    require('./currencyrates/index');
-}
-if (window.location.pathname === '/investment-group') {
-    require('./investment-group/index');
-}
-if (window.location.pathname === '/investment') {
-    require('./investment/index');
-}
-if (/^\/investment\/summary/.test(window.location.pathname)) {
-    require('./investment/summary');
-}
-if (window.location.pathname === '/investment/timeline') {
-    require('./investment/timeline');
-}
-if (/^\/investment\/\d+/.test(window.location.pathname)) {
-    require('./investment/show');
-}
-if (   window.location.pathname === '/investment-price/create'
-    || /^\/investment-price\/\d+\/edit/.test(window.location.pathname)) {
-    require('./investment-price/form');
-}
-if (/^\/investment-price\/list\/\d+/.test(window.location.pathname)) {
-    require('./investment-price/list');
-}
-if (window.location.pathname === '/tag') {
-    require('./tags/index');
-}
-if (   window.location.pathname === '/transactions/standard/create'
-    || /^\/transactions\/standard\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
-
-    require('./transactions/standard');
-}
-
-if (   window.location.pathname === '/transactions/investment/create'
-    || /^\/transactions\/investment\/\d+\/(edit|clone|enter|replace)/.test(window.location.pathname)) {
-
-    require('./transactions/investment');
-}
-
-if (/^\/transactions\/standard\/\d+\/(show)/.test(window.location.pathname)) {
+// Show transaction. Action type is verified
+if (route().current() === 'transaction.open'
+    && ['show'].includes(route().params.action)) {
     require('./transactions/show');
-}
-
-if (window.location.pathname === '/reports/schedule') {
-    require('./reports/schedule');
-}
-
-if (window.location.pathname === '/reports/cashflow') {
-    require('./reports/cashflow');
-}
-
-if (window.location.pathname === '/reports/budgetchart') {
-    require('./reports/budgetchart');
-}
-
-if (window.location.pathname === '/reports/transactions') {
-    require('./reports/transactions');
-}
-
-if (window.location.pathname === '/search') {
-    require('./search/search');
-}
-
-if (window.location.pathname === '/import/csv') {
-    require('./import/csv');
-}
-
-if (window.location.pathname === '/register') {
-    require('./auth/register');
-}
-
-if (window.location.pathname === '/user/settings') {
-    require('./user/settings');
 }
 
 // Notifications
 require('./notifications');
 
-$(function() {
+$(function () {
     // Generally available account selector
-    $('#jump_to_account').on('change', function() {
+    $('#jump_to_account').on('change', function () {
         if (this.value === '') {
             return false;
         }
-        window.location.href = route('account-entity.show', { account_entity: this.value });
+        window.location.href = route('account-entity.show', {account_entity: this.value});
     });
 
     // Generally available cancel button with confirmation
-    $(".cancel.confirm-needed").on("click", function() {
+    $(".cancel.confirm-needed").on("click", function () {
         return confirm(__('Are you sure to abandon this form?'));
     });
 });

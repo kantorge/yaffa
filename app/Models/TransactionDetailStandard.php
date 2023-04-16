@@ -30,11 +30,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|TransactionDetailStandard whereAmountFrom($value)
  * @method static Builder|TransactionDetailStandard whereAmountTo($value)
  * @method static Builder|TransactionDetailStandard whereId($value)
- * @mixin Eloquent
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
  * @property-read \App\Models\TransactionType $transactionType
+ * @mixin Eloquent
  */
 class TransactionDetailStandard extends Model
 {
@@ -52,7 +52,7 @@ class TransactionDetailStandard extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'account_from_id',

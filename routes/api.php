@@ -55,7 +55,9 @@ Route::get('/transactions/get_scheduled_items/{type}', [TransactionApiController
     ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
 
 Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])->name('api.transactions.storeStandard');
+Route::post('/transactions/investment', [TransactionApiController::class, 'storeInvestment'])->name('api.transactions.storeInvestment');
 Route::patch('/transactions/standard/{transaction}', [TransactionApiController::class, 'updateStandard'])->name('api.transactions.updateStandard');
+Route::patch('/transactions/investment/{transaction}', [TransactionApiController::class, 'updateInvestment'])->name('api.transactions.updateInvestment');
 Route::patch('/transactions/{transaction}/skip', [TransactionApiController::class, 'skipScheduleInstance'])->name('api.transactions.skipScheduleInstance');
 Route::get('/transaction/{transaction}', [TransactionApiController::class, 'getItem']);
 Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiController::class, 'reconcile']);

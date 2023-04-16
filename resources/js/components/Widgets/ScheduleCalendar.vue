@@ -68,14 +68,7 @@ export default {
       return dataTableHelpers.transactionTypeIcon(transaction.transaction_type.type, transaction.transaction_type.name, this.getTransactionLabel(transaction));
     },
     getTransactionLink: function (type, id) {
-      if (type === 'standard') {
-        return route('transactions.open.standard', {transaction: id, action: 'enter'});
-      }
-      if (type === 'investment') {
-        return route('transactions.open.investment', {transaction: id, action: 'enter'});
-      }
-      // Not expected, but fallback to home route
-      return route('home');
+      return window.route('transaction.open', {transaction: id, action: 'enter'});
     },
     getTransactionLabel: function (transaction) {
       if (transaction.transaction_type.type === 'standard') {

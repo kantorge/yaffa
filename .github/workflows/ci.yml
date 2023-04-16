@@ -18,89 +18,88 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    - name: Setup PHP Action
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        extensions: mbstring, dom, fileinfo, mysql
-        coverage: xdebug
-      env:
-        fail-fast: true
+      - name: Setup PHP Action
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, mysql
+          coverage: xdebug
+        env:
+          fail-fast: true
 
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Start mysql service
-      run: sudo /etc/init.d/mysql start
+      - name: Start mysql service
+        run: sudo /etc/init.d/mysql start
 
-    - name: Get composer cache directory
-      id: composer-cache
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-    - name: Cache composer dependencies
-      uses: actions/cache@v3
-      with:
-        path: ${{ steps.composer-cache.outputs.dir }}
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-        restore-keys: ${{ runner.os }}-composer-
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
-    - name: Install composer dependencies
-      run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
-    - name: Prepare Laravel Application
-      run: ln -f -s .env.ci .env
+      - name: Prepare Laravel Application
+        run: ln -f -s .env.ci .env
 
-    - name: Clear Config
-      run: php artisan config:clear
+      - name: Clear Config
+        run: php artisan config:clear
 
-    - name: Run Migration
-      run: php artisan migrate -v
-      env:
+      - name: Run Migration
+        run: php artisan migrate -v
+        env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
-    - name: Run Testsuite
-      run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml --testsuite AllNonDusk
-      env:
+      - name: Run Testsuite
+        run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml --testsuite AllNonDusk
+        env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
-    - name: Upload coverage to Codacy
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
+      - name: Upload coverage to Codacy
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
 
-#  Suspended Dusk Tests due to unreliable Select2 testing
-#  dusk-php:
-#    runs-on: ubuntu-latest
-#    env:
-#      APP_URL: "http://127.0.0.1:8000"
-#      DB_USERNAME: root
-#      DB_PASSWORD: root
-#      MAIL_MAILER: log
-#    steps:
-#      - uses: actions/checkout@v3
-#      - name: Prepare The Environment
-#        run: cp .env.dusk.ci .env
-#      - name: Create Database
-#        run: |
-#          sudo systemctl start mysql
-#          mysql --user="root" --password="root" -e "CREATE DATABASE \`yaffa\` character set UTF8mb4 collate utf8mb4_bin;"
-#      - name: Install Composer Dependencies
-#        run: composer install --no-progress --prefer-dist --optimize-autoloader
-#      - name: Generate Application Key
-#        run: php artisan key:generate
-#      - name: Upgrade Chrome Driver
-#        run: php artisan dusk:chrome-driver --detect
-#      - name: Start Chrome Driver
-#        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
-#      - name: Run Laravel Server
-#        run: php artisan serve --no-reload &
-#      - name: Run Dusk Tests
-#        run: php artisan dusk
-#      - name: Upload Screenshots
-#        if: failure()
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: screenshots
-#          path: tests/Browser/screenshots
-#      - name: Upload Console Logs
-#        if: failure()
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: console
-#          path: tests/Browser/console
+  dusk-php:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: "http://127.0.0.1:8000"
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      MAIL_MAILER: log
+    steps:
+      - uses: actions/checkout@v3
+      - name: Prepare The Environment
+        run: cp .env.dusk.ci .env
+      - name: Create Database
+        run: |
+          sudo systemctl start mysql
+          mysql --user="root" --password="root" -e "CREATE DATABASE \`yaffa\` character set UTF8mb4 collate utf8mb4_bin;"
+      - name: Install Composer Dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Generate Application Key
+        run: php artisan key:generate
+      - name: Upgrade Chrome Driver
+        run: php artisan dusk:chrome-driver --detect
+      - name: Start Chrome Driver
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+      - name: Run Laravel Server
+        run: php artisan serve --no-reload &
+      - name: Run Dusk Tests
+        run: php artisan dusk
+      - name: Upload Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: screenshots
+          path: tests/Browser/screenshots
+      - name: Upload Console Logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: console
+          path: tests/Browser/console

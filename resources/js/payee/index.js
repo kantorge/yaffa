@@ -136,7 +136,7 @@ window.table = $(dataTableSelector).DataTable({
             // Send request to change payee active state
             $.ajax ({
                 type: 'PUT',
-                url: '/api/assets/accountentity/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
+                url: window.route('api.accountentity.updateActive', {account_entity: row.data().id, active: (row.data().active ? 0 : 1)}),
                 data: {
                     "_token": csrfToken,
                 },

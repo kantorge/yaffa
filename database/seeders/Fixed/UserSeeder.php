@@ -19,6 +19,8 @@ class UserSeeder extends Seeder
                 'name' => Str::ucfirst($alias) . ' User',
                 'email' => $alias . '@yaffa.cc',
                 'password' => Hash::make($alias),
+                'language' => 'en',
+                'locale' => 'en-US',
             ]);
         }
     }

@@ -119,19 +119,11 @@ window.table = $("#dataTable").DataTable({
             defaultContent: '',
             title: __("Actions"),
             render: function(data, _type, row) {
-                if (row.transaction_type.type === 'standard') {
-                    return  dataTableHelpers.dataTablesActionButton(data, 'standardQuickView') +
-                            dataTableHelpers.dataTablesActionButton(data, 'standardShow') +
-                            dataTableHelpers.dataTablesActionButton(data, 'edit', 'standard') +
-                            dataTableHelpers.dataTablesActionButton(data, 'clone', 'standard') +
-                            dataTableHelpers.dataTablesActionButton(data, 'delete');
-                }
-
-                /* Not implemented yet
-                return '<a href="' + route('transactions.open.investment', {transaction: data, action: 'edit'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-edit" title="Edit"></i></a> ' +
-                            '<a href="' + route('transactions.open.investment', {transaction: data, action: 'clone'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-clone" title="Clone"></i></a> ' +
-                            '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="Delete"></i></button>';
-                */
+                return  dataTableHelpers.dataTablesActionButton(data, 'quickView') +
+                        dataTableHelpers.dataTablesActionButton(data, 'show') +
+                        dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                        dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                        dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
@@ -399,7 +391,7 @@ $(elementTagSelector).select2({
     allowClear: true
 });
 
-// Append preset tags, if any
+// Append preset tag, if any
 if (filters.tags) {
     filters.tags.forEach(function(tag) {
         $.ajax({
@@ -459,7 +451,7 @@ let rebuildUrl = function () {
     params.push(...payees);
 
     // Tags
-    const tags = $(elementTagSelector).val().map((item) => 'tags[]=' + item);
+    const tags = $(elementTagSelector).val().map((item) => 'tag[]=' + item);
     params.push(...tags);
 
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));

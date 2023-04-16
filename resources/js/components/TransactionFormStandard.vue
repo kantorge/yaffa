@@ -324,11 +324,14 @@
         <div class="card-body">
           <div class="row">
             <div class="d-none d-md-block col-md-10">
-              <div v-show="!fromModal">
-                <label class="control-label block-label">
-                  {{ __('After saving') }}
-                </label>
+              <div v-show="!fromModal" dusk="action-after-save-desktop-button-group">
                 <div class="btn-group">
+                  <button
+                      class="btn btn-secondary"
+                      disabled
+                  >
+                    {{ __('Action after saving') }}
+                  </button>
                   <button
                       v-for="item in activeCallbackOptions"
                       :key="item.id"
@@ -346,7 +349,7 @@
             <div class="col-12 d-block d-md-none">
               <div v-show="!fromModal">
                 <label class="control-label block-label">
-                  {{ __('After saving') }}
+                  {{ __('Action after saving') }}
                 </label>
                 <select
                     class="form-control"
@@ -387,7 +390,7 @@
 </template>
 
 <script>
-import {getCurrencySymbol} from "../helpers";
+import {todayInUTC, getCurrencySymbol} from "../helpers";
 
 require('select2');
 
@@ -422,7 +425,7 @@ export default {
     action: String,
     transaction: Object,
     simplified: {
-      // If true, no schedule or budget is shown
+      // If true, no schedule or budget option is shown
       type: Boolean,
       default: false,
     },
@@ -462,7 +465,7 @@ export default {
       fromModal: this.fromModal,
       transaction_type: 'withdrawal',
       config_type: 'transaction_detail_standard',
-      date: window.todayInUTC(),
+      date: todayInUTC(),
       comment: null,
       schedule: false,
       budget: false,
@@ -493,6 +496,11 @@ export default {
       {
         value: 'clone',
         label: __('Clone this transaction'),
+        enabled: true,
+      },
+      {
+        value: 'show',
+        label: __('Show this transaction'),
         enabled: true,
       },
       {
@@ -785,15 +793,15 @@ export default {
           this.form.original_schedule_config.next_date = undefined;
 
           // Set new schedule start date to today
-          this.form.schedule_config.start_date = window.todayInUTC();
+          this.form.schedule_config.start_date = todayInUTC();
 
           // If this is a schedule, then set the new next date to today
           if (this.form.schedule) {
-            this.form.schedule_config.next_date = window.todayInUTC();
+            this.form.schedule_config.next_date = todayInUTC();
           }
 
           // Set original schedule end date to today - 1 day
-          this.form.original_schedule_config.end_date = new Date(window.todayInUTC().getTime() - 24 * 60 * 60 * 1000);
+          this.form.original_schedule_config.end_date = new Date(todayInUTC().getTime() - 24 * 60 * 60 * 1000);
         }
       }
 
@@ -832,18 +840,6 @@ export default {
 
       // Proceed with component update
       this.onChangeTransactionType(newState, false);
-    },
-
-    onTransactionTypeChange(newState) {
-      // Update callback options
-      const foundCallbackIndex = this.callbackOptions.findIndex(x => x.value === 'returnToSecondaryAccount');
-      this.callbackOptions[foundCallbackIndex]['enabled'] = (newState === 'transfer')
-
-      // Ensure, that selected item is enabled. Otherwise, set to first enabled option
-      const selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
-      if (! this.callbackOptions[selectedCallbackIndex].enabled) {
-        this.callback = this.callbackOptions.find(option => option.enabled)['value'];
-      }
     },
 
     /**
@@ -890,7 +886,7 @@ export default {
 
       // Ensure, that selected item is enabled. Otherwise, set to first enabled option
       const selectedCallbackIndex = this.callbackOptions.findIndex(x => x.value === this.callback);
-      if (! this.callbackOptions[selectedCallbackIndex].enabled) {
+      if (!this.callbackOptions[selectedCallbackIndex].enabled) {
         this.callback = this.callbackOptions.find(option => option.enabled)['value'];
       }
     },
@@ -1042,7 +1038,8 @@ export default {
 
       // Any type of new transaction needs POST method
       this.form.post(
-          window.route('api.transactions.storeStandard'), this.form
+          window.route('api.transactions.storeStandard'),
+          this.form
       )
           .then((response) => {
             this.$emit(

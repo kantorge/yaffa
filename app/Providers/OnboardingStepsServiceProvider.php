@@ -49,7 +49,7 @@ class OnboardingStepsServiceProvider extends ServiceProvider
                 ->completeIf(fn (User $model) => Category::whereUserId($model->id)->count() > 0);
 
             Onboard::addStep(__('Add your first transaction'))
-                ->link(route('transactions.createStandard'))
+                ->link(route('transaction.create', ['type' => 'standard']))
                 ->cta(__('Add transaction'))
                 ->completeIf(fn (User $model) => $model->transactionCount() > 0);
         });

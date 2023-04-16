@@ -146,7 +146,7 @@
                         {{ __('Transaction history') }}
                     </div>
                     <div>
-                        <a href="{{route('transactions.createInvestment')}}" class="btn btn-success btn-sm" title="{{ __('New investment transaction') }}"><i class="fa fa-plus"></i></a>
+                        <a href="{{route('transaction.create', ['type' => '$investment'])}}" class="btn btn-success btn-sm" title="{{ __('New investment transaction') }}"><i class="fa fa-plus"></i></a>
                     </div>
                 </div>
                 <div class="card-body">

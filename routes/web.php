@@ -44,11 +44,11 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy']);
 
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
-Route::get('/investment/summary', [InvestmentController::class, 'summary'])->name('investment.summary');
 Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
-Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])->name('investment-price.list');
+Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
+    ->name('investment-price.list');
 
 Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPrice'])
     ->name('investment-price.retreive');
@@ -59,34 +59,33 @@ Route::resource('investment-price', InvestmentPriceController::class)
 Route::resource('tag', TagController::class)
     ->except(['show']);
 
-Route::get('/transactions/standard/create', [TransactionController::class, 'createStandard'])->name('transactions.createStandard');
-Route::get('/transactions/investment/create', [TransactionController::class, 'createInvestment'])->name('transactions.createInvestment');
-Route::post('/transactions/investment', [TransactionController::class, 'storeInvestment'])->name('transactions.storeInvestment');
+Route::get('/transactions/create/{type}', [TransactionController::class, 'create'])
+    ->where('type', 'standard|investment')
+    ->name('transaction.create');
 
-Route::get('/transactions/standard/{transaction}/{action}', [TransactionController::class, 'openStandard'])
+Route::get('/transactions/{transaction}/{action}', [TransactionController::class, 'openTransaction'])
     ->where('action', 'edit|clone|enter|show|replace')
-    ->name('transactions.open.standard');
+    ->name('transaction.open');
 
-Route::get('/transactions/investment/{transaction}/{action}', [TransactionController::class, 'openInvestment'])
-    ->where('action', 'edit|clone|enter|replace')
-    ->name('transactions.open.investment');
-
-Route::patch('/transactions/investment/{transaction}', [TransactionController::class, 'updateInvestment'])->name('transactions.updateInvestment');
-Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])->name('transactions.skipScheduleInstance');
+Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])
+    ->name('transactions.skipScheduleInstance');
 Route::resource('transactions', TransactionController::class)
     ->only(['destroy']);
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
 Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
-Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])->name('reports.transactions');
+Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
+    ->name('reports.transactions');
 
 // Routes to display form to merge two payees
-Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])->name('payees.merge.form');
+Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
+    ->name('payees.merge.form');
 Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->name('payees.merge.submit');
 
 // Routes to display form to merge two categories
-Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])->name('categories.merge.form');
+Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
+    ->name('categories.merge.form');
 Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
 
 // Route(s) for search related functionality
