@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 class CategoryRequest extends FormRequest
 {
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
@@ -25,7 +25,7 @@ class CategoryRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         // Ensure that checkbox values are available
         $this->merge([

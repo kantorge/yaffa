@@ -100,16 +100,13 @@ var dtHistory = $(selectorHistoryTable).DataTable({
                 if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                            ? (row.reconciled == 1
-                                    ? __('Reconciled')
-                                    : __('Uncleared')
-                            )
+                            ? (row.reconciled ? __('Reconciled') : __('Uncleared') )
                             : __('Unavailable')
                     );
                 }
                 return (!row.schedule
                     && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                        ? (row.reconciled == 1
+                        ? (row.reconciled
                                 ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                 : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
                         )

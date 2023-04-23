@@ -55,7 +55,10 @@ class TransactionRequest extends FormRequest
                     new IsFalsy(), // Scheduled or budgeted items cannot be reconciled
                 ],
 
-                'schedule_config.start_date' => 'required|date',
+                'schedule_config.start_date' => [
+                    'required',
+                    'date',
+                ],
                 'schedule_config.next_date' => [
                     'nullable',
                     'date',
@@ -160,7 +163,7 @@ class TransactionRequest extends FormRequest
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
-                    //technical field, but required for standard transaction
+                    // Technical fields, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
                     'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 
@@ -180,7 +183,7 @@ class TransactionRequest extends FormRequest
                 ]);
             }
         } elseif ($this->get('config_type') === 'transaction_detail_investment') {
-            //adjust detail related rules, based on transaction type
+            // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
                 'config.account_id' => [
                     'required',
@@ -246,7 +249,7 @@ class TransactionRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         // Get transaction type ID by name
         if ($this->transaction_type) {

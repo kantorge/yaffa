@@ -65,7 +65,11 @@ export default {
 
   methods: {
     getTransactionTypeIcon: function (transaction) {
-      return dataTableHelpers.transactionTypeIcon(transaction.transaction_type.type, transaction.transaction_type.name, this.getTransactionLabel(transaction));
+      return dataTableHelpers.transactionTypeIcon(
+          transaction.transaction_type.type,
+          transaction.transaction_type.name,
+          this.getTransactionLabel(transaction)
+      );
     },
     getTransactionLink: function (type, id) {
       return window.route('transaction.open', {transaction: id, action: 'enter'});

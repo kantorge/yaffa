@@ -319,11 +319,9 @@ export let transactionColumnDefiniton = {
         title: __('Tags'),
         defaultContent: '',
         render: function (data) {
-            if (!data || data.length === 0) {
-                return '';
+            if (data?.length > 0) {
+                return data.map(tag => tag.name).join(', ');
             }
-
-            return data.map(tag => tag.name).join(', ');
         }
     }
 }

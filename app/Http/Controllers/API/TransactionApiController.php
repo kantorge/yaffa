@@ -502,7 +502,8 @@ class TransactionApiController extends Controller
         $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
         // Handle default payee amount, if present, by adding amount as an item
-        if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
+        if (array_key_exists('remaining_payee_default_amount', $validated)
+            && $validated['remaining_payee_default_amount'] > 0) {
             $newItem = TransactionItem::create(
                 [
                     'transaction_id' => $transaction->id,
@@ -626,11 +627,9 @@ class TransactionApiController extends Controller
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
-        return response()->json(
-            [
-                'transaction' => $transaction,
-            ]
-        );
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     /**

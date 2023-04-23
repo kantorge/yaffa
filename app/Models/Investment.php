@@ -57,13 +57,13 @@ use Illuminate\Support\Arr;
  * @method static Builder|Investment whereSymbol($value)
  * @method static Builder|Investment whereUpdatedAt($value)
  * @method static Builder|Investment whereUserId($value)
- * @property-read Collection<int, \App\Models\TransactionDetailInvestment> $transactionDetailInvestment
+ * @property-read Collection<int, TransactionDetailInvestment> $transactionDetailInvestment
  * @property-read int|null $transaction_detail_investment_count
- * @property-read Collection<int, \App\Models\Transaction> $transactions
+ * @property-read Collection<int, Transaction> $transactions
  * @property-read int|null $transactions_count
- * @property-read Collection<int, \App\Models\Transaction> $transactionsBasic
+ * @property-read Collection<int, Transaction> $transactionsBasic
  * @property-read int|null $transactions_basic_count
- * @property-read Collection<int, \App\Models\Transaction> $transactionsScheduled
+ * @property-read Collection<int, Transaction> $transactionsScheduled
  * @property-read int|null $transactions_scheduled_count
  * @mixin Eloquent
  */
@@ -82,16 +82,9 @@ class Investment extends Model
     protected $table = 'investments';
 
     /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-
-    /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'name',
@@ -274,7 +267,7 @@ class Investment extends Model
             return $transaction instanceof Transaction ? $transaction->config->price : null;
         }
 
-        //combined is needed and we have both data: get latest
+        // Combined is needed and we have both data: get latest
         if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
             if ($price->date > $transaction->date) {
                 return $price->price;
@@ -283,12 +276,12 @@ class Investment extends Model
             return $transaction->config->price;
         }
 
-        //we have only stored data
+        // We have only stored data
         if ($price instanceof InvestmentPrice) {
             return $price->price;
         }
 
-        //we have only transaction data
+        // We have only transaction data
         if ($transaction instanceof Transaction) {
             return $transaction->config->price;
         }

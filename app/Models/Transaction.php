@@ -193,9 +193,9 @@ class Transaction extends Model
             $operator = $this->transactionType->amount_operator;
             if ($operator) {
                 return ($operator === 'minus' ? -1 : 1) * $this->config->price * $this->config->quantity
-                        + $this->config->dividend
-                        - $this->config->tax
-                        - $this->config->commission;
+                    + $this->config->dividend
+                    - $this->config->tax
+                    - $this->config->commission;
             }
         }
 
