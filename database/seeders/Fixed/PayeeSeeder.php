@@ -13,7 +13,7 @@ class PayeeSeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         $payeeConfig = Payee::create(
             [

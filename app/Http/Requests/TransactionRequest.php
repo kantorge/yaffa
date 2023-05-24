@@ -26,6 +26,8 @@ class TransactionRequest extends FormRequest
             'config.price' => __('price'),
             'config.commission' => __('commission'),
             'config.tax' => __('tax'),
+            // Standard fields
+            'config.amount_to' => __('amount to'),
         ];
     }
 
@@ -257,5 +259,10 @@ class TransactionRequest extends FormRequest
                 'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id,
             ]);
         }
+
+        // Ensure that reconciled flag is set to false if not provided
+        $this->merge([
+            'reconciled' => $this->reconciled ?? 0,
+        ]);
     }
 }

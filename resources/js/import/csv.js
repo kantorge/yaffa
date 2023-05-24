@@ -56,7 +56,7 @@ document.getElementById('csv_file').addEventListener('change', function () {
     reader.addEventListener('load', function (e) {
 
         let csvData = e.target.result;
-        var csvRows = $.csv.toObjects(csvData, { separator: ';' });
+        let csvRows = $.csv.toObjects(csvData, { separator: ';' });
         let processedRows = 0;
 
         // Run the rule engine for each row
@@ -309,7 +309,9 @@ $('#account').select2({
     document.getElementById('csv_file').disabled = true;
 });
 
-window.table = $("#dataTable").DataTable({
+const tableSelector = '#dataTable';
+
+window.table = $(tableSelector).DataTable({
     data: window.transactions,
     columns: [
         {
@@ -422,7 +424,7 @@ window.table = $("#dataTable").DataTable({
                     return 'Not found';
                 }
 
-                var html = '';
+                let html = '';
                 data.forEach(function (similarTransaction) {
                     html += '<button class="btn btn-sm ' + (similarTransaction.similarityScore === 1 ? 'btn-success' : 'btn-warning') + ' transaction-similar transaction-basic transaction-quickview" data-id="' + similarTransaction.id + '" type="button"><i class="fa fa-fw fa-eye" title="Quick view"></i></button> ';
                 })
@@ -496,17 +498,17 @@ window.table = $("#dataTable").DataTable({
     // Apply initial filters
     initComplete: function () {
         // Initially filter by handled
-        $('#dataTable').DataTable().column(9).search('No').draw();
+        $(tableSelector).DataTable().column(9).search('No').draw();
     }
 });
 
 // Set up event listener that stores the currently selected transaction and dispatches an event
-$('#dataTable').on('click', 'button.create-transaction-from-draft', function () {
+$(tableSelector).on('click', 'button.create-transaction-from-draft', function () {
     // TODO: should this data passed back and forth instead of storing it?
-    recentTransactionDraftId = $(this).data('draft');
+    recentTransactionDraftId = Number($(this).data('draft'));
 
     // Retrieve the transaction draft based on stored draft ID
-    const draft = window.transactions.find(transaction => transaction.draftId == recentTransactionDraftId);
+    const draft = window.transactions.find(transaction => transaction.draftId === recentTransactionDraftId);
     const transaction = Object.assign({}, draft);
 
     // Some transformations
@@ -529,7 +531,7 @@ $('#dataTable').on('click', 'button.create-transaction-from-draft', function () 
 
 // Quick view for similar transactions
 // Initiate display, without any actions
-$('#dataTable').on('click', 'button.transaction-similar.transaction-basic.transaction-quickview', function () {
+$(tableSelector).on('click', 'button.transaction-similar.transaction-basic.transaction-quickview', function () {
     let icon = this.querySelector('i');
     // If spinner is displayed, do not initiate another request
     if (icon.classList.contains("fa-spinner")) {
@@ -592,7 +594,7 @@ $('#dataTable').on('click', 'button.transaction-similar.transaction-basic.transa
 // Quick view for related schedules
 // Initiate display and store draft id
 // TODO: unify functionality with similar transaction display
-$('#dataTable').on('click', 'button.transaction-related.transaction-quickview', function () {
+$(tableSelector).on('click', 'button.transaction-related.transaction-quickview', function () {
     window.recentTransactionDraftId = $(this).data('draft');
 
     let icon = this.querySelector('i');
@@ -668,7 +670,7 @@ window.addEventListener('transaction-created', function (event) {
 });
 
 // Set up an event listener for immediately creating a transaction
-$('#dataTable').on('click', 'button.record', function () {
+$(tableSelector).on('click', 'button.record', function () {
     recentTransactionDraftId = $(this).data('draft');
     // TODO: Disable all the action buttons of this item
 
@@ -742,7 +744,7 @@ $('#dataTable').on('click', 'button.record', function () {
 });
 
 // Event listener for marking a transaction as handled
-$('#dataTable').on('click', 'button.handled', function () {
+$(tableSelector).on('click', 'button.handled', function () {
     let transactionId = $(this).data('draft');
     let transaction = window.transactions.find(transaction => transaction.draftId == transactionId);
     transaction.handled = true;

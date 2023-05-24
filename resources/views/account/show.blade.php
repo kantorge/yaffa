@@ -166,9 +166,27 @@
             </div>
 
             <div class="card mb-3">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between">
                     <div class="card-title">
                         {{ __('Scheduled transactions') }}
+                    </div>
+                    <div>
+                        <a class="btn btn-sm btn-success"
+                           href="{{ route('transaction.create', [
+                                        'type' => 'standard',
+                                        'account_from' => $account->id,
+                                        'schedule' => 1,
+                                        'callback' => 'back'
+                                    ]) }}"
+                           title="{{ __('New scheduled transaction') }}"><i class="fa fa-cart-plus"></i></a>
+                        <a class="btn btn-sm btn-success"
+                           href="{{ route('transaction.create', [
+                                        'type' => 'investment',
+                                        'account' => $account->id,
+                                        'schedule' => 1,
+                                        'callback' => 'back'
+                                    ]) }}"
+                           title="{{ __('New scheduled investment transaction') }}"><i class="fa fa-line-chart"></i></a>
                     </div>
                 </div>
                 <div class="card-body">

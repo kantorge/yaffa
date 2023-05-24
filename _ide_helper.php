@@ -1144,7 +1144,7 @@ namespace Illuminate\Support\Facades {
             return $instance->instance($abstract, $instance);
         }
                     /**
-                     * Assign a set of tag to a given binding.
+                     * Assign a set of tags to a given binding.
                      *
                      * @param array|string $abstracts
                      * @param array|mixed $tags
@@ -2684,7 +2684,7 @@ namespace Illuminate\Support\Facades {
             $instance->withoutDoubleEncoding();
         }
                     /**
-                     * Indicate that component tag should not be compiled.
+                     * Indicate that component tags should not be compiled.
                      *
                      * @static
                      */
@@ -3890,7 +3890,7 @@ namespace Illuminate\Support\Facades {
             return $instance->clear();
         }
                     /**
-                     * Begin executing a new tag operation if the store supports it.
+                     * Begin executing a new tags operation if the store supports it.
                      *
                      * @param array|mixed $names
                      * @return \Illuminate\Cache\TaggedCache
@@ -3903,7 +3903,7 @@ namespace Illuminate\Support\Facades {
             return $instance->tags($names);
         }
                     /**
-                     * Determine if the current store supports tag.
+                     * Determine if the current store supports tags.
                      *
                      * @return bool
                      * @static
@@ -17845,6 +17845,143 @@ namespace Spatie\LaravelIgnition\Facades {
     }
 }
 
+namespace LaravelDuskReporter {
+    /**
+     *
+     *
+     */
+    class LaravelDuskReporter
+    {
+        /**
+         * Check is report file name valid, and if not - amend it.
+         *
+         * @param string $name
+         * @return string
+         * @static
+         */
+        public static function getValidFileName($name)
+        {
+            return \LaravelDuskReporter\Reporter::getValidFileName($name);
+        }
+                    /**
+                     * Get new report file.
+                     *
+                     * @param string $name
+                     * @return \LaravelDuskReporter\Generation\ReportFileContract
+                     * @static
+                     */
+        public static function newFile($name)
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->newFile($name);
+        }
+                    /**
+                     * Get new screenshot manager.
+                     *
+                     * @return \LaravelDuskReporter\Generation\ReportScreenshotContract
+                     * @static
+                     */
+        public static function screenshoter()
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->screenshoter();
+        }
+                    /**
+                     *
+                     *
+                     * @param \Closure|null $getBodyElementCallback
+                     * @return \LaravelDuskReporter\Reporter
+                     * @static
+                     */
+        public static function setBodyElementSearchCallback($getBodyElementCallback)
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->setBodyElementSearchCallback($getBodyElementCallback);
+        }
+                    /**
+                     * Get store build folder
+                     *
+                     * @param string $path - File path, optional
+                     * @return string
+                     * @static
+                     */
+        public static function storeBuildAt($path = '')
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->storeBuildAt($path);
+        }
+                    /**
+                     * Get store screenshots folder
+                     *
+                     * @param string $path - File path, optional
+                     * @return string
+                     * @static
+                     */
+        public static function storeScreenshotAt($path = '')
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->storeScreenshotAt($path);
+        }
+                    /**
+                     * Check if need use relative path
+                     *
+                     * @return bool
+                     * @static
+                     */
+        public static function useScreenshotRelativePath()
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->useScreenshotRelativePath();
+        }
+                    /**
+                     * Check is screenshots disabled
+                     *
+                     * @return bool
+                     * @static
+                     */
+        public static function isScreenshotsDisabled()
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->isScreenshotsDisabled();
+        }
+                    /**
+                     * Check is reporting disabled
+                     *
+                     * @return bool
+                     * @static
+                     */
+        public static function isReportingDisabled()
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->isReportingDisabled();
+        }
+                    /**
+                     * Add file to table of contents.
+                     *
+                     * @param string $name
+                     * @static
+                     */
+        public static function addToTableOfContents($name)
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            $instance->addToTableOfContents($name);
+        }
+                    /**
+                     * Get report file name
+                     *
+                     * @param string $name
+                     * @param bool $relative
+                     * @return string
+                     * @static
+                     */
+        public static function reportFileName($name, $relative = false)
+        {
+            /** @var \LaravelDuskReporter\Reporter $instance */
+            return $instance->reportFileName($name, $relative);
+        }
+    }
+}
+
 namespace Laravel\Dusk {
     /**
      *
@@ -17868,6 +18005,33 @@ namespace Laravel\Dusk {
         public static function select2($field, $value = null, $wait = 2, $suffix = ' + .select2')
         {
             return \Laravel\Dusk\Browser::select2($field, $value, $wait, $suffix);
+        }
+                    /**
+                     *
+                     *
+                     * @param mixed $field
+                     * @param mixed $value
+                     * @param mixed $wait
+                     * @param mixed $suffix
+                     * @static
+                     */
+        public static function select2ExactSearch($field, $value, $wait = 2, $suffix = ' + .select2')
+        {
+            return \Laravel\Dusk\Browser::select2ExactSearch($field, $value, $wait, $suffix);
+        }
+                    /**
+                     * Register a macro for Laravel Dusk, which clears the selection from a given Select2
+                     * $field - the selector of the Select2 element
+                     * $outerSelector - optionally set an external element, which will be clicked to close the Select2
+                     *
+                     * @param mixed $field
+                     * @param mixed $outerSelector
+                     * @param mixed $suffix
+                     * @static
+                     */
+        public static function select2ClearAll($field, $outerSelector = null, $suffix = ' + .select2')
+        {
+            return \Laravel\Dusk\Browser::select2ClearAll($field, $outerSelector, $suffix);
         }
     }
 }
@@ -21905,6 +22069,9 @@ namespace  {
     {
     }
     class Flare extends \Spatie\LaravelIgnition\Facades\Flare
+    {
+    }
+    class LaravelDuskReporter extends \LaravelDuskReporter\LaravelDuskReporter
     {
     }
 }

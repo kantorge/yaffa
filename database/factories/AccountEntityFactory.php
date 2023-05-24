@@ -32,7 +32,7 @@ class AccountEntityFactory extends Factory
         ];
     }
 
-    public function payee(User $user = null)
+    public function payee(User $user = null): AccountEntityFactory
     {
         return $this->state(function (array $attributes) use ($user) {
             if (!$user) {

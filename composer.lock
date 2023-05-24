@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "88e6d957723849dcb5548910328ae8dc",
+    "content-hash": "d7a281acda89777e7193412bb4f6f378",
     "packages": [
         {
             "name": "amrshawky/currency",
@@ -10943,16 +10943,16 @@
         },
         {
             "name": "roquie/laravel-dusk-select2",
-            "version": "2.1.0",
+            "version": "dev-feature/search_selector_delay",
             "source": {
                 "type": "git",
-                "url": "https://github.com/roquie/laravel-dusk-select2.git",
-                "reference": "eb13801b753d77384948b8447ebe82beab76f5c5"
+                "url": "https://github.com/kantorge/laravel-dusk-select2.git",
+                "reference": "a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/roquie/laravel-dusk-select2/zipball/eb13801b753d77384948b8447ebe82beab76f5c5",
-                "reference": "eb13801b753d77384948b8447ebe82beab76f5c5",
+                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4",
+                "reference": "a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4",
                 "shasum": ""
             },
             "require-dev": {
@@ -10967,7 +10967,11 @@
                     "src/macro.php"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Laravel\\Dusk\\Select2\\Tests\\": "tests/"
+                }
+            },
             "license": [
                 "MIT"
             ],
@@ -10979,10 +10983,9 @@
             ],
             "description": "Select2.js support for the Laravel Dusk testing.",
             "support": {
-                "issues": "https://github.com/roquie/laravel-dusk-select2/issues",
-                "source": "https://github.com/roquie/laravel-dusk-select2/tree/2.1.0"
+                "source": "https://github.com/kantorge/laravel-dusk-select2/tree/feature/search_selector_delay"
             },
-            "time": "2020-09-03T12:55:45+00:00"
+            "time": "2023-04-29T12:02:10+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -13100,12 +13103,80 @@
                 }
             ],
             "time": "2021-07-28T10:34:58+00:00"
+        },
+        {
+            "name": "yaroslawww/laravel-dusk-reporter",
+            "version": "3.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/yaroslawww/laravel-dusk-reporter.git",
+                "reference": "3f5e3df8dae0cc41c8b85509c22a9b6fd440f664"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/yaroslawww/laravel-dusk-reporter/zipball/3f5e3df8dae0cc41c8b85509c22a9b6fd440f664",
+                "reference": "3f5e3df8dae0cc41c8b85509c22a9b6fd440f664",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.2",
+                "laravel/dusk": "^6.0",
+                "orchestra/testbench": "^6.23",
+                "phpunit/phpunit": "^9.5",
+                "vimeo/psalm": "^4.12"
+            },
+            "suggest": {
+                "ext-imagick": "Needed to support combined report screen."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "LaravelDuskReporter\\ServiceProvider"
+                    ],
+                    "aliases": {
+                        "LaravelDuskReporter": "LaravelDuskReporter\\LaravelDuskReporter"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "LaravelDuskReporter\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Yaroslav Georgitsa",
+                    "email": "yaroslav.georgitsa@gmail.com",
+                    "homepage": "https://github.com/yaroslawww",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Report generator for Laravel Dusk.",
+            "homepage": "https://github.com/yaroslawww/laravel-dusk-reporter",
+            "keywords": [
+                "laravel-dusk-reporter",
+                "report"
+            ],
+            "support": {
+                "issues": "https://github.com/yaroslawww/laravel-dusk-reporter/issues",
+                "source": "https://github.com/yaroslawww/laravel-dusk-reporter/tree/3.1.1"
+            },
+            "time": "2021-11-28T16:16:46+00:00"
         }
     ],
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "nikaia/translation-sheet": 20
+        "nikaia/translation-sheet": 20,
+        "roquie/laravel-dusk-select2": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

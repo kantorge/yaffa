@@ -38,13 +38,9 @@ export default {
     ActionButtonBar,
   },
 
-  props: {
-    originalTransaction: Object,
-  },
-
   data() {
     return {
-      transaction: Object.assign({}, this.originalTransaction),
+      transaction: Object.assign({}, window.transaction),
     };
   },
 

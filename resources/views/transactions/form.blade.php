@@ -34,14 +34,18 @@
         <div id="app">
             <transaction-container-standard
                 action = "{{ $action }}"
-                :transaction = "{{ $transaction ?? '{}' }}"
+                @if($transaction)
+                    :transaction = "{{ $transaction }}"
+                @endif
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')
         <div id="app">
             <transaction-container-investment
                 action = "{{ $action }}"
-                :transaction = "{{ $transaction ?? '{}' }}"
+                @if($transaction)
+                    :transaction = "{{ $transaction }}"
+                @endif
             ></transaction-container-investment>
         </div>
     @endif

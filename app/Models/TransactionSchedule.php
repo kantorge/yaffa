@@ -2,41 +2,50 @@
 
 namespace App\Models;
 
+use Database\Factories\TransactionScheduleFactory;
 use DateTime;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
+use Recurr\Rule;
+use Recurr\Transformer\ArrayTransformer;
+use Recurr\Transformer\ArrayTransformerConfig;
+use Recurr\Transformer\Constraint\AfterConstraint;
 
 /**
  * App\Models\TransactionSchedule
  *
  * @property int $id
  * @property int $transaction_id
- * @property \Illuminate\Support\Carbon $start_date
- * @property \Illuminate\Support\Carbon|null $next_date
- * @property \Illuminate\Support\Carbon|null $end_date
+ * @property Carbon $start_date
+ * @property Carbon|null $next_date
+ * @property Carbon|null $end_date
  * @property string $frequency
  * @property int $interval
  * @property int|null $count
  * @property float|null $inflation
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Transaction $transaction
- * @method static \Database\Factories\TransactionScheduleFactory factory(...$parameters)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule query()
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereEndDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereFrequency($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereInflation($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereInterval($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereNextDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereStartDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereTransactionId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TransactionSchedule whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Transaction $transaction
+ * @method static TransactionScheduleFactory factory(...$parameters)
+ * @method static Builder|TransactionSchedule newModelQuery()
+ * @method static Builder|TransactionSchedule newQuery()
+ * @method static Builder|TransactionSchedule query()
+ * @method static Builder|TransactionSchedule whereCount($value)
+ * @method static Builder|TransactionSchedule whereCreatedAt($value)
+ * @method static Builder|TransactionSchedule whereEndDate($value)
+ * @method static Builder|TransactionSchedule whereFrequency($value)
+ * @method static Builder|TransactionSchedule whereId($value)
+ * @method static Builder|TransactionSchedule whereInflation($value)
+ * @method static Builder|TransactionSchedule whereInterval($value)
+ * @method static Builder|TransactionSchedule whereNextDate($value)
+ * @method static Builder|TransactionSchedule whereStartDate($value)
+ * @method static Builder|TransactionSchedule whereTransactionId($value)
+ * @method static Builder|TransactionSchedule whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class TransactionSchedule extends Model
 {
@@ -73,15 +82,15 @@ class TransactionSchedule extends Model
         'end_date' => 'date',
     ];
 
-    public function transaction()
+    public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
     }
 
     public function getNextInstance()
     {
-        $constraint = new \Recurr\Transformer\Constraint\AfterConstraint(new DateTime($this->next_date), false);
-        $rule = new \Recurr\Rule();
+        $constraint = new AfterConstraint(new DateTime($this->next_date), false);
+        $rule = new Rule();
 
         $rule->setStartDate(new DateTime($this->start_date));
 
@@ -98,9 +107,9 @@ class TransactionSchedule extends Model
             $rule->setInterval($this->interval);
         }
 
-        $transformer = new \Recurr\Transformer\ArrayTransformer();
+        $transformer = new ArrayTransformer();
 
-        $transformerConfig = new \Recurr\Transformer\ArrayTransformerConfig();
+        $transformerConfig = new ArrayTransformerConfig();
 
         $transformerConfig->enableLastDayOfMonthFix();
         $transformer->setConfig($transformerConfig);
@@ -114,7 +123,7 @@ class TransactionSchedule extends Model
         return $recurrence[0]->getStart();
     }
 
-    public function skipNextInstance()
+    public function skipNextInstance(): bool
     {
         $this->next_date = $this->getNextInstance();
 

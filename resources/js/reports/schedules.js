@@ -2,53 +2,34 @@ import 'datatables.net-bs5'
 import 'datatables.net-responsive-bs5'
 
 import * as dataTableHelpers from '../components/dataTableHelper';
-
-import { RRule } from 'rrule';
+import * as helpers from '../helpers';
 
 window.table = $('#table').DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
         dataSrc: function(data) {
-            return data.transactions.map(function(transaction) {
-                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-                if (transaction.schedule_config.next_date) {
-                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-                }
-                if (transaction.schedule_config.end_date) {
-                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-                }
-
-                // Create rule
-                transaction.schedule_config.rule = new RRule({
-                    freq: RRule[transaction.schedule_config.frequency],
-                    interval: transaction.schedule_config.interval,
-                    dtstart: transaction.schedule_config.start_date,
-                    until: transaction.schedule_config.end_date,
-                });
-
-                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
-
-                return transaction;
-            });
+            return data.transactions
+                .map(helpers.processTransaction)
+                .map(helpers.processScheduledTransaction);
         },
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.start_date', __('Start date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.locale),
         {
-            data: "schedule_config.rule",
+            data: "transaction_schedule.rule",
             title: __("Schedule settings"),
             render: function (data) {
                 // Return human readable format of RRule
-                // TODO: translation
+                // TODO: translation of rrule strings
                 return data.toText();
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('budget', __('Budget')),
-        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule_config.active', __('Active')),
+        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('transaction_schedule.active', __('Active')),
         {
             data: "transaction_type.type",
             title: __("Type"),
@@ -104,13 +85,15 @@ window.table = $('#table').DataTable({
         }
     ],
     createdRow: function (row, data) {
-        if (!data.schedule_config.next_date) {
+        $(row).attr('data-id', data.id);
+
+        if (!data.transaction_schedule.next_date) {
             return;
         }
 
-        if (data.schedule_config.next_date  < new Date(new Date().setHours(0,0,0,0)) ) {
+        if (data.transaction_schedule.next_date  < new Date(new Date().setHours(0,0,0,0)) ) {
             $(row).addClass('danger');
-        } else if (data.schedule_config.next_date  < new Date(new Date().setHours(24,0,0,0)) ) {
+        } else if (data.transaction_schedule.next_date  < new Date(new Date().setHours(24,0,0,0)) ) {
             $(row).addClass('warning');
         }
     },

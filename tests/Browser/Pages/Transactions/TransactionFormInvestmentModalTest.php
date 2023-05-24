@@ -10,6 +10,8 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
+    protected User $user;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -20,14 +22,14 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
             $this->artisan('db:seed');
             static::$migrationRun = true;
         }
+
+        $this->user = User::firstWhere('email', 'demo@yaffa.cc');
     }
 
     public function test_user_can_load_the_investment_transaction_form_in_a_modal()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
-
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->loginAs($user)
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
                 // Load the view for a random account
                 ->visitRoute('account-entity.show', ['account_entity' => 1])
                 // Wait for the page to load

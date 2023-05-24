@@ -1,6 +1,7 @@
 <template>
     <transaction-form-standard
             :action="action"
+            :initial-callback="callback"
             :transaction="transactionData"
             @cancel="onCancel"
             @success="onSuccess"
@@ -16,49 +17,64 @@ export default {
         TransactionFormStandard,
     },
 
-  props: {
-    action: String,
-    transaction: Object,
-  },
+    props: {
+        action: {
+            type: String,
+            default: 'create',
+        },
+        transaction: {
+            type: Object,
+            default: {
+                transaction_type: {
+                    name: 'withdrawal',
+                },
+                date: new Date(),
+                schedule: false,
+                budget: false,
+                reconciled: false,
+                comment: null,
+                config: {
+                    account_from_id: null,
+                    account_to_id: null,
+                    amount_from: null,
+                    amount_to: null,
+                },
+            }
+        },
+    },
 
-  computed: {},
+    computed: {},
 
-  created() {
-  },
+    created() {
+    },
 
-  data() {
-    let data = {
-      // Default callback is to create a new transaction
-      callback: 'create',
-    };
+    data() {
+        const urlParams = new URLSearchParams(window.location.search);
 
-    // Set some default values for new transactions
-    if (this.action === 'create') {
-      if (!data.transactionData) {
-        data.transactionData = {};
-      }
-      if (!data.transactionData.config) {
-        data.transactionData.config = {};
-      }
+        let data = {
+            // Default callback is to create a new transaction
+            callback: urlParams.get('callback') || 'create',
+            transactionData: Object.assign({}, this.transaction)
+        };
 
-      // Check for various default values in URL
-      const urlParams = new URLSearchParams(window.location.search);
+        // Check for various default values in URL for new transactions
+        if (this.action === 'create') {
+            if (urlParams.get('account_from')) {
+                data.transactionData.config.account_from_id = urlParams.get('account_from');
+            }
 
-      if (urlParams.get('account_from')) {
-        data.transactionData.config.account_from_id = urlParams.get('account_from');
-      }
+            if (urlParams.get('account_to')) {
+                data.transactionData.config.account_from_id = urlParams.get('account_to');
+            }
 
-      data.transactionData.date = new Date();
-      data.transactionData.transaction_type = {
-        name: 'withdrawal',
-      };
-    } else {
-      // For all other cases (where we expect some data to be available), copy transaction from prop
-      data.transactionData = this.transaction;
-    }
+            if (urlParams.get('schedule')) {
+                data.transactionData.schedule = !!urlParams.get('schedule');
+                data.transactionData.date = undefined;
+            }
+        }
 
-    return data;
-  },
+        return data;
+    },
 
     methods: {
         // Determine, which account to use as a callback, if user wants to return to selected account
@@ -98,12 +114,12 @@ export default {
             }
 
             if (this.callback === 'returnToPrimaryAccount') {
-                location.href = window.route('account.history', {account: this.getReturnAccount('primary', transaction)});
+                location.href = window.route('account-entity.show', {account_entity: this.getReturnAccount('primary', transaction)});
                 return;
             }
 
             if (this.callback === 'returnToSecondaryAccount') {
-                location.href = window.route('account.history', {account: this.getReturnAccount('secondary', transaction)});
+                location.href = window.route('account-entity.show', {account_entity: this.getReturnAccount('secondary', transaction)});
                 return;
             }
 

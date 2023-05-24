@@ -8,8 +8,6 @@
 
 @section('content')
     <div id="app">
-        <transaction-show-container
-                :original-transaction="{{ $transaction ?? '{}' }}"
-        ></transaction-show-container>
+        <transaction-show-container></transaction-show-container>
     </div>
 @endsection

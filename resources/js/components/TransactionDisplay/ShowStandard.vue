@@ -35,7 +35,7 @@
               <dt class="col-6">
                 {{ accountToFieldLabel }}
               </dt>
-              <dd class="col-6">
+              <dd class="col-6" dusk="label-account-to-name">
                 {{ transaction.config.account_to.name }}
               </dd>
 
