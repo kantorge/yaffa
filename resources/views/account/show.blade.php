@@ -132,6 +132,7 @@
                                 <option value="thisQuarterToDate">{{ __('This quarter to date') }}</option>
                                 <option value="thisYearToDate">{{ __('This year to date') }}</option>
                                 <option value="previousMonth">{{ __('Previous month') }}</option>
+                                <option value="previousMonthToDate">{{ __('Previous month to date') }}</option>
                             </select>
                         </div>
                     </div>

@@ -592,6 +592,10 @@ document.getElementById('dateRangePickerPresets').addEventListener('change', fun
             start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
             end = new Date(date.getFullYear(), date.getMonth(), 0);
             break;
+        case 'previousMonthToDate':
+            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+            end = date;
+            break;
         default:
             start = {clear: true};
             end = {clear: true};
