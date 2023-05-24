@@ -65,7 +65,11 @@ export default {
 
   methods: {
     getTransactionTypeIcon: function (transaction) {
-      return dataTableHelpers.transactionTypeIcon(transaction.transaction_type.type, transaction.transaction_type.name, this.getTransactionLabel(transaction));
+      return dataTableHelpers.transactionTypeIcon(
+          transaction.transaction_type.type,
+          transaction.transaction_type.name,
+          this.getTransactionLabel(transaction)
+      );
     },
     getTransactionLink: function (type, id) {
       return window.route('transaction.open', {transaction: id, action: 'enter'});
@@ -75,7 +79,10 @@ export default {
         // Capitalize first letter of transaction type
         const type = transaction.transaction_type.name.charAt(0).toUpperCase() + transaction.transaction_type.name.slice(1);
         // Return constructed label
-        return type + ' ' + helpers.toFormattedCurrency(transaction.config.amount_to, this.locale, transaction.currency) + ' from ' + transaction.config.account_from.name + ' to ' + transaction.config.account_to.name;
+        return type + ' ' +
+            helpers.toFormattedCurrency(transaction.config.amount_to, this.locale, transaction.transaction_currency) +
+            ' from ' + transaction.config.account_from.name +
+            ' to ' + transaction.config.account_to.name;
       }
     },
     refreshTooltip: function () {
@@ -112,13 +119,13 @@ export default {
               // Keep only the transactions with a next date set.
               // Note: the date values are not converted to JavaScript Date objects in general.
               // Note: at this point, all items should have a schedule and next date, but a double-check is performed
-              .filter((transaction) => transaction.schedule_config && transaction.schedule_config.next_date)
+              .filter((transaction) => transaction.transaction_schedule && transaction.transaction_schedule.next_date)
               // Map the data to the format required by the calendar component
               .map(function (transaction, index) {
                 return {
                   key: index + 1,
                   customData: transaction,
-                  dates: new Date(transaction.schedule_config.next_date)
+                  dates: new Date(transaction.transaction_schedule.next_date)
                 }
               })
 

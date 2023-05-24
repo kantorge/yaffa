@@ -61,6 +61,8 @@ class TransactionFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'schedule' => 1,
+                'budget' => 0,
+                'reconciled' => 0,
                 'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
                 'config_type' => 'transaction_detail_standard',
                 'config_id' => TransactionDetailStandard::factory()->withdrawal()->create()->id,
@@ -114,6 +116,42 @@ class TransactionFactory extends Factory
                 'config_type' => 'transaction_detail_investment',
                 'config_id' => TransactionDetailInvestment::factory()
                     ->buy()->create($config)->id,
+            ];
+        });
+    }
+
+    /**
+     * Transaction type is SELL investment
+     *
+     * @param array $config
+     * @return Factory
+     */
+    public function sell(array $config = []): Factory
+    {
+        return $this->state(function (array $attributes) use ($config) {
+            return [
+                'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
+                'config_type' => 'transaction_detail_investment',
+                'config_id' => TransactionDetailInvestment::factory()
+                    ->sell()->create($config)->id,
+            ];
+        });
+    }
+
+    /**
+     * Transaction type is DIVIDEND investment
+     *
+     * @param array $config
+     * @return Factory
+     */
+    public function dividend(array $config = []): Factory
+    {
+        return $this->state(function (array $attributes) use ($config) {
+            return [
+                'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
+                'config_type' => 'transaction_detail_investment',
+                'config_id' => TransactionDetailInvestment::factory()
+                    ->dividend()->create($config)->id,
             ];
         });
     }

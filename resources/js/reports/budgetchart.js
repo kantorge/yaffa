@@ -2,11 +2,12 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+
 require('datatables.net-bs5');
 import * as dataTableHelpers from './../components/dataTableHelper'
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
-import { RRule } from 'rrule';
+import * as helpers from "../helpers";
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
@@ -155,30 +156,11 @@ window.table = $(tableSelector).DataTable({
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
         dataSrc: function (data) {
-            var transactions = data.transactions || [];
-            return transactions.map(function (transaction) {
-                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-                if (transaction.schedule_config.next_date) {
-                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-                }
-                if (transaction.schedule_config.end_date) {
-                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-                }
-
-                // Create rule
-                transaction.schedule_config.rule = new RRule({
-                    freq: RRule[transaction.schedule_config.frequency],
-                    interval: transaction.schedule_config.interval,
-                    dtstart: transaction.schedule_config.start_date,
-                    until: transaction.schedule_config.end_date,
-                });
-
-                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
-
-                return transaction;
-            });
+            return data.transactions
+                .map(helpers.processTransaction)
+                .map(helpers.processScheduledTransaction);
         },
-        data: function() {
+        data: function () {
             if (initialTableLoad) {
                 initialTableLoad = false;
                 return {
@@ -194,9 +176,9 @@ window.table = $(tableSelector).DataTable({
         },
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("schedule_config.start_date", __("Start date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.locale),
         {
-            data: "schedule_config.rule",
+            data: "transaction_schedule.rule",
             title: __("Schedule"),
             render: function (data) {
                 // Return human readable format
@@ -204,20 +186,20 @@ window.table = $(tableSelector).DataTable({
                 return data.toText();
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("schedule_config.next_date", __("Start date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("transaction_schedule.next_date", __("Start date"), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('budget', __('Budget')),
-        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule_config.active', __('Active')),
+        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('transaction_schedule.active', __('Active')),
         {
             data: "transaction_type.type",
             title: __("Type"),
             render: function (data, type) {
                 if (type == 'filter') {
-                    return  data;
+                    return data;
                 }
-                return (  data === 'standard'
-                        ? '<i class="fa fa-money text-primary" title="' + __('Standard') + '"></i>'
-                        : '<i class="fa fa-line-chart text-primary" title="' + __('Investment') + '"></i>');
+                return (data === 'standard'
+                    ? '<i class="fa fa-money text-primary" title="' + __('Standard') + '"></i>'
+                    : '<i class="fa fa-line-chart text-primary" title="' + __('Investment') + '"></i>');
             },
             className: "text-center",
         },
@@ -245,12 +227,15 @@ window.table = $(tableSelector).DataTable({
             title: __("Actions"),
             render: function (data, _type, row) {
                 return dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                       dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                       dataTableHelpers.dataTablesActionButton(data, 'replace') +
-                       dataTableHelpers.dataTablesActionButton(data, 'delete') +
-                       (row.schedule
-                        ? '<a href="' + window.route('transaction.open', { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                          '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
+                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
+                    dataTableHelpers.dataTablesActionButton(data, 'delete') +
+                    (row.schedule
+                        ? '<a href="' + window.route('transaction.open', {
+                            transaction: data,
+                            action: 'enter'
+                        }) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
+                        '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
                         : '');
             },
             className: "dt-nowrap",
@@ -259,13 +244,13 @@ window.table = $(tableSelector).DataTable({
         }
     ],
     createdRow: function (row, data) {
-        if (!data.schedule_config.next_date) {
+        if (!data.transaction_schedule.next_date) {
             return;
         }
 
-        if (data.schedule_config.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('danger');
-        } else if (data.schedule_config.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
             $(row).addClass('warning');
         }
     },
@@ -319,47 +304,47 @@ let rebuildUrl = function () {
 
 // Initialize category tree view
 $(treeSelector)
-.jstree({
-    core: {
-        data: function (_obj, callback) {
-            fetch('/api/assets/categories?withInactive=1')
-                .then(response => response.json())
-                .then(data => {
-                    let categories = data.map(function(category) {
-                        var i = presetCategories.findIndex(cat => cat == category.id);
-                        presetCategories[i] = false;
+    .jstree({
+        core: {
+            data: function (_obj, callback) {
+                fetch('/api/assets/categories?withInactive=1')
+                    .then(response => response.json())
+                    .then(data => {
+                        let categories = data.map(function (category) {
+                            var i = presetCategories.findIndex(cat => cat == category.id);
+                            presetCategories[i] = false;
 
-                        return {
-                            id: category.id,
-                            parent: category.parent_id || '#',
-                            text: (category.active ? category.name : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>'),
-                            full_name: category.full_name,
-                            icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
-                            state: {
-                                selected: (i > -1)
+                            return {
+                                id: category.id,
+                                parent: category.parent_id || '#',
+                                text: (category.active ? category.name : '<span class="text-muted" title="' + __('Inactive') + '">' + category.name + '</span>'),
+                                full_name: category.full_name,
+                                icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
+                                state: {
+                                    selected: (i > -1)
+                                }
                             }
-                        }
-                    });
-                    callback.call(this, categories);
-                })
-		},
-        themes: {
-            dots: false
-          }
-    },
-    plugins: [
-        "checkbox"
-    ],
-    checkbox: {
-        keep_selected_style: false
-    },
-})
-.on('select_node.jstree', rebuildUrl)
-.on('deselect_node.jstree', rebuildUrl)
-.on('ready.jstree', function() {
-    elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
-    reloadData();
-});
+                        });
+                        callback.call(this, categories);
+                    })
+            },
+            themes: {
+                dots: false
+            }
+        },
+        plugins: [
+            "checkbox"
+        ],
+        checkbox: {
+            keep_selected_style: false
+        },
+    })
+    .on('select_node.jstree', rebuildUrl)
+    .on('deselect_node.jstree', rebuildUrl)
+    .on('ready.jstree', function () {
+        elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
+        reloadData();
+    });
 
 // Select all button function
 document.getElementById('all').addEventListener('click', function() {

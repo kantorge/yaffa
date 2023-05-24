@@ -71,11 +71,12 @@
                                 {{ __('Are you looking for any of these payees?') }}
                             </label>
                             <div class="col-sm-9">
-                                <ul class="list-unstyled">
+                                <ul class="list-unstyled" id="similar-payee-list">
                                     <li
                                         class="mt-2"
                                         v-for="payee in similarPayees"
                                         :key="payee.id"
+                                        :data-id="payee.id"
                                     >
                                         <a href="#" @click.prevent="onSelectPayee(payee)">
                                             {{ payee.name }}
@@ -169,11 +170,14 @@
                 const event = new Event("change", { bubbles: true, cancelable: true });
                 e.target.dispatchEvent(event);
             });
+
+            // Initialize modal
+            this.modal = new coreui.Modal(document.getElementById(this.id));
         },
 
         methods: {
             show() {
-                $(this.$el).modal();
+                this.modal.show()
             },
 
             resetForm() {
@@ -214,15 +218,15 @@
             },
 
             processAfterSubmit(response) {
-                setTimeout(this.hideAndReset(this), 1000);
+                setTimeout(this.hideAndReset, 1000);
 
                 // Let parent know about the new item
                 this.$emit('payeeSelected', response.data);
             },
 
-            hideAndReset(vm) {
-                vm.resetForm();
-                $(vm.$el).modal('hide');
+            hideAndReset() {
+                this.resetForm();
+                this.modal.hide();
             },
 
             onSubmit() {

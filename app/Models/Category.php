@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * App\Models\Category
@@ -16,17 +18,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property bool $active
  * @property int|null $parent_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read mixed $full_name
  * @property-read Category|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\AccountEntity[] $payeesNotPreferring
+ * @property-read \Illuminate\Database\Eloquent\Collection|AccountEntity[] $payeesNotPreferring
  * @property-read int|null $payees_not_preferring_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transaction
+ * @property-read \Illuminate\Database\Eloquent\Collection|Transaction[] $transaction
  * @property-read int|null $transaction_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItem
+ * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItem
  * @property-read int|null $transaction_item_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static Builder|Category active()
  * @method static \Database\Factories\CategoryFactory factory(...$parameters)
  * @method static Builder|Category newModelQuery()
@@ -56,7 +58,7 @@ class Category extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'name',
@@ -72,16 +74,7 @@ class Category extends Model
         'full_name',
     ];
 
-    public static function rules()
-    {
-        return [
-            'name' => 'required|min:2|max:191',
-            'active' => 'boolean',
-            'parent_id' => 'in:category,id',
-        ];
-    }
-
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class);
     }
@@ -94,23 +87,34 @@ class Category extends Model
     /**
      * Scope a query to only include active entities.
      *
-     * @param  Builder  $query
+     * @param Builder $query
      * @return Builder
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', 1);
     }
 
     /**
-     * Scope a query to only include top level categories.
+     * Scope a query to only include top level categories only.
      *
-     * @param  Builder  $query
+     * @param Builder $query
      * @return Builder
      */
-    public function scopeTopLevel($query)
+    public function scopeParentCategory(Builder $query): Builder
     {
         return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Scope a query to only include child categories only.
+     *
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeChildCategory(Builder $query): Builder
+    {
+        return $query->whereNotNull('parent_id');
     }
 
     public function user(): BelongsTo
@@ -118,18 +122,28 @@ class Category extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function transactionItem()
+    public function transactionItem(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
     }
 
     public function transaction()
     {
-        return $this->hasManyThrough(Transaction::class, TransactionItem::class, 'category_id', 'id', 'id', 'transaction_id');
+        return $this->hasManyThrough(
+            Transaction::class,
+            TransactionItem::class,
+            'category_id',
+            'id',
+            'id',
+            'transaction_id'
+        );
     }
 
     public function payeesNotPreferring()
     {
-        return $this->belongsToMany(AccountEntity::class, 'account_entity_category_preference')->where('preferred', false);
+        return $this->belongsToMany(
+            AccountEntity::class,
+            'account_entity_category_preference'
+        )->where('preferred', false);
     }
 }

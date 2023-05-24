@@ -61,12 +61,12 @@ class TransactionController extends Controller
         // Load all relevant relations
         $transaction->loadDetails();
 
-        // Show is routed to special view, and also further data is needed
+        // Show is routed to special view
         if ($action === 'show') {
-            return view('transactions.show', [
+            JavaScript::put([
                 'transaction' => $transaction,
-                'type' => $transaction->transactionType->type,
             ]);
+            return view('transactions.show');
         }
 
         // Adjust date and schedule settings, if entering a recurring item

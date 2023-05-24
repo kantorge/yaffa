@@ -49,7 +49,7 @@ const dateRangePicker = new DateRangePicker(
 
 let initialLoad = true;
 
-var dtHistory = $(selectorHistoryTable).DataTable({
+let dtHistory = $(selectorHistoryTable).DataTable({
     ajax: function (_data, callback, _settings) {
         if (initialLoad) {
             initialLoad = false;
@@ -81,11 +81,7 @@ var dtHistory = $(selectorHistoryTable).DataTable({
             .then((response) => response.json())
             .then((data) => {
                 let result = data.data
-                    .map(function (transaction) {
-                        transaction.date = new Date(transaction.date);
-
-                        return transaction;
-                    });
+                    .map(helpers.processTransaction);
 
                 callback({data: result});
             });
@@ -100,16 +96,13 @@ var dtHistory = $(selectorHistoryTable).DataTable({
                 if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                            ? (row.reconciled == 1
-                                    ? __('Reconciled')
-                                    : __('Uncleared')
-                            )
+                            ? (row.reconciled ? __('Reconciled') : __('Uncleared'))
                             : __('Unavailable')
                     );
                 }
                 return (!row.schedule
                     && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                        ? (row.reconciled == 1
+                        ? (row.reconciled
                                 ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                 : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
                         )
@@ -126,18 +119,26 @@ var dtHistory = $(selectorHistoryTable).DataTable({
         {
             data: 'id',
             title: __("Actions"),
-            render: function (data, _type, row) {
+            render: function (data) {
                 return dataTableHelpers.dataTablesActionButton(data, 'quickView') +
-                       dataTableHelpers.dataTablesActionButton(data, 'show') +
-                       dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                       dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                       dataTableHelpers.dataTablesActionButton(data, 'delete');
+                    dataTableHelpers.dataTablesActionButton(data, 'show') +
+                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                    dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
             searchable: false,
         }
     ],
+    /**
+     * Callback for every row created: mute scheduled transactions
+     *
+     * @param {Node} row
+     * @param {Object} data
+     * @property {boolean} data.schedule
+     * @returns {void}
+     */
     createdRow: function (row, data) {
         if (data.schedule) {
             $(row).addClass('text-muted text-italic');
@@ -163,29 +164,19 @@ var dtHistory = $(selectorHistoryTable).DataTable({
     paging: false,
 });
 
-var dtSchedule = $(selectorScheduleTable).DataTable({
+let dtSchedule = $(selectorScheduleTable).DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/schedule?account=' + account.id,
         type: 'GET',
         dataSrc: function (data) {
             return data.transactions
-                .map(function (transaction) {
-                    transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-                    if (transaction.schedule_config.next_date) {
-                        transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-                    }
-                    if (transaction.schedule_config.end_date) {
-                        transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-                    }
-
-                    return transaction;
-                })
-                .filter(transaction => transaction.schedule_config.next_date);
+                .map(helpers.processTransaction)
+                .filter(transaction => transaction.transaction_schedule.next_date);
         },
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('schedule_config.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefiniton.payee,
         dataTableHelpers.transactionColumnDefiniton.category,
         dataTableHelpers.transactionColumnDefiniton.amount,
@@ -195,29 +186,37 @@ var dtSchedule = $(selectorScheduleTable).DataTable({
             data: 'id',
             title: __("Actions"),
             defaultContent: '',
-            render: function (data, _type, row) {
-                return  '<button class="btn btn-xs btn-success create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Adjust and enter instance') + '"><i class="fa fa-fw fa-pencil"></i></button> ' +
-                        // TODO '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' +
-                        dataTableHelpers.dataTablesActionButton(data, 'skip') +
-                        dataTableHelpers.dataTablesActionButton(data, 'edit') +
-                        dataTableHelpers.dataTablesActionButton(data, 'clone') +
-                        dataTableHelpers.dataTablesActionButton(data, 'replace') +
-                        dataTableHelpers.dataTablesActionButton(data, 'delete');
+            render: function (data) {
+                return '<button class="btn btn-xs btn-success create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Adjust and enter instance') + '"><i class="fa fa-fw fa-pencil"></i></button> ' +
+                    dataTableHelpers.dataTablesActionButton(data, 'skip') +
+                    dataTableHelpers.dataTablesActionButton(data, 'edit') +
+                    dataTableHelpers.dataTablesActionButton(data, 'clone') +
+                    dataTableHelpers.dataTablesActionButton(data, 'replace') +
+                    dataTableHelpers.dataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",
             orderable: false,
             searchable: false,
         }
     ],
+    /**
+     * Callback for every row created: colorize the next date.
+     *
+     * @param {Node} row
+     * @param {Object} data
+     * @property {Object} data.transaction_schedule
+     * @property {Date} data.transaction_schedule.next_date
+     * @returns {void}
+     */
     createdRow: function (row, data) {
         // This data is required, but just to be on the safe side, let's validate it
-        if (!data.schedule_config.next_date) {
+        if (!data.transaction_schedule.next_date) {
             return;
         }
 
-        if (data.schedule_config.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
             $(row).addClass('table-danger');
-        } else if (data.schedule_config.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
             $(row).addClass('table-warning');
         }
     },
@@ -263,10 +262,10 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
             });
 
             var data = row.data();
-            var newNextDate = response.data.transaction.schedule_config.next_date;
+            var newNextDate = response.data.transaction.transaction_schedule.next_date;
             // If next date exists, update the row. Otherwise remove it.
             if (newNextDate) {
-                data.schedule_config.next_date = new Date(newNextDate);
+                data.transaction_schedule.next_date = new Date(newNextDate);
                 row.data(data).draw();
 
                 // Emit a custom event to global scope about the result
@@ -306,7 +305,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
 });
 
 // Define and run a function to get the account balance
-let getAccountBalance = function() {
+let getAccountBalance = function () {
     // Get the balance related elements
     let elementOpeningBalance = document.getElementById('overviewOpeningBalance');
     let elementCurrentCash = document.getElementById('overviewCurrentCash');
@@ -452,14 +451,17 @@ $('#create-standard-transaction-button').on('click', function () {
     recentTransactionDraftId = undefined;
 
     // Create transaction daft
-    const transaction = {};
-
-    transaction.transaction_type = 'withdrawal';
-    transaction.schedule = false;
-    transaction.budget = false;
-    transaction.date = new Date();
-    transaction.config = {};
-    transaction.config.account_from_id = account.id;
+    const transaction = {
+        transaction_type: {
+            name: 'withdrawal'
+        },
+        schedule: false,
+        budget: false,
+        date: new Date(),
+        config: {
+            account_from_id: account.id,
+        },
+    };
 
     // Dispatch event
     const event = new CustomEvent('initiateCreateFromDraft', {
@@ -471,20 +473,26 @@ $('#create-standard-transaction-button').on('click', function () {
     window.dispatchEvent(event);
 });
 
+// The following variable is used to store the current transaction being created.
+let recentTransactionDraftId;
+
 // Set up event listener for new investment transaction button
 $('#create-investment-transaction-button').on('click', function () {
     // TODO: should this data passed back and forth instead of storing it?
     recentTransactionDraftId = undefined;
 
     // Create transaction daft
-    const transaction = {};
-
-    transaction.transaction_type = 'Buy';
-    transaction.schedule = false;
-    transaction.budget = false;
-    transaction.date = new Date();
-    transaction.config = {};
-    transaction.config.account_id = account.id;
+    const transaction = {
+        transaction_type: {
+            name: 'Buy',
+        },
+        schedule: false,
+        budget: false,
+        date: new Date(),
+        config: {
+            account_id: account.id,
+        },
+    };
 
     // Dispatch event
     const event = new CustomEvent('initiateCreateFromDraft', {
@@ -496,34 +504,25 @@ $('#create-investment-transaction-button').on('click', function () {
     window.dispatchEvent(event);
 });
 
-// The following variable is used to store the current transaction being created.
-let recentTransactionDraftId;
-
 // Set up event listener that stores the currently selected transaction and dispatches an event
 $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', function () {
-    // TODO: should this data passed back and forth instead of storing it?
-    recentTransactionDraftId = $(this).data('draft');
+    // TODO: should this data be passed back and forth instead of storing it?
+    recentTransactionDraftId = Number($(this).data('draft'));
 
-    var transactions = [];
-    $(selectorScheduleTable).dataTable().api().data().each(function (d) {
-        transactions.push(d)
-    });
-
-    // Retrieve the transaction draft based on stored (draft) ID
-    const draft = transactions.find(transaction => transaction.id == recentTransactionDraftId);
+    const draft = dtSchedule.row($(this).parentsUntil('tr')).data();
     const transaction = Object.assign({}, draft);
 
-    // TODO: can this transaction type conversion be generalized elsewhere?
-    transaction.transaction_type = transaction.transaction_type.name;
-    transaction.config_type = 'transaction_detail_standard';
+    // Remove schedule and budget data
     transaction.schedule = false;
     transaction.budget = false;
-    transaction.date = transaction.schedule_config.next_date;
+
+    // Adjust the date to the next scheduled date
+    transaction.date = transaction.transaction_schedule.next_date;
 
     // Dispatch event
     const event = new CustomEvent('initiateEnterInstance', {
         detail: {
-            transaction: transaction
+            transaction: transaction,
         }
     });
     window.dispatchEvent(event);
@@ -543,89 +542,15 @@ window.addEventListener('transaction-created', function (event) {
         dtHistory.columns.adjust().draw();
     }, 2000);
 
-    // TODO: Adjust the next date of the original scheduled item, accounting for a completed schedule
-    // console.log(recentTransactionDraftId)
-});
-
-
-// Set up an event listener for immediately creating a transaction
-window.scheduleTable = $(selectorScheduleTable).on('click', 'button.record', function () {
-    recentTransactionDraftId = $(this).data('draft');
-    // TODO: Disable all the action buttons of this item
-
-    var transactions = [];
-    $(selectorScheduleTable).dataTable().api().data().each(function (d) {
-        transactions.push(d)
-    });
-
-    let transaction = transactions.find(transaction => transaction.id == $(this).data('draft'));
-
-    // Further data preparation
-    transaction.action = 'enter';
-    transaction.config_type = 'transaction_detail_standard';
-    transaction.items = [];
-    transaction.fromModal = true;
-    transaction.config.account_from_id = transaction.config.account_from.id;
-    transaction.config.account_to_id = transaction.config.account_to.id;
-
-    // If default category is set, use it as remaining payee default amount
-    if (transaction.config.account_to?.config.category) {
-        transaction.remaining_payee_default_amount = transaction.amount;
-        transaction.remaining_payee_default_category_id = transaction.config.account_to.config.category.id;
+    // If the transaction was created from a draft, then adjust the schedule
+    if (!recentTransactionDraftId) {
+        return;
     }
 
-    // Call the backend to create the transaction
-    const url = route('api.transactions.storeStandard');
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': window.csrfToken,
-        },
-        body: JSON.stringify(transaction)
-    })
-        .then((response) => {
-            if (response.statusText !== 'OK') {
-                throw new Error(response.statusText);
-            }
+    // Reload the schedule table
+    dtSchedule.ajax.reload();
 
-            response.json()
-        })
-        .then((data) => {
-            // Get the new transaction from the response
-            let transaction = data.transaction;
-
-            // TODO: This should be unified with the same modal behavior
-            // Emit a custom event to global scope about the new transaction to be displayed as a notification
-            let notificationEvent = new CustomEvent('notification', {
-                detail: {
-                    notification: {
-                        type: 'success',
-                        message: 'Transaction added (#' + transaction.id + ')',
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                        timeout: 10000,
-                    }
-                },
-            });
-            window.dispatchEvent(notificationEvent);
-
-            // Emit a custom event about the new transaction to be displayed
-            let transactionEvent = new CustomEvent('transaction-created', {
-                detail: {
-                    // Pass the entire transaction object to the event
-                    transaction: transaction,
-                }
-            });
-            window.dispatchEvent(transactionEvent);
-        })
-        .finally(() => {
-            // TODO: Re-enable all the action buttons of this item
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    // TODO: is there a more efficient way to do this instead of reloading the entire table?
 });
 
 // Listener for the date range presets

@@ -16,7 +16,7 @@ class GetCurrencyRates implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $currency;
+    public Currency $currency;
 
     /**
      * Create a new job instance.

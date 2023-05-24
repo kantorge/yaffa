@@ -23,7 +23,7 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->text(mt_rand(10, 25)),
+            'name' => $this->faker->unique()->word(),
             'active' => $this->faker->boolean(80),
             'parent_id' => null,
             'user_id' => User::inRandomOrder()->first()->id,

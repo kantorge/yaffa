@@ -7,23 +7,24 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 
 class TransactionSeeder extends Seeder
 {
-    private $tags;
+    private Collection $tags;
 
     /**
      * Run the database seeds by creating random values with factory
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         $this->tags = $user->tags;
 
         // Create standard withdrawals
         Transaction::factory()
             ->count(rand(10, 20))
-            ->withdrawal($user)
+            ->withdrawal()
             ->create([
                 'user_id' => $user->id,
             ])
@@ -56,7 +57,6 @@ class TransactionSeeder extends Seeder
             ->withdrawal_schedule()
             ->create([
                 'user_id' => $user->id,
-                'reconciled' => false,
             ])
             ->each(function ($transaction) {
                 $this->createTransactionSchedule($transaction);
@@ -72,7 +72,7 @@ class TransactionSeeder extends Seeder
             ]);
     }
 
-    private function createTransactionSchedule(Transaction $transaction)
+    private function createTransactionSchedule(Transaction $transaction): void
     {
         TransactionSchedule::factory()
             ->create([
@@ -80,7 +80,7 @@ class TransactionSeeder extends Seeder
             ]);
     }
 
-    private function createTransactionProperties(Transaction $transaction)
+    private function createTransactionProperties(Transaction $transaction): void
     {
         $newTransactionItems = TransactionItem::factory()
             ->count(rand(1, 5))
@@ -100,7 +100,7 @@ class TransactionSeeder extends Seeder
             );
         });
 
-        //update totals
+        // Update totals
         $transaction->config->amount_from = $transaction->config->amount_to = $transaction->transactionItems->sum('amount');
 
         $transaction->transactionItems()->saveMany($newTransactionItems);

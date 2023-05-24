@@ -20,7 +20,7 @@ class TransactionDetailStandardFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [];
     }
@@ -28,9 +28,9 @@ class TransactionDetailStandardFactory extends Factory
     /**
      * Transaction type is WITHDRAWAL
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function withdrawal()
+    public function withdrawal(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -45,9 +45,9 @@ class TransactionDetailStandardFactory extends Factory
     /**
      * Transaction type is DEPOSIT
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function deposit()
+    public function deposit(): Factory
     {
         return $this->state(function (array $attributes) {
             return [
@@ -62,9 +62,9 @@ class TransactionDetailStandardFactory extends Factory
     /**
      * Transaction type is TRANSFER
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
-    public function transfer()
+    public function transfer(): Factory
     {
         return $this->state(function (array $attributes) {
             $accounts = AccountEntity::where('config_type', 'account')->inRandomOrder()->take(2)->get();

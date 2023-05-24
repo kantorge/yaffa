@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
+use App\Models\Account;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -88,16 +89,16 @@ class TransactionApiController extends Controller
         $categories = $this->categoryService->getChildCategories($request);
 
         // Get all standard transactions
-        $standardTransactions = Transaction::with(
-            [
-                'config',
-                'transactionType',
-                'transactionSchedule',
-                'transactionItems',
-                'transactionItems.category',
-                'transactionItems.tags',
-            ]
-        )
+        $standardTransactions = Transaction::with([
+            'config',
+            'config.accountFrom',
+            'config.accountTo',
+            'transactionType',
+            'transactionSchedule',
+            'transactionItems',
+            'transactionItems.category',
+            'transactionItems.tags',
+        ])
             ->where('user_id', Auth::user()->id)
             ->byScheduleType($type)
             ->where(
@@ -122,7 +123,19 @@ class TransactionApiController extends Controller
                     $query->whereIn('category_id', $categories->pluck('id'));
                 });
             })
-            ->get();
+            ->get()
+            ->loadMorph(
+                'config.accountFrom',
+                [
+                    Account::class => ['config', 'config.currency'],
+                ]
+            )
+            ->loadMorph(
+                'config.accountTo',
+                [
+                    Account::class => ['config', 'config.currency'],
+                ]
+            );
 
         // Return empty collection if categories are required
         if ($request->has('category_required')) {
@@ -131,6 +144,9 @@ class TransactionApiController extends Controller
             // Get all investment transactions
             $investmentTransactions = Transaction::with([
                 'config',
+                'config.account',
+                'config.account.config',
+                'config.account.config.currency',
                 'config.investment',
                 'transactionType',
                 'transactionSchedule',
@@ -155,15 +171,9 @@ class TransactionApiController extends Controller
                 ->get();
         }
 
-        // Unify and merge two transaction types
-        $transactions = $standardTransactions
-            ->map(fn ($transaction) => $transaction->transformToClient())
-            ->union($investmentTransactions
-                ->map(fn ($transaction) => $transaction->transformToClient()));
-
         return response()->json(
             [
-                'transactions' => $transactions->values(),
+                'transactions' => $standardTransactions->concat($investmentTransactions),
             ],
             Response::HTTP_OK
         );
@@ -269,7 +279,7 @@ class TransactionApiController extends Controller
             $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
                 ->where('config_type', 'transaction_detail_investment')
-                // TODO: How to create a a query with no results in a more simple way?
+                // TODO: How to create a query with no results in a more simple way?
                 ->where('id', null);
         }
 
@@ -297,36 +307,36 @@ class TransactionApiController extends Controller
                 'transactionItems.category',
             ])
             ->get()
-            ->loadMorph('config', [
-                TransactionDetailStandard::class => ['config'],
-            ]);
+            ->loadMorph(
+                'config.accountFrom',
+                [
+                    Account::class => ['config', 'config.currency'],
+                ]
+            )
+            ->loadMorph(
+                'config.accountTo',
+                [
+                    Account::class => ['config', 'config.currency'],
+                ]
+            );
 
         $investmentTransactions = $investmentQuery
             ->with([
                 'config',
+                'config.account',
+                'config.account.config',
+                'config.account.config.currency',
+                'config.investment',
                 'transactionType',
+                'transactionSchedule',
             ])
-            ->get()
-            ->loadMorph('config', [
-                TransactionDetailInvestment::class => ['config'],
-            ]);
+            ->get();
 
-        // Preprocess data
-        $transactions = $standardTransactions
-            ->map(fn ($transaction) => $transaction->transformToClient())
-            ->merge(
-                $investmentTransactions
-                    ->map(fn ($transaction) => $transaction->transformToClient())
-            );
-
-        $data = $transactions
-            ->sortBy('date')
-            ->sortByDesc('transactionType')
-            ->values();
+        $transactions = $standardTransactions->merge($investmentTransactions);
 
         return response()->json(
             [
-                'data' => $data,
+                'data' => $transactions,
             ],
             Response::HTTP_OK
         );
@@ -398,11 +408,12 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
-        return response()->json(
-            [
-                'transaction' => $transaction->transformToClient(),
-            ]
-        );
+        // Ensure that the transaction is loaded with all relations
+        $transaction->loadDetails();
+
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     public function storeInvestment(TransactionRequest $request): JsonResponse
@@ -453,11 +464,12 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
-        return response()->json(
-            [
-                'transaction' => $transaction->transformToClient(),
-            ]
-        );
+        // Ensure that the transaction is loaded with all relations
+        $transaction->loadDetails();
+
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
@@ -502,7 +514,8 @@ class TransactionApiController extends Controller
         $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
         // Handle default payee amount, if present, by adding amount as an item
-        if (array_key_exists('remaining_payee_default_amount', $validated) && $validated['remaining_payee_default_amount'] > 0) {
+        if (array_key_exists('remaining_payee_default_amount', $validated)
+            && $validated['remaining_payee_default_amount'] > 0) {
             $newItem = TransactionItem::create(
                 [
                     'transaction_id' => $transaction->id,
@@ -524,11 +537,12 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
-        return response()->json(
-            [
-                'transaction' => $transaction->transformToClient(),
-            ]
-        );
+        // Ensure that the transaction is loaded with all relations
+        $transaction->loadDetails();
+
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
@@ -570,11 +584,12 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
-        return response()->json(
-            [
-                'transaction' => $transaction->transformToClient(),
-            ]
-        );
+        // Ensure that the transaction is loaded with all relations
+        $transaction->loadDetails();
+
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     private function processTransactionItem($transactionItems, $transactionId): array
@@ -626,11 +641,9 @@ class TransactionApiController extends Controller
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
-        return response()->json(
-            [
-                'transaction' => $transaction,
-            ]
-        );
+        return response()->json([
+            'transaction' => $transaction,
+        ]);
     }
 
     /**

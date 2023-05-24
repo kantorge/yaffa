@@ -73,8 +73,6 @@ class TransactionDetailInvestment extends Model
     ];
 
     protected $casts = [
-        'account_id' => 'integer',
-        'investment_id' => 'integer',
         'price' => 'float',
         'quantity' => 'float',
         'commission' => 'float',
@@ -92,6 +90,11 @@ class TransactionDetailInvestment extends Model
         return $this->belongsTo(AccountEntity::class, 'account_id');
     }
 
+    /**
+     * Get the investment details associated with the transaction.
+     *
+     * @return BelongsTo
+     */
     public function investment(): BelongsTo
     {
         return $this->belongsTo(Investment::class, 'investment_id');

@@ -81,6 +81,8 @@ class AccountApiController extends Controller
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
             ->where('account_entities.user_id', $parameters['user']->id)
+            // Take only accounts
+            ->where('account_entities.config_type', 'account')
             ->groupBy("transaction_details_standard.account_{$type}_id")
             ->orderByRaw('count(*) DESC')
             ->when($parameters['limit'] !== 0, function ($query) use ($parameters) {

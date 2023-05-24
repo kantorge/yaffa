@@ -67,4 +67,40 @@ class TransactionDetailInvestmentFactory extends Factory
             ];
         });
     }
+
+    /**
+     * Transaction type is SELL
+     *
+     * @return Factory
+     */
+    public function sell(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => null,
+            ];
+        });
+    }
+
+    /**
+     * Transaction type is DIVIDEND
+     *
+     * @return Factory
+     */
+    public function dividend(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'price' => null,
+                'quantity' => null,
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => $this->faker->randomFloat(4, 0.0001, 100),
+            ];
+        });
+    }
 }

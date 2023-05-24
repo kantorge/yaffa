@@ -104,6 +104,10 @@ class Transaction extends Model
         'budget' => 'boolean',
     ];
 
+    protected $appends = [
+        'transaction_currency',
+    ];
+
     public function config(): MorphTo
     {
         return $this->morphTo();
@@ -193,9 +197,9 @@ class Transaction extends Model
             $operator = $this->transactionType->amount_operator;
             if ($operator) {
                 return ($operator === 'minus' ? -1 : 1) * $this->config->price * $this->config->quantity
-                        + $this->config->dividend
-                        - $this->config->tax
-                        - $this->config->commission;
+                    + $this->config->dividend
+                    - $this->config->tax
+                    - $this->config->commission;
             }
         }
 
@@ -205,16 +209,19 @@ class Transaction extends Model
     // Generic function to load necessary relations, based on transaction type
     public function loadDetails(): void
     {
+        if ($this->transactionType->type === 'standard') {
+            $this->loadStandardDetails();
+            return;
+        }
         if ($this->transactionType->type === 'investment') {
             $this->loadInvestmentDetails();
-        } else {
-            $this->loadStandardDetails();
+            return;
         }
     }
 
     private function loadStandardDetails(): void
     {
-        $this->load([
+        $this->loadMissing([
             'config',
             'config.accountFrom',
             'config.accountTo',
@@ -226,7 +233,7 @@ class Transaction extends Model
         ]);
 
         if ($this->transactionType->name === 'withdrawal') {
-            $this->load([
+            $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
                 'config.accountTo.config',
@@ -234,7 +241,7 @@ class Transaction extends Model
         }
 
         if ($this->transactionType->name === 'deposit') {
-            $this->load([
+            $this->loadMissing([
                 'config.accountTo.config',
                 'config.accountTo.config.currency',
                 'config.accountFrom.config',
@@ -242,7 +249,7 @@ class Transaction extends Model
         }
 
         if ($this->transactionType->name === 'transfer') {
-            $this->load([
+            $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
                 'config.accountTo.config',
@@ -253,7 +260,7 @@ class Transaction extends Model
 
     private function loadInvestmentDetails(): void
     {
-        $this->load([
+        $this->loadMissing([
             'config',
             'config.account',
             'config.account.config',
@@ -264,170 +271,37 @@ class Transaction extends Model
         ]);
     }
 
-    public function transformToClient(): array
+    public function getTransactionCurrencyAttribute(): ?Currency
     {
-        // Standard
-        if ($this->config_type === 'transaction_detail_standard') {
-            return array_merge(
-                $this->transformDataCommon(),
-                $this->transformDataStandard(),
-                [
-                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency(),
-                ]
-            );
-        }
-
-        // Investment
-        if ($this->config_type === 'transaction_detail_investment') {
-            return array_merge(
-                $this->transformDataCommon(),
-                $this->transformDataInvestment(),
-                [
-                    'currency' => $this->transactionCurrency() ?? $this->getBaseCurrency(),
-                ]
-            );
-        }
-
-        return [];
-    }
-
-    private function transformDataCommon(): array
-    {
-        $transaction = $this;
-
-        // Prepare schedule related data if schedule is set
-        $schedule = null;
-        if ($transaction->transactionSchedule) {
-            $schedule = [
-                'start_date' => $transaction->transactionSchedule->start_date->toISOString(),
-                'next_date' => ($transaction->transactionSchedule->next_date ? $transaction->transactionSchedule->next_date->toISOString() : null),
-                'end_date' => ($transaction->transactionSchedule->end_date ? $transaction->transactionSchedule->end_date->toISOString() : null),
-                'frequency' => $transaction->transactionSchedule->frequency,
-                'count' => $transaction->transactionSchedule->count,
-                'interval' => $transaction->transactionSchedule->interval,
-            ];
-        }
-
-        return [
-            'id' => $transaction->id,
-            'date' => $transaction->date,  // Change compared to schedule controller
-            'transaction_type' => $transaction->transactionType->toArray(),
-            'config_type' => $transaction->config_type,
-            'schedule_config' => $schedule,
-            'schedule' => $transaction->schedule,
-            'budget' => $transaction->budget,
-            'comment' => $transaction->comment,
-            'reconciled' => $transaction->reconciled,
-        ];
-    }
-
-    private function transformDataStandard(): array
-    {
-        if (! $this->transactionItems) {
-            $this->load([
-                'transactionItems',
-                'transactionItems.category',
-                'transactionItems.tags',
-            ]);
-        }
-
-        // TODO: replace with eager loading
-        $allAccounts = AccountEntity::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        $transaction = $this;
-        $transactionArray = $this->toArray();
-
-        return [
-            'config' => [
-                'account_from_id' => $transaction->config->account_from_id,
-                'account_from' => [
-                    'name' => $allAccounts[$transaction->config->account_from_id] ?? null,
-                    'id' => $transaction->config->account_from_id,
-                ],
-                'account_to_id' => $transaction->config->account_to_id,
-                'account_to' => [
-                    'name' => $allAccounts[$transaction->config->account_to_id] ?? null,
-                    'id' => $transaction->config->account_to_id,
-                ],
-                'amount_from' => $transaction->config->amount_from,
-                'amount_to' => $transaction->config->amount_to,
-            ],
-            'transaction_items' => $transactionArray['transaction_items'],
-            'tags' => $this->tags()->values(),
-            'categories' => $this->categories()->values(),
-        ];
-    }
-
-    private function transformDataInvestment(): array
-    {
-        // TODO: replace with eager loading
-        $allAccounts = AccountEntity::where('user_id', Auth::user()->id)
-            ->pluck('name', 'id')
-            ->all();
-
-        $transaction = $this;
-        $amount = $transaction->cashflowValue();
-
-        return [
-            'config' => [
-                'account' => [
-                    'name' => $allAccounts[$transaction->config->account_id],
-                    'id' => $transaction->config->account_id,
-                ],
-                'investment' => [
-                    'name' => $transaction->config->investment->name,
-                    'id' => $transaction->config->investment_id,
-                ],
-                // TODO: does this need to follow from-to convention?
-                'account_from_id' => $transaction->config->account_id,
-                'account_from' => [
-                    'name' => $allAccounts[$transaction->config->account_id],
-                    'id' => $transaction->config->account_id,
-                ],
-                'account_to_id' => $transaction->config->investment_id,
-                'account_to' => [
-                    'name' => $transaction->config->investment->name,
-                    'id' => $transaction->config->investment_id,
-                ],
-                'amount_from' => $amount,
-                'amount_to' => $amount,
-            ],
-            'tags' => [],
-
-            'investment_name' => $transaction->config->investment->name,
-            'quantity' => $transaction->config->quantity,
-            'price' => $transaction->config->price,
-        ];
+        return $this->transactionCurrency() ?? $this->getBaseCurrency();
     }
 
     public function transactionCurrency()
     {
         if ($this->config_type === 'transaction_detail_standard') {
             if ($this->transaction_type === 'deposit') {
-                $this->load([
+                $this->loadMissing([
                     'config',
                     'config.accountTo',
                     'config.accountTo.config',
                     'config.accountTo.config.currency',
                 ]);
 
-                return $this->config?->accountTo?->currency;
+                return $this->config?->accountTo?->config->currency;
             }
 
-            return $this->config?->accountFrom?->currency;
+            return $this->config?->accountFrom?->config->currency;
         }
 
         if ($this->config_type === 'transaction_detail_investment') {
-            $this->load([
+            $this->loadMissing([
                 'config',
                 'config.account',
                 'config.account.config',
                 'config.account.config.currency',
             ]);
 
-            return $this->config->account->currency;
+            return $this->config->account->config->currency;
         }
 
         return null;

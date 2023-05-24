@@ -214,20 +214,20 @@ export let transactionColumnDefiniton = {
         render: function (_data, _type, row) {
             if (row.transaction_type.type === 'standard') {
                 if (row.transaction_type.name === 'withdrawal') {
-                    return row.config.account_to.name;
+                    return row.config.account_to?.name;
                 }
                 if (row.transaction_type.name === 'deposit') {
-                    return row.config.account_from.name;
+                    return row.config.account_from?.name;
                 }
                 if (row.transaction_type.name === 'transfer') {
                     return __('Transfer from :account_from to :account_to', {
-                        account_from: row.config.account_from.name,
-                        account_to: row.config.account_to.name
+                        account_from: row.config.account_from?.name,
+                        account_to: row.config.account_to?.name
                     });
                 }
             }
             if (row.transaction_type.type === 'investment') {
-                return row.config.account_to.name;
+                return row.config.account.name;
             }
 
             // Special case for history view
@@ -265,16 +265,14 @@ export let transactionColumnDefiniton = {
                     return row.transaction_type.name;
                 }
                 if (!row.transaction_type.amount_operator) {
-                    return row.transaction_type.name + " " + row.quantity;
+                    return row.transaction_type.name + " " + row.config.quantity;
                 }
 
-                return row.transaction_type.name + " " + row.quantity.toLocaleString(window.YAFFA.locale, {
+                return row.transaction_type.name + " " + row.config.quantity.toLocaleString(window.YAFFA.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
-                }) + " @ " + helpers.toFormattedCurrency(row.price, window.YAFFA.locale, row.currency);
+                }) + " @ " + helpers.toFormattedCurrency(row.config.price, window.YAFFA.locale, row.transaction_currency);
             }
-
-            return '';
         },
         orderable: false
     },
@@ -293,13 +291,31 @@ export let transactionColumnDefiniton = {
                     if (row.transaction_type.amount_operator === 'plus') {
                         prefix = '+ ';
                     }
+
+                    return prefix + helpers.toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.transaction_currency);
                 }
-                return prefix + helpers.toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.currency);
+                if (row.transaction_type.type === 'investment') {
+                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
+
+                    if (row.transaction_type.amount_operator === 'minus') {
+                        prefix = '- ';
+                        amount = amount + row.config.commission + row.config.tax ;
+                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                    }
+                    if (row.transaction_type.amount_operator === 'plus') {
+                        prefix = '+ ';
+                        amount = amount - row.config.commission - row.config.tax ;
+                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                    }
+                }
             }
 
-            return row.config.amount_to;
+            if (row.transaction_type.type === 'standard') {
+                return row.config.amount_to;
+            }
         },
         className: 'dt-nowrap',
+        type: 'num',
     },
 
     // Transaction comment (truncated)
@@ -319,11 +335,9 @@ export let transactionColumnDefiniton = {
         title: __('Tags'),
         defaultContent: '',
         render: function (data) {
-            if (!data || data.length === 0) {
-                return '';
+            if (data?.length > 0) {
+                return data.map(tag => tag.name).join(', ');
             }
-
-            return data.map(tag => tag.name).join(', ');
         }
     }
 }

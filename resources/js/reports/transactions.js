@@ -3,6 +3,7 @@ require ('datatables.net-bs5');
 require('datatables.net-responsive-bs5');
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
+import * as helpers from './../helpers';
 
 require('select2');
 
@@ -73,11 +74,7 @@ window.table = $(tableSelector).DataTable({
             d.date_to = dates[1];
         },
         dataSrc: function (json) {
-            return json.data.map(function(transaction) {
-                transaction.date = new Date(transaction.date);
-
-                return transaction;
-            });
+            return json.data.map(helpers.processTransaction);
         }
     },
     processing: true,

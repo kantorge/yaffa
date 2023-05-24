@@ -11,11 +11,11 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 form-group">
-                            <label for="account">{{ __('Select account') }}</label>
+                            <label for="account">{{ __('Target account') }}</label>
                             <select name="account" id="account" class="form-control"></select>
                         </div>
                         <div class="col-md-6 form-group">
-                            <label for="csv_file">{{ __('File') }}</label>
+                            <label for="csv_file">{{ __('File') }}</label><br>
                             <input type="file" class="form-control-file" id="csv_file" name="file" disabled>
                         </div>
                         <div class="col-md-2 form-group">

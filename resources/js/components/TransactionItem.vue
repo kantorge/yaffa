@@ -241,18 +241,6 @@
                         data: data
                     }
                 });
-                /*
-                elementTags.select2(
-                    'data',
-                    this.tags.map(function(tag) {
-                        return {
-                            id: tag.id,
-                            tag: tag.name,
-                        }
-                    })
-                );
-                */
-                //console.log(elementTags.select2('data'));
             }
         },
 
