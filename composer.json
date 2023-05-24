@@ -43,8 +43,7 @@
         "nunomaduro/phpinsights": "^2.0",
         "phpunit/phpunit": "^9.5",
         "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
-        "spatie/laravel-ignition": "^1.6.4",
-        "yaroslawww/laravel-dusk-reporter": "^3.1"
+        "spatie/laravel-ignition": "^1.6.4"
     },
     "config": {
         "discard-changes": true,

@@ -25,7 +25,7 @@ use function with;
 use function tap;
 use function optional;
 
-/**
+    /**
      * PhpStorm Meta file, to provide autocomplete information for PhpStorm
      *
      * @author Barry vd. Heuvel <barryvdh@gmail.com>
@@ -2399,4 +2399,5 @@ use function optional;
     override(with(0), type(0));
     override(tap(0), type(0));
     override(optional(0), type(0));
+
 }
