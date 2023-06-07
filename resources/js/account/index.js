@@ -68,6 +68,16 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Account group"),
         },
         {
+            data: 'alias',
+            title: __('Import alias'),
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.replace('\n', '<br>') : __('Not set'));
+                }
+                return data;
+            }
+        },
+        {
             data: "id",
             title: __("Actions"),
             render: function (data, _type, row) {
@@ -80,6 +90,11 @@ window.table = $(dataTableSelector).DataTable({
             searchable: false,
         }
     ],
+    createdRow: function(row, data) {
+        if (!data.alias) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
+        }
+    },
     order: [
         [ 0, 'asc' ]
     ],

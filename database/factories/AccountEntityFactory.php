@@ -29,6 +29,7 @@ class AccountEntityFactory extends Factory
             'name' => $this->faker->unique()->word(),
             'active' => $this->faker->boolean(80),
             'user_id' => User::inRandomOrder()->first()->id,
+            'alias' => $this->faker->boolean(50) ? $this->faker->word() : null,
         ];
     }
 

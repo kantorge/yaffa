@@ -156,6 +156,19 @@
                     </select>
                 </div>
             </div>
+
+            <div class="row mb-3">
+                <label for="alias" class="col-form-label col-sm-3">
+                    {{ __('Import alias') }}
+                </label>
+                <div class="col-sm-9">
+                            <textarea
+                                    class="form-control"
+                                    id="alias"
+                                    name="alias"
+                            >{{old('alias', $account->alias ?? '' )}}</textarea>
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             @csrf

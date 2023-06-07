@@ -77,6 +77,7 @@ class AccountEntity extends Model
         'config_type',
         'config_id',
         'user_id',
+        'alias',
     ];
 
     protected $hidden = ['config_id'];
