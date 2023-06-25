@@ -25,6 +25,10 @@
         @case('replace')
             {{ __('Clone scheduled transaction and close base item') }}
             @break
+
+        @case('finalize')
+            {{ __('Finalize draft transaction') }}
+            @break
     @endswitch
 @endsection
 
@@ -34,9 +38,13 @@
         <div id="app">
             <transaction-container-standard
                 action = "{{ $action }}"
-                @if($transaction)
+                @if ($transaction)
                     :transaction = "{{ $transaction }}"
                 @endif
+                @if (isset($source_id))
+                    :source-id = "{{ $source_id }}"
+                @endif
+                dusk="transaction-container-standard"
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')

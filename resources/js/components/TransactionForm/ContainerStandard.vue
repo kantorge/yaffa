@@ -3,6 +3,7 @@
             :action="action"
             :initial-callback="callback"
             :transaction="transactionData"
+            :source-id="sourceId"
             @cancel="onCancel"
             @success="onSuccess"
     ></transaction-form-standard>
@@ -40,6 +41,10 @@ export default {
                     amount_to: null,
                 },
             }
+        },
+        sourceId: {
+            type: Number,
+            default: null,
         },
     },
 

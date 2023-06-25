@@ -34,7 +34,7 @@ class TransactionRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'action' => 'required|in:create,edit,clone,enter,replace',
+            'action' => 'required|in:create,edit,clone,enter,replace,finalize',
             'fromModal' => 'nullable|boolean',
 
             'id' => 'nullable|exists:transactions,id',
@@ -44,6 +44,8 @@ class TransactionRequest extends FormRequest
             'schedule' => 'boolean',
             'budget' => 'boolean',
             'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
+
+            'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled

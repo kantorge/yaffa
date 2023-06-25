@@ -93,6 +93,21 @@
 
     <li class="nav-group" aria-expanded="false">
         <a class="nav-link nav-group-toggle" href="#">
+            <i class="nav-icon fa-solid fa-microchip"></i>
+            {{ __('Automation') }}
+        </a>
+        <ul class="nav-group-items">
+            <x-nav-link
+                href="{{ route('received-mail.index') }}"
+                iconClasses="fa-solid fa-envelope"
+                text="{{ __('Received emails')  }}"
+
+            />
+        </ul>
+    </li>
+
+    <li class="nav-group" aria-expanded="false">
+        <a class="nav-link nav-group-toggle" href="#">
             <i class="nav-icon fa fa-bolt"></i>
             {{ __('Quick actions') }}
         </a>

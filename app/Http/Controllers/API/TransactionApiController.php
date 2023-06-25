@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Account;
+use App\Models\ReceivedMail;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
@@ -400,6 +401,14 @@ class TransactionApiController extends Controller
             $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
 
             $sourceTransaction->push();
+        }
+
+        // Save reference to incoming mail, if finalizing a transaction from email
+        if ($validated['action'] === 'finalize' && $validated['source_id']) {
+            $mail = ReceivedMail::find($validated['source_id']);
+            $mail->transaction_id = $transaction->id;
+            $mail->handled = true;
+            $mail->save();
         }
 
         // Create notification only if invoked from standalone view (not modal)

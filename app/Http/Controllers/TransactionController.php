@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountEntity;
 use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
+use Exception;
 
 class TransactionController extends Controller
 {
@@ -122,5 +125,56 @@ class TransactionController extends Controller
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
 
         return redirect()->back();
+    }
+
+    public function createFromDraft(Request $request)
+    {
+        /**
+         * @post('/transactions/create-from-draft')
+         * @name('transactions.createFromDraft')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        $transactionData = json_decode($request->input('transaction'), true);
+
+        // Make a new transaction from the draft
+        $transaction = new Transaction($transactionData);
+
+        // Try to add relation for transaction type, if it exists
+        try {
+            $transaction->transaction_type = [
+                'name' => $transactionData['transaction_type']['name'],
+            ];
+        } catch (Exception $e) {
+            $transaction->transaction_type = [
+                'name' => 'withdrawal',
+            ];
+        }
+
+        // Ensure that a config relation exists, even if it's empty
+        if (! array_key_exists('config', $transactionData)) {
+            $transactionData['config'] = [];
+        }
+        $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
+
+        // Try to add relation for account and payee, if they exist
+        if ($transactionData['config']['account_from_id'] ?? null !== null) {
+            $transaction->config->setRelation('account_from', AccountEntity::find($transactionData['config']['account_from_id']));
+        }
+        if ($transactionData['config']['account_to_id'] ?? null !== null) {
+            $transaction->config->setRelation('account_to', AccountEntity::find($transactionData['config']['account_to_id']));
+        }
+
+        // Ensure that the transaction is basic
+        $transaction->schedule = false;
+        $transaction->budget = false;
+        $transaction->reconciled = false;
+
+        return view('transactions.form', [
+            'transaction' => $transaction,
+            'action' => 'finalize',
+            'type' => 'standard', // TODO: Make this dynamic to support investments
+            'source_id' => $request->input('mail_id'),
+        ]);
     }
 }

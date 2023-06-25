@@ -10,6 +10,7 @@ use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
 use App\Http\Controllers\MainController;
+use App\Http\Controllers\ReceivedMailController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
@@ -69,8 +70,13 @@ Route::get('/transactions/{transaction}/{action}', [TransactionController::class
 
 Route::patch('/transactions/{transaction}/skip', [TransactionController::class, 'skipScheduleInstance'])
     ->name('transactions.skipScheduleInstance');
+Route::post('/transactions/create-from-draft', [TransactionController::class, 'createFromDraft'])
+    ->name('transactions.createFromDraft');
 Route::resource('transactions', TransactionController::class)
     ->only(['destroy']);
+
+Route::resource('received-mail', ReceivedMailController::class)
+    ->only(['index', 'show', 'destroy']);
 
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');

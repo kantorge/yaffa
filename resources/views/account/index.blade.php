@@ -69,6 +69,4 @@
             </div>
         </div>
     </div>
-
-    @include('template.components.model-delete-form')
 @stop
