@@ -641,9 +641,12 @@ class TransactionApiController extends Controller
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
 
-        return response()->json([
-            'transaction' => $transaction,
-        ]);
+        return response()->json(
+            [
+                'transaction' => $transaction,
+            ],
+            Response::HTTP_OK
+        );
     }
 
     /**

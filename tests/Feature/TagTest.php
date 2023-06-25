@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Tag;
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -39,7 +40,7 @@ class TagTest extends TestCase
     /** @test */
     public function unverified_user_cannot_access_resource()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
+        /** @var Authenticatable $user_unverified */
         $user_unverified = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -63,7 +64,7 @@ class TagTest extends TestCase
         $user1 = User::factory()->create();
         $tag = $this->createForUser($user1, $this->base_model);
 
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
+        /** @var Authenticatable $user2 */
         $user2 = User::factory()->create();
 
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $tag))->assertStatus(Response::HTTP_FORBIDDEN);

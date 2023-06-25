@@ -113,6 +113,11 @@ class Transaction extends Model
         return $this->morphTo();
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function transactionType(): BelongsTo
     {
         return $this->belongsTo(TransactionType::class);

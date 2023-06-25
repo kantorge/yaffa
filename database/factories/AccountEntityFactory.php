@@ -9,6 +9,9 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @template TModel of Model
+ */
 class AccountEntityFactory extends Factory
 {
     /**
@@ -29,7 +32,7 @@ class AccountEntityFactory extends Factory
             'name' => $this->faker->unique()->word(),
             'active' => $this->faker->boolean(80),
             'user_id' => User::inRandomOrder()->first()->id,
-            'alias' => $this->faker->boolean(50) ? $this->faker->word() : null,
+            'alias' => $this->faker->boolean(30) ? $this->faker->word() : null,
         ];
     }
 
@@ -44,7 +47,7 @@ class AccountEntityFactory extends Factory
                 'name' => $this->faker->company(),
                 'config_type' => 'payee',
                 'config_id' => Payee::factory()->create([
-                    'category_id' => $this->faker->boolean(50) ? $user->categories()->inRandomOrder()->first()->id : null,
+                    'category_id' => $this->faker->boolean() ? $user->categories()->inRandomOrder()->first()->id : null,
                 ])->id,
             ];
         });

@@ -20,7 +20,7 @@ trait CurrencyTrait
     public function allCurrencyRatesByMonth(bool $withCarbonDates = true, bool $onlyToBaseCurrency = true): Collection
     {
         $baseCurrency = $this->getBaseCurrency();
-        if (! $baseCurrency) {
+        if (!$baseCurrency) {
             return new Collection();
         }
 
@@ -57,6 +57,10 @@ trait CurrencyTrait
      */
     public function getBaseCurrency(): ?Currency
     {
+        if (!Auth::check()) {
+            return null;
+        }
+
         return Auth::user()
             ->currencies()
             ->where('base', 1)

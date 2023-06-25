@@ -47,7 +47,10 @@
                     </div>
                 </div>
                 <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
-                    @include('template.components.tablefilter-sidebar-active')
+                    <x-tablefilter-sidebar-switch
+                            label=" {{ __('Active') }}"
+                            property="active"
+                    />
                     @include('template.components.tablefilter-sidebar-search')
                 </ul>
             </div>

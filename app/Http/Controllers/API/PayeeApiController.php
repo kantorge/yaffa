@@ -287,7 +287,7 @@ class PayeeApiController extends Controller
      * Get existing payees that are similar to the given name.
      * Optionally limit search to active or inactive payees.
      */
-    public function getSimilarPayees(Request $request)
+    public function getSimilarPayees(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/payee/similar')
@@ -310,13 +310,16 @@ class PayeeApiController extends Controller
 
             return $payee;
         })
-            ->filter(fn ($payee) => true || $payee->percentage > 80)
             ->sortByDesc('percentage')
             ->take(5)
             ->values();
 
-        // Return response with payees
-        return response($payees, Response::HTTP_OK);
+        // Return JSON response with payees
+        return response()
+            ->json(
+                $payees,
+                Response::HTTP_OK
+            );
     }
 
     /**
@@ -325,7 +328,7 @@ class PayeeApiController extends Controller
      * @param  AccountEntity  $accountEntity
      * @return JsonResponse
      */
-    public function getItem(AccountEntity $accountEntity)
+    public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
          * @get('/api/assets/payee/{accountEntity}')

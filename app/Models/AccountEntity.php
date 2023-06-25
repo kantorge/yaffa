@@ -200,7 +200,7 @@ class AccountEntity extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopeAccounts($query)
+    public function scopeAccounts($query): Builder
     {
         return $query->where('config_type', 'account');
     }
@@ -211,7 +211,7 @@ class AccountEntity extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopePayees($query)
+    public function scopePayees($query): Builder
     {
         return $query->where('config_type', 'payee');
     }

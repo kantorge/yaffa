@@ -20,15 +20,17 @@ class ViewServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // General notification helper content; used in all layouts
+        View::composer('template.layouts.page', NotificationMessageComposer::class);
+        View::composer('template.layouts.auth', NotificationMessageComposer::class);
+
+        // Below composers are for logged in users only, based on view files
+
         // Account list for quick jump
         View::composer('template.layouts.page', AccountListComposer::class);
 
-        // Generic JavaScript variables (for logged in views)
+        // Generic JavaScript variables
         View::composer('template.layouts.page', JavaScriptVariablesComposer::class);
-
-        // General notification helper content
-        View::composer('template.layouts.page', NotificationMessageComposer::class);
-        View::composer('template.layouts.auth', NotificationMessageComposer::class);
 
         // Investment form - all investment groups
         View::composer('investment.form', InvestmentGroupListComposer::class);

@@ -178,6 +178,20 @@ window.table = $(dataTableSelector).DataTable({
                 success: function (data) {
                     // Update row in table data souerce
                     window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
+
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Account deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
                     let notificationEvent = new CustomEvent('notification', {
@@ -192,28 +206,11 @@ window.table = $(dataTableSelector).DataTable({
                         },
                     });
                     window.dispatchEvent(notificationEvent);
-                },
-                complete: function (_data) {
-                    row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
-                        detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Account deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
                 }
             });
         });
     }
 });
-
-initializeDeleteButtonListener(dataTableSelector, 'account-entity.destroy');
 
 function renderDeleteButton(row) {
     if (row.transactions_count === 0) {

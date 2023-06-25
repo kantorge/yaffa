@@ -24,7 +24,7 @@ class TransactionController extends Controller
          */
 
         // Sanity check for necessary assets
-        if (AccountEntity::active()->where('config_type', '=', 'account')->count() === 0) {
+        if (AccountEntity::active()->accounts()->count() === 0) {
             $this->addMessage(
                 __('Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.'),
                 'info',
