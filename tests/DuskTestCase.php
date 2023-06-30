@@ -5,6 +5,7 @@ namespace Tests;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
 
 abstract class DuskTestCase extends BaseTestCase
@@ -68,5 +69,17 @@ abstract class DuskTestCase extends BaseTestCase
     {
         return isset($_SERVER['DUSK_START_MAXIMIZED']) ||
                isset($_ENV['DUSK_START_MAXIMIZED']);
+    }
+
+    /**
+     * Helper function to read the number of rows in a DataTable
+     *
+     * @param Browser $browser
+     * @param string $tableSelector
+     * @return int
+     */
+    protected function getTableRowCount(Browser $browser, string $tableSelector): int
+    {
+        return $browser->script("return $('{$tableSelector}').DataTable().rows({search:'applied'}).count()")[0];
     }
 }

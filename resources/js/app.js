@@ -16,7 +16,8 @@ routeMap.set('investment.timeline', 'investment/timeline');
 routeMap.set('investment-price.create', 'investment-price/form');
 routeMap.set('investment-price.edit', 'investment-price/form');
 routeMap.set('investment-price.list', 'investment-price/list');
-routeMap.set('tag.index', 'tag/index');
+routeMap.set('received-mail.index', 'received-mail/index');
+routeMap.set('received-mail.show', 'received-mail/show');
 routeMap.set('report.schedules', 'reports/schedules');
 routeMap.set('reports.cashflow', 'reports/cashflow');
 routeMap.set('reports.budgetchart', 'reports/budgetchart');
@@ -24,6 +25,7 @@ routeMap.set('reports.transactions', 'reports/transactions');
 routeMap.set('search', 'search/search');
 routeMap.set('import.csv', 'import/csv');
 routeMap.set('register', 'auth/register');
+routeMap.set('tag.index', 'tag/index');
 routeMap.set('user.settings', 'user/settings');
 
 // Generic loader based on map above
@@ -33,6 +35,12 @@ if (routeMap.has(route().current())) {
 }
 
 // More specific loaders
+
+// Workaround for POST routes
+if (route('transactions.createFromDraft') === window.location.href) {
+    require('./transactions/standard');
+}
+
 // Index for accounts or payees. Type is verified and used to load the correct file.
 if (route().current() === 'account-entity.index'
     && ['account', 'payee'].includes(route().params.type)) {

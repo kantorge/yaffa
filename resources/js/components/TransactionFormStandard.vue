@@ -442,6 +442,10 @@ export default {
             type: Boolean,
             default: false,
         },
+        sourceId: {
+            type: Number,
+            default: null,
+        }
     },
 
     data() {
@@ -483,6 +487,7 @@ export default {
             },
             remaining_payee_default_amount: 0,
             remaining_payee_default_category_id: null,
+            source_id: null,
         });
 
         // Id counter for items
@@ -807,6 +812,9 @@ export default {
                     this.form.original_schedule_config.end_date = new Date(todayInUTC().getTime() - 24 * 60 * 60 * 1000);
                 }
             }
+
+            // Assign any source ID passed to the form. Currently, this can be a received mail ID
+            this.form.source_id = this.sourceId;
 
             // Set form action
             this.form.action = this.action;

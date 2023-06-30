@@ -8,6 +8,11 @@
  * @type {string}
  */
 export function toFormattedCurrency(input, locale, currencySettings) {
+    // Fallback to raw input if currency settings are missing
+    if (!currencySettings || !currencySettings.iso_code) {
+        return input.toString();
+    }
+
     return input?.toLocaleString(
         locale,
         {

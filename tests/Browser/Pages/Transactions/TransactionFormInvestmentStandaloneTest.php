@@ -100,6 +100,11 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Try to select an account
                 ->click('#account + .select2')
                 ->waitFor('.select2-container--open')
+                // Search for investment accounts
+                ->type('.select2-search__field', 'Investment account')
+                // Wait for results to load
+                ->waitFor('#select2-account-results .select2-results__option:not(.loading-results)', 10)
+                // Verify that only accounts with USD currency are displayed
                 ->assertSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account USD')
                 ->assertDontSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account EUR');
         });

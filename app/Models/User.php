@@ -124,6 +124,10 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'end_date' => 'datetime',
     ];
 
+    protected $withCount = [
+        'unhandledReceivedMail',
+    ];
+
     public function accountGroups(): HasMany
     {
         return $this->hasMany(AccountGroup::class);
@@ -179,5 +183,15 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     public function transactionCount(): int
     {
         return $this->hasMany(Transaction::class)->count();
+    }
+
+    public function receivedMails(): HasMany
+    {
+        return $this->hasMany(ReceivedMail::class);
+    }
+
+    public function unhandledReceivedMail(): HasMany
+    {
+        return $this->hasMany(ReceivedMail::class)->unhandled();
     }
 }

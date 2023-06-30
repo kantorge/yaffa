@@ -13,9 +13,9 @@ function findPayee(fact) {
     }
 
     // Try to loop payee import aliases and find the one with the same or name as the 'Közlemény/2' field.
-    for (let payee of window.payees.filter(payee => payee.config.import_alias)) {
+    for (let payee of window.payees.filter(payee => payee.alias)) {
         // Payee alias can have multiple values separated by newlines. Loop each item.
-        for (let alias of payee.config.import_alias.split('\r\n')) {
+        for (let alias of payee.alias.split('\r\n')) {
             let regex = new RegExp(alias, 'i');
             if (regex.test(fact)) {
                 return payee;

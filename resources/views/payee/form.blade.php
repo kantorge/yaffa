@@ -117,15 +117,15 @@
                     </div>
 
                     <div class="row mb-3">
-                        <label for="import_alias" class="col-form-label col-sm-3">
+                        <label for="alias" class="col-form-label col-sm-3">
                             {{ __('Import alias') }}
                         </label>
                         <div class="col-sm-9">
                             <textarea
                                 class="form-control"
-                                id="import_alias"
-                                name="config[import_alias]"
-                            >{{old('config.import_alias', $payee->config->import_alias ?? '' )}}</textarea>
+                                id="alias"
+                                name="alias"
+                            >{{old('alias', $payee->alias ?? '' )}}</textarea>
                         </div>
                     </div>
                 </div>

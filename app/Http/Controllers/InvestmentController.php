@@ -124,7 +124,7 @@ class InvestmentController extends Controller
         return view('investment.form');
     }
 
-    public function store(InvestmentRequest $request)
+    public function store(InvestmentRequest $request): RedirectResponse
     {
         /**
          * @post('/investment')

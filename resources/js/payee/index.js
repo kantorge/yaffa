@@ -80,7 +80,7 @@ window.table = $(dataTableSelector).DataTable({
             type: 'date',
         },
         {
-            data: 'import_alias',
+            data: 'alias',
             title: __('Import alias'),
             render: function(data, type) {
                 if (type === 'display') {
@@ -115,7 +115,7 @@ window.table = $(dataTableSelector).DataTable({
         if (!data.transactions_max_date) {
             $('td:eq(5)', row).addClass("text-muted text-italic");
         }
-        if (!data.import_alias) {
+        if (!data.alias) {
             $('td:eq(6)', row).addClass("text-muted text-italic");
         }
     },

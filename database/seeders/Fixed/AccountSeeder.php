@@ -14,7 +14,7 @@ class AccountSeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         $accountConfig = Account::create(
             [
@@ -117,5 +117,14 @@ class AccountSeeder extends Seeder
                 'user_id' => $user->id,
             ]
         );
+
+        // Create one inactive account
+        AccountEntity::Factory()
+            ->for($user)
+            ->account($user)
+            ->create([
+                'name' => 'Inactive account',
+                'active' => 0,
+            ]);
     }
 }

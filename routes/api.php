@@ -7,6 +7,7 @@ use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReportApiController;
+use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +68,9 @@ Route::get(
     '/reports/account_history_by_month/{accountEntity}/{withForecast?}',
     [ReportApiController::class, 'getAccountHistoryByMonth']
 );
+
+Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class, 'destroy'])
+    ->name('api.received-mail.destroy');
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 

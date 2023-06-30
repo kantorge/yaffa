@@ -2,11 +2,12 @@
 
 namespace App\Providers;
 
+use App\Components\MailHandler;
 use App\Models\Account;
 use App\Models\Payee;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use Illuminate\Database\Eloquent\Model;
+use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -48,5 +49,8 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_standard' => TransactionDetailStandard::class,
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
+
+        // Setup Mailbox to handle incoming emails sent to specified address
+        Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
     }
 }

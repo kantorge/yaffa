@@ -26,6 +26,10 @@ class AccountEntityRequest extends FormRequest
             ],
             'config_type' => 'required|in:account,payee',
             'active' => 'boolean',
+            'alias' => [
+                'nullable',
+                'string',
+            ],
         ];
 
         if ($this->config_type === 'account') {
@@ -50,10 +54,6 @@ class AccountEntityRequest extends FormRequest
                 'config.category_id' => [
                     'nullable',
                     Rule::exists('categories', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
-                ],
-                'config.import_alias' => [
-                    'nullable',
-                    'string',
                 ],
                 'config.preferred' => [
                     'nullable',

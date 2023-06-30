@@ -149,7 +149,7 @@ class CategoryController extends Controller
      * @param  Category  $category
      * @return Response
      */
-    public function destroy(Category $category)
+    public function destroy(Category $category): Response
     {
         /**
          * @delete('/categories/{category}')
@@ -175,10 +175,10 @@ class CategoryController extends Controller
     /**
      * Display a form to merge two categories.
      *
-     * @param Category $categorySource
+     * @param Category|null $categorySource
      * @return View
      */
-    public function mergeCategoriesForm(?Category $categorySource)
+    public function mergeCategoriesForm(?Category $categorySource): View
     {
         /**
          * @get('/categories/merge/{categorySource?}')

@@ -31,7 +31,8 @@ class TagListTest extends DuskTestCase
     public function test_user_can_load_the_tag_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', 'demo@yaffa.cc')
+            ->load('tags');
 
         // Get the first tag of the user.
         $tagToSearch = $user->tags()->first();
@@ -48,24 +49,39 @@ class TagListTest extends DuskTestCase
                 ->assertPresent('@table-tags');
 
             // Get the number of tags in the table using JavaScript
-            $this->assertEquals(3, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(
+                $user->tags()->count(),
+                $this->getTagCount($browser, '#table')
+            );
 
             // Filter the table using the button bar to show only inactive tags
             $browser->click('label[for=table_filter_active_no]');
-            $this->assertEquals(1, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(
+                $user->tags()->where('active', false)->count(),
+                $this->getTagCount($browser, '#table')
+            );
 
             // Filter the table using the button bar to show only active tags
             $browser->click('label[for=table_filter_active_yes]');
-            $this->assertEquals(2, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(
+                $user->tags()->where('active', true)->count(),
+                $this->getTagCount($browser, '#table')
+            );
 
             // Filter the table using the button bar to show all tags
             $browser->click('label[for=table_filter_active_any]');
-            $this->assertEquals(3, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(
+                $user->tags()->count(),
+                $this->getTagCount($browser, '#table')
+            );
 
             // Filter the table using the search field
             $browser->type('@input-table-filter-search', $tagToSearch->name);
             // The number of filtered tags should be 1
-            $this->assertEquals(1, $this->getTagCount($browser, '#table'));
+            $this->assertEquals(
+                1,
+                $this->getTagCount($browser, '#table')
+            );
 
             // Clear the search field
             $browser->clear('@input-table-filter-search');

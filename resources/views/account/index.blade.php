@@ -48,7 +48,10 @@
                     </div>
                 </div>
                 <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
-                    @include('template.components.tablefilter-sidebar-active')
+                    <x-tablefilter-sidebar-switch
+                            label=" {{ __('Active') }}"
+                            property="active"
+                    />
                     @include('template.components.tablefilter-sidebar-search')
                 </ul>
             </div>
@@ -56,11 +59,14 @@
         <div class="col-12 col-lg-9">
             <div class="card mb-3">
                 <div class="card-body no-datatable-search">
-                    <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
+                    <table
+                            class="table table-striped table-bordered table-hover"
+                            dusk="table-accounts"
+                            id="table"
+                            role="grid"
+                    ></table>
                 </div>
             </div>
         </div>
     </div>
-
-    @include('template.components.model-delete-form')
 @stop

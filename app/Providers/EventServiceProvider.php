@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\IncomingEmailReceived;
 use App\Events\Registered;
 use App\Listeners\CreateDefaultAssetsForNewUser;
+use App\Listeners\ProcessIncomingEmail;
 use App\Listeners\SendLoginFailedNotification;
 use App\Listeners\SendLoginSuccessNotification;
 use Illuminate\Auth\Events\Failed;
@@ -30,6 +32,10 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             CreateDefaultAssetsForNewUser::class,
             SendEmailVerificationNotification::class,
+        ],
+
+        IncomingEmailReceived::class => [
+            ProcessIncomingEmail::class,
         ],
     ];
 }

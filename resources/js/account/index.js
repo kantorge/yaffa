@@ -68,6 +68,16 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Account group"),
         },
         {
+            data: 'alias',
+            title: __('Import alias'),
+            render: function(data, type) {
+                if (type === 'display') {
+                    return (data ? data.replace('\n', '<br>') : __('Not set'));
+                }
+                return data;
+            }
+        },
+        {
             data: "id",
             title: __("Actions"),
             render: function (data, _type, row) {
@@ -80,6 +90,11 @@ window.table = $(dataTableSelector).DataTable({
             searchable: false,
         }
     ],
+    createdRow: function(row, data) {
+        if (!data.alias) {
+            $('td:eq(6)', row).addClass("text-muted text-italic");
+        }
+    },
     order: [
         [ 0, 'asc' ]
     ],
@@ -163,6 +178,20 @@ window.table = $(dataTableSelector).DataTable({
                 success: function (data) {
                     // Update row in table data souerce
                     window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
+
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Account deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
                     let notificationEvent = new CustomEvent('notification', {
@@ -177,28 +206,11 @@ window.table = $(dataTableSelector).DataTable({
                         },
                     });
                     window.dispatchEvent(notificationEvent);
-                },
-                complete: function (_data) {
-                    row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
-                        detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Account deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
                 }
             });
         });
     }
 });
-
-initializeDeleteButtonListener(dataTableSelector, 'account-entity.destroy');
 
 function renderDeleteButton(row) {
     if (row.transactions_count === 0) {
