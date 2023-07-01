@@ -473,7 +473,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_reactivate_a_payee_throgh_the_new_payee_modal()
+    public function test_user_can_reactivate_a_payee_through_the_new_payee_modal()
     {
         // Create an inactive payee
         $payee = AccountEntity::factory()
