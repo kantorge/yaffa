@@ -212,7 +212,7 @@
                                 <div class="col-md-6 mb-2">
                                     <div class="form-group">
                                         <label class="control-label">
-                                            {{ __('Total') }}
+                                            {{ __('Total cashflow') }}
                                             <span v-if="currency" dusk="label-currency">({{ currency }})</span>
                                         </label>
                                         <input type="text" :value="total" class="form-control" disabled="disabled">
@@ -432,8 +432,9 @@ export default {
         total() {
             return (this.form.config.quantity || 0) * (this.form.config.price || 0)
                 + (this.form.config.dividend || 0)
-                - (this.form.config.commission || 0)
-                - (this.form.config.tax || 0);
+                - ((this.form.config.commission || 0) + (this.form.config.tax || 0))
+                // Taxes and commissions are added to the value when the transaction is a buy
+                * (this.transactionTypeSettings.amount_operator === 'minus' ? -1 : 1);
         },
 
         transactionTypeSettings() {
@@ -460,36 +461,42 @@ export default {
                 quantity: true,
                 price: true,
                 dividend: false,
+                amount_operator: 'minus',
             },
             {
                 name: 'Sell',
                 quantity: true,
                 price: true,
                 dividend: false,
+                amount_operator: 'plus',
             },
             {
                 name: 'Add shares',
                 quantity: true,
                 price: false,
                 dividend: false,
+                amount_operator: null,
             },
             {
                 name: 'Remove shares',
                 quantity: true,
                 price: false,
                 dividend: false,
+                amount_operator: null,
             },
             {
                 name: 'Dividend',
                 quantity: false,
                 price: false,
                 dividend: true,
+                amount_operator: 'plus',
             },
             {
                 name: 'Interest yield',
                 quantity: false,
                 price: false,
                 dividend: true,
+                amount_operator: 'plus',
             },
         ];
 
