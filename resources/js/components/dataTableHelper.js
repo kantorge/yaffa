@@ -5,16 +5,42 @@ import * as helpers from "../helpers";
 export function dataTablesActionButton(id, action) {
     const functions = {
         delete: function () {
-            return '<button class="btn btn-xs btn-danger data-delete" data-delete data-id="' + id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-trash"></i></button> ';
+            return `
+                <button 
+                    class="btn btn-xs btn-danger data-delete"
+                    data-delete
+                    data-id="${id}"
+                    type="button"
+                    title="${__('Delete')}"
+                >
+                    <i class="fa fa-fw fa-spinner fa-spin"></i>
+                    <i class="fa fa-fw fa-trash"></i>
+                </button> `;
         },
         quickView: function () {
-            return '<button class="btn btn-xs btn-success transaction-quickview" data-id="' + id + '" type="button" title="' + __('Quick view') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-eye"></i></button> ';
+            return `
+                <button 
+                    class="btn btn-xs btn-success transaction-quickview"
+                    data-id="${id}"
+                    type="button"
+                    title="${__('Quick view')}"
+                >
+                    <i class="fa fa-fw fa-spinner fa-spin"></i>
+                    <i class="fa fa-fw fa-eye"></i>
+                </button> `;
         },
         show: function () {
-            return '<a href="' + route('transaction.open', {
-                transaction: id,
-                action: 'show'
-            }) + '" class="btn btn-xs btn-success" title="' + __('View details') + '"><i class="fa fa-fw fa-search"></i></a> ';
+            return `
+                <a 
+                    href="${route('transaction.open', {
+                        transaction: id,
+                        action: 'show'
+                    })}"
+                    class="btn btn-xs btn-success"
+                    title="${__('View details')}"
+                >
+                    <i class="fa fa-fw fa-search"></i>
+                </a> `;
         },
         edit: function () {
             return '<a href="' + route('transaction.open', {
@@ -36,6 +62,31 @@ export function dataTablesActionButton(id, action) {
         },
         skip: function () {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
+        },
+        skip_reload: function () {
+            return `
+                <button 
+                    class="btn btn-xs btn-warning data-skip"
+                    data-skip
+                    data-id="${id}"
+                    type="button"
+                    title="${__('Skip current schedule')}"
+                >
+                    <i class="fa fa-fw fa-forward"></i>
+                </button> `;
+        },
+        enter: function () {
+            return `
+                <a 
+                    href="${route('transaction.open', {
+                        transaction: id,
+                        action: 'enter'
+                    })}"
+                    class="btn btn-xs btn-success"
+                    title="${__('Edit and insert instance')}"
+                >
+                    <i class="fa fa-fw fa-pencil"></i>
+                </a> `;
         }
     }
 

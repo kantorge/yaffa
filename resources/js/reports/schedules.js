@@ -4,7 +4,8 @@ import 'datatables.net-responsive-bs5'
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 
-window.table = $('#table').DataTable({
+const tableSelector = '#table';
+window.table = $(tableSelector).DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
@@ -74,9 +75,9 @@ window.table = $('#table').DataTable({
                         dataTableHelpers.dataTablesActionButton(data, 'clone') +
                         dataTableHelpers.dataTablesActionButton(data, 'replace') +
                         dataTableHelpers.dataTablesActionButton(data, 'delete') +
-                        (row.schedule
-                            ? '<a href="' + route('transaction.open', {transaction: data, action: 'enter'}) + '" class="btn btn-xs btn-success" title="' + __('Edit and insert instance') + '"><i class="fa fa-fw fa-pencil"></i></a> ' +
-                              '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-forward"></i></i></button> '
+                        (row.schedule && row.transaction_schedule.active
+                            ? dataTableHelpers.dataTablesActionButton(data, 'enter') +
+                              dataTableHelpers.dataTablesActionButton(data, 'skip_reload')
                             : '');
             },
             className: "dt-nowrap",
@@ -114,8 +115,8 @@ window.table = $('#table').DataTable({
     paging:         false,
 });
 
-dataTableHelpers.initializeSkipInstanceButton('#table');
-dataTableHelpers.initializeDeleteButton('#table');
+dataTableHelpers.initializeSkipInstanceButton(tableSelector);
+dataTableHelpers.initializeAjaxDeleteButton(tableSelector);
 
 // Listeners for button filters
 $('input[name=schedule]').on("change", function() {
