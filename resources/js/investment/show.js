@@ -160,12 +160,12 @@ window.table = $('#table').DataTable({
             data: "id",
             title: __("Actions"),
             render: function (data, _type, row) {
-                var actions = '<button class="btn btn-sm btn-outline-dark set-date" data-type="from" data-date="' + row.date + '" title="' + __('Make this the start date') + '"><i class="fa fa-fw fa-caret-left"></i></button> ' +
-                              '<button class="btn btn-sm btn-outline-dark set-date" data-type="to" data-date="' + row.date + '" title="' + __('Make this the end date') + '"><i class="fa fa-fw  fa-caret-right"></i></button> ';
+                var actions = '<button class="btn btn-xs btn-outline-dark set-date" data-type="from" data-date="' + row.date + '" title="' + __('Make this the start date') + '"><i class="fa fa-fw fa-caret-left"></i></button> ' +
+                              '<button class="btn btn-xs btn-outline-dark set-date" data-type="to" data-date="' + row.date + '" title="' + __('Make this the end date') + '"><i class="fa fa-fw  fa-caret-right"></i></button> ';
                 if (!row.schedule) {
-                    actions += '<a href="' + route('transaction.open', {transaction: data, action: 'edit'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                               '<a href="' + route('transaction.open', {transaction: data, action: 'clone'}) + '" class="btn btn-sm btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
-                               '<button class="btn btn-sm btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
+                    actions += '<a href="' + route('transaction.open', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
+                               '<a href="' + route('transaction.open', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
+                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
                 }
 
                 return actions;
