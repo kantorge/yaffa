@@ -55,7 +55,7 @@ if (route().current() === 'account-entity.show') {
 
 // Create or edit payee
 // Accounts don't need extra JS
-if (route().current() === 'account-entity.create'
+if ((route().current() === 'account-entity.create' || route().current() === 'account-entity.edit')
     && route().params.type === 'payee') {
     require('./payee/form');
 }
