@@ -457,6 +457,13 @@ class TransactionApiController extends Controller
             return $transaction;
         });
 
+        // Adjust source transaction schedule, if entering schedule instance
+        if ($validated['action'] === 'enter') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+            $sourceTransaction->transactionSchedule->skipNextInstance();
+        }
+
         // Adjust source transaction schedule, if creating a new schedule clone
         if ($validated['action'] === 'replace') {
             $sourceTransaction = Transaction::find($validated['id'])
