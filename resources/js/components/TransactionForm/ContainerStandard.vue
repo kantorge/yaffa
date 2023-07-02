@@ -4,6 +4,7 @@
             :initial-callback="callback"
             :transaction="transactionData"
             :source-id="sourceId"
+            :simplified="isSimplified"
             @cancel="onCancel"
             @success="onSuccess"
     ></transaction-form-standard>
@@ -48,7 +49,11 @@ export default {
         },
     },
 
-    computed: {},
+    computed: {
+        isSimplified() {
+            return this.action === 'enter';
+        },
+    },
 
     created() {
     },

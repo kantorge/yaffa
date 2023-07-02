@@ -103,7 +103,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3 mb-2 align-self-end">
-                                    <div class="form-check" v-if="!simplified">
+                                    <div class="form-check">
                                         <label>
                                             <input
                                                     :disabled="form.schedule || form.budget"

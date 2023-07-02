@@ -3,6 +3,7 @@
             :action="action"
             :initial-callback="callback"
             :transaction="transactionData"
+            :simplified="isSimplified"
             @cancel="onCancel"
             @success="onSuccess"
     ></transaction-form-investment>
@@ -43,7 +44,11 @@ export default {
         },
     },
 
-    computed: {},
+    computed: {
+        isSimplified() {
+            return this.action === 'enter';
+        },
+    },
 
     created() {
     },
