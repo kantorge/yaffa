@@ -184,6 +184,10 @@ EOF;
      */
     private function getValuesFromEmail(string $text): array
     {
+        // Currently the text is too long for the AI to process, so we need to clean it up a bit
+        // TODO: make this an optional user setting
+        $text = $this->cleanUpText($text);
+
         $response = $this->getAiResponse(sprintf(self::AI_PROMPT_MAIN, $text));
 
         // Process the JSON response into an associative array
@@ -206,6 +210,22 @@ EOF;
         ]);
 
         return $result;
+    }
+
+    /**
+     * Clean up the text to make it easier for the AI to process. Remove image and link references.
+     * @param string $text
+     * @return string
+     */
+    private function cleanUpText(string $text): string
+    {
+        // Remove image references
+        $text = preg_replace('/\[image:.*?\]/', '', $text);
+
+        // Remove link references
+        $text = preg_replace('/<http[^>]+>/', '', $text);
+
+        return $text;
     }
 
     /**
