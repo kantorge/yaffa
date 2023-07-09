@@ -44,6 +44,9 @@ class ReceivedMailShowTest extends DuskTestCase
                 // Validate that the finalize button is not present
                 ->assertMissing('@button-received-mail-finalize')
 
+                // Validate that the reset processed button is not present
+                ->assertMissing('@button-received-mail-reprocess')
+
                 // Validate that the transaction data is not present, and the tab is disabled
                 ->assertMissing('@received-mail-tab-data')
                 ->assertAttributeContains('@button-received-mail-tab-data', 'class', 'disabled')
@@ -131,6 +134,9 @@ class ReceivedMailShowTest extends DuskTestCase
                 // Validate that the finalize button is present
                 ->assertPresent('@button-received-mail-finalize')
 
+                // Validate that the reset processed button is present
+                ->assertPresent('@button-received-mail-reprocess')
+
                 // Validate that the transaction data is present
                 ->assertPresent('@received-mail-tab-data')
 
@@ -147,6 +153,67 @@ class ReceivedMailShowTest extends DuskTestCase
                 $browser->click('@button-received-mail-finalize');
             })
                 ->assertRouteIs('transactions.createFromDraft');
+        });
+    }
+
+    public function test_user_can_reset_the_processed_flag_of_a_mail()
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', 'demo@yaffa.cc');
+
+        // Generate a new unhadled mail
+        $mail = ReceivedMail::factory()
+            ->for($user)
+            ->create([
+                'processed' => true,
+                'handled' => false,
+                'transaction_data' => [
+                    "raw" => [
+                        "date" => "2023-05-29",
+                        "type" => "deposit",
+                        "payee" => "McDonald's - Budaörs",
+                        "amount" => "9179.00",
+                        "account" => null,
+                        "currency" => "Ft",
+                        "payee_id" => 385,
+                        "account_id" => null,
+                        "transaction_type_id" => 2
+                    ],
+                    "date" => "2023-05-29",
+                    "config" => [
+                        "amount_to" => 9179.00,
+                        "amount_from" => 9179.00,
+                        "account_to_id" => null,
+                        "account_from_id" => 385
+                    ],
+                    "config_type" => "transaction_detail_standard",
+                    "transaction_type" => [
+                        "name" => "withdrawal"
+                    ],
+                    "transaction_type_id" => 2
+                ]
+            ]);
+
+        $this->browse(function (Browser $browser) use ($user, $mail) {
+            $browser
+            // Acting as the main user
+                ->loginAs($user)
+                // Load the received mail show page
+                ->visitRoute('received-mail.show', ['received_mail' => $mail->id])
+                // Wait for the page to load
+                ->waitFor('div.body')
+
+                // Press the reset processed button
+                ->click('@button-received-mail-reprocess')
+
+                // Accept the confirmation dialog
+                ->acceptDialog()
+
+                // Wait for the page to reload
+                ->waitForReload()
+
+                // Validate the processed icon
+                ->assertPresent('@icon-received-mail-processed-no');
         });
     }
 
@@ -215,6 +282,9 @@ class ReceivedMailShowTest extends DuskTestCase
 
                 // Validate that the finalize button is not present
                 ->assertMissing('@button-received-mail-finalize')
+
+                // Validate that the reset processed button is not present
+                ->assertMissing('@button-received-mail-reprocess')
 
                 // Validate that the transaction data is present
                 ->assertPresent('@received-mail-tab-data')

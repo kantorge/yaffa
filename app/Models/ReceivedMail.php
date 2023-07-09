@@ -30,6 +30,11 @@ class ReceivedMail extends Model
         'transaction_data' => 'array',
     ];
 
+    public function scopeUnprocessed($query)
+    {
+        return $query->where('processed', false);
+    }
+
     public function scopeUnhandled($query)
     {
         return $query->where('handled', false);

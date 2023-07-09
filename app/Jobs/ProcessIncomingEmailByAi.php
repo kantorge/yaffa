@@ -8,6 +8,7 @@ use App\Models\ReceivedMail;
 use App\Models\TransactionType;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,7 +21,7 @@ use OpenAI\Responses\Completions\CreateResponse;
 use JsonException;
 use Exception;
 
-class ProcessIncomingEmailByAi implements ShouldQueue
+class ProcessIncomingEmailByAi implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -102,6 +103,14 @@ EOF;
     public function __construct(ReceivedMail $mail)
     {
         $this->mail = $mail;
+    }
+
+    /**
+     * The unique ID of the job.
+     */
+    public function uniqueId()
+    {
+        return $this->mail->id;
     }
 
     /**

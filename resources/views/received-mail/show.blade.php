@@ -94,6 +94,19 @@
                 <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardActions">
                     @if ($receivedMail->processed && !$receivedMail->handled)
                     <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ __('Process email again') }}
+                        <button
+                                class="btn btn-xs btn-warning reprocessIcon"
+                                dusk="button-received-mail-reprocess"
+                                type="button"
+                                title="{{ __('Process email again') }}"
+                        >
+                            <i class="fa fa-fw fa-repeat"></i>
+                        </button>
+                    </li>
+                    @endif
+                    @if ($receivedMail->processed && !$receivedMail->handled)
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('Finalize transaction') }}
                         <button
                                 class="btn btn-xs btn-primary finalizeIcon"
