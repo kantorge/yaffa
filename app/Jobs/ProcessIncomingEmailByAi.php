@@ -52,6 +52,9 @@ Further details about the expected values:
 * type
 ** The type is withdrawal if money was spent, and deposit if money was received.
 ** Any order or purchase is a type of withdrawal, any income is a type of deposit.
+* account
+** The account can also be a credit card, a bank account, a PayPal account, or any other account.
+** The account can also be referred to as "funding source" or "payment method".
 
 The text to process is the following:
 """
