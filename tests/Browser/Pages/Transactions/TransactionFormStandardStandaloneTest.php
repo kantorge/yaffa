@@ -499,13 +499,13 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertSeeIn('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"]', '(inactive)')
 
                 // Select the payee from the list
-                ->click('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"]')
+                ->click('#newPayeeModal #similar-payee-list li[data-id="' . $payee->id . '"] a')
 
                 // There is a 1 second delay between clicking the payee and the modal closing
                 ->pause(1000)
 
                 // Verify that the modal is closed
-                ->waitUntilMissing('#newPayeeModal', 10)
+                ->waitUntilMissing('#newPayeeModal.show', 10)
 
                 // Verify that the payee is added to the transaction
                 ->assertSeeIn('#account_to + .select2', $payee->name);

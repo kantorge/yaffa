@@ -8,11 +8,7 @@ trait FlashMessages
 {
     public static function addMessage($message, $type = 'info', $title = '', $icon = '', $dismissible = false): void
     {
-        if (session()->has('notification_collection')) {
-            $existingData = session()->get('notification_collection');
-        } else {
-            $existingData = new Collection();
-        }
+        $existingData = session()->get('notification_collection', new Collection());
 
         // Add new item
         $existingData->push([
@@ -28,12 +24,7 @@ trait FlashMessages
 
     public static function getMessages()
     {
-        return self::hasMessages() ? session()->get('notification_collection') : new Collection();
-    }
-
-    public static function hasMessages(): bool
-    {
-        return session()->has('notification_collection');
+        return session()->get('notification_collection', new Collection());
     }
 
     public static function addSimpleSuccessMessage($message): void

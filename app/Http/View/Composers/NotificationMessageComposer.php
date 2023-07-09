@@ -7,13 +7,15 @@ use Illuminate\View\View;
 
 class NotificationMessageComposer
 {
+    use FlashMessages;
+
     /**
      * Bind data to the view.
      *
-     * @param  \Illuminate\View\View  $view
+     * @param View $view
      */
-    public function compose(View $view)
+    public function compose(View $view): void
     {
-        $view->with('notifications', FlashMessages::getMessages());
+        $view->with('notifications', self::getMessages());
     }
 }

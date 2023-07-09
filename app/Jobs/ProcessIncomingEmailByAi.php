@@ -8,6 +8,7 @@ use App\Models\ReceivedMail;
 use App\Models\TransactionType;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,7 +21,7 @@ use OpenAI\Responses\Completions\CreateResponse;
 use JsonException;
 use Exception;
 
-class ProcessIncomingEmailByAi implements ShouldQueue
+class ProcessIncomingEmailByAi implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -32,7 +33,8 @@ class ProcessIncomingEmailByAi implements ShouldQueue
     private const AI_PROMPT_MAIN = <<<'EOF'
 I will provide you the text body of an email, which is a receipt of a financial transaction.
 The language used in the email is unknown.
-I'd like you to extract certain information from it as a JSON object, without any further explanation.
+I'd like you to extract certain information from it.
+The response should be in JSON format, without any additional text or explanation.
 
 The desired output format is the following.
 All keys are required. If a value is not available or cannot be determined, mark the entire value as null.
@@ -47,7 +49,9 @@ All keys are required. If a value is not available or cannot be determined, mark
 }
 
 Further details about the expected values:
-* type: the type is withdrawal if money was spent, and deposit if money was received.
+* type
+** The type is withdrawal if money was spent, and deposit if money was received.
+** Any order or purchase is a type of withdrawal, any income is a type of deposit.
 
 The text to process is the following:
 """
@@ -102,6 +106,14 @@ EOF;
     }
 
     /**
+     * The unique ID of the job.
+     */
+    public function uniqueId()
+    {
+        return $this->mail->id;
+    }
+
+    /**
      * Execute the job.
      *
      */
@@ -112,6 +124,7 @@ EOF;
             'sender' => $this->mail->sender,
             'user' => $this->mail->user,
             'subject' => $this->mail->subject,
+            'raw_text' => $this->mail->text,
         ]);
 
         try {
@@ -126,7 +139,6 @@ EOF;
             // Retrieve the transaction type ID from the transaction type name
             $values['transaction_type_id'] = $this->getTransactionTypeIdFromType($values['type']);
         } catch (Exception $e) {
-            echo $e->getMessage();
             // Send a response email to the user with the error message
             $this->sendErrorEmail($this->mail, $e->getMessage());
 
@@ -184,13 +196,22 @@ EOF;
      */
     private function getValuesFromEmail(string $text): array
     {
+        // Currently the text is too long for the AI to process, so we need to clean it up a bit
+        // TODO: make this an optional user setting
+        $text = $this->cleanUpText($text);
+
         $response = $this->getAiResponse(sprintf(self::AI_PROMPT_MAIN, $text));
+
+        logger()->debug('OpenAI response - mail parse', [
+            'cleaned_text' => $text,
+            'response' => $response,
+        ]);
 
         // Process the JSON response into an associative array
         try {
             $result = json_decode($response['choices'][0]['text'], true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            // TODO: would it add value to retry the request?
+            // TODO: add retry mechanism by enabling the user to mark the email as unprocessed
 
             logger()->error('Failed to parse AI response', [
                 'response' => $response,
@@ -200,12 +221,23 @@ EOF;
             throw new Exception('Failed to parse AI response');
         }
 
-        logger()->debug('OpenAI response - mail parse', [
-            'response' => $response,
-            'result' => $result,
-        ]);
-
         return $result;
+    }
+
+    /**
+     * Clean up the text to make it easier for the AI to process. Remove image and link references.
+     * @param string $text
+     * @return string
+     */
+    private function cleanUpText(string $text): string
+    {
+        // Remove image references
+        $text = preg_replace('/\[image:.*?\]/', '', $text);
+
+        // Remove link references
+        $text = preg_replace('/<http[^>]+>/', '', $text);
+
+        return $text;
     }
 
     /**
@@ -225,7 +257,13 @@ EOF;
             // Calculate the similarity of the account name to the provided name
             // Use the same letter case for both strings, to get a more accurate result
             similar_text(Str::lower($account->name), Str::lower($name), $similarity_name);
-            similar_text(Str::lower($account->alias), Str::lower($name), $similarity_alias);
+
+            if ($account->alias !== null) {
+                similar_text(Str::lower($account->alias), Str::lower($name), $similarity_alias);
+            } else {
+                $similarity_alias = 0;
+            }
+
             $account->similarity = max($similarity_name, $similarity_alias);
 
             return $account;
@@ -251,7 +289,13 @@ EOF;
             // Calculate the similarity of the payee name to the provided name
             // Use the same letter case for both strings, to get a more accurate result
             similar_text(Str::lower($payee->name), Str::lower($name), $similarity_name);
-            similar_text(Str::lower($payee->alias), Str::lower($name), $similarity_alias);
+
+            if ($payee->alias !== null) {
+                similar_text(Str::lower($payee->alias), Str::lower($name), $similarity_alias);
+            } else {
+                $similarity_alias = 0;
+            }
+
             $payee->similarity = max($similarity_name, $similarity_alias);
 
             return $payee;
@@ -281,7 +325,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return (trim($result) !== 'N/A' ? $result : null);
+        return trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getPayeeIdFromPayee(User $user, string $payee = null): ?int
@@ -305,7 +349,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return (trim($result) !== 'N/A' ? $result : null);
+        return trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getTransactionTypeIdFromType(string $type): int

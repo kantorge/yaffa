@@ -24,4 +24,19 @@ class ReceivedMailService
             'error' => $error,
         ];
     }
+
+    public function resetProcessed(ReceivedMail $receivedMail): array
+    {
+        $receivedMail->processed = false;
+        $receivedMail->transaction_data = null;
+        $receivedMail->handled = false;
+        $receivedMail->transaction_id = null;
+
+        $receivedMail->save();
+
+        return [
+            'success' => true,
+            'error' => null,
+        ];
+    }
 }

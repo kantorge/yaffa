@@ -47,3 +47,46 @@ document.querySelector('.deleteIcon').addEventListener('click', function () {
     form.action = window.route('received-mail.destroy', window.mail.id);
     form.submit();
 });
+
+// Initialize the reset processed button
+document.querySelector('.reprocessIcon').addEventListener('click', function () {
+    // Confirm the action with the user
+    if (!confirm(__('Are you sure to want to reprocess this email? Current data will be overwritten.'))) {
+        return;
+    }
+
+    // Prevent running multiple times in parallel
+    if ($(this).hasClass("busy")) {
+        return false;
+    }
+
+    $(this).addClass('busy');
+
+    const id = window.mail.id;
+
+    axios.patch(window.route('api.received-mail.reset-processed', {'receivedMail': id}))
+        .then(function (response) {
+            // Reload the page
+            location.reload();
+
+            // TODO: handle update of the page without reloading
+        })
+        .catch(function (error) {
+            // Emit a custom event to global scope about the result
+            let notificationEvent = new CustomEvent('notification', {
+                detail: {
+                    notification: {
+                        type: 'danger',
+                        message: 'Error reseting email processed status (#' + id + '): ' + error,
+                        title: null,
+                        icon: null,
+                        dismissible: true,
+                    }
+                },
+            });
+            window.dispatchEvent(notificationEvent);
+
+            $(selector).find(".busy[data-delete]").removeClass('busy')
+        });
+
+});

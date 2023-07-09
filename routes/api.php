@@ -69,6 +69,8 @@ Route::get(
     [ReportApiController::class, 'getAccountHistoryByMonth']
 );
 
+Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiController::class, 'resetProcessed'])
+    ->name('api.received-mail.reset-processed');
 Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class, 'destroy'])
     ->name('api.received-mail.destroy');
 
