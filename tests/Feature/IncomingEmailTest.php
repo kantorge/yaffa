@@ -99,4 +99,28 @@ class IncomingEmailTest extends TestCase
         );
     }
 
+    /** @test */
+    public function email_without_subject_is_stored_with_default_subject()
+    {
+        // The related job is not executed in the test environment
+        Queue::fake();
+
+        $user = User::factory()->create();
+
+        $email = new TestMail(
+            $user->email,
+            ' ',
+            'Some example text in the body',
+        );
+
+        Mail::to(config('yaffa.incoming_receipts_email'))->send($email);
+
+        $this->assertEquals(
+            __('(No subject)'),
+            ReceivedMail::where('user_id', $user->id)
+                ->latest()
+                ->first()
+                ->subject
+        );
+    }
 }
