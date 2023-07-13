@@ -5,8 +5,6 @@ import { toFormattedCurrency } from '../helpers';
 
 import {
     booleanToTableIcon,
-    genericDataTablesActionButton, initializeDeleteButtonListener,
-    // initializeDeleteButtonListener
 } from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';

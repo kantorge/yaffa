@@ -63,7 +63,7 @@ class AccountListTest extends DuskTestCase
                 $this->getTableRowCount($browser, TABLESELECTOR)
             );
 
-            // Filter the table using the button bar to show only accounts
+            // Filter the table using the button bar to show all accounts
             $browser->click('label[for=table_filter_active_any]');
             $this->assertEquals(
                 $user->accounts()->count(),
