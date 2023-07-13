@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * App\Models\ReceivedMail
+ *
+ * @property int $id
+ * @property string $subject
+ * @property string $html
+ * @property string $text
+ * @property boolean $processed
+ * @property boolean $handled
+ */
 class ReceivedMail extends Model
 {
     use HasFactory;
