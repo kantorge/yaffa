@@ -20,9 +20,6 @@ window.categories = window.categories.map(function(category) {
         category.transactions_max_date = new Date(Date.parse(category.transactions_max_date));
     }
 
-    // Adjust parent name
-    category.parent = category.parent || { id: undefined, name: 'Not set' };
-
     return category;
 });
 
@@ -35,8 +32,14 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Name")
         },
         {
-            data: "parent.name",
-            title: __("Parent category")
+            data: "parent",
+            title: __("Parent category"),
+            render: function (data, type) {
+                if (type === 'filter') {
+                    return data ? 'child_category' : 'parent_category';
+                }
+                return data ? data.name : __('Not set');
+            },
         },
         {
             data: "active",
@@ -90,19 +93,15 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data) {
                 return  genericDataTablesActionButton(data, 'edit', 'categories.edit') +
                         genericDataTablesActionButton(data, 'delete') +
-                        '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-sm btn-primary" title="' + __('Merge into an other category') + '"><i class="fa fa-random"></i></a> ';
+                        '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-xs btn-primary" title="' + __('Merge into an other category') + '"><i class="fa fa-random"></i></a> ';
             },
             className: "dt-nowrap",
             orderable: false,
             searchable: false,
         }
     ],
-    order: [
-        [0, 'asc']
-    ],
-    responsive: true,
     createdRow: function(row, data) {
-        if (typeof data.parent.id === 'undefined') {
+        if (!data.parent) {
             $('td:eq(1)', row).addClass("text-muted text-italic");
         }
         if (data.transactions_count === 0) {
@@ -115,6 +114,17 @@ window.table = $(dataTableSelector).DataTable({
             $('td:eq(5)', row).addClass("text-muted text-italic");
         }
     },
+    order: [
+        [0, 'asc']
+    ],
+    deferRender: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
+    responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
             var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
@@ -166,7 +176,24 @@ window.table = $(dataTableSelector).DataTable({
 
 initializeDeleteButtonListener(dataTableSelector, 'categories.destroy');
 
-// Listeners for button filter(s)
-$('input[name=active]').on("change", function() {
+// Listeners for filters
+$('input[name=table_filter_active]').on("change", function() {
     table.column(2).search(this.value).draw();
+});
+$('#table_filter_search_text').keyup(function(){
+    table.search($(this).val()).draw() ;
+});
+
+$('input[name=table_filter_category_level]').on("change", function() {
+    // TODO: use regex to search for parent/child categories, instead of predefined strings
+    // If parents are needed, then exclude categories without parent
+    if (this.value === 'parents') {
+        table.column(1).search('parent_category').draw();
+    }
+    // If children are needed, then exclude categories with parent
+    else if (this.value === 'children') {
+        table.column(1).search('child_category').draw();
+    } else {
+        table.column(1).search('').draw();
+    }
 });
