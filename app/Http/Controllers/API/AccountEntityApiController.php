@@ -72,7 +72,7 @@ class AccountEntityApiController extends Controller
                     'accountEntity' => $accountEntity,
                     'error' => $result['error'],
                 ],
-                Response::HTTP_INTERNAL_SERVER_ERROR
+                Response::HTTP_UNPROCESSABLE_ENTITY
             );
     }
 }

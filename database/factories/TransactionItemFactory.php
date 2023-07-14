@@ -20,7 +20,7 @@ class TransactionItemFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             'category_id' => Category::whereNotNull('parent_id')->inRandomOrder()->first()->id,

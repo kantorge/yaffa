@@ -39,11 +39,6 @@ class AccountEntityApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        $this->assertDatabaseHas('account_entities', [
-            'id' => $accountEntity->id,
-            'active' => 1,
-        ]);
-
         $this->assertEquals($accountEntity->fresh()->active, 1);
     }
 
@@ -64,10 +59,7 @@ class AccountEntityApiControllerTest extends TestCase
                 'user_id' => $user->id,
             ]);
 
-        // Create a second user
-        $user2 = User::factory()->create();
-
-        // Try to update the account entity as an unauthorized user
+        // Try to update the account entity as an unauthenticated user
         $response = $this->put(
             route(
                 'api.accountentity.updateActive',
@@ -84,14 +76,11 @@ class AccountEntityApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
-        $this->assertDatabaseHas('account_entities', [
-            'id' => $accountEntity->id,
-            'active' => $accountEntity->active,
-        ]);
+        $this->assertEquals($accountEntity->fresh()->active, false);
 
-        $this->assertEquals($accountEntity->fresh()->active, $accountEntity->active);
+        // Try to update the account entity as a different user
+        $user2 = User::factory()->create();
 
-        // Try to update the account entity as the second user
         $this->actingAs($user2);
         $response = $this->put(route('api.accountentity.updateActive', [
             'accountEntity' => $accountEntity->id,
@@ -99,11 +88,6 @@ class AccountEntityApiControllerTest extends TestCase
         ]));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
-
-        $this->assertDatabaseHas('account_entities', [
-            'id' => $accountEntity->id,
-            'active' => $accountEntity->active,
-        ]);
 
         $this->assertEquals($accountEntity->fresh()->active, $accountEntity->active);
     }
