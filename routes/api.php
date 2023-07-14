@@ -27,6 +27,8 @@ Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
 Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])
     ->name('api.category.updateActive');
 Route::get('/assets/category/{category}', [CategoryApiController::class, 'getItem']);
+Route::delete('/assets/category/{category}', [CategoryApiController::class, 'destroy'])
+    ->name('api.category.destroy');
 
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);

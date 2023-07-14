@@ -36,7 +36,8 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Parent category"),
             render: function (data, type) {
                 if (type === 'filter') {
-                    return data ? 'child_category' : 'parent_category';
+                    console.log((data ? '_child_' + data.name : '_parent_'))
+                    return (data ? '_child_' + data.name : '_parent_');
                 }
                 return data ? data.name : __('Not set');
             },
@@ -90,9 +91,9 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: "id",
             title: __("Actions"),
-            render: function (data) {
+            render: function (data, _type, row) {
                 return  genericDataTablesActionButton(data, 'edit', 'categories.edit') +
-                        genericDataTablesActionButton(data, 'delete') +
+                        renderDeleteButton(row) +
                         '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-xs btn-primary" title="' + __('Merge into an other category') + '"><i class="fa fa-random"></i></a> ';
             },
             className: "dt-nowrap",
@@ -171,10 +172,81 @@ window.table = $(dataTableSelector).DataTable({
                 }
             });
         });
+
+        // Listener for delete button
+        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+            // Confirm the action with the user
+            if (!confirm(__('Are you sure to want to delete this item?'))) {
+                return;
+            }
+
+            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+
+            // Change icon to spinner
+            $(this).addClass('busy');
+            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
+
+            // Send request to change investment active state
+            $.ajax({
+                type: 'DELETE',
+                url: window.route('api.category.destroy', +row.data().id),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data souerce
+                    window.accounts = window.categories.filter(category => category.id !== data.category.id);
+
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Category deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                },
+                error: function (data) {
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'danger',
+                                message: __('Error while trying to delete category:') + ' ' + data.responseJSON.error,
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
+                }
+            });
+        });
     }
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'categories.destroy');
+function renderDeleteButton(row) {
+    if (row.transactions_count_total === 0 && row.children_count === 0) {
+        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
+    }
+
+    let title = __("This category cannot be deleted.") + "\n";
+    if (row.transactions_count_total > 0) {
+        title += __('It is already used in transactions.') + "\n";
+    }
+    if (row.children_count > 0) {
+        title += __('It has subcategories assigned.') + "\n";
+    }
+
+    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + title + '"><i class="fa fa-fw fa-trash"></i></button> '
+}
 
 // Listeners for filters
 $('input[name=table_filter_active]').on("change", function() {
@@ -185,14 +257,13 @@ $('#table_filter_search_text').keyup(function(){
 });
 
 $('input[name=table_filter_category_level]').on("change", function() {
-    // TODO: use regex to search for parent/child categories, instead of predefined strings
     // If parents are needed, then exclude categories without parent
     if (this.value === 'parents') {
-        table.column(1).search('parent_category').draw();
+        table.column(1).search('_parent_').draw();
     }
     // If children are needed, then exclude categories with parent
     else if (this.value === 'children') {
-        table.column(1).search('child_category').draw();
+        table.column(1).search('_child_').draw();
     } else {
         table.column(1).search('').draw();
     }

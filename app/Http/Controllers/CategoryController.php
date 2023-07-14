@@ -48,6 +48,8 @@ class CategoryController extends Controller
                         ->where('transactions.budget', false);
                 }
             ])
+            ->withCount('transaction as transactions_count_total')
+            ->withCount('children')
             // TODO: how should this be solved using withMin?
             ->withCount([
                 'transaction as transactions_min_date' => function (Builder $query) {

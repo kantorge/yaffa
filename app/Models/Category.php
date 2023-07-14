@@ -79,6 +79,11 @@ class Category extends Model
         return $this->belongsTo(self::class);
     }
 
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
     public function getFullNameAttribute(): string
     {
         return (isset($this->parent->name) ? $this->parent->name . ' > ' : '') . $this['name'];

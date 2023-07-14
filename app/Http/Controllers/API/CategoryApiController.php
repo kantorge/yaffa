@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Services\CategoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,9 +13,13 @@ use Illuminate\Support\Facades\DB;
 
 class CategoryApiController extends Controller
 {
+    protected CategoryService $categoryService;
+
     public function __construct()
     {
         $this->middleware('auth:sanctum');
+
+        $this->categoryService = new CategoryService();
     }
 
     public function getList(Request $request): JsonResponse
@@ -170,6 +175,34 @@ class CategoryApiController extends Controller
             ->json(
                 $category,
                 Response::HTTP_OK
+            );
+    }
+
+    public function destroy(Category $category): JsonResponse
+    {
+        /**
+         * @delete('/api/assets/category/{category}')
+         * @name('api.category.destroy')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $this->authorize('delete', $category);
+        $result = $this->categoryService->delete($category);
+
+        if ($result['success']) {
+            return response()
+                ->json(
+                    ['category' => $category],
+                    Response::HTTP_OK
+                );
+        }
+
+        return response()
+            ->json(
+                [
+                    'category' => $category,
+                    'error' => $result['error'],
+                ],
+                Response::HTTP_UNPROCESSABLE_ENTITY
             );
     }
 }
