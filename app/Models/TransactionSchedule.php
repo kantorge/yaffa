@@ -72,6 +72,7 @@ class TransactionSchedule extends Model
         'count',
         'interval',
         'inflation',
+        'automatic_recording'
     ];
 
     protected $hidden = ['transaction_id'];
@@ -80,6 +81,7 @@ class TransactionSchedule extends Model
         'next_date' => 'date',
         'start_date' => 'date',
         'end_date' => 'date',
+        'automatic_recording' => 'boolean'
     ];
 
     public function transaction(): BelongsTo

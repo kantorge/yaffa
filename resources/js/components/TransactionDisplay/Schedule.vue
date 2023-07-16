@@ -64,6 +64,22 @@
                             <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                         </dd>
 
+                        <dt
+                                class="col-6 mb-2"
+                                v-if="isSchedule"
+                        >
+                            {{ __('Automatic recording') }}
+                        </dt>
+                        <dd
+                                class="col-6 mb-2"
+                                v-if="isSchedule"
+                        >
+                            <span v-if="schedule.automatic_recording">
+                                <i class="fa fa-check text-success" :title="__('Yes')"></i>
+                            </span>
+                            <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
+                        </dd>
+
                         <dt class="col-6 mb-2">
                             {{ __('End date') }}
                         </dt>

@@ -1,5 +1,5 @@
 <template>
-    <div class="card mb-3">
+    <div class="card mb-3" dusk="card-transaction-schedule">
         <div class="card-header d-flex justify-content-between">
             <div
                     class="card-title"
@@ -94,8 +94,32 @@
                     ></Datepicker>
                 </div>
                 <div
-                    class="col-6 col-sm-4 mb-2"
-                    :class="form.errors.has('schedule_config.count') ? 'has-error' : ''"
+                        class="col-6 col-sm-4 mb-2"
+                        :class="{'has-error' : form.errors.has('schedule_config.automatic_recording')}"
+                        v-if="isSchedule"
+                >
+                    <div class="form-check">
+                        <br>
+                        <input
+                                class="form-check-input"
+                                dusk="checkbox-schedule-automatic-recording"
+                                type="checkbox"
+                                value="1"
+                                v-model="schedule.automatic_recording"
+                                id="schedule_automatic_recording"
+                        >
+                        <label class="form-check-label" for="schedule_automatic_recording">
+                            {{ __('Automatic recording') }}
+                            <i
+                                    class="fa fa-info-circle text-primary"
+                                    :title="__('The transaction is automatically entered on the next date.')"
+                            ></i>
+                        </label>
+                    </div>
+                </div>
+                <div
+                        class="col-6 col-sm-4 mb-2"
+                        :class="{ 'has-error' : form.errors.has('schedule_config.count')}"
                 >
                     <label for="schedule_count" class="control-label">
                         {{ __('Count') }}

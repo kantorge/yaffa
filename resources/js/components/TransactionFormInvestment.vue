@@ -713,6 +713,7 @@ export default {
 
                     this.form.schedule_config.start_date = this.copyDateObject(this.transaction.transaction_schedule.start_date);
                     this.form.schedule_config.next_date = this.copyDateObject(this.transaction.transaction_schedule.next_date);
+                    this.form.schedule_config.automatic_recording = this.transaction.transaction_schedule.automatic_recording;
                     this.form.schedule_config.end_date = this.copyDateObject(this.transaction.transaction_schedule.end_date);
 
                     this.form.schedule_config.inflation = this.transaction.transaction_schedule.inflation;
@@ -726,6 +727,7 @@ export default {
                     this.form.original_schedule_config.interval = this.form.schedule_config.interval;
                     this.form.original_schedule_config.inflation = this.form.schedule_config.inflation;
                     this.form.original_schedule_config.start_date = this.copyDateObject(this.form.schedule_config.start_date);
+                    this.form.original_schedule_config.automatic_recording = this.form.schedule_config.automatic_recording;
 
                     // Reset next date of original schedule config to set it ended
                     this.form.original_schedule_config.next_date = undefined;

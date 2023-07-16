@@ -68,6 +68,9 @@ class TransactionRequest extends FormRequest
                     'date',
                     'after_or_equal:schedule_config.start_date',
                 ],
+                'schedule_config.automatic_recording' => [
+                    'boolean'
+                ],
                 'schedule_config.end_date' => [
                     'nullable',
                     'date',

@@ -263,6 +263,33 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
+    public function test_automatic_recording_is_enabled_only_for_scheduled_transactions()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+            $browser
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transaction.create', ['type' => 'standard'])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+                // The schedule card should not be visible
+                ->assertMissing('@card-transaction-schedule')
+                // Select budget checkbox
+                ->click('@checkbox-transaction-budget')
+                // The schedule card should be visible, but the automatic recording checkbox should not be visible
+                ->assertVisible('@card-transaction-schedule')
+                ->assertMissing('@checkbox-schedule-automatic-recording')
+                // Select schedule checkbox
+                ->click('@checkbox-transaction-schedule')
+                // The automatic recording checkbox should be visible
+                ->assertVisible('@checkbox-schedule-automatic-recording')
+                // Unselect the budget checkbox
+                ->click('@checkbox-transaction-budget')
+                // The automatic recording checkbox should still be visible
+                ->assertVisible('@checkbox-schedule-automatic-recording');
+        });
+    }
+
     public function test_user_can_submit_transaction_form_with_schedule()
     {
         $this->markTestIncomplete('This test has not been implemented yet.');
