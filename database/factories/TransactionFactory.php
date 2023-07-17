@@ -60,6 +60,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
+                'date' => null,
                 'schedule' => 1,
                 'budget' => 0,
                 'reconciled' => 0,

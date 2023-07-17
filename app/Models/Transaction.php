@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Http\Traits\CurrencyTrait;
+use Bkwld\Cloner\Cloneable;
 use Carbon\Carbon;
 use Database\Factories\TransactionFactory;
 use Eloquent;
@@ -61,6 +62,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  */
 class Transaction extends Model
 {
+    use Cloneable;
     use CurrencyTrait;
     use HasFactory;
 
@@ -106,6 +108,10 @@ class Transaction extends Model
 
     protected $appends = [
         'transaction_currency',
+    ];
+
+    protected $cloneable_relations = [
+        'config',
     ];
 
     public function config(): MorphTo

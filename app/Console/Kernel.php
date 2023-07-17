@@ -30,6 +30,9 @@ class Kernel extends ConsoleKernel
 
         // Run the currency rate retrieval command
         $schedule->command('app:currency-rates:get')->dailyAt('06:00');
+
+        // Run the command to record scheduled transactions
+        $schedule->command('app:record-scheduled-transactions')->dailyAt('06:00');
     }
 
     /**

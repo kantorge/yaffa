@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Bkwld\Cloner\Cloneable;
 use Database\Factories\TransactionItemFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,6 +37,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class TransactionItem extends Model
 {
+    use Cloneable;
     use HasFactory;
 
     /**
@@ -62,6 +64,10 @@ class TransactionItem extends Model
         'category_id',
         'amount',
         'comment',
+    ];
+
+    protected $cloneable_relations = [
+        'tags',
     ];
 
     public function transaction(): BelongsTo
