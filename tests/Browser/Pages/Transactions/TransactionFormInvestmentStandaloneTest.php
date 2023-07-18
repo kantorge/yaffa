@@ -81,6 +81,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Select account
                 ->select2ExactSearch('#account', 'Investment account USD', 10)
                 ->assertSeeIn('#account + .select2', 'Investment account USD')
+                // Make sure, that the account API call is finished, by waiting for the currency to be displayed
+                ->waitForTextIn('@label-currency', '$', 10)
                 // Try to select an investment by opening the dropdown
                 ->click('#investment + .select2')
                 // Wait for the default options to load
