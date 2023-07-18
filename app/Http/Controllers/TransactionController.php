@@ -8,6 +8,7 @@ use App\Models\TransactionDetailStandard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 use Exception;
 
@@ -27,7 +28,7 @@ class TransactionController extends Controller
          */
 
         // Sanity check for necessary assets
-        if (AccountEntity::active()->accounts()->count() === 0) {
+        if (Auth::user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.'),
                 'info',
