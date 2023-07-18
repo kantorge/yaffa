@@ -81,9 +81,10 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Select account
                 ->select2ExactSearch('#account', 'Investment account USD', 10)
                 ->assertSeeIn('#account + .select2', 'Investment account USD')
-                // Try to select an investment
+                // Try to select an investment by opening the dropdown
                 ->click('#investment + .select2')
-                ->waitFor('.select2-container--open')
+                // Wait for the default options to load
+                ->waitFor('.select2-container--open> .select2-dropdown > .select2-results > ul', 10)
                 ->assertSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Test investment USD')
                 ->assertDontSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Test investment EUR');
         });
