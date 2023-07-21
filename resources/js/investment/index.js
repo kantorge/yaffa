@@ -111,7 +111,7 @@ let table = $('#investmentSummary').DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.investments.filter(investment => investment.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
@@ -134,8 +134,8 @@ let table = $('#investmentSummary').DataTable({
             let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
 
             // Change icon to spinner
-            $(this).addClass('busy');
-            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
+            let element = $(this);
+            element.addClass('busy');
 
             // Send request to change investment active state
             $.ajax({
@@ -149,6 +149,22 @@ let table = $('#investmentSummary').DataTable({
                 success: function (data) {
                     // Update row in table data souerce
                     window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
+
+                    // Remove row from table
+                    $(settings.nTable).DataTable().row($(this).parents('tr')).remove().draw();
+
+                    let notificationEvent = new CustomEvent('notification', {
+                        detail: {
+                            notification: {
+                                type: 'success',
+                                message: __('Investment deleted'),
+                                title: null,
+                                icon: null,
+                                dismissible: true,
+                            }
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
                     let notificationEvent = new CustomEvent('notification', {
@@ -165,19 +181,8 @@ let table = $('#investmentSummary').DataTable({
                     window.dispatchEvent(notificationEvent);
                 },
                 complete: function (_data) {
-                    row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
-                        detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Investment deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    // Restore button icon
+                    element.removeClass('busy');
                 }
             });
         });
@@ -194,10 +199,31 @@ let table = $('#investmentSummary').DataTable({
 // Listeners for button filter(s)
 dataTableHelpers.initializeFilterButtonsActive(table, 1);
 
+/**
+ *
+ * @param {Object} row
+ * @property {number} row.transactions_count
+ * @returns {string}
+ */
 function renderDeleteButton(row) {
     if (row.transactions_count === 0) {
-        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> '
+        return `
+            <button 
+                class="btn btn-xs btn-danger deleteIcon" 
+                data-id="${row.id}"
+                type="button"
+                title="${__('Delete')}"
+            >
+                <i class="fa fa-fw fa-spinner fa-spin"></i>
+                <i class="fa fa-fw fa-trash"></i>
+            </button>`;
     }
 
-    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + __('Investment is already used, it cannot be deleted') + '"><i class="fa fa-fw fa-trash"></i></button> '
+    return `
+            <button 
+                class="btn btn-xs btn-outline-danger"
+                type="button" title="${__('Investment is already used, it cannot be deleted')}"
+            >
+                <i class="fa fa-fw fa-trash"></i>
+            </button> `;
 }
