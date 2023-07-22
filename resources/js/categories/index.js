@@ -36,7 +36,6 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Parent category"),
             render: function (data, type) {
                 if (type === 'filter') {
-                    console.log((data ? '_child_' + data.name : '_parent_'))
                     return (data ? '_child_' + data.name : '_parent_');
                 }
                 return data ? data.name : __('Not set');
