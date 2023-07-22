@@ -182,8 +182,8 @@ window.table = $(dataTableSelector).DataTable({
             let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
 
             // Change icon to spinner
-            $(this).addClass('busy');
-            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
+            let element = $(this);
+            element.addClass('busy');
 
             // Send request to change investment active state
             $.ajax({
@@ -225,15 +225,36 @@ window.table = $(dataTableSelector).DataTable({
                         },
                     });
                     window.dispatchEvent(notificationEvent);
+                },
+                complete: function (_data) {
+                    // Restore button icon
+                    element.removeClass('busy');
                 }
             });
         });
     }
 });
 
+/**
+ *
+ * @param {Object} row
+ * @property {number} row.transactions_count
+ * @property {number} row.transactions_count_total
+ * @property {number} row.children_count
+ * @returns {string}
+ */
 function renderDeleteButton(row) {
     if (row.transactions_count_total === 0 && row.children_count === 0) {
-        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
+        return `
+            <button 
+                class="btn btn-xs btn-danger deleteIcon"
+                data-id="${row.id}"
+                type="button"
+                title="${__('Delete')}"
+            >
+                <i class="fa fa-fw fa-spinner fa-spin"></i>
+                <i class="fa fa-fw fa-trash"></i>
+            </button> `;
     }
 
     let title = __("This category cannot be deleted.") + "\n";
@@ -244,7 +265,14 @@ function renderDeleteButton(row) {
         title += __('It has subcategories assigned.') + "\n";
     }
 
-    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + title + '"><i class="fa fa-fw fa-trash"></i></button> '
+    return `
+        <button 
+            class="btn btn-xs btn-outline-danger"
+            type="button"
+            title="${title}"
+        >
+            <i class="fa fa-fw fa-trash"></i>
+        </button> `;
 }
 
 // Listeners for filters
