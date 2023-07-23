@@ -36,19 +36,24 @@ class AccountEntityFactory extends Factory
         ];
     }
 
-    public function payee(User $user = null): AccountEntityFactory
+    public function payee(User $user = null, array $configAttributes = []): AccountEntityFactory
     {
-        return $this->state(function (array $attributes) use ($user) {
+        return $this->state(function (array $attributes) use ($user, $configAttributes) {
             if (!$user) {
                 $user = User::find($attributes['user_id']);
             }
 
+            $configAttributes = array_merge(
+                [
+                    'category_id' => $this->faker->boolean() ? $user->categories()->inRandomOrder()->first()->id : null,
+                ],
+                $configAttributes
+            );
+
             return [
                 'name' => $this->faker->company(),
                 'config_type' => 'payee',
-                'config_id' => Payee::factory()->create([
-                    'category_id' => $this->faker->boolean() ? $user->categories()->inRandomOrder()->first()->id : null,
-                ])->id,
+                'config_id' => Payee::factory()->create($configAttributes)->id,
             ];
         });
     }

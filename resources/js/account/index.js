@@ -5,9 +5,22 @@ import { toFormattedCurrency } from '../helpers';
 
 import {
     booleanToTableIcon,
+    renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';
+
+/**
+ * Define the conditions for the delete button, as required by the DataTables helper.
+ */
+const deleteButtonConditions = [
+    {
+        property: 'transactions_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is already used in transactions.'),
+    },
+];
 
 window.table = $(dataTableSelector).DataTable({
     data: window.accounts,
@@ -81,7 +94,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, _type, row) {
                 return  '<a href="' + window.route('account-entity.show', {account_entity: data}) + '" class="btn btn-xs btn-success" title="' + __('Show details') + '"><i class="fa fa-magnifying-glass"></i></a> ' +
                         '<a href="' + window.route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-edit"></i></a> ' +
-                        renderDeleteButton(row);
+                    renderDeleteAssetButton(row, deleteButtonConditions, __("This account cannot be deleted."));
             },
             className: "dt-nowrap",
             orderable: false,
@@ -209,14 +222,6 @@ window.table = $(dataTableSelector).DataTable({
         });
     }
 });
-
-function renderDeleteButton(row) {
-    if (row.transactions_count === 0) {
-        return '<button class="btn btn-xs btn-danger deleteIcon" data-id="' + row.id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> '
-    }
-
-    return '<button class="btn btn-xs btn-outline-danger" type="button" title="' + __('Account is already used, it cannot be deleted') + '"><i class="fa fa-fw fa-trash"></i></button> '
-}
 
 // Listeners for filters
 $('input[name=table_filter_active]').on("change", function() {

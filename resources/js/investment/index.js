@@ -1,8 +1,23 @@
+import {renderDeleteAssetButton} from "./../components/dataTableHelper";
+
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 import {toFormattedCurrency} from '../helpers';
+
+/**
+ * Define the conditions for the delete button, as required by the DataTables helper.
+ */
+const deleteButtonConditions = [
+    {
+        property: 'transactions_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is already used in transactions.'),
+    },
+];
+
 
 let table = $('#investmentSummary').DataTable({
     data: window.investments,
@@ -83,7 +98,7 @@ let table = $('#investmentSummary').DataTable({
                 return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
                     '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ' +
                     dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'investment.edit') +
-                    renderDeleteButton(row);
+                    renderDeleteAssetButton(row, deleteButtonConditions, __("This investment cannot be deleted."));
             },
             className: "dt-nowrap",
             orderable: false,
@@ -140,7 +155,7 @@ let table = $('#investmentSummary').DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.investment.destroy', +row.data().id),
+                url: window.route('api.investment.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -198,32 +213,3 @@ let table = $('#investmentSummary').DataTable({
 
 // Listeners for button filter(s)
 dataTableHelpers.initializeFilterButtonsActive(table, 1);
-
-/**
- *
- * @param {Object} row
- * @property {number} row.transactions_count
- * @returns {string}
- */
-function renderDeleteButton(row) {
-    if (row.transactions_count === 0) {
-        return `
-            <button 
-                class="btn btn-xs btn-danger deleteIcon" 
-                data-id="${row.id}"
-                type="button"
-                title="${__('Delete')}"
-            >
-                <i class="fa fa-fw fa-spinner fa-spin"></i>
-                <i class="fa fa-fw fa-trash"></i>
-            </button>`;
-    }
-
-    return `
-            <button 
-                class="btn btn-xs btn-outline-danger"
-                type="button" title="${__('Investment is already used, it cannot be deleted')}"
-            >
-                <i class="fa fa-fw fa-trash"></i>
-            </button> `;
-}

@@ -29,7 +29,7 @@ class CategoryController extends Controller
      *
      * @return View
      */
-    public function index()
+    public function index(): View
     {
         /**
          * @get('/categories')
@@ -66,6 +66,9 @@ class CategoryController extends Controller
                         ->where('transactions.budget', false);
                 }
             ])
+            ->withCount('payeesNotPreferring')
+            ->withCount('payeesPreferring')
+            ->withCount('payeesDefaulting')
             ->get();
 
         // Pass data for DataTables

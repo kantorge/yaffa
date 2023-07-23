@@ -145,17 +145,20 @@ class AccountEntity extends Model
      */
     public function categoryPreference(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->withPivot('preferred');
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')
+            ->withPivot('preferred');
     }
 
     public function preferredCategories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', true);
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')
+            ->where('preferred', true);
     }
 
     public function deferredCategories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'account_entity_category_preference')->where('preferred', false);
+        return $this->belongsToMany(Category::class, 'account_entity_category_preference')
+            ->where('preferred', false);
     }
 
     // Relation to transactions where this account is the from account or the to account

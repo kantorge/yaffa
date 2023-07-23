@@ -4,7 +4,7 @@ require("datatables.net-responsive-bs5");
 import {
     booleanToTableIcon,
     genericDataTablesActionButton,
-    initializeDeleteButtonListener,
+    renderDeleteAssetButton,
 } from './../components/dataTableHelper';
 
 const dataTableSelector = '#table';
@@ -23,6 +23,41 @@ window.categories = window.categories.map(function(category) {
     return category;
 });
 
+/**
+ * Define the conditions for the delete button, as required by the DataTables helper.
+ */
+const deleteButtonConditions = [
+    {
+        property: 'transactions_count_total',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is already used in transactions.'),
+    },
+    {
+        property: 'children_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It has subcategories assigned.'),
+    },
+    {
+        property: 'payees_defaulting_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used as default category by some payees.'),
+    },
+    {
+        property: 'payees_preferring_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used as preferred category by some payees.'),
+    },
+    {
+        property: 'payees_not_preferring_count',
+        value: 0,
+        negate: false,
+        errorMessage: __('It is used as not preferred category by some payees.'),
+    }
+];
 
 window.table = $(dataTableSelector).DataTable({
     data: window.categories,
@@ -92,7 +127,7 @@ window.table = $(dataTableSelector).DataTable({
             title: __("Actions"),
             render: function (data, _type, row) {
                 return  genericDataTablesActionButton(data, 'edit', 'categories.edit') +
-                        renderDeleteButton(row) +
+                        renderDeleteAssetButton(row, deleteButtonConditions, __("This category cannot be deleted.")) +
                         '<a href="' + route('categories.merge.form', { categorySource: data }) + '" class="btn btn-xs btn-primary" title="' + __('Merge into an other category') + '"><i class="fa fa-random"></i></a> ';
             },
             className: "dt-nowrap",
@@ -188,7 +223,7 @@ window.table = $(dataTableSelector).DataTable({
             // Send request to change investment active state
             $.ajax({
                 type: 'DELETE',
-                url: window.route('api.category.destroy', +row.data().id),
+                url: window.route('api.category.destroy', row.data().id),
                 data: {
                     "_token": csrfToken,
                 },
@@ -196,7 +231,7 @@ window.table = $(dataTableSelector).DataTable({
                 context: this,
                 success: function (data) {
                     // Update row in table data souerce
-                    window.accounts = window.categories.filter(category => category.id !== data.category.id);
+                    window.categories = window.categories.filter(category => category.id !== data.category.id);
 
                     row.remove().draw();
                     let notificationEvent = new CustomEvent('notification', {
@@ -234,46 +269,6 @@ window.table = $(dataTableSelector).DataTable({
         });
     }
 });
-
-/**
- *
- * @param {Object} row
- * @property {number} row.transactions_count
- * @property {number} row.transactions_count_total
- * @property {number} row.children_count
- * @returns {string}
- */
-function renderDeleteButton(row) {
-    if (row.transactions_count_total === 0 && row.children_count === 0) {
-        return `
-            <button 
-                class="btn btn-xs btn-danger deleteIcon"
-                data-id="${row.id}"
-                type="button"
-                title="${__('Delete')}"
-            >
-                <i class="fa fa-fw fa-spinner fa-spin"></i>
-                <i class="fa fa-fw fa-trash"></i>
-            </button> `;
-    }
-
-    let title = __("This category cannot be deleted.") + "\n";
-    if (row.transactions_count_total > 0) {
-        title += __('It is already used in transactions.') + "\n";
-    }
-    if (row.children_count > 0) {
-        title += __('It has subcategories assigned.') + "\n";
-    }
-
-    return `
-        <button 
-            class="btn btn-xs btn-outline-danger"
-            type="button"
-            title="${title}"
-        >
-            <i class="fa fa-fw fa-trash"></i>
-        </button> `;
-}
 
 // Listeners for filters
 $('input[name=table_filter_active]').on("change", function() {

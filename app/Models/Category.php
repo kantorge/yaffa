@@ -151,4 +151,28 @@ class Category extends Model
             'account_entity_category_preference'
         )->where('preferred', false);
     }
+
+    public function payeesPreferring()
+    {
+        return $this->belongsToMany(
+            AccountEntity::class,
+            'account_entity_category_preference'
+        )->where('preferred', true);
+    }
+
+    public function payeesDefaulting()
+    {
+        return $this->hasManyThrough(
+            AccountEntity::class,
+            Payee::class,
+            'category_id',
+            'config_id',
+            'id',
+            'id'
+        )
+            ->where(
+                'config_type',
+                'payee'
+            );
+    }
 }

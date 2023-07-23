@@ -508,3 +508,66 @@ export function initializeQuickViewButton(selector) {
             });
     });
 }
+
+/**
+ * This is a generic function to render delete button for assets
+ * It receives a row object from DataTables and returns a button
+ * It also receives an array of objects with the following properties, representing the requirements for the
+ * delete button to be enabled:
+ * - property: the name of the property in the row object
+ * - value: the value of the property that enables the button
+ * - negate: if true, the button is enabled when the property is NOT equal to the value
+ * - errorMessage: the message to display when the button is disabled
+ *
+ * @param {Object} row
+ * @param {Object} requirements
+ * @param {String} errorMessage
+ * @returns {String}
+ */
+export function renderDeleteAssetButton(row, requirements, errorMessage) {
+    let passes = 0;
+    let errorMessages = [
+        errorMessage + "\n"
+    ];
+
+    requirements.forEach(requirement => {
+        if (requirement.negate) {
+            if (row[requirement.property] !== requirement.value) {
+                passes++;
+            } else {
+                errorMessages.push(requirement.errorMessage);
+            }
+        } else {
+            if (row[requirement.property] === requirement.value) {
+                passes++;
+            } else {
+                errorMessages.push(requirement.errorMessage);
+            }
+        }
+    });
+
+    if (passes === requirements.length) {
+        return `
+            <button 
+                class="btn btn-xs btn-danger deleteIcon"
+                data-id="${row.id}"
+                type="button"
+                title="${__('Delete')}"
+            >
+                <i class="fa fa-fw fa-spinner fa-spin"></i>
+                <i class="fa fa-fw fa-trash"></i>
+            </button> `;
+    }
+
+    let title = errorMessages.join("\n");
+
+    return `
+        <button 
+            class="btn btn-xs btn-outline-danger"
+            data-id="${row.id}"
+            type="button"
+            title="${title}"
+        >
+            <i class="fa fa-fw fa-trash"></i>
+        </button> `;
+}

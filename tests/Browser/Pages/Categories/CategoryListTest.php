@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Pages\Categories;
 
+use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\User;
 use Laravel\Dusk\Browser;
@@ -115,5 +116,134 @@ class CategoryListTest extends DuskTestCase
                 $this->getTableRowCount($browser, TABLESELECTOR)
             );
         });
+    }
+
+    public function test_delete_button_behaviour()
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', 'demo@yaffa.cc');
+
+        // Create categories for various test cases
+
+        // Standalone category, which can be deleted
+        $standaloneParentCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+
+        // Parent category with a child category, which cannot be deleted
+        /** @var Category $parentWithChildCategory */
+        $parentWithChildCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+
+        Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => $parentWithChildCategory->id,
+            ]);
+
+        // Parent category assigned to a payee, which cannot be deleted
+        $payeeDefaultCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+
+        AccountEntity::factory()
+            ->for($user)
+            ->payee($user, ['category_id' => $payeeDefaultCategory->id])
+            ->create();
+
+        // Parent category which is the preferred category of a payee, which cannot be deleted
+        /** @var Category $payeePreferredCategory */
+        $payeePreferredCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+
+        /** @var AccountEntity $payeeWithPreferredCategory */
+        $payeeWithPreferredCategory = AccountEntity::factory()
+            ->for($user)
+            ->payee($user, ['category_id' => null])
+            ->create();
+
+        $payeeWithPreferredCategory
+            ->categoryPreference()
+            ->attach($payeePreferredCategory->id, ['preferred' => true]);
+
+        // Parent category which is the deferred category of a payee, which cannot be deleted
+        /** @var Category $payeeDeferredCategory */
+        $payeeDeferredCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+
+        /** @var AccountEntity $payeeWithDeferredCategory */
+        $payeeWithDeferredCategory = AccountEntity::factory()
+            ->for($user)
+            ->payee($user, ['category_id' => null])
+            ->create();
+
+        $payeeWithDeferredCategory
+            ->categoryPreference()
+            ->attach($payeeDeferredCategory->id, ['preferred' => false]);
+
+        // Perform the tests
+        $this->browse(function (Browser $browser) use ($user, $standaloneParentCategory, $parentWithChildCategory, $payeeDefaultCategory, $payeePreferredCategory, $payeeDeferredCategory) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the category list
+                ->visitRoute('categories.index')
+                // Wait for the table to load
+                ->waitFor('@table-categories')
+                // Check that the category list is visible
+                ->assertPresent('@table-categories');
+
+            // Validate the delete button is enabled for a standalone parent category
+            $browser->assertPresent(
+                TABLESELECTOR . " button.deleteIcon[data-id='{$standaloneParentCategory->id}']"
+            );
+
+            // Validate the delete button is disabled for a parent category with a child category
+            $browser->assertMissing(
+                TABLESELECTOR . " button.deleteIcon[data-id='{$parentWithChildCategory->id}']"
+            );
+            $browser->assertPresent(
+                TABLESELECTOR . " button[data-id='{$parentWithChildCategory->id}']:not(.deleteIcon)"
+            );
+
+            // Validate the delete button is disabled for a category assigned to a payee as default category
+            $browser->assertMissing(
+                TABLESELECTOR . " button.deleteIcon[data-id='{$payeeDefaultCategory->id}']"
+            );
+            $browser->assertPresent(
+                TABLESELECTOR . " button[data-id='{$payeeDefaultCategory->id}']:not(.deleteIcon)"
+            );
+
+            // Validate the delete button is disabled for a category which is the preferred category of a payee
+            $browser->assertMissing(
+                TABLESELECTOR . " button.deleteIcon[data-id='{$payeePreferredCategory->id}']"
+            );
+            $browser->assertPresent(
+                TABLESELECTOR . " button[data-id='{$payeePreferredCategory->id}']:not(.deleteIcon)"
+            );
+
+            // Validate the delete button is disabled for a category which is the deferred category of a payee
+            $browser->assertMissing(
+                TABLESELECTOR . " button.deleteIcon[data-id='{$payeeDeferredCategory->id}']"
+            );
+            $browser->assertPresent(
+                TABLESELECTOR . " button[data-id='{$payeeDeferredCategory->id}']:not(.deleteIcon)"
+            );
+        });
+
+        // TODO: assert the disabled button titles
     }
 }
