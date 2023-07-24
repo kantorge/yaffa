@@ -269,7 +269,7 @@ $(elementPayeeSelector).select2({
         },
         cache: true
     },
-    selectOnClose: true,
+    selectOnClose: false,
     placeholder: __("Select payee"),
     allowClear: true
 });
@@ -327,7 +327,7 @@ $(elementCategorySelectSelector).select2({
         },
         cache: true
     },
-    selectOnClose: true,
+    selectOnClose: false,
     placeholder: __("Select category"),
     allowClear: true
 });

@@ -3,7 +3,7 @@ require('./bootstrap');
 const routeMap = new Map();
 routeMap.set('home', 'dashboard');
 routeMap.set('account-group.index', 'account-group/index');
-routeMap.set('payee.merge.form', 'payees/merge');
+routeMap.set('payees.merge.form', 'payee/merge');
 routeMap.set('account.history', 'account/history');
 routeMap.set('categories.index', 'categories/index');
 routeMap.set('categories.merge.form', 'categories/merge');

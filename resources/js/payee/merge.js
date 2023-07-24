@@ -1,4 +1,4 @@
-import 'select2';
+require('select2');
 $.fn.select2.amd.define(
     'select2/i18n/' + window.YAFFA.language,
     [],
@@ -7,6 +7,7 @@ $.fn.select2.amd.define(
 
 // Add select2 functionality to payee_source select
 $('#payee_source').select2({
+    theme: "bootstrap-5",
     placeholder: __('Select payee to be merged'),
     allowClear: true,
     selectOnClose: false,
@@ -23,7 +24,7 @@ $('#payee_source').select2({
             };
         },
         processResults: function (data) {
-            //Exclude payee in target select
+            // Exclude payee in target select
             let targetPayee = $('#payee_target').select2('data');
             if (targetPayee.length > 0) {
                 data = data.filter(function (item) {
@@ -48,6 +49,7 @@ if (payeeSource) {
 
 // Add select2 functionality to payee_target select
 $('#payee_target').select2({
+    theme: "bootstrap-5",
     placeholder: __('Select payee to be merged into'),
     allowClear: true,
     selectOnClose: false,
@@ -64,7 +66,7 @@ $('#payee_target').select2({
             };
         },
         processResults: function (data) {
-            //Exclude payee in source select
+            // Exclude payee in source select
             let sourcePayee = $('#payee_source').select2('data');
             if (sourcePayee.length > 0) {
                 data = data.filter(function (item) {
@@ -86,13 +88,13 @@ $('#merge-payees-form').on('submit', function (e) {
     let source = $('#payee_source').select2('data');
     let target = $('#payee_target').select2('data');
 
-    if (source.length == 0 || target.length == 0) {
+    if (source.length === 0 || target.length === 0) {
         e.preventDefault();
         alert(__('Please select payees to be merged'));
         return;
     } else {
         // Validate if both select2 inputs are not the same
-        if (source[0].id == target[0].id) {
+        if (source[0].id === target[0].id) {
             e.preventDefault();
             alert(__('Please select different payees to be merged'));
             return;
@@ -101,7 +103,7 @@ $('#merge-payees-form').on('submit', function (e) {
 
     // Validate if action radio button is selected
     let action = $('input[name=action]:checked').val();
-    if (action == undefined) {
+    if (typeof action === "undefined") {
         e.preventDefault();
         alert(__('Please select an action'));
         return;

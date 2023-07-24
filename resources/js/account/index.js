@@ -177,7 +177,7 @@ window.table = $(dataTableSelector).DataTable({
             $(this).addClass('busy');
             $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
 
-            // Send request to change investment active state
+            // Send request to delete account
             $.ajax({
                 type: 'DELETE',
                 url: window.route('api.accountentity.destroy', +row.data().id),

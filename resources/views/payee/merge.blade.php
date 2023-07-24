@@ -55,13 +55,25 @@
                             </label>
                             <div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="action" value="delete" checked="checked">
+                                    <input
+                                            class="form-check-input"
+                                            type="radio"
+                                            name="action"
+                                            value="delete"
+                                            checked="checked"
+                                    >
                                     <label class="form-check-label">
                                         {{ __('Delete merged payee') }}
                                     </label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="action" value="close" checked="">
+                                    <input
+                                            class="form-check-input"
+                                            type="radio"
+                                            name="action"
+                                            value="close"
+                                            checked=""
+                                    >
                                     <label class="form-check-label">
                                         {{ __('Set merged payee to inactive') }}
                                     </label>
@@ -70,7 +82,9 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <span class="help-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
+                        <span class="help-block">
+                            {{ __('This action cannot be undone. Proceed with caution.') }}
+                        </span>
                         @csrf
                         <button
                             class="btn btn-sm btn-outline-dark ms-2 me-2"
