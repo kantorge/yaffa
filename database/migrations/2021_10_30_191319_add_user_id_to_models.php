@@ -17,9 +17,9 @@ class AddUserIdToModels extends Migration
         if (DB::table('users')->count() < 1) {
             DB::table('users')->insert(
                 [
-                    'name' => 'Default user',
-                    'email' => config('yaffa.admin_email'),
-                    'password' => Hash::make('password'),
+                    'name' => 'Demo User',
+                    'email' => 'demo@yaffa.cc',
+                    'password' => Hash::make('demo'),
                 ]
             );
         }
@@ -105,9 +105,10 @@ class AddUserIdToModels extends Migration
     }
 
     /**
-     * This migration cannot be reversed, as removing users is likely to result in duplicate entries violating unique constraints.
-     * Theoretically we could remove all users and all their assets, except one, but that's not likely to be the requirement.
-     *
+     * This migration cannot be reversed,
+     * as removing users is likely to result in duplicate entries violating unique constraints.
+     * Theoretically we could remove all users and all their assets, except one,
+     * but that's not likely to be the requirement.
      */
     public function down(): void
     {

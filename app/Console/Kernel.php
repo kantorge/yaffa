@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
             $schedule->command('telescope:prune')->daily();
         }
 
+        // Reset the sandbox database every Monday at 2am UTC
+        $schedule->command('app:database:reset')->weeklyOn(1, '02:00');
+
         // Run the investment price retrieval command
         $schedule->command('app:investment-prices:get')->dailyAt('05:00');
 
