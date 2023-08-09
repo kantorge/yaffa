@@ -3,27 +3,27 @@
 // @formatter:off
 
 namespace PHPSTORM_META {
-use App;
+    use App;
 
-use function app;
-use function resolve;
-use function array_add;
-use function array_except;
-use function array_first;
-use function array_last;
-use function array_get;
-use function array_only;
-use function array_prepend;
-use function array_pull;
-use function array_set;
-use function array_sort;
-use function array_sort_recursive;
-use function array_where;
-use function head;
-use function last;
-use function with;
-use function tap;
-use function optional;
+    use function app;
+    use function resolve;
+    use function array_add;
+    use function array_except;
+    use function array_first;
+    use function array_last;
+    use function array_get;
+    use function array_only;
+    use function array_prepend;
+    use function array_pull;
+    use function array_set;
+    use function array_sort;
+    use function array_sort_recursive;
+    use function array_where;
+    use function head;
+    use function last;
+    use function with;
+    use function tap;
+    use function optional;
 
     /**
      * PhpStorm Meta file, to provide autocomplete information for PhpStorm

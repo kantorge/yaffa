@@ -241,7 +241,7 @@ $(selectorScheduleTable).DataTable({
 });
 
 dataTableHelpers.initializeSkipInstanceButton("#historyTable, #scheduleTable");
-dataTableHelpers.initializeDeleteButton("#historyTable, #scheduleTable");
+dataTableHelpers.initializeAjaxDeleteButton("#historyTable, #scheduleTable");
 dataTableHelpers.initializeQuickViewButton(selectorHistoryTable);
 
 $('input[name=reconciled]').on("change", function () {
