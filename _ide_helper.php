@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 9.52.10.
+ * Generated for Laravel 9.52.15.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -1224,7 +1224,7 @@ namespace Illuminate\Support\Facades {
          * Call the given Closure / class@method and inject its dependencies.
          *
          * @param callable|string $callback
-         * @param \Illuminate\Container\array<string,  mixed>  $parameters
+         * @param array<string, mixed> $parameters
          * @param string|null $defaultMethod
          * @return mixed
          * @throws \InvalidArgumentException
@@ -17829,7 +17829,7 @@ namespace Spatie\LaravelIgnition\Facades {
          *
          * @param string $name
          * @param string $messageLevel
-         * @param \Spatie\FlareClient\array<int,  mixed> $metaData
+         * @param array<int, mixed> $metaData
          * @return \Spatie\FlareClient\Flare
          * @static
          */
@@ -17922,7 +17922,7 @@ namespace Spatie\LaravelIgnition\Facades {
         /**
          *
          *
-         * @param \Spatie\FlareClient\array<int,  string> $fieldNames
+         * @param array<int, string> $fieldNames
          * @return \Spatie\FlareClient\Flare
          * @static
          */
@@ -17998,7 +17998,7 @@ namespace Spatie\LaravelIgnition\Facades {
          *
          *
          * @param string $groupName
-         * @param \Spatie\FlareClient\array<string,  mixed> $properties
+         * @param array<string, mixed> $properties
          * @return \Spatie\FlareClient\Flare
          * @static
          */
@@ -21738,8 +21738,8 @@ namespace  {
         /**
          * Increment the given column's values by the given amounts.
          *
-         * @param \Illuminate\Database\Query\array<string,  float|int|numeric-string>  $columns
-         * @param \Illuminate\Database\Query\array<string,  mixed>  $extra
+         * @param array<string, float|int|numeric-string> $columns
+         * @param array<string, mixed> $extra
          * @return int
          * @throws \InvalidArgumentException
          * @static
@@ -21753,8 +21753,8 @@ namespace  {
         /**
          * Decrement the given column's values by the given amounts.
          *
-         * @param \Illuminate\Database\Query\array<string,  float|int|numeric-string>  $columns
-         * @param \Illuminate\Database\Query\array<string,  mixed>  $extra
+         * @param array<string, float|int|numeric-string> $columns
+         * @param array<string, mixed> $extra
          * @return int
          * @throws \InvalidArgumentException
          * @static
