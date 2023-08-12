@@ -20,6 +20,7 @@ class AddUserIdToModels extends Migration
                     'name' => 'Demo User',
                     'email' => 'demo@yaffa.cc',
                     'password' => Hash::make('demo'),
+                    'email_verified_at' => now(),
                 ]
             );
         }
