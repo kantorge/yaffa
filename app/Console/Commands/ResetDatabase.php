@@ -33,7 +33,7 @@ class ResetDatabase extends Command
         Artisan::call('migrate:fresh', ['--force' => true]);
 
         // The migrate:fresh command creates a base user. Now we need to load the demo.sql file into the database.
-        $file = base_path('database/demo.sql');
+        $file = base_path('database/seeders/demo.sql');
         DB::unprepared(file_get_contents($file));
 
         /**
