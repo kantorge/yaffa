@@ -17,10 +17,9 @@ class AddUserIdToModels extends Migration
         if (DB::table('users')->count() < 1) {
             DB::table('users')->insert(
                 [
-                    'name' => 'Demo User',
-                    'email' => 'demo@yaffa.cc',
-                    'password' => Hash::make('demo'),
-                    'email_verified_at' => now(),
+                    'name' => 'Default user',
+                    'email' => config('yaffa.admin_email'),
+                    'password' => Hash::make('password'),
                 ]
             );
         }
