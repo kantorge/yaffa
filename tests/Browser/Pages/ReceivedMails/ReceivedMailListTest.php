@@ -236,12 +236,17 @@ class ReceivedMailListTest extends DuskTestCase
             $browser->assertPresent(TABLESELECTOR . ' button.finalizeIcon');
 
             // Store the mail id for later from the data-id attribute
-            $mailId = $browser->attribute(TABLESELECTOR . ' button.finalizeIcon', 'data-id');
+            $mailId = $browser->attribute(TABLESELECTOR . ' button.finalizeIcon:first-of-type', 'data-id');
 
             // Click the finalize button
-            $browser->click(TABLESELECTOR . ' button.finalizeIcon')
+            $browser->click(TABLESELECTOR . ' button.finalizeIcon:first-of-type')
                 // Check that the finalize transaction route is loaded
                 ->assertRouteIs('transactions.createFromDraft')
+                // Wait for the transaction container to load
+                ->waitFor('@transaction-container-standard')
+                // Wait for Vue to load
+                // TODO: This is a hack, find a better way to wait for Vue to load
+                ->pause(10000)
                 // Check that Vue has a sourceId set
                 ->assertVue('sourceId', $mailId, '@transaction-container-standard');
         });
