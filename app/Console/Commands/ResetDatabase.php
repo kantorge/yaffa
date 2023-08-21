@@ -29,12 +29,17 @@ class ResetDatabase extends Command
      */
     public function handle(): int
     {
+        $this->info('Putting site in maintenance mode...');
         Artisan::call('down');
+
+        $this->info('Resetting database...');
         Artisan::call('migrate:fresh', ['--force' => true]);
 
         // The migrate:fresh command creates a base user. Now we need to load the demo.sql file into the database.
+        $this->info('Loading demo data from file...');
         $file = base_path('database/seeders/demo.sql');
         DB::unprepared(file_get_contents($file));
+        $this->info('Demo data loaded.');
 
         /**
          * Now we need to adjust ALL dates in the database to be the current date.
@@ -43,24 +48,32 @@ class ResetDatabase extends Command
          * which represents the latest date in the demo data. We need the difference in months.
          * Then, add that difference to every date in the database.
          */
+        $this->info('Adjusting dates in the database...');
         $date = '2008-12-31';
         $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
+        $diffMonths = $diff->y * 12 + $diff->m;
 
         // Update all dates in the database
         // transactions - date
-        DB::table('transactions')
-            ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diff->m} MONTH)")]);
+        $this->info('Adjusting dates - transactions...');
+        $affected = DB::table('transactions')
+            ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diffMonths} MONTH)")]);
+        $this->info("Transactions updated: {$affected}");
 
         // transsaction_schedules - start_date, next_date, end_date
-        DB::table('transaction_schedules')
+        $affected = DB::table('transaction_schedules')
             ->update([
-                'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diff->m} MONTH)"),
-                'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diff->m} MONTH)"),
-                'end_date' => DB::raw("DATE_ADD(end_date, INTERVAL {$diff->m} MONTH)"),
+                'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diffMonths} MONTH)"),
+                'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diffMonths} MONTH)"),
+                'end_date' => DB::raw("DATE_ADD(end_date, INTERVAL {$diffMonths} MONTH)"),
             ]);
+        $this->info("Transaction schedules updated: {$affected}");
 
         // Finally, run automated data retrieval commands to populate the database with current data.
+        $this->info('Retrieving investment data...');
         Artisan::call('app:investment-prices:get');
+
+        $this->info('Database refresh ready, putting site live...');
         Artisan::call('up');
 
         return Command::SUCCESS;
