@@ -51,7 +51,7 @@ class ResetDatabase extends Command
         $this->info('Adjusting dates in the database...');
         $date = '2008-12-31';
         $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
-        $diffMonths = $diff->y * 12 + $diff->m;
+        $diffMonths = $diff->y * 12 + $diff->m + 1;
 
         // Update all dates in the database
         // transactions - date
