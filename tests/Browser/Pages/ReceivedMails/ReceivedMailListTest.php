@@ -244,10 +244,7 @@ class ReceivedMailListTest extends DuskTestCase
                 ->assertRouteIs('transactions.createFromDraft')
                 // Wait for the transaction container to load
                 ->waitFor('@transaction-container-standard')
-                // Wait for Vue to load
-                // TODO: This is a hack, find a better way to wait for Vue to load
-                ->pause(10000)
-                // Check that Vue has a sourceId set
+                // Assert sourceId is set to the mail id in Vue
                 ->assertVue('sourceId', $mailId, '@transaction-container-standard');
         });
     }
