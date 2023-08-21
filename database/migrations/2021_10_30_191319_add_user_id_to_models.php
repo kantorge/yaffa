@@ -20,6 +20,7 @@ class AddUserIdToModels extends Migration
                     'name' => 'Default user',
                     'email' => config('yaffa.admin_email'),
                     'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
                 ]
             );
         }
