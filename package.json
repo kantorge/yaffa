@@ -50,6 +50,6 @@
         "vanillajs-datepicker": "^1.2.0",
         "vform": "^2.1.2",
         "vue": "^3.2.45",
-        "webpack": "^5.75.0"
+        "webpack": "^5.88.2"
     }
 }
