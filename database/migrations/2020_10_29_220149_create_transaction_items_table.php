@@ -16,7 +16,7 @@ return new class () extends Migration {
         Schema::create('transaction_items', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Transaction::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Category::class)->nullable()->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Category::class)->constrained()->restrictOnDelete();
             $table->decimal('amount', 12, 4);
             $table->string('comment', 191)->nullable();
         });
