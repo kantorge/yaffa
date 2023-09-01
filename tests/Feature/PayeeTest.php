@@ -29,8 +29,12 @@ class PayeeTest extends TestCase
         $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store", ['type' => 'payee']))->assertRedirect(route('login'));
 
-        $this->create(Category::class);
-        $payee = AccountEntity::factory()->payee()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Category $category */
+        $category = Category::factory()->for($user)->create();
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()->payee($user)->for($user)->create();
 
         $this->get(route("{$this->base_route}.edit", ['type' => 'payee', 'account_entity' => $payee->id]))->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", ['type' => 'payee', 'account_entity' => $payee->id]))->assertRedirect(route('login'));

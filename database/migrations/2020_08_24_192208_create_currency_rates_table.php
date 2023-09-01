@@ -1,29 +1,29 @@
 <?php
 
+use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCurrencyRatesTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('currency_rates', function (Blueprint $table) {
-            $table->bigIncrements('id');
-
-            $table->foreignId('from_id');
-            $table->foreignId('to_id');
-
+            $table->id();
+            $table->foreignIdFor(Currency::class, 'from_id')
+                ->constrained('currencies')
+                ->cascadeOnDelete();
+            $table->foreignIdFor(Currency::class, 'to_id')
+                ->constrained('currencies')
+                ->cascadeOnDelete();
             $table->date('date');
             $table->decimal('rate', 8, 4);
 
-            $table->foreign('from_id')->references('id')->on('currencies');
-            $table->foreign('to_id')->references('id')->on('currencies');
-
+            // Make a date and currency pair unique
             $table->unique(['date', 'from_id', 'to_id']);
         });
     }
@@ -32,8 +32,8 @@ class CreateCurrencyRatesTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('currency_rates');
     }
-}
+};

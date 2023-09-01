@@ -1,25 +1,23 @@
 <?php
 
+use App\Models\AccountGroup;
+use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAccountsTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('opening_balance')->default(0);
-            $table->foreignId('account_group_id');
-            $table->foreignId('currency_id');
-
-            $table->foreign('account_group_id')->references('id')->on('account_groups');
-            $table->foreign('currency_id')->references('id')->on('currencies');
+            $table->foreignIdFor(AccountGroup::class)->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Currency::class)->constrained()->restrictOnDelete();
         });
     }
 
@@ -27,8 +25,8 @@ class CreateAccountsTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('accounts');
     }
-}
+};

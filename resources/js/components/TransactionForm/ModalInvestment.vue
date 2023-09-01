@@ -42,7 +42,7 @@ export default {
                 reconciled: false,
                 comment: null,
                 config: {
-                    account_id: null,
+                    account_entity_id: null,
                     investment_id: null,
                     price: null,
                     quantity: null,

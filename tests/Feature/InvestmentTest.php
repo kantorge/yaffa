@@ -29,8 +29,11 @@ class InvestmentTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        $this->createPrerequisites();
-        $investment = Investment::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createPrerequisites($user);
+        /** @var Investment $investment */
+        $investment = Investment::factory()->for($user)->create();
 
         $this->get(route("{$this->base_route}.edit", $investment->id))->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", $investment->id))->assertRedirect(route('login'));
@@ -40,15 +43,20 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_cannot_access_other_users_resource()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
+        /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
         $user2 = User::factory()->create();
 
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investment->id))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investment->id))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investment->id))->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investment->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investment->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investment->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     /** @test */
@@ -105,6 +113,7 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_create_an_investment()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
 
@@ -114,8 +123,10 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_investment()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
+        /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
         $response = $this
@@ -134,8 +145,10 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_cannot_update_an_investment_with_missing_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
+        /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
         $response = $this
@@ -163,8 +176,10 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_update_an_investment_with_proper_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
+        /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
         $attributes = Investment::factory()->for($user)->raw();
@@ -195,12 +210,13 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_delete_an_existing_investment()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         $this->assertDestroyWithUser($user);
     }
 
-    private function createPrerequisites(User $user = null)
+    private function createPrerequisites(User $user = null): array
     {
         if ($user) {
             $investmentGroup = $this->createForUser($user, InvestmentGroup::class);

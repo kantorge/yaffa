@@ -25,7 +25,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             static::$migrationRun = true;
         }
 
-        $this->user = User::firstWhere('email', 'demo@yaffa.cc');
+        $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
 
     private function fillStandardBuyForm(Browser $browser): Browser
@@ -368,7 +368,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
             $browser->assertRouteIs(
                 'account-entity.show',
-                ['account_entity' => $transaction->config->account_id]
+                ['account_entity' => $transaction->config->account_entity_id]
             );
         });
     }

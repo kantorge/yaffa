@@ -1,27 +1,24 @@
 <?php
 
+use App\Models\Category;
+use App\Models\Transaction;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTransactionItemsTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('transaction_items', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('transaction_id');
-            $table->unsignedBigInteger('category_id')->nullable();
-            $table->decimal('amount', 12, 2);
+            $table->foreignIdFor(Transaction::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Category::class)->nullable()->constrained()->restrictOnDelete();
+            $table->decimal('amount', 12, 4);
             $table->string('comment', 191)->nullable();
-
-            $table->foreign('transaction_id')->references('id')->on('transactions')->onDelete('CASCADE');
-            $table->foreign('category_id')->references('id')->on('categories');
         });
     }
 
@@ -29,8 +26,8 @@ class CreateTransactionItemsTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('transaction_items');
     }
-}
+};

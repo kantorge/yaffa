@@ -27,11 +27,14 @@ class CategoryTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        $category = Category::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Category $category */
+        $category = Category::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $category->id))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", $category->id))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", $category->id))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.edit", $category))->assertRedirect(route('login'));
+        $this->patch(route("{$this->base_route}.update", $category))->assertRedirect(route('login'));
+        $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirect(route('login'));
     }
 
     /** @test */
@@ -42,9 +45,12 @@ class CategoryTest extends TestCase
 
         $user2 = User::factory()->create();
 
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $category->id))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $category->id))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $category->id))->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->get(route("{$this->base_route}.edit", $category->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->patch(route("{$this->base_route}.update", $category->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $category->id))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     /** @test */

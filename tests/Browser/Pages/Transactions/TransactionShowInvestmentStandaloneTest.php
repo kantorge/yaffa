@@ -28,12 +28,12 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 
     public function test_user_can_load_the_investment_transaction_details()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
             ->buy([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
                 'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
                 'price' => 1.23456,
                 'quantity' => 2.34567,
@@ -84,12 +84,12 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
      **/
     public function test_user_can_load_the_investment_transaction_details_for_a_scheduled_transaction()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data and a schedule
         $transaction = Transaction::factory()
             ->buy([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
                 'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
                 'price' => 1.23456,
                 'quantity' => 2.34567,

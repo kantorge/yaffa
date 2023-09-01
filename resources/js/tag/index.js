@@ -26,10 +26,23 @@ window.table = $(dataTableSelector).DataTable({
             className: "text-center",
         },
         {
+            data: "transaction_count",
+            title: __("Transactions"),
+            className: "text-center",
+            type: "num",
+        },
+        {
             data: "id",
             title: __("Actions"),
             render: function (data) {
-                return  genericDataTablesActionButton(data, 'edit', 'tag.edit') +
+                return  `<a 
+                                class="btn btn-xs btn-success" 
+                                href="${route('reports.transactions', {tags: [data]})}"
+                                title="${__('Show transactions')}"
+                        >
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </a> ` +
+                        genericDataTablesActionButton(data, 'edit', 'tag.edit') +
                         genericDataTablesActionButton(data, 'delete');
             },
             className: "dt-nowrap",

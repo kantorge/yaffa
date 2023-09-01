@@ -34,10 +34,10 @@ Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setD
     ->name('currencies.setDefault');
 
 Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase'])
-    ->name('currencyrate.retreiveMissing');
+    ->name('currency-rate.retreiveMissing');
 
 Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retreiveCurrencyRateToBase'])
-    ->name('currencyrate.retreiveRate');
+    ->name('currency-rate.retreiveRate');
 
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');

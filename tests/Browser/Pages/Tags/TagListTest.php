@@ -31,7 +31,7 @@ class TagListTest extends DuskTestCase
     public function test_user_can_load_the_tag_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc')
+        $user = User::firstWhere('email', $this::USER_EMAIL)
             ->load('tags');
 
         // Get the first tag of the user.
@@ -94,7 +94,7 @@ class TagListTest extends DuskTestCase
 
     public function test_user_can_reach_the_new_tag_form_via_the_tag_list()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser
@@ -114,7 +114,7 @@ class TagListTest extends DuskTestCase
     public function test_user_can_reach_the_edit_tag_form_via_the_tag_list()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
         // Get the firt tag of the user. We assume, that it will be visible in the list.
         $tagToEdit = $user->tags()->first();
 
@@ -144,7 +144,7 @@ class TagListTest extends DuskTestCase
     public function test_user_can_reach_the_delete_tag_form_via_the_tag_list()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Get the firt tag of the user. We assume, that it will be visible in the list.
         $tagToDelete = $user->tags()->first();

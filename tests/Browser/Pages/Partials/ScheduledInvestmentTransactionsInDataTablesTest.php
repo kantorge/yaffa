@@ -29,12 +29,13 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
     public function test_details_of_a_buy_transaction_are_correct()
     {
         // Select main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data
+        /** @var Transaction $transaction */
         $transaction = Transaction::factory()
             ->buy([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
                 'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
                 'price' => 100,
                 'quantity' => 2000,
@@ -94,12 +95,12 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
     public function test_details_of_a_sell_transaction_are_correct()
     {
         // Select main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
             ->sell([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
                 'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
                 'price' => 100,
                 'quantity' => 2000,
@@ -159,12 +160,12 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
     public function test_details_of_a_dividend_transaction_are_correct()
     {
         // Select main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
             ->dividend([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
                 'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
                 'quantity' => null,
                 'price' => null,
