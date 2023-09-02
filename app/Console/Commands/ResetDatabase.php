@@ -39,14 +39,16 @@ class ResetDatabase extends Command
 
         // Create the demo user without using factory, which is not autoloaded in production
         $this->info('Creating demo user...');
-        User::create([
+        $user = User::create([
             'name' => 'Demo User',
             'email' => 'demo@yaffa.cc',
-            'email_verified_at' => now(),
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
         ]);
+
+        // Make sure to verify the demo user
+        $user->markEmailAsVerified();
 
         // Now we need to load the demo.sql file into the database.
         // We assume the database to be empty in terms of users and user related data, except the demo user (1).
