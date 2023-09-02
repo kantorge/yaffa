@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use Artisan;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -37,8 +36,9 @@ class ResetDatabase extends Command
         $this->info('Resetting database...');
         Artisan::call('migrate:fresh', ['--force' => true]);
 
-        // Create the demo user using factory
-        User::factory()->create([
+        // Create the demo user using factory, which is not autoloaded in production
+        $this->info('Creating demo user...');
+        resolve(\Database\Factories\UserFactory::class)->create([
             'name' => 'Demo User',
             'email' => 'demo@yaffa.cc',
             'password' => Hash::make('demo'),
