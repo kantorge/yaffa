@@ -1,5 +1,12 @@
-on: push
-name: CI
+name: Automated Tests
+
+on:
+  push:
+    # Ignore branches which are expected to have producion assets, and some tests would fail
+    branches-ignore:
+      - main
+      - other/sandbox
+
 jobs:
   phpunit:
     runs-on: ubuntu-latest
