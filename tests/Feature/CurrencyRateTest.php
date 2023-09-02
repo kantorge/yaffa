@@ -85,7 +85,7 @@ class CurrencyRateTest extends TestCase
         $otherCurrency->save();
 
         // Add one currency rate record
-        $rate = CurrencyRate::create([
+        CurrencyRate::create([
             'from_id' => $otherCurrency->id,
             'to_id' => $baseCurrency->id,
             'rate' => 1,
@@ -100,7 +100,7 @@ class CurrencyRateTest extends TestCase
             ]))
             ->assertStatus(200)
             ->assertViewIs("currency-rate.index");
-        /*
+
         $this->actingAs($user)
             ->from(route("currency-rate.index", [
                 'from' => $otherCurrency,
@@ -109,8 +109,11 @@ class CurrencyRateTest extends TestCase
             ->get(route("currency-rate.retreiveRate", [
                 'currency' => $otherCurrency,
             ]))
-            ->assertStatus(200)
-            ->assertViewIs("currency-rate.index");
+            ->assertRedirectToRoute("currency-rate.index", [
+                'from' => $otherCurrency,
+                'to' => $baseCurrency
+            ]);
+
 
         $this->actingAs($user)
             ->from(route("currency-rate.index", [
@@ -120,8 +123,9 @@ class CurrencyRateTest extends TestCase
             ->get(route("currency-rate.retreiveMissing", [
                 'currency' => $otherCurrency,
             ]))
-            ->assertStatus(200)
-            ->assertViewIs("currency-rate.index");
-        */
+            ->assertRedirectToRoute("currency-rate.index", [
+                'from' => $otherCurrency,
+                'to' => $baseCurrency
+            ]);
     }
 }

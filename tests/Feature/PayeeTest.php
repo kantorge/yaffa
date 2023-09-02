@@ -31,8 +31,7 @@ class PayeeTest extends TestCase
 
         /** @var User $user */
         $user = User::factory()->create();
-        /** @var Category $category */
-        $category = Category::factory()->for($user)->create();
+        Category::factory()->for($user)->create();
         /** @var AccountEntity $payee */
         $payee = AccountEntity::factory()->payee($user)->for($user)->create();
 
