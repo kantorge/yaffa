@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use Artisan;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class ResetDatabase extends Command
 {
@@ -35,7 +37,18 @@ class ResetDatabase extends Command
         $this->info('Resetting database...');
         Artisan::call('migrate:fresh', ['--force' => true]);
 
-        // The migrate:fresh command creates a base user. Now we need to load the demo.sql file into the database.
+        // Create the demo user using factory
+        User::factory()->create([
+            'name' => 'Deemo User',
+            'email' => 'demo@yaffa.cc',
+            'password' => Hash::make('demo'),
+            'email_verified_at' => now(),
+            'language' => 'en',
+            'locale' => 'en-US',
+        ]);
+
+        // Now we need to load the demo.sql file into the database.
+        // We assume the database to be empty in terms of users and user related data, except the demo user (1).
         $this->info('Loading demo data from file...');
         $file = base_path('database/seeders/demo.sql');
         DB::unprepared(file_get_contents($file));

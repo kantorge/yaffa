@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * App\Models\TransactionDetailInvestment
  *
  * @property int $id
- * @property int $account_id
+ * @property int $account_entity_id
  * @property int $investment_id
  * @property float|null $price
  * @property float|null $quantity
@@ -63,7 +63,7 @@ class TransactionDetailInvestment extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'account_id',
+        'account_entity_id',
         'investment_id',
         'price',
         'quantity',
@@ -87,7 +87,7 @@ class TransactionDetailInvestment extends Model
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(AccountEntity::class, 'account_id');
+        return $this->belongsTo(AccountEntity::class, 'account_entity_id');
     }
 
     /**

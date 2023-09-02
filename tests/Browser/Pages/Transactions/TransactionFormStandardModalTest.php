@@ -23,7 +23,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
             static::$migrationRun = true;
         }
 
-        $this->user = User::firstWhere('email', 'demo@yaffa.cc');
+        $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
 
     public function test_user_can_load_the_standard_transaction_form_in_a_modal()

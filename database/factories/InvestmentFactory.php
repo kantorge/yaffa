@@ -32,7 +32,7 @@ class InvestmentFactory extends Factory
             'symbol' => Str::slug($name),
             'isin' => $this->faker->asciify(str_repeat('*', 12)),
             'comment' => $this->faker->boolean(25) ? $this->faker->text(191) : null,
-            'active' => $this->faker->boolean(80) ? true : false,
+            'active' => $this->faker->boolean(80),
             'auto_update' => false,
             'investment_group_id' => $user->investmentGroups()->inRandomOrder()->first()->id,
             'currency_id' => $user->currencies()->inRandomOrder()->first()->id,

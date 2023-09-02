@@ -126,16 +126,27 @@ export default {
                             customData: transaction,
                             dates: new Date(transaction.transaction_schedule.next_date)
                         }
-                    })
+                    });
 
                 // Set min and max dates or fall back to current month
-                if (vue.transactions.length > 0) {
-                    vue.minDate = vue.transactions.map((transaction) => transaction.dates).reduce(function (a, b) {
+                if (vue.transactions.length > 1) {
+                    const minDate = vue.transactions.map((transaction) => transaction.dates).reduce(function (a, b) {
                         return (a < b ? a : b);
                     });
-                    vue.maxDate = vue.transactions.map((transaction) => transaction.dates).reduce(function (a, b) {
+
+                    // Set the minDate to the first day of the same month
+                    vue.minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+
+                    const maxDate = vue.transactions.map((transaction) => transaction.dates).reduce(function (a, b) {
                         return (a > b ? a : b);
                     });
+
+                    // Set the maxDate to the last day of the same month
+                    vue.maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+                } else if (vue.transactions.length === 1) {
+                    const date = new Date(vue.transactions[0].dates);
+                    vue.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                    vue.maxDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
                 } else {
                     const date = new Date();
                     vue.minDate = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -143,7 +154,6 @@ export default {
                 }
             })
             .finally(function () {
-                window.a = vue.transactions;
                 vue.busy = false;
                 setTimeout(() => vue.refreshTooltip(), 1000);
             });

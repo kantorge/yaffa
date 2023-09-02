@@ -8,6 +8,7 @@ use App\Models\CurrencyRate;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class CurrencyRateController extends Controller
@@ -22,7 +23,7 @@ class CurrencyRateController extends Controller
         $this->currencyRate = $currencyRate;
     }
 
-    public function index(Currency $from, Currency $to)
+    public function index(Currency $from, Currency $to): View
     {
         /**
          * @get('/currencyrates/{from}/{to}')
@@ -43,11 +44,11 @@ class CurrencyRateController extends Controller
         JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
         return view(
-            'currencyrates.index',
-            with([
+            'currency-rate.index',
+            [
                 'from' => $from,
                 'to' => $to,
-            ])
+            ]
         );
     }
 
@@ -81,7 +82,7 @@ class CurrencyRateController extends Controller
     {
         /**
          * @get('/currencyrates/get/{currency}/{from?}')
-         * @name('currencyrate.retreiveRate')
+         * @name('currency-rate.retreiveRate')
          * @middlewares('web')
          */
 
@@ -93,11 +94,11 @@ class CurrencyRateController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveMissingCurrencyRateToBase(Currency $currency)
+    public function retreiveMissingCurrencyRateToBase(Currency $currency): RedirectResponse
     {
         /**
          * @get('/currencyrates/missing/{currency}')
-         * @name('currencyrate.retreiveMissing')
+         * @name('currency-rate.retreiveMissing')
          * @middlewares('web')
          */
         // Authorize user access to requested currency

@@ -116,7 +116,7 @@ window.table = $(tableSelector).DataTable({
             data: 'id',
             defaultContent: '',
             title: __("Actions"),
-            render: function(data, _type, row) {
+            render: function(data, _type) {
                 return  dataTableHelpers.dataTablesActionButton(data, 'quickView') +
                         dataTableHelpers.dataTablesActionButton(data, 'show') +
                         dataTableHelpers.dataTablesActionButton(data, 'edit') +
@@ -449,7 +449,7 @@ let rebuildUrl = function () {
     params.push(...payees);
 
     // Tags
-    const tags = $(elementTagSelector).val().map((item) => 'tag[]=' + item);
+    const tags = $(elementTagSelector).val().map((item) => 'tags[]=' + item);
     params.push(...tags);
 
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));

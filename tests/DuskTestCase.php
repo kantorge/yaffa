@@ -12,6 +12,10 @@ abstract class DuskTestCase extends BaseTestCase
 {
     use CreatesApplication;
 
+    // Define the user email, that is generally used for testing
+    // This should match the primary user email in the database\seeders\DatabaseSeeder.php file
+    protected const USER_EMAIL = 'demo@yaffa.cc';
+
     /**
      * Prepare for Dusk test execution.
      *

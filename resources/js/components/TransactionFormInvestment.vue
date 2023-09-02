@@ -64,7 +64,7 @@
                                         <select
                                                 class="form-select"
                                                 id="account"
-                                                v-model="form.config.account_id">
+                                                v-model="form.config.account_entity_id">
                                         </select>
                                     </div>
                                 </div>
@@ -503,7 +503,7 @@ export default {
         // Check for various default values in URL
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('account')) {
-            this.form.config.account_id = urlParams.get('account');
+            this.form.config.account_entity_id = urlParams.get('account');
         }
 
         // Set form action
@@ -556,13 +556,13 @@ export default {
                     });
             })
             .on('select2:unselect', function () {
-                $vm.account_id = null;
+                $vm.account_entity_id = null;
                 $vm.account_currency = null;
                 $vm.account_currency_id = null;
             });
 
         // Load default value for account
-        this.getDefaultAccountDetails(this.form.config.account_id);
+        this.getDefaultAccountDetails(this.form.config.account_entity_id);
 
         // Investment dropdown functionality
         $('#investment').select2({
@@ -617,14 +617,14 @@ export default {
     },
 
     methods: {
-        getDefaultAccountDetails(account_id) {
-            if (!account_id) {
+        getDefaultAccountDetails(account_entity_id) {
+            if (!account_entity_id) {
                 return;
             }
             const $vm = this;
 
             $.ajax({
-                url: '/api/assets/account/' + this.form.config.account_id,
+                url: '/api/assets/account/' + this.form.config.account_entity_id,
                 data: {
                     _token: $vm.csrfToken,
                 },
@@ -701,7 +701,7 @@ export default {
                 this.form.config.tax = this.transaction.config?.tax;
                 this.form.config.dividend = this.transaction.config?.dividend;
 
-                this.form.config.account_id = this.transaction.config.account_id;
+                this.form.config.account_entity_id = this.transaction.config.account_entity_id;
                 this.form.config.investment_id = this.transaction.config.investment_id;
 
                 // Copy schedule config
@@ -778,12 +778,12 @@ export default {
             }
 
             if (this.callback === 'returnToPrimaryAccount') {
-                location.href = window.route('account.history', {account: this.form.config.account_id});
+                location.href = window.route('account.history', {account: this.form.config.account_entity_id});
                 return;
             }
 
             if (this.callback === 'returnToSecondaryAccount') {
-                location.href = window.route('account.history', {account: this.form.config.account_id});
+                location.href = window.route('account.history', {account: this.form.config.account_entity_id});
                 return;
             }
 
@@ -867,7 +867,7 @@ export default {
             this.initializeTransaction();
 
             // Load default value for accounts
-            this.getDefaultAccountDetails(transaction.config.account_id);
+            this.getDefaultAccountDetails(transaction.config.account_entity_id);
             this.getDefaultInvestmentDetails(transaction.config.investment_id);
         }
     }

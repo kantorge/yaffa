@@ -13,7 +13,7 @@
             <div class="card-header d-flex justify-content-between">
                 <div class="card-title">{{ __('Currency rate values') }}</div>
                 <div>
-                    <a href="{{ route('currencyrate.retreiveMissing', ['currency' =>  $from->id ]) }}" class="btn btn-success" title="{{ __('Load new currency rates') }}">
+                    <a href="{{ route('currency-rate.retreiveMissing', ['currency' =>  $from->id ]) }}" class="btn btn-success" title="{{ __('Load new currency rates') }}">
                         <span class="fa fa-cloud-download"></span>
                     </a>
                 </div>

@@ -107,6 +107,7 @@
                                 value="1"
                                 v-model="schedule.automatic_recording"
                                 id="schedule_automatic_recording"
+                                :disabled="!allowCustomizationData"
                         >
                         <label class="form-check-label" for="schedule_automatic_recording">
                             {{ __('Automatic recording') }}

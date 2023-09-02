@@ -970,7 +970,7 @@ export default {
                             q: params.term,
                             transaction_type: $vm.form.transaction_type,
                             account_type: type,
-                            account_id: $vm.accountId,
+                            account_entity_id: $vm.accountId,
                         };
                     },
                     processResults: function (data) {
@@ -1001,8 +1001,8 @@ export default {
             };
         },
 
-        getDefaultAccountDetails(account_id, type) {
-            if (!account_id) {
+        getDefaultAccountDetails(account_entity_id, type) {
+            if (!account_entity_id) {
                 return;
             }
 
@@ -1014,7 +1014,7 @@ export default {
             const selector = '#account_' + type;
 
             $.ajax({
-                url: '/api/assets/' + this.getAccountType(type) + '/' + account_id,
+                url: '/api/assets/' + this.getAccountType(type) + '/' + account_entity_id,
                 data: {
                     _token: $vm.csrfToken,
                 }

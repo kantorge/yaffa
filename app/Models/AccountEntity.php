@@ -69,7 +69,7 @@ class AccountEntity extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'name',
@@ -96,7 +96,7 @@ class AccountEntity extends Model
         return $this->hasManyThrough(
             Transaction::class,
             TransactionDetailInvestment::class,
-            'account_id',
+            'account_entity_id',
             'config_id',
             'id',
             'id',

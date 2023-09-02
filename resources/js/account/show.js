@@ -490,7 +490,7 @@ $('#create-investment-transaction-button').on('click', function () {
         budget: false,
         date: new Date(),
         config: {
-            account_id: account.id,
+            account_entity_id: account.id,
         },
     };
 

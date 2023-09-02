@@ -26,7 +26,7 @@ class AccountListTest extends DuskTestCase
     public function test_user_can_load_the_account_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc')
+        $user = User::firstWhere('email', $this::USER_EMAIL)
             ->load('accounts');
 
         // Get the first account of the user.

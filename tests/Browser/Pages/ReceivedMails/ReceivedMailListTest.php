@@ -28,7 +28,7 @@ class ReceivedMailListTest extends DuskTestCase
     public function test_user_can_load_the_received_mail_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc')
+        $user = User::firstWhere('email', $this::USER_EMAIL)
             ->load('accounts');
 
         // Create test mails - 1 unprocessed, 2 processed, 1 handled
@@ -140,7 +140,7 @@ class ReceivedMailListTest extends DuskTestCase
     public function test_user_can_interact_with_mail_action_buttons()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // The same mails should be still present from the previous test
 

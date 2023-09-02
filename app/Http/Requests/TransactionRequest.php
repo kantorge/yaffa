@@ -19,7 +19,7 @@ class TransactionRequest extends FormRequest
     {
         return [
             // Investment specific fields
-            'config.account_id' => __('account'),
+            'config.account_entity_id' => __('account'),
             'config.investment_id' => __('investment'),
             'config.dividend' => __('dividend'),
             'config.quantity' => __('quantity'),
@@ -121,14 +121,12 @@ class TransactionRequest extends FormRequest
                 'items' => 'array',
                 'items.*' => 'array',
                 'items.*.amount' => [
-                    'nullable',
-                    'required_with:items.*.category,items.*.comment,items.*.tags',
+                    'required',
                     'numeric',
                     'gt:0',
                 ],
                 'items.*.category_id' => [
-                    'nullable',
-                    'required_with:items.*.amount',
+                    'required',
                     'exists:categories,id',
                 ],
                 'items.*.comment' => 'nullable|max:191',
@@ -192,7 +190,7 @@ class TransactionRequest extends FormRequest
         } elseif ($this->get('config_type') === 'transaction_detail_investment') {
             // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
-                'config.account_id' => [
+                'config.account_entity_id' => [
                     'required',
                     'exists:account_entities,id,config_type,account',
                 ],

@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run($aliases = [])
+    public function run($aliases = []): void
     {
         foreach ($aliases as $alias) {
             User::factory()->create([

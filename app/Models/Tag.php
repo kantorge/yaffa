@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 
 /**
@@ -77,6 +78,21 @@ class Tag extends Model
             'tag_id',
             'transaction_item_id'
         );
+    }
+
+    // Define the relation to transactions through transaction items
+    public function transactions()
+    {
+        return Transaction::whereHas('transactionItems', function ($query) {
+            $query->whereHas('tags', function ($query) {
+                $query->where('tags.id', $this->id);
+            });
+        });
+    }
+
+    public function getTransactionCountAttribute(): int
+    {
+        return $this->transactions()->count();
     }
 
     /**

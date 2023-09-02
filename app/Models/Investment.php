@@ -207,7 +207,7 @@ class Investment extends Model
                 function (Builder $query) use ($investmentId, $account) {
                     $query->Where('investment_id', $investmentId);
                     if ($account !== null) {
-                        $query->where('account_id', '=', $account->id);
+                        $query->where('account_entity_id', '=', $account->id);
                     }
                 }
             )

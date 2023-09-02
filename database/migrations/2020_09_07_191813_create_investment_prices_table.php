@@ -1,25 +1,26 @@
 <?php
 
+use App\Models\Investment;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateInvestmentPricesTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('investment_prices', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->foreignId('investment_id');
+            $table->foreignIdFor(Investment::class)->constrained()->cascadeOnDelete();
             $table->decimal('price', 10, 4);
             $table->timestamps();
 
-            $table->foreign('investment_id')->references('id')->on('investments');
+            // Make a date and investment pair unique
+            $table->unique(['date', 'investment_id']);
         });
     }
 
@@ -27,8 +28,8 @@ class CreateInvestmentPricesTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('investment_prices');
     }
-}
+};

@@ -147,7 +147,7 @@ class Account extends Model
                     ->where('type', 'investment')
                     ->whereNotNull('quantity_operator');
             })
-            ->where('transaction_details_investment.account_id', $this->config->id)
+            ->where('transaction_details_investment.account_entity_id', $this->config->id)
             ->get();
     }
 }

@@ -169,9 +169,9 @@ class Currency extends Model
             return;
         }
 
-        $date = Carbon::create('yesterday');
+        $date = Carbon::parse('yesterday');
         if (!$from) {
-            $from = Carbon::create('yesterday');
+            $from = Carbon::parse('yesterday');
         }
 
         $rates = CurrencyApi::rates()
@@ -179,6 +179,11 @@ class Currency extends Model
             ->base($this->iso_code)
             ->symbols([$baseCurrency->iso_code])
             ->get();
+
+        // If rates is not an array with at least one element, return.
+        if (!is_array($rates) || count($rates) === 0) {
+            return;
+        }
 
         foreach ($rates as $date => $rate) {
             CurrencyRate::updateOrCreate(

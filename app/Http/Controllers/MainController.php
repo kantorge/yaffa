@@ -83,7 +83,7 @@ class MainController extends Controller
                 'config',
                 [TransactionDetailInvestment::class],
                 function (Builder $query) use ($account) {
-                    $query->where('account_id', $account->id);
+                    $query->where('account_entity_id', $account->id);
                 }
             )
             ->with([
@@ -119,7 +119,7 @@ class MainController extends Controller
 
                     $transaction->transactionOperator = $transaction->transactionType->amount_operator;
                     $transaction->quantityOperator = $transaction->transactionType->quantity_operator;
-                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
+                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_entity_id];
                     $transaction->account_to_name = $transaction->config->investment->name;
                     $transaction->amount_from = ($amount < 0 ? -$amount : null);
                     $transaction->amount_to = ($amount > 0 ? $amount : null);
