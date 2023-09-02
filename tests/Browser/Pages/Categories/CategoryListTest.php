@@ -33,6 +33,7 @@ class CategoryListTest extends DuskTestCase
             ->load('categories');
 
         // Create a category to search for, with unique name, parent and active status
+        /** @var Category $categoryToSearch */
         $categoryToSearch = Category::factory()
             ->for($user)
             ->create([
