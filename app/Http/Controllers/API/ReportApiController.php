@@ -380,7 +380,7 @@ class ReportApiController extends Controller
                 'transaction_schedules.count',
             )
             ->selectRaw('LAST_DAY(transactions.date - interval 1 month) + interval 1 day AS month')
-            ->selectRaw('CASE WHEN transactions.transaction_type_id = ? THEN transaction_details_standard.account_from_id ELSE transaction_details_standard.account_to_id END AS account_id', [$transactionTypeWithdrawal->id])
+            ->selectRaw('CASE WHEN transactions.transaction_type_id = ? THEN transaction_details_standard.account_from_id ELSE transaction_details_standard.account_to_id END AS account_entity_id', [$transactionTypeWithdrawal->id])
             ->selectRaw('CASE WHEN transactions.transaction_type_id = ? THEN -transaction_details_standard.amount_from ELSE transaction_details_standard.amount_to END AS amount', [$transactionTypeWithdrawal->id])
             ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
             ->leftJoin('transaction_schedules', 'transactions.id', '=', 'transaction_schedules.transaction_id')
@@ -394,7 +394,7 @@ class ReportApiController extends Controller
                 'transactions.id',
                 'transactions.schedule',
                 'transactions.budget',
-                'transaction_details_investment.account_id',
+                'transaction_details_investment.account_entity_id',
                 'transaction_schedules.start_date',
                 'transaction_schedules.next_date',
                 'transaction_schedules.end_date',
@@ -424,7 +424,7 @@ class ReportApiController extends Controller
         // Group standard transactions by month, and get all relevant details
         $compact = [];
         $transactionsHistory->each(function ($transaction) use (&$compact, $accountCurrencyList) {
-            $currency = $accountCurrencyList[$transaction->account_id];
+            $currency = $accountCurrencyList[$transaction->account_entity_id];
 
             $compact[$transaction->month][$currency][] = floatval($transaction->amount);
         });
@@ -434,7 +434,7 @@ class ReportApiController extends Controller
                 $item = [
                     'id' => $transaction->id,
                     'amount' => floatval($transaction->amount),
-                    'account_id' => $transaction->account_id,
+                    'account_entity_id' => $transaction->account_entity_id,
                     'transaction_schedule' => (object) [
                         'start_date' => $transaction->start_date,
                         'next_date' => $transaction->next_date,
@@ -456,8 +456,8 @@ class ReportApiController extends Controller
                 (new Carbon())->addYears(50)
             )->each(function ($transaction) use (&$compact, $accountCurrencyList, $baseCurrency) {
                 $month = $transaction->date->format('Y-m-01');
-                if (array_key_exists($transaction->account_id, $accountCurrencyList)) {
-                    $currency = $accountCurrencyList[$transaction->account_id];
+                if (array_key_exists($transaction->account_entity_id, $accountCurrencyList)) {
+                    $currency = $accountCurrencyList[$transaction->account_entity_id];
                 } else {
                     $currency = $baseCurrency->id;
                 }
@@ -600,7 +600,7 @@ class ReportApiController extends Controller
                 'transactions.id',
                 'transactions.schedule',
                 'transactions.budget',
-                'transaction_details_investment.account_id',
+                'transaction_details_investment.account_entity_id',
                 'transaction_schedules.start_date',
                 'transaction_schedules.next_date',
                 'transaction_schedules.end_date',
@@ -615,7 +615,7 @@ class ReportApiController extends Controller
             ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
             ->where('transactions.user_id', Auth::user()->id)
             ->where('transactions.config_type', 'transaction_detail_investment')
-            ->where('transaction_details_investment.account_id', $accountEntity->id)
+            ->where('transaction_details_investment.account_entity_id', $accountEntity->id)
             ->whereIn('transactions.transaction_type_id', function ($query) {
                 $query->from('transaction_types')
                     ->select('id')

@@ -13,7 +13,7 @@ class ReceivedMailShowTest extends DuskTestCase
     public function test_user_can_load_the_received_mail_show_page_for_unprocessed_mail()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Generate a new unprocessed mail
         $mail = ReceivedMail::factory()
@@ -77,7 +77,7 @@ class ReceivedMailShowTest extends DuskTestCase
     public function test_user_can_load_the_received_mail_show_page_for_processed_unhadled_mail()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Generate a new unhadled mail
         $mail = ReceivedMail::factory()
@@ -159,7 +159,7 @@ class ReceivedMailShowTest extends DuskTestCase
     public function test_user_can_reset_the_processed_flag_of_a_mail()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Generate a new unhadled mail
         $mail = ReceivedMail::factory()
@@ -220,7 +220,7 @@ class ReceivedMailShowTest extends DuskTestCase
     public function test_user_can_load_the_received_mail_show_page_for_processed_handled_mail()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Generate a new handled mail
         $transaction = Transaction::factory()

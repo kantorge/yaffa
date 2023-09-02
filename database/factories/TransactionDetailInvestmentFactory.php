@@ -32,7 +32,7 @@ class TransactionDetailInvestmentFactory extends Factory
         $currency = $accountCurrencies->intersect($investmentCurrencies)->random();
 
         return [
-            'account_id' => AccountEntity::where('config_type', 'account')
+            'account_entity_id' => AccountEntity::where('config_type', 'account')
                 ->whereHasMorph(
                     'config',
                     [Account::class],

@@ -25,7 +25,7 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
 
     public function test_user_can_load_the_standard_transaction_details()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create a standard transaction with specific data
         $transaction = Transaction::factory()->withdrawal()->create([

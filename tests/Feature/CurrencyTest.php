@@ -27,7 +27,10 @@ class CurrencyTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-        $currency = $this->create($this->base_model);
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Currency $currency */
+        $currency = Currency::factory()->for($user)->create();
 
         $this->get(route("{$this->base_route}.edit", $currency))->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", $currency))->assertRedirect(route('login'));

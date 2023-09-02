@@ -117,6 +117,7 @@ class AccountGroupTest extends TestCase
     /** @test */
     public function user_can_create_an_account_group()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }

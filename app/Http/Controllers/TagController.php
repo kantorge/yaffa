@@ -33,7 +33,8 @@ class TagController extends Controller
         $tags = Auth::user()
             ->tags()
             ->select('id', 'name', 'active')
-            ->get();
+            ->get()
+            ->append('transaction_count');
 
         // Pass data for DataTables
         JavaScript::put([

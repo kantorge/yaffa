@@ -26,59 +26,93 @@ class AccountTest extends TestCase
     /** @test */
     public function user_cannot_create_new_account_without_an_account_group()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $this->createForUser($user, Currency::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
+
+        // User is redirected to create an account group first
         $response->assertRedirect(route('account-group.create'));
     }
 
     /** @test */
     public function user_cannot_create_new_account_without_a_currency()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $this->createForUser($user, AccountGroup::class);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
+
+        // User is redirected to create a currency first
         $response->assertRedirect(route('currencies.create'));
     }
 
     /** @test */
     public function guest_cannot_access_resource()
     {
+        // Unauthenticated user cannot access any actions of the resource
         $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create", ['type' => 'account']))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store", ['type' => 'account']))->assertRedirect(route('login'));
 
-        $this->create(AccountGroup::class);
-        $this->create(Currency::class);
-        $account = AccountEntity::factory()->account()->create();
+        // Create a user and the related resources
+        /** @var User $user */
+        $user = User::factory()->create();
 
-        $this->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", ['type' => 'account', 'account_entity' => $account->id]))->assertRedirect(route('login'));
+        $this->createForUser($user, AccountGroup::class);
+        $this->createForUser($user, Currency::class);
+        /** @var AccountEntity $account */
+        $account = AccountEntity::factory()->account($user)->for($user)->create();
+
+        $this->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))
+            ->assertRedirect(route('login'));
+        $this->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))
+            ->assertRedirect(route('login'));
+        $this->delete(route("{$this->base_route}.destroy", [
+            'type' => 'account',
+            'account_entity' => $account->id
+        ]))
+            ->assertRedirect(route('login'));
     }
 
     /** @test */
     public function user_cannot_access_other_users_resource()
     {
+        /** @var User $user1 */
         $user1 = User::factory()->create();
         $this->createForUser($user1, AccountGroup::class);
         $this->createForUser($user1, Currency::class);
+        /** @var AccountEntity $account */
         $account = AccountEntity::factory()->for($user1)->account($user1)->create();
 
+        /** @var User $user2 */
         $user2 = User::factory()->create();
 
-        $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", ['type' => 'account', 'account_entity' => $account->id]))->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->get(route("{$this->base_route}.edit", [
+            'type' => 'account',
+            'account_entity' => $account->id
+        ]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->patch(route("{$this->base_route}.update", [
+            'type' => 'account',
+            'account_entity' => $account->id
+        ]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
+        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", [
+            'type' => 'account',
+            'account_entity' => $account->id
+        ]))
+            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     /** @test */
     public function user_can_view_list_of_accounts()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $this->createForUser($user, AccountGroup::class);

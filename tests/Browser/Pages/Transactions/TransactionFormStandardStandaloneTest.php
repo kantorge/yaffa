@@ -26,7 +26,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             static::$migrationRun = true;
         }
 
-        $this->user = User::firstWhere('email', 'demo@yaffa.cc');
+        $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
 
     private function fillStandardWithdrawalForm(Browser $browser): Browser
