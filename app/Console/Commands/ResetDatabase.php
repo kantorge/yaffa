@@ -39,10 +39,9 @@ class ResetDatabase extends Command
 
         // Create the demo user using factory
         User::factory()->create([
-            'name' => 'Deemo User',
+            'name' => 'Demo User',
             'email' => 'demo@yaffa.cc',
             'password' => Hash::make('demo'),
-            'email_verified_at' => now(),
             'language' => 'en',
             'locale' => 'en-US',
         ]);
