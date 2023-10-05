@@ -19,7 +19,7 @@
         "laravel-mix": "^6.0.49",
         "mini-css-extract-plugin": "^2.7.2",
         "node-sass": "^8.0.0",
-        "postcss": "^8.4.20",
+        "postcss": "^8.4.31",
         "postcss-loader": "^7.0.2",
         "resolve-url-loader": "^4.0.0",
         "sass": "^1.57.1",
