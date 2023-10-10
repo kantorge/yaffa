@@ -41,7 +41,7 @@
         "jquery": "^3.6.3",
         "jquery-csv": "^1.0.21",
         "json-rules-engine": "^6.1.2",
-        "jstree": "^3.3.12",
+        "jstree": "^3.3.16",
         "mathjs": "^9.5.2",
         "rrule": "^2.7.1",
         "select2": "^4.0.13",
