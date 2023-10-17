@@ -1,11 +1,11 @@
 // Import external libraries
 require ('datatables.net-bs5');
-require('datatables.net-responsive-bs5');
+import 'datatables.net-responsive-bs5';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
 import * as helpers from './../helpers';
 
-require('select2');
+import 'select2';
 
 // TODO: translate daterangpicker
 // TODO: how to make this dynamic, loading only current language?

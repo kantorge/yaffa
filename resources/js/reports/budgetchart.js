@@ -3,7 +3,7 @@ import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 
-require('datatables.net-bs5');
+import 'datatables.net-bs5';
 import * as dataTableHelpers from './../components/dataTableHelper'
 import 'jstree';
 import 'jstree/src/themes/default/style.css'

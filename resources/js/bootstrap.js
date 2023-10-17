@@ -1,11 +1,12 @@
 window.$ = window.jQuery = require('jquery');
-require('bootstrap')
+import 'bootstrap'
 
 // Get CSRF Token from meta tag
 window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 // Axios
-window.axios = require('axios');
+import axios from 'axios';
+window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 if (window.csrfToken) {

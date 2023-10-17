@@ -12,7 +12,7 @@ import {toFormattedCurrency, toIsoDateString} from '../helpers';
 import { RRule } from 'rrule';
 
 import 'select2';
-require('jquery-csv');
+import 'jquery-csv';
 
 window.transactions = [];
 window.account_currency = {};

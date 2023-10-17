@@ -1,7 +1,7 @@
 import {renderDeleteAssetButton} from "./../components/dataTableHelper";
 
-require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
+import 'datatables.net-bs5';
+import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 import {toFormattedCurrency} from '../helpers';
