@@ -19,7 +19,7 @@
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^9.0",
+        "laravel/framework": "^9.19",
         "laravel/sanctum": "^2.12",
         "laravel/ui": "^4.2",
         "nesbot/carbon": "^2.40",
