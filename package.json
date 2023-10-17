@@ -16,7 +16,6 @@
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.3",
         "file-loader": "^6.2.0",
-        "laravel-mix": "^6.0.49",
         "mini-css-extract-plugin": "^2.7.2",
         "node-sass": "^8.0.0",
         "postcss": "^8.4.20",
@@ -25,7 +24,9 @@
         "sass": "^1.57.1",
         "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
-        "vue-loader": "^16.8.3"
+        "vue-loader": "^16.8.3",
+        "vite": "^3.0.2",
+        "laravel-vite-plugin": "^0.6.0"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.32",
@@ -50,6 +51,7 @@
         "vanillajs-datepicker": "^1.2.0",
         "vform": "^2.1.2",
         "vue": "^3.2.45",
-        "webpack": "^5.88.2"
+        "webpack": "^5.88.2",
+        "@vitejs/plugin-vue": "^3.0.1"
     }
 }
