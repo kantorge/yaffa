@@ -14,6 +14,20 @@ class PayeeTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function createPayeeAndUser(): AccountEntity
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $account */
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        return $account;
+    }
+
     public function setUp(): void
     {
         parent::setUp();
@@ -29,11 +43,7 @@ class PayeeTest extends TestCase
         $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store", ['type' => 'payee']))->assertRedirect(route('login'));
 
-        /** @var User $user */
-        $user = User::factory()->create();
-        Category::factory()->for($user)->create();
-        /** @var AccountEntity $payee */
-        $payee = AccountEntity::factory()->payee($user)->for($user)->create();
+        $payee = $this->createPayeeAndUser();
 
         $this->get(route("{$this->base_route}.edit", ['type' => 'payee', 'account_entity' => $payee->id]))->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", ['type' => 'payee', 'account_entity' => $payee->id]))->assertRedirect(route('login'));
@@ -43,12 +53,11 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_cannot_access_other_users_resource()
     {
-        $user1 = User::factory()->create();
-        $this->createForUser($user1, Category::class);
-        $payee = AccountEntity::factory()->for($user1)->payee($user1)->create();
+        $payee = $this->createPayeeAndUser();
 
+        /** @var User $user2 */
         $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
+
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", ['type' => 'payee', 'account_entity' => $payee->id]))->assertStatus(Response::HTTP_FORBIDDEN);
@@ -57,10 +66,10 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_can_view_list_of_payees()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
-        $this->createForUser($user, Category::class);
-        AccountEntity::factory()->for($user)->payee($user)->count(5)->create();
+        AccountEntity::factory()->payee()->count(5)->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->get(route("{$this->base_route}.index", ['type' => 'payee']));
 
@@ -85,8 +94,8 @@ class PayeeTest extends TestCase
     public function user_cannot_create_a_payee_with_missing_data()
     {
         $user = User::factory()->create();
-
         $category = $this->createForUser($user, Category::class);
+
         $response = $this
             ->actingAs($user)
             ->postJson(
@@ -107,13 +116,15 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_can_create_a_payee()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
+        // Create a class for this user, which can be used in the config
         $this->createForUser($user, Category::class);
 
         $attributes = $baseAttributes = AccountEntity::factory()->for($user)->raw();
         $attributes['config_type'] = 'payee';
-        $attributes['config'] = Payee::factory()->raw();
+        $attributes['config'] = Payee::factory()->withUser($user)->raw();
 
         $response = $this
             ->actingAs($user)
@@ -132,10 +143,8 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_payee()
     {
-        $user = User::factory()->create();
-
-        $this->createForUser($user, Category::class);
-        $payee = AccountEntity::factory()->for($user)->payee($user)->create();
+        $payee = $this->createPayeeAndUser();
+        $user = $payee->user;
 
         $response = $this
             ->actingAs($user)
@@ -153,10 +162,8 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_cannot_update_a_payee_with_missing_data()
     {
-        $user = User::factory()->create();
-
-        $this->createForUser($user, Category::class);
-        $payee = AccountEntity::factory()->for($user)->payee($user)->create();
+        $payee = $this->createPayeeAndUser();
+        $user = $payee->user;
 
         $response = $this
             ->actingAs($user)
@@ -178,12 +185,8 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_can_update_a_payee_with_proper_data()
     {
-        $user = User::factory()->create();
-
-        $this->createForUser($user, Category::class);
-        $payee = AccountEntity::factory()->for($user)->payee($user)->create();
-
-        $attributes = AccountEntity::factory()->for($user)->payee($user)->raw();
+        $payee = $this->createPayeeAndUser();
+        $user = $payee->user;
 
         $response = $this
             ->actingAs($user)
@@ -193,7 +196,7 @@ class PayeeTest extends TestCase
                     ['type' => 'payee', 'account_entity' => $payee->id]
                 ),
                 [
-                    'name' => $attributes['name'],
+                    'name' => 'Updated payee name',
                     'active' => $payee->active,
                     'config_type' => 'payee',
                     'config' => [
@@ -209,18 +212,16 @@ class PayeeTest extends TestCase
     /** @test */
     public function user_can_delete_an_existing_payee()
     {
-        $user = User::factory()->create();
-        $this->createForUser($user, Category::class);
-
-        $payee = AccountEntity::factory()->for($user)->payee($user)->create();
-        $payeeConfig = $payee->config;
+        $payee = $this->createPayeeAndUser();
+        $user = $payee->user;
+        $payee->load('config');
 
         $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $payee->id));
 
         // Check if model was deleted
-        $this->assertDatabaseMissing($payee->getTable(), $payee->makeHidden('config')->toArray());
+        $this->assertDatabaseMissing($payee->getTable(), $payee->attributesToArray());
 
         // Check if config was also deleted
-        $this->assertDatabaseMissing('payees', $payeeConfig->toArray());
+        $this->assertDatabaseMissing('payees', $payee->config->toArray());
     }
 }

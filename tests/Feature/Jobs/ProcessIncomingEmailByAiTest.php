@@ -6,9 +6,7 @@ use App\Jobs\ProcessIncomingEmailByAi;
 use App\Mail\TransactionCreatedFromEmail;
 use App\Mail\TransactionErrorFromEmail;
 use App\Models\AccountEntity;
-use App\Models\AccountGroup;
 use App\Models\Category;
-use App\Models\Currency;
 use App\Models\ReceivedMail;
 use App\Models\TransactionType;
 use App\Models\User;
@@ -97,24 +95,25 @@ class ProcessIncomingEmailByAiTest extends TestCase
     public function transaction_data_array_is_created_if_processing_is_successful()
     {
         // Generate a user and a fake incoming email
+        /** @var User $user */
         $user = User::factory()->create();
         $mail = ReceivedMail::factory()
             ->for($user)
             ->create();
 
         // Generate further necessary assets - account
-        AccountGroup::factory()->for($user)->create();
-        Currency::factory()->for($user)->create();
         $account = AccountEntity::factory()
-            ->for($user)
-            ->account($user)
-            ->create();
+            ->account()
+            ->create([
+                'user_id' => $user->id,
+            ]);
 
         Category::factory()->for($user)->create();
         $payee = AccountEntity::factory()
-            ->for($user)
-            ->payee($user)
-            ->create();
+            ->payee()
+            ->create([
+                'user_id' => $user->id,
+            ]);
 
         $date = Carbon::now();
 
@@ -143,7 +142,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
             CreateResponse::fake([
                 'choices' => [
                     [
-                        'text' => (string)$account->id,
+                        'text' => (string) $account->id,
                     ],
                 ],
             ]),
@@ -153,7 +152,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
             CreateResponse::fake([
                 'choices' => [
                     [
-                        'text' => (string)$payee->id,
+                        'text' => (string) $payee->id,
                     ],
                 ],
             ]),

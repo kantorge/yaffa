@@ -95,6 +95,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_create_a_currency()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user, [
             'base' => true, // The first currency is expected to be the base currency

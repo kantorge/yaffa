@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItem
  * @property-read int|null $transaction_item_count
  * @property-read User $user
+ *
  * @method static Builder|Category active()
  * @method static \Database\Factories\CategoryFactory factory(...$parameters)
  * @method static Builder|Category newModelQuery()
@@ -42,6 +43,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder|Category whereParentId($value)
  * @method static Builder|Category whereUpdatedAt($value)
  * @method static Builder|Category whereUserId($value)
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Category> $children
+ * @property-read int|null $children_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AccountEntity> $payeesDefaulting
+ * @property-read int|null $payees_defaulting_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AccountEntity> $payeesPreferring
+ * @property-read int|null $payees_preferring_count
+ *
+ * @method static Builder|Category childCategory()
+ * @method static Builder|Category parentCategory()
+ *
  * @mixin \Eloquent
  */
 class Category extends Model
@@ -91,9 +103,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -102,9 +111,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include top level categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeParentCategory(Builder $query): Builder
     {
@@ -113,9 +119,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include child categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeChildCategory(Builder $query): Builder
     {

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\AccountEntity;
 use App\Models\Currency;
-use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,7 +29,6 @@ class InvestmentGroupTest extends TestCase
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
         $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
 
-
         $user = User::factory()->create();
         $investmentGroup = $this->createForUser($user, $this->base_model);
 
@@ -41,7 +40,7 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function unverified_user_cannot_access_resource()
     {
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
+        /** @var User $user_unverified */
         $user_unverified = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -49,7 +48,6 @@ class InvestmentGroupTest extends TestCase
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
-
 
         $user = User::factory()->create();
         $investmentGroup = $this->createForUser($user, $this->base_model);
@@ -62,11 +60,13 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_cannot_access_other_users_resource()
     {
+        /** @var User $user1 */
         $user1 = User::factory()->create();
         $investmentGroup = $this->createForUser($user1, $this->base_model);
 
+        /** @var User $user2 */
         $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
+
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
@@ -118,6 +118,7 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_can_create_an_investment_group()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
@@ -159,6 +160,7 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_can_update_an_investment_group_with_proper_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $investmentGroup = $this->createForUser($user, $this->base_model);
@@ -182,17 +184,26 @@ class InvestmentGroupTest extends TestCase
     /** @test */
     public function user_can_delete_an_existing_investment_group()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
 
+    /** @test */
     public function user_cannot_delete_investment_group_with_attached_investment()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $investmentGroup = $this->createForUser($user, $this->base_model);
         $this->createForUser($user, Currency::class);
-        Investment::factory()->for($user)->create();
+        AccountEntity::factory()
+            ->investment([
+                'investment_group_id' => $investmentGroup->id,
+            ])
+            ->create([
+                'user_id' => $user->id,
+            ]);
 
         $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $investmentGroup->id));
         $response->assertSessionHas('notification_collection.0.type', 'danger');

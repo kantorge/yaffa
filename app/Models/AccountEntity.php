@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Auth;
  * @property-read Collection|Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
  * @property-read User $user
+ *
  * @method static Builder|AccountEntity accounts()
  * @method static Builder|AccountEntity active()
  * @method static AccountEntityFactory factory(...$parameters)
@@ -58,6 +59,18 @@ use Illuminate\Support\Facades\Auth;
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
  * @method static Builder|AccountEntity forCurrentUser()
+ *
+ * @property string|null $alias
+ * @property-read Collection<int, Transaction> $transactionsInvestment
+ * @property-read int|null $transactions_investment_count
+ * @property-read Collection<int, Transaction> $transactionsStandardFrom
+ * @property-read int|null $transactions_standard_from_count
+ * @property-read Collection<int, Transaction> $transactionsStandardTo
+ * @property-read int|null $transactions_standard_to_count
+ *
+ * @method static Builder|AccountEntity investments()
+ * @method static Builder|AccountEntity whereAlias($value)
+ *
  * @mixin Eloquent
  */
 class AccountEntity extends Model
@@ -91,52 +104,56 @@ class AccountEntity extends Model
         return $this->morphTo();
     }
 
-    public function transactionsInvestment(): HasManyThrough
+    /**
+     * Returns the transactions where the TransactionType is investment,
+     * and account_from_id or account_to_id is this account entity.
+     */
+    public function transactionsInvestment(): HasMany
     {
-        return $this->hasManyThrough(
+        return $this->hasMany(
             Transaction::class,
-            TransactionDetailInvestment::class,
-            'account_entity_id',
-            'config_id',
-            'id',
-            'id',
+            'account_from_id'
         )
-            ->where(
-                'config_type',
-                'transaction_detail_investment'
+            ->orWhere(
+                'account_to_id',
+                $this->id
+            )
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'investment')
+            );
+
+    }
+
+    /**
+     * Returns the transactions where the TransactionType is standard,
+     * and account_from_id is this account entity.
+     */
+    public function transactionsStandardFrom(): HasMany
+    {
+        return $this->hasMany(
+            Transaction::class,
+            'account_from_id'
+        )
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'standard')
             );
     }
 
-    public function transactionsStandardFrom(): HasManyThrough
+    /**
+     * Returns the transactions where the TransactionType is standard,
+     * and account_to_id is this account entity.
+     */
+    public function transactionsStandardTo(): HasMany
     {
-        return $this->hasManyThrough(
+        return $this->hasMany(
             Transaction::class,
-            TransactionDetailStandard::class,
-            'account_from_id',
-            'config_id',
-            'id',
-            'id',
-        )
-            ->where(
-                'config_type',
-                'transaction_detail_standard'
-            );
-    }
-
-    public function transactionsStandardTo(): HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailStandard::class,
-            'account_to_id',
-            'config_id',
-            'id',
-            'id',
-        )
-            ->where(
-                'config_type',
-                'transaction_detail_standard'
-            );
+            'account_to_id'
+        )->whereHas(
+            'transactionType',
+            fn ($query) => $query->where('type', 'standard')
+        );
     }
 
     /**
@@ -161,31 +178,6 @@ class AccountEntity extends Model
             ->where('preferred', false);
     }
 
-    // Relation to transactions where this account is the from account or the to account
-    public function transactionsFrom()
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailStandard::class,
-            'account_from_id',
-            'config_id',
-            'id',
-            'id'
-        );
-    }
-
-    public function transactionsTo()
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailStandard::class,
-            'account_to_id',
-            'config_id',
-            'id',
-            'id'
-        );
-    }
-
     /**
      * Scope a query to only include active entities.
      *
@@ -201,7 +193,6 @@ class AccountEntity extends Model
      * Scope a query to only include accounts.
      *
      * @param  Builder  $query
-     * @return Builder
      */
     public function scopeAccounts($query): Builder
     {
@@ -212,7 +203,6 @@ class AccountEntity extends Model
      * Scope a query to only include payees.
      *
      * @param  Builder  $query
-     * @return Builder
      */
     public function scopePayees($query): Builder
     {
@@ -220,12 +210,21 @@ class AccountEntity extends Model
     }
 
     /**
+     * Scope a query to only include investments.
+     *
+     * @param  Builder  $query
+     */
+    public function scopeInvestments($query): Builder
+    {
+        return $query->where('config_type', 'investment');
+    }
+
+    /**
      * Scope a query to only include account entities of authenticated user.
      *
      * @param  Builder  $query
-     * @return Builder
      */
-    public function scopeForCurrentUser($query)
+    public function scopeForCurrentUser($query): Builder
     {
         return $query->where('user_id', Auth::user()->id);
     }

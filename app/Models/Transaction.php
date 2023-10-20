@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Recurr\Rule;
@@ -41,6 +40,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
  * @property-read TransactionType $transactionType
+ *
  * @method static Builder|Transaction byScheduleType($type)
  * @method static TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
@@ -58,6 +58,10 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereTransactionTypeId($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
+ *
+ * @property-read \App\Models\Currency|null $transaction_currency
+ * @property-read \App\Models\User $user
+ *
  * @mixin Eloquent
  */
 class Transaction extends Model
@@ -85,13 +89,15 @@ class Transaction extends Model
         'schedule',
         'budget',
         'comment',
-        'config_type',
-        'config_id',
         'user_id',
-    ];
-
-    protected $hidden = [
-        'config_id',
+        'account_from_id',
+        'account_to_id',
+        'amount_primary',
+        'amount_secondary',
+        'price',
+        'quantity',
+        'commission',
+        'tax',
     ];
 
     /**
@@ -104,20 +110,17 @@ class Transaction extends Model
         'reconciled' => 'boolean',
         'schedule' => 'boolean',
         'budget' => 'boolean',
+        'amount_primary' => 'float',
+        'amount_secondary' => 'float',
+        'price' => 'float',
+        'quantity' => 'float',
+        'commission' => 'float',
+        'tax' => 'float',
     ];
 
     protected $appends = [
         'transaction_currency',
     ];
-
-    protected $cloneable_relations = [
-        'config',
-    ];
-
-    public function config(): MorphTo
-    {
-        return $this->morphTo();
-    }
 
     public function user(): BelongsTo
     {
@@ -139,6 +142,39 @@ class Transaction extends Model
         return $this->hasOne(TransactionSchedule::class);
     }
 
+    public function accountFrom(): BelongsTo
+    {
+        return $this->belongsTo(AccountEntity::class, 'account_from_id');
+    }
+
+    public function accountTo(): BelongsTo
+    {
+        return $this->belongsTo(AccountEntity::class, 'account_to_id');
+    }
+
+    /**
+     * Get the investment details associated with the transaction.
+     * If the transaction is not an investment, return null.
+     * Otherwise, return the investment from either the account from or the account to field.
+     */
+    public function investment(): ?TransactionDetailInvestment
+    {
+        if ($this->transactionType->quantity_operator !== 'investment') {
+            return null;
+        }
+
+        if ($this->transactionType->quantity_operator === 'plus') {
+            return $this->accountTo->config;
+        }
+
+        if ($this->transactionType->quantity_operator === 'minus') {
+            return $this->accountFrom->config;
+        }
+
+        // Dividend and yield
+        return $this->accountFrom()->config;
+    }
+
     public function tags()
     {
         return $this->transactionItems
@@ -157,10 +193,6 @@ class Transaction extends Model
 
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
-     *
-     * @param Builder $query
-     * @param string $type
-     * @return Builder
      */
     public function scopeByScheduleType(Builder $query, string $type): Builder
     {
@@ -177,24 +209,8 @@ class Transaction extends Model
     }
 
     /**
-     * Override the default delete method to delete the transaction configuration as well
-     *
-     * @return bool|null
-     */
-    public function delete(): bool|null
-    {
-        // Remove the transaction configuration
-        $this->config()->delete();
-
-        return parent::delete();
-    }
-
-    /**
      * Get a numeric value representing the net financial result of the current transaction.
      * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
-     *
-     * @param AccountEntity|null $account
-     * @return float|int
      */
     public function cashflowValue(AccountEntity $account = null): float|int
     {
@@ -222,20 +238,16 @@ class Transaction extends Model
     {
         if ($this->transactionType->type === 'standard') {
             $this->loadStandardDetails();
-            return;
-        }
-        if ($this->transactionType->type === 'investment') {
+        } elseif ($this->transactionType->type === 'investment') {
             $this->loadInvestmentDetails();
-            return;
         }
     }
 
     private function loadStandardDetails(): void
     {
         $this->loadMissing([
-            'config',
-            'config.accountFrom',
-            'config.accountTo',
+            'accountFrom',
+            'accountTo',
             'transactionSchedule',
             'transactionType',
             'transactionItems',
@@ -245,26 +257,26 @@ class Transaction extends Model
 
         if ($this->transactionType->name === 'withdrawal') {
             $this->loadMissing([
-                'config.accountFrom.config',
-                'config.accountFrom.config.currency',
-                'config.accountTo.config',
+                'accountFrom.config',
+                'accountFrom.config.currency',
+                'accountTo.config',
             ]);
         }
 
         if ($this->transactionType->name === 'deposit') {
             $this->loadMissing([
-                'config.accountTo.config',
-                'config.accountTo.config.currency',
-                'config.accountFrom.config',
+                'accountTo.config',
+                'accountTo.config.currency',
+                'accountFrom.config',
             ]);
         }
 
         if ($this->transactionType->name === 'transfer') {
             $this->loadMissing([
-                'config.accountFrom.config',
-                'config.accountFrom.config.currency',
-                'config.accountTo.config',
-                'config.accountTo.config.currency',
+                'accountFrom.config',
+                'accountFrom.config.currency',
+                'accountTo.config',
+                'accountTo.config.currency',
             ]);
         }
     }
@@ -272,11 +284,8 @@ class Transaction extends Model
     private function loadInvestmentDetails(): void
     {
         $this->loadMissing([
-            'config',
-            'config.account',
-            'config.account.config',
-            'config.account.config.currency',
-            'config.investment',
+            'accountFrom.config',
+            'accountTo.config',
             'transactionSchedule',
             'transactionType',
         ]);
@@ -292,10 +301,9 @@ class Transaction extends Model
         if ($this->config_type === 'transaction_detail_standard') {
             if ($this->transaction_type === 'deposit') {
                 $this->loadMissing([
-                    'config',
-                    'config.accountTo',
-                    'config.accountTo.config',
-                    'config.accountTo.config.currency',
+                    'accountTo',
+                    'accountTo.config',
+                    'accountTo.config.currency',
                 ]);
 
                 return $this->config?->accountTo?->config->currency;
@@ -318,7 +326,7 @@ class Transaction extends Model
         return null;
     }
 
-    public function scheduleInstances(?Carbon $constraintStart = null, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500)
+    public function scheduleInstances(Carbon $constraintStart = null, Carbon $maxLookAhead = null, ?int $virtualLimit = 500)
     {
         $scheduleInstances = new Collection();
 

@@ -13,8 +13,37 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $subject
  * @property string $html
  * @property string $text
- * @property boolean $processed
- * @property boolean $handled
+ * @property bool $processed
+ * @property bool $handled
+ * @property string $message_id
+ * @property array|null $transaction_data
+ * @property int $user_id
+ * @property int|null $transaction_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Transaction|null $transaction
+ * @property-read \App\Models\User $user
+ *
+ * @method static \Database\Factories\ReceivedMailFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail unhandled()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail unprocessed()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereHandled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereHtml($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereMessageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereProcessed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereTransactionData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereTransactionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReceivedMail whereUserId($value)
+ *
+ * @mixin \Eloquent
  */
 class ReceivedMail extends Model
 {

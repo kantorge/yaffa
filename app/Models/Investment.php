@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
 use Eloquent;
@@ -15,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Arr;
 
 /**
@@ -39,6 +39,7 @@ use Illuminate\Support\Arr;
  * @property-read Collection|InvestmentPrice[] $investmentPrices
  * @property-read int|null $investment_prices_count
  * @property-read User $user
+ *
  * @method static Builder|Investment active()
  * @method static InvestmentFactory factory(...$parameters)
  * @method static Builder|Investment newModelQuery()
@@ -57,6 +58,7 @@ use Illuminate\Support\Arr;
  * @method static Builder|Investment whereSymbol($value)
  * @method static Builder|Investment whereUpdatedAt($value)
  * @method static Builder|Investment whereUserId($value)
+ *
  * @property-read Collection<int, TransactionDetailInvestment> $transactionDetailInvestment
  * @property-read int|null $transaction_detail_investment_count
  * @property-read Collection<int, Transaction> $transactions
@@ -65,14 +67,17 @@ use Illuminate\Support\Arr;
  * @property-read int|null $transactions_basic_count
  * @property-read Collection<int, Transaction> $transactionsScheduled
  * @property-read int|null $transactions_scheduled_count
+ * @property-read \App\Models\AccountEntity|null $config
+ *
  * @mixin Eloquent
  */
 class Investment extends Model
 {
     use HasFactory;
-    use ModelOwnedByUserTrait;
 
     protected $guarded = [];
+
+    public $timestamps = false;
 
     /**
      * The table associated with the model.
@@ -87,19 +92,15 @@ class Investment extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'name',
         'symbol',
         'isin',
-        'comment',
-        'active',
-        'auto_update',
         'investment_group_id',
         'currency_id',
+        'auto_update',
         'investment_price_provider',
     ];
 
     protected $casts = [
-        'active' => 'boolean',
         'auto_update' => 'boolean',
     ];
 
@@ -107,75 +108,53 @@ class Investment extends Model
         'investment_price_provider_name',
     ];
 
-    /**
-     * Scope a query to only include active investments.
-     *
-     * @param Builder $query
-     * @return Builder
-     */
-    public function scopeActive(Builder $query): Builder
+    public function config(): MorphOne
     {
-        return $query->where('active', true);
+        return $this->morphOne(AccountEntity::class, 'config');
     }
 
-    public function transactionDetailInvestment(): HasMany
+    public function transactions(): HasMany
     {
-        return $this->hasMany(TransactionDetailInvestment::class);
-    }
-
-    public function transactions(): HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailInvestment::class,
-            'investment_id',
-            'config_id',
-            'id',
-            'id',
-        )
-            ->where(
-                'config_type',
-                'transaction_detail_investment'
+        return $this->hasMany(Transaction::class)
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'investment')
             );
     }
 
-    public function transactionsBasic(): HasManyThrough
+    public function transactionsBasic(): HasMany
     {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailInvestment::class,
-            'investment_id',
-            'config_id',
-            'id',
-            'id',
-        )
+        return $this->hasMany(Transaction::class)
             ->byScheduleType('none')
-            ->where(
-                'config_type',
-                'transaction_detail_investment'
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'investment')
             );
     }
 
-    public function transactionsScheduled(): HasManyThrough
+    public function transactionsScheduled(): HasMany
+    {
+        return $this->hasMany(Transaction::class)
+            ->byScheduleType('schedule')
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'investment')
+            );
+    }
+
+    /**
+     * Get the associated investment prices via the account entity
+     */
+    public function investmentPrices(): HasManyThrough
     {
         return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailInvestment::class,
+            InvestmentPrice::class,
+            AccountEntity::class,
+            'config_id',
             'investment_id',
             'config_id',
-            'id',
-            'id',
-        )
-            ->byScheduleType('schedule')
-            ->where(
-                'config_type',
-                'transaction_detail_investment'
-            );
-    }
-
-    public function investmentPrices(): HasMany
-    {
-        return $this->hasMany(InvestmentPrice::class);
+            'id'
+        );
     }
 
     public function investmentGroup(): BelongsTo
@@ -193,24 +172,26 @@ class Investment extends Model
         $investmentId = $this->id;
 
         // Get all investment transactions for current investment
-        $transactions = Transaction::with(
-            [
-                'config',
-                'transactionType',
-            ]
-        )
+        $transactions = Transaction::with([
+            'transactionType',
+        ])
             ->byScheduleType('none')
-            ->where('config_type', 'transaction_detail_investment')
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investmentId, $account) {
-                    $query->Where('investment_id', $investmentId);
-                    if ($account !== null) {
-                        $query->where('account_entity_id', '=', $account->id);
-                    }
-                }
+            ->whereHas(
+                'transactionType',
+                fn ($query) => $query->where('type', 'investment')
             )
+            // Check if the investment is in the transaction in the from or to account
+            ->where(function ($query) use ($investmentId) {
+                $query->where('account_from_id', $investmentId)
+                    ->orWhere('account_to_id', $investmentId);
+            })
+            // If provided, check if the account is in the transaction in the from or to account
+            ->when($account, function ($query) use ($account) {
+                $query->where(function ($query) use ($account) {
+                    $query->where('account_from_id', $account->id)
+                        ->orWhere('account_to_id', $account->id);
+                });
+            })
             ->get();
 
         return $transactions->sum(function ($transaction) {
@@ -237,20 +218,10 @@ class Investment extends Model
         }
 
         if ($type === 'transaction' || $type === 'combined') {
-            $transaction = Transaction::with(
-                [
-                    'config',
-                ]
-            )
-                ->byScheduleType('none')
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investmentId) {
-                        $query
-                            ->Where('investment_id', $investmentId)
-                            ->WhereNotNull('price');
-                    }
+            $transaction = Transaction::byScheduleType('none')
+                ->whereHas(
+                    'transactionType',
+                    fn ($query) => $query->where('type', 'investment')->whereNotNull('price')
                 )
                 ->when($onOrBefore, function ($query) use ($onOrBefore) {
                     $query->where('date', '<=', $onOrBefore);
@@ -289,23 +260,12 @@ class Investment extends Model
         return null;
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * @var array
-     */
     protected array $priceProviders = [
         'alpha_vantage' => [
             'name' => 'Alpha Vantage',
         ],
     ];
 
-    /**
-     * @return string|null
-     */
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
@@ -323,8 +283,6 @@ class Investment extends Model
 
     /**
      * Return all available price providers
-     *
-     * @return array
      */
     public function getAllInvestmentPriceProviders(): array
     {
@@ -335,8 +293,9 @@ class Investment extends Model
      * Common function to get price of investment from provider.
      * It invokes the provider's function and updates the price in the database.
      *
-     * @param Carbon|null $from Optionnally specify the date to retrieve data from
-     * @param bool $refill Future option to request reload of prices
+     * @param  Carbon|null  $from Optionnally specify the date to retrieve data from
+     * @param  bool  $refill Future option to request reload of prices
+     *
      * @uses getInvestmentPriceFromAlphaVantage()
      */
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
@@ -347,8 +306,10 @@ class Investment extends Model
 
     /**
      * TODO: this should have a contract to have standard parameters
-     * @param Carbon|null $from Optionnally specify the date to retrieve data from
-     * @param bool $refill Future option to request reload of prices
+     *
+     * @param  Carbon|null  $from Optionnally specify the date to retrieve data from
+     * @param  bool  $refill Future option to request reload of prices
+     *
      * @throws GuzzleException
      */
     public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void

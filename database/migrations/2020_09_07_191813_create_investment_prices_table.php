@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Investment;
+use App\Models\AccountEntity;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +15,9 @@ return new class () extends Migration {
         Schema::create('investment_prices', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->foreignIdFor(Investment::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(AccountEntity::class, 'investment_id')
+                ->constrained()
+                ->cascadeOnDelete();
             $table->decimal('price', 10, 4);
             $table->timestamps();
 

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Investment $investment
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice query()
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereInvestmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice wherePrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class InvestmentPrice extends Model

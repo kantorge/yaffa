@@ -19,14 +19,14 @@ class TagController extends Controller
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(): View
     {
         /**
          * @get('/tag')
+         *
          * @name('tag.index')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
          */
         // Get all tags of the user from the database and return to view
@@ -48,7 +48,9 @@ class TagController extends Controller
     {
         /**
          * @get('/tag/create')
+         *
          * @name('tag.create')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
          */
         return view('tag.form');
@@ -56,15 +58,14 @@ class TagController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Tag  $tag
-     * @return View
      */
     public function edit(Tag $tag): View
     {
         /**
          * @get('/tag/{tag}/edit')
+         *
          * @name('tag.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,tag')
          */
         return view('tag.form', ['tag' => $tag]);
@@ -74,10 +75,12 @@ class TagController extends Controller
     {
         /**
          * @post('/tag')
+         *
          * @name('tag.store')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
          */
-        Tag::create($request->validated());
+        $request->user()->tags()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Tag added'));
 
@@ -88,8 +91,11 @@ class TagController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/tag/{tag}')
+         *
          * @name('tag.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,tag')
          */
         // Retrieve the validated input data
@@ -105,15 +111,14 @@ class TagController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Tag  $tag
-     * @return RedirectResponse
      */
     public function destroy(Tag $tag): RedirectResponse
     {
         /**
          * @delete('/tag/{tag}')
+         *
          * @name('tag.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,tag')
          */
         $tag->delete();

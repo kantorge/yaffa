@@ -13,7 +13,7 @@
             <div>
                 <a
                         class="btn btn-success"
-                        href="{{ route('investment.create') }}"
+                        href="{{ route('account-entity.create', ['type' => 'investment']) }}"
                         title="{{ __('New investment') }}"
                 >
                     <i class="fa fa-plus"></i>

@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read Collection|Tag[] $tags
  * @property-read int|null $tags_count
  * @property-read Transaction $transaction
+ *
  * @method static TransactionItemFactory factory(...$parameters)
  * @method static Builder|TransactionItem newModelQuery()
  * @method static Builder|TransactionItem newQuery()
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @method static Builder|TransactionItem whereComment($value)
  * @method static Builder|TransactionItem whereId($value)
  * @method static Builder|TransactionItem whereTransactionId($value)
+ *
  * @mixin Eloquent
  */
 class TransactionItem extends Model

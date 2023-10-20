@@ -10,6 +10,20 @@ use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
+    const REQUIRED_POSITIVE_NUMBER = 'required|numeric|gt:0';
+
+    private function accountEntityRule(string $configType, bool $required = true): array
+    {
+        return [
+            ($required ? 'required' : 'nullable'),
+            Rule::exists('account_entities', 'id')
+                ->where(function ($query) use ($configType) {
+                    $query->where('config_type', $configType)
+                        ->where('user_id', $this->user()->id);
+                }),
+        ];
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -18,16 +32,16 @@ class TransactionRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            // Investment specific fields
-            'config.account_entity_id' => __('account'),
-            'config.investment_id' => __('investment'),
-            'config.dividend' => __('dividend'),
-            'config.quantity' => __('quantity'),
-            'config.price' => __('price'),
-            'config.commission' => __('commission'),
-            'config.tax' => __('tax'),
-            // Standard fields
-            'config.amount_to' => __('amount to'),
+            // TODO: should these depend on the transaction type?
+            'account_from_id' => __('source'),
+            'account_to_id' => __('destination'),
+            'amount_primary' => __('amount'),
+            'amount_secondary' => __('destination amount'),
+
+            'quantity' => __('quantity'),
+            'price' => __('price'),
+            'commission' => __('commission'),
+            'tax' => __('tax'),
         ];
     }
 
@@ -43,13 +57,12 @@ class TransactionRequest extends FormRequest
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
-            'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
 
             'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled
-        $isBasic = (!$this->get('schedule') && !$this->get('budget')) || $this->get('schedule');
+        $isBasic = (! $this->get('schedule') && ! $this->get('budget')) || $this->get('schedule');
 
         // Set date and schedule related rules
         if ($this->get('schedule') || $this->get('budget')) {
@@ -69,7 +82,7 @@ class TransactionRequest extends FormRequest
                     'after_or_equal:schedule_config.start_date',
                 ],
                 'schedule_config.automatic_recording' => [
-                    'boolean'
+                    'boolean',
                 ],
                 'schedule_config.end_date' => [
                     'nullable',
@@ -115,8 +128,9 @@ class TransactionRequest extends FormRequest
         }
 
         // Adjustments based on transaction type
-        if ($this->get('config_type') === 'transaction_detail_standard') {
-            //any standard transactions have common rules for items
+        $transactionType = TransactionType::where('name', $this->get('transaction_type'))->first();
+        if ($transactionType->type === 'standard') {
+            // Standard transactions have common rules for items
             $rules = array_merge($rules, [
                 'items' => 'array',
                 'items.*' => 'array',
@@ -131,111 +145,113 @@ class TransactionRequest extends FormRequest
                 ],
                 'items.*.comment' => 'nullable|max:191',
                 'items.*.tags' => 'array',
-                //TODO: rule validation with option to create new tag
+                //TODO: rule validation with the possibility to create a new tag
                 //'transactionItems.*.tags.*' => 'nullable|exists:tags,id',
             ]);
 
-            //adjust detail related rules, based on transaction type
-            //accounts are only needed for basic setup (not budget only)
+            // Adjust detail related rules, based on transaction type
+            // Accounts are only needed for basic setup (not budget only)
             if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
-                    'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account',
-                    ],
-                    'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee',
-                    ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+                    'account_from_id' => $this->accountEntityRule('account', $isBasic),
+                    'account_to_id' => $this->accountEntityRule('payee', $isBasic),
+                    'amount_primary' => self::REQUIRED_POSITIVE_NUMBER,
+                    'amount_secondary' => 'prohibited',
 
-                    //technical field, but required for standard transaction
+                    // Technical field, but required for standard transaction
+                    // TODO: remove this and handle it in the controller
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
                     'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 
                 ]);
             } elseif ($this->get('transaction_type') === 'deposit') {
                 $rules = array_merge($rules, [
-                    'config.account_from_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,payee',
-                    ],
-                    'config.account_to_id' => [
-                        ($isBasic ? 'required' : 'nullable'),
-                        'exists:account_entities,id,config_type,account',
-                    ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
+                    'account_from_id' => $this->accountEntityRule('payee', $isBasic),
+                    'account_to_id' => $this->accountEntityRule('account', $isBasic),
+                    'amount_primary' => self::REQUIRED_POSITIVE_NUMBER,
+                    'amount_secondary' => 'prohibited',
 
                     // Technical fields, but required for standard transaction
+                    // TODO: remove this and handle it in the controller
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
                     'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 
                 ]);
             } elseif ($this->get('transaction_type') === 'transfer') {
                 $rules = array_merge($rules, [
-                    'config.account_from_id' => [
-                        'required',
-                        'exists:account_entities,id,config_type,account',
-                    ],
-                    'config.account_to_id' => [
-                        'required',
-                        'exists:account_entities,id,config_type,account',
-                    ],
-                    'config.amount_from' => 'required|numeric|gt:0',
-                    'config.amount_to' => 'required|numeric|gt:0',
+                    'account_from_id' => array_merge(
+                        $this->accountEntityRule('account'),
+                        ['different:account_to_id'],
+                    ),
+                    'account_to_id' => array_merge(
+                        $this->accountEntityRule('account'),
+                        ['different:account_from_id'],
+                    ),
+                    'amount_primary' => self::REQUIRED_POSITIVE_NUMBER,
+                    'amount_secondary' => self::REQUIRED_POSITIVE_NUMBER,
                 ]);
             }
         } elseif ($this->get('config_type') === 'transaction_detail_investment') {
             // Adjust detail related rules, based on transaction type
-            $rules = array_merge($rules, [
-                'config.account_entity_id' => [
-                    'required',
-                    'exists:account_entities,id,config_type,account',
-                ],
-                'config.investment_id' => [
-                    'required',
-                    'exists:investments,id',
-                ],
-                'config.commission' => 'nullable|numeric|gte:0',
-                'config.tax' => 'nullable|numeric|gte:0',
-            ]);
-
             //TODO: validate currency of account and investment
 
-            $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type_id));
+            $rules = array_merge(
+                $rules,
+                [
+                    'commission' => 'nullable|numeric|gte:0',
+                    'tax' => 'nullable|numeric|gte:0',
+                ],
+                $this->getInvestmentRuleDetails($this->transaction_type_id)
+            );
         }
 
         return $rules;
     }
 
-    private function getInvestmentAmountRules($transactionTypeId): array
+    private function getInvestmentRuleDetails($transactionTypeId): array
     {
-        // Buy OR Sell
-        if ($transactionTypeId === 4 || $transactionTypeId === 5) {
-            return [
-                'config.price' => 'required|numeric|gt:0',
-                'config.quantity' => 'required|numeric|gt:0',
+        if ($transactionTypeId === 4) {
+            // Buy
+            $rules = [
+                'account_from' => $this->accountEntityRule('account'),
+                'account_to' => $this->accountEntityRule('investment'),
+                'price' => self::REQUIRED_POSITIVE_NUMBER,
+                'quantity' => self::REQUIRED_POSITIVE_NUMBER,
             ];
+        } elseif ($transactionTypeId === 5) {
+            // Sell
+            $rules = [
+                'account_from' => $this->accountEntityRule('investment'),
+                'account_to' => $this->accountEntityRule('account'),
+                'price' => self::REQUIRED_POSITIVE_NUMBER,
+                'quantity' => self::REQUIRED_POSITIVE_NUMBER,
+            ];
+        } elseif ($transactionTypeId === 6) {
+            // Add shares
+            $rules = [
+                'account_from' => $this->accountEntityRule('account'),
+                'account_to' => $this->accountEntityRule('investment'),
+                'quantity' => self::REQUIRED_POSITIVE_NUMBER,
+            ];
+        } elseif ($transactionTypeId === 7) {
+            // Remove shares
+            $rules = [
+                'account_from' => $this->accountEntityRule('investment'),
+                'account_to' => $this->accountEntityRule('account'),
+                'quantity' => self::REQUIRED_POSITIVE_NUMBER,
+            ];
+        } elseif ($transactionTypeId === 8 || $transactionTypeId === 11) {
+            // Dividend OR Cap gains
+            $rules = [
+                'account_from' => $this->accountEntityRule('investment'),
+                'account_to' => $this->accountEntityRule('account'),
+                'amount_primary' => self::REQUIRED_POSITIVE_NUMBER,
+            ];
+        } else {
+            $rules = [];
         }
 
-        // Add shares OR Remove shares
-        if ($transactionTypeId === 6 || $transactionTypeId === 7) {
-            return [
-                'config.quantity' => 'required|numeric|gt:0',
-            ];
-        }
-
-        // Dividend OR Cap gains
-        if ($transactionTypeId === 8 || $transactionTypeId === 9 || $transactionTypeId === 10) {
-            return [
-                'config.dividend' => 'required|numeric|gt:0',
-            ];
-        }
-
-        // Fallback
-        return [];
+        return $rules;
     }
 
     /**

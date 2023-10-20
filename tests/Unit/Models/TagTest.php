@@ -15,6 +15,7 @@ class TagTest extends TestCase
     public function test_tag_active_scope_returns_only_active_items()
     {
         // Create a user
+        /** @var User $user */
         $user = User::factory()->create();
 
         // Create random number of active tags
@@ -28,7 +29,7 @@ class TagTest extends TestCase
         );
 
         // Create random number of inactive tags
-        $inactive = $this->createForUser(
+        $this->createForUser(
             $user,
             Tag::class,
             [

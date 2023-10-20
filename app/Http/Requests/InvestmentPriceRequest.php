@@ -13,7 +13,7 @@ class InvestmentPriceRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'date' => [
@@ -30,7 +30,9 @@ class InvestmentPriceRequest extends FormRequest
             ],
             'investment_id' => [
                 'required',
-                Rule::exists('investments', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
+                Rule::exists('account_entity', 'id')
+                    ->where('config_type', 'investment')
+                    ->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
         ];
     }

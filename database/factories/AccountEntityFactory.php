@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\Investment;
 use App\Models\Payee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,65 +24,89 @@ class AccountEntityFactory extends Factory
 
     /**
      * Define the model's default state.
-     *
-     * @return array
      */
     public function definition(): array
     {
         return [
             'name' => $this->faker->unique()->word(),
             'active' => $this->faker->boolean(80),
-            'user_id' => User::inRandomOrder()->first()->id,
             'alias' => $this->faker->boolean(30) ? $this->faker->word() : null,
+            'user_id' => null,
         ];
     }
 
-    public function payee(User $user = null, array $configAttributes = []): AccountEntityFactory
+    public function payee(array $configAttributes = []): AccountEntityFactory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            if (!$user) {
-                $user = User::find($attributes['user_id']);
-            }
-
-            $configAttributes = array_merge(
-                [
-                    'category_id' => $this->faker->boolean() ? $user->categories()->inRandomOrder()->first()->id : null,
-                ],
-                $configAttributes
+        return $this->state(function (array $attributes) use ($configAttributes) {
+            /** @var User $user */
+            $user = User::findOr(
+                $attributes['user_id'] ?? null,
+                [],
+                fn () => User::factory()->create()
             );
 
-            return [
-                'name' => $this->faker->company(),
-                'config_type' => 'payee',
-                'config_id' => Payee::factory()->create($configAttributes)->id,
-            ];
+            // Merge and use the passed attributes as AccountEntity attributes
+            // If not passed, leave it empty to use factory defaults
+            return array_merge(
+                $attributes,
+                [
+                    'user_id' => $user->id,
+                    'config_type' => 'payee',
+                    'config_id' => Payee::factory()->withUser($user)->create($configAttributes)->id,
+                ]
+            );
         });
     }
 
     /**
-     * @param User|null $user Optionally pass the owner of the created asset. Selected by random from existing users if null.
-     * @param array $configAttributes Optionally pass the properties to be used.
-     * @return AccountEntityFactory
+     * @param  array  $configAttributes Optionally pass the properties to be used.
      */
-    public function account(User $user = null, array $configAttributes = []): AccountEntityFactory
+    public function account(array $configAttributes = []): AccountEntityFactory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            if (!$user) {
-                $user = User::find($attributes['user_id']);
-            }
-
-            $configAttributes = array_merge(
-                [
-                    'account_group_id' => $user->accountGroups()->inRandomOrder()->first()->id,
-                    'currency_id' => $user->currencies()->inRandomOrder()->first()->id,
-                ],
-                $configAttributes
+        return $this->state(function (array $attributes) use ($configAttributes) {
+            /** @var User $user */
+            $user = User::findOr(
+                $attributes['user_id'] ?? null,
+                [],
+                fn () => User::factory()->create()
             );
 
-            return [
-                'config_type' => 'account',
-                'config_id' => Account::factory()->create($configAttributes)->id,
-            ];
+            // Merge and use the passed attributes as AccountEntity attributes
+            // If not passed, leave it empty to use factory defaults
+            return array_merge(
+                $attributes,
+                [
+                    'user_id' => $user->id,
+                    'config_type' => 'account',
+                    'config_id' => Account::factory()->withUser($user)->create($configAttributes)->id,
+                ]
+            );
+        });
+    }
+
+    /**
+     * @param  array  $configAttributes Optionally pass the properties to be used.
+     */
+    public function investment(array $configAttributes = []): AccountEntityFactory
+    {
+        return $this->state(function (array $attributes) use ($configAttributes) {
+            /** @var User $user */
+            $user = User::findOr(
+                $attributes['user_id'] ?? null,
+                [],
+                fn () => User::factory()->create()
+            );
+
+            // Merge and use the passed attributes as AccountEntity attributes
+            // If not passed, leave it empty to use factory defaults
+            return array_merge(
+                $attributes,
+                [
+                    'user_id' => $user->id,
+                    'config_type' => 'investment',
+                    'config_id' => Investment::factory()->withUser($user)->create($configAttributes)->id,
+                ]
+            );
         });
     }
 }

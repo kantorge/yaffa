@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\DB;
  * @property-read Collection|Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
  * @property-read User|null $user
+ *
  * @method static Builder|AccountEntity accounts()
  * @method static Builder|AccountEntity active()
  * @method static AccountFactory factory(...$parameters)
@@ -48,6 +50,7 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Account whereCurrencyId($value)
  * @method static Builder|Account whereId($value)
  * @method static Builder|Account whereOpeningBalance($value)
+ *
  * @mixin Eloquent
  */
 class Account extends Model
@@ -75,7 +78,7 @@ class Account extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'opening_balance',
@@ -83,7 +86,7 @@ class Account extends Model
         'currency_id',
     ];
 
-    public function config()
+    public function config(): MorphOne
     {
         return $this->morphOne(AccountEntity::class, 'config');
     }

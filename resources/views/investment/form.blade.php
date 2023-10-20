@@ -10,7 +10,7 @@
 @if(isset($investment))
 <form
     accept-charset="UTF-8"
-    action="{{ route('investment.update', $investment->id) }}"
+    action="{{ route('account-entity.update', ['type' => 'investment', 'account_entity' => $investment->id]) }}"
     autocomplete="off"
     method="POST"
 >
@@ -18,7 +18,7 @@
 @else
 <form
     accept-charset="UTF-8"
-    action="{{ route('investment.store') }}"
+    action="{{ route('account-entity.store', ['type' => 'investment']) }}"
     autocomplete="off"
     method="POST"
 >
@@ -84,9 +84,9 @@
                     <input
                         class="form-control"
                         id="symbol"
-                        name="symbol"
+                        name="config[symbol]"
                         type="text"
-                        value="{{old('symbol', $investment->symbol ?? '' )}}"
+                        value="{{old('config.symbol', $investment->config->symbol ?? '' )}}"
                     >
                 </div>
             </div>
@@ -99,24 +99,9 @@
                     <input
                         class="form-control"
                         id="isin"
-                        name="isin"
+                        name="config[isin]"
                         type="text"
-                        value="{{old('isin', $investment->isin ?? '' )}}"
-                    >
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label for="comment" class="col-form-label col-sm-3">
-                    {{ __('Comment') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="comment"
-                        name="comment"
-                        type="text"
-                        value="{{old('comment', $investment->comment ?? '' )}}"
+                        value="{{old('config.isin', $investment->config->isin ?? '' )}}"
                     >
                 </div>
             </div>
@@ -129,17 +114,17 @@
                     <select
                         class="form-select"
                         id="investment_group_id"
-                        name="investment_group_id"
+                        name="config[investment_group_id]"
                     >
                         @forelse($allInvestmentGropus as $id => $name)
                             <option
                                 value="{{ $id }}"
                                 @if (old())
-                                    @if (old('investment_group_id') == $id)
+                                    @if (old('config.investment_group_id') == $id)
                                         selected="selected"
                                     @endif
                                 @elseif(isset($investment))
-                                    @if ($investment['investment_group_id'] == $id)
+                                    @if ($investment['config']['investment_group_id'] == $id)
                                         selected="selected"
                                     @endif
                                 @endif
@@ -162,17 +147,17 @@
                     <select
                         class="form-select"
                         id="currency_id"
-                        name="currency_id"
+                        name="config[currency_id]"
                     >
                         @forelse($allCurrencies as $id => $name)
                             <option
                                 value="{{ $id }}"
                                 @if (old())
-                                    @if (old('currency_id') == $id)
+                                    @if (old('config.currency_id') == $id)
                                         selected="selected"
                                     @endif
                                 @elseif(isset($investment))
-                                    @if ($investment['currency_id'] == $id)
+                                    @if ($investment['config']['currency_id'] == $id)
                                         selected="selected"
                                     @endif
                                 @endif
@@ -195,18 +180,18 @@
                     <select
                         class="form-select"
                         id="investment_price_provider"
-                        name="investment_price_provider"
+                        name="config[investment_price_provider]"
                     >
                         <option value=''>{{ __(' < No price provider > ') }}</option>
                         @forelse($allInvestmentPriceProviders as $id => $properties)
                             <option
                                 value="{{ $id }}"
                                 @if (old())
-                                    @if (old('investment_price_provider') == $id)
+                                    @if (old('config.investment_price_provider') == $id)
                                         selected="selected"
                                     @endif
                                 @elseif(isset($investment))
-                                    @if ($investment['investment_price_provider'] == $id)
+                                    @if ($investment['config']['investment_price_provider'] == $id)
                                         selected="selected"
                                     @endif
                                 @endif
@@ -229,15 +214,15 @@
                     <input
                         id="auto_update"
                         class="form-check-input"
-                        name="auto_update"
+                        name="config[auto_update]"
                         type="checkbox"
                         value="1"
                         @if (old())
-                            @if (old('auto_update') == '1')
+                            @if (old('config.auto_update') == '1')
                                 checked="checked"
                             @endif
                         @elseif(isset($investment))
-                            @if ($investment->auto_update == '1')
+                            @if ($investment->config->auto_update == '1')
                                 checked="checked"
                             @endif
                         @else
@@ -249,9 +234,15 @@
         </div>
         <div class="card-footer">
             @csrf
+            <input name="config_type" type="hidden" value="investment">
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
-            <a href="{{ route('investment.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <a
+                    href="{{ route('account-entity.index', ['type' => 'investment']) }}"
+                    class="btn btn-secondary cancel confirm-needed"
+            >
+                {{ __('Cancel') }}
+            </a>
         </div>
     </div>
 </form>

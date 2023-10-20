@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Http\Controller\API;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountGroup;
 use App\Models\Category;
-use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
@@ -72,7 +72,7 @@ class CategoryApiControllerTest extends TestCase
             ]),
             [],
             [
-                'Accept' => 'application/json'
+                'Accept' => 'application/json',
             ]
         );
 
@@ -163,9 +163,12 @@ class CategoryApiControllerTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
+        /** @var Category $categoryParent */
         $categoryParent = Category::factory()
             ->for($user)
             ->create();
+
+        /** @var Category $categoryChild */
         $categoryChild = Category::factory()
             ->for($user)
             ->create([
@@ -173,29 +176,28 @@ class CategoryApiControllerTest extends TestCase
             ]);
 
         // Create a transaction for this category, which also needs other models:
-        // account group, currency, account, payee
-        AccountGroup::factory()
+        // account, payee (which will create necessarry other assets)
+        AccountEntity::factory()
             ->for($user)
-            ->create();
-
-        Currency::factory()
-            ->for($user)
+            ->for(
+                Account::factory()->withUser($user),
+                'config'
+            )
             ->create();
 
         AccountEntity::factory()
-            ->account($user)
             ->for($user)
-            ->create();
-
-        AccountEntity::factory()
-            ->payee($user)
-            ->for($user)
+            ->for(
+                Payee::factory()->withUser($user),
+                'config'
+            )
             ->create();
 
         // Create a standard transaction with specific data
-        $transaction = Transaction::factory()->withdrawal()->create([
-            'user_id' => $user->id,
-        ]);
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create();
 
         TransactionItem::factory()->create([
             'transaction_id' => $transaction->id,

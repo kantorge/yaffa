@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $rate
  * @property-read \App\Models\Currency $currencyFrom
  * @property-read \App\Models\Currency $currencyTo
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate query()
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereRate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate whereToId($value)
+ *
  * @mixin \Eloquent
  */
 class CurrencyRate extends Model

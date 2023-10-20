@@ -32,55 +32,15 @@ class InvestmentController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
-     *
-     * @return View
-     */
-    public function index(): View
-    {
-        /**
-         * @get('/investment')
-         * @name('investment.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
-         */
-        // Show all investments from the database and return to view
-        $investments = Auth::user()
-            ->investments()
-            ->withCount('transactions')
-            ->withCount('transactionsBasic')
-            ->withCount('transactionsScheduled')
-            ->with([
-                'currency',
-                'investmentGroup',
-            ])
-            ->get();
-
-        $investments->map(function ($investment) {
-            $investment['price'] = $investment->getLatestPrice();
-            $investment['quantity'] = $investment->getCurrentQuantity();
-
-            return $investment;
-        });
-
-        // Pass data for DataTables
-        JavaScriptFacade::put([
-            'investments' => $investments,
-        ]);
-
-        return view('investment.index');
-    }
-
-    /**
      * Display form to edit the resource.
-     *
-     * @param Investment $investment
-     * @return View
      */
     public function edit(Investment $investment): View
     {
         /**
          * @get('/investment/{investment}/edit')
+         *
          * @name('investment.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,investment')
          */
         return view(
@@ -95,8 +55,11 @@ class InvestmentController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/investment/{investment}')
+         *
          * @name('investment.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,investment')
          */
         // Retrieve the validated input data
@@ -106,60 +69,31 @@ class InvestmentController extends Controller
 
         self::addSimpleSuccessMessage(__('Investment updated'));
 
-        return redirect()->route('investment.index');
-    }
-
-    /**
-     * Display form to create new resource.
-     *
-     * @return View
-     */
-    public function create(): View
-    {
-        /**
-         * @get('/investment/create')
-         * @name('investment.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
-         */
-        return view('investment.form');
-    }
-
-    public function store(InvestmentRequest $request): RedirectResponse
-    {
-        /**
-         * @post('/investment')
-         * @name('investment.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
-         */
-        Investment::create($request->validated());
-
-        self::addSimpleSuccessMessage(__('Investment added'));
-
-        return redirect()->route('investment.index');
+        return redirect()->route('account-entity.index', ['type' => 'investment']);
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Investment $investment
-     * @return RedirectResponse
      */
     public function destroy(Investment $investment): RedirectResponse
     {
         /**
          * @delete('/investment/{investment}')
+         *
          * @name('investment.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,investment')
          */
-
         $result = $this->investmentService->delete($investment);
 
         if ($result['success']) {
             self::addSimpleSuccessMessage(__('Investment deleted'));
-            return redirect()->route('investment.index');
+
+            return redirect()->route('account-entity.index', ['type' => 'investment']);
         }
 
         self::addSimpleDangerMessage($result['error']);
+
         return redirect()->back();
     }
 
@@ -167,7 +101,9 @@ class InvestmentController extends Controller
     {
         /**
          * @get('/investment/{investment}')
+         *
          * @name('investment.show')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:view,investment')
          */
         // Get all stored price points
@@ -301,7 +237,7 @@ class InvestmentController extends Controller
             ->sortBy('date')
             ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
                 $operator = $transaction['quantity_operator'];
-                if (!$operator) {
+                if (! $operator) {
                     $quantity = 0;
                 } else {
                     $quantity = ($operator === 'minus' ? -1 : 1) * $transaction['quantity'];
@@ -333,14 +269,14 @@ class InvestmentController extends Controller
 
     /**
      * Display view with timeline chart.
-     *
-     * @return View
      */
     public function timeline(): View
     {
         /**
          * @get('/investment/timeline')
+         *
          * @name('investment.timeline')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         return view('investment.timeline');

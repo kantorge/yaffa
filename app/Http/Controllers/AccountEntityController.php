@@ -6,6 +6,7 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\Investment;
 use App\Models\Payee;
 use App\Services\AccountEntityService;
 use Exception;
@@ -30,13 +31,13 @@ class AccountEntityController extends Controller
         $this->accountEntityService = new AccountEntityService();
     }
 
-    /*
+    /**
      * Check if type parameter is provided and if it is valid. It is only needed if not running from CLI.
      */
-    private function checkTypeParam(Request $request)
+    private function checkTypeParam(Request $request): void
     {
-        if (!app()->runningInConsole()
-            && (!$request->has('type') || !in_array($request->type, ['account', 'payee']))) {
+        if (! app()->runningInConsole()
+            && (! $request->has('type') || ! in_array($request->type, ['account', 'payee', 'investment']))) {
             abort(Response::HTTP_NOT_FOUND);
         }
     }
@@ -72,6 +73,11 @@ class AccountEntityController extends Controller
             );
         }
 
+        // Load view for Investments
+        if ($accountEntity->config_type === 'investment') {
+            // TODO: move functionality from InvestmentController@show to here
+        }
+
         // Currently no function for Payees, redirect back
         return redirect()->back();
     }
@@ -79,16 +85,17 @@ class AccountEntityController extends Controller
     /**
      * Display a listing of the resource, for the type specified in request.
      *
-     * @param Request $request
-     * @return View
      * @uses indexAccount()
      * @uses indexPayee()
+     * @uses indexInvestment()
      */
     public function index(Request $request): View
     {
         /**
          * @get('/account-entity')
+         *
          * @name('account-entity.index')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
@@ -96,9 +103,6 @@ class AccountEntityController extends Controller
         return $this->{'index' . Str::ucfirst($request->get('type'))}();
     }
 
-    /**
-     * @return View
-     */
     private function indexAccount(): View
     {
         // Show all accounts of user from the database and return to view
@@ -125,9 +129,6 @@ class AccountEntityController extends Controller
         return view('account.index');
     }
 
-    /**
-     * @return View
-     */
     private function indexPayee(): View
     {
         // Show all payees of the user from the database and return to view
@@ -150,19 +151,47 @@ class AccountEntityController extends Controller
         return view('payee.index');
     }
 
+    private function indexInvestment(): View
+    {
+        // Show all investments from the database and return to view
+        $investments = Auth::user()
+            ->investments()
+            ->withCount('transactionsInvestment as transactions')
+            ->with([
+                'config.currency',
+                'config.investmentGroup',
+            ])
+            ->get();
+
+        $investments->map(function ($investment) {
+            $investment['price'] = $investment->config->getLatestPrice();
+            $investment['quantity'] = $investment->config->getCurrentQuantity();
+
+            return $investment;
+        });
+
+        // Pass data for DataTables
+        JavaScriptFacade::put([
+            'investments' => $investments,
+        ]);
+
+        return view('investment.index');
+    }
+
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
-     * @return View|RedirectResponse
      * @uses createPayee
      * @uses createAccount
+     * @uses createInvestment
      */
     public function create(Request $request): View|RedirectResponse
     {
         /**
          * @get('/account-entity/create')
+         *
          * @name('account-entity.create')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
@@ -172,16 +201,8 @@ class AccountEntityController extends Controller
 
     private function createAccount(): View|RedirectResponse
     {
-        // Get all account groups
-        $allAccountGroups = Auth::user()
-            ->accountGroups()
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->get()
-            ->pluck('name', 'id');
-
         // Redirect to account group form, if empty
-        if (count($allAccountGroups) === 0) {
+        if (Auth::user()->accountGroups()->count() === 0) {
             $this->addMessage(
                 'Before creating an account, please add at least one account group. E.g. cash, bank accounts, savings, etc. Account groups help to organize your accounts.',
                 'info',
@@ -192,11 +213,8 @@ class AccountEntityController extends Controller
             return redirect()->route('account-group.create');
         }
 
-        // Get all currencies
-        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
-
-        // Redirect to currency form, if empty
-        if (count($allCurrencies) === 0) {
+        // Redirect to currency form, if the current user has no currencies
+        if (Auth::user()->currencies()->count() === 0) {
             $this->addMessage(
                 'Before creating an account, please add at least one currency. Accounts must have a currency assigned.',
                 'info',
@@ -207,12 +225,9 @@ class AccountEntityController extends Controller
             return redirect()->route('currencies.create');
         }
 
-        return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
+        return view('account.form');
     }
 
-    /**
-     * @return View
-     */
     private function createPayee(): View
     {
         JavaScriptFacade::put([
@@ -222,17 +237,45 @@ class AccountEntityController extends Controller
         return view('payee.form');
     }
 
+    private function createInvestment(): View|RedirectResponse
+    {
+        // Redirect to investment group form, if empty
+        if (Auth::user()->investmentGroups()->count() === 0) {
+            $this->addMessage(
+                'Before creating an investment, please add at least one investment group. E.g. stocks, bonds, funds, etc. Investment groups help to organize your investments.',
+                'info',
+                'No investment groups found',
+                'info-circle'
+            );
+
+            return redirect()->route('investment-group.create');
+        }
+
+        // Redirect to currency form, if the current user has no currencies
+        if (Auth::user()->currencies()->count() === 0) {
+            $this->addMessage(
+                'Before creating an investment, please add at least one currency. Investments must have a currency assigned.',
+                'info',
+                'No currencies found',
+                'info-circle'
+            );
+
+            return redirect()->route('currencies.create');
+        }
+
+        return view('investment.form');
+    }
+
     /**
      * Store a newly created resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @return RedirectResponse
      */
     public function store(AccountEntityRequest $request): RedirectResponse
     {
         /**
          * @post('/account-entity')
+         *
          * @name('account-entity.store')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
          */
         $this->checkTypeParam($request);
@@ -257,7 +300,8 @@ class AccountEntityController extends Controller
             $payeeConfig = Payee::create($validated['config']);
             $accountEntity->config()->associate($payeeConfig);
 
-            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            // Sync category preference. First, create a variable.
+            // Set preferred categories to boolean true and not preferred categories to boolean false.
             $preferences = [];
             if (array_key_exists('preferred', $validated['config'])) {
                 foreach ($validated['config']['preferred'] as $categoryId) {
@@ -281,6 +325,17 @@ class AccountEntityController extends Controller
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
 
+        if ($validated['config_type'] === 'investment') {
+            $investmentConfig = Investment::create($validated['config']);
+            $accountEntity->config()->associate($investmentConfig);
+
+            $accountEntity->push();
+
+            self::addSimpleSuccessMessage(__('Investment added'));
+
+            return redirect()->route('account-entity.index', ['type' => 'investment']);
+        }
+
         // This redirect is theoretically not used
         return redirect()->back();
     }
@@ -288,22 +343,20 @@ class AccountEntityController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Request $request
-     * @param AccountEntity $accountEntity
-     * @return View
      * @uses editPayee
      * @uses editAccount
+     * @uses editInvestment
      */
-    public function edit(Request $request, AccountEntity $accountEntity): View
+    public function edit(AccountEntity $accountEntity): View
     {
         /**
          * @get('/account-entity/{account_entity}/edit')
+         *
          * @name('account-entity.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
-        $this->checkTypeParam($request);
-
-        return $this->{'edit' . Str::ucfirst($request->type)}($accountEntity);
+        return $this->{'edit' . Str::ucfirst($accountEntity->config_type)}($accountEntity);
     }
 
     private function editAccount(AccountEntity $accountEntity): View
@@ -350,19 +403,32 @@ class AccountEntityController extends Controller
         );
     }
 
+    private function editInvestment(AccountEntity $accountEntity): View
+    {
+        $accountEntity->load(['config', 'config.investmentGroup', 'config.currency']);
+
+        // Investment groups and currencies are loaded by ViewServiceProvider
+
+        return view(
+            'investment.form',
+            [
+                'investment' => $accountEntity,
+            ]
+        );
+    }
+
     /**
      * Update the specified resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @param AccountEntity $accountEntity
-     * @return RedirectResponse
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/account-entity/{account_entity}')
+         *
          * @name('account-entity.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
         $this->checkTypeParam($request);
@@ -410,22 +476,33 @@ class AccountEntityController extends Controller
             return redirect()->route('account-entity.index', ['type' => 'payee']);
         }
 
+        if ($validated['config_type'] === 'investment') {
+            $accountEntity->load(['config']);
+
+            $accountEntity->fill($validated);
+            $accountEntity->config->fill($validated['config']);
+
+            $accountEntity->push();
+
+            self::addSimpleSuccessMessage(__('Investment updated'));
+
+            return redirect()->route('account-entity.index', ['type' => 'investment']);
+        }
+
         // This redirect is theoretically not used
         return redirect()->back();
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Request $request
-     * @param AccountEntity $accountEntity
-     * @return RedirectResponse
      */
     public function destroy(Request $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
          * @delete('/account-entity/{account_entity}')
+         *
          * @name('account-entity.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
          */
         $this->checkTypeParam($request);
@@ -440,20 +517,22 @@ class AccountEntityController extends Controller
         }
 
         self::addSimpleDangerMessage($result['error']);
+
         return redirect()->back();
     }
 
     /**
      * Display a form to merge two payees.
      *
-     * @param AccountEntity|null $payeeSource
      * @return View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource)
     {
         /**
          * @get('/payees/merge/{payeeSource?}')
+         *
          * @name('payees.merge.form')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         if ($payeeSource) {
@@ -472,7 +551,9 @@ class AccountEntityController extends Controller
     {
         /**
          * @post('/payees/merge')
+         *
          * @name('payees.merge.submit')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         $validated = $request->validated();

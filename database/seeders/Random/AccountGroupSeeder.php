@@ -22,8 +22,8 @@ class AccountGroupSeeder extends Seeder
 
         $users->each(function ($user) use ($count) {
             AccountGroup::factory()
-                ->count($count)
                 ->for($user)
+                ->count($count)
                 ->create();
         });
     }

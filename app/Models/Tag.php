@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read User $user
+ *
  * @method static Builder|Tag active()
  * @method static TagFactory factory(...$parameters)
  * @method static Builder|Tag newModelQuery()
@@ -37,6 +38,9 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Tag whereName($value)
  * @method static Builder|Tag whereUpdatedAt($value)
  * @method static Builder|Tag whereUserId($value)
+ *
+ * @property-read int $transaction_count
+ *
  * @mixin Eloquent
  */
 class Tag extends Model
@@ -97,9 +101,6 @@ class Tag extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeActive(Builder $query): Builder
     {

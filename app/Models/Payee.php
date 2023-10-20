@@ -14,8 +14,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property int $id
  * @property int|null $category_id
  * @property \Illuminate\Support\Carbon|null $category_suggestion_dismissed
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string|null $import_alias
  * @property-read \App\Models\Category|null $category
  * @property-read \App\Models\AccountEntity|null $config
@@ -25,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
  * @property-read \App\Models\User $user
+ *
  * @method static Builder|AccountEntity accounts()
  * @method static Builder|AccountEntity active()
  * @method static \Database\Factories\PayeeFactory factory(...$parameters)
@@ -34,10 +33,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @method static Builder|Payee query()
  * @method static Builder|Payee whereCategoryId($value)
  * @method static Builder|Payee whereCategorySuggestionDismissed($value)
- * @method static Builder|Payee whereCreatedAt($value)
  * @method static Builder|Payee whereId($value)
  * @method static Builder|Payee whereImportAlias($value)
- * @method static Builder|Payee whereUpdatedAt($value)
+ *
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
  * @property-read int|null $category_preference_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
@@ -50,6 +48,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read int|null $transaction_detail_standard_to_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
  * @property-read int|null $transactions_from_count
+ *
  * @mixin \Eloquent
  */
 class Payee extends Model
@@ -57,6 +56,8 @@ class Payee extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public $timestamps = false;
 
     /**
      * The table associated with the model.
@@ -75,7 +76,7 @@ class Payee extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'category_id',
@@ -85,7 +86,7 @@ class Payee extends Model
     /**
      * The attributes that should be cast.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'category_suggestion_dismissed' => 'datetime',

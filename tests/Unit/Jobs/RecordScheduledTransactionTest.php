@@ -3,14 +3,11 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\RecordScheduledTransaction;
+use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountGroup;
-use App\Models\Category;
-use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\Transaction;
-use App\Models\TransactionSchedule;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -24,32 +21,34 @@ class RecordScheduledTransactionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountGroup::factory()->for($user)->create();
-        Currency::factory()->for($user)->create();
-        AccountEntity::factory()->account($user)->for($user)->create();
-        Category::factory()->for($user)->create();
-        AccountEntity::factory()->payee($user)->for($user)->create();
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+
+        AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create();
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
-            ->withdrawal_schedule()
             ->for($user)
+            ->withdrawal_schedule($user)
             ->create();
 
-        $start = Carbon::parse('first day of next month')->startOfDay();
+        // By default, a transaction schedule will be created
+        // We need to adjust its properties to better suite our test
+        $transaction->transactionSchedule->update([
+            'end_date' => null,
+            'automatic_recording' => true,
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'MONTHLY',
+        ]);
 
-        TransactionSchedule::factory()
-            ->create([
-                'start_date' => $start,
-                'next_date' => $start,
-                'end_date' => null,
-                'transaction_id' => $transaction->id,
-                'automatic_recording' => true,
-                'count' => null,
-                'interval' => 1,
-                'frequency' => 'MONTHLY',
-            ]);
+        $start = $transaction->transactionSchedule->next_date;
 
         // Run the job
         $job = new RecordScheduledTransaction($transaction);

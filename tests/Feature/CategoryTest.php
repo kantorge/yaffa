@@ -100,6 +100,7 @@ class CategoryTest extends TestCase
     /** @test */
     public function user_can_create_a_category()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $this->assertCreateForUser($user);

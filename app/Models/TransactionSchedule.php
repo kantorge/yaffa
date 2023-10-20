@@ -30,6 +30,7 @@ use Recurr\Transformer\Constraint\AfterConstraint;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Transaction $transaction
+ *
  * @method static TransactionScheduleFactory factory(...$parameters)
  * @method static Builder|TransactionSchedule newModelQuery()
  * @method static Builder|TransactionSchedule newQuery()
@@ -45,6 +46,11 @@ use Recurr\Transformer\Constraint\AfterConstraint;
  * @method static Builder|TransactionSchedule whereStartDate($value)
  * @method static Builder|TransactionSchedule whereTransactionId($value)
  * @method static Builder|TransactionSchedule whereUpdatedAt($value)
+ *
+ * @property bool $automatic_recording
+ *
+ * @method static Builder|TransactionSchedule whereAutomaticRecording($value)
+ *
  * @mixin Eloquent
  */
 class TransactionSchedule extends Model
@@ -72,7 +78,7 @@ class TransactionSchedule extends Model
         'count',
         'interval',
         'inflation',
-        'automatic_recording'
+        'automatic_recording',
     ];
 
     protected $hidden = ['transaction_id'];
@@ -81,7 +87,7 @@ class TransactionSchedule extends Model
         'next_date' => 'date',
         'start_date' => 'date',
         'end_date' => 'date',
-        'automatic_recording' => 'boolean'
+        'automatic_recording' => 'boolean',
     ];
 
     public function transaction(): BelongsTo

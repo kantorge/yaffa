@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read User $user
+ *
  * @method static Builder|Currency autoUpdate()
  * @method static Builder|Currency base()
  * @method static CurrencyFactory factory(...$parameters)
@@ -43,6 +44,7 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Currency whereNumDigits($value)
  * @method static Builder|Currency whereUpdatedAt($value)
  * @method static Builder|Currency whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class Currency extends Model
@@ -82,8 +84,6 @@ class Currency extends Model
 
     /**
      * Get the user that owns this currency.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -92,9 +92,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeBase(Builder $query): Builder
     {
@@ -103,9 +100,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return currencies that are not base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeNotBase(Builder $query): Builder
     {
@@ -114,9 +108,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return currencies that are set to be automatically updated.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeAutoUpdate(Builder $query): Builder
     {
@@ -126,8 +117,6 @@ class Currency extends Model
     /**
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
-     *
-     * @return string|null
      */
     public function rate(): ?string
     {
@@ -147,8 +136,6 @@ class Currency extends Model
 
     /**
      * Get the base currency of the same user, who owns this currency.
-     *
-     * @return Currency|null
      */
     public function baseCurrency(): ?Currency
     {
@@ -158,10 +145,8 @@ class Currency extends Model
 
     /**
      * Get the currency rates for this currency.
-     *
-     * @param Carbon|null $from
      */
-    public function retreiveCurrencyRateToBase(?Carbon $from = null): void
+    public function retreiveCurrencyRateToBase(Carbon $from = null): void
     {
         $baseCurrency = $this->baseCurrency();
 
@@ -170,7 +155,7 @@ class Currency extends Model
         }
 
         $date = Carbon::parse('yesterday');
-        if (!$from) {
+        if (! $from) {
             $from = Carbon::parse('yesterday');
         }
 
@@ -181,7 +166,7 @@ class Currency extends Model
             ->get();
 
         // If rates is not an array with at least one element, return.
-        if (!is_array($rates) || count($rates) === 0) {
+        if (! is_array($rates) || count($rates) === 0) {
             return;
         }
 
@@ -239,6 +224,7 @@ class Currency extends Model
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
+
             return false;
         }
 

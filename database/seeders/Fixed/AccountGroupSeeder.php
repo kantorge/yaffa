@@ -15,8 +15,8 @@ class AccountGroupSeeder extends Seeder
     public function run(User $user)
     {
         AccountGroup::factory()
-            ->count(4)
             ->for($user)
+            ->count(4)
             ->state(new Sequence(
                 ['name' => 'Cash'],
                 ['name' => 'Bank accounts'],

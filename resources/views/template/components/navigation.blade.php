@@ -7,7 +7,7 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('investment.index') }}">
+        <a class="nav-link" href="{{ route('account-entity.index', ['type' => 'investment']) }}">
             <i class="nav-icon fa-solid fa-chart-line"></i>
             {{ __('Investments') }}
         </a>

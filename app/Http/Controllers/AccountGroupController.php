@@ -20,14 +20,14 @@ class AccountGroupController extends Controller
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(): View
     {
         /**
          * @get('/account-group')
+         *
          * @name('account-group.index')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountGroup')
          */
         // Get all account groups of the user from the database and return to view
@@ -48,7 +48,9 @@ class AccountGroupController extends Controller
     {
         /**
          * @get('/account-group/create')
+         *
          * @name('account-group.create')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountGroup')
          */
         return view('account-group.form');
@@ -56,15 +58,14 @@ class AccountGroupController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return View
      */
     public function edit(AccountGroup $accountGroup): View
     {
         /**
          * @get('/account-group/{account_group}/edit')
+         *
          * @name('account-group.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,account_group')
          */
         return view('account-group.form', ['accountGroup' => $accountGroup]);
@@ -74,10 +75,12 @@ class AccountGroupController extends Controller
     {
         /**
          * @post('/account-group')
+         *
          * @name('account-group.store')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountGroup')
          */
-        AccountGroup::create($request->validated());
+        $request->user()->accountGroups()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Account group added'));
 
@@ -88,8 +91,11 @@ class AccountGroupController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/account-group/{account_group}')
+         *
          * @name('account-group.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,account_group')
          */
         $validated = $request->validated();
@@ -104,15 +110,14 @@ class AccountGroupController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return RedirectResponse
      */
     public function destroy(AccountGroup $accountGroup): RedirectResponse
     {
         /**
          * @delete('/account-group/{account_group}')
+         *
          * @name('account-group.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,account_group')
          */
         try {

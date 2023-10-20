@@ -10,7 +10,6 @@ routeMap.set('categories.merge.form', 'categories/merge');
 routeMap.set('currencies.index', 'currencies/index');
 routeMap.set('currency-rate.index', 'currencyrates/index');
 routeMap.set('investment-group.index', 'investment-group/index');
-routeMap.set('investment.index', 'investment/index');
 routeMap.set('investment.show', 'investment/show');
 routeMap.set('investment.timeline', 'investment/timeline');
 routeMap.set('investment-price.create', 'investment-price/form');
@@ -43,7 +42,7 @@ if (route('transactions.createFromDraft') === window.location.href) {
 
 // Index for accounts or payees. Type is verified and used to load the correct file.
 if (route().current() === 'account-entity.index'
-    && ['account', 'payee'].includes(route().params.type)) {
+    && ['account', 'payee', 'investment'].includes(route().params.type)) {
     require(`./${route().params.type}/index`);
 }
 

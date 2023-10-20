@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
-use Exception;
 use Throwable;
 
 class CategoryController extends Controller
@@ -26,14 +26,14 @@ class CategoryController extends Controller
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(): View
     {
         /**
          * @get('/categories')
+         *
          * @name('categories.index')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Category')
          */
         // Show all categories of user from the database and return to view
@@ -46,7 +46,7 @@ class CategoryController extends Controller
                     $query->select(DB::raw('COUNT(distinct transactions.id)'))
                         ->where('transactions.schedule', false)
                         ->where('transactions.budget', false);
-                }
+                },
             ])
             ->withCount('transaction as transactions_count_total')
             ->withCount('children')
@@ -56,7 +56,7 @@ class CategoryController extends Controller
                     $query->select(DB::raw('MIN(transactions.date)'))
                         ->where('transactions.schedule', false)
                         ->where('transactions.budget', false);
-                }
+                },
             ])
             // TODO: how should this be solved using withMax?
             ->withCount([
@@ -64,7 +64,7 @@ class CategoryController extends Controller
                     $query->select(DB::raw('MAX(transactions.date)'))
                         ->where('transactions.schedule', false)
                         ->where('transactions.budget', false);
-                }
+                },
             ])
             ->withCount('payeesNotPreferring')
             ->withCount('payeesPreferring')
@@ -81,27 +81,29 @@ class CategoryController extends Controller
 
     /**
      * Display a form for adding new resource.
-     *
-     * @return View
      */
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/categories/create')
+         *
          * @name('categories.create')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
         return view('categories.form');
     }
 
-    public function store(CategoryRequest $request)
+    public function store(CategoryRequest $request): RedirectResponse
     {
         /**
          * @post('/categories')
+         *
          * @name('categories.store')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
-        Category::create($request->validated());
+        $request->user()->categories()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Category added'));
 
@@ -111,14 +113,15 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  Category  $category
      * @return View
      */
     public function edit(Category $category)
     {
         /**
          * @get('/categories/{category}/edit')
+         *
          * @name('categories.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,category')
          */
         return view(
@@ -133,8 +136,11 @@ class CategoryController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/categories/{category}')
+         *
          * @name('categories.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,category')
          */
         // Retrieve the validated input data
@@ -150,15 +156,14 @@ class CategoryController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Category  $category
-     * @return Response
      */
     public function destroy(Category $category): Response
     {
         /**
          * @delete('/categories/{category}')
+         *
          * @name('categories.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,category')
          */
         try {
@@ -179,15 +184,14 @@ class CategoryController extends Controller
 
     /**
      * Display a form to merge two categories.
-     *
-     * @param Category|null $categorySource
-     * @return View
      */
     public function mergeCategoriesForm(?Category $categorySource): View
     {
         /**
          * @get('/categories/merge/{categorySource?}')
+         *
          * @name('categories.merge.form')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         if ($categorySource) {
@@ -209,7 +213,9 @@ class CategoryController extends Controller
     {
         /**
          * @post('/categories/merge')
+         *
          * @name('categories.merge.submit')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         // Retrieve the validated input data

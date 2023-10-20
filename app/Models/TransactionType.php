@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $type
  * @property string|null $amount_operator
  * @property string|null $quantity_operator
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType query()
@@ -20,10 +21,12 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType whereQuantityOperator($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType whereType($value)
+ *
  * @mixin \Eloquent
  */
 class TransactionType extends Model
 {
     public $timestamps = false;
+
     protected $table = 'transaction_types';
 }

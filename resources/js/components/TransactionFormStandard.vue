@@ -495,6 +495,7 @@ export default {
         // Id counter for items
         data.itemCounter = 0;
 
+        // Callback option for successful form submission, which is selected by default
         data.callback = this.initialCallback;
 
         // Various callback options

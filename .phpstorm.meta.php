@@ -6,12 +6,11 @@ namespace PHPSTORM_META {
     use App;
 
     use function app;
-    use function resolve;
     use function array_add;
     use function array_except;
     use function array_first;
-    use function array_last;
     use function array_get;
+    use function array_last;
     use function array_only;
     use function array_prepend;
     use function array_pull;
@@ -21,14 +20,16 @@ namespace PHPSTORM_META {
     use function array_where;
     use function head;
     use function last;
-    use function with;
-    use function tap;
     use function optional;
+    use function resolve;
+    use function tap;
+    use function with;
 
     /**
      * PhpStorm Meta file, to provide autocomplete information for PhpStorm
      *
      * @author Barry vd. Heuvel <barryvdh@gmail.com>
+     *
      * @see https://github.com/barryvdh/laravel-ide-helper
      */
     override(new \Illuminate\Contracts\Container\Container(), map([
@@ -2386,11 +2387,10 @@ namespace PHPSTORM_META {
         'view.finder' => \Illuminate\View\FileViewFinder::class,
     ]));
 
-
-    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::mock(0), map(["" => "@&\Mockery\MockInterface"]));
-    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::partialMock(0), map(["" => "@&\Mockery\MockInterface"]));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::mock(0), map(['' => "@&\Mockery\MockInterface"]));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::partialMock(0), map(['' => "@&\Mockery\MockInterface"]));
     override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::instance(0), type(1));
-    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::spy(0), map(["" => "@&\Mockery\MockInterface"]));
+    override(\Illuminate\Foundation\Testing\Concerns\InteractsWithContainer::spy(0), map(['' => "@&\Mockery\MockInterface"]));
     override(\Illuminate\Support\Arr::add(0), type(0));
     override(\Illuminate\Support\Arr::except(0), type(0));
     override(\Illuminate\Support\Arr::first(0), elementType(0));

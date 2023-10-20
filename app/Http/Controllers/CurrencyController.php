@@ -24,14 +24,14 @@ class CurrencyController extends Controller
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(): View
     {
         /**
          * @get('/currencies')
+         *
          * @name('currencies.index')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
@@ -57,7 +57,9 @@ class CurrencyController extends Controller
     {
         /**
          * @get('/currencies/create')
+         *
          * @name('currencies.create')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
         return view('currencies.form');
@@ -67,10 +69,12 @@ class CurrencyController extends Controller
     {
         /**
          * @post('/currencies')
+         *
          * @name('currencies.store')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        $currency = Currency::create($request->validated());
+        $currency = $request->user()->currencies()->create($request->validated());
 
         // The first currency created will be automatically set as the base currency
         if ($request->user()->currencies->count() === 1) {
@@ -85,15 +89,14 @@ class CurrencyController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param Currency $currency
-     * @return View
      */
     public function edit(Currency $currency): View
     {
         /**
          * @get('/currencies/{currency}/edit')
+         *
          * @name('currencies.edit')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
 
@@ -111,8 +114,11 @@ class CurrencyController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
+         *
          * @uri('/currencies/{currency}')
+         *
          * @name('currencies.update')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         $validated = $request->validated();
@@ -127,15 +133,14 @@ class CurrencyController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Currency $currency
-     * @return Response|RedirectResponse
      */
     public function destroy(Currency $currency): Response|RedirectResponse
     {
         /**
          * @delete('/currencies/{currency}')
+         *
          * @name('currencies.destroy')
+         *
          * @middlewares('web', 'auth', 'verified', 'can:delete,currency')
          */
         // Base currency cannot be deleted
@@ -165,7 +170,9 @@ class CurrencyController extends Controller
     {
         /**
          * @get('/currencies/{currency}/setDefault')
+         *
          * @name('currencies.setDefault')
+         *
          * @middlewares('web', 'auth', 'verified')
          */
         if ($currency->setToBase()) {

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Random;
 
+use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,7 +13,7 @@ class InvestmentSeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user, int $count = 5)
+    public function run(User $user, int $count = 5): void
     {
         if ($user) {
             $users = new Collection([$user]);
@@ -21,9 +22,13 @@ class InvestmentSeeder extends Seeder
         }
 
         $users->each(function ($user) use ($count) {
-            Investment::factory()
+            AccountEntity::factory()
                 ->count($count)
                 ->for($user)
+                ->for(
+                    Investment::factory()->withUser($user),
+                    'config'
+                )
                 ->create();
         });
     }

@@ -60,6 +60,7 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property-read int|null $tokens_count
  * @property-read Collection<int, Transaction> $transactions
  * @property-read int|null $transactions_count
+ *
  * @method static UserFactory factory($count = null, $state = [])
  * @method static Builder|User flagged(string $name)
  * @method static Builder|User newModelQuery()
@@ -78,6 +79,13 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder|User whereRememberToken($value)
  * @method static Builder|User whereStartDate($value)
  * @method static Builder|User whereUpdatedAt($value)
+ *
+ * @property-read Collection<int, \App\Models\ReceivedMail> $receivedMails
+ * @property-read int|null $received_mails_count
+ * @property-read Collection<int, \App\Models\Tag> $tags
+ * @property-read Collection<int, \App\Models\ReceivedMail> $unhandledReceivedMail
+ * @property-read int|null $unhandled_received_mail_count
+ *
  * @mixin Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail, Onboardable
@@ -148,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(Currency::class);
     }
 
-    public function baseCurrency(): Currency|null
+    public function baseCurrency(): ?Currency
     {
         return $this->currencies()
             ->where('base', true)
@@ -162,7 +170,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
 
     public function investments(): HasMany
     {
-        return $this->hasMany(Investment::class);
+        return $this->hasMany(AccountEntity::class)->investments();
     }
 
     public function payees(): HasMany

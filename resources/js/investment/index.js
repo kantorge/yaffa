@@ -39,16 +39,16 @@ let table = $('#investmentSummary').DataTable({
             className: "text-center activeIcon",
         },
         {
-            data: "investment_group.name",
+            data: "config.investment_group.name",
             title: __("Group"),
             type: "string"
         },
         {
-            data: "symbol",
+            data: "config.symbol",
             title: __("Symbol"),
         },
         {
-            data: "isin",
+            data: "config.isin",
             title: __("ISIN number"),
         },
         {
@@ -97,7 +97,7 @@ let table = $('#investmentSummary').DataTable({
             render: function (data, _type, row) {
                 return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
                     '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ' +
-                    dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'investment.edit') +
+                    dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'account-entity.edit') +
                     renderDeleteAssetButton(row, deleteButtonConditions, __("This investment cannot be deleted."));
             },
             className: "dt-nowrap",

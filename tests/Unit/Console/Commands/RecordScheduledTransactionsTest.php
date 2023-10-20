@@ -29,14 +29,14 @@ class RecordScheduledTransactionsTest extends TestCase
 
         AccountGroup::factory()->for($user)->create();
         Currency::factory()->for($user)->create();
-        AccountEntity::factory()->account($user)->for($user)->create();
+        AccountEntity::factory()->account()->create(['user_id' => $user->id]);
         Category::factory()->for($user)->create();
-        AccountEntity::factory()->payee($user)->for($user)->create();
+        AccountEntity::factory()->payee()->create(['user_id' => $user->id]);
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
-            ->withdrawal_schedule()
+            ->withdrawal_schedule($user)
             ->for($user)
             ->create();
 
@@ -107,7 +107,7 @@ class RecordScheduledTransactionsTest extends TestCase
     {
         $date = Carbon::tomorrow()->startOfDay();
 
-        $transaction = $this->createTestTransaction([
+        $this->createTestTransaction([
             'start_date' => $date,
             'next_date' => $date,
         ]);
@@ -125,7 +125,7 @@ class RecordScheduledTransactionsTest extends TestCase
     /** @test */
     public function test_transaction_with_empty_next_date_is_not_recorded()
     {
-        $transaction = $this->createTestTransaction(['next_date' => null]);
+        $this->createTestTransaction(['next_date' => null]);
 
         Queue::fake();
 

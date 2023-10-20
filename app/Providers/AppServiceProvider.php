@@ -4,9 +4,8 @@ namespace App\Providers;
 
 use App\Components\MailHandler;
 use App\Models\Account;
+use App\Models\Investment;
 use App\Models\Payee;
-use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionDetailStandard;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
@@ -46,8 +45,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'account' => Account::class,
             'payee' => Payee::class,
-            'transaction_detail_standard' => TransactionDetailStandard::class,
-            'transaction_detail_investment' => TransactionDetailInvestment::class,
+            'investment' => Investment::class,
         ]);
 
         // Setup Mailbox to handle incoming emails sent to specified address

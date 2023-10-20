@@ -175,7 +175,12 @@
             <input name="config_type" type="hidden" value="account">
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
-            <a href="{{ route('account-entity.index', ['type' => 'account']) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <a
+                        href="{{ route('account-entity.index', ['type' => 'account']) }}"
+                        class="btn btn-secondary cancel confirm-needed"
+            >
+                {{ __('Cancel') }}
+            </a>
         </div>
     </div>
 </form>
