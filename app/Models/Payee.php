@@ -58,6 +58,8 @@ class Payee extends Model
 
     protected $guarded = [];
 
+    public $timestamps = false;
+
     /**
      * The table associated with the model.
      *
