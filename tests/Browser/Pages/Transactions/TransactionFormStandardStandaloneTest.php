@@ -182,7 +182,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
     public function test_user_can_submit_deposit_transaction_form()
     {
-        echo $this->user->payees()->count();
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
