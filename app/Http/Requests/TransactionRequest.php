@@ -121,14 +121,12 @@ class TransactionRequest extends FormRequest
                 'items' => 'array',
                 'items.*' => 'array',
                 'items.*.amount' => [
-                    'nullable',
-                    'required_with:items.*.category,items.*.comment,items.*.tags',
+                    'required',
                     'numeric',
                     'gt:0',
                 ],
                 'items.*.category_id' => [
-                    'nullable',
-                    'required_with:items.*.amount',
+                    'required',
                     'exists:categories,id',
                 ],
                 'items.*.comment' => 'nullable|max:191',

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * App\Models\TransactionDetailInvestment
  *
  * @property int $id
- * @property int $account_id
+ * @property int $account_entity_id
  * @property int $investment_id
  * @property float|null $price
  * @property float|null $quantity

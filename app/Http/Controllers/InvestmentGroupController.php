@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class InvestmentGroupController extends Controller
@@ -18,9 +21,9 @@ class InvestmentGroupController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         /**
          * @get('/investment-group')
@@ -41,7 +44,7 @@ class InvestmentGroupController extends Controller
         return view('investment-group.index');
     }
 
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/investment-group/create')
@@ -55,9 +58,9 @@ class InvestmentGroupController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  InvestmentGroup  $investmentGroup
-     * @return \Illuminate\View\View
+     * @return View
      */
-    public function edit(InvestmentGroup $investmentGroup)
+    public function edit(InvestmentGroup $investmentGroup): View
     {
         /**
          * @get('/investment-group/{investment_group}/edit')
@@ -67,21 +70,21 @@ class InvestmentGroupController extends Controller
         return view('investment-group.form', ['investmentGroup' => $investmentGroup]);
     }
 
-    public function store(InvestmentGroupRequest $request)
+    public function store(InvestmentGroupRequest $request): RedirectResponse
     {
         /**
          * @post('/investment-group')
          * @name('investment-group.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\InvestmentGroup')
          */
-        InvestmentGroup::create($request->validated());
+        $request->user()->investmentGroups()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Investment group added'));
 
         return redirect()->route('investment-group.index');
     }
 
-    public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup)
+    public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -104,9 +107,9 @@ class InvestmentGroupController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  InvestmentGroup  $investmentGroup
-     * @return \Illuminate\Http\Response
+     * @return RedirectResponse
      */
-    public function destroy(InvestmentGroup $investmentGroup)
+    public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
     {
         /**
          * @delete('/investment-group/{investment_group}')
@@ -118,7 +121,7 @@ class InvestmentGroupController extends Controller
             self::addSimpleSuccessMessage(__('Investment group deleted'));
 
             return redirect()->route('investment-group.index');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Investment group is in use, cannot be deleted'));
             } else {

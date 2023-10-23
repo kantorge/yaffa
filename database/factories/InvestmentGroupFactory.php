@@ -20,11 +20,11 @@ class InvestmentGroupFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             'name' => $this->faker->unique()->text(mt_rand(5, 25)),
-            'user_id' => User::inRandomOrder()->first()->id,
+            'user_id' => User::factory(),
         ];
     }
 }

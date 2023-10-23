@@ -1,31 +1,26 @@
 <?php
 
+use App\Models\Investment;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTransactionDetailsInvestmentTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('transaction_details_investment', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('account_id');
-            $table->foreignId('investment_id');
-
+            $table->foreignId('account_id')->constrained('account_entities')->restrictOnDelete();
+            $table->foreignIdFor(Investment::class)->constrained()->restrictOnDelete();
             $table->decimal('price', 10, 4)->nullable();
             $table->decimal('quantity', 14, 4)->nullable();
             $table->decimal('commission', 14, 4)->nullable();
             $table->decimal('tax', 14, 4)->nullable();
-            $table->decimal('dividend', 12, 2)->nullable();
-
-            $table->foreign('account_id')->references('id')->on('account_entities');
-            $table->foreign('investment_id')->references('id')->on('investments');
+            $table->decimal('dividend', 12, 4)->nullable();
         });
     }
 
@@ -33,8 +28,8 @@ class CreateTransactionDetailsInvestmentTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('transaction_details_investment');
     }
-}
+};

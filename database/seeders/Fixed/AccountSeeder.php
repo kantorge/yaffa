@@ -121,7 +121,7 @@ class AccountSeeder extends Seeder
         // Create one inactive account
         AccountEntity::Factory()
             ->for($user)
-            ->account($user)
+            ->for(Account::factory()->withUser($user), 'config')
             ->create([
                 'name' => 'Inactive account',
                 'active' => 0,

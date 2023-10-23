@@ -172,16 +172,8 @@ class AccountEntityController extends Controller
 
     private function createAccount(): View|RedirectResponse
     {
-        // Get all account groups
-        $allAccountGroups = Auth::user()
-            ->accountGroups()
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->get()
-            ->pluck('name', 'id');
-
         // Redirect to account group form, if empty
-        if (count($allAccountGroups) === 0) {
+        if (Auth::user()->accountGroups()->count() === 0) {
             $this->addMessage(
                 'Before creating an account, please add at least one account group. E.g. cash, bank accounts, savings, etc. Account groups help to organize your accounts.',
                 'info',
@@ -192,11 +184,8 @@ class AccountEntityController extends Controller
             return redirect()->route('account-group.create');
         }
 
-        // Get all currencies
-        $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
-
         // Redirect to currency form, if empty
-        if (count($allCurrencies) === 0) {
+        if (Auth::user()->currencies()->count() === 0) {
             $this->addMessage(
                 'Before creating an account, please add at least one currency. Accounts must have a currency assigned.',
                 'info',
@@ -207,7 +196,7 @@ class AccountEntityController extends Controller
             return redirect()->route('currencies.create');
         }
 
-        return view('account.form', ['allAccountGroups' => $allAccountGroups, 'allCurrencies' => $allCurrencies]);
+        return view('account.form');
     }
 
     /**
@@ -257,7 +246,8 @@ class AccountEntityController extends Controller
             $payeeConfig = Payee::create($validated['config']);
             $accountEntity->config()->associate($payeeConfig);
 
-            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            // Sync category preference. First, create a variable.
+            // Set preferred categories to boolean true and not preferred categories to boolean false.
             $preferences = [];
             if (array_key_exists('preferred', $validated['config'])) {
                 foreach ($validated['config']['preferred'] as $categoryId) {
@@ -388,7 +378,8 @@ class AccountEntityController extends Controller
             $accountEntity->fill($validated);
             $accountEntity->config->fill($validated['config']);
 
-            // Sync category preference. First, create a variable. Set preferred categories to boolean true and not preferred categories to boolean false.
+            // Sync category preference. First, create a variable.
+            // Set preferred categories to boolean true and not preferred categories to boolean false.
             $preferences = [];
             if (array_key_exists('preferred', $validated['config'])) {
                 foreach ($validated['config']['preferred'] as $categoryId) {

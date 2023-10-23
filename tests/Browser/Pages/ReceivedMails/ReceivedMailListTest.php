@@ -28,7 +28,7 @@ class ReceivedMailListTest extends DuskTestCase
     public function test_user_can_load_the_received_mail_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc')
+        $user = User::firstWhere('email', $this::USER_EMAIL)
             ->load('accounts');
 
         // Create test mails - 1 unprocessed, 2 processed, 1 handled
@@ -50,7 +50,7 @@ class ReceivedMailListTest extends DuskTestCase
 
         $transaction = Transaction::factory()
             ->for($user)
-            ->withdrawal()
+            ->withdrawal($user)
             ->create();
 
         $handledMail = ReceivedMail::factory()
@@ -140,7 +140,7 @@ class ReceivedMailListTest extends DuskTestCase
     public function test_user_can_interact_with_mail_action_buttons()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // The same mails should be still present from the previous test
 
@@ -236,13 +236,15 @@ class ReceivedMailListTest extends DuskTestCase
             $browser->assertPresent(TABLESELECTOR . ' button.finalizeIcon');
 
             // Store the mail id for later from the data-id attribute
-            $mailId = $browser->attribute(TABLESELECTOR . ' button.finalizeIcon', 'data-id');
+            $mailId = $browser->attribute(TABLESELECTOR . ' button.finalizeIcon:first-of-type', 'data-id');
 
             // Click the finalize button
-            $browser->click(TABLESELECTOR . ' button.finalizeIcon')
+            $browser->click(TABLESELECTOR . ' button.finalizeIcon:first-of-type')
                 // Check that the finalize transaction route is loaded
                 ->assertRouteIs('transactions.createFromDraft')
-                // Check that Vue has a sourceId set
+                // Wait for the transaction container to load
+                ->waitFor('@transaction-container-standard')
+                // Assert sourceId is set to the mail id in Vue
                 ->assertVue('sourceId', $mailId, '@transaction-container-standard');
         });
     }

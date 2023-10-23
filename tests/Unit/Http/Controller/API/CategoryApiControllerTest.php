@@ -2,10 +2,12 @@
 
 namespace Tests\Unit\Http\Controller\API;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
@@ -183,19 +185,20 @@ class CategoryApiControllerTest extends TestCase
             ->create();
 
         AccountEntity::factory()
-            ->account($user)
             ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
             ->create();
 
         AccountEntity::factory()
-            ->payee($user)
             ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
             ->create();
 
         // Create a standard transaction with specific data
-        $transaction = Transaction::factory()->withdrawal()->create([
-            'user_id' => $user->id,
-        ]);
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create();
 
         TransactionItem::factory()->create([
             'transaction_id' => $transaction->id,

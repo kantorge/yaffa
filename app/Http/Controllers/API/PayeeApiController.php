@@ -41,9 +41,9 @@ class PayeeApiController extends Controller
                 ->orderBy('name')
                 ->take(10)
                 ->get();
-        } elseif ($request->get('account_id')) {
+        } elseif ($request->get('account_entity_id')) {
             // Account and transaction type is expected to be present
-            $accountId = $request->get('account_id');
+            $accountId = $request->get('account_entity_id');
 
             $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
             $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');

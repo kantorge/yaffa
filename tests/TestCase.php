@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Testing\TestResponse;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -45,7 +46,7 @@ abstract class TestCase extends BaseTestCase
         return $class::factory()->for($user)->count($times)->create($attributes);
     }
 
-    protected function assertCreateForUser(User $user, $attributes = [], $model = '', $route = '')
+    protected function assertCreateForUser(User $user, $attributes = [], $model = '', $route = ''): TestResponse
     {
         $route = $this->base_route ? "{$this->base_route}.store" : $route;
         $model = $this->base_model ?? $model;

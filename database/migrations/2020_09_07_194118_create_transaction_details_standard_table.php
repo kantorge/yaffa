@@ -1,26 +1,30 @@
 <?php
 
+use App\Models\AccountEntity;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTransactionDetailsStandardTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('transaction_details_standard', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('account_from_id')->nullable();
-            $table->foreignId('account_to_id')->nullable();
-            $table->decimal('amount_from', 12, 2);
-            $table->decimal('amount_to', 12, 2);
+            $table->foreignIdFor(AccountEntity::class, 'account_from_id')
+                ->constrained('account_entities')
+                ->restrictOnDelete();
+            $table->foreignIdFor(AccountEntity::class, 'account_to_id')
+                ->constrained('account_entities')
+                ->restrictOnDelete();
+            $table->decimal('amount_from', 12, 4);
+            $table->decimal('amount_to', 12, 4);
 
-            $table->foreign('account_from_id')->references('id')->on('account_entities');
-            $table->foreign('account_to_id')->references('id')->on('account_entities');
+            // Indexes
+            $table->index(['account_from_id', 'account_to_id']);
         });
     }
 
@@ -28,8 +32,8 @@ class CreateTransactionDetailsStandardTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('transaction_details_standard');
     }
-}
+};

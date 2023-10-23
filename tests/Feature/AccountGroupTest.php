@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
-use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -48,7 +48,6 @@ class AccountGroupTest extends TestCase
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
         $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
-
 
         $user = User::factory()->create();
         $accountGroup = $this->createForUser($user, $this->base_model);
@@ -117,6 +116,7 @@ class AccountGroupTest extends TestCase
     /** @test */
     public function user_can_create_an_account_group()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
@@ -188,11 +188,16 @@ class AccountGroupTest extends TestCase
     /** @test */
     public function user_cannot_delete_account_group_with_attached_account()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
-        $accountGroup = $this->createForUser($user, $this->base_model);
-        $this->createForUser($user, Currency::class);
-        AccountEntity::factory()->for($user)->account($user)->create();
+        /** @var AccountEntity $accountGroup */
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create();
+        $account->load('config');
+        $accountGroup = $account->config->accountGroup;
 
         $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $accountGroup->id));
         $response->assertSessionHas('notification_collection.0.type', 'danger');

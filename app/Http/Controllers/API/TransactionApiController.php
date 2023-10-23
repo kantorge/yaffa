@@ -165,7 +165,7 @@ class TransactionApiController extends Controller
                         'config',
                         [TransactionDetailInvestment::class],
                         function (Builder $query) use ($request) {
-                            $query->Where('account_id', $request->get('account'));
+                            $query->where('account_id', $request->get('account'));
                         }
                     );
                 })
@@ -353,12 +353,13 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated) {
+            // Create the configuration first
+            $transactionDetails = TransactionDetailStandard::create($validated['config']);
+
             $transaction = new Transaction($validated);
             $transaction->user_id = Auth::user()->id;
-            $transaction->save();
-
-            $transactionDetails = TransactionDetailStandard::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
+            $transaction->push();
 
             $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
@@ -435,11 +436,11 @@ class TransactionApiController extends Controller
         $validated = $request->validated();
 
         $transaction = DB::transaction(function () use ($validated, $request) {
+            // Create the configuration first
+            $transactionDetails = TransactionDetailInvestment::create($validated['config']);
+
             $transaction = new Transaction($validated);
             $transaction->user_id = $request->user()->id;
-            $transaction->save();
-
-            $transactionDetails = TransactionDetailInvestment::create($validated['config']);
             $transaction->config()->associate($transactionDetails);
 
             $transaction->push();

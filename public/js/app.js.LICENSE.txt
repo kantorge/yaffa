@@ -7,15 +7,15 @@
    */
 
 /*!
-  * Bootstrap v5.3.0 (https://getbootstrap.com/)
+  * Bootstrap v5.3.2 (https://getbootstrap.com/)
   * Copyright 2011-2023 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
   */
 
 /*!
-  * CoreUI [object Object] v4.2.6 (https://coreui.io)
-  * Copyright 2022 The CoreUI Team (https://github.com/orgs/coreui/people)
-  * Licensed under MIT (https://coreui.io)
+  * CoreUI v4.3.2 (https://coreui.io)
+  * Copyright 2023 The CoreUI Team (https://github.com/orgs/coreui/people)
+  * Licensed under MIT (https://github.com/coreui/coreui/blob/main/LICENSE)
   */
 
 /*!
@@ -24,6 +24,8 @@
  * @author   Feross Aboukhadijeh <http://feross.org>
  * @license  MIT
  */
+
+/*! #__NO_SIDE_EFFECTS__ */
 
 /*! Responsive 2.5.0
  * © SpryMedia Ltd - datatables.net/license
@@ -41,9 +43,9 @@
  **/
 
 /**
- * @license Fraction.js v4.2.0 05/03/2022
+ * @license Fraction.js v4.3.7 31/08/2023
  * https://www.xarg.org/2014/03/rational-numbers-in-javascript/
  *
- * Copyright (c) 2021, Robert Eisele (robert@xarg.org)
+ * Copyright (c) 2023, Robert Eisele (robert@raw.org)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  **/

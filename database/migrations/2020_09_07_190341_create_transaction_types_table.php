@@ -4,13 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTransactionTypesTable extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('transaction_types', function (Blueprint $table) {
             $table->id();
@@ -25,7 +24,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 1,
                 'name' => 'withdrawal',
-                'type' => 'Standard',
+                'type' => 'standard',
                 'amount_operator' => 'minus',
                 'quantity_operator' => null,
             ]
@@ -35,7 +34,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 2,
                 'name' => 'deposit',
-                'type' => 'Standard',
+                'type' => 'standard',
                 'amount_operator' => 'plus',
                 'quantity_operator' => null,
             ]
@@ -45,7 +44,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 3,
                 'name' => 'transfer',
-                'type' => 'Standard',
+                'type' => 'standard',
                 'amount_operator' => null,
                 'quantity_operator' => null,
             ]
@@ -55,7 +54,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 4,
                 'name' => 'Buy',
-                'type' => 'Investment',
+                'type' => 'investment',
                 'amount_operator' => 'minus',
                 'quantity_operator' => 'plus',
             ]
@@ -65,7 +64,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 5,
                 'name' => 'Sell',
-                'type' => 'Investment',
+                'type' => 'investment',
                 'amount_operator' => 'plus',
                 'quantity_operator' => 'minus',
             ]
@@ -75,7 +74,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 6,
                 'name' => 'Add shares',
-                'type' => 'Investment',
+                'type' => 'investment',
                 'amount_operator' => null,
                 'quantity_operator' => 'plus',
             ]
@@ -85,7 +84,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 7,
                 'name' => 'Remove shares',
-                'type' => 'Investment',
+                'type' => 'investment',
                 'amount_operator' => null,
                 'quantity_operator' => 'minus',
             ]
@@ -95,7 +94,7 @@ class CreateTransactionTypesTable extends Migration
             [
                 'id' => 8,
                 'name' => 'Dividend',
-                'type' => 'Investment',
+                'type' => 'investment',
                 'amount_operator' => 'plus',
                 'quantity_operator' => null,
             ]
@@ -104,9 +103,9 @@ class CreateTransactionTypesTable extends Migration
         DB::table('transaction_types')->insert(
             [
                 'id' => 9,
-                'name' => 'S-Term Cap Gains Dist',
-                'type' => 'Investment',
-                'amount_operator' => 'plus',
+                'name' => 'unused',
+                'type' => 'unused',
+                'amount_operator' => null,
                 'quantity_operator' => null,
             ]
         );
@@ -114,8 +113,18 @@ class CreateTransactionTypesTable extends Migration
         DB::table('transaction_types')->insert(
             [
                 'id' => 10,
-                'name' => 'L-Term Cap Gains Dist',
-                'type' => 'Investment',
+                'name' => 'unused',
+                'type' => 'unused',
+                'amount_operator' => null,
+                'quantity_operator' => null,
+            ]
+        );
+
+        DB::table('transaction_types')->insert(
+            [
+                'id' => 11,
+                'name' => 'Interest yield',
+                'type' => 'investment',
                 'amount_operator' => 'plus',
                 'quantity_operator' => null,
             ]
@@ -126,8 +135,8 @@ class CreateTransactionTypesTable extends Migration
      * Reverse the migrations.
      *
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('transaction_types');
     }
-}
+};

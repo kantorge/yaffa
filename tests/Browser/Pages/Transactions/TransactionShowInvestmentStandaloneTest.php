@@ -5,7 +5,6 @@ namespace Tests\Browser\Pages\Transactions;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\Transaction;
-use App\Models\TransactionSchedule;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -28,20 +27,23 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 
     public function test_user_can_load_the_investment_transaction_details()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
-            ->buy([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
-                'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
-                'price' => 1.23456,
-                'quantity' => 2.34567,
-                'commission' => 3.45678,
-                'tax' => 4.56789,
-            ])
+            ->for($user)
+            ->buy(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'price' => 1.23456,
+                    'quantity' => 2.34567,
+                    'commission' => 3.45678,
+                    'tax' => 4.56789,
+                ]
+            )
             ->create([
-                'user_id' => $user->id,
                 'comment' => 'Test comment',
                 'reconciled' => true,
             ]);
@@ -73,8 +75,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
                 ->assertMissing('@button-action-bar-open')
                 // Skip and enter instance buttons are not available in the action bar
                 ->assertMissing('@button-action-bar-skip')
-                ->assertMissing('@button-action-bar-enter-instance')
-            ;
+                ->assertMissing('@button-action-bar-enter-instance');
         });
     }
 
@@ -84,28 +85,28 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
      **/
     public function test_user_can_load_the_investment_transaction_details_for_a_scheduled_transaction()
     {
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create an investment transaction with specific data and a schedule
         $transaction = Transaction::factory()
-            ->buy([
-                'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
-                'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
-                'price' => 1.23456,
-                'quantity' => 2.34567,
-                'commission' => 3.45678,
-                'tax' => 4.56789,
-            ])
+            ->for($user)
+            ->buy(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'price' => 1.23456,
+                    'quantity' => 2.34567,
+                    'commission' => 3.45678,
+                    'tax' => 4.56789,
+                ]
+            )
             ->create([
-                'user_id' => $user->id,
                 'date' => null,
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
             ]);
-        TransactionSchedule::factory()->create([
-            'transaction_id' => $transaction->id,
-        ]);
 
         $this->browse(function (Browser $browser) use ($user, $transaction) {
             $browser->loginAs($user)
@@ -119,8 +120,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 
                 // Skip and enter instance buttons are available in the action bar
                 ->assertPresent('@button-action-bar-skip')
-                ->assertPresent('@button-action-bar-enter-instance')
-            ;
+                ->assertPresent('@button-action-bar-enter-instance');
         });
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Browser\Pages\Categories;
 
 use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Payee;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -29,10 +30,11 @@ class CategoryListTest extends DuskTestCase
     public function test_user_can_load_the_category_list_and_use_filters()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc')
+        $user = User::firstWhere('email', $this::USER_EMAIL)
             ->load('categories');
 
         // Create a category to search for, with unique name, parent and active status
+        /** @var Category $categoryToSearch */
         $categoryToSearch = Category::factory()
             ->for($user)
             ->create([
@@ -121,7 +123,7 @@ class CategoryListTest extends DuskTestCase
     public function test_delete_button_behaviour()
     {
         // Load the main test user
-        $user = User::firstWhere('email', 'demo@yaffa.cc');
+        $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create categories for various test cases
 
@@ -155,7 +157,7 @@ class CategoryListTest extends DuskTestCase
 
         AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => $payeeDefaultCategory->id])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => $payeeDefaultCategory->id]), 'config')
             ->create();
 
         // Parent category which is the preferred category of a payee, which cannot be deleted
@@ -169,7 +171,7 @@ class CategoryListTest extends DuskTestCase
         /** @var AccountEntity $payeeWithPreferredCategory */
         $payeeWithPreferredCategory = AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => null])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
             ->create();
 
         $payeeWithPreferredCategory
@@ -187,7 +189,7 @@ class CategoryListTest extends DuskTestCase
         /** @var AccountEntity $payeeWithDeferredCategory */
         $payeeWithDeferredCategory = AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => null])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
             ->create();
 
         $payeeWithDeferredCategory

@@ -84,7 +84,7 @@ class CategoryController extends Controller
      *
      * @return View
      */
-    public function create()
+    public function create(): View
     {
         /**
          * @get('/categories/create')
@@ -94,14 +94,14 @@ class CategoryController extends Controller
         return view('categories.form');
     }
 
-    public function store(CategoryRequest $request)
+    public function store(CategoryRequest $request): RedirectResponse
     {
         /**
          * @post('/categories')
          * @name('categories.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Category')
          */
-        Category::create($request->validated());
+        $request->user()->categories()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Category added'));
 
@@ -114,7 +114,7 @@ class CategoryController extends Controller
      * @param  Category  $category
      * @return View
      */
-    public function edit(Category $category)
+    public function edit(Category $category): View
     {
         /**
          * @get('/categories/{category}/edit')
@@ -129,7 +129,7 @@ class CategoryController extends Controller
         );
     }
 
-    public function update(CategoryRequest $request, Category $category)
+    public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')

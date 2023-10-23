@@ -106,7 +106,7 @@ class ReportController extends Controller
         return view('reports.transactions');
     }
 
-    public function getSchedules()
+    public function getSchedules(): View
     {
         /**
          * @get('/reports/schedule')
