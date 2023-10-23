@@ -12,7 +12,7 @@ class AccountGroupSeeder extends Seeder
     /**
      * Run the database seeds by creating random values with factory
      */
-    public function run(?User $user, $count = 5)
+    public function run(?User $user, $count = 5): void
     {
         if ($user) {
             $users = new Collection([$user]);

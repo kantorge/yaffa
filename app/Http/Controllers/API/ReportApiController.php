@@ -394,7 +394,7 @@ class ReportApiController extends Controller
                 'transactions.id',
                 'transactions.schedule',
                 'transactions.budget',
-                'transaction_details_investment.account_entity_id',
+                'transaction_details_investment.account_id',
                 'transaction_schedules.start_date',
                 'transaction_schedules.next_date',
                 'transaction_schedules.end_date',
@@ -600,7 +600,7 @@ class ReportApiController extends Controller
                 'transactions.id',
                 'transactions.schedule',
                 'transactions.budget',
-                'transaction_details_investment.account_entity_id',
+                'transaction_details_investment.account_id',
                 'transaction_schedules.start_date',
                 'transaction_schedules.next_date',
                 'transaction_schedules.end_date',
@@ -615,7 +615,7 @@ class ReportApiController extends Controller
             ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
             ->where('transactions.user_id', Auth::user()->id)
             ->where('transactions.config_type', 'transaction_detail_investment')
-            ->where('transaction_details_investment.account_entity_id', $accountEntity->id)
+            ->where('transaction_details_investment.account_id', $accountEntity->id)
             ->whereIn('transactions.transaction_type_id', function ($query) {
                 $query->from('transaction_types')
                     ->select('id')

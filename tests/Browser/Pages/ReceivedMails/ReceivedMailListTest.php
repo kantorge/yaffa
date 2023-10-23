@@ -50,7 +50,7 @@ class ReceivedMailListTest extends DuskTestCase
 
         $transaction = Transaction::factory()
             ->for($user)
-            ->withdrawal()
+            ->withdrawal($user)
             ->create();
 
         $handledMail = ReceivedMail::factory()

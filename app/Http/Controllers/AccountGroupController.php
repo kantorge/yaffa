@@ -77,7 +77,7 @@ class AccountGroupController extends Controller
          * @name('account-group.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountGroup')
          */
-        AccountGroup::create($request->validated());
+        $request->user()->accountGroups()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Account group added'));
 

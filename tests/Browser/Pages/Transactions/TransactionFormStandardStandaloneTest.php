@@ -4,6 +4,7 @@ namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
@@ -181,6 +182,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
     public function test_user_can_submit_deposit_transaction_form()
     {
+        echo $this->user->payees()->count();
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
@@ -388,8 +390,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->acceptDialog()
 
                 // Add minimum necessary fields
-                ->select2ExactSearch('#account_to', $account->name, 10)
-                ->select2ExactSearch('#account_from', 'Investment account EUR', 10)
+                ->select2ExactSearch('#account_to', $account->name, 60)
+                ->select2ExactSearch('#account_from', 'Investment account EUR', 60)
                 ->type('#transaction_amount_from', '100')
                 ->type('#transaction_amount_to', '100')
 
@@ -504,9 +506,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
     {
         // Create an inactive payee
         $payee = AccountEntity::factory()
-            ->payee($this->user)
+            ->for($this->user)
+            ->for(Payee::factory()->withUser($this->user), 'config')
             ->create([
-                'user_id' => $this->user->id,
                 'active' => false,
             ]);
 

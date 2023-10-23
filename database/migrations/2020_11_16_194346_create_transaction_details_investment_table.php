@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\AccountEntity;
 use App\Models\Investment;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -15,7 +14,7 @@ return new class () extends Migration {
     {
         Schema::create('transaction_details_investment', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(AccountEntity::class)->constrained()->restrictOnDelete();
+            $table->foreignId('account_id')->constrained('account_entities')->restrictOnDelete();
             $table->foreignIdFor(Investment::class)->constrained()->restrictOnDelete();
             $table->decimal('price', 10, 4)->nullable();
             $table->decimal('quantity', 14, 4)->nullable();

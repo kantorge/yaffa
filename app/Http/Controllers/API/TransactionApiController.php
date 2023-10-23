@@ -165,7 +165,7 @@ class TransactionApiController extends Controller
                         'config',
                         [TransactionDetailInvestment::class],
                         function (Builder $query) use ($request) {
-                            $query->where('account_entity_id', $request->get('account'));
+                            $query->where('account_id', $request->get('account'));
                         }
                     );
                 })
@@ -273,7 +273,7 @@ class TransactionApiController extends Controller
                     $query->whereIn('config_id', function ($query) use ($request) {
                         $query->select('id')
                             ->from('transaction_details_investment')
-                            ->whereIn('account_entity_id', $request->get('accounts'));
+                            ->whereIn('account_id', $request->get('accounts'));
                     });
                 });
         } else {

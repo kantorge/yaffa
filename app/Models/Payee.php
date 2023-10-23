@@ -77,7 +77,7 @@ class Payee extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'category_id',
@@ -87,7 +87,7 @@ class Payee extends Model
     /**
      * The attributes that should be cast.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'category_suggestion_dismissed' => 'datetime',

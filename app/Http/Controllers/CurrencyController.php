@@ -70,7 +70,7 @@ class CurrencyController extends Controller
          * @name('currencies.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        $currency = Currency::create($request->validated());
+        $currency = $request->user()->currencies()->create($request->validated());
 
         // The first currency created will be automatically set as the base currency
         if ($request->user()->currencies->count() === 1) {

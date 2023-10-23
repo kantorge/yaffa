@@ -96,7 +96,7 @@ class AccountEntity extends Model
         return $this->hasManyThrough(
             Transaction::class,
             TransactionDetailInvestment::class,
-            'account_entity_id',
+            'account_id',
             'config_id',
             'id',
             'id',

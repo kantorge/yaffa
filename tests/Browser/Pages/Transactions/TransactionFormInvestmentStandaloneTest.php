@@ -97,13 +97,13 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Select investment
+                // As a preparation, select an investment with known currency
                 ->select2ExactSearch('#investment', 'Test investment USD', 10)
                 ->assertSeeIn('#investment + .select2', 'Test investment USD')
-                // Try to select an account
+                // As a main test, search for accounts
                 ->click('#account + .select2')
                 ->waitFor('.select2-container--open')
-                // Search for investment accounts
+                // Search for investment accounts, without specifying a currency
                 ->type('.select2-search__field', 'Investment account')
                 // Wait for results to load
                 ->waitFor('#select2-account-results .select2-results__option:not(.loading-results)', 10)
@@ -368,7 +368,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
             $browser->assertRouteIs(
                 'account-entity.show',
-                ['account_entity' => $transaction->config->account_entity_id]
+                ['account_entity' => $transaction->config->account_id]
             );
         });
     }
