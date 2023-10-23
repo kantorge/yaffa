@@ -35,7 +35,7 @@
         "barryvdh/laravel-ide-helper": "^2.12",
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.17",
-        "laravel/dusk": "^7.1",
+        "laravel/dusk": "7.9.3",
         "laravel/pint": "^1.1",
         "laravel/sail": "^1.16",
         "laravel/telescope": "^4.6",
