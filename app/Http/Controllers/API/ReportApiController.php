@@ -394,7 +394,7 @@ class ReportApiController extends Controller
                 'transactions.id',
                 'transactions.schedule',
                 'transactions.budget',
-                'transaction_details_investment.account_id',
+                'transaction_details_investment.account_id AS account_entity_id',
                 'transaction_schedules.start_date',
                 'transaction_schedules.next_date',
                 'transaction_schedules.end_date',
