@@ -102,13 +102,13 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->assertSeeIn('#investment + .select2', 'Test investment USD')
                 // As a main test, search for accounts
                 ->click('#account + .select2')
-                ->waitFor('.select2-container--open')
+                ->waitFor('span.select2-container--open:not(.select2-container--below)')
                 // Search for investment accounts, without specifying a currency
                 ->type('.select2-search__field', 'Investment account')
-                // Wait for results to load
-                ->waitFor('#select2-account-results .select2-results__option:not(.loading-results)', 10)
+                // Wait for results to load, which means that the Searing text is not displayed anymore
+                ->waitUntilMissing('#select2-account-results ul.select2-results__options li.select2-results__option.loading-results', 10)
                 // Verify that only accounts with USD currency are displayed
-                ->assertSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account USD')
+                ->waitForTextIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account USD', 10)
                 ->assertDontSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account EUR');
         });
     }
