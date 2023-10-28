@@ -33,7 +33,7 @@ class AccountEntityController extends Controller
     /*
      * Check if type parameter is provided and if it is valid. It is only needed if not running from CLI.
      */
-    private function checkTypeParam(Request $request)
+    private function checkTypeParam(Request $request): void
     {
         if (!app()->runningInConsole()
             && (!$request->has('type') || !in_array($request->type, ['account', 'payee']))) {
@@ -278,22 +278,19 @@ class AccountEntityController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Request $request
      * @param AccountEntity $accountEntity
      * @return View
      * @uses editPayee
      * @uses editAccount
      */
-    public function edit(Request $request, AccountEntity $accountEntity): View
+    public function edit(AccountEntity $accountEntity): View
     {
         /**
          * @get('/account-entity/{account_entity}/edit')
          * @name('account-entity.edit')
          * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
-        $this->checkTypeParam($request);
-
-        return $this->{'edit' . Str::ucfirst($request->type)}($accountEntity);
+        return $this->{'edit' . Str::ucfirst($accountEntity->config_type)}($accountEntity);
     }
 
     private function editAccount(AccountEntity $accountEntity): View
@@ -355,11 +352,9 @@ class AccountEntityController extends Controller
          * @name('account-entity.update')
          * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
          */
-        $this->checkTypeParam($request);
-
         $validated = $request->validated();
 
-        if ($validated['config_type'] === 'account') {
+        if ($accountEntity->config_type === 'account') {
             $accountEntity->load(['config']);
 
             $accountEntity->fill($validated);
@@ -372,7 +367,7 @@ class AccountEntityController extends Controller
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }
 
-        if ($validated['config_type'] === 'payee') {
+        if ($accountEntity->config_type === 'payee') {
             $accountEntity->load(['config']);
 
             $accountEntity->fill($validated);
@@ -408,18 +403,16 @@ class AccountEntityController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Request $request
      * @param AccountEntity $accountEntity
      * @return RedirectResponse
      */
-    public function destroy(Request $request, AccountEntity $accountEntity): RedirectResponse
+    public function destroy(AccountEntity $accountEntity): RedirectResponse
     {
         /**
          * @delete('/account-entity/{account_entity}')
          * @name('account-entity.destroy')
          * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
          */
-        $this->checkTypeParam($request);
         $result = $this->accountEntityService->delete($accountEntity);
 
         if ($result['success']) {
@@ -440,7 +433,7 @@ class AccountEntityController extends Controller
      * @param AccountEntity|null $payeeSource
      * @return View
      */
-    public function mergePayeesForm(?AccountEntity $payeeSource)
+    public function mergePayeesForm(?AccountEntity $payeeSource): View
     {
         /**
          * @get('/payees/merge/{payeeSource?}')
@@ -459,7 +452,7 @@ class AccountEntityController extends Controller
     /**
      * Merge two payees.
      */
-    public function mergePayees(MergePayeesRequest $request)
+    public function mergePayees(MergePayeesRequest $request): RedirectResponse
     {
         /**
          * @post('/payees/merge')
