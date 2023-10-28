@@ -23,22 +23,8 @@ class PayeeFactory extends Factory
      */
     public function definition(): array
     {
-        // This will select a category that is not a parent category, but it belongs to a random user
-        // If no such category is found, then take a random user, and create a new parent and child category for them
-        // Users are assumed to exist at this point
-        /** @var Category $category */
-        $category = Category::whereNotNull('parent_id')
-            ->inRandomOrder()
-            ->firstOr(function () {
-                $user = User::inRandomOrder()->first();
-                /** @var Category $parent */
-                $parent = Category::factory()->for($user)->create(['parent_id' => null]);
-
-                return Category::factory()->for($user)->create(['parent_id' => $parent->id]);
-            });
-
         return [
-            'category_id' => $this->faker->boolean(50) ? $category->id : null,
+            'category_id' => null,
             'category_suggestion_dismissed' => null,
         ];
     }
