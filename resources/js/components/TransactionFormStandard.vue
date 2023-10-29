@@ -254,7 +254,7 @@
                                     ></MathInput>
                                 </div>
                             </div>
-                            <dl class="row">
+                            <dl class="row" v-if="!transactionTypeIsTransfer">
                                 <dt class="col-sm-8">
                                     {{ __('Total amount') }}:
                                 </dt>
@@ -319,6 +319,7 @@
                             :currency="from.account_currency"
                             :payee="payeeId"
                             :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
+                            :enabled="!transactionTypeIsTransfer"
                     ></transaction-item-container>
                 </div>
             </div>
@@ -644,6 +645,10 @@ export default {
 
             return 0;
         },
+
+        transactionTypeIsTransfer() {
+            return this.form.transaction_type === 'transfer';
+        },
     },
 
     created() {
@@ -761,7 +766,6 @@ export default {
                 // Copy configuration
                 this.form.config.amount_from = this.transaction.config.amount_from;
                 this.form.config.amount_to = this.transaction.config.amount_to;
-
                 this.form.config.account_from_id = this.transaction.config.account_from_id;
                 this.form.config.account_to_id = this.transaction.config.account_to_id;
 
@@ -893,6 +897,11 @@ export default {
                     .val(null).trigger('change')
                     .select2('destroy')
                     .select2(this.getAccountSelectConfig('to'));
+            }
+
+            // Remove all items, if transaction type is transfer
+            if (this.form.transaction_type === 'transfer') {
+                this.form.items = [];
             }
 
             // Update callback options
@@ -1117,7 +1126,7 @@ export default {
             this.syncScheduleStartDate(newDate);
         },
 
-        // Update TO amount with FROM value, if needed
+        // Update TO amount with FROM value, if FROM value changed, and the currencies are the same
         "form.config.amount_from": {
             immediate: true,
             handler(value) {

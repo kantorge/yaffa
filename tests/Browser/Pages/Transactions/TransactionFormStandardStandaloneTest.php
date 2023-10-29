@@ -566,4 +566,31 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertMissing('#account_from_container > button[data-coreui-target="#newPayeeModal"]');
         });
     }
+
+    public function test_transfer_transaction_type_does_not_allow_to_add_transaction_items()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transaction.create', ['type' => 'standard'])
+                // Add amount
+                ->type('#transaction_amount_from', '100')
+                // Add one transaction item
+                ->click('@button-add-transaction-item')
+                // Switch to transfer and confirm dialog
+                ->click('@transaction-type-transfer')
+                ->acceptDialog()
+                // Verify that the "add transaction item" button is disabled
+                ->assertDisabled('@button-add-transaction-item')
+                // Verify that the previously added transaction item is not visible
+                ->assertMissing('#transaction_item_container .transaction_item_row')
+                // Switch back to withdrawal and confirm dialog
+                ->click('@transaction-type-withdrawal')
+                ->acceptDialog()
+                // Verify that the "add transaction item" button is enabled
+                ->assertEnabled('@button-add-transaction-item')
+                // Verify that the previously added transaction item is not visible
+                ->assertMissing('#transaction_item_container .transaction_item_row');
+        });
+    }
 }
