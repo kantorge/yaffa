@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.1](https://github.com/kantorge/yaffa/compare/v0.1.0...v0.1.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* bump version number for latest changes ([33d189f](https://github.com/kantorge/yaffa/commit/33d189f975da60c30069b68541ed354321777505))
+* editing a transfer with different currencies gets loaded with correct amounts ([3171c1d](https://github.com/kantorge/yaffa/commit/3171c1dc85a7f62e364c70c881286b35b3196041))
+* read the app version from config.json instead of a config file ([5837f6d](https://github.com/kantorge/yaffa/commit/5837f6dc761a474c2c06cfa6f153f5bb481b755c))
+* release-please action settings ([35bcd26](https://github.com/kantorge/yaffa/commit/35bcd264dfef55b08c8b97eb5458bf8287353995))
+* transaction item and tag reference cascade rule ([0ee0343](https://github.com/kantorge/yaffa/commit/0ee0343416c2fec070988182c9ae5308462ae43f))
+* transfers have no items ([4b7de50](https://github.com/kantorge/yaffa/commit/4b7de50fef1fb22474c5018d91bd5ba94182f290))
+
+
+### Miscellaneous Chores
+
+* **develop:** release 1.0.0 ([638eb29](https://github.com/kantorge/yaffa/commit/638eb29c9aefd51ab921008aba49a438d738f6dc))
+
 ## 0.1.0 (2023-10-29)
 
 
