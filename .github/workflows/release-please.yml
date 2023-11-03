@@ -15,5 +15,8 @@ jobs:
     steps:
       - uses: google-github-actions/release-please-action@v3
         with:
+          default-branch: main
           release-type: php
           package-name: kantorge/yaffa
+          release-search-depth: 100
+          commit-search-depth: 100
