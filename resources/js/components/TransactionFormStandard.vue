@@ -1042,6 +1042,14 @@ export default {
         },
 
         onSubmit() {
+            // Some preparation before submitting the form
+
+            // Adjust the "amount to" value. It needs to match the "amount from" value, if the currencies are the same,
+            // or if only one of the values is set
+            if (this.from.account_currency === this.to.account_currency || !this.from.account_currency || !this.to.account_currency) {
+                this.form.config.amount_to = this.form.config.amount_from;
+            }
+
             // Editing an existing transaction needs PATCH method
             if (this.action === 'edit') {
                 this.form.patch(
@@ -1124,16 +1132,6 @@ export default {
         // On change of new schedule start date, adjust original schedule end date to previous day
         "form.schedule_config.start_date": function (newDate) {
             this.syncScheduleStartDate(newDate);
-        },
-
-        // Update TO amount with FROM value, if FROM value changed, and the currencies are the same
-        "form.config.amount_from": {
-            immediate: true,
-            handler(value) {
-                if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
-                    this.form.config.amount_to = value;
-                }
-            },
         },
 
         transaction(transaction) {
