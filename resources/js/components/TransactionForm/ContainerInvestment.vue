@@ -32,7 +32,7 @@ export default {
                 reconciled: false,
                 comment: null,
                 config: {
-                    account_entity_id: null,
+                    account_id: null,
                     investment_id: null,
                     price: null,
                     quantity: null,
@@ -65,7 +65,7 @@ export default {
         // Check for various default values in URL for new transactions
         if (this.action === 'create') {
             if (urlParams.get('account')) {
-                data.transactionData.config.account_entity_id = urlParams.get('account');
+                data.transactionData.config.account_id = urlParams.get('account');
             }
 
             if (urlParams.get('schedule')) {
@@ -101,7 +101,7 @@ export default {
             }
 
             if (this.callback === 'returnToPrimaryAccount') {
-                location.href = window.route('account-entity.show', {account_entity: transaction.config.account_entity_id});
+                location.href = window.route('account-entity.show', {account_entity: transaction.config.account_id});
                 return;
             }
 

@@ -254,7 +254,7 @@
                                     ></MathInput>
                                 </div>
                             </div>
-                            <dl class="row">
+                            <dl class="row" v-if="!transactionTypeIsTransfer">
                                 <dt class="col-sm-8">
                                     {{ __('Total amount') }}:
                                 </dt>
@@ -319,6 +319,7 @@
                             :currency="from.account_currency"
                             :payee="payeeId"
                             :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
+                            :enabled="!transactionTypeIsTransfer"
                     ></transaction-item-container>
                 </div>
             </div>
@@ -644,6 +645,10 @@ export default {
 
             return 0;
         },
+
+        transactionTypeIsTransfer() {
+            return this.form.transaction_type === 'transfer';
+        },
     },
 
     created() {
@@ -761,7 +766,6 @@ export default {
                 // Copy configuration
                 this.form.config.amount_from = this.transaction.config.amount_from;
                 this.form.config.amount_to = this.transaction.config.amount_to;
-
                 this.form.config.account_from_id = this.transaction.config.account_from_id;
                 this.form.config.account_to_id = this.transaction.config.account_to_id;
 
@@ -893,6 +897,11 @@ export default {
                     .val(null).trigger('change')
                     .select2('destroy')
                     .select2(this.getAccountSelectConfig('to'));
+            }
+
+            // Remove all items, if transaction type is transfer
+            if (this.form.transaction_type === 'transfer') {
+                this.form.items = [];
             }
 
             // Update callback options
@@ -1033,6 +1042,14 @@ export default {
         },
 
         onSubmit() {
+            // Some preparation before submitting the form
+
+            // Adjust the "amount to" value. It needs to match the "amount from" value, if the currencies are the same,
+            // or if only one of the values is set
+            if (this.from.account_currency === this.to.account_currency || !this.from.account_currency || !this.to.account_currency) {
+                this.form.config.amount_to = this.form.config.amount_from;
+            }
+
             // Editing an existing transaction needs PATCH method
             if (this.action === 'edit') {
                 this.form.patch(
@@ -1115,16 +1132,6 @@ export default {
         // On change of new schedule start date, adjust original schedule end date to previous day
         "form.schedule_config.start_date": function (newDate) {
             this.syncScheduleStartDate(newDate);
-        },
-
-        // Update TO amount with FROM value, if needed
-        "form.config.amount_from": {
-            immediate: true,
-            handler(value) {
-                if (!(this.from.account_currency && this.to.account_currency && this.from.account_currency != this.to.account_currency)) {
-                    this.form.config.amount_to = value;
-                }
-            },
         },
 
         transaction(transaction) {

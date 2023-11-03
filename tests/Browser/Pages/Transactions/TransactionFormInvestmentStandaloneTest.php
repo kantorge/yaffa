@@ -97,18 +97,18 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Select investment
+                // As a preparation, select an investment with known currency
                 ->select2ExactSearch('#investment', 'Test investment USD', 10)
                 ->assertSeeIn('#investment + .select2', 'Test investment USD')
-                // Try to select an account
+                // As a main test, search for accounts
                 ->click('#account + .select2')
-                ->waitFor('.select2-container--open')
-                // Search for investment accounts
+                ->waitFor('span.select2-container--open:not(.select2-container--below)')
+                // Search for investment accounts, without specifying a currency
                 ->type('.select2-search__field', 'Investment account')
-                // Wait for results to load
-                ->waitFor('#select2-account-results .select2-results__option:not(.loading-results)', 10)
+                // Wait for results to load, which means that the Searing text is not displayed anymore
+                ->waitUntilMissing('#select2-account-results ul.select2-results__options li.select2-results__option.loading-results', 10)
                 // Verify that only accounts with USD currency are displayed
-                ->assertSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account USD')
+                ->waitForTextIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account USD', 10)
                 ->assertDontSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Investment account EUR');
         });
     }
@@ -368,7 +368,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
             $browser->assertRouteIs(
                 'account-entity.show',
-                ['account_entity' => $transaction->config->account_entity_id]
+                ['account_entity' => $transaction->config->account_id]
             );
         });
     }

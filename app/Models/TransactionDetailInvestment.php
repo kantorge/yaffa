@@ -63,7 +63,7 @@ class TransactionDetailInvestment extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'account_entity_id',
+        'account_id',
         'investment_id',
         'price',
         'quantity',
@@ -87,7 +87,7 @@ class TransactionDetailInvestment extends Model
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(AccountEntity::class, 'account_entity_id');
+        return $this->belongsTo(AccountEntity::class, 'account_id');
     }
 
     /**

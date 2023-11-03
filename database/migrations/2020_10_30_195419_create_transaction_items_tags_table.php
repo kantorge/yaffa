@@ -15,7 +15,7 @@ return new class () extends Migration {
     {
         Schema::create('transaction_items_tags', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(TransactionItem::class)->constrained();
+            $table->foreignIdFor(TransactionItem::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Tag::class)->constrained()->cascadeOnDelete();
         });
     }

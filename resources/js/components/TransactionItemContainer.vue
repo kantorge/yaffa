@@ -15,12 +15,17 @@
                     class="btn btn-sm btn-success ms-1"
                     dusk="button-add-transaction-item"
                     @click="this.$emit('addTransactionItem')"
-                    :title="__('New transaction item')"><i class="fa fa-plus"></i></button>
+                    :title="__('New transaction item')"
+                    :disabled="!enabled"
+                >
+                    <i class="fa fa-plus"></i>
+                </button>
             </div>
         </div>
         <div class="card-body" id="transaction_item_container">
             <div
                 class="list-group"
+                v-if="enabled"
                 v-for="(item, index) in transactionItems"
                 :key="item.id">
 
@@ -40,7 +45,10 @@
                     :payee="payee"
                 ></transaction-item>
             </div>
-            <div v-if="transactionItems.length === 0">
+            <div v-if="!enabled">
+                {{ __('Transaction items are disabled for this transaction type') }}
+            </div>
+            <div v-if="enabled && transactionItems.length === 0">
                 {{ __('No items added') }}
             </div>
         </div>
@@ -56,7 +64,11 @@
                     type="button"
                     class="btn btn-sm btn-success ms-1"
                     @click="this.$emit('addTransactionItem')"
-                    :title="__('New transaction item')"><span class="fa fa-plus"></span></button>
+                    :title="__('New transaction item')"
+                    :disabled="!enabled"
+                >
+                    <span class="fa fa-plus"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -74,6 +86,10 @@
             currency: String,
             remainingAmount: Number,
             payee: [Number, String],
+            enabled: {
+                type: Boolean,
+                default: true,
+            }
         },
 
         emits: [

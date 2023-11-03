@@ -16,7 +16,6 @@ return new class () extends Migration {
             $table->id();
             $table->foreignIdFor(Category::class)->nullable()->constrained()->nullOnDelete();
             $table->timestamp('category_suggestion_dismissed')->nullable();
-            $table->timestamps();
         });
     }
 

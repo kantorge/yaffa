@@ -3,12 +3,10 @@
 namespace Tests\Unit\Console\Commands;
 
 use App\Jobs\RecordScheduledTransaction;
+use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountGroup;
-use App\Models\Category;
-use App\Models\Currency;
+use App\Models\Payee;
 use App\Models\Transaction;
-use App\Models\TransactionSchedule;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,37 +25,30 @@ class RecordScheduledTransactionsTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
-        AccountGroup::factory()->for($user)->create();
-        Currency::factory()->for($user)->create();
-        AccountEntity::factory()->account($user)->for($user)->create();
-        Category::factory()->for($user)->create();
-        AccountEntity::factory()->payee($user)->for($user)->create();
+        AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user), 'config')->create();
+        AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
 
         // Create a scheduled transaction
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
-            ->withdrawal_schedule()
             ->for($user)
+            ->withdrawal_schedule($user)
             ->create();
 
-        $start = Carbon::parse('first day of next month')->startOfDay();
-
-        TransactionSchedule::factory()
-            ->create(
-                array_merge(
-                    [
-                        'start_date' => $start,
-                        'next_date' => $start,
-                        'end_date' => null,
-                        'transaction_id' => $transaction->id,
-                        'automatic_recording' => true,
-                        'count' => null,
-                        'interval' => 1,
-                        'frequency' => 'MONTHLY',
-                    ],
-                    $schedule
-                )
-            );
+        // By default, a transaction schedule will be created
+        // We need to adjust its properties to better suite our test
+        $transaction->transactionSchedule->update(
+            array_merge(
+                [
+                    'end_date' => null,
+                    'automatic_recording' => true,
+                    'count' => null,
+                    'interval' => 1,
+                    'frequency' => 'MONTHLY',
+                ],
+                $schedule
+            )
+        );
 
         return $transaction;
     }
@@ -107,7 +98,7 @@ class RecordScheduledTransactionsTest extends TestCase
     {
         $date = Carbon::tomorrow()->startOfDay();
 
-        $transaction = $this->createTestTransaction([
+        $this->createTestTransaction([
             'start_date' => $date,
             'next_date' => $date,
         ]);
@@ -125,7 +116,7 @@ class RecordScheduledTransactionsTest extends TestCase
     /** @test */
     public function test_transaction_with_empty_next_date_is_not_recorded()
     {
-        $transaction = $this->createTestTransaction(['next_date' => null]);
+        $this->createTestTransaction(['next_date' => null]);
 
         Queue::fake();
 

@@ -77,7 +77,7 @@ class TagController extends Controller
          * @name('tag.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Tag')
          */
-        Tag::create($request->validated());
+        $request->user()->tags()->create($request->validated());
 
         self::addSimpleSuccessMessage(__('Tag added'));
 

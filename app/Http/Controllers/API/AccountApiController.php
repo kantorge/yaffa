@@ -191,7 +191,7 @@ class AccountApiController extends Controller
                     'account_entities',
                     'account_entities.id',
                     '=',
-                    'transaction_details_investment.account_entity_id'
+                    'transaction_details_investment.account_id'
                 )
                 ->select('account_entities.id', 'account_entities.name AS text')
                 ->where('account_entities.active', true)
@@ -217,7 +217,7 @@ class AccountApiController extends Controller
                     '=',
                     TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
                 )
-                ->groupBy('transaction_details_investment.account_entity_id')
+                ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get();
@@ -379,7 +379,7 @@ class AccountApiController extends Controller
                             ->where('type', 'Investment')
                             ->whereNotNull('amount_operator');
                     })
-                    ->where('transaction_details_investment.account_entity_id', $account->id)
+                    ->where('transaction_details_investment.account_id', $account->id)
                     ->first();
 
                 // Get summary of transfer transaction values

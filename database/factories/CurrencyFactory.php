@@ -24,13 +24,21 @@ class CurrencyFactory extends Factory
     {
         $currency = $this->faker->currencyArray();
 
+        // Get a user that doesn't have this currency
+        $user = User::whereDoesntHave(
+            'currencies',
+            fn ($query) => $query->where('iso_code', $currency['iso_code'])
+        )
+            ->inRandomOrder()
+            ->firstOr(fn () => User::factory()->create());
+
         return [
             'name' => $currency['name'],
             'iso_code' => $currency['iso_code'],
             'num_digits' => $currency['num_digits'],
             'base' => null,
             'auto_update' => $this->faker->boolean,
-            'user_id' => User::inRandomOrder()->first()->id,
+            'user_id' => $user->id,
         ];
     }
 }

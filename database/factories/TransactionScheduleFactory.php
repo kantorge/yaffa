@@ -22,7 +22,7 @@ class TransactionScheduleFactory extends Factory
     public function definition(): array
     {
         $start = $this->faker->dateTimeBetween('-1 year', 'now');
-        $end = $this->faker->dateTimeBetween($start, $start->format('Y-m-d H:i:s') . ' 2 years');
+        $end = $this->faker->dateTimeBetween($start, $start->format('Y-m-d H:i:s') . ' +2 years');
 
         return [
             'start_date' => $start,
@@ -31,6 +31,7 @@ class TransactionScheduleFactory extends Factory
             'frequency' => $this->faker->randomElement(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
             'interval' => $this->faker->numberBetween(1, 5),
             'count' => $this->faker->boolean(50) ? null : $this->faker->numberBetween(1, 5),
+            'automatic_recording' => false
         ];
     }
 }

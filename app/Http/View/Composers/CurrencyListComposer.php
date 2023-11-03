@@ -12,7 +12,7 @@ class CurrencyListComposer
      *
      * @param View $view
      */
-    public function compose(View $view)
+    public function compose(View $view): void
     {
         $allCurrencies = Auth::user()
             ->currencies()

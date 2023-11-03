@@ -225,7 +225,7 @@ class ReceivedMailShowTest extends DuskTestCase
         // Generate a new handled mail
         $transaction = Transaction::factory()
             ->for($user)
-            ->withdrawal()
+            ->withdrawal($user)
             ->create();
 
         $mail = ReceivedMail::factory()

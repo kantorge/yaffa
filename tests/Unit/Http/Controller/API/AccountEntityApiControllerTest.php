@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Http\Controller\API;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
@@ -20,15 +21,16 @@ class AccountEntityApiControllerTest extends TestCase
     public function it_updates_the_active_status_of_an_account_entity()
     {
         // Create a user and an account entity, which also needs a currency and an account group
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
         $accountEntity = AccountEntity::factory()
-            ->account($user)
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
             ->create([
                 'active' => false,
-                'user_id' => $user->id,
             ]);
 
         $this->actingAs($user);
@@ -39,7 +41,7 @@ class AccountEntityApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        $this->assertEquals($accountEntity->fresh()->active, 1);
+        $this->assertEquals(1, $accountEntity->fresh()->active);
     }
 
     /**
@@ -48,15 +50,17 @@ class AccountEntityApiControllerTest extends TestCase
     public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity()
     {
         // Create a user and an account entity, which also needs a currency and an account group
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createForUser($user, AccountGroup::class);
         $this->createForUser($user, Currency::class);
 
+        /** @var AccountEntity $accountEntity */
         $accountEntity = AccountEntity::factory()
-            ->account($user)
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
             ->create([
                 'active' => false,
-                'user_id' => $user->id,
             ]);
 
         // Try to update the account entity as an unauthenticated user
@@ -76,9 +80,10 @@ class AccountEntityApiControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
 
-        $this->assertEquals($accountEntity->fresh()->active, false);
+        $this->assertEquals(false, $accountEntity->fresh()->active);
 
         // Try to update the account entity as a different user
+        /** @var User $user2 */
         $user2 = User::factory()->create();
 
         $this->actingAs($user2);

@@ -4,6 +4,7 @@ namespace Tests\Browser\Pages\Categories;
 
 use App\Models\AccountEntity;
 use App\Models\Category;
+use App\Models\Payee;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -156,7 +157,7 @@ class CategoryListTest extends DuskTestCase
 
         AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => $payeeDefaultCategory->id])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => $payeeDefaultCategory->id]), 'config')
             ->create();
 
         // Parent category which is the preferred category of a payee, which cannot be deleted
@@ -170,7 +171,7 @@ class CategoryListTest extends DuskTestCase
         /** @var AccountEntity $payeeWithPreferredCategory */
         $payeeWithPreferredCategory = AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => null])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
             ->create();
 
         $payeeWithPreferredCategory
@@ -188,7 +189,7 @@ class CategoryListTest extends DuskTestCase
         /** @var AccountEntity $payeeWithDeferredCategory */
         $payeeWithDeferredCategory = AccountEntity::factory()
             ->for($user)
-            ->payee($user, ['category_id' => null])
+            ->for(Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
             ->create();
 
         $payeeWithDeferredCategory

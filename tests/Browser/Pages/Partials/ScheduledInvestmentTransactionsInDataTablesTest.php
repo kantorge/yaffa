@@ -5,7 +5,6 @@ namespace Tests\Browser\Pages\Partials;
 use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\Transaction;
-use App\Models\TransactionSchedule;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -34,27 +33,24 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         // Create an investment transaction with specific data
         /** @var Transaction $transaction */
         $transaction = Transaction::factory()
-            ->buy([
-                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
-                'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
-                'price' => 100,
-                'quantity' => 2000,
-                'commission' => 300,
-                'tax' => 200,
-                'dividend' => null,
-            ])
+            ->for($user)
+            ->buy(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'price' => 100,
+                    'quantity' => 2000,
+                    'commission' => 300,
+                    'tax' => 200,
+                    'dividend' => null,
+                ]
+            )
             ->create([
-                'user_id' => $user->id,
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
                 'budget' => false,
-            ]);
-
-        // Create the schedule for the transaction
-        TransactionSchedule::factory()
-            ->create([
-                'transaction_id' => $transaction->id,
             ]);
 
         // Run the test
@@ -99,27 +95,24 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
-            ->sell([
-                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
-                'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
-                'price' => 100,
-                'quantity' => 2000,
-                'commission' => 300,
-                'tax' => 200,
-                'dividend' => null,
-            ])
+            ->for($user)
+            ->sell(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'price' => 100,
+                    'quantity' => 2000,
+                    'commission' => 300,
+                    'tax' => 200,
+                    'dividend' => null,
+                ]
+            )
             ->create([
-                'user_id' => $user->id,
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
                 'budget' => false,
-            ]);
-
-        // Create the schedule for the transaction
-        TransactionSchedule::factory()
-            ->create([
-                'transaction_id' => $transaction->id,
             ]);
 
         // Run the test
@@ -164,27 +157,24 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
 
         // Create an investment transaction with specific data
         $transaction = Transaction::factory()
-            ->dividend([
-                'account_entity_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
-                'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
-                'quantity' => null,
-                'price' => null,
-                'commission' => 400,
-                'tax' => 300,
-                'dividend' => 10000,
-            ])
+            ->for($user)
+            ->dividend(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'quantity' => null,
+                    'price' => null,
+                    'commission' => 400,
+                    'tax' => 300,
+                    'dividend' => 10000,
+                ]
+            )
             ->create([
-                'user_id' => $user->id,
                 'comment' => 'Test comment',
                 'reconciled' => false,
                 'schedule' => true,
                 'budget' => false,
-            ]);
-
-        // Create the schedule for the transaction
-        TransactionSchedule::factory()
-            ->create([
-                'transaction_id' => $transaction->id,
             ]);
 
         // Run the test

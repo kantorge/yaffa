@@ -28,11 +28,13 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
         // Create a standard transaction with specific data
-        $transaction = Transaction::factory()->withdrawal()->create([
-            'user_id' => $user->id,
-            'comment' => 'Test comment',
-            'reconciled' => true,
-        ]);
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create([
+                'comment' => 'Test comment',
+                'reconciled' => true,
+            ]);
 
         $this->browse(function (Browser $browser) use ($user, $transaction) {
             $browser->loginAs($user)
@@ -51,7 +53,6 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
                 // Skip and enter instance buttons are not available in the action bar
                 ->assertMissing('@button-action-bar-skip')
                 ->assertMissing('@button-action-bar-enter-instance');
-
         });
     }
 }

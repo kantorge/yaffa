@@ -19,7 +19,7 @@ class TransactionRequest extends FormRequest
     {
         return [
             // Investment specific fields
-            'config.account_entity_id' => __('account'),
+            'config.account_id' => __('account'),
             'config.investment_id' => __('investment'),
             'config.dividend' => __('dividend'),
             'config.quantity' => __('quantity'),
@@ -190,7 +190,7 @@ class TransactionRequest extends FormRequest
         } elseif ($this->get('config_type') === 'transaction_detail_investment') {
             // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
-                'config.account_entity_id' => [
+                'config.account_id' => [
                     'required',
                     'exists:account_entities,id,config_type,account',
                 ],

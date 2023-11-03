@@ -2,6 +2,7 @@
 
 namespace Http\Controller\API;
 
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
@@ -21,9 +22,8 @@ class AccountApiControllerTest extends TestCase
     public function test_account_list_with_query_applies_all_provided_filters()
     {
         // Primary user with test data covering various use cases
+        /** @var User $user */
         $user = User::factory()->create();
-
-        $this->createForUser($user, AccountGroup::class);
 
         // Multiple (2) currencies
         $this->createForUser($user, Currency::class, CurrencyData::getCurrencyByIsoCode('USD'));
@@ -33,20 +33,21 @@ class AccountApiControllerTest extends TestCase
         // One account with base name
         AccountEntity::factory()
             ->for($user)
-            ->account($user, ['currency_id' => $currencies->first()->id])
+            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currencies->first()->id]), 'config')
             ->create([
                 'active' => true,
                 'name' => self::BASE_ACCOUNT_NAME
             ]);
 
         // Other user with dummy data and same account name
+        /** @var User $user2 */
         $user2 = User::factory()->create();
         $this->createForUser($user2, AccountGroup::class);
         $this->createForUser($user2, Currency::class);
 
         AccountEntity::factory()
             ->for($user2)
-            ->account($user2)
+            ->for(Account::factory()->withUser($user2), 'config')
             ->create([
                 'active' => true,
                 'name' => self::BASE_ACCOUNT_NAME
@@ -65,7 +66,7 @@ class AccountApiControllerTest extends TestCase
         // We create a new item for primary user with similar name, but not active, other currency
         AccountEntity::factory()
             ->for($user)
-            ->account($user, ['currency_id' => $currencies->last()->id])
+            ->for(Account::factory()->withUser($user)->create(['currency_id' => $currencies->last()->id]), 'config')
             ->create([
                 'active' => false,
                 'name' => self::BASE_ACCOUNT_NAME . " - inactive",
@@ -77,12 +78,14 @@ class AccountApiControllerTest extends TestCase
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
 
         // Inactive items can be requested
-        $response = $this->actingAs($user)->getJson('/api/assets/account?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)
+            ->getJson('/api/assets/account?withInactive=1&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
 
         // Currency can be specified
-        $response = $this->actingAs($user)->getJson('/api/assets/account?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
+        $response = $this->actingAs($user)
+            ->getJson('/api/assets/account?withInactive=1&currency_id=' . $currencies->first()->id . '&q=' . self::BASE_ACCOUNT_NAME);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(1);
         $response->assertJsonPath('0.name', self::BASE_ACCOUNT_NAME);
@@ -92,7 +95,7 @@ class AccountApiControllerTest extends TestCase
         for ($i = 1; $i <= 20; $i++) {
             AccountEntity::factory()
                 ->for($user)
-                ->account($user)
+                ->for(Account::factory()->withUser($user), 'config')
                 ->create([
                     'active' => true,
                     'name' => self::BASE_ACCOUNT_NAME . " - clone - " . $i,
