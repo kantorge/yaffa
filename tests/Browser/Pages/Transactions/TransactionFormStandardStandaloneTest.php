@@ -6,6 +6,8 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionType;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -564,6 +566,70 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Verify that the add new payee button is not visible
                 ->assertMissing('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
                 ->assertMissing('#account_from_container > button[data-coreui-target="#newPayeeModal"]');
+        });
+    }
+
+    public function test_transfer_transaction_type_does_not_allow_to_add_transaction_items()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transaction.create', ['type' => 'standard'])
+                // Add amount
+                ->type('#transaction_amount_from', '100')
+                // Add one transaction item
+                ->click('@button-add-transaction-item')
+                // Switch to transfer and confirm dialog
+                ->click('@transaction-type-transfer')
+                ->acceptDialog()
+                // Verify that the "add transaction item" button is disabled
+                ->assertDisabled('@button-add-transaction-item')
+                // Verify that the previously added transaction item is not visible
+                ->assertMissing('#transaction_item_container .transaction_item_row')
+                // Switch back to withdrawal and confirm dialog
+                ->click('@transaction-type-withdrawal')
+                ->acceptDialog()
+                // Verify that the "add transaction item" button is enabled
+                ->assertEnabled('@button-add-transaction-item')
+                // Verify that the previously added transaction item is not visible
+                ->assertMissing('#transaction_item_container .transaction_item_row');
+        });
+    }
+
+    public function test_editing_a_transfer_with_different_currencies_loads_the_form_correctly()
+    {
+        // Create a new transaction, which should be a transfer, using different currencies
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 10,
+                    'amount_to' => 20,
+                    'account_from_id' => AccountEntity::firstWhere('name', 'Cash account USD')->id,
+                    'account_to_id' => AccountEntity::firstWhere('name', 'Cash account EUR')->id,
+                ]),
+                'config'
+            )
+            ->create([
+                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'config_type' => 'transaction_detail_standard',
+            ]);
+
+        // Load the transaction form to edit the transaction
+        $this->browse(function (Browser $browser) use ($transaction) {
+            $browser->loginAs($this->user)
+                // Open the transaction edit form
+                ->visitRoute('transaction.open', ['action' => 'edit', 'transaction' => $transaction->id])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+
+                // Assert that the form is loaded correctly, especially the amount and currency fields
+                ->assertSelected('#account_from', $transaction->config->accountFrom->id)
+                ->assertSelected('#account_to', $transaction->config->accountTo->id)
+                ->assertInputValue('#transaction_amount_from', '10')
+                ->assertInputValue('#transaction_amount_to', '20')
+                // The exchange rate should also be visible
+                ->assertSeeIn('@label-transaction-exchange-rate', '2.0000');
         });
     }
 }
