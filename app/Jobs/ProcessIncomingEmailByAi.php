@@ -383,7 +383,7 @@ EOF;
         // Merge the attributes with defaults
         $attributes = array_merge(
             [
-                'model' => 'text-davinci-003',
+                'model' => 'gpt-3.5-turbo-instruct',
                 'max_tokens' => 256,
                 'temperature' => 0.1,
                 'top_p' => 1,
