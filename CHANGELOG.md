@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/kantorge/yaffa/compare/v0.1.1...v0.2.0) (2023-11-09)
+
+
+### Features
+
+* update the OpenAI model used for mail processing ([1f859a1](https://github.com/kantorge/yaffa/commit/1f859a19a584cccb14c9ffae1ce7acffa8d1dff9))
+
 ## [0.1.1](https://github.com/kantorge/yaffa/compare/v0.1.0...v0.1.1) (2023-11-03)
 
 
