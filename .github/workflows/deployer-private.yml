@@ -1,8 +1,6 @@
 name: Deploy to private instance
 
 on:
-  #testing
-  push:
   release:
     types: [released]
 
