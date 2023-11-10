@@ -1,0 +1,55 @@
+name: Deploy to private instance
+
+on:
+  #testing
+  push:
+  release:
+    types: [released]
+
+concurrency: production_environment
+
+jobs:
+  deploy:
+    environment: Private
+    name: Deploy Tag to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setep PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "$SSH_KEY" > ~/.ssh/private_key
+          chmod 600 ~/.ssh/staging.key
+          cat >>~/.ssh/config <<END
+            Host host_name
+              HostName $SSH_HOST
+              User $SSH_USER
+              IdentityFile ~/.ssh/private_key
+              StrictHostKeyChecking no
+          END
+
+      - name: Set Up Deployer
+        run: curl -LO https://deployer.org/deployer.phar && mv deployer.phar bin/dep && sudo chmod +x bin/dep
+
+      - name: Deploy Yaffa
+        uses: deployphp/action@master
+        with:
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          dep: deployer
