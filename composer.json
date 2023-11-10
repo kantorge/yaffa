@@ -34,6 +34,7 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.5",
         "barryvdh/laravel-ide-helper": "^2.12",
+        "deployer/deployer": "^7.3",
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.17",
         "laravel/dusk": "7.9.3",
