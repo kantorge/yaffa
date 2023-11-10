@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/kantorge/yaffa/compare/v0.2.0...v0.2.1) (2023-11-10)
+
+
+### Miscellaneous Chores
+
+* npm update ([cdc7666](https://github.com/kantorge/yaffa/commit/cdc76661e774d346e154dc2096765b4595376cea))
+
 ## [0.2.0](https://github.com/kantorge/yaffa/compare/v0.1.1...v0.2.0) (2023-11-09)
 
 
