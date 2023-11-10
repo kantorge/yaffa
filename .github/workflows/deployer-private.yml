@@ -35,7 +35,7 @@ jobs:
           mkdir -p ~/.ssh/
           echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           echo "$SSH_KEY" > ~/.ssh/private_key
-          chmod 600 ~/.ssh/staging.key
+          chmod 600 ~/.ssh/private_key
           cat >>~/.ssh/config <<END
             Host host_name
               HostName $SSH_HOST
