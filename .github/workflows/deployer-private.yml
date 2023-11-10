@@ -44,9 +44,6 @@ jobs:
               StrictHostKeyChecking no
           END
 
-      - name: Set Up Deployer
-        run: curl -LO https://deployer.org/deployer.phar && mv deployer.phar bin/dep && sudo chmod +x bin/dep
-
       - name: Deploy Yaffa
         uses: deployphp/action@master
         with:
