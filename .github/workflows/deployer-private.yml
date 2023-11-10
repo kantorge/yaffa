@@ -59,4 +59,4 @@ jobs:
         with:
           private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
-          dep: yaffa private
+          dep: deploy

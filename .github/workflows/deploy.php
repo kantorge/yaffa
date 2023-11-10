@@ -16,8 +16,6 @@ host('private')
 
 desc('Deploy YAFFA to host defined by environment variables');
 
-task('yaffa', ['deploy']);
-
 after('deploy:publish', 'artisan:queue:restart');
 
 after('deploy:failed', 'deploy:unlock');
