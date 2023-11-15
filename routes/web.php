@@ -17,6 +17,8 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
+use App\Mail\TransactionCreatedFromEmail;
+use App\Models\ReceivedMail;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('home');
@@ -114,3 +116,18 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::post('/email/verification-notification', [VerificationController::class, 'send'])
     ->middleware(['auth', 'throttle:6,1'])
     ->name('verification.send');
+
+/* Test routes, only available if environment is local */
+if (app()->environment('local')) {
+    Route::get('/test/email/transactioncreatedbyai', function () {
+        $mail = ReceivedMail::factory()->withTransaction()->create();
+        $message = (new TransactionCreatedFromEmail($mail));
+        return $message->render();
+    });
+
+    Route::get('/test/email/transactionerrorfromemail', function () {
+        $mail = ReceivedMail::factory()->create();
+        $message = (new App\Mail\TransactionErrorFromEmail($mail, 'This is a test error'));
+        return $message->render();
+    });
+}

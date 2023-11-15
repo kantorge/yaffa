@@ -1,13 +1,14 @@
 @component('mail::message')
 
-    Dear {{ $user->name }},
+Dear {{ $user->name }},
 
-    The following error occured while processing your email with subject "{{ $mail->subject }}":
+The following error occured while processing your email with subject "{{ $mail->subject }}":
 
-    {{ $error }}
+{{ $error }}
 
-    That's all we know. Processing will not be attempted again.
+That's all we know. Processing will not be attempted again.
 
-    Thanks,<br>
-    {{ config('app.name') }}
+Thanks,<br>
+{{ config('app.name') }}
+
 @endcomponent
