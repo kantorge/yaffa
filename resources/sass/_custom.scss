@@ -135,3 +135,13 @@ div.card-header > div.card-title {
 .header-local-mode {
     background-color: #d33724;
 }
+
+// Adjust the font of the brand name in the header
+.sidebar-brand-full > a {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.sidebar-brand-full > a > span,
+.header-brand.d-md-none > span {
+    vertical-align: middle;
+}

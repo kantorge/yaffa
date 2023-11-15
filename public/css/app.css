@@ -13388,6 +13388,16 @@ div.card-header > div.card-title {
   background-color: #d33724;
 }
 
+.sidebar-brand-full > a {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.sidebar-brand-full > a > span,
+.header-brand.d-md-none > span {
+  vertical-align: middle;
+}
+
 .select2-container {
   box-sizing: border-box;
   display: inline-block;
