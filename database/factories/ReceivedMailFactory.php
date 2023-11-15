@@ -42,7 +42,7 @@ class ReceivedMailFactory extends Factory
      */
     public function withTransaction(): ReceivedMailFactory
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function () {
             $user = User::inRandomOrder()->first();
             $transaction = Transaction::factory()
                 ->for($user)
