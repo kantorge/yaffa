@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class ImportController extends Controller
@@ -10,9 +11,9 @@ class ImportController extends Controller
     /**
      * Display UI for importing and parsing CSV files.
      *
-     * @return \Illuminate\Http\Response
+     * @return View
      */
-    public function importCsv()
+    public function importCsv(): View
     {
         /**
          * @get('/import/csv')
