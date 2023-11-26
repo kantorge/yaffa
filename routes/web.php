@@ -100,7 +100,7 @@ Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])
 Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 // Route for the CSV import functionality
-Route::get('/import/csv', [ImportController::class, 'importCsv'])->name('import.csv');
+Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');

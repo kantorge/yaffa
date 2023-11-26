@@ -1,10 +1,16 @@
 // Categorization rule engine functionality
-const { Engine, Rule } = require('json-rules-engine')
+const { Engine } = require('json-rules-engine')
 let engine = new Engine()
 
-// Helper function to find a payee in the global payees array
-function findPayee(fact) {
-    // Loop all payees and find the one with the same or name as the 'Közlemény/2' field.
+/**
+ * Helper function to find a payee in the global payees array.
+ *
+ * @param {string} fact
+ * @param {string} fallbackPayeeName
+ * @returns {Object}
+ */
+function findPayee(fact, fallbackPayeeName) {
+    // Loop all payees and find the one with the same or name as the provided string.
     for (let payee of window.payees) {
         let regex = new RegExp(payee.name, 'i');
         if (regex.test(fact)) {
@@ -12,7 +18,7 @@ function findPayee(fact) {
         }
     }
 
-    // Try to loop payee import aliases and find the one with the same or name as the 'Közlemény/2' field.
+    // Try to loop payee import aliases and find the one with the same or name as the provided string.
     for (let payee of window.payees.filter(payee => payee.alias)) {
         // Payee alias can have multiple values separated by newlines. Loop each item.
         for (let alias of payee.alias.split('\r\n')) {
@@ -24,23 +30,27 @@ function findPayee(fact) {
     }
 
     // If no match was found, return the default payee.
-    // TODO: This should be a configurable option.
-    return window.payees.find(payee => payee.name === 'Egyéb');
+    return window.payees.find(payee => payee.name === fallbackPayeeName);
 }
 
-// Define custom operator for Regex matching
-engine.addOperator('matchesRegex', (factValue, jsonValue) => {
-    if (!factValue.length) return false
+/**
+ * Define custom operator for Regex matching
+ *
+ * @param {string} factValue Value to be tested
+ * @param {string} regexString Regex pattern
+ * @returns {boolean}
+ */
+const operatorMatchRegex = function (factValue, regexString) {
+    if (!factValue.length) return false;
 
-    let regex = new RegExp(jsonValue);
+    let regex = new RegExp(regexString);
 
     return regex.test(factValue);
-})
-
-// TODO: move common processing rules to common variables
+};
+engine.addOperator('matchesRegex', operatorMatchRegex)
 
 // Rule for card payment
-let ruleCardPayment = new Rule({
+engine.addRule({
     conditions: {
         all: [
             {
@@ -71,27 +81,19 @@ let ruleCardPayment = new Rule({
                 },
                 {
                     transactionField: 'transaction_config_type',
-                    customFunction: function (_fact, _transaction) {
-                        return 'standard';
-                    }
+                    customValue: 'standard',
                 },
                 {
                     transactionField: 'transaction_type_id',
-                    customFunction: function (_fact, _transaction) {
-                        return 1;
-                    }
+                    customValue: 1,
                 },
                 {
                     transactionField: 'transaction_type.name',
-                    customFunction: function (_fact, _transaction) {
-                        return 'withdrawal';
-                    }
+                    customValue: 'withdrawal',
                 },
                 {
                     transactionField: 'transaction_type.amount_operator',
-                    customFunction: function (_fact, _transaction) {
-                        return 'minus';
-                    }
+                    customValue: 'minus',
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -120,7 +122,7 @@ let ruleCardPayment = new Rule({
                 {
                     transactionField: 'config.account_to',
                     customFunction: function (fact, _transaction) {
-                        return findPayee(fact['Közlemény/2']);
+                        return findPayee(fact['Közlemény/2'], 'Egyéb');
                     }
                 },
                 {
@@ -138,7 +140,7 @@ let ruleCardPayment = new Rule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.config.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to?.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -147,10 +149,9 @@ let ruleCardPayment = new Rule({
         }
     }
 });
-engine.addRule(ruleCardPayment);
 
 // Rule for outgoing wire transfer
-let ruleOutgoingWireTransfer = new Rule({
+engine.addRule({
     conditions: {
         all: [
             // Negative amount
@@ -189,27 +190,19 @@ let ruleOutgoingWireTransfer = new Rule({
                 },
                 {
                     transactionField: 'transaction_config_type',
-                    customFunction: function (_fact, _transaction) {
-                        return 'standard';
-                    }
+                    customValue: 'standard',
                 },
                 {
                     transactionField: 'transaction_type_id',
-                    customFunction: function (_fact, _transaction) {
-                        return 1;
-                    }
+                    customValue: 1,
                 },
                 {
                     transactionField: 'transaction_type.name',
-                    customFunction: function (_fact, _transaction) {
-                        return 'withdrawal';
-                    }
+                    customValue: 'withdrawal',
                 },
                 {
                     transactionField: 'transaction_type.amount_operator',
-                    customFunction: function (_fact, _transaction) {
-                        return 'minus';
-                    }
+                    customValue: 'minus',
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -238,7 +231,7 @@ let ruleOutgoingWireTransfer = new Rule({
                 {
                     transactionField: 'config.account_to',
                     customFunction: function (fact, _transaction) {
-                        return findPayee(fact['Közlemény/2']);
+                        return findPayee(fact['Közlemény/2'], 'Egyéb');
                     }
                 },
                 {
@@ -256,7 +249,7 @@ let ruleOutgoingWireTransfer = new Rule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.config.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to?.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -264,8 +257,7 @@ let ruleOutgoingWireTransfer = new Rule({
             ]
         }
     }
-})
-engine.addRule(ruleOutgoingWireTransfer);
+});
 
 // Rule for incoming wire transfer
 engine.addRule({
@@ -305,27 +297,19 @@ engine.addRule({
                 },
                 {
                     transactionField: 'transaction_config_type',
-                    customFunction: function (_fact, _transaction) {
-                        return 'standard';
-                    }
+                    customValue: 'standard',
                 },
                 {
                     transactionField: 'transaction_type_id',
-                    customFunction: function (_fact, _transaction) {
-                        return 2;
-                    }
+                    customValue: 2,
                 },
                 {
                     transactionField: 'transaction_type.name',
-                    customFunction: function (_fact, _transaction) {
-                        return 'deposit';
-                    }
+                    customValue: 'deposit',
                 },
                 {
                     transactionField: 'transaction_type.amount_operator',
-                    customFunction: function (_fact, _transaction) {
-                        return 'plus';
-                    }
+                    customValue: 'plus',
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -354,7 +338,7 @@ engine.addRule({
                 {
                     transactionField: 'config.account_from',
                     customFunction: function (fact, _transaction) {
-                        return findPayee(fact['Közlemény/2']);
+                        return findPayee(fact['Közlemény/2'], 'Egyéb');
                     }
                 },
                 {
@@ -372,7 +356,7 @@ engine.addRule({
                     customFunction: function (fact, transaction) {
                         // If the account_to is the default payee, use the 'Közlemény/2' field as the comment.
                         // TODO: This should be a configurable option.
-                        if (transaction.config.account_to.name === 'Egyéb') {
+                        if (transaction.config.account_to?.name === 'Egyéb') {
                             return fact['Közlemény/2'];
                         }
                     }
@@ -383,7 +367,7 @@ engine.addRule({
 })
 
 // Rule transfer for transfer between accounts
-let ruleCashWithdrawal = new Rule({
+engine.addRule({
     conditions: {
         any: [
             {
@@ -435,27 +419,19 @@ let ruleCashWithdrawal = new Rule({
                 },
                 {
                     transactionField: 'transaction_config_type',
-                    customFunction: function (_fact, _transaction) {
-                        return 'standard';
-                    }
+                    customValue: 'standard',
                 },
                 {
                     transactionField: 'transaction_type_id',
-                    customFunction: function (_fact, _transaction) {
-                        return 3;
-                    }
+                    customValue: 3,
                 },
                 {
                     transactionField: 'transaction_type.name',
-                    customFunction: function (_fact, _transaction) {
-                        return 'transfer';
-                    }
+                    customValue: 'transfer',
                 },
                 {
                     transactionField: 'transaction_type.amount_operator',
-                    customFunction: function (_fact, _transaction) {
-                        return '';
-                    }
+                    customValue: '',
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -483,9 +459,7 @@ let ruleCashWithdrawal = new Rule({
                 },
                 {
                     transactionField: 'config.account_to',
-                    customFunction: function (_fact, _transaction) {
-                        return undefined;
-                    }
+                    customValue: undefined,
                 },
                 {
                     transactionField: 'config.account_from',
@@ -507,7 +481,5 @@ let ruleCashWithdrawal = new Rule({
         }
     }
 });
-engine.addRule(ruleCashWithdrawal);
-
 
 module.exports = engine;
