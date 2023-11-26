@@ -103,6 +103,11 @@
                 text="{{ __('Received emails')  }}"
 
             />
+            <x-nav-link
+                    href="{{ route('import.csv') }}"
+                    iconClasses="fa-solid fa-upload"
+                    text="{{ __('Import transactions') }}"
+            />
         </ul>
     </li>
 
@@ -121,11 +126,6 @@
                 href="{{ route('transaction.create', ['type' => 'investment']) }}"
                 iconClasses="fa-solid fa-chart-line"
                 text="{{ __('New investment transaction') }}"
-            />
-            <x-nav-link
-                href="{{ route('import.csv') }}"
-                iconClasses="fa-solid fa-upload"
-                text="{{ __('Import transactions') }}"
             />
         </ul>
     </li>

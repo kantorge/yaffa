@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.2](https://github.com/kantorge/yaffa/compare/v0.2.1...v0.2.2) (2023-11-26)
+
+
+### Bug Fixes
+
+* AI-related email formatting ([#107](https://github.com/kantorge/yaffa/issues/107)) ([47daadf](https://github.com/kantorge/yaffa/commit/47daadf67fb8c98c0065bdc4d4ee32bdb29e7089))
+* quick fixes to broken CSV import page ([2896b0b](https://github.com/kantorge/yaffa/commit/2896b0b0a7b4672569d00e1263c8ca144eba1e32))
+
+## [0.2.1](https://github.com/kantorge/yaffa/compare/v0.2.0...v0.2.1) (2023-11-10)
+
+
+### Miscellaneous Chores
+
+* npm update ([cdc7666](https://github.com/kantorge/yaffa/commit/cdc76661e774d346e154dc2096765b4595376cea))
+
+## [0.2.0](https://github.com/kantorge/yaffa/compare/v0.1.1...v0.2.0) (2023-11-09)
+
+
+### Features
+
+* update the OpenAI model used for mail processing ([1f859a1](https://github.com/kantorge/yaffa/commit/1f859a19a584cccb14c9ffae1ce7acffa8d1dff9))
+
 ## [0.1.1](https://github.com/kantorge/yaffa/compare/v0.1.0...v0.1.1) (2023-11-03)
 
 

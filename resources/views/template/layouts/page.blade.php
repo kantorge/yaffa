@@ -6,7 +6,9 @@
         <div class="sidebar-brand-full">
             <a href="{{ route('home') }}">
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
-                YAFFA
+                <span>
+                    YAFFA
+                </span>
             </a>
         </div>
         <div class="sidebar-brand-narrow">
@@ -55,7 +57,9 @@
             </button>
             <a class="header-brand d-md-none" href="{{ route('home') }} ">
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
-                YAFFA
+                <span>
+                    YAFFA
+                </span>
             </a>
             <ul class="header-nav ms-auto"></ul>
             <ul class="header-nav ms-3 me-4">

@@ -9,8 +9,7 @@ import * as dataTableHelpers from './../components/dataTableHelper'
 import {toFormattedCurrency, toIsoDateString} from '../helpers';
 
 // Import RRule library for handling schedules
-import { RRule } from 'rrule';
-
+import {RRule} from 'rrule';
 import 'select2';
 require('jquery-csv');
 
@@ -22,23 +21,23 @@ window.schedules = [];
 // Helper function to save nested object values
 function storeNestedObjectValue(base, names, value) {
     // If a value is given, remove the last name and keep it for later:
-    var lastName = arguments.length === 3 ? names.pop() : false;
+    const lastName = arguments.length === 3 ? names.pop() : false;
 
     // Walk the hierarchy, creating new objects where needed.
     // If the lastName was removed, then the last object is not set yet:
-    for( var i = 0; i < names.length; i++ ) {
-        base = base[ names[i] ] = base[ names[i] ] || {};
+    for (let i = 0; i < names.length; i++) {
+        base = base[names[i]] = base[names[i]] || {};
     }
 
     // If a value was given, set it to the last name:
-    if( lastName ) base = base[ lastName ] = value;
+    if (lastName) base = base[lastName] = value;
 
     // Return the last object in the hierarchy:
     return base;
-};
+}
 
 // Require the rule engine
-// TODO: make this dynamic based on the selected account
+// TODO: make this selectable from a list of available rules
 let engine = require('./rules/hun_raiffeisen_v1.js');
 
 // The following variable is used to store the current transaction being created.
@@ -50,13 +49,13 @@ document.getElementById('csv_file').addEventListener('change', function () {
         return;
     }
 
-    var myFile = this.files[0];
-    var reader = new FileReader();
+    const myFile = this.files[0];
+    const reader = new FileReader();
 
     reader.addEventListener('load', function (e) {
 
         let csvData = e.target.result;
-        let csvRows = $.csv.toObjects(csvData, { separator: ';' });
+        let csvRows = $.csv.toObjects(csvData, {separator: ';'});
         let processedRows = 0;
 
         // Run the rule engine for each row
@@ -75,21 +74,30 @@ document.getElementById('csv_file').addEventListener('change', function () {
             };
 
             engine.run(transaction)
-                .then(({ events }) => {
-
+                .then(({events}) => {
                     // Loop all rules to extract transaction data from row
-                    events.filter(event => event.params.processingRules).map(event => event.params.processingRules.map(rule => {
-                        // Get value from rule
-                        const value = rule.customFunction(transaction, rawTransaction);
+                    events
+                        .filter(event => event.params.processingRules)
+                        .forEach(event => event.params.processingRules.forEach(
+                            rule => {
+                                // Get value from rule, prefering a custom static value over a custom function
+                                let value;
 
-                        // If field is provided as list of keys (.), split to an array and handle accordingly
-                        if (rule.transactionField.includes('.')) {
-                            const fieldPath = rule.transactionField.split('.');
-                            storeNestedObjectValue(rawTransaction, fieldPath, value);
-                        } else {
-                            rawTransaction[rule.transactionField] = value;
-                        }
-                    }));
+                                if (rule.hasOwnProperty('customValue')) {
+                                    value = rule.customValue;
+                                } else if (rule.hasOwnProperty('customFunction') && typeof rule.customFunction === 'function') {
+                                    value = rule.customFunction(transaction, rawTransaction);
+                                }
+
+                                // If field is provided as list of keys (.), split to an array and handle accordingly
+                                if (rule.transactionField.includes('.')) {
+                                    const fieldPath = rule.transactionField.split('.');
+                                    storeNestedObjectValue(rawTransaction, fieldPath, value);
+                                } else {
+                                    rawTransaction[rule.transactionField] = value;
+                                }
+                            })
+                        );
 
                     // TODO: proper filtering
                     if (rawTransaction.date) {
@@ -114,6 +122,7 @@ document.getElementById('csv_file').addEventListener('change', function () {
                     if (processedRows === csvRows.length) {
                         refillUnmatchedRows(unmatchedRows);
                         table.clear().rows.add(transactions).draw();
+                        table.columns.adjust().draw();
 
                         // Also initiate collection of similar transactions
                         collectSimilarTransactions();
@@ -127,8 +136,12 @@ document.getElementById('csv_file').addEventListener('change', function () {
 
 function collectSimilarTransactions() {
     // Find min and max date in transactions array
-    let minDate = new Date(Math.min.apply(Math, transactions.map(function (o) { return o.date; })));
-    let maxDate = new Date(Math.max.apply(Math, transactions.map(function (o) { return o.date; })));
+    let minDate = new Date(Math.min.apply(Math, transactions.map(function (o) {
+        return o.date;
+    })));
+    let maxDate = new Date(Math.max.apply(Math, transactions.map(function (o) {
+        return o.date;
+    })));
 
     // Get all standard transactions in the range of min and max date
     let url = new URL(window.location.origin + '/api/transactions');
@@ -136,90 +149,90 @@ function collectSimilarTransactions() {
     url.searchParams.append('date_to', toIsoDateString(maxDate));
 
     fetch(url)
-    .then(function(response) {
-        // TODO: proper error handling
-        if (!response.ok) {
-            throw new Error('Network response was not OK');
-        }
-        return response.json()
-    })
-    .then(data => {
-        let existingTransactions = data.data.map(transaction => {
-            transaction.date = new Date(transaction.date);
-            return transaction;
-        });
-
-        // Loop all transactions and associate similar transactions
-        window.transactions.map(function (transaction) {
-            transaction.similarTransactions = [];
-            existingTransactions.forEach(function (existingTransaction) {
-                // Calculate similarity between transactions using date, amount and accounts
-
-                // Transaction types must match
-                if (transaction.transaction_type.name !== existingTransaction.transaction_type.name) {
-                    return
-                }
-
-                // Other fields count towards similarity
-                let similarityCount = 0;
-                const maxSimilarity = 4;
-
-                if (toIsoDateString(transaction.date) === toIsoDateString(existingTransaction.date)) {
-                    similarityCount++;
-                }
-                if (transaction.config.amount_to == existingTransaction.config.amount_to) {
-                    similarityCount++;
-                }
-                if (transaction.config.account_from?.id == existingTransaction.config.account_from.id) {
-                    similarityCount++;
-                }
-                if (transaction.config.account_to?.id == existingTransaction.config.account_to.id) {
-                    similarityCount++;
-                }
-
-                if (similarityCount / maxSimilarity > 0.5) {
-                    transaction.similarTransactions.push(Object.assign({similarityScore: similarityCount / maxSimilarity}, existingTransaction));
-                }
-            });
-
-            // Loop the array of schedules to find matches
-            transaction.relatedSchedules = [];
-            window.schedules.forEach(function (schedule) {
-                // Calculate similarity between transactions using amount and accounts
-
-                // Transaction types must match
-                if (transaction.transaction_type.name !== schedule.transaction_type.name) {
-                    return;
-                }
-
-                // Other fields count towards similarity
-                let similarityCount = 0;
-                const maxSimilarity = 4;
-
-                if (toIsoDateString(transaction.date) === toIsoDateString(schedule.schedule_config.next_date)) {
-                    similarityCount++;
-                }
-                if (transaction.config.amount_to == schedule.config.amount_to) {
-                    similarityCount++;
-                }
-                if (transaction.config.account_from && transaction.config.account_from.id == schedule.config.account_from.id) {
-                    similarityCount++;
-                }
-                if (transaction.config.account_to && transaction.config.account_to.id == schedule.config.account_to.id) {
-                    similarityCount++;
-                }
-
-                if (similarityCount / maxSimilarity > 0.5) {
-                    transaction.relatedSchedules.push(Object.assign({similarityScore: similarityCount / maxSimilarity}, schedule));
-                }
-            });
-
-            return transaction;
+        .then(function (response) {
+            // TODO: proper error handling
+            if (!response.ok) {
+                throw new Error('Network response was not OK');
+            }
+            return response.json()
         })
-    })
-    .finally(() => {
-        table.clear().rows.add(transactions).draw();
-    })
+        .then(data => {
+            let existingTransactions = data.data.map(transaction => {
+                transaction.date = new Date(transaction.date);
+                return transaction;
+            });
+
+            // Loop all transactions and associate similar transactions
+            window.transactions.map(function (transaction) {
+                transaction.similarTransactions = [];
+                existingTransactions.forEach(function (existingTransaction) {
+                    // Calculate similarity between transactions using date, amount and accounts
+
+                    // Transaction types must match
+                    if (transaction.transaction_type.name !== existingTransaction.transaction_type.name) {
+                        return
+                    }
+
+                    // Other fields count towards similarity
+                    let similarityCount = 0;
+                    const maxSimilarity = 4;
+
+                    if (toIsoDateString(transaction.date) === toIsoDateString(existingTransaction.date)) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.amount_to == existingTransaction.config.amount_to) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.account_from?.id == existingTransaction.config.account_from.id) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.account_to?.id == existingTransaction.config.account_to.id) {
+                        similarityCount++;
+                    }
+
+                    if (similarityCount / maxSimilarity > 0.5) {
+                        transaction.similarTransactions.push(Object.assign({similarityScore: similarityCount / maxSimilarity}, existingTransaction));
+                    }
+                });
+
+                // Loop the array of schedules to find matches
+                transaction.relatedSchedules = [];
+                window.schedules.forEach(function (schedule) {
+                    // Calculate similarity between transactions using amount and accounts
+
+                    // Transaction types must match
+                    if (transaction.transaction_type.name !== schedule.transaction_type.name) {
+                        return;
+                    }
+
+                    // Other fields count towards similarity
+                    let similarityCount = 0;
+                    const maxSimilarity = 4;
+
+                    if (toIsoDateString(transaction.date) === toIsoDateString(schedule.schedule_config.next_date)) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.amount_to == schedule.config.amount_to) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.account_from && transaction.config.account_from.id == schedule.config.account_from.id) {
+                        similarityCount++;
+                    }
+                    if (transaction.config.account_to && transaction.config.account_to.id == schedule.config.account_to.id) {
+                        similarityCount++;
+                    }
+
+                    if (similarityCount / maxSimilarity > 0.5) {
+                        transaction.relatedSchedules.push(Object.assign({similarityScore: similarityCount / maxSimilarity}, schedule));
+                    }
+                });
+
+                return transaction;
+            })
+        })
+        .finally(() => {
+            table.clear().rows.add(transactions).draw();
+        })
 }
 
 // Function to refill the unmatched rows table
@@ -274,7 +287,7 @@ $('#account').select2({
         },
         processResults: function (data) {
             return {
-                results: data.map(function(account) {
+                results: data.map(function (account) {
                     return {
                         id: account.id,
                         text: account.name,
@@ -288,26 +301,26 @@ $('#account').select2({
     placeholder: "Select account",
     allowClear: true
 })
-.on('select2:select', function (e) {
-    $.ajax({
-        url:  '/api/assets/account/' + e.params.data.id,
-        data: {
-            _token: csrfToken,
-        }
+    .on('select2:select', function (e) {
+        $.ajax({
+            url: '/api/assets/account/' + e.params.data.id,
+            data: {
+                _token: csrfToken,
+            }
+        })
+            .done(data => {
+                window.account_currency = data.config.currency;
+
+                // Enable the file input
+                document.getElementById('csv_file').disabled = false;
+            });
     })
-    .done(data => {
-        window.account_currency = data.config.currency;
+    .on('select2:unselect', function (e) {
+        window.account_currency = {};
 
-        // Enable the file input
-        document.getElementById('csv_file').disabled = false;
+        // Disable the file input
+        document.getElementById('csv_file').disabled = true;
     });
-})
-.on('select2:unselect', function (e) {
-    window.account_currency = {};
-
-    // Disable the file input
-    document.getElementById('csv_file').disabled = true;
-});
 
 const tableSelector = '#dataTable';
 
@@ -383,10 +396,10 @@ window.table = $(tableSelector).DataTable({
                     return 'Not set';
                 }
                 let prefix = '';
-                if (row.transaction_type.amount_operator == 'minus') {
+                if (row.transaction_type.amount_operator === 'minus') {
                     prefix = '- ';
                 }
-                if (row.transaction_type.amount_operator == 'plus') {
+                if (row.transaction_type.amount_operator === 'plus') {
                     prefix = '+ ';
                 }
                 return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);
@@ -464,20 +477,21 @@ window.table = $(tableSelector).DataTable({
             data: 'handled',
             render: function (data, type) {
                 return dataTableHelpers.booleanToTableIcon(data, type);
-            }
+            },
+            className: "text-center",
         },
         {
             title: "Actions",
             data: 'draftId',
             orderable: false,
             render: function (data, _type, row) {
-                return '<button class="btn btn-sm btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-plus" title="Quick create"></i></button> ' +
-                       (row.quickRecordingPossible ? '<button class="btn btn-sm btn-success record" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-bolt" title="Crete from existing values"></i></button> ' : '') +
-                       '<button class="btn btn-sm btn-info handled" data-draft="' + data + '" type="button"><i class="fa fa-fw fa-check" title="Mark as handled"></i></button> ';
+                return '<button class="btn btn-xs btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Quick create') + '"><i class="fa fa-fw fa-plus"></i></button> ' +
+                    (row.quickRecordingPossible ? '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button" title="' + __('Crete from existing values') + '"><i class="fa fa-fw fa-bolt"></i></button> ' : '') +
+                    '<button class="btn btn-xs btn-info handled" data-draft="' + data + '" type="button" title="' + __('Mark as handled') + '"><i class="fa fa-fw fa-check"></i></button> ';
             }
         }
     ],
-    createdRow: function(row, data) {
+    createdRow: function (row, data) {
         // Account from name
         dataTableHelpers.muteCellWithValue($('td:eq(2)', row), 'Not set');
         // Account to name
@@ -542,53 +556,53 @@ $(tableSelector).on('click', 'button.transaction-similar.transaction-basic.trans
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
     fetch('/api/transaction/' + this.dataset.id)
-    .then(function(response) {
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        return response;
-    }).then(response => response.json())
-    .then(function(data) {
-        let transaction = data.transaction;
+        .then(function (response) {
+            if (!response.ok) {
+                throw Error(response.statusText);
+            }
+            return response;
+        }).then(response => response.json())
+        .then(function (data) {
+            let transaction = data.transaction;
 
-        // Convert dates to Date objects
-        if (transaction.date) {
-            transaction.date = new Date(transaction.date);
-        }
-        if (transaction.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+            // Convert dates to Date objects
+            if (transaction.date) {
+                transaction.date = new Date(transaction.date);
             }
-            if (transaction.transaction_schedule.end_date) {
-                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-            }
-            if (transaction.transaction_schedule.next_date) {
-                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-            }
-        }
-
-        // Emit global event for modal to display
-        let event = new CustomEvent('showTransactionQuickviewModal', {
-            detail: {
-                transaction: transaction,
-                controls: {
-                    show: false,
-                    edit: false,
-                    clone: false,
-                    skip: false,
-                    enter: false,
-                    delete: false,
+            if (transaction.transaction_schedule) {
+                if (transaction.transaction_schedule.start_date) {
+                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                }
+                if (transaction.transaction_schedule.end_date) {
+                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                }
+                if (transaction.transaction_schedule.next_date) {
+                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
                 }
             }
+
+            // Emit global event for modal to display
+            let event = new CustomEvent('showTransactionQuickviewModal', {
+                detail: {
+                    transaction: transaction,
+                    controls: {
+                        show: false,
+                        edit: false,
+                        clone: false,
+                        skip: false,
+                        enter: false,
+                        delete: false,
+                    }
+                }
+            });
+            window.dispatchEvent(event);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+        .finally(() => {
+            icon.className = originalIconClass;
         });
-        window.dispatchEvent(event);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
-    .finally(() => {
-        icon.className = originalIconClass;
-    });
 });
 
 // Quick view for related schedules
@@ -607,53 +621,53 @@ $(tableSelector).on('click', 'button.transaction-related.transaction-quickview',
     icon.className = "fa fa-fw fa-spin fa-spinner";
 
     fetch('/api/transaction/' + this.dataset.id)
-    .then(function(response) {
-        if (!response.ok) {
-            throw Error(response.statusText);
-        }
-        return response;
-    }).then(response => response.json())
-    .then(function(data) {
-        let transaction = data.transaction;
+        .then(function (response) {
+            if (!response.ok) {
+                throw Error(response.statusText);
+            }
+            return response;
+        }).then(response => response.json())
+        .then(function (data) {
+            let transaction = data.transaction;
 
-        // Convert dates to Date objects
-        if (transaction.date) {
-            transaction.date = new Date(transaction.date);
-        }
-        if (transaction.transaction_schedule) {
-            if (transaction.transaction_schedule.start_date) {
-                transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+            // Convert dates to Date objects
+            if (transaction.date) {
+                transaction.date = new Date(transaction.date);
             }
-            if (transaction.transaction_schedule.end_date) {
-                transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
-            }
-            if (transaction.transaction_schedule.next_date) {
-                transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
-            }
-        }
-
-        // Emit global event for modal to display
-        let event = new CustomEvent('showTransactionQuickviewModal', {
-            detail: {
-                transaction: transaction,
-                controls: {
-                    show: false,
-                    edit: false,
-                    clone: false,
-                    skip: true,
-                    enter: true,
-                    delete: false,
+            if (transaction.transaction_schedule) {
+                if (transaction.transaction_schedule.start_date) {
+                    transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
+                }
+                if (transaction.transaction_schedule.end_date) {
+                    transaction.transaction_schedule.end_date = new Date(transaction.transaction_schedule.end_date);
+                }
+                if (transaction.transaction_schedule.next_date) {
+                    transaction.transaction_schedule.next_date = new Date(transaction.transaction_schedule.next_date);
                 }
             }
+
+            // Emit global event for modal to display
+            let event = new CustomEvent('showTransactionQuickviewModal', {
+                detail: {
+                    transaction: transaction,
+                    controls: {
+                        show: false,
+                        edit: false,
+                        clone: false,
+                        skip: true,
+                        enter: true,
+                        delete: false,
+                    }
+                }
+            });
+            window.dispatchEvent(event);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+        .finally(() => {
+            icon.className = originalIconClass;
         });
-        window.dispatchEvent(event);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
-    .finally(() => {
-        icon.className = originalIconClass;
-    });
 });
 
 // Set up an event listener for the recently created transaction
@@ -700,47 +714,47 @@ $(tableSelector).on('click', 'button.record', function () {
         },
         body: JSON.stringify(transaction)
     })
-    .then((response) => {
-        if (response.statusText !== 'OK') {
-            throw new Error(response.statusText);
-        }
-
-        response.json()
-    })
-    .then((data) => {
-        // Get the new transaction from the response
-        let transaction = data.transaction;
-
-        // TODO: This should be unified with the same modal behavior
-        // Emit a custom event to global scope about the new transaction to be displayed as a notification
-        let notificationEvent = new CustomEvent('notification', {
-            detail: {
-                notification: {
-                    type: 'success',
-                    message: 'Transaction added (#' + transaction.id + ')',
-                    title: null,
-                    icon: null,
-                    dismissible: true,
-                }
-            },
-        });
-        window.dispatchEvent(notificationEvent);
-
-        // Emit a custom event about the new transaction to be displayed
-        let transactionEvent = new CustomEvent('transaction-created', {
-            detail: {
-                // Pass the entire transaction object to the event
-                transaction: transaction,
+        .then((response) => {
+            if (response.statusText !== 'OK') {
+                throw new Error(response.statusText);
             }
+
+            response.json()
+        })
+        .then((data) => {
+            // Get the new transaction from the response
+            let transaction = data.transaction;
+
+            // TODO: This should be unified with the same modal behavior
+            // Emit a custom event to global scope about the new transaction to be displayed as a notification
+            let notificationEvent = new CustomEvent('notification', {
+                detail: {
+                    notification: {
+                        type: 'success',
+                        message: 'Transaction added (#' + transaction.id + ')',
+                        title: null,
+                        icon: null,
+                        dismissible: true,
+                    }
+                },
+            });
+            window.dispatchEvent(notificationEvent);
+
+            // Emit a custom event about the new transaction to be displayed
+            let transactionEvent = new CustomEvent('transaction-created', {
+                detail: {
+                    // Pass the entire transaction object to the event
+                    transaction: transaction,
+                }
+            });
+            window.dispatchEvent(transactionEvent);
+        })
+        .finally(() => {
+            // TODO: Re-enable all the action buttons of this item
+        })
+        .catch(error => {
+            console.error(error);
         });
-        window.dispatchEvent(transactionEvent);
-    })
-    .finally(() => {
-        // TODO: Re-enable all the action buttons of this item
-    })
-    .catch(error => {
-        console.error(error);
-    });
 });
 
 // Event listener for marking a transaction as handled
@@ -755,10 +769,10 @@ $(tableSelector).on('click', 'button.handled', function () {
 });
 
 // Set up filtering
-$('input[name=has_similar]').on("change", function() {
+$('input[name=has_similar]').on("change", function () {
     table.column(7).search(this.value).draw();
 });
-$('input[name=handled]').on("change", function() {
+$('input[name=handled]').on("change", function () {
     table.column(9).search(this.value).draw();
 });
 
@@ -792,44 +806,45 @@ $('#reset').on('click', function () {
 
 // Load active schedules via API
 fetch('/api/transactions/get_scheduled_items/schedule')
-.then(response => response.json())
-.then(data => {
-    window.schedules = data.transactions
-    // Take only standard transaction (ignore investments)
-    .filter(transaction => transaction.transaction_config_type === 'standard')
-    // Take only transactions with a next date
-    .filter(transaction => transaction.schedule_config.next_date)
-    .map(function(transaction) {
-        transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
-        if (transaction.schedule_config.next_date) {
-            transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
-        }
-        if (transaction.schedule_config.end_date) {
-            transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
-        }
+    .then(response => response.json())
+    .then(data => {
+        window.schedules = data.transactions
+            // Take only standard transaction (ignore investments)
+            .filter(transaction => transaction.transaction_config_type === 'standard')
+            // Take only transactions with a next date
+            .filter(transaction => transaction.schedule_config.next_date)
+            .map(function (transaction) {
+                transaction.schedule_config.start_date = new Date(transaction.schedule_config.start_date);
+                if (transaction.schedule_config.next_date) {
+                    transaction.schedule_config.next_date = new Date(transaction.schedule_config.next_date);
+                }
+                if (transaction.schedule_config.end_date) {
+                    transaction.schedule_config.end_date = new Date(transaction.schedule_config.end_date);
+                }
 
-        // Create rule
-        transaction.schedule_config.rule = new RRule({
-            freq: RRule[transaction.schedule_config.frequency],
-            interval: transaction.schedule_config.interval,
-            dtstart: transaction.schedule_config.start_date,
-            until: transaction.schedule_config.end_date,
-        });
+                // Create rule
+                transaction.schedule_config.rule = new RRule({
+                    freq: RRule[transaction.schedule_config.frequency],
+                    interval: transaction.schedule_config.interval,
+                    dtstart: transaction.schedule_config.start_date,
+                    until: transaction.schedule_config.end_date,
+                });
 
-        transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
+                transaction.schedule_config.active = !!transaction.schedule_config.rule.after(new Date(), true);
 
-        return transaction;
+                return transaction;
+            })
+            .filter(function (transaction) {
+                return transaction.schedule_config.active;
+            });
     })
-    .filter(function(transaction) {
-        return transaction.schedule_config.active;
+    .catch(error => {
+        console.error(error);
     });
-})
-.catch(error => {
-    console.error(error);
-});
 
 // Initialize Vue for the quick view
-import { createApp } from 'vue'
+import {createApp} from 'vue'
+
 const app = createApp({})
 
 // Add global translator function
@@ -837,6 +852,7 @@ app.config.globalProperties.__ = window.__;
 
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import TransactionCreateModal from './../components/TransactionForm/ModalStandard.vue'
+
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', TransactionCreateModal)
 
