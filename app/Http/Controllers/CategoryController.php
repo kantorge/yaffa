@@ -8,7 +8,6 @@ use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -152,9 +151,9 @@ class CategoryController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Category  $category
-     * @return Response
+     * @return RedirectResponse
      */
-    public function destroy(Category $category): Response
+    public function destroy(Category $category): RedirectResponse
     {
         /**
          * @delete('/categories/{category}')
