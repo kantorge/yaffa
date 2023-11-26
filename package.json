@@ -41,7 +41,7 @@
         "datatables.net-responsive-bs5": "^2.4.0",
         "jquery": "^3.6.3",
         "jquery-csv": "^1.0.21",
-        "json-rules-engine": "^6.1.2",
+        "json-rules-engine": "^6.5.0",
         "jstree": "^3.3.12",
         "mathjs": "^9.5.2",
         "rrule": "^2.7.1",
