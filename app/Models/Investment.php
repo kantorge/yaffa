@@ -365,7 +365,7 @@ class Investment extends Model
             'https://www.alphavantage.co/query',
             [
                 'query' => [
-                    'function' => 'TIME_SERIES_DAILY_ADJUSTED',
+                    'function' => 'TIME_SERIES_DAILY',
                     'datatype' => 'json',
                     'symbol' => $this->symbol,
                     'apikey' => config('yaffa.alpha_vantage_key'),
