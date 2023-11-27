@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/kantorge/yaffa/compare/v0.2.2...v0.3.0) (2023-11-27)
+
+
+### Features
+
+* Add option to use Sentry for Laravel ([592fae5](https://github.com/kantorge/yaffa/commit/592fae57d9e0e22cf6bf76bb03fb7fccfac206cd))
+
+
+### Bug Fixes
+
+* accounts are not mandatory for standard transaction to support budgets ([4c2340f](https://github.com/kantorge/yaffa/commit/4c2340f544c5b47e575d9132f2bc89c0f894e281))
+
 ## [0.2.2](https://github.com/kantorge/yaffa/compare/v0.2.1...v0.2.2) (2023-11-26)
 
 
