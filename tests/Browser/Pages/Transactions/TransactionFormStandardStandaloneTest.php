@@ -632,4 +632,61 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertSeeIn('@label-transaction-exchange-rate', '2.0000');
         });
     }
+
+    public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                // Open vanilla form (withdrawal, no preselected account)
+                ->visitRoute('transaction.create', ['type' => 'standard'])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+                // Validate that the account is empty, by checking if the select2 has no options
+                ->assertPresent('#account_from')
+                ->assertMissing('#account_from > option')
+                // Validate that the payee is empty, by checking if the select2 has no options
+                ->assertPresent('#account_to')
+                ->assertMissing('#account_to > option')
+                // Add amount
+                ->type('#transaction_amount_from', '100')
+                // Select budget checkbox
+                ->click('@checkbox-transaction-budget')
+
+                // Wait for the schedule card to be visible
+                ->waitFor('@card-transaction-schedule')
+                // Select start date by clicking the input, which opens up the date picker
+                ->click('#schedule_start_current')
+                // Wait for the calendar to be visible
+                ->waitFor('div.dp__menu')
+                // Click the current date which is highlighted
+                ->click('div.dp__calendar_item > div.dp__today')
+
+                // Select the "show transaction" callback
+                ->click('@action-after-save-desktop-button-group button[value="show"]')
+
+                // Submit form
+                ->clickAndWaitForReload('#transactionFormStandard-Save');
+
+            // Get the latest transaction from the database
+            $transaction = Transaction::orderBy('id', 'desc')->first();
+
+            // Check that the view is the transaction show
+            $browser->assertRouteIs(
+                'transaction.open',
+                [
+                    'action' => 'show',
+                    'transaction' => $transaction->id,
+                ]
+            );
+
+            // Wait for the show transaction page to load
+            $browser->waitFor('#transactionShowStandard')
+            // Assert that the transaction is a budget
+                ->assertPresent('@label-budget > i.fa-check')
+            // Assert that the account is 'Not set'
+                ->assertSeeIn('@label-account-from-name', 'Not set')
+            // Assert that the payee is 'Not set'
+                ->assertSeeIn('@label-account-to-name', 'Not set');
+        });
+    }
 }

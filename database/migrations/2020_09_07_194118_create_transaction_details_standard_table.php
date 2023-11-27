@@ -15,9 +15,11 @@ return new class () extends Migration {
         Schema::create('transaction_details_standard', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(AccountEntity::class, 'account_from_id')
+                ->nullable()
                 ->constrained('account_entities')
                 ->restrictOnDelete();
             $table->foreignIdFor(AccountEntity::class, 'account_to_id')
+                ->nullable()
                 ->constrained('account_entities')
                 ->restrictOnDelete();
             $table->decimal('amount_from', 12, 4);
