@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.1](https://github.com/kantorge/yaffa/compare/v0.3.0...v0.3.1) (2023-12-09)
+
+
+### Bug Fixes
+
+* add NPM build to Dusk testing workflow ([c447a14](https://github.com/kantorge/yaffa/commit/c447a1443d0938573f6c03cfc58acc36ef59669b))
+* alpha vantage endpoint ([ebcb8eb](https://github.com/kantorge/yaffa/commit/ebcb8ebce6c3e5055365a30f12a8f765df790abb))
+* DataTables styling restructured ([5a4b806](https://github.com/kantorge/yaffa/commit/5a4b8060eaec154d99f61f73ab9b423d3f182750))
+* schedule calendar display ([0ade790](https://github.com/kantorge/yaffa/commit/0ade790ec6017decae1a4dc7a42e2cc858e51d4f))
+* search box placeholder color ([dcb49a2](https://github.com/kantorge/yaffa/commit/dcb49a266ce2970da0d2d2b4e4fe55440b6224c4))
+* upgrade axios from 1.6.1 to 1.6.2 ([e21b209](https://github.com/kantorge/yaffa/commit/e21b2094d0fe53d427e7e071cc6f42aec2ec1c33))
+
+
+### Miscellaneous Chores
+
+* bump resolve-url-loader to version 5 ([7eb5c25](https://github.com/kantorge/yaffa/commit/7eb5c25a397dbb45f0c6100674b40aaae487a2a6))
+
 ## [0.3.0](https://github.com/kantorge/yaffa/compare/v0.2.2...v0.3.0) (2023-11-27)
 
 

@@ -84,15 +84,3 @@
  * Licensed same as jquery - under the terms of the MIT License
  *   http://www.opensource.org/licenses/mit-license.php
  */
-
-/*! Bootstrap 5 integration for DataTables' Responsive
- * © SpryMedia Ltd - datatables.net/license
- */
-
-/*! DataTables 1.13.7
- * ©2008-2023 SpryMedia Ltd - datatables.net/license
- */
-
-/*! DataTables Bootstrap 5 integration
- * 2020 SpryMedia Ltd - datatables.net/license
- */

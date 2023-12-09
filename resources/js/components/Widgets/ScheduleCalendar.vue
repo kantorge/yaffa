@@ -28,7 +28,7 @@
                 <template v-slot:day-content="{ day, attributes }">
                     <div>
                         <span class="day-label text-sm">{{ day.day }}</span>
-                        <div>
+                        <div class="vc-day-custom-content">
                             <a
                                     v-for="item in attributes"
                                     :key="item.key"
@@ -164,6 +164,7 @@ export default {
 <style>
 .custom-calendar.vc-container {
     border-radius: 0;
+    max-width: 100%;
 }
 
 .custom-calendar .vc-header {
@@ -185,12 +186,12 @@ export default {
     border: 1px solid #b8c2cc;
     padding: 0 5px 3px 5px;
     text-align: left;
-    height: 60px;
+    height: 65px;
     min-width: 45px;
     background-color: white;
 }
 
-.custom-calendar .vc-day-dots {
-    margin-bottom: 5px;
+.custom-calendar .vc-day-custom-content {
+    line-height: normal;
 }
 </style>
