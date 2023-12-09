@@ -19,24 +19,24 @@
     </div>
 
     <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
-        <form action="{{ route('search') }}" method="get" class="sidebar-brand-full">
+        <form action="{{ route('search') }}" method="get">
             <div class="input-group">
                 <input type="text" name="q" class="form-control" placeholder="{{ __('Search...') }}" autocomplete="off">
-                <button type="submit" id="search-btn" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button type="submit" id="search-btn" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
             </div>
         </form>
     </div>
     <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
         @if(isset($accountsForNavbar) && count($accountsForNavbar) > 0)
-        <form action="#" method="get" class="sidebar-brand-full">
-            <div class="input-group">
-                <select name="jump_to_account" id="jump_to_account" class="form-select">
-                    <option value="">{{ __('Select account to open') }}</option>
-                    @foreach($accountsForNavbar as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
+        <form action="#" method="get">
+            <select name="jump_to_account" id="jump_to_account" class="form-select">
+                <option value="">{{ __('Select account to open') }}</option>
+                @foreach($accountsForNavbar as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
+                @endforeach
+            </select>
         </form>
         @endif
     </div>

@@ -15234,6 +15234,16 @@ ul.search-result-list li.inactive:before {
   opacity: 1;
 }
 
+.sidebar-brand-form input::-moz-placeholder {
+  color: var(--cui-input-placeholder-color, #8a93a2);
+  opacity: 1;
+}
+
+.sidebar-brand-form input::placeholder {
+  color: var(--cui-input-placeholder-color, #8a93a2);
+  opacity: 1;
+}
+
 .sidebar-brand-form select option {
   color: black;
 }
