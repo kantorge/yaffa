@@ -28,49 +28,72 @@
                             <dt class="col-6">
                                 {{ accountFromFieldLabel }}
                             </dt>
-                            <dd class="col-6" :class="(transaction.config.account_from?.name ? '' : 'text-muted')">
-                                {{ transaction.config.account_from?.name || "Not set" }}
+                            <dd
+                                    class="col-6"
+                                    :class="(transaction.config.account_from?.name ? '' : 'text-muted')"
+                                    dusk="label-account-from-name"
+                            >
+                                {{ transaction.config.account_from?.name || __('Not set') }}
                             </dd>
 
                             <dt class="col-6">
                                 {{ accountToFieldLabel }}
                             </dt>
-                            <dd class="col-6" dusk="label-account-to-name">
-                                {{ transaction.config.account_to.name }}
+                            <dd
+                                    class="col-6"
+                                    :class="(transaction.config.account_to?.name ? '' : 'text-muted')"
+                                    dusk="label-account-to-name"
+                            >
+                                {{ transaction.config.account_to?.name || __('Not set') }}
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Comment') }}
                             </dt>
                             <dd class="col-6" :class="(transaction.comment ? '' : 'text-muted')">
-                                {{ transaction.comment || "Not set" }}
+                                {{ transaction.comment || __('Not set') }}
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Scheduled') }}
                             </dt>
                             <dd class="col-6">
-                                <span v-if="transaction.schedule"><i class="fa fa-check text-success"
-                                                                     :title="__('Yes')"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
+                                <i
+                                        v-if="transaction.schedule"
+                                        class="fa fa-check text-success"
+                                        :title="__('Yes')"></i>
+                                <i
+                                        v-else
+                                        class="fa fa-ban text-danger"
+                                        :title="__('No')"></i>
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Budget') }}
                             </dt>
-                            <dd class="col-6">
-                                <span v-if="transaction.budget"><i class="fa fa-check text-success"
-                                                                   :title="__('Yes')"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
+                            <dd class="col-6" dusk="label-budget">
+                                <i
+                                        v-if="transaction.budget"
+                                        class="fa fa-check text-success"
+                                        :title="__('Yes')"></i>
+                                <i
+                                        v-else
+                                        class="fa fa-ban text-danger"
+                                        :title="__('No')"></i>
                             </dd>
 
                             <dt class="col-6">
                                 {{ __('Reconciled') }}
                             </dt>
                             <dd class="col-6">
-                                <span v-if="transaction.reconciled"><i class="fa fa-check text-success"
-                                                                       :title="__('Yes')"></i></span>
-                                <span v-else><i class="fa fa-ban text-danger" :title="__('No')"></i></span>
+                                <i
+                                        v-if="transaction.reconciled"
+                                        class="fa fa-check text-success"
+                                        :title="__('Yes')"></i>
+                                <i
+                                        v-else
+                                        class="fa fa-ban text-danger"
+                                        :title="__('No')"></i>
                             </dd>
                         </dl>
                     </div>
