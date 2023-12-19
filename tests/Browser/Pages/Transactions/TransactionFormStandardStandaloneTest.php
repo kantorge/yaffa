@@ -689,4 +689,34 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertSeeIn('@label-account-to-name', 'Not set');
         });
     }
+
+    public function test_user_can_change_the_date_on_the_standard_form()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+
+            $this->fillStandardWithdrawalForm($browser)
+                // Click the date input to open the date picker
+                ->click('#date')
+                // Wait for the calendar to be visible
+                ->waitFor('.vc-pane-container')
+                // Click the first day of the month
+                ->click('.vc-pane-container .vc-day.in-month')
+                // Wait for the date picker to close
+                ->waitUntilMissing('.vc-pane-container', 10)
+                // Select callback to show transaction
+                ->click('@action-after-save-desktop-button-group button[value="show"]')
+                // Submit form
+                ->clickAndWaitForReload('#transactionFormStandard-Save');
+
+            // Get the latest transaction from the database
+            $transaction = Transaction::orderBy('id', 'desc')->first();
+
+            // Confirm that the transaction date is the first day of the month
+            $this->assertEquals(
+                now()->startOfMonth()->format('Y-m-d'),
+                $transaction->date->format('Y-m-d')
+            );
+        });
+    }
 }
