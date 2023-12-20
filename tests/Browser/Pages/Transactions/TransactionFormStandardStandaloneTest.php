@@ -656,10 +656,10 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitFor('@card-transaction-schedule')
                 // Select start date by clicking the input, which opens up the date picker
                 ->click('#schedule_start_current')
-                // Wait for the calendar to be visible
-                ->waitFor('div.dp__menu')
+                // Wait for the date picker to open
+                ->waitFor('.vc-pane-container', 10)
                 // Click the current date which is highlighted
-                ->click('div.dp__calendar_item > div.dp__today')
+                ->click('.vc-pane-container .vc-day.is-today')
 
                 // Select the "show transaction" callback
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
@@ -700,8 +700,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#date')
                 // Wait for the calendar to be visible
                 ->waitFor('.vc-pane-container')
-                // Click the first day of the month
-                ->click('.vc-pane-container .vc-day.in-month')
+                // Click the first day of the month, which is in the second column
+                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
                 // Wait for the date picker to close
                 ->waitUntilMissing('.vc-pane-container', 10)
                 // Select callback to show transaction

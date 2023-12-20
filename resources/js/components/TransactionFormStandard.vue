@@ -74,10 +74,7 @@
                                     <DatePicker
                                             :columns=2
                                             :disabled="form.schedule"
-                                            :initial-page="{
-                                                year: form.date.getFullYear() - (form.date.getMonth() === 0 ? 1 : 0),
-                                                month: form.date.getMonth(),
-                                            }"
+                                            :initial-page="datePickerInitialPage"
                                             is-required
                                             :masks="{
                                                     L: 'YYYY-MM-DD',
@@ -663,6 +660,14 @@ export default {
 
         transactionTypeIsTransfer() {
             return this.form.transaction_type === 'transfer';
+        },
+
+        datePickerInitialPage() {
+            const date = this.form.date || new Date();
+            return {
+                year: date.getFullYear() - (date.getMonth() === 0 ? 1 : 0),
+                month: date.getMonth(),
+            };
         },
     },
 

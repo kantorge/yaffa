@@ -415,7 +415,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Wait for the date picker to open
                 ->waitFor('.vc-pane-container', 10)
                 // Click the first day of the month
-                ->click('.vc-pane-container .vc-day.in-month')
+                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
                 // Wait for the date picker to close
                 ->waitUntilMissing('.vc-pane-container', 10)
                 // Select callback to show the transaction
