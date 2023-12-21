@@ -51,7 +51,9 @@ class AppServiceProvider extends ServiceProvider
             'transaction_detail_investment' => TransactionDetailInvestment::class,
         ]);
 
-        // Setup Mailbox to handle incoming emails sent to specified address
-        Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
+        // Setup Mailbox to handle incoming emails sent to specified address, if this email address is configured
+        if (config('yaffa.incoming_receipts_email')) {
+            Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
+        }
     }
 }

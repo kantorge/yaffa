@@ -60,15 +60,26 @@
                             :for="'schedule_start_' + this.$.vnode.key" class="control-label">
                         {{ __('Start date') }}
                     </label>
-                    <Datepicker
-                            :id="'schedule_start_' + this.$.vnode.key"
-                            v-model="schedule.start_date"
+                    <DatePicker
+                            v-model.string="schedule.start_date"
                             :disabled="!allowCustomizationData"
-                            autoApply
-                            format="yyyy. MM. dd."
-                            :enableTimePicker="false"
-                            utc="preserve"
-                    ></Datepicker>
+                            mode="date"
+                            is-required
+                            :popover="{ visibility: 'click' }"
+                            :masks="{
+                                L: 'YYYY-MM-DD',
+                                modelValue: 'YYYY-MM-DD'
+                            }"
+                    >
+                        <template #default="{inputValue, inputEvents}">
+                            <input
+                                    class="form-control"
+                                    :id="'schedule_start_' + this.$.vnode.key"
+                                    :value="inputValue"
+                                    v-on="inputEvents"
+                            >
+                        </template>
+                    </DatePicker>
                 </div>
                 <div
                         class="col-6 col-sm-4 mb-2"
@@ -83,15 +94,26 @@
                                 :title="__('If next date is empty, then this schedule is considered to be finished')"
                         ></span>
                     </label>
-                    <Datepicker
-                            id="schedule_next"
-                            v-model="schedule.next_date"
+                    <DatePicker
+                            v-model.string="schedule.next_date"
                             :disabled="!allowCustomizationData"
-                            autoApply
-                            format="yyyy. MM. dd."
-                            :enableTimePicker="false"
-                            utc="preserve"
-                    ></Datepicker>
+                            mode="date"
+                            is-required
+                            :popover="{ visibility: 'click' }"
+                            :masks="{
+                                L: 'YYYY-MM-DD',
+                                modelValue: 'YYYY-MM-DD'
+                            }"
+                    >
+                        <template #default="{inputValue, inputEvents}">
+                            <input
+                                    class="form-control"
+                                    :id="'schedule_next' + this.$.vnode.key"
+                                    :value="inputValue"
+                                    v-on="inputEvents"
+                            >
+                        </template>
+                    </DatePicker>
                 </div>
                 <div
                         class="col-6 col-sm-4 mb-2"
@@ -139,15 +161,26 @@
                     <label for="schedule_end" class="control-label">
                         {{ __('End date') }}
                     </label>
-                    <Datepicker
-                            id="schedule_end"
-                            v-model="schedule.end_date"
+                    <DatePicker
+                            v-model.string="schedule.end_date"
                             :disabled="!allowCustomizationData"
-                            autoApply
-                            format="yyyy. MM. dd."
-                            :enableTimePicker="false"
-                            utc="preserve"
-                    ></Datepicker>
+                            mode="date"
+                            is-required
+                            :popover="{ visibility: 'click' }"
+                            :masks="{
+                                L: 'YYYY-MM-DD',
+                                modelValue: 'YYYY-MM-DD'
+                            }"
+                    >
+                        <template #default="{inputValue, inputEvents}">
+                            <input
+                                    class="form-control"
+                                    :id="'schedule_end' + this.$.vnode.key"
+                                    :value="inputValue"
+                                    v-on="inputEvents"
+                            >
+                        </template>
+                    </DatePicker>
                 </div>
                 <div
                         class="col-6 col-sm-4 mb-2"
@@ -172,13 +205,12 @@
 </template>
 
 <script>
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css'
+import {DatePicker} from 'v-calendar';
 import MathInput from './MathInput.vue'
 
 export default {
     components: {
-        Datepicker,
+        DatePicker,
         MathInput,
     },
 
