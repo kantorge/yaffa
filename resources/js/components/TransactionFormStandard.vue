@@ -71,15 +71,28 @@
                                     <label class="block-label" for="date">
                                         {{ __('Date') }}
                                     </label>
-                                    <Datepicker
-                                            id="date"
-                                            v-model="form.date"
-                                            :disabled="form.schedule || form.budget"
-                                            autoApply
-                                            format="yyyy. MM. dd."
-                                            :enableTimePicker="false"
-                                            utc="preserve"
-                                    ></Datepicker>
+                                    <DatePicker
+                                            :columns=2
+                                            :disabled="form.schedule"
+                                            :initial-page="datePickerInitialPage"
+                                            is-required
+                                            :masks="{
+                                                    L: 'YYYY-MM-DD',
+                                                    modelValue: 'YYYY-MM-DD'
+                                                }"
+                                            mode="date"
+                                            :popover="{ visibility: 'click' }"
+                                            v-model.string="form.date"
+                                    >
+                                        <template #default="{inputValue, inputEvents}">
+                                            <input
+                                                    class="form-control"
+                                                    id="date"
+                                                    :value="inputValue"
+                                                    v-on="inputEvents"
+                                            >
+                                        </template>
+                                    </DatePicker>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -409,8 +422,7 @@ import MathInput from './MathInput.vue'
 import Form from 'vform'
 import {Button, AlertErrors} from 'vform/src/components/bootstrap5'
 
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css'
+import {DatePicker} from 'v-calendar';
 
 import TransactionItemContainer from './TransactionItemContainer.vue'
 import TransactionSchedule from './TransactionSchedule.vue'
@@ -420,7 +432,7 @@ import PayeeForm from './../components/PayeeForm.vue'
 export default {
     components: {
         TransactionItemContainer, TransactionSchedule, PayeeForm,
-        Datepicker,
+        DatePicker,
         Button, AlertErrors,
         MathInput,
     },
@@ -648,6 +660,14 @@ export default {
 
         transactionTypeIsTransfer() {
             return this.form.transaction_type === 'transfer';
+        },
+
+        datePickerInitialPage() {
+            const date = this.form.date || new Date();
+            return {
+                year: date.getFullYear() - (date.getMonth() === 0 ? 1 : 0),
+                month: date.getMonth(),
+            };
         },
     },
 

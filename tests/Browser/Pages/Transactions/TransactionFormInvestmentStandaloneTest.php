@@ -402,4 +402,35 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->assertRouteIs('tag.index');
         });
     }
+
+    public function test_user_can_change_the_date_on_the_investment_form()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+
+            // Fill form with standard data
+            $this->fillStandardBuyForm($browser)
+                // Click the date field to open the date picker
+                ->click('#date')
+                // Wait for the date picker to open
+                ->waitFor('.vc-pane-container', 10)
+                // Click the first day of the month
+                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
+                // Wait for the date picker to close
+                ->waitUntilMissing('.vc-pane-container', 10)
+                // Select callback to show the transaction
+                ->click('@action-after-save-desktop-button-group button[value="show"]')
+                // Submit form
+                ->clickAndWaitForReload('#transactionFormInvestment-Save');
+
+            // Get the last transaction from the database
+            $transaction = Transaction::orderBy('id', 'desc')->first();
+
+            $this->assertEquals(
+                now()->startOfMonth()->format('Y-m-d'),
+                $transaction->date->format('Y-m-d')
+            );
+        });
+
+    }
 }
