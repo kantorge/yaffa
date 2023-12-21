@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.2](https://github.com/kantorge/yaffa/compare/v0.3.1...v0.3.2) (2023-12-21)
+
+
+### Bug Fixes
+
+* account for missing date ([1c43c6a](https://github.com/kantorge/yaffa/commit/1c43c6a056642a46704db8bd46ac41bc843ad10d))
+* disable Telescope by default ([4db1078](https://github.com/kantorge/yaffa/commit/4db10787ad2d81ae075976025ae1510bfd3dca0b))
+* NPM build ([a5f412d](https://github.com/kantorge/yaffa/commit/a5f412dc59e5988e666d6d9812308c8f940d84b7))
+* setup incoming mail listener only if email address is provided ([723618b](https://github.com/kantorge/yaffa/commit/723618ba88dde5f2f50140e1845afaeff4f6697d))
+* upgrade @fortawesome/fontawesome-free from 6.4.2 to 6.5.0 ([8d6d70b](https://github.com/kantorge/yaffa/commit/8d6d70b5be4b0c083eeeb59943e11619e0accb7b))
+* upgrade @fortawesome/free-brands-svg-icons from 6.4.2 to 6.5.0 ([110ec70](https://github.com/kantorge/yaffa/commit/110ec700a5bff9251e63c0a9fb83c48237f37380))
+* upgrade vue from 3.3.8 to 3.3.9 ([4f3cb47](https://github.com/kantorge/yaffa/commit/4f3cb47b84666f6b697de1a5920295140ebdaaa2))
+
 ## [0.3.1](https://github.com/kantorge/yaffa/compare/v0.3.0...v0.3.1) (2023-12-09)
 
 
