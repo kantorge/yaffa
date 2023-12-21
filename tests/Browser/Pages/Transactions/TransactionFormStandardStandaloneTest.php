@@ -656,10 +656,10 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitFor('@card-transaction-schedule')
                 // Select start date by clicking the input, which opens up the date picker
                 ->click('#schedule_start_current')
-                // Wait for the calendar to be visible
-                ->waitFor('div.dp__menu')
+                // Wait for the date picker to open
+                ->waitFor('.vc-pane-container', 10)
                 // Click the current date which is highlighted
-                ->click('div.dp__calendar_item > div.dp__today')
+                ->click('.vc-pane-container .vc-day.is-today')
 
                 // Select the "show transaction" callback
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
@@ -687,6 +687,36 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertSeeIn('@label-account-from-name', 'Not set')
             // Assert that the payee is 'Not set'
                 ->assertSeeIn('@label-account-to-name', 'Not set');
+        });
+    }
+
+    public function test_user_can_change_the_date_on_the_standard_form()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+
+            $this->fillStandardWithdrawalForm($browser)
+                // Click the date input to open the date picker
+                ->click('#date')
+                // Wait for the calendar to be visible
+                ->waitFor('.vc-pane-container')
+                // Click the first day of the month, which is in the second column
+                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
+                // Wait for the date picker to close
+                ->waitUntilMissing('.vc-pane-container', 10)
+                // Select callback to show transaction
+                ->click('@action-after-save-desktop-button-group button[value="show"]')
+                // Submit form
+                ->clickAndWaitForReload('#transactionFormStandard-Save');
+
+            // Get the latest transaction from the database
+            $transaction = Transaction::orderBy('id', 'desc')->first();
+
+            // Confirm that the transaction date is the first day of the month
+            $this->assertEquals(
+                now()->startOfMonth()->format('Y-m-d'),
+                $transaction->date->format('Y-m-d')
+            );
         });
     }
 }
