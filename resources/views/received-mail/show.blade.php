@@ -24,7 +24,10 @@
                     <dl class="row mb-0">
                         <dt class="col-8">{{ __('Received at') }}</dt>
                         <dd class="col-4"
-                            title="{{ $receivedMail->created_at }}">{{ $receivedMail->created_at->diffForHumans() }}</dd>
+                            title="{{ $receivedMail->created_at }}"
+                        >
+                            {{ $receivedMail->created_at->diffForHumans() }}
+                        </dd>
                         <dt class="col-8">{{ __('Processed') }}</dt>
                         <dd class="col-4">
                             @if ($receivedMail->processed)
@@ -80,6 +83,57 @@
                     </dl>
                 </div>
             </div>
+
+            @if($receivedMail->processed)
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div
+                            class="card-title collapse-control"
+                            data-coreui-toggle="collapse"
+                            data-coreui-target="#cardExtractedData"
+                            dusk="card-received-mail-extracted-data"
+                    >
+                        <i class="fa fa-angle-down"></i>
+                        {{ __('Extracted data') }}
+                    </div>
+                </div>
+                <div class="collapse card-body show" aria-expanded="true" id="cardExtractedData">
+                    <dl class="row mb-0">
+                        <dd class="col-6">
+                            {{ __('Transaction type') }}
+                        </dd>
+                        <dt class="col-6">
+                            {{ $receivedMail->transaction_data['transaction_type']['name'] }}
+                        </dt>
+                        <dd class="col-6">
+                            {{ __('Date') }}
+                        </dd>
+                        <dt class="col-6">
+                            {{ $receivedMail->transaction_data['date'] }}
+                        </dt>
+                        <dd class="col-6">
+                            {{ __('Account') }}
+                        </dd>
+                        <dt class="col-6">
+                            {{ $receivedMail->transaction_data['raw']['account'] }}
+                        </dt>
+                        <dd class="col-6">
+                            {{ __('Payee') }}
+                        </dd>
+                        <dt class="col-6">
+                            {{ $receivedMail->transaction_data['raw']['payee'] }}
+                        </dt>
+                        <dd class="col-6">
+                            {{ __('Amount') }}
+                        </dd>
+                        <dt class="col-6">
+                            {{ $receivedMail->transaction_data['raw']['amount'] }}
+                        </dt>
+                    </dl>
+                </div>
+            </div>
+            @endif
+
             <div class="card mb-3">
                 <div class="card-header">
                     <div
@@ -135,7 +189,7 @@
             </div>
         </div>
         <div class="col-12 col-lg-9">
-            <div class="card">
+            <div class="card mb-3">
                 <div class="card-header">
                     <ul class="nav nav-tabs card-header-tabs">
                         <li class="nav-item">
@@ -168,32 +222,6 @@
                                 {{ __('Text') }}
                             </button>
                         </li>
-                        <li
-                                class="nav-item"
-                                @if(!$receivedMail->processed)
-                                    title="{{ __('Email has not been processed yet') }}"
-                                @endif
-                        >
-                            <button
-                                    @class([
-                                        "nav-link",
-                                        "disabled" => !$receivedMail->processed
-                                    ])
-                                    id="nav-email-tab-data"
-                                    data-coreui-toggle="tab"
-                                    data-coreui-target="#email-tab-data"
-                                    dusk="button-received-mail-tab-data"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="email-tab-data"
-                                    aria-selected="false"
-                                    @if(!$receivedMail->processed)
-                                        aria-disabled="true"
-                                    @endif
-                            >
-                                {{ __('Extracted data') }}
-                            </button>
-                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -218,24 +246,6 @@
                         >
                             <pre>{{ e($receivedMail->text) }}</pre>
                         </div>
-                        @if($receivedMail->processed)
-                            <div
-                                    class="tab-pane fade"
-                                    dusk="received-mail-tab-data"
-                                    id="email-tab-data"
-                                    role="tabpanel"
-                                    aria-labelledby="nav-email-tab-data"
-                                    tabindex="0"
-                            >
-                                <pre>
-                                    Transaction type: {{ $receivedMail->transaction_data['transaction_type']['name'] }}
-                                    Date: {{ $receivedMail->transaction_data['date'] }}
-                                    Account: {{ $receivedMail->transaction_data['raw']['account'] }}
-                                    Payee: {{ $receivedMail->transaction_data['raw']['payee'] }}
-                                    Amount: {{ $receivedMail->transaction_data['raw']['amount'] }}
-                                </pre>
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
