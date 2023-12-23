@@ -115,7 +115,7 @@ class RegisterTest extends TestCase
         $userData = User::factory()->make();
         $password = 'notasecret';
 
-        $response = $this
+        $this
             ->from($this->registerGetRoute())
             ->post($this->registerPostRoute(), [
                 'name' => $userData->name,
