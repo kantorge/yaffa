@@ -13,19 +13,30 @@ class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $verificationVerifyRouteName = 'verification.verify';
+    protected string $verificationVerifyRouteName = 'verification.verify';
 
-    protected function successfulVerificationRoute()
+    /**
+     * Ensure that the yaffa.email_verification_required config value is set to true for these tests.
+     * Exceptions will be set for specific tests.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['yaffa.email_verification_required' => true]);
+    }
+
+    protected function successfulVerificationRoute(): string
     {
         return route('home');
     }
 
-    protected function verificationNoticeRoute()
+    protected function verificationNoticeRoute(): string
     {
         return route('verification.notice');
     }
 
-    protected function validVerificationVerifyRoute($user)
+    protected function validVerificationVerifyRoute($user): string
     {
         return URL::signedRoute($this->verificationVerifyRouteName, [
             'id' => $user->id,
@@ -33,7 +44,7 @@ class EmailVerificationTest extends TestCase
         ]);
     }
 
-    protected function invalidVerificationVerifyRoute($user)
+    protected function invalidVerificationVerifyRoute($user): string
     {
         return route($this->verificationVerifyRouteName, [
             'id' => $user->id,
@@ -41,12 +52,12 @@ class EmailVerificationTest extends TestCase
         ]);
     }
 
-    protected function verificationResendRoute()
+    protected function verificationResendRoute(): string
     {
         return route('verification.send');
     }
 
-    protected function loginRoute()
+    protected function loginRoute(): string
     {
         return route('login');
     }
@@ -62,6 +73,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_sees_the_verification_notice_when_not_verified()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -75,6 +87,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_verified_user_is_redirected_home_when_visiting_verification_notice_route()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -87,6 +100,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_guest_cannot_see_the_verification_verify_route()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -99,10 +113,12 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_cannot_verify_others()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
 
+        /** @var User $user2 */
         $user2 = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -116,6 +132,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_is_redirected_to_correct_route_when_already_verified()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -128,6 +145,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_forbidden_is_returned_when_signature_is_invalid_in_verification_verify_route()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -140,6 +158,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_can_verify_themselves()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -161,6 +180,7 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function test_user_is_redirected_to_correct_route_if_already_verified()
     {
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => now(),
         ]);
@@ -175,7 +195,7 @@ class EmailVerificationTest extends TestCase
     {
         Notification::fake();
 
-
+        /** @var User $user */
         $user = User::factory()->create([
             'email_verified_at' => null,
         ]);
