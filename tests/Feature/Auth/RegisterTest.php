@@ -14,6 +14,17 @@ class RegisterTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Ensure that the yaffa.email_verification_required config value is set to true for these tests.
+     * Exceptions will be set for specific tests.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['yaffa.email_verification_required' => true]);
+    }
+
     protected function successfulRegistrationRoute(): string
     {
         return route('home');
@@ -46,6 +57,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_view_registration_form_when_authenticated()
     {
+        /** @var User $user */
         $user = User::factory()->make();
 
         $response = $this->actingAs($user)->get($this->registerGetRoute());
@@ -58,6 +70,7 @@ class RegisterTest extends TestCase
     {
         Event::fake();
 
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -84,6 +97,8 @@ class RegisterTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertEquals($userData->name, $user->name);
         $this->assertEquals($userData->email, $user->email);
+        // By default, a user is not verified
+        $this->assertNull($user->email_verified_at);
         $this->assertTrue(Hash::check($password, $user->password));
 
         // Registration generates event
@@ -91,8 +106,42 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
+    public function test_user_is_automatically_verified_if_feature_is_enabled()
+    {
+        // Ensure that the yaffa.email_verification_required config value is set to false for this test.
+        config(['yaffa.email_verification_required' => false]);
+
+        /** @var User $userData */
+        $userData = User::factory()->make();
+        $password = 'notasecret';
+
+        $response = $this
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
+
+        // Get newly created user by email address
+        $users = User::where('email', $userData->email)->get();
+        $user = $users->first();
+
+        $this->assertAuthenticatedAs($user);
+        // By default, a user is verified
+        $this->assertNotNull($user->email_verified_at);
+    }
+
+    /** @test */
     public function test_user_cannot_register_without_name()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -123,6 +172,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_register_without_email()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -153,6 +203,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_register_with_invalid_email()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -183,6 +234,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_register_without_password()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
 
         $response = $this
@@ -213,6 +265,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_register_without_password_confirmation()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -244,6 +297,7 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_cannot_register_with_passwords_not_matching()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
@@ -274,6 +328,7 @@ class RegisterTest extends TestCase
 
     public function test_user_cannot_register_without_accepting_terms()
     {
+        /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
 
