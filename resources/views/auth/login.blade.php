@@ -14,7 +14,10 @@
                                 {{ __('Login') }}
                             </h1>
                             <p class="text-medium-emphasis">
-                                {{ __('Sign in to start your session') }}
+                                You can create a new account for yourself by registering,
+                                or you can explore our demo data using credentials below.
+                                <br>
+                                <strong>Email:</strong> demo@yaffa.cc <strong>Password:</strong> demo
                             </p>
                             <form method="POST" action="{{ route('login') }}">
                                 @csrf
