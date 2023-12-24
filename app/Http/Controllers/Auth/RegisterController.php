@@ -67,9 +67,9 @@ class RegisterController extends Controller
          */
         if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
             self::addMessage(
-                'You cannot register new users.',
+                __('You cannot register new users.'),
                 'danger',
-                'User limit reached',
+                __('User limit reached'),
                 'exclamation-triangle'
             );
 
@@ -171,9 +171,16 @@ class RegisterController extends Controller
     {
         $this->validator($request->all())->validate();
 
+        $user = $this->create($request->all());
+
+        // Make the user verified by default, if the feature is enabled.
+        if (!config('yaffa.email_verification_required')) {
+            $user->markEmailAsVerified();
+        }
+
         event(
             new Registered(
-                $user = $this->create($request->all()),
+                $user,
                 [
                     'defaultData' => $request->post('default_data'),
                     'baseCurrency' => $request->post('base_currency'),

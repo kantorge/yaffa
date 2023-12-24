@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/kantorge/yaffa/compare/v0.3.2...v0.4.0) (2023-12-23)
+
+
+### Features
+
+* restructure received email view ([32e17b9](https://github.com/kantorge/yaffa/commit/32e17b9ee9d6031d48553f8aac4a16c01a0b502c))
+* user verification is configurable via environment variable ([9b7a79e](https://github.com/kantorge/yaffa/commit/9b7a79e0687cccfe3e994ebfd2b0b8b89c4dbcc4))
+
 ## [0.3.2](https://github.com/kantorge/yaffa/compare/v0.3.1...v0.3.2) (2023-12-21)
 
 

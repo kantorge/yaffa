@@ -7,6 +7,7 @@ use App\Mail\TransactionErrorFromEmail;
 use App\Models\ReceivedMail;
 use App\Models\TransactionType;
 use App\Models\User;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,10 +17,9 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use JsonException;
 use OpenAI\Laravel\Facades\OpenAI;
 use OpenAI\Responses\Completions\CreateResponse;
-use JsonException;
-use Exception;
 
 class ProcessIncomingEmailByAi implements ShouldQueue, ShouldBeUnique
 {
@@ -238,9 +238,7 @@ EOF;
         $text = preg_replace('/\[image:.*?\]/', '', $text);
 
         // Remove link references
-        $text = preg_replace('/<http[^>]+>/', '', $text);
-
-        return $text;
+        return preg_replace('/<http[^>]+>/', '', $text);
     }
 
     /**

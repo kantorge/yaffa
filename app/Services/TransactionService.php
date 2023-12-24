@@ -16,10 +16,10 @@ class TransactionService
     public function enterScheduleInstance(Transaction $transaction): void
     {
         // Clone the transaction using cloner
+        /** @var Transaction $newTransaction */
         $newTransaction = $transaction->duplicate();
 
         // Set the date to the next scheduled date
-        /** @var Transaction $newTransaction */
         $newTransaction->date = $transaction->transactionSchedule->next_date;
 
         // Remove the schedule and budget flags

@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $subject
  * @property string $html
  * @property string $text
- * @property boolean $processed
- * @property boolean $handled
+ * @property bool $processed
+ * @property bool $handled
  */
 class ReceivedMail extends Model
 {

@@ -51,7 +51,11 @@
                                 <a href="{{ route('register') }}" class="btn btn-lg btn-light mt-3">
                                     {{ __('Register a new account') }}
                                 </a>
-                                <a href="https://github.com/kantorge/yaffa" class="btn btn-lg btn-link text-light mt-3">
+                                <a
+                                        href="https://www.yaffa.cc/"
+                                        target="_blank"
+                                        class="btn btn-lg btn-link text-light mt-3"
+                                >
                                     {{ __('Learn more') }}
                                 </a>
                             </div>
