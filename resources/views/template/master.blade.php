@@ -34,6 +34,9 @@
         })(window,document,'script','dataLayer','GTM-WWCL54V');</script>
     <!-- End Google Tag Manager -->
 
+    {{-- Optional header scripts --}}
+    @yield('head_scripts')
+
     {{-- Base Meta Tags --}}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

@@ -17,12 +17,17 @@
                         </div>
                         @endif
 
-                        <form method="POST" action="{{ route('password.email') }}">
+                        <form method="POST" action="{{ route('password.email') }}" id="form-with-recaptcha">
                             @csrf
 
                             @include('auth.components.email', ['autofocus' => true])
 
-                            <button type="submit" class="btn btn-primary">
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary g-recaptcha"
+                                    data-sitekey="6LfLGjwpAAAAAC82dlzgfwAdeRMXEQuHFdUKwoXu"
+                                    data-callback="onSubmit"
+                            >
                                 {{ __('Send Password Reset Link') }}
                             </button>
                         </form>

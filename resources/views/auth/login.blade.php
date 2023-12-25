@@ -19,7 +19,7 @@
                                 <br>
                                 <strong>Email:</strong> demo@yaffa.cc <strong>Password:</strong> demo
                             </p>
-                            <form method="POST" action="{{ route('login') }}">
+                            <form method="POST" action="{{ route('login') }}" id="form-with-recaptcha">
                                 @csrf
 
                                 @include('auth.components.email', ['autofocus' => true])
@@ -28,7 +28,13 @@
 
                                 <div class="row">
                                     <div class="col-5">
-                                        <button class="btn btn-primary px-4" type="submit" dusk="login-button">
+                                        <button
+                                                class="btn btn-primary px-4 g-recaptcha"
+                                                data-sitekey="6LfLGjwpAAAAAC82dlzgfwAdeRMXEQuHFdUKwoXu"
+                                                data-callback="onSubmit"
+                                                type="submit"
+                                                dusk="login-button"
+                                        >
                                             {{ __('Login') }}
                                         </button>
                                     </div>
