@@ -19,12 +19,9 @@
         gtag("set", "ads_data_redaction", true);
     </script>
 
-    <script type="text/javascript"
-            id="Cookiebot"
-            src="https://consent.cookiebot.com/uc.js"
-            data-cbid="35229ad1-e2ba-4f4c-b28d-e40682ed7005"
-            data-blockingmode="auto"
-    ></script>
+    <!-- Start cookieyes banner -->
+    <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/e9350d1620a1a6851a457df3/script.js"></script>
+    <!-- End cookieyes banner -->
 
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
