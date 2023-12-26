@@ -10,7 +10,7 @@
                         @include('template.components.flag-bar')
                         <h1>{{ __('Register') }}</h1>
                         <p class="text-medium-emphasis">{{ __('Create an account to start using YAFFA') }}</p>
-                        <form method="POST" action="{{ route('register') }}" autocomplete="off" class="form-with-recaptcha">
+                        <form method="POST" action="{{ route('register') }}" autocomplete="off" id="form-with-recaptcha">
                             @csrf
 
                             @include('auth.components.email', ['autofocus' => false])
