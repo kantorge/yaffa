@@ -16617,7 +16617,7 @@ select + .select2-container--bootstrap-5 {
 }
 
 /*!
- * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -24315,10 +24315,6 @@ readers do not read off random characters that represent icons */
   content: "\f064";
 }
 
-.fa-arrow-turn-right::before {
-  content: "\f064";
-}
-
 .fa-mail-forward::before {
   content: "\f064";
 }
@@ -24846,7 +24842,7 @@ readers do not read off random characters that represent icons */
 }
 
 /*!
- * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -24860,7 +24856,7 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 900;
   font-display: block;
-  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?b6879d41b0852f01ed5b0216c4c72e11) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?d75e3fd1eb12e9bd66550e304bdd1ec7) format("truetype");
+  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?fb8184add5a3101ad0a321db81c70285) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?45a265d0f07b31cde85f8723d9c53efd) format("truetype");
 }
 .fas,
 .fa-solid {
@@ -24868,7 +24864,7 @@ readers do not read off random characters that represent icons */
 }
 
 /*!
- * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -24882,7 +24878,7 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?b041b1fa4fe241b234458a565482c4c6) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?50701fbb8177c2dde530fc83add388ef) format("truetype");
+  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?e931bc0d14f5bbb1da223e8e9112ab9b) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?adc51aab4d771ab65f8162d68231b526) format("truetype");
 }
 .far,
 .fa-regular {
@@ -24890,7 +24886,7 @@ readers do not read off random characters that represent icons */
 }
 
 /*!
- * Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com
+ * Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2023 Fonticons, Inc.
  */
@@ -24904,7 +24900,7 @@ readers do not read off random characters that represent icons */
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?878f31251d960bd6266f20ccdc4d738f) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?016b4a6cdced82ab3aa1907e3855cfd2) format("truetype");
+  src: url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?8d3cabfc66809162fb4d7109aefa44dc) format("woff2"), url(/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?6205fd00fb1b573e9f0f0734a5817282) format("truetype");
 }
 .fab,
 .fa-brands {
@@ -24957,6 +24953,10 @@ readers do not read off random characters that represent icons */
 
 .fa-ups:before {
   content: "\f7e0";
+}
+
+.fa-pixiv:before {
+  content: "\e640";
 }
 
 .fa-wpexplorer:before {
@@ -25097,6 +25097,10 @@ readers do not read off random characters that represent icons */
 
 .fa-deskpro:before {
   content: "\f38f";
+}
+
+.fa-brave:before {
+  content: "\e63c";
 }
 
 .fa-sistrix:before {
@@ -25323,6 +25327,10 @@ readers do not read off random characters that represent icons */
   content: "\f384";
 }
 
+.fa-opensuse:before {
+  content: "\e62b";
+}
+
 .fa-pied-piper-alt:before {
   content: "\f1a8";
 }
@@ -25515,6 +25523,10 @@ readers do not read off random characters that represent icons */
   content: "\f294";
 }
 
+.fa-square-letterboxd:before {
+  content: "\e62e";
+}
+
 .fa-sticker-mule:before {
   content: "\f3f7";
 }
@@ -25557,6 +25569,10 @@ readers do not read off random characters that represent icons */
 
 .fa-confluence:before {
   content: "\f78d";
+}
+
+.fa-shoelace:before {
+  content: "\e60c";
 }
 
 .fa-mdb:before {
@@ -25721,6 +25737,10 @@ readers do not read off random characters that represent icons */
 
 .fa-envira:before {
   content: "\f299";
+}
+
+.fa-google-scholar:before {
+  content: "\e63b";
 }
 
 .fa-square-gitlab:before {
@@ -25899,6 +25919,10 @@ readers do not read off random characters that represent icons */
   content: "\f1ca";
 }
 
+.fa-signal-messenger:before {
+  content: "\e663";
+}
+
 .fa-paypal:before {
   content: "\f1ed";
 }
@@ -25943,6 +25967,10 @@ readers do not read off random characters that represent icons */
   content: "\e531";
 }
 
+.fa-mintbit:before {
+  content: "\e62f";
+}
+
 .fa-ethereum:before {
   content: "\f42e";
 }
@@ -25973,6 +26001,10 @@ readers do not read off random characters that represent icons */
 
 .fa-bimobject:before {
   content: "\f378";
+}
+
+.fa-brave-reverse:before {
+  content: "\e63d";
 }
 
 .fa-facebook-f:before {
@@ -26109,6 +26141,10 @@ readers do not read off random characters that represent icons */
 
 .fa-tencent-weibo:before {
   content: "\f1d5";
+}
+
+.fa-letterboxd:before {
+  content: "\e62d";
 }
 
 .fa-symfony:before {
@@ -26293,6 +26329,10 @@ readers do not read off random characters that represent icons */
 
 .fa-cmplid:before {
   content: "\e360";
+}
+
+.fa-upwork:before {
+  content: "\e641";
 }
 
 .fa-facebook:before {
@@ -26525,6 +26565,10 @@ readers do not read off random characters that represent icons */
 
 .fa-supple:before {
   content: "\f3f9";
+}
+
+.fa-webflow:before {
+  content: "\e65c";
 }
 
 .fa-rebel:before {

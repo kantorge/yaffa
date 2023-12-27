@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1972cabb1a153ce18cb131fc55abc817",
+    "content-hash": "1b3ee8e25a61abd01e8ba82d62bb345f",
     "packages": [
         {
             "name": "amrshawky/currency",
@@ -261,6 +261,77 @@
                 "source": "https://github.com/beyondcode/laravel-mailbox/tree/3.1.0"
             },
             "time": "2023-02-21T09:49:26+00:00"
+        },
+        {
+            "name": "biscolab/laravel-recaptcha",
+            "version": "v6.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/biscolab/laravel-recaptcha.git",
+                "reference": "c3d742e6a082cefe2ffce1e13b17a104abfc7234"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/biscolab/laravel-recaptcha/zipball/c3d742e6a082cefe2ffce1e13b17a104abfc7234",
+                "reference": "c3d742e6a082cefe2ffce1e13b17a104abfc7234",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/routing": "^7.0|^8.0|^9.0|^10.0",
+                "illuminate/support": "^7.0|^8.0|^9.0|^10.0",
+                "php": "^7.3|^8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "5.*|6.*|^7.0|^8.0",
+                "phpunit/phpunit": "^9.1"
+            },
+            "suggest": {
+                "biscolab/laravel-authlog": "It allows to handle logged-in users and force log-out if needed"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Biscolab\\ReCaptcha\\ReCaptchaServiceProvider"
+                    ],
+                    "aliases": {
+                        "ReCaptcha": "Biscolab\\ReCaptcha\\Facades\\ReCaptcha"
+                    }
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Biscolab\\ReCaptcha\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roberto Belotti",
+                    "email": "roby.belotti@gmail.com",
+                    "homepage": "https://biscolab.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Simple and painless Google reCAPTCHA package for Laravel framework",
+            "homepage": "https://biscolab.com/laravel-recaptcha",
+            "keywords": [
+                "captcha",
+                "laravel",
+                "recaptcha",
+                "validation"
+            ],
+            "support": {
+                "issues": "https://github.com/biscolab/laravel-recaptcha/issues",
+                "source": "https://github.com/biscolab/laravel-recaptcha/tree/v6.0.0"
+            },
+            "time": "2023-02-11T17:27:50+00:00"
         },
         {
             "name": "bkwld/cloner",
@@ -10860,6 +10931,51 @@
             "time": "2021-11-16T10:29:06+00:00"
         },
         {
+            "name": "manyapp/duskapiconf",
+            "version": "v0.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/manyapp/duskapiconf.git",
+                "reference": "55e7c3fd916a321a9a288538365c5a1c58908dbd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/manyapp/duskapiconf/zipball/55e7c3fd916a321a9a288538365c5a1c58908dbd",
+                "reference": "55e7c3fd916a321a9a288538365c5a1c58908dbd",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Manyapp\\DuskApiConf\\DuskApiConfServiceProvider"
+                    ],
+                    "aliases": []
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Manyapp\\DuskApiConf\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "mit"
+            ],
+            "authors": [
+                {
+                    "name": "manyapp",
+                    "email": "admin@many.app"
+                }
+            ],
+            "description": "Change your Laravel configuration for each Dusk test with an easy API",
+            "support": {
+                "issues": "https://github.com/manyapp/duskapiconf/issues",
+                "source": "https://github.com/manyapp/duskapiconf/tree/v0.0.3"
+            },
+            "time": "2019-07-05T14:16:16+00:00"
+        },
+        {
             "name": "maximebf/debugbar",
             "version": "v1.19.1",
             "source": {
@@ -14525,5 +14641,5 @@
         "php": "^8.1"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.2.0"
 }

@@ -9,4 +9,8 @@ return [
     'registered_user_limit' => env('REGISTERED_USER_LIMIT'),
     'incoming_receipts_email' => env('INCOMING_RECEIPTS_EMAIL'),
     'email_verification_required' => env('EMAIL_VERIFICATION_REQUIRED', false),
+
+    // Optional settings, used primarily for the public facing Sandbox environment
+    'gtm_container_id' => env('GTM_CONTAINER_ID'),
+    'cookieyes_id' => env('COOKIEYES_ID'),
 ];

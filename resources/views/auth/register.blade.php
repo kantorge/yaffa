@@ -10,7 +10,14 @@
                         @include('template.components.flag-bar')
                         <h1>{{ __('Register') }}</h1>
                         <p class="text-medium-emphasis">{{ __('Create an account to start using YAFFA') }}</p>
-                        <form method="POST" action="{{ route('register') }}" autocomplete="off">
+                        <form
+                                method="POST"
+                                action="{{ route('register') }}"
+                                autocomplete="off"
+                                @if(config('recaptcha.api_site_key'))
+                                    id="form-with-recaptcha"
+                                @endif
+                        >
                             @csrf
 
                             @include('auth.components.email', ['autofocus' => false])
@@ -20,7 +27,10 @@
                                     <i class="fa-regular fa-fw fa-user"></i>
                                 </span>
                                 <input
-                                    class="form-control @error('name') is-invalid @enderror"
+                                    @class([
+                                        'form-control',
+                                        'is-invalid' => $errors->has('name'),
+                                    ])
                                     id="name"
                                     name="name"
                                     placeholder="{{ __('Name') }}"
@@ -41,18 +51,28 @@
 
                             <div class="form-check mb-3">
                                 <input
-                                        class="form-check-input"
+                                        @class([
+                                            "form-check-input",
+                                        ])
                                         name="tos"
                                         required
                                         type="checkbox"
                                         value="yes"
                                         id="tos"
                                 >
-                                <label class="form-check-label" for="tos">
-                                    {!! __('I accept the <a href=":toslink" target="_blank">terms of service</a>', ['toslink' => route('terms')]) !!}
+                                <label
+                                        @class([
+                                            "form-check-label",
+                                            "is-invalid" => $errors->has('tos'),
+                                        ])
+                                        for="tos"
+                                >
+                                    {!! __('I accept the <a href=":toslink" target="_blank">terms of service</a>',
+                                            ['toslink' => route('terms')]
+                                            ) !!}
                                 </label>
                                 @error('tos')
-                                <span class="invalid-feedback" role="alert">
+                                    <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
                                 @enderror
@@ -73,7 +93,7 @@
                                         <span class="ms-2 d-none d-md-block">{{ __('Language') }}</span>
                                     </span>
                                     <select
-                                        class="form-select  @error('language') is-invalid @enderror"
+                                        class="form-select @error('language') is-invalid @enderror"
                                         id="language"
                                         name="language"
                                     >
@@ -125,10 +145,10 @@
                                         @endforeach
                                     </select>
                                     <span
-                                        class="input-group-text btn btn-info"
-                                        data-coreui-toggle="tooltip"
-                                        data-coreui-placement="right"
-                                        title="{{ __('Controls how numbers, dates, currencies are formatted.') }}"
+                                            class="input-group-text btn btn-info"
+                                            data-coreui-toggle="tooltip"
+                                            data-coreui-placement="right"
+                                            title="{{ __('Controls how numbers, dates, currencies are formatted.') }}"
                                     >
                                         <i class="fa fa-info-circle"></i>
                                     </span>
@@ -184,8 +204,12 @@
                                             name="base_currency"
                                     >
                                         @foreach ($availableCurrencies as $key => $value)
-                                            <option value="{{ $key }}"
-                                                    @if (old() && old('base_currency') == $key) selected="selected"@endif>
+                                            <option
+                                                    value="{{ $key }}"
+                                                    @if (old() && old('base_currency') === $key)
+                                                        selected="selected"
+                                                    @endif
+                                            >
                                                 {{ __($value) }}
                                             </option>
                                         @endforeach
@@ -200,14 +224,29 @@
                                     </span>
 
                                     @error('base_currency')
-                                    <span class="invalid-feedback" role="alert">
+                                        <span class="invalid-feedback" role="alert">
                                             <strong>{{ __($message) }}</strong>
                                         </span>
                                     @enderror
                                 </div>
                             </div>
 
-                            <button class="btn btn-block btn-success mt-3" type="submit">{{ __('Register') }}</button>
+                            <button
+                                    @class([
+                                        'btn',
+                                        'btn-block',
+                                        'btn-success',
+                                        'mt-3',
+                                        'g-recaptcha' => config('recaptcha.api_site_key'),
+                                    ])
+                                    type="submit"
+                                    @if(config('recaptcha.api_site_key'))
+                                        data-sitekey="{{ config('recaptcha.api_site_key') }}"
+                                        data-callback="onSubmit"
+                                    @endif
+                            >
+                                {{ __('Register') }}
+                            </button>
                         </form>
                         <p class="text-medium-emphasis mt-3">
                             {{ __('Do you have an account?') }}
