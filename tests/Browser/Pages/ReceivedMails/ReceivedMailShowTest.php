@@ -47,9 +47,8 @@ class ReceivedMailShowTest extends DuskTestCase
                 // Validate that the reset processed button is not present
                 ->assertMissing('@button-received-mail-reprocess')
 
-                // Validate that the transaction data is not present, and the tab is disabled
-                ->assertMissing('@received-mail-tab-data')
-                ->assertAttributeContains('@button-received-mail-tab-data', 'class', 'disabled')
+                // Validate that the transaction data is not present as a card
+                ->assertMissing('@card-received-mail-extracted-data')
 
                 // Validate that the HTML and text tabs are present, and the HTML tab is active
                 ->assertPresent('@received-mail-tab-html')
@@ -138,7 +137,7 @@ class ReceivedMailShowTest extends DuskTestCase
                 ->assertPresent('@button-received-mail-reprocess')
 
                 // Validate that the transaction data is present
-                ->assertPresent('@received-mail-tab-data')
+                ->assertPresent('@card-received-mail-extracted-data')
 
                 // Validate that the HTML and text tabs are present, and the HTML tab is active
                 ->assertPresent('@received-mail-tab-html')
@@ -287,7 +286,7 @@ class ReceivedMailShowTest extends DuskTestCase
                 ->assertMissing('@button-received-mail-reprocess')
 
                 // Validate that the transaction data is present
-                ->assertPresent('@received-mail-tab-data')
+                ->assertPresent('@card-received-mail-extracted-data')
 
                 // Validate that the HTML and text tabs are present, and the HTML tab is active
                 ->assertPresent('@received-mail-tab-html')
