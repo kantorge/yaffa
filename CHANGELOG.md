@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/kantorge/yaffa/compare/v0.4.0...v0.5.0) (2023-12-27)
+
+
+### Features
+
+* Sandbox-specific, optional components ([ff9cadd](https://github.com/kantorge/yaffa/commit/ff9cadd4301eefedbea9925e6d92e95ddee4e152))
+
+
+### Bug Fixes
+
+* add missing values to the .env.example files ([806764c](https://github.com/kantorge/yaffa/commit/806764c52383419b86b140062e99a41d46016720))
+* upgrade vue from 3.3.9 to 3.3.10 ([72bb91a](https://github.com/kantorge/yaffa/commit/72bb91a6e949ff4594fc8d1760474bf286822c89))
+
+
+### Miscellaneous Chores
+
+* remove (mostly) unused GTM references ([ed4adc5](https://github.com/kantorge/yaffa/commit/ed4adc5626d5a0532179d6aded077cc887f15041))
+
 ## [0.4.0](https://github.com/kantorge/yaffa/compare/v0.3.2...v0.4.0) (2023-12-23)
 
 
