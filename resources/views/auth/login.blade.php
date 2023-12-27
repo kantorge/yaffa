@@ -19,7 +19,13 @@
                                 <br>
                                 <strong>Email:</strong> demo@yaffa.cc <strong>Password:</strong> demo
                             </p>
-                            <form method="POST" action="{{ route('login') }}" id="form-with-recaptcha">
+                            <form
+                                    method="POST"
+                                    action="{{ route('login') }}"
+                                    @if(config('recaptcha.api_site_key'))
+                                        id="form-with-recaptcha"
+                                    @endif
+                            >
                                 @csrf
 
                                 @include('auth.components.email', ['autofocus' => true])
@@ -29,11 +35,18 @@
                                 <div class="row">
                                     <div class="col-5">
                                         <button
-                                                class="btn btn-primary px-4 g-recaptcha"
-                                                data-sitekey="6LfLGjwpAAAAAC82dlzgfwAdeRMXEQuHFdUKwoXu"
-                                                data-callback="onSubmit"
+                                                @class([
+                                                    'btn',
+                                                    'btn-primary',
+                                                    'px-4',
+                                                    'g-recaptcha' => config('recaptcha.api_site_key'),
+                                                ])
                                                 type="submit"
                                                 dusk="login-button"
+                                                @if(config('recaptcha.api_site_key'))
+                                                    data-sitekey="{{ config('recaptcha.api_site_key') }}"
+                                                    data-callback="onSubmit"
+                                                @endif
                                         >
                                             {{ __('Login') }}
                                         </button>

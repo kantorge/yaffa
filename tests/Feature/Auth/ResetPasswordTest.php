@@ -39,6 +39,17 @@ class ResetPasswordTest extends TestCase
         return route('home');
     }
 
+    /**
+     * For all these tests, make sure that recaptcha is disabled.
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        config(['recaptcha.api_site_key' => null]);
+        config(['recaptcha.api_secret_key' => null]);
+    }
+
     /** @test */
     public function test_user_can_view_password_reset_form()
     {

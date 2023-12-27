@@ -3,7 +3,10 @@
         <i class="fa-solid fa-fw fa-lock"></i>
     </span>
     <input
-        class="form-control @error('password_confirmation') is-invalid @enderror"
+        @class([
+            'form-control',
+            'is-invalid' => $errors->has('password_confirmation')
+        ])
         id="password_confirmation"
         name="password_confirmation"
         placeholder="{{ __('Confirm password') }}"

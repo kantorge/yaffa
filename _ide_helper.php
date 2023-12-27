@@ -17568,6 +17568,231 @@ namespace BeyondCode\Mailbox\Facades {
 
 }
 
+namespace Biscolab\ReCaptcha\Facades {
+    /**
+     * Class ReCaptcha
+     *
+     * @package Biscolab\ReCaptcha\Facades
+     * @method static string htmlFormSnippet()
+     */
+    class ReCaptcha
+    {
+        /**
+         * Write HTML <button> tag in your HTML code
+         * Insert before </form> tag
+         *
+         * @param string $button_label
+         * @param array|null $properties
+         * @return string
+         * @static
+         */
+        public static function htmlFormButton($button_label = 'Submit', $properties = [])
+        {
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->htmlFormButton($button_label, $properties);
+        }
+        /**
+         * Write script HTML tag in you HTML code
+         * Insert before </head> tag
+         *
+         * @param array|null $configuration
+         * @return string
+         * @throws Exception
+         * @static
+         */
+        public static function htmlScriptTagJsApi($configuration = [])
+        {
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->htmlScriptTagJsApi($configuration);
+        }
+        /**
+         *
+         *
+         * @return string
+         * @throws Exception
+         * @static
+         */
+        public static function getFormId()
+        {
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getFormId();
+        }
+        /**
+         *
+         *
+         * @param string $api_site_key
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setApiSiteKey($api_site_key)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setApiSiteKey($api_site_key);
+        }
+        /**
+         *
+         *
+         * @param string $api_secret_key
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setApiSecretKey($api_secret_key)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setApiSecretKey($api_secret_key);
+        }
+        /**
+         *
+         *
+         * @return int
+         * @static
+         */
+        public static function getCurlTimeout()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getCurlTimeout();
+        }
+        /**
+         *
+         *
+         * @param string $version
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setVersion($version)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setVersion($version);
+        }
+        /**
+         *
+         *
+         * @return string
+         * @static
+         */
+        public static function getVersion()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getVersion();
+        }
+        /**
+         *
+         *
+         * @param bool $skip_by_ip
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setSkipByIp($skip_by_ip)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setSkipByIp($skip_by_ip);
+        }
+        /**
+         *
+         *
+         * @param null|string $api_domain
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setApiDomain($api_domain = null)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setApiDomain($api_domain);
+        }
+        /**
+         *
+         *
+         * @return string
+         * @static
+         */
+        public static function getApiDomain()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getApiDomain();
+        }
+        /**
+         *
+         *
+         * @return \Biscolab\ReCaptcha\ReCaptchaBuilder
+         * @static
+         */
+        public static function setApiUrls()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->setApiUrls();
+        }
+        /**
+         *
+         *
+         * @return array|mixed
+         * @static
+         */
+        public static function getIpWhitelist()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getIpWhitelist();
+        }
+        /**
+         * Checks whether the user IP address is among IPs "to be skipped"
+         *
+         * @return boolean
+         * @static
+         */
+        public static function skipByIp()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->skipByIp();
+        }
+        /**
+         * Call out to reCAPTCHA and process the response
+         *
+         * @param string $response
+         * @return boolean|array
+         * @static
+         */
+        public static function validate($response)
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->validate($response);
+        }
+        /**
+         *
+         *
+         * @return string
+         * @static
+         */
+        public static function getApiSiteKey()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getApiSiteKey();
+        }
+        /**
+         *
+         *
+         * @return string
+         * @static
+         */
+        public static function getApiSecretKey()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getApiSecretKey();
+        }
+        /**
+         *
+         *
+         * @return string
+         * @static
+         */
+        public static function getOnLoadCallback()
+        {            //Method inherited from \Biscolab\ReCaptcha\ReCaptchaBuilder
+            /** @var \Biscolab\ReCaptcha\ReCaptchaBuilderInvisible $instance */
+            return $instance->getOnLoadCallback();
+        }
+
+    }
+
+}
+
 namespace Laracasts\Utilities\JavaScript {
     /**
      *
@@ -22357,6 +22582,9 @@ namespace  {
     {
     }
     class Mailbox extends \BeyondCode\Mailbox\Facades\Mailbox
+    {
+    }
+    class ReCaptcha extends \Biscolab\ReCaptcha\Facades\ReCaptcha
     {
     }
     class JavaScript extends \Laracasts\Utilities\JavaScript\JavaScriptFacade

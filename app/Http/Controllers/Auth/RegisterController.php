@@ -100,9 +100,9 @@ class RegisterController extends Controller
      * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
-    protected function validator(array $data)
+    protected function validator(array $data): \Illuminate\Contracts\Validation\Validator
     {
-        return Validator::make($data, [
+        $rules = [
             'name' => [
                 'required',
                 'string',
@@ -140,7 +140,14 @@ class RegisterController extends Controller
                 'required',
                 Rule::in(array_keys($this->availableCurrencies)),
             ]
-        ]);
+        ];
+
+        if (config('recaptcha.api_site_key')
+            && config('recaptcha.api_secret_key')) {
+            $rules[recaptchaFieldName()] = recaptchaRuleName();
+        }
+
+        return Validator::make($data, $rules);
     }
 
     /**
