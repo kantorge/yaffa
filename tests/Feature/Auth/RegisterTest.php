@@ -23,6 +23,10 @@ class RegisterTest extends TestCase
         parent::setUp();
 
         config(['yaffa.email_verification_required' => true]);
+
+        // Ensure that recaptcha is disabled for these tests.
+        config(['recaptcha.api_site_key' => null]);
+        config(['recaptcha.api_secret_key' => null]);
     }
 
     protected function successfulRegistrationRoute(): string

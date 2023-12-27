@@ -16,7 +16,13 @@
                             <p class="text-medium-emphasis">
                                 {{ __('Sign in to start your session') }}
                             </p>
-                            <form method="POST" action="{{ route('login') }}">
+                            <form
+                                    method="POST"
+                                    action="{{ route('login') }}"
+                                    @if(config('recaptcha.api_site_key'))
+                                        id="form-with-recaptcha"
+                                    @endif
+                            >
                                 @csrf
 
                                 @include('auth.components.email', ['autofocus' => true])
@@ -25,7 +31,20 @@
 
                                 <div class="row">
                                     <div class="col-5">
-                                        <button class="btn btn-primary px-4" type="submit" dusk="login-button">
+                                        <button
+                                                @class([
+                                                    'btn',
+                                                    'btn-primary',
+                                                    'px-4',
+                                                    'g-recaptcha' => config('recaptcha.api_site_key'),
+                                                ])
+                                                type="submit"
+                                                dusk="login-button"
+                                                @if(config('recaptcha.api_site_key'))
+                                                    data-sitekey="{{ config('recaptcha.api_site_key') }}"
+                                                    data-callback="onSubmit"
+                                                @endif
+                                        >
                                             {{ __('Login') }}
                                         </button>
                                     </div>

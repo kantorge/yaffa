@@ -3,7 +3,10 @@
         <i class="fa-solid fa-fw fa-lock"></i>
     </span>
     <input
-        class="form-control @error('password') is-invalid @enderror"
+        @class([
+            'form-control',
+            'is-invalid' => $errors->has('password')
+        ])
         id="password"
         name="password"
         placeholder="{{ __('Password') }}"
