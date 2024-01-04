@@ -464,7 +464,7 @@ export default {
         datePickerInitialPage() {
             const date = this.form.date || new Date();
             return {
-                year: date.getFullYear() - (date.getMonth() === 0 ? 1 : 0),
+                year: date.getFullYear(),
                 month: date.getMonth(),
             };
         },
