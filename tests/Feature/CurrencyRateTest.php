@@ -5,32 +5,56 @@ namespace Tests\Feature;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
+use Carbon\Carbon;
+use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 use Tests\TestCase;
 
 class CurrencyRateTest extends TestCase
 {
+    private function createUniqeCurrencyForUser(User $user): Currency
+    {
+        // Get the currencies supported by the mock provider
+        $currencyApi = CurrencyExchangeRates::create();
+        $currencies = $currencyApi->getSupportedCurrencies();
+
+        $loopCount = 0;
+        $loopLimit = 10000;
+        do {
+            /** @var Currency $currency */
+            $currency = Currency::factory()
+                ->for($user)
+                ->fromIsoCodes($currencies)
+                ->make();
+
+            if ($loopCount++ > $loopLimit) {
+                $this->fail("Loop limit of {$loopLimit} reached while trying to create unique currency");
+            }
+        } while (
+            Currency::where('user_id', $user->id)
+                ->where('iso_code', $currency->iso_code)
+                ->count() > 0
+        );
+        $currency->save();
+
+        return $currency;
+    }
+
     /** @test */
     public function guest_cannot_access_resource()
     {
+        // For this test, set the data provider of the currency exchange rate API to mock
+        config(['currency-exchange-rates.default_provider' => 'mock']);
+
         // Create a test user and two currencies for that user
         /** @var User $user */
         $user = User::factory()->create();
 
         // Create a base currency for the user
-        /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->for($user)->create(['base' => true]);
+        $baseCurrency = $this->createUniqeCurrencyForUser($user);
+        $baseCurrency->base = true;
+        $baseCurrency->save();
 
-        // Create a non-base currency for the user,
-        // while ensuring that the base currency is not the same as the non-base currency
-        do {
-            /** @var Currency $otherCurrency */
-            $otherCurrency = Currency::factory()->for($user)->make();
-        } while (
-            Currency::where('user_id', $user->id)
-                ->where('iso_code', $otherCurrency->iso_code)
-                ->count()
-        );
-        $otherCurrency->save();
+        $otherCurrency = $this->createUniqeCurrencyForUser($user);
 
         // Add one currency rate record
         $rate = CurrencyRate::create([
@@ -64,32 +88,26 @@ class CurrencyRateTest extends TestCase
     /** @test */
     public function user_can_access_their_own_resources()
     {
+        // For this test, set the data provider of the currency exchange rate API to mock
+        config(['currency-exchange-rates.default_provider' => 'mock']);
+
         // Create a test user and two currencies for that user
         /** @var User $user */
         $user = User::factory()->create();
 
         // Create a base currency for the user
-        /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->for($user)->create(['base' => true]);
+        $baseCurrency = $this->createUniqeCurrencyForUser($user);
+        $baseCurrency->base = true;
+        $baseCurrency->save();
 
-        // Create a non-base currency for the user,
-        // while ensuring that the base currency is not the same as the non-base currency
-        do {
-            /** @var Currency $otherCurrency */
-            $otherCurrency = Currency::factory()->for($user)->make();
-        } while (
-            Currency::where('user_id', $user->id)
-                ->where('iso_code', $otherCurrency->iso_code)
-                ->count()
-        );
-        $otherCurrency->save();
+        $otherCurrency = $this->createUniqeCurrencyForUser($user);
 
         // Add one currency rate record
         CurrencyRate::create([
             'from_id' => $otherCurrency->id,
             'to_id' => $baseCurrency->id,
             'rate' => 1,
-            'date' => now()
+            'date' => Carbon::yesterday()
         ]);
 
         // Acting as the user, try to access various routes
