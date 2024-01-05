@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.5.1](https://github.com/kantorge/yaffa/compare/v0.5.0...v0.5.1) (2024-01-05)
+
+
+### Bug Fixes
+
+* currency tests ([bbc82a0](https://github.com/kantorge/yaffa/commit/bbc82a02db92d851be91281b3362c85047c1b367))
+* default date on transaction forms ([511b399](https://github.com/kantorge/yaffa/commit/511b3998696a32a4189f759671dc89452a0a1cbe))
+* package.json & package-lock.json to reduce vulnerabilities ([71dca32](https://github.com/kantorge/yaffa/commit/71dca3269a72062583ece0b5270f79fc06e60624))
+* swap currency exchange rate provider ([990155e](https://github.com/kantorge/yaffa/commit/990155eb13fa8784dcaef11f223fa0f03fcf547d))
+* upgrade vue from 3.3.10 to 3.3.11 ([1bdc127](https://github.com/kantorge/yaffa/commit/1bdc127905d9d50b89c5bf92ae7719354a4e3115))
+
+
+### Miscellaneous Chores
+
+* minor code cleanup ([c9a7f5e](https://github.com/kantorge/yaffa/commit/c9a7f5e620bff7bc0203b89dab8d6b2d0329122d))
+
+## [0.5.0](https://github.com/kantorge/yaffa/compare/v0.4.0...v0.5.0) (2023-12-27)
+
+
+### Features
+
+* Sandbox-specific, optional components ([ff9cadd](https://github.com/kantorge/yaffa/commit/ff9cadd4301eefedbea9925e6d92e95ddee4e152))
+
+
+### Bug Fixes
+
+* add missing values to the .env.example files ([806764c](https://github.com/kantorge/yaffa/commit/806764c52383419b86b140062e99a41d46016720))
+* upgrade vue from 3.3.9 to 3.3.10 ([72bb91a](https://github.com/kantorge/yaffa/commit/72bb91a6e949ff4594fc8d1760474bf286822c89))
+
+
+### Miscellaneous Chores
+
+* remove (mostly) unused GTM references ([ed4adc5](https://github.com/kantorge/yaffa/commit/ed4adc5626d5a0532179d6aded077cc887f15041))
+
 ## [0.4.0](https://github.com/kantorge/yaffa/compare/v0.3.2...v0.4.0) (2023-12-23)
 
 

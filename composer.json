@@ -1,7 +1,7 @@
 {
     "name": "kantorge/yaffa",
     "description": "Yet Another Free Financial Application: a free, self-hosted personal finance app",
-    "version": "0.4.0",
+    "version": "0.5.1",
     "type": "project",
     "keywords": [
         "personal finance",
@@ -11,7 +11,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "amrshawky/laravel-currency": "^5.0",
         "beyondcode/laravel-mailbox": "^3.1",
         "biscolab/laravel-recaptcha": "^6.0",
         "bkwld/cloner": "^3.11",
@@ -20,6 +19,7 @@
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
+        "kantorge/laravel-currency-exchange-rates": "^0.0.3",
         "laracasts/utilities": "^3.2",
         "laravel/framework": "^9.0",
         "laravel/sanctum": "^2.12",
