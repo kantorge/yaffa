@@ -4,135 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b3ee8e25a61abd01e8ba82d62bb345f",
+    "content-hash": "62d047f79d5dd7d433e64b2ec9cbc7ef",
     "packages": [
-        {
-            "name": "amrshawky/currency",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amrshawky/currency.git",
-                "reference": "39f13b6783ef611fd13916d48abd31bca2ab1e54"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amrshawky/currency/zipball/39f13b6783ef611fd13916d48abd31bca2ab1e54",
-                "reference": "39f13b6783ef611fd13916d48abd31bca2ab1e54",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "guzzlehttp/guzzle": ">=6.0",
-                "php": ">=7.2"
-            },
-            "require-dev": {
-                "phpunit/phpunit": ">=8.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "AmrShawky\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Amr Shawky",
-                    "homepage": "https://amrshawky.com"
-                }
-            ],
-            "description": "A PHP library for current and historical currency exchange rates & crypto exchange rates based on the free API provided by exchangerate.host",
-            "keywords": [
-                "crypto exchange rates",
-                "currency",
-                "currency converter",
-                "exchange rates",
-                "php"
-            ],
-            "support": {
-                "issues": "https://github.com/amrshawky/currency/issues",
-                "source": "https://github.com/amrshawky/currency/tree/1.0.0"
-            },
-            "funding": [
-                {
-                    "url": "https://ko-fi.com/amrshawky",
-                    "type": "ko_fi"
-                }
-            ],
-            "time": "2021-05-13T23:41:33+00:00"
-        },
-        {
-            "name": "amrshawky/laravel-currency",
-            "version": "5.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amrshawky/laravel-currency.git",
-                "reference": "34df93d1bc19758fe8bc2be63a0fc1580cb2b3bd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amrshawky/laravel-currency/zipball/34df93d1bc19758fe8bc2be63a0fc1580cb2b3bd",
-                "reference": "34df93d1bc19758fe8bc2be63a0fc1580cb2b3bd",
-                "shasum": ""
-            },
-            "require": {
-                "amrshawky/currency": "^1.0",
-                "ext-json": "*",
-                "guzzlehttp/guzzle": ">=6.0",
-                "illuminate/support": "^6.0|^7.0|^8.0|^9.0",
-                "php": ">=7.2"
-            },
-            "require-dev": {
-                "phpunit/phpunit": ">=8.5.23"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "AmrShawky\\LaravelCurrency\\CurrencyServiceProvider"
-                    ],
-                    "aliases": {
-                        "Currency": "AmrShawky\\LaravelCurrency\\Facade\\Currency"
-                    }
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "AmrShawky\\LaravelCurrency\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Amr Shawky",
-                    "homepage": "https://amrshawky.com"
-                }
-            ],
-            "description": "A Laravel package for current and historical currency exchange rates & crypto exchange rates based on the free API provided by exchangerate.host",
-            "keywords": [
-                "currency",
-                "currency converter",
-                "exchange rates",
-                "laravel"
-            ],
-            "support": {
-                "issues": "https://github.com/amrshawky/laravel-currency/issues",
-                "source": "https://github.com/amrshawky/laravel-currency/tree/5.0.0"
-            },
-            "funding": [
-                {
-                    "url": "https://ko-fi.com/amrshawky",
-                    "type": "ko_fi"
-                }
-            ],
-            "time": "2022-02-08T19:26:13+00:00"
-        },
         {
             "name": "asm89/stack-cors",
             "version": "v2.1.1",
@@ -1908,6 +1781,82 @@
             "time": "2021-10-08T21:21:46+00:00"
         },
         {
+            "name": "kantorge/laravel-currency-exchange-rates",
+            "version": "v0.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kantorge/laravel-currency-exchange-rates.git",
+                "reference": "0ad0b4d1db518f70710c9f90eb36768aecb9fab5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kantorge/laravel-currency-exchange-rates/zipball/0ad0b4d1db518f70710c9f90eb36768aecb9fab5",
+                "reference": "0ad0b4d1db518f70710c9f90eb36768aecb9fab5",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.8",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.8",
+                "orchestra/testbench": "^8.8",
+                "pestphp/pest": "^2.20",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^1.0",
+                "phpstan/phpstan-phpunit": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Kantorge\\CurrencyExchangeRates\\CurrencyExchangeRatesServiceProvider"
+                    ],
+                    "aliases": {
+                        "CurrencyExchangeRates": "Kantorge\\CurrencyExchangeRates\\Facades\\CurrencyExchangeRates"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Kantorge\\CurrencyExchangeRates\\": "src/",
+                    "Kantorge\\CurrencyExchangeRates\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Gergely Kántor",
+                    "email": "kantorge@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A Laravel package to retrieve historical currency exchange rate data",
+            "homepage": "https://github.com/kantorge/laravel-currency-exchange-rates",
+            "keywords": [
+                "kantorge",
+                "laravel",
+                "laravel-currency-exchange-rates"
+            ],
+            "support": {
+                "issues": "https://github.com/kantorge/laravel-currency-exchange-rates/issues",
+                "source": "https://github.com/kantorge/laravel-currency-exchange-rates/tree/v0.0.3"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/kantorge",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-01-01T21:51:18+00:00"
+        },
+        {
             "name": "laracasts/utilities",
             "version": "3.2.2",
             "source": {
@@ -2293,16 +2242,16 @@
         },
         {
             "name": "laravel/ui",
-            "version": "v4.2.2",
+            "version": "v4.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/ui.git",
-                "reference": "a58ec468db4a340b33f3426c778784717a2c144b"
+                "reference": "d166e09cdcb2e23836f694774cba77a32edb6007"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/ui/zipball/a58ec468db4a340b33f3426c778784717a2c144b",
-                "reference": "a58ec468db4a340b33f3426c778784717a2c144b",
+                "url": "https://api.github.com/repos/laravel/ui/zipball/d166e09cdcb2e23836f694774cba77a32edb6007",
+                "reference": "d166e09cdcb2e23836f694774cba77a32edb6007",
                 "shasum": ""
             },
             "require": {
@@ -2349,9 +2298,9 @@
                 "ui"
             ],
             "support": {
-                "source": "https://github.com/laravel/ui/tree/v4.2.2"
+                "source": "https://github.com/laravel/ui/tree/v4.3.0"
             },
-            "time": "2023-05-09T19:47:28+00:00"
+            "time": "2023-12-19T14:46:09+00:00"
         },
         {
             "name": "league/commonmark",
@@ -10929,51 +10878,6 @@
                 }
             ],
             "time": "2021-11-16T10:29:06+00:00"
-        },
-        {
-            "name": "manyapp/duskapiconf",
-            "version": "v0.0.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/manyapp/duskapiconf.git",
-                "reference": "55e7c3fd916a321a9a288538365c5a1c58908dbd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/manyapp/duskapiconf/zipball/55e7c3fd916a321a9a288538365c5a1c58908dbd",
-                "reference": "55e7c3fd916a321a9a288538365c5a1c58908dbd",
-                "shasum": ""
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Manyapp\\DuskApiConf\\DuskApiConfServiceProvider"
-                    ],
-                    "aliases": []
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Manyapp\\DuskApiConf\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "mit"
-            ],
-            "authors": [
-                {
-                    "name": "manyapp",
-                    "email": "admin@many.app"
-                }
-            ],
-            "description": "Change your Laravel configuration for each Dusk test with an easy API",
-            "support": {
-                "issues": "https://github.com/manyapp/duskapiconf/issues",
-                "source": "https://github.com/manyapp/duskapiconf/tree/v0.0.3"
-            },
-            "time": "2019-07-05T14:16:16+00:00"
         },
         {
             "name": "maximebf/debugbar",
