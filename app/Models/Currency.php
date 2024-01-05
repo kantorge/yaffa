@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use AmrShawky\LaravelCurrency\Facade\Currency as CurrencyApi;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
@@ -13,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 
 /**
  * App\Models\Currency
@@ -60,7 +60,7 @@ class Currency extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<string>
      */
     protected $fillable = [
         'name',
@@ -73,7 +73,7 @@ class Currency extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'base' => 'boolean',
@@ -174,18 +174,21 @@ class Currency extends Model
             $from = Carbon::parse('yesterday');
         }
 
-        $rates = CurrencyApi::rates()
-            ->timeSeries($from->format('Y-m-d'), $date->format('Y-m-d'))
-            ->base($this->iso_code)
-            ->symbols([$baseCurrency->iso_code])
-            ->get();
+        $currencyApi = CurrencyExchangeRates::create();
+
+        $apiData = $currencyApi->getTimeSeries(
+            $from,
+            $date,
+            $this->iso_code,
+            [$baseCurrency->iso_code]
+        );
 
         // If rates is not an array with at least one element, return.
-        if (!is_array($rates) || count($rates) === 0) {
+        if (!is_array($apiData) || empty($apiData)) {
             return;
         }
 
-        foreach ($rates as $date => $rate) {
+        foreach ($apiData as $date => $rate) {
             CurrencyRate::updateOrCreate(
                 [
                     'from_id' => $this->id,
@@ -232,7 +235,8 @@ class Currency extends Model
         try {
             DB::beginTransaction();
 
-            Currency::where('user_id', $this->user->id)->update('base', null);
+            Currency::where('user_id', $this->user->id)
+                ->update(['base' => null]);
             $this->base = true;
             $this->save();
 
