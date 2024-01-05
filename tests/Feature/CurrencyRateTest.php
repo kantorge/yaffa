@@ -50,8 +50,9 @@ class CurrencyRateTest extends TestCase
         $user = User::factory()->create();
 
         // Create a base currency for the user
-        /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->for($user)->create(['base' => true]);
+        $baseCurrency = $this->createUniqeCurrencyForUser($user);
+        $baseCurrency->base = true;
+        $baseCurrency->save();
 
         $otherCurrency = $this->createUniqeCurrencyForUser($user);
 
@@ -95,8 +96,9 @@ class CurrencyRateTest extends TestCase
         $user = User::factory()->create();
 
         // Create a base currency for the user
-        /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->for($user)->create(['base' => true]);
+        $baseCurrency = $this->createUniqeCurrencyForUser($user);
+        $baseCurrency->base = true;
+        $baseCurrency->save();
 
         $otherCurrency = $this->createUniqeCurrencyForUser($user);
 
