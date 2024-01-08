@@ -12,7 +12,7 @@ const dataTableSelector = '#table';
 $(dataTableSelector).DataTable({
     data: currencyRates,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "rate",
             title: __("Rate"),

@@ -27,7 +27,7 @@ window.prices = window.prices.map(function(price) {
 $(dataTableSelector).DataTable({
     data: window.prices,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "priceFloat",
             title: __("Price"),

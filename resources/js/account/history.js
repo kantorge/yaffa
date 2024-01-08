@@ -56,7 +56,7 @@ var dtColumnSettingPayee = {
 $(selectorHistoryTable).DataTable({
     data: transactionData,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -84,7 +84,7 @@ $(selectorHistoryTable).DataTable({
             orderable: false,
         },
         dtColumnSettingPayee,
-        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefinition.category,
         {
             title: __('Withdrawal'),
             defaultContent: '',
@@ -121,8 +121,8 @@ $(selectorHistoryTable).DataTable({
                 }
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             title: __("Actions"),
             defaultContent: '',
@@ -177,9 +177,9 @@ $(selectorHistoryTable).DataTable({
 $(selectorScheduleTable).DataTable({
     data: scheduleData,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dtColumnSettingPayee,
-        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefinition.category,
         {
             title: "Withdrawal",
             defaultContent: '',
@@ -202,8 +202,8 @@ $(selectorScheduleTable).DataTable({
             },
             className: 'dt-nowrap'
         },
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             data: 'id',
             title: __("Actions"),

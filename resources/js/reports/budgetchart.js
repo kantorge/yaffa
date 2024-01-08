@@ -176,7 +176,7 @@ window.table = $(tableSelector).DataTable({
         },
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.start_date", __("Start date"), window.YAFFA.locale),
         {
             data: "transaction_schedule.rule",
             title: __("Schedule"),
@@ -186,10 +186,10 @@ window.table = $(tableSelector).DataTable({
                 return data.toText();
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField("transaction_schedule.next_date", __("Start date"), window.YAFFA.locale),
-        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('schedule', __('Schedule')),
-        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('budget', __('Budget')),
-        dataTableHelpers.transactionColumnDefiniton.iconFromBooleanField('transaction_schedule.active', __('Active')),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField("transaction_schedule.next_date", __("Start date"), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
+        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
+        dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
         {
             data: "transaction_type.type",
             title: __("Type"),
@@ -203,9 +203,9 @@ window.table = $(tableSelector).DataTable({
             },
             className: "text-center",
         },
-        dataTableHelpers.transactionColumnDefiniton.payee,
-        dataTableHelpers.transactionColumnDefiniton.category,
-        dataTableHelpers.transactionColumnDefiniton.amount,
+        dataTableHelpers.transactionColumnDefinition.payee,
+        dataTableHelpers.transactionColumnDefinition.category,
+        dataTableHelpers.transactionColumnDefinition.amount,
         {
             data: 'comment',
             title: __("Comment"),

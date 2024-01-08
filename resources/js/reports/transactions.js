@@ -82,7 +82,7 @@ window.table = $(tableSelector).DataTable({
         processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             title: __('Type'),
             defaultContent: '',
@@ -101,8 +101,8 @@ window.table = $(tableSelector).DataTable({
             defaultContent: '',
             data: 'config.account_to.name',
         },
-        dataTableHelpers.transactionColumnDefiniton.category,
-        dataTableHelpers.transactionColumnDefiniton.amount,
+        dataTableHelpers.transactionColumnDefinition.category,
+        dataTableHelpers.transactionColumnDefinition.amount,
         {
             title: __("Extra"),
             defaultContent: '',

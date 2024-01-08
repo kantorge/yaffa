@@ -87,7 +87,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             });
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -111,11 +111,11 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             },
             orderable: false,
         },
-        dataTableHelpers.transactionColumnDefiniton.payee,
-        dataTableHelpers.transactionColumnDefiniton.category,
-        dataTableHelpers.transactionColumnDefiniton.amount,
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.payee,
+        dataTableHelpers.transactionColumnDefinition.category,
+        dataTableHelpers.transactionColumnDefinition.amountCustom,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             data: 'id',
             title: __("Actions"),
@@ -176,12 +176,12 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
-        dataTableHelpers.transactionColumnDefiniton.payee,
-        dataTableHelpers.transactionColumnDefiniton.category,
-        dataTableHelpers.transactionColumnDefiniton.amount,
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.payee,
+        dataTableHelpers.transactionColumnDefinition.category,
+        dataTableHelpers.transactionColumnDefinition.amountCustom,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             data: 'id',
             title: __("Actions"),
