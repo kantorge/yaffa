@@ -93,7 +93,7 @@ window.summary = {
 window.table = $('#table').DataTable({
     data: transactions,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "transaction_type.name",
             title: __("Transaction"),
