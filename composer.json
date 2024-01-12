@@ -10,7 +10,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "beyondcode/laravel-mailbox": "^3.1",
         "biscolab/laravel-recaptcha": "^6.0",
         "bkwld/cloner": "^3.11",
