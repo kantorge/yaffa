@@ -30,24 +30,28 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return $browser
-            ->visitRoute('transaction.create', ['type' => 'investment'])
-            // Wait for form to load
-            ->waitFor('#transactionFormInvestment')
-            // Select account
-            ->select2ExactSearch('#account', 'Investment account USD', 10)
-            // Select investment
-            ->select2ExactSearch('#investment', 'Test investment USD', 10)
-            // Select type
-            ->select('#transaction_type', 'Buy')
-            // Add quantity
-            ->type('#transaction_quantity', '10')
-            // Add price
-            ->type('#transaction_price', '20')
-            // Add commission
-            ->type('#transaction_commission', '30')
-            // Add taxes
-            ->type('#transaction_tax', '40');
+        return retry(3, function () use ($browser) {
+            return $browser
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                // Wait for the form and key elements to be present
+                ->waitFor('#transactionFormInvestment')
+                ->waitFor('#account', 10)
+                ->waitFor('#investment', 10)
+                // Select account
+                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                // Select investment
+                ->select2ExactSearch('#investment', 'Test investment USD', 10)
+                // Select type
+                ->select('#transaction_type', 'Buy')
+                // Add quantity
+                ->type('#transaction_quantity', '10')
+                // Add price
+                ->type('#transaction_price', '20')
+                // Add commission
+                ->type('#transaction_commission', '30')
+                // Add taxes
+                ->type('#transaction_tax', '40');
+        });
     }
 
     public function test_user_can_load_the_investment_transaction_form()
