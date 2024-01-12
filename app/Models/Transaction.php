@@ -6,7 +6,7 @@ use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
 use Carbon\Carbon;
 use Database\Factories\TransactionFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

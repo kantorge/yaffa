@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Builder;
