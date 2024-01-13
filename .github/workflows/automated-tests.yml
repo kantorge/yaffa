@@ -7,6 +7,22 @@ on:
       - main
       - other/sandbox
 
+    # Only run tests if relevant file types (php, js, css, etc) are changed
+    paths:
+      - '**.php'
+      - '**.js'
+      - '**.css'
+      - '**.vue'
+      - '**.scss'
+      - '**.env.ci'
+      - '**.env.dusk.ci'
+      - '**.json'
+      - '**.lock'
+      - '**.xml'
+      - '**.yml'
+      - '**.gitignore'
+      - '**.gitattributes'
+
 jobs:
   phpunit:
     runs-on: ubuntu-latest
