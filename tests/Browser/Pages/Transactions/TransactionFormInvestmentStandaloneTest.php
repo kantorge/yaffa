@@ -12,6 +12,10 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
+    private const string ACCOUNT_DROPDOWN_SELECTOR = '#account';
+    private const string INVESTMENT_DROPDOWN_SELECTOR = '#investment';
+    private const string MAIN_FORM_SELECTOR = '#transactionFormInvestment';
+
     protected User $user;
 
     public function setUp(): void
@@ -34,13 +38,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             return $browser
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Wait for the form and key elements to be present
-                ->waitFor('#transactionFormInvestment')
-                ->waitFor('#account', 10)
-                ->waitFor('#investment', 10)
-                // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
-                // Select investment
-                ->select2ExactSearch('#investment', 'Test investment USD', 10)
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
                 // Select type
                 ->select('#transaction_type', 'Buy')
                 // Add quantity
@@ -50,7 +50,11 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Add commission
                 ->type('#transaction_commission', '30')
                 // Add taxes
-                ->type('#transaction_tax', '40');
+                ->type('#transaction_tax', '40')
+                // Select account
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
+                // Select investment
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment USD', 10);
         });
     }
 
@@ -59,7 +63,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent('#transactionFormInvestment');
+                ->assertPresent(self::MAIN_FORM_SELECTOR);
         });
     }
 
@@ -83,12 +87,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
-                ->assertSeeIn('#account + .select2', 'Investment account USD')
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
+                ->assertSeeIn(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2', 'Investment account USD')
                 // Make sure, that the account API call is finished, by waiting for the currency to be displayed
                 ->waitForTextIn('@label-currency', '$', 10)
                 // Try to select an investment by opening the dropdown
-                ->click('#investment + .select2')
+                ->click(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2')
                 // Wait for the default options to load
                 ->waitFor('.select2-container--open> .select2-dropdown > .select2-results > ul', 10)
                 ->assertSeeIn('.select2-container--open > .select2-dropdown > .select2-results > ul', 'Test investment USD')
@@ -102,10 +106,10 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // As a preparation, select an investment with known currency
-                ->select2ExactSearch('#investment', 'Test investment USD', 10)
-                ->assertSeeIn('#investment + .select2', 'Test investment USD')
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment USD', 10)
+                ->assertSeeIn(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2', 'Test investment USD')
                 // As a main test, search for accounts
-                ->click('#account + .select2')
+                ->click(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2')
                 ->waitFor('span.select2-container--open:not(.select2-container--below)')
                 // Search for investment accounts, without specifying a currency
                 ->type('.select2-search__field', 'Investment account')
@@ -123,28 +127,28 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent('#transactionFormInvestment')
+                ->assertPresent(self::MAIN_FORM_SELECTOR)
 
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
 
                 // Validate currency is displayed correctly
                 ->waitForTextIn('@label-currency', '$')
 
                 // Remove the account
-                ->select2ClearAll('#account', '#transactionFormInvestment')
+                ->select2ClearAll(self::ACCOUNT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
                 ->assertNotPresent('@label-currency')
 
                 // Select investment
-                ->select2ExactSearch('#investment', 'Test investment EUR', 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment EUR', 10)
 
                 // Validate currency is displayed correctly
                 ->waitForTextIn('@label-currency', '€')
 
                 // Remove the investment
-                ->select2ClearAll('#investment', '#transactionFormInvestment')
+                ->select2ClearAll(self::INVESTMENT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
                 ->assertNotPresent('@label-currency');
@@ -157,28 +161,28 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent('#transactionFormInvestment')
+                ->assertPresent(self::MAIN_FORM_SELECTOR)
 
                 // Select investment
-                ->select2ExactSearch('#investment', 'Test investment EUR', 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment EUR', 10)
 
                 // Validate currency is displayed correctly
                 ->waitForTextIn('@label-currency', '€')
 
                 // Remove the investment
-                ->select2ClearAll('#investment', '#transactionFormInvestment')
+                ->select2ClearAll(self::INVESTMENT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
                 ->assertNotPresent('@label-currency')
 
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
 
                 // Validate currency is displayed correctly
                 ->waitForTextIn('@label-currency', '$')
 
                 // Remove the account
-                ->select2ClearAll('#account', '#transactionFormInvestment')
+                ->select2ClearAll(self::ACCOUNT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
                 ->assertNotPresent('@label-currency');
@@ -207,9 +211,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
                 // Select investment
-                ->select2ExactSearch('#investment', 'Test investment USD', 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment USD', 10)
                 // Select type
                 ->select('#transaction_type', 'Sell')
                 // Verify that dividend field is disabled
@@ -235,9 +239,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
                 // Select investment
-                ->select2ExactSearch('#investment', 'Test investment USD', 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment USD', 10)
                 // Select type
                 ->select('#transaction_type', 'Dividend')
                 // Verify that quantity field is disabled
@@ -271,9 +275,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Select account
-                ->select2ExactSearch('#account', 'Investment account USD', 10)
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, 'Investment account USD', 10)
                 // Select investment
-                ->select2ExactSearch('#investment', 'Test investment USD', 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, 'Test investment USD', 10)
                 // Select type
                 ->select('#transaction_type', 'Add shares')
                 // Verify that price field is disabled
