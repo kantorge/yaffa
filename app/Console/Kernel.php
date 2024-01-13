@@ -33,6 +33,9 @@ class Kernel extends ConsoleKernel
 
         // Run the command to record scheduled transactions
         $schedule->command('app:record-scheduled-transactions')->dailyAt('06:00');
+
+        // Redis cache cleanup
+        $schedule->command('cache:prune-stale-tags')->hourly();
     }
 
     /**

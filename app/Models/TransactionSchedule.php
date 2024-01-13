@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Database\Factories\TransactionScheduleFactory;
 use DateTime;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

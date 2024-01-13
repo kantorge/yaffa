@@ -6,7 +6,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class ReportController extends Controller
 {

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\TransactionDetailStandardFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,8 +32,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|TransactionDetailStandard whereId($value)
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
- * @property-read \App\Models\TransactionSchedule|null $transactionSchedule
- * @property-read \App\Models\TransactionType $transactionType
+ * @property-read TransactionSchedule|null $transactionSchedule
+ * @property-read TransactionType $transactionType
  * @mixin Eloquent
  */
 class TransactionDetailStandard extends Model

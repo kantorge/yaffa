@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

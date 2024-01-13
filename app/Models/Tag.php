@@ -4,14 +4,12 @@ namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Database\Factories\TagFactory;
-use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 
 /**
@@ -37,7 +35,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Tag whereName($value)
  * @method static Builder|Tag whereUpdatedAt($value)
  * @method static Builder|Tag whereUserId($value)
- * @mixin Eloquent
  */
 class Tag extends Model
 {

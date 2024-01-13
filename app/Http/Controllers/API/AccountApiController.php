@@ -414,18 +414,23 @@ class AccountApiController extends Controller
                 $account['sum'] += $account['investments'];
 
                 // Apply currency exchange, if necesary
-                if ($account->config->currency_id !== $baseCurrency->id) {
-                    $rate = $currencies->find($account->config->currency_id)->rate();
+                if ($account->config->currency_id === $baseCurrency->id) {
+                    $account['currency'] = $account->config->currency;
 
-                    $account['sum_foreign'] = $account['sum'];
-                    $account['sum'] *= $rate;
-
-                    $account['cash_foreign'] = $account['cash'];
-                    $account['cash'] *= $rate;
-
-                    $account['investments_foreign'] = $account['investments'];
-                    $account['investments'] *= $rate;
+                    return $account;
                 }
+
+                $rate = $currencies->find($account->config->currency_id)->rate();
+
+                $account['sum_foreign'] = $account['sum'];
+                $account['sum'] *= $rate;
+
+                $account['cash_foreign'] = $account['cash'];
+                $account['cash'] *= $rate;
+
+                $account['investments_foreign'] = $account['investments'];
+                $account['investments'] *= $rate;
+
                 $account['currency'] = $account->config->currency;
 
                 return $account;
