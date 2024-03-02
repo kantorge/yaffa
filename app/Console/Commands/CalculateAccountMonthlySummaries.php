@@ -16,11 +16,10 @@ class CalculateAccountMonthlySummaries extends Command
      *
      * @var string
      */
-    protected $signature = 'app:cache:account-monthly-summaries 
-                            {--accountEntityId= : The ID of the account entity. If provided, the command will only process this account entity.}
-                            {--transactionType= : The type of transaction. Must be \'account_balance\' or \'investment_value\'. If not provided, the command will process both types.}
-                            {--dataType= : The type of data. Must be \'fact\', \'forecast\', or \'budget\'. If not provided, the command will process all types.}';
-
+    protected $signature = 'app:cache:account-monthly-summaries'
+        . '{--accountEntityId= : The ID of the account entity to process directly.}'
+        . '{--transactionType= : One of \'account_balance\', \'investment_value\'. All types get processed if not set.}'
+        . '{--dataType= : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.}';
 
     /**
      * The console command description.
@@ -54,16 +53,44 @@ class CalculateAccountMonthlySummaries extends Command
             $jobs = [];
             // Loop through all accounts and create a job for each account
             $user->accounts->each(function ($account) use ($user, &$jobs) {
-                $jobs['account_balance-fact'][] = new CalculateAccountMonthlySummariesJob($user, 'account_balance-fact', $account);
-                $jobs['account_balance-forecast'][] = new CalculateAccountMonthlySummariesJob($user, 'account_balance-forecast', $account);
-                $jobs['investment_value-fact'][] = new CalculateAccountMonthlySummariesJob($user, 'investment_value-fact', $account);
-                $jobs['investment_value-forecast'][] = new CalculateAccountMonthlySummariesJob($user, 'investment_value-forecast', $account);
-                $jobs['account_balance-budget'][] = new CalculateAccountMonthlySummariesJob($user, 'account_balance-budget', $account);
+                $jobs['account_balance-fact'][] = new CalculateAccountMonthlySummariesJob(
+                    $user,
+                    'account_balance-fact',
+                    $account
+                );
+
+                $jobs['account_balance-forecast'][] = new CalculateAccountMonthlySummariesJob(
+                    $user,
+                    'account_balance-forecast',
+                    $account
+                );
+
+                $jobs['investment_value-fact'][] = new CalculateAccountMonthlySummariesJob(
+                    $user,
+                    'investment_value-fact',
+                    $account
+                );
+
+                $jobs['investment_value-forecast'][] = new CalculateAccountMonthlySummariesJob(
+                    $user,
+                    'investment_value-forecast',
+                    $account
+                );
+
+                $jobs['account_balance-budget'][] = new CalculateAccountMonthlySummariesJob(
+                    $user,
+                    'account_balance-budget',
+                    $account
+                );
             });
 
             // Finally, add the generic budget job, which handles empty accounts
-            $jobs['account_balance-budget'][] = new CalculateAccountMonthlySummariesJob($user, 'account_balance-budget');
+            $jobs['account_balance-budget'][] = new CalculateAccountMonthlySummariesJob(
+                $user,
+                'account_balance-budget'
+            );
 
+            // Now we need to dispatch the jobs prepared above
             Bus::batch($jobs['account_balance-fact'])
                 ->name('CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id)
                 ->dispatch();

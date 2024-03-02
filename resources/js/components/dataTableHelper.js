@@ -236,7 +236,7 @@ export function muteCellWithValue(column, mutedValue) {
 
 // These objects can be used to standard data display in various dataTable column definitions
 // The usage assumes that the underlying transaction object has also unified format
-export let transactionColumnDefinition = {
+export const transactionColumnDefinition = {
     // Generic date field
     dateFromCustomField: function (fieldName, title, locale) {
         return {

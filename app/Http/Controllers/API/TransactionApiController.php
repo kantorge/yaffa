@@ -731,8 +731,6 @@ class TransactionApiController extends Controller
             event(new TransactionUpdated($sourceTransaction, [
                 'schedule_config' => $originalScheduleConfig,
             ]));
-
-            return;
         }
     }
 }
