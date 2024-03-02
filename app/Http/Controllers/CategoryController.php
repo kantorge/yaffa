@@ -191,7 +191,7 @@ class CategoryController extends Controller
          */
         if ($categorySource) {
             JavaScriptFacade::put([
-                'categorySource' => $categorySource->toArray(),
+                'categorySource' => $categorySource,
             ]);
         }
 

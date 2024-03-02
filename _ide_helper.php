@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 9.52.16.
+ * Generated for Laravel 10.40.0.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -150,6 +150,18 @@ namespace Illuminate\Support\Facades {
             return $instance->bootstrapPath($path);
         }
         /**
+         * Set the bootstrap file directory.
+         *
+         * @param string $path
+         * @return \Illuminate\Foundation\Application
+         * @static
+         */
+        public static function useBootstrapPath($path)
+        {
+            /** @var \Illuminate\Foundation\Application $instance */
+            return $instance->useBootstrapPath($path);
+        }
+        /**
          * Get the path to the application configuration files.
          *
          * @param string $path
@@ -160,6 +172,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Foundation\Application $instance */
             return $instance->configPath($path);
+        }
+        /**
+         * Set the configuration directory.
+         *
+         * @param string $path
+         * @return \Illuminate\Foundation\Application
+         * @static
+         */
+        public static function useConfigPath($path)
+        {
+            /** @var \Illuminate\Foundation\Application $instance */
+            return $instance->useConfigPath($path);
         }
         /**
          * Get the path to the database directory.
@@ -212,13 +236,26 @@ namespace Illuminate\Support\Facades {
         /**
          * Get the path to the public / web directory.
          *
+         * @param string $path
          * @return string
          * @static
          */
-        public static function publicPath()
+        public static function publicPath($path = '')
         {
             /** @var \Illuminate\Foundation\Application $instance */
-            return $instance->publicPath();
+            return $instance->publicPath($path);
+        }
+        /**
+         * Set the public / web directory.
+         *
+         * @param string $path
+         * @return \Illuminate\Foundation\Application
+         * @static
+         */
+        public static function usePublicPath($path)
+        {
+            /** @var \Illuminate\Foundation\Application $instance */
+            return $instance->usePublicPath($path);
         }
         /**
          * Get the path to the storage directory.
@@ -269,6 +306,19 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Foundation\Application $instance */
             return $instance->viewPath($path);
+        }
+        /**
+         * Join the given paths together.
+         *
+         * @param string $basePath
+         * @param string $path
+         * @return string
+         * @static
+         */
+        public static function joinPaths($basePath, $path = '')
+        {
+            /** @var \Illuminate\Foundation\Application $instance */
+            return $instance->joinPaths($basePath, $path);
         }
         /**
          * Get the path to the environment file directory.
@@ -383,6 +433,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Foundation\Application $instance */
             return $instance->runningInConsole();
+        }
+        /**
+         * Determine if the application is running any of the given console commands.
+         *
+         * @param string|array $commands
+         * @return bool
+         * @static
+         */
+        public static function runningConsoleCommand(...$commands)
+        {
+            /** @var \Illuminate\Foundation\Application $instance */
+            return $instance->runningConsoleCommand(...$commands);
         }
         /**
          * Determine if the application is running unit tests.
@@ -1512,6 +1574,18 @@ namespace Illuminate\Support\Facades {
     class Artisan
     {
         /**
+         * Re-route the Symfony command events to their Laravel counterparts.
+         *
+         * @internal
+         * @return \App\Console\Kernel
+         * @static
+         */
+        public static function rerouteSymfonyCommandEvents()
+        {            //Method inherited from \Illuminate\Foundation\Console\Kernel
+            /** @var \App\Console\Kernel $instance */
+            return $instance->rerouteSymfonyCommandEvents();
+        }
+        /**
          * Run the console application.
          *
          * @param \Symfony\Component\Console\Input\InputInterface $input
@@ -1656,7 +1730,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the Artisan application instance.
          *
-         * @param \Illuminate\Console\Application $artisan
+         * @param \Illuminate\Console\Application|null $artisan
          * @static
          */
         public static function setArtisan($artisan)
@@ -2645,6 +2719,18 @@ namespace Illuminate\Support\Facades {
             return $instance->getCustomDirectives();
         }
         /**
+         * Indicate that the following callable should be used to prepare strings for compilation.
+         *
+         * @param callable $callback
+         * @return \Illuminate\View\Compilers\BladeCompiler
+         * @static
+         */
+        public static function prepareStringsForCompilationUsing($callback)
+        {
+            /** @var \Illuminate\View\Compilers\BladeCompiler $instance */
+            return $instance->prepareStringsForCompilationUsing($callback);
+        }
+        /**
          * Register a new precompiler.
          *
          * @param callable $precompiler
@@ -2713,6 +2799,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $path
          * @return bool
+         * @throws \ErrorException
          * @static
          */
         public static function isExpired($path)
@@ -2825,6 +2912,7 @@ namespace Illuminate\Support\Facades {
      * @method static array|null resolveAuthenticatedUser(\Illuminate\Http\Request $request)
      * @method static void resolveAuthenticatedUserUsing(\Closure $callback)
      * @method static \Illuminate\Broadcasting\Broadcasters\Broadcaster channel(\Illuminate\Contracts\Broadcasting\HasBroadcastChannel|string $channel, callable|string $callback, array $options = [])
+     * @method static \Illuminate\Support\Collection getChannels()
      * @see \Illuminate\Broadcasting\BroadcastManager
      * @see \Illuminate\Broadcasting\Broadcasters\Broadcaster
      */
@@ -3191,12 +3279,13 @@ namespace Illuminate\Support\Facades {
          * Specify the jobs that should be dispatched instead of faked.
          *
          * @param array|string $jobsToDispatch
+         * @return \Illuminate\Support\Testing\Fakes\BusFake
          * @static
          */
         public static function except($jobsToDispatch)
         {
             /** @var \Illuminate\Support\Testing\Fakes\BusFake $instance */
-            $instance->except($jobsToDispatch);
+            return $instance->except($jobsToDispatch);
         }
         /**
          * Assert if a job was dispatched based on a truth-test callback.
@@ -3338,6 +3427,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\BusFake $instance */
             $instance->assertDispatchedWithoutChain($command, $callback);
+        }
+        /**
+         * Create a new assertion about a chained batch.
+         *
+         * @param \Closure $callback
+         * @return \Illuminate\Support\Testing\Fakes\ChainedBatchTruthTest
+         * @static
+         */
+        public static function chainedBatch($callback)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\BusFake $instance */
+            return $instance->chainedBatch($callback);
         }
         /**
          * Assert if a batch was dispatched based on a truth-test callback.
@@ -3482,6 +3583,18 @@ namespace Illuminate\Support\Facades {
             /** @var \Illuminate\Support\Testing\Fakes\BusFake $instance */
             return $instance->recordPendingBatch($pendingBatch);
         }
+        /**
+         * Specify if commands should be serialized and restored when being batched.
+         *
+         * @param bool $serializeAndRestore
+         * @return \Illuminate\Support\Testing\Fakes\BusFake
+         * @static
+         */
+        public static function serializeAndRestore($serializeAndRestore = true)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\BusFake $instance */
+            return $instance->serializeAndRestore($serializeAndRestore);
+        }
 
     }
     /**
@@ -3515,6 +3628,19 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Cache\CacheManager $instance */
             return $instance->driver($driver);
+        }
+        /**
+         * Resolve the given store.
+         *
+         * @param string $name
+         * @return \Illuminate\Contracts\Cache\Repository
+         * @throws \InvalidArgumentException
+         * @static
+         */
+        public static function resolve($name)
+        {
+            /** @var \Illuminate\Cache\CacheManager $instance */
+            return $instance->resolve($name);
         }
         /**
          * Create a new cache repository with the given implementation.
@@ -3595,6 +3721,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Cache\CacheManager $instance */
             return $instance->extend($driver, $callback);
+        }
+        /**
+         * Set the application instance used by the manager.
+         *
+         * @param \Illuminate\Contracts\Foundation\Application $app
+         * @return \Illuminate\Cache\CacheManager
+         * @static
+         */
+        public static function setApplication($app)
+        {
+            /** @var \Illuminate\Cache\CacheManager $instance */
+            return $instance->setApplication($app);
         }
         /**
          * Determine if an item exists in the cache.
@@ -3954,6 +4092,18 @@ namespace Illuminate\Support\Facades {
             return $instance->getStore();
         }
         /**
+         * Set the cache store implementation.
+         *
+         * @param \Illuminate\Contracts\Cache\Store $store
+         * @return static
+         * @static
+         */
+        public static function setStore($store)
+        {
+            /** @var \Illuminate\Cache\Repository $instance */
+            return $instance->setStore($store);
+        }
+        /**
          * Get the event dispatcher instance.
          *
          * @return \Illuminate\Contracts\Events\Dispatcher
@@ -4118,6 +4268,18 @@ namespace Illuminate\Support\Facades {
             return $instance->flush();
         }
         /**
+         * Get the full path for the given cache key.
+         *
+         * @param string $key
+         * @return string
+         * @static
+         */
+        public static function path($key)
+        {
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->path($key);
+        }
+        /**
          * Get the Filesystem instance.
          *
          * @return \Illuminate\Filesystem\Filesystem
@@ -4138,6 +4300,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Cache\FileStore $instance */
             return $instance->getDirectory();
+        }
+        /**
+         * Set the cache directory where locks should be stored.
+         *
+         * @param string|null $lockDirectory
+         * @return \Illuminate\Cache\FileStore
+         * @static
+         */
+        public static function setLockDirectory($lockDirectory)
+        {
+            /** @var \Illuminate\Cache\FileStore $instance */
+            return $instance->setLockDirectory($lockDirectory);
         }
         /**
          * Get the cache key prefix.
@@ -4657,12 +4831,26 @@ namespace Illuminate\Support\Facades {
             return $instance->connection($name);
         }
         /**
+         * Get a database connection instance from the given configuration.
+         *
+         * @param string $name
+         * @param array $config
+         * @param bool $force
+         * @return \Illuminate\Database\MySqlConnection
+         * @static
+         */
+        public static function connectUsing($name, $config, $force = false)
+        {
+            /** @var \Illuminate\Database\DatabaseManager $instance */
+            return $instance->connectUsing($name, $config, $force);
+        }
+        /**
          * Register a custom Doctrine type.
          *
          * @param string $class
          * @param string $name
          * @param string $type
-         * @throws \Doctrine\DBAL\DBALException
+         * @throws \Doctrine\DBAL\Exception
          * @throws \RuntimeException
          * @static
          */
@@ -4944,7 +5132,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Begin a fluent query against a database table.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|string $table
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Contracts\Database\Query\Expression|string $table
          * @param string|null $as
          * @return \Illuminate\Database\Query\Builder
          * @static
@@ -5020,6 +5208,20 @@ namespace Illuminate\Support\Facades {
         {            //Method inherited from \Illuminate\Database\Connection
             /** @var \Illuminate\Database\MySqlConnection $instance */
             return $instance->select($query, $bindings, $useReadPdo);
+        }
+        /**
+         * Run a select statement against the database and returns all of the result sets.
+         *
+         * @param string $query
+         * @param array $bindings
+         * @param bool $useReadPdo
+         * @return array
+         * @static
+         */
+        public static function selectResultSets($query, $bindings = [], $useReadPdo = true)
+        {            //Method inherited from \Illuminate\Database\Connection
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->selectResultSets($query, $bindings, $useReadPdo);
         }
         /**
          * Run a select statement against the database and returns a generator.
@@ -5125,6 +5327,18 @@ namespace Illuminate\Support\Facades {
             return $instance->pretend($callback);
         }
         /**
+         * Execute the given callback without "pretending".
+         *
+         * @param \Closure $callback
+         * @return mixed
+         * @static
+         */
+        public static function withoutPretending($callback)
+        {            //Method inherited from \Illuminate\Database\Connection
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->withoutPretending($callback);
+        }
+        /**
          * Bind values to their parameters in the given statement.
          *
          * @param \PDOStatement $statement
@@ -5205,6 +5419,16 @@ namespace Illuminate\Support\Facades {
             $instance->resetTotalQueryDuration();
         }
         /**
+         * Reconnect to the database if a PDO connection is missing.
+         *
+         * @static
+         */
+        public static function reconnectIfMissingConnection()
+        {            //Method inherited from \Illuminate\Database\Connection
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            $instance->reconnectIfMissingConnection();
+        }
+        /**
          * Register a hook to be run just before a database query is executed.
          *
          * @param \Closure $callback
@@ -5231,13 +5455,26 @@ namespace Illuminate\Support\Facades {
          * Get a new raw query expression.
          *
          * @param mixed $value
-         * @return \Illuminate\Database\Query\Expression
+         * @return \Illuminate\Contracts\Database\Query\Expression
          * @static
          */
         public static function raw($value)
         {            //Method inherited from \Illuminate\Database\Connection
             /** @var \Illuminate\Database\MySqlConnection $instance */
             return $instance->raw($value);
+        }
+        /**
+         * Escape a value for safe SQL embedding.
+         *
+         * @param string|float|int|bool|null $value
+         * @param bool $binary
+         * @return string
+         * @static
+         */
+        public static function escape($value, $binary = false)
+        {            //Method inherited from \Illuminate\Database\Connection
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->escape($value, $binary);
         }
         /**
          * Determine if the database connection has modified any database records.
@@ -5307,7 +5544,7 @@ namespace Illuminate\Support\Facades {
             return $instance->isDoctrineAvailable();
         }
         /**
-         * Indicates whether native alter operations will be used when dropping or renaming columns, even if Doctrine DBAL is installed.
+         * Indicates whether native alter operations will be used when dropping, renaming, or modifying columns, even if Doctrine DBAL is installed.
          *
          * @return bool
          * @static
@@ -5612,6 +5849,17 @@ namespace Illuminate\Support\Facades {
             return $instance->getQueryLog();
         }
         /**
+         * Get the connection query log with embedded bindings.
+         *
+         * @return array
+         * @static
+         */
+        public static function getRawQueryLog()
+        {            //Method inherited from \Illuminate\Database\Connection
+            /** @var \Illuminate\Database\MySqlConnection $instance */
+            return $instance->getRawQueryLog();
+        }
+        /**
          * Clear the query log.
          *
          * @static
@@ -5900,7 +6148,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param string|object $event
          * @param mixed $payload
-         * @return array|null
+         * @return mixed
          * @static
          */
         public static function until($event, $payload = [])
@@ -5992,6 +6240,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Events\Dispatcher $instance */
             return $instance->setQueueResolver($resolver);
+        }
+        /**
+         * Set the database transaction manager resolver implementation.
+         *
+         * @param callable $resolver
+         * @return \Illuminate\Events\Dispatcher
+         * @static
+         */
+        public static function setTransactionManagerResolver($resolver)
+        {
+            /** @var \Illuminate\Events\Dispatcher $instance */
+            return $instance->setTransactionManagerResolver($resolver);
         }
         /**
          * Gets the raw, unprepared listeners.
@@ -6190,6 +6450,21 @@ namespace Illuminate\Support\Facades {
             return $instance->get($path, $lock);
         }
         /**
+         * Get the contents of a file as decoded JSON.
+         *
+         * @param string $path
+         * @param int $flags
+         * @param bool $lock
+         * @return array
+         * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+         * @static
+         */
+        public static function json($path, $flags = 0, $lock = false)
+        {
+            /** @var \Illuminate\Filesystem\Filesystem $instance */
+            return $instance->json($path, $flags, $lock);
+        }
+        /**
          * Get contents of a file with shared access.
          *
          * @param string $path
@@ -6313,13 +6588,14 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $path
          * @param string $data
+         * @param bool $lock
          * @return int
          * @static
          */
-        public static function append($path, $data)
+        public static function append($path, $data, $lock = false)
         {
             /** @var \Illuminate\Filesystem\Filesystem $instance */
-            return $instance->append($path, $data);
+            return $instance->append($path, $data, $lock);
         }
         /**
          * Get or set UNIX mode of a file or directory.
@@ -6918,30 +7194,30 @@ namespace Illuminate\Support\Facades {
             return $instance->after($callback);
         }
         /**
-         * Determine if the given ability should be granted for the current user.
+         * Determine if all of the given abilities should be granted for the current user.
          *
-         * @param string $ability
+         * @param \Illuminate\Auth\Access\iterable|string $abilities
          * @param array|mixed $arguments
          * @return bool
          * @static
          */
-        public static function allows($ability, $arguments = [])
+        public static function allows($abilities, $arguments = [])
         {
             /** @var \Illuminate\Auth\Access\Gate $instance */
-            return $instance->allows($ability, $arguments);
+            return $instance->allows($abilities, $arguments);
         }
         /**
-         * Determine if the given ability should be denied for the current user.
+         * Determine if any of the given abilities should be denied for the current user.
          *
-         * @param string $ability
+         * @param \Illuminate\Auth\Access\iterable|string $abilities
          * @param array|mixed $arguments
          * @return bool
          * @static
          */
-        public static function denies($ability, $arguments = [])
+        public static function denies($abilities, $arguments = [])
         {
             /** @var \Illuminate\Auth\Access\Gate $instance */
-            return $instance->denies($ability, $arguments);
+            return $instance->denies($abilities, $arguments);
         }
         /**
          * Determine if all of the given abilities should be granted for the current user.
@@ -7095,6 +7371,18 @@ namespace Illuminate\Support\Facades {
             return $instance->policies();
         }
         /**
+         * Set the default denial response for gates and policies.
+         *
+         * @param \Illuminate\Auth\Access\Response $response
+         * @return \Illuminate\Auth\Access\Gate
+         * @static
+         */
+        public static function defaultDenialResponse($response)
+        {
+            /** @var \Illuminate\Auth\Access\Gate $instance */
+            return $instance->defaultDenialResponse($response);
+        }
+        /**
          * Set the container instance used by the gate.
          *
          * @param \Illuminate\Contracts\Container\Container $container
@@ -7229,6 +7517,18 @@ namespace Illuminate\Support\Facades {
             return $instance->needsRehash($hashedValue, $options);
         }
         /**
+         * Determine if a given string is already hashed.
+         *
+         * @param string $value
+         * @return bool
+         * @static
+         */
+        public static function isHashed($value)
+        {
+            /** @var \Illuminate\Hashing\HashManager $instance */
+            return $instance->isHashed($value);
+        }
+        /**
          * Get the default driver name.
          *
          * @return string
@@ -7316,20 +7616,23 @@ namespace Illuminate\Support\Facades {
      *
      *
      * @method static \Illuminate\Http\Client\PendingRequest baseUrl(string $url)
-     * @method static \Illuminate\Http\Client\PendingRequest withBody(string $content, string $contentType)
+     * @method static \Illuminate\Http\Client\PendingRequest withBody(string $content, string $contentType = 'application/json')
      * @method static \Illuminate\Http\Client\PendingRequest asJson()
      * @method static \Illuminate\Http\Client\PendingRequest asForm()
      * @method static \Illuminate\Http\Client\PendingRequest attach(string|array $name, string|resource $contents = '', string|null $filename = null, array $headers = [])
      * @method static \Illuminate\Http\Client\PendingRequest asMultipart()
      * @method static \Illuminate\Http\Client\PendingRequest bodyFormat(string $format)
+     * @method static \Illuminate\Http\Client\PendingRequest withQueryParameters(array $parameters)
      * @method static \Illuminate\Http\Client\PendingRequest contentType(string $contentType)
      * @method static \Illuminate\Http\Client\PendingRequest acceptJson()
      * @method static \Illuminate\Http\Client\PendingRequest accept(string $contentType)
      * @method static \Illuminate\Http\Client\PendingRequest withHeaders(array $headers)
+     * @method static \Illuminate\Http\Client\PendingRequest withHeader(string $name, mixed $value)
+     * @method static \Illuminate\Http\Client\PendingRequest replaceHeaders(array $headers)
      * @method static \Illuminate\Http\Client\PendingRequest withBasicAuth(string $username, string $password)
      * @method static \Illuminate\Http\Client\PendingRequest withDigestAuth(string $username, string $password)
      * @method static \Illuminate\Http\Client\PendingRequest withToken(string $token, string $type = 'Bearer')
-     * @method static \Illuminate\Http\Client\PendingRequest withUserAgent(string $userAgent)
+     * @method static \Illuminate\Http\Client\PendingRequest withUserAgent(string|bool $userAgent)
      * @method static \Illuminate\Http\Client\PendingRequest withUrlParameters(array $parameters = [])
      * @method static \Illuminate\Http\Client\PendingRequest withCookies(array $cookies, string $domain)
      * @method static \Illuminate\Http\Client\PendingRequest maxRedirects(int $max)
@@ -7338,9 +7641,11 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Http\Client\PendingRequest sink(string|resource $to)
      * @method static \Illuminate\Http\Client\PendingRequest timeout(int $seconds)
      * @method static \Illuminate\Http\Client\PendingRequest connectTimeout(int $seconds)
-     * @method static \Illuminate\Http\Client\PendingRequest retry(int $times, int $sleepMilliseconds = 0, callable|null $when = null, bool $throw = true)
+     * @method static \Illuminate\Http\Client\PendingRequest retry(int $times, \Closure|int $sleepMilliseconds = 0, callable|null $when = null, bool $throw = true)
      * @method static \Illuminate\Http\Client\PendingRequest withOptions(array $options)
      * @method static \Illuminate\Http\Client\PendingRequest withMiddleware(callable $middleware)
+     * @method static \Illuminate\Http\Client\PendingRequest withRequestMiddleware(callable $middleware)
+     * @method static \Illuminate\Http\Client\PendingRequest withResponseMiddleware(callable $middleware)
      * @method static \Illuminate\Http\Client\PendingRequest beforeSending(callable $callback)
      * @method static \Illuminate\Http\Client\PendingRequest throw(callable|null $callback = null)
      * @method static \Illuminate\Http\Client\PendingRequest throwIf(callable|bool $condition, callable|null $throwCallback = null)
@@ -7376,6 +7681,42 @@ namespace Illuminate\Support\Facades {
      */
     class Http
     {
+        /**
+         * Add middleware to apply to every request.
+         *
+         * @param callable $middleware
+         * @return \Illuminate\Http\Client\Factory
+         * @static
+         */
+        public static function globalMiddleware($middleware)
+        {
+            /** @var \Illuminate\Http\Client\Factory $instance */
+            return $instance->globalMiddleware($middleware);
+        }
+        /**
+         * Add request middleware to apply to every request.
+         *
+         * @param callable $middleware
+         * @return \Illuminate\Http\Client\Factory
+         * @static
+         */
+        public static function globalRequestMiddleware($middleware)
+        {
+            /** @var \Illuminate\Http\Client\Factory $instance */
+            return $instance->globalRequestMiddleware($middleware);
+        }
+        /**
+         * Add response middleware to apply to every request.
+         *
+         * @param callable $middleware
+         * @return \Illuminate\Http\Client\Factory
+         * @static
+         */
+        public static function globalResponseMiddleware($middleware)
+        {
+            /** @var \Illuminate\Http\Client\Factory $instance */
+            return $instance->globalResponseMiddleware($middleware);
+        }
         /**
          * Create a new response instance for use during stubbing.
          *
@@ -7561,6 +7902,17 @@ namespace Illuminate\Support\Facades {
             return $instance->getDispatcher();
         }
         /**
+         * Get the array of global middleware.
+         *
+         * @return array
+         * @static
+         */
+        public static function getGlobalMiddleware()
+        {
+            /** @var \Illuminate\Http\Client\Factory $instance */
+            return $instance->getGlobalMiddleware();
+        }
+        /**
          * Register a custom macro.
          *
          * @param string $name
@@ -7708,6 +8060,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Translation\Translator $instance */
             $instance->load($namespace, $group, $locale);
+        }
+        /**
+         * Register a callback that is responsible for handling missing translation keys.
+         *
+         * @param callable|null $callback
+         * @return static
+         * @static
+         */
+        public static function handleMissingKeysUsing($callback)
+        {
+            /** @var \Illuminate\Translation\Translator $instance */
+            return $instance->handleMissingKeysUsing($callback);
         }
         /**
          * Add a new namespace to the loader.
@@ -7944,6 +8308,8 @@ namespace Illuminate\Support\Facades {
      * @method static \Psr\Log\LoggerInterface getLogger()
      * @method static \Illuminate\Contracts\Events\Dispatcher getEventDispatcher()
      * @method static void setEventDispatcher(\Illuminate\Contracts\Events\Dispatcher $dispatcher)
+     * @method static \Illuminate\Log\Logger|mixed when(\Closure|mixed|null $value = null, callable|null $callback = null, callable|null $default = null)
+     * @method static \Illuminate\Log\Logger|mixed unless(\Closure|mixed|null $value = null, callable|null $callback = null, callable|null $default = null)
      * @see \Illuminate\Log\LogManager
      */
     class Log
@@ -8444,6 +8810,39 @@ namespace Illuminate\Support\Facades {
             $instance->assertNothingQueued();
         }
         /**
+         * Assert the total number of mailables that were sent.
+         *
+         * @param int $count
+         * @static
+         */
+        public static function assertSentCount($count)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
+            $instance->assertSentCount($count);
+        }
+        /**
+         * Assert the total number of mailables that were queued.
+         *
+         * @param int $count
+         * @static
+         */
+        public static function assertQueuedCount($count)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
+            $instance->assertQueuedCount($count);
+        }
+        /**
+         * Assert the total number of mailables that were sent or queued.
+         *
+         * @param int $count
+         * @static
+         */
+        public static function assertOutgoingCount($count)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
+            $instance->assertOutgoingCount($count);
+        }
+        /**
          * Get all of the mailables matching a truth-test callback.
          *
          * @param string|\Closure $mailable
@@ -8580,17 +8979,6 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
             return $instance->later($delay, $view, $queue);
-        }
-        /**
-         * Get the array of failed recipients.
-         *
-         * @return array
-         * @static
-         */
-        public static function failures()
-        {
-            /** @var \Illuminate\Support\Testing\Fakes\MailFake $instance */
-            return $instance->failures();
         }
 
     }
@@ -8865,19 +9253,6 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\NotificationFake $instance */
             $instance->assertCount($expectedCount);
-        }
-        /**
-         * Assert the total amount of times a notification was sent.
-         *
-         * @param int $expectedCount
-         * @param string $notification
-         * @deprecated Use the assertSentTimes method instead
-         * @static
-         */
-        public static function assertTimesSent($expectedCount, $notification)
-        {
-            /** @var \Illuminate\Support\Testing\Fakes\NotificationFake $instance */
-            $instance->assertTimesSent($expectedCount, $notification);
         }
         /**
          * Get all of the notifications matching a truth-test callback.
@@ -9256,6 +9631,28 @@ namespace Illuminate\Support\Facades {
             $instance->assertPushedWithoutChain($job, $callback);
         }
         /**
+         * Assert if a closure was pushed based on a truth-test callback.
+         *
+         * @param callable|int|null $callback
+         * @static
+         */
+        public static function assertClosurePushed($callback = null)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            $instance->assertClosurePushed($callback);
+        }
+        /**
+         * Assert that a closure was not pushed based on a truth-test callback.
+         *
+         * @param callable|null $callback
+         * @static
+         */
+        public static function assertClosureNotPushed($callback = null)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            $instance->assertClosureNotPushed($callback);
+        }
+        /**
          * Determine if a job was pushed based on a truth-test callback.
          *
          * @param string|\Closure $job
@@ -9266,6 +9663,17 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
             $instance->assertNotPushed($job, $callback);
+        }
+        /**
+         * Assert the total count of jobs that were pushed.
+         *
+         * @param int $expectedCount
+         * @static
+         */
+        public static function assertCount($expectedCount)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            $instance->assertCount($expectedCount);
         }
         /**
          * Assert that no jobs were pushed.
@@ -9436,6 +9844,18 @@ namespace Illuminate\Support\Facades {
             return $instance->pushedJobs();
         }
         /**
+         * Specify if jobs should be serialized and restored when being "pushed" to the queue.
+         *
+         * @param bool $serializeAndRestore
+         * @return \Illuminate\Support\Testing\Fakes\QueueFake
+         * @static
+         */
+        public static function serializeAndRestore($serializeAndRestore = true)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\QueueFake $instance */
+            return $instance->serializeAndRestore($serializeAndRestore);
+        }
+        /**
          * Get the connection name for the queue.
          *
          * @return string
@@ -9534,6 +9954,18 @@ namespace Illuminate\Support\Facades {
             return $instance->getDatabase();
         }
         /**
+         * Get the maximum number of attempts for an object-based queue handler.
+         *
+         * @param mixed $job
+         * @return mixed
+         * @static
+         */
+        public static function getJobTries($job)
+        {            //Method inherited from \Illuminate\Queue\Queue
+            /** @var \Illuminate\Queue\DatabaseQueue $instance */
+            return $instance->getJobTries($job);
+        }
+        /**
          * Get the backoff for an object-based queue handler.
          *
          * @param mixed $job
@@ -9598,19 +10030,6 @@ namespace Illuminate\Support\Facades {
      */
     class Redirect
     {
-        /**
-         * Create a new redirect response to the "home" route.
-         *
-         * @param int $status
-         * @return \Illuminate\Http\RedirectResponse
-         * @deprecated Will be removed in a future Laravel version.
-         * @static
-         */
-        public static function home($status = 302)
-        {
-            /** @var \Illuminate\Routing\Redirector $instance */
-            return $instance->home($status);
-        }
         /**
          * Create a new redirect response to the previous location.
          *
@@ -10207,7 +10626,7 @@ namespace Illuminate\Support\Facades {
          *
          * @param string|null $key
          * @param mixed $default
-         * @return \Symfony\Component\HttpFoundation\ParameterBag|mixed
+         * @return \Symfony\Component\HttpFoundation\InputBag|mixed
          * @static
          */
         public static function json($key = null, $default = null)
@@ -10366,7 +10785,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Set the JSON payload for the request.
          *
-         * @param \Symfony\Component\HttpFoundation\ParameterBag $json
+         * @param \Symfony\Component\HttpFoundation\InputBag $json
          * @return \Illuminate\Http\Request
          * @static
          */
@@ -12273,7 +12692,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Create a new redirect response to a controller action.
          *
-         * @param string $action
+         * @param array|string $action
          * @param mixed $parameters
          * @param int $status
          * @param array $headers
@@ -12374,6 +12793,7 @@ namespace Illuminate\Support\Facades {
      * @method static \Illuminate\Routing\RouteRegistrar controller(string $controller)
      * @method static \Illuminate\Routing\RouteRegistrar domain(string $value)
      * @method static \Illuminate\Routing\RouteRegistrar middleware(array|string|null $middleware)
+     * @method static \Illuminate\Routing\RouteRegistrar missing(\Closure $missing)
      * @method static \Illuminate\Routing\RouteRegistrar name(string $value)
      * @method static \Illuminate\Routing\RouteRegistrar namespace(string|null $value)
      * @method static \Illuminate\Routing\RouteRegistrar prefix(string $prefix)
@@ -12392,7 +12812,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function spyRouteConflict()
         {
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->spyRouteConflict();
         }
         /**
@@ -12402,7 +12822,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function updateGroupStack($attributes)
         {
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->updateGroupStack($attributes);
         }
         /**
@@ -12412,7 +12832,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function routeError($info, $err, $msg)
         {
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->routeError($info, $err, $msg);
         }
         /**
@@ -12422,7 +12842,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function addRoute($methods, $uri, $action)
         {
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->addRoute($methods, $uri, $action);
         }
         /**
@@ -12435,7 +12855,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function get($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->get($uri, $action);
         }
         /**
@@ -12448,7 +12868,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function post($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->post($uri, $action);
         }
         /**
@@ -12461,7 +12881,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function put($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->put($uri, $action);
         }
         /**
@@ -12474,7 +12894,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function patch($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->patch($uri, $action);
         }
         /**
@@ -12487,7 +12907,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function delete($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->delete($uri, $action);
         }
         /**
@@ -12500,7 +12920,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function options($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->options($uri, $action);
         }
         /**
@@ -12513,11 +12933,11 @@ namespace Illuminate\Support\Facades {
          */
         public static function any($uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->any($uri, $action);
         }
         /**
-         * Register a new Fallback route with the router.
+         * Register a new fallback route with the router.
          *
          * @param array|string|callable|null $action
          * @return \Illuminate\Routing\Route
@@ -12525,7 +12945,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function fallback($action)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->fallback($action);
         }
         /**
@@ -12539,7 +12959,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function redirect($uri, $destination, $status = 302)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->redirect($uri, $destination, $status);
         }
         /**
@@ -12552,7 +12972,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function permanentRedirect($uri, $destination)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->permanentRedirect($uri, $destination);
         }
         /**
@@ -12568,7 +12988,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function view($uri, $view, $data = [], $status = 200, $headers = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->view($uri, $view, $data, $status, $headers);
         }
         /**
@@ -12582,7 +13002,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function match($methods, $uri, $action = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->match($methods, $uri, $action);
         }
         /**
@@ -12594,7 +13014,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resources($resources, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->resources($resources, $options);
         }
         /**
@@ -12608,7 +13028,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resource($name, $controller, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->resource($name, $controller, $options);
         }
         /**
@@ -12620,7 +13040,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiResources($resources, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->apiResources($resources, $options);
         }
         /**
@@ -12634,7 +13054,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiResource($name, $controller, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->apiResource($name, $controller, $options);
         }
         /**
@@ -12646,7 +13066,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singletons($singletons, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->singletons($singletons, $options);
         }
         /**
@@ -12660,7 +13080,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singleton($name, $controller, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->singleton($name, $controller, $options);
         }
         /**
@@ -12672,7 +13092,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiSingletons($singletons, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->apiSingletons($singletons, $options);
         }
         /**
@@ -12686,7 +13106,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiSingleton($name, $controller, $options = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->apiSingleton($name, $controller, $options);
         }
         /**
@@ -12694,12 +13114,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param array $attributes
          * @param \Closure|array|string $routes
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function group($attributes, $routes)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->group($attributes, $routes);
         }
         /**
@@ -12712,7 +13132,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function mergeWithLastGroup($new, $prependExistingPrefix = true)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->mergeWithLastGroup($new, $prependExistingPrefix);
         }
         /**
@@ -12723,7 +13143,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getLastGroupPrefix()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getLastGroupPrefix();
         }
         /**
@@ -12737,7 +13157,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function newRoute($methods, $uri, $action)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->newRoute($methods, $uri, $action);
         }
         /**
@@ -12749,7 +13169,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function respondWithRoute($name)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->respondWithRoute($name);
         }
         /**
@@ -12761,7 +13181,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function dispatch($request)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->dispatch($request);
         }
         /**
@@ -12773,7 +13193,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function dispatchToRoute($request)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->dispatchToRoute($request);
         }
         /**
@@ -12785,7 +13205,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function gatherRouteMiddleware($route)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->gatherRouteMiddleware($route);
         }
         /**
@@ -12798,7 +13218,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resolveMiddleware($middleware, $excluded = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->resolveMiddleware($middleware, $excluded);
         }
         /**
@@ -12811,7 +13231,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function prepareResponse($request, $response)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->prepareResponse($request, $response);
         }
         /**
@@ -12824,7 +13244,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function toResponse($request, $response)
         {            //Method inherited from \Illuminate\Routing\Router
-            return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::toResponse($request, $response);
+            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::toResponse($request, $response);
         }
         /**
          * Substitute the route bindings onto the route.
@@ -12837,7 +13257,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function substituteBindings($route)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->substituteBindings($route);
         }
         /**
@@ -12850,8 +13270,20 @@ namespace Illuminate\Support\Facades {
          */
         public static function substituteImplicitBindings($route)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->substituteImplicitBindings($route);
+        }
+        /**
+         * Register a callback to to run after implicit bindings are substituted.
+         *
+         * @param callable $callback
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @static
+         */
+        public static function substituteImplicitBindingsUsing($callback)
+        {            //Method inherited from \Illuminate\Routing\Router
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            return $instance->substituteImplicitBindingsUsing($callback);
         }
         /**
          * Register a route matched event listener.
@@ -12861,7 +13293,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function matched($callback)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->matched($callback);
         }
         /**
@@ -12872,7 +13304,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getMiddleware()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getMiddleware();
         }
         /**
@@ -12880,12 +13312,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $name
          * @param string $class
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function aliasMiddleware($name, $class)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->aliasMiddleware($name, $class);
         }
         /**
@@ -12897,7 +13329,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasMiddlewareGroup($name)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->hasMiddlewareGroup($name);
         }
         /**
@@ -12908,7 +13340,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getMiddlewareGroups()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getMiddlewareGroups();
         }
         /**
@@ -12916,12 +13348,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $name
          * @param array $middleware
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function middlewareGroup($name, $middleware)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->middlewareGroup($name, $middleware);
         }
         /**
@@ -12931,12 +13363,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function prependMiddlewareToGroup($group, $middleware)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->prependMiddlewareToGroup($group, $middleware);
         }
         /**
@@ -12946,12 +13378,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function pushMiddlewareToGroup($group, $middleware)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->pushMiddlewareToGroup($group, $middleware);
         }
         /**
@@ -12959,23 +13391,23 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function removeMiddlewareFromGroup($group, $middleware)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->removeMiddlewareFromGroup($group, $middleware);
         }
         /**
          * Flush the router's middleware groups.
          *
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function flushMiddlewareGroups()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->flushMiddlewareGroups();
         }
         /**
@@ -12987,7 +13419,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function bind($key, $binder)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->bind($key, $binder);
         }
         /**
@@ -13000,7 +13432,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function model($key, $class, $callback = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->model($key, $class, $callback);
         }
         /**
@@ -13012,7 +13444,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getBindingCallback($key)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getBindingCallback($key);
         }
         /**
@@ -13023,7 +13455,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getPatterns()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getPatterns();
         }
         /**
@@ -13035,7 +13467,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function pattern($key, $pattern)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->pattern($key, $pattern);
         }
         /**
@@ -13046,7 +13478,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function patterns($patterns)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->patterns($patterns);
         }
         /**
@@ -13057,7 +13489,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasGroupStack()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->hasGroupStack();
         }
         /**
@@ -13068,7 +13500,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getGroupStack()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getGroupStack();
         }
         /**
@@ -13081,7 +13513,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function input($key, $default = null)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->input($key, $default);
         }
         /**
@@ -13092,7 +13524,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getCurrentRequest()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getCurrentRequest();
         }
         /**
@@ -13103,7 +13535,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getCurrentRoute()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getCurrentRoute();
         }
         /**
@@ -13114,7 +13546,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function current()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->current();
         }
         /**
@@ -13126,7 +13558,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function has($name)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->has($name);
         }
         /**
@@ -13137,7 +13569,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteName()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->currentRouteName();
         }
         /**
@@ -13149,7 +13581,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function is(...$patterns)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->is(...$patterns);
         }
         /**
@@ -13161,7 +13593,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteNamed(...$patterns)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->currentRouteNamed(...$patterns);
         }
         /**
@@ -13172,7 +13604,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteAction()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->currentRouteAction();
         }
         /**
@@ -13184,7 +13616,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function uses(...$patterns)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->uses(...$patterns);
         }
         /**
@@ -13196,7 +13628,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteUses($action)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->currentRouteUses($action);
         }
         /**
@@ -13207,7 +13639,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singularResourceParameters($singular = true)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->singularResourceParameters($singular);
         }
         /**
@@ -13218,7 +13650,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resourceParameters($parameters = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->resourceParameters($parameters);
         }
         /**
@@ -13230,7 +13662,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resourceVerbs($verbs = [])
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->resourceVerbs($verbs);
         }
         /**
@@ -13241,7 +13673,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getRoutes()
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->getRoutes();
         }
         /**
@@ -13252,7 +13684,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function setRoutes($routes)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->setRoutes($routes);
         }
         /**
@@ -13263,7 +13695,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function setCompiledRoutes($routes)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             $instance->setCompiledRoutes($routes);
         }
         /**
@@ -13275,18 +13707,18 @@ namespace Illuminate\Support\Facades {
          */
         public static function uniqueMiddleware($middleware)
         {            //Method inherited from \Illuminate\Routing\Router
-            return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::uniqueMiddleware($middleware);
+            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::uniqueMiddleware($middleware);
         }
         /**
          * Set the container instance used by the router.
          *
          * @param \Illuminate\Container\Container $container
-         * @return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter
+         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
          * @static
          */
         public static function setContainer($container)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->setContainer($container);
         }
         /**
@@ -13298,7 +13730,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function macro($name, $macro)
         {            //Method inherited from \Illuminate\Routing\Router
-            \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::macro($name, $macro);
+            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::macro($name, $macro);
         }
         /**
          * Mix another object into the class.
@@ -13310,7 +13742,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function mixin($mixin, $replace = true)
         {            //Method inherited from \Illuminate\Routing\Router
-            \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::mixin($mixin, $replace);
+            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::mixin($mixin, $replace);
         }
         /**
          * Checks if macro is registered.
@@ -13321,7 +13753,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasMacro($name)
         {            //Method inherited from \Illuminate\Routing\Router
-            return \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::hasMacro($name);
+            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::hasMacro($name);
         }
         /**
          * Flush the existing macros.
@@ -13330,7 +13762,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function flushMacros()
         {            //Method inherited from \Illuminate\Routing\Router
-            \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter::flushMacros();
+            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::flushMacros();
         }
         /**
          * Dynamically handle calls to the class.
@@ -13343,7 +13775,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function macroCall($method, $parameters)
         {            //Method inherited from \Illuminate\Routing\Router
-            /** @var \Imanghafoori\LaravelMicroscope\SpyClasses\SpyRouter $instance */
+            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
             return $instance->macroCall($method, $parameters);
         }
 
@@ -13380,28 +13812,86 @@ namespace Illuminate\Support\Facades {
             return $instance->dropDatabaseIfExists($name);
         }
         /**
-         * Determine if the given table exists.
+         * Get the tables for the database.
          *
-         * @param string $table
-         * @return bool
+         * @return array
          * @static
          */
-        public static function hasTable($table)
+        public static function getTables()
         {
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
-            return $instance->hasTable($table);
+            return $instance->getTables();
         }
         /**
-         * Get the column listing for a given table.
+         * Get the views for the database.
+         *
+         * @return array
+         * @static
+         */
+        public static function getViews()
+        {
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getViews();
+        }
+        /**
+         * Get all of the table names for the database.
+         *
+         * @deprecated Will be removed in a future Laravel version.
+         * @return array
+         * @static
+         */
+        public static function getAllTables()
+        {
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getAllTables();
+        }
+        /**
+         * Get all of the view names for the database.
+         *
+         * @deprecated Will be removed in a future Laravel version.
+         * @return array
+         * @static
+         */
+        public static function getAllViews()
+        {
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getAllViews();
+        }
+        /**
+         * Get the columns for a given table.
          *
          * @param string $table
          * @return array
          * @static
          */
-        public static function getColumnListing($table)
+        public static function getColumns($table)
         {
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
-            return $instance->getColumnListing($table);
+            return $instance->getColumns($table);
+        }
+        /**
+         * Get the indexes for a given table.
+         *
+         * @param string $table
+         * @return array
+         * @static
+         */
+        public static function getIndexes($table)
+        {
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getIndexes($table);
+        }
+        /**
+         * Get the foreign keys for a given table.
+         *
+         * @param string $table
+         * @return array
+         * @static
+         */
+        public static function getForeignKeys($table)
+        {
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getForeignKeys($table);
         }
         /**
          * Drop all tables from the database.
@@ -13422,28 +13912,6 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
             $instance->dropAllViews();
-        }
-        /**
-         * Get all of the table names for the database.
-         *
-         * @return array
-         * @static
-         */
-        public static function getAllTables()
-        {
-            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
-            return $instance->getAllTables();
-        }
-        /**
-         * Get all of the view names for the database.
-         *
-         * @return array
-         * @static
-         */
-        public static function getAllViews()
-        {
-            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
-            return $instance->getAllViews();
         }
         /**
          * Set the default string length for migrations.
@@ -13485,7 +13953,7 @@ namespace Illuminate\Support\Facades {
             \Illuminate\Database\Schema\MySqlBuilder::morphUsingUlids();
         }
         /**
-         * Attempt to use native schema operations for dropping and renaming columns, even if Doctrine DBAL is installed.
+         * Attempt to use native schema operations for dropping, renaming, and modifying columns, even if Doctrine DBAL is installed.
          *
          * @param bool $value
          * @static
@@ -13493,6 +13961,41 @@ namespace Illuminate\Support\Facades {
         public static function useNativeSchemaOperationsIfPossible($value = true)
         {            //Method inherited from \Illuminate\Database\Schema\Builder
             \Illuminate\Database\Schema\MySqlBuilder::useNativeSchemaOperationsIfPossible($value);
+        }
+        /**
+         * Determine if the given table exists.
+         *
+         * @param string $table
+         * @return bool
+         * @static
+         */
+        public static function hasTable($table)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->hasTable($table);
+        }
+        /**
+         * Determine if the given view exists.
+         *
+         * @param string $view
+         * @return bool
+         * @static
+         */
+        public static function hasView($view)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->hasView($view);
+        }
+        /**
+         * Get the user-defined types that belong to the database.
+         *
+         * @return array
+         * @static
+         */
+        public static function getTypes()
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getTypes();
         }
         /**
          * Determine if the given table has a given column.
@@ -13551,13 +14054,26 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $table
          * @param string $column
+         * @param bool $fullDefinition
          * @return string
          * @static
          */
-        public static function getColumnType($table, $column)
+        public static function getColumnType($table, $column, $fullDefinition = false)
         {            //Method inherited from \Illuminate\Database\Schema\Builder
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
-            return $instance->getColumnType($table, $column);
+            return $instance->getColumnType($table, $column, $fullDefinition);
+        }
+        /**
+         * Get the column listing for a given table.
+         *
+         * @param string $table
+         * @return array
+         * @static
+         */
+        public static function getColumnListing($table)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
+            return $instance->getColumnListing($table);
         }
         /**
          * Modify a table on the schema.
@@ -13708,6 +14224,49 @@ namespace Illuminate\Support\Facades {
             /** @var \Illuminate\Database\Schema\MySqlBuilder $instance */
             $instance->blueprintResolver($resolver);
         }
+        /**
+         * Register a custom macro.
+         *
+         * @param string $name
+         * @param object|callable $macro
+         * @static
+         */
+        public static function macro($name, $macro)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            \Illuminate\Database\Schema\MySqlBuilder::macro($name, $macro);
+        }
+        /**
+         * Mix another object into the class.
+         *
+         * @param object $mixin
+         * @param bool $replace
+         * @throws \ReflectionException
+         * @static
+         */
+        public static function mixin($mixin, $replace = true)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            \Illuminate\Database\Schema\MySqlBuilder::mixin($mixin, $replace);
+        }
+        /**
+         * Checks if macro is registered.
+         *
+         * @param string $name
+         * @return bool
+         * @static
+         */
+        public static function hasMacro($name)
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            return \Illuminate\Database\Schema\MySqlBuilder::hasMacro($name);
+        }
+        /**
+         * Flush the existing macros.
+         *
+         * @static
+         */
+        public static function flushMacros()
+        {            //Method inherited from \Illuminate\Database\Schema\Builder
+            \Illuminate\Database\Schema\MySqlBuilder::flushMacros();
+        }
 
     }
     /**
@@ -13738,6 +14297,28 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Session\SessionManager $instance */
             return $instance->blockDriver();
+        }
+        /**
+         * Get the maximum number of seconds the session lock should be held for.
+         *
+         * @return int
+         * @static
+         */
+        public static function defaultRouteBlockLockSeconds()
+        {
+            /** @var \Illuminate\Session\SessionManager $instance */
+            return $instance->defaultRouteBlockLockSeconds();
+        }
+        /**
+         * Get the maximum number of seconds to wait while attempting to acquire a route block session lock.
+         *
+         * @return int
+         * @static
+         */
+        public static function defaultRouteBlockWaitSeconds()
+        {
+            /** @var \Illuminate\Session\SessionManager $instance */
+            return $instance->defaultRouteBlockWaitSeconds();
         }
         /**
          * Get the session configuration.
@@ -13896,6 +14477,18 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Session\Store $instance */
             return $instance->only($keys);
+        }
+        /**
+         * Get all the session data except for a specified array of items.
+         *
+         * @param array $keys
+         * @return array
+         * @static
+         */
+        public static function except($keys)
+        {
+            /** @var \Illuminate\Session\Store $instance */
+            return $instance->except($keys);
         }
         /**
          * Checks if a key exists.
@@ -14444,7 +15037,7 @@ namespace Illuminate\Support\Facades {
         /**
          * Get a default cloud filesystem instance.
          *
-         * @return \Illuminate\Filesystem\FilesystemAdapter
+         * @return \Illuminate\Contracts\Filesystem\Cloud
          * @static
          */
         public static function cloud()
@@ -14741,6 +15334,19 @@ namespace Illuminate\Support\Facades {
             return $instance->get($path);
         }
         /**
+         * Get the contents of a file as decoded JSON.
+         *
+         * @param string $path
+         * @param int $flags
+         * @return array|null
+         * @static
+         */
+        public static function json($path, $flags = 0)
+        {
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $instance */
+            return $instance->json($path, $flags);
+        }
+        /**
          * Create a streamed response for a given file.
          *
          * @param string $path
@@ -14785,13 +15391,13 @@ namespace Illuminate\Support\Facades {
         /**
          * Store the uploaded file on the disk.
          *
-         * @param string $path
-         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string $file
+         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string $path
+         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string|array|null $file
          * @param mixed $options
          * @return string|false
          * @static
          */
-        public static function putFile($path, $file, $options = [])
+        public static function putFile($path, $file = null, $options = [])
         {
             /** @var \Illuminate\Filesystem\FilesystemAdapter $instance */
             return $instance->putFile($path, $file, $options);
@@ -14799,14 +15405,14 @@ namespace Illuminate\Support\Facades {
         /**
          * Store the uploaded file on the disk with a given name.
          *
-         * @param string $path
-         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string $file
-         * @param string $name
+         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string $path
+         * @param \Illuminate\Http\File|\Illuminate\Http\UploadedFile|string|array|null $file
+         * @param string|array|null $name
          * @param mixed $options
          * @return string|false
          * @static
          */
-        public static function putFileAs($path, $file, $name, $options = [])
+        public static function putFileAs($path, $file, $name = null, $options = [])
         {
             /** @var \Illuminate\Filesystem\FilesystemAdapter $instance */
             return $instance->putFileAs($path, $file, $name, $options);
@@ -15702,6 +16308,18 @@ namespace Illuminate\Support\Facades {
             return $instance->withKeyResolver($keyResolver);
         }
         /**
+         * Set the callback that should be used to attempt to resolve missing named routes.
+         *
+         * @param callable $missingNamedRouteResolver
+         * @return \Illuminate\Routing\UrlGenerator
+         * @static
+         */
+        public static function resolveMissingNamedRoutesUsing($missingNamedRouteResolver)
+        {
+            /** @var \Illuminate\Routing\UrlGenerator $instance */
+            return $instance->resolveMissingNamedRoutesUsing($missingNamedRouteResolver);
+        }
+        /**
          * Get the root controller namespace.
          *
          * @return string
@@ -15782,14 +16400,14 @@ namespace Illuminate\Support\Facades {
          * @param array $data
          * @param array $rules
          * @param array $messages
-         * @param array $customAttributes
+         * @param array $attributes
          * @return \Illuminate\Validation\Validator
          * @static
          */
-        public static function make($data, $rules, $messages = [], $customAttributes = [])
+        public static function make($data, $rules, $messages = [], $attributes = [])
         {
             /** @var \Illuminate\Validation\Factory $instance */
-            return $instance->make($data, $rules, $messages, $customAttributes);
+            return $instance->make($data, $rules, $messages, $attributes);
         }
         /**
          * Validate the given data against the provided rules.
@@ -15797,15 +16415,15 @@ namespace Illuminate\Support\Facades {
          * @param array $data
          * @param array $rules
          * @param array $messages
-         * @param array $customAttributes
+         * @param array $attributes
          * @return array
          * @throws \Illuminate\Validation\ValidationException
          * @static
          */
-        public static function validate($data, $rules, $messages = [], $customAttributes = [])
+        public static function validate($data, $rules, $messages = [], $attributes = [])
         {
             /** @var \Illuminate\Validation\Factory $instance */
-            return $instance->validate($data, $rules, $messages, $customAttributes);
+            return $instance->validate($data, $rules, $messages, $attributes);
         }
         /**
          * Register a custom validator extension.
@@ -16882,7 +17500,7 @@ namespace Illuminate\Support {
      *
      *
      * @template TKey of array-key
-     * @template TValue
+     * @template-covariant TValue
      * @implements \ArrayAccess<TKey, TValue>
      * @implements \Illuminate\Support\Enumerable<TKey, TValue>
      */
@@ -18580,7 +19198,7 @@ namespace Illuminate\Http {
 
 }
 
-namespace Imanghafoori\LaravelMicroscope\SpyClasses {
+namespace Imanghafoori\LaravelMicroscope\Features\CheckRoutes {
     /**
      *
      *
@@ -18804,7 +19422,7 @@ namespace  {
         /**
          * Add a basic where clause to the query.
          *
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
@@ -18820,7 +19438,7 @@ namespace  {
         /**
          * Add a basic where clause to the query, and return the first result.
          *
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
@@ -18836,7 +19454,7 @@ namespace  {
         /**
          * Add an "or where" clause to the query.
          *
-         * @param \Closure|array|string|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|array|string|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -18851,7 +19469,7 @@ namespace  {
         /**
          * Add a basic "where not" clause to the query.
          *
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
@@ -18867,7 +19485,7 @@ namespace  {
         /**
          * Add an "or where not" clause to the query.
          *
-         * @param \Closure|array|string|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|array|string|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -18882,7 +19500,7 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @return \Illuminate\Database\Eloquent\Builder|static
          * @static
          */
@@ -18895,7 +19513,7 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @return \Illuminate\Database\Eloquent\Builder|static
          * @static
          */
@@ -19019,7 +19637,7 @@ namespace  {
         }
 
         /**
-         * Get the first record matching the attributes or create it.
+         * Get the first record matching the attributes. If the record is not found, create it.
          *
          * @param array $attributes
          * @param array $values
@@ -19030,6 +19648,20 @@ namespace  {
         {
             /** @var Illuminate\Database\Eloquent\Builder $instance */
             return $instance->firstOrCreate($attributes, $values);
+        }
+
+        /**
+         * Attempt to create the record. If a unique constraint violation occurs, attempt to find the matching record.
+         *
+         * @param array $attributes
+         * @param array $values
+         * @return \Illuminate\Database\Eloquent\Model|static
+         * @static
+         */
+        public static function createOrFirst($attributes = [], $values = [])
+        {
+            /** @var Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->createOrFirst($attributes, $values);
         }
 
         /**
@@ -19092,7 +19724,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of a query.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @static
          */
@@ -19105,7 +19737,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of a query if it's the sole matching record.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @throws Illuminate\Database\MultipleRecordsFoundException
@@ -19120,7 +19752,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of the query or throw an exception.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @static
@@ -19185,7 +19817,7 @@ namespace  {
         /**
          * Get a collection with the values of a given column.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
          * @param string|null $key
          * @return Illuminate\Support\Collection
          * @static
@@ -19203,6 +19835,7 @@ namespace  {
          * @param array|string $columns
          * @param string $pageName
          * @param int|null $page
+         * @param \Closure|int|null $total
          * @return Illuminate\Contracts\Pagination\LengthAwarePaginator
          * @throws InvalidArgumentException
          * @static
@@ -19269,6 +19902,19 @@ namespace  {
         {
             /** @var Illuminate\Database\Eloquent\Builder $instance */
             return $instance->forceCreate($attributes);
+        }
+
+        /**
+         * Save a new model instance with mass assignment without raising model events.
+         *
+         * @param array $attributes
+         * @return \Illuminate\Database\Eloquent\Model|$this
+         * @static
+         */
+        public static function forceCreateQuietly($attributes = [])
+        {
+            /** @var Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->forceCreateQuietly($attributes);
         }
 
         /**
@@ -19373,6 +20019,20 @@ namespace  {
         {
             /** @var Illuminate\Database\Eloquent\Builder $instance */
             return $instance->withCasts($casts);
+        }
+
+        /**
+         * Execute the given Closure within a transaction savepoint if needed.
+         *
+         * @template TModelValue
+         * @param \Closure():  TModelValue  $scope
+         * @return Illuminate\Database\Eloquent\TModelValue
+         * @static
+         */
+        public static function withSavepointIfNeeded($scope)
+        {
+            /** @var Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->withSavepointIfNeeded($scope);
         }
 
         /**
@@ -19606,6 +20266,39 @@ namespace  {
         {
             /** @var Illuminate\Database\Eloquent\Builder $instance */
             return $instance->chunkById($count, $callback, $column, $alias);
+        }
+
+        /**
+         * Chunk the results of a query by comparing IDs in descending order.
+         *
+         * @param int $count
+         * @param callable $callback
+         * @param string|null $column
+         * @param string|null $alias
+         * @return bool
+         * @static
+         */
+        public static function chunkByIdDesc($count, $callback, $column = null, $alias = null)
+        {
+            /** @var Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->chunkByIdDesc($count, $callback, $column, $alias);
+        }
+
+        /**
+         * Chunk the results of a query by comparing IDs in a given order.
+         *
+         * @param int $count
+         * @param callable $callback
+         * @param string|null $column
+         * @param string|null $alias
+         * @param bool $descending
+         * @return bool
+         * @static
+         */
+        public static function orderedChunkById($count, $callback, $column = null, $alias = null, $descending = false)
+        {
+            /** @var Illuminate\Database\Eloquent\Builder $instance */
+            return $instance->orderedChunkById($count, $callback, $column, $alias, $descending);
         }
 
         /**
@@ -20016,7 +20709,7 @@ namespace  {
          * Add a basic where clause to a relationship query.
          *
          * @param string $relation
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -20032,7 +20725,7 @@ namespace  {
          * Add an "or where" clause to a relationship query.
          *
          * @param string $relation
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -20049,7 +20742,7 @@ namespace  {
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -20066,7 +20759,7 @@ namespace  {
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
-         * @param \Closure|string|array|\Illuminate\Database\Query\Expression $column
+         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @return \Illuminate\Database\Eloquent\Builder|static
@@ -20082,7 +20775,7 @@ namespace  {
          * Add a morph-to relationship condition to the query.
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string $model
+         * @param \Illuminate\Database\Eloquent\Model|string|null $model
          * @return \Illuminate\Database\Eloquent\Builder|static
          * @static
          */
@@ -20110,7 +20803,7 @@ namespace  {
          * Add a morph-to relationship condition to the query with an "or where" clause.
          *
          * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string $model
+         * @param \Illuminate\Database\Eloquent\Model|string|null $model
          * @return \Illuminate\Database\Eloquent\Builder|static
          * @static
          */
@@ -20427,10 +21120,10 @@ namespace  {
         /**
          * Add a join clause to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @param string $type
          * @param bool $where
          * @return Illuminate\Database\Query\Builder
@@ -20445,10 +21138,10 @@ namespace  {
         /**
          * Add a "join where" clause to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string $operator
-         * @param string $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $second
          * @param string $type
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20466,7 +21159,7 @@ namespace  {
          * @param string $as
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @param string $type
          * @param bool $where
          * @return Illuminate\Database\Query\Builder
@@ -20482,10 +21175,10 @@ namespace  {
         /**
          * Add a left join to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20498,10 +21191,10 @@ namespace  {
         /**
          * Add a "join where" clause to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string $operator
-         * @param string $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20518,7 +21211,7 @@ namespace  {
          * @param string $as
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20531,10 +21224,10 @@ namespace  {
         /**
          * Add a right join to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20547,10 +21240,10 @@ namespace  {
         /**
          * Add a "right join where" clause to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string $first
          * @param string $operator
-         * @param string $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20567,7 +21260,7 @@ namespace  {
          * @param string $as
          * @param \Closure|string $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20580,10 +21273,10 @@ namespace  {
         /**
          * Add a "cross join" clause to the query.
          *
-         * @param string $table
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
          * @param \Closure|string|null $first
          * @param string|null $operator
-         * @param string|null $second
+         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20700,7 +21393,7 @@ namespace  {
         /**
          * Add a "where in" clause to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @param string $boolean
          * @param bool $not
@@ -20716,7 +21409,7 @@ namespace  {
         /**
          * Add an "or where in" clause to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20730,7 +21423,7 @@ namespace  {
         /**
          * Add a "where not in" clause to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -20745,7 +21438,7 @@ namespace  {
         /**
          * Add an "or where not in" clause to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20818,7 +21511,7 @@ namespace  {
         /**
          * Add a "where null" clause to the query.
          *
-         * @param string|array $columns
+         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $columns
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -20833,7 +21526,7 @@ namespace  {
         /**
          * Add an "or where null" clause to the query.
          *
-         * @param string|array $column
+         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20846,7 +21539,7 @@ namespace  {
         /**
          * Add a "where not null" clause to the query.
          *
-         * @param string|array $columns
+         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $columns
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20860,7 +21553,7 @@ namespace  {
         /**
          * Add a where between statement to the query.
          *
-         * @param string|\Illuminate\Database\Query\Expression $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @param string $boolean
          * @param bool $not
@@ -20876,7 +21569,7 @@ namespace  {
         /**
          * Add a where between statement using columns to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @param string $boolean
          * @param bool $not
@@ -20892,7 +21585,7 @@ namespace  {
         /**
          * Add an or where between statement to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20906,7 +21599,7 @@ namespace  {
         /**
          * Add an or where between statement using columns to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20920,7 +21613,7 @@ namespace  {
         /**
          * Add a where not between statement to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -20935,7 +21628,7 @@ namespace  {
         /**
          * Add a where not between statement using columns to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -20950,7 +21643,7 @@ namespace  {
         /**
          * Add an or where not between statement to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20964,7 +21657,7 @@ namespace  {
         /**
          * Add an or where not between statement using columns to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20978,7 +21671,7 @@ namespace  {
         /**
          * Add an "or where not null" clause to the query.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -20991,8 +21684,8 @@ namespace  {
         /**
          * Add a "where date" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|null $operator
          * @param \DateTimeInterface|string|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -21007,8 +21700,8 @@ namespace  {
         /**
          * Add an "or where date" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|null $operator
          * @param \DateTimeInterface|string|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21022,8 +21715,8 @@ namespace  {
         /**
          * Add a "where time" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|null $operator
          * @param \DateTimeInterface|string|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -21038,8 +21731,8 @@ namespace  {
         /**
          * Add an "or where time" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|null $operator
          * @param \DateTimeInterface|string|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21053,8 +21746,8 @@ namespace  {
         /**
          * Add a "where day" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -21069,8 +21762,8 @@ namespace  {
         /**
          * Add an "or where day" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21084,8 +21777,8 @@ namespace  {
         /**
          * Add a "where month" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -21100,8 +21793,8 @@ namespace  {
         /**
          * Add an "or where month" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21115,8 +21808,8 @@ namespace  {
         /**
          * Add a "where year" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -21131,8 +21824,8 @@ namespace  {
         /**
          * Add an "or where year" statement to the query.
          *
-         * @param string $column
-         * @param string $operator
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param \DateTimeInterface|string|int|null $operator
          * @param \DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21186,7 +21879,7 @@ namespace  {
         /**
          * Add an exists clause to the query.
          *
-         * @param Closure $callback
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -21201,7 +21894,7 @@ namespace  {
         /**
          * Add an or exists clause to the query.
          *
-         * @param Closure $callback
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21215,7 +21908,7 @@ namespace  {
         /**
          * Add a where not exists clause to the query.
          *
-         * @param Closure $callback
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21229,7 +21922,7 @@ namespace  {
         /**
          * Add a where not exists clause to the query.
          *
-         * @param Closure $callback
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -21477,7 +22170,7 @@ namespace  {
         /**
          * Add a "group by" clause to the query.
          *
-         * @param array|string $groups
+         * @param array|\Illuminate\Contracts\Database\Query\Expression|string $groups
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -21504,7 +22197,7 @@ namespace  {
         /**
          * Add a "having" clause to the query.
          *
-         * @param \Closure|string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|\Closure|string $column
          * @param string|int|float|null $operator
          * @param string|int|float|null $value
          * @param string $boolean
@@ -21520,7 +22213,7 @@ namespace  {
         /**
          * Add an "or having" clause to the query.
          *
-         * @param \Closure|string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|\Closure|string $column
          * @param string|int|float|null $operator
          * @param string|int|float|null $value
          * @return Illuminate\Database\Query\Builder
@@ -21619,7 +22312,7 @@ namespace  {
          * Add a "having between " clause to the query.
          *
          * @param string $column
-         * @param array $values
+         * @param Illuminate\Database\Query\iterable $values
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -21663,7 +22356,7 @@ namespace  {
         /**
          * Add an "order by" clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Expression|string $column
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Contracts\Database\Query\Expression|string $column
          * @param string $direction
          * @return Illuminate\Database\Query\Builder
          * @throws InvalidArgumentException
@@ -21678,7 +22371,7 @@ namespace  {
         /**
          * Add a descending "order by" clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Expression|string $column
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Contracts\Database\Query\Expression|string $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */
@@ -21814,7 +22507,7 @@ namespace  {
         /**
          * Remove all existing orders and optionally add a new order.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Query\Expression|string|null $column
+         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Contracts\Database\Query\Expression|string|null $column
          * @param string $direction
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -21926,6 +22619,18 @@ namespace  {
         }
 
         /**
+         * Get the raw SQL representation of the query with embedded bindings.
+         *
+         * @return string
+         * @static
+         */
+        public static function toRawSql()
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->toRawSql();
+        }
+
+        /**
          * Get a single expression value from the first result of a query.
          *
          * @param string $expression
@@ -22019,7 +22724,7 @@ namespace  {
         /**
          * Retrieve the "count" result of the query.
          *
-         * @param string $columns
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $columns
          * @return int
          * @static
          */
@@ -22032,7 +22737,7 @@ namespace  {
         /**
          * Retrieve the minimum value of a given column.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */
@@ -22045,7 +22750,7 @@ namespace  {
         /**
          * Retrieve the maximum value of a given column.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */
@@ -22058,7 +22763,7 @@ namespace  {
         /**
          * Retrieve the sum of the values of a given column.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */
@@ -22071,7 +22776,7 @@ namespace  {
         /**
          * Retrieve the average of the values of a given column.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */
@@ -22084,7 +22789,7 @@ namespace  {
         /**
          * Alias for the "avg" method.
          *
-         * @param string $column
+         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */
@@ -22245,10 +22950,22 @@ namespace  {
         }
 
         /**
+         * Get all of the query builder's columns in a text-only array with all expressions evaluated.
+         *
+         * @return array
+         * @static
+         */
+        public static function getColumns()
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->getColumns();
+        }
+
+        /**
          * Create a raw database expression.
          *
          * @param mixed $value
-         * @return Illuminate\Database\Query\Expression
+         * @return Illuminate\Contracts\Database\Query\Expression
          * @static
          */
         public static function raw($value)
@@ -22425,6 +23142,18 @@ namespace  {
         }
 
         /**
+         * Dump the raw current SQL with embedded bindings.
+         *
+         * @return Illuminate\Database\Query\Builder
+         * @static
+         */
+        public static function dumpRawSql()
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->dumpRawSql();
+        }
+
+        /**
          * Die and dump the current SQL and bindings.
          *
          * @return Illuminate\Database\Query\never
@@ -22434,6 +23163,18 @@ namespace  {
         {
             /** @var Illuminate\Database\Query\Builder $instance */
             return $instance->dd();
+        }
+
+        /**
+         * Die and dump the current SQL with embedded bindings.
+         *
+         * @return Illuminate\Database\Query\never
+         * @static
+         */
+        public static function ddRawSql()
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->ddRawSql();
         }
 
         /**

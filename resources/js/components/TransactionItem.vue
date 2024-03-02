@@ -33,7 +33,7 @@
                     ><span class="fa fa-copy"></span></button>
                 </div>
             </div>
-            <div class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block">
+            <div class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block">
                 <label class="control-label">
                     {{ __('Tags') }}
                 </label>
@@ -44,7 +44,7 @@
                     v-model="tagsData">
                 </select>
             </div>
-            <div class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block">
+            <div class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block">
                 <label class="control-label">
                     {{ __('Comment') }}
                 </label>

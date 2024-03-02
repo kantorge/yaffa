@@ -9,15 +9,22 @@ am4core.useTheme(am4themes_animated);
 
 const dataTableSelector = '#table';
 
-$(dataTableSelector).DataTable({
-    data: currencyRates,
+// Make sure that the currencyRates array contains numeric values
+
+window.table = $(dataTableSelector).DataTable({
+    data: window.currencyRates,
     columns: [
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "rate",
             title: __("Rate"),
             render: function(data, type) {
-                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, window.YAFFA.baseCurrency)
+                return dataTableHelpers.toFormattedCurrency(
+                    type,
+                    data,
+                    window.YAFFA.locale,
+                    Object.assign({}, window.YAFFA.baseCurrency, {max_digits: 4})
+                )
             }
         },
         {
@@ -33,24 +40,37 @@ $(dataTableSelector).DataTable({
     ],
     order: [
         [ 0, 'desc' ]
-    ]
+    ],
+    deferRender: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    scroller: true,
+    stateSave: false,
+    processing: true,
+    paging: false,
+    info: false,
 });
 
-var chart = am4core.create("chartdiv", am4charts.XYChart);
-chart.data = currencyRates;
+let chart = am4core.create("chartdiv", am4charts.XYChart);
+chart.data = window.currencyRates;
 
 chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
 
-var categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
+let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
 categoryAxis.dataFields.category = "date";
-var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
-var series = chart.series.push(new am4charts.LineSeries());
+let series = chart.series.push(new am4charts.LineSeries());
 series.dataFields.valueY = "rate";
 series.dataFields.dateX = "date";
 
-var scrollbarX = new am4charts.XYChartScrollbar();
+let scrollbarX = new am4charts.XYChartScrollbar();
 scrollbarX.series.push(series);
 chart.scrollbarX = scrollbarX;
 
 dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'currency-rate.destroy');
+
+// Listener for the search filter
+$('#table_filter_search_text').keyup(function(){
+    table.search($(this).val()).draw() ;
+})

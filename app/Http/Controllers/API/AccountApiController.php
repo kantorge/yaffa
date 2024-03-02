@@ -6,9 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\Investment;
-use App\Models\Transaction;
-use App\Models\TransactionDetailStandard;
+use App\Models\AccountMonthlySummary;
 use App\Models\TransactionType;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -211,8 +209,6 @@ class AccountApiController extends Controller
                         );
                 })
                 ->where(
-                    // TODO: fallback to query without this, if no results are found
-                    // https://stackoverflow.com/questions/26160155/laravel-eloquent-change-query-if-no-results
                     'transaction_type_id',
                     '=',
                     TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
@@ -254,17 +250,12 @@ class AccountApiController extends Controller
     /**
      * Get the current balance of a selected account or all accounts
      *
-     * Loop all accounts, and calculate their current values, including:
-     *  - opening balance
-     *  - all standard transactions: + deposits - withdrawals +/- transactions respectively
-     *  - all investment transaction monetary value: + sell - buy + dividends
-     *  - latest value of all investments, based on actual volume: + buy + add - sell - removal
-     *
-     * Transaction types table holds information of operators to be used, except transfer, which depends on direction
+     * The balance is calculated using AccountMonthlySummary, which is regularly updated.
      *
      * @param Request $request
      * @param AccountEntity|null $accountEntity
      * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function getAccountBalance(Request $request, AccountEntity $accountEntity = null): JsonResponse
     {
@@ -272,7 +263,33 @@ class AccountApiController extends Controller
          * @get('/api/account/balance/{accountEntity?}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+
         $user = $request->user();
+
+        // Validate the account entity and the user
+        if ($accountEntity !== null && $accountEntity->user_id !== $user->id) {
+            throw new AuthorizationException('You do not have permission to access this account entity.');
+        }
+
+        // Before proceeding with any calculation, check if any batch jobs are running for this user for fact data
+        $batchJobsCount = DB::table('job_batches')
+            ->whereIn('name', [
+                'CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id,
+                'CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id,
+            ])
+            ->where('finished_at', null)
+            ->count();
+
+        if ($batchJobsCount > 0) {
+            return response()
+                ->json(
+                    [
+                        'result' => 'busy',
+                        'message' => __('Account summary calculations are in progress.'),
+                    ],
+                    Response::HTTP_OK
+                );
+        }
 
         $baseCurrency = $this->getBaseCurrency();
 
@@ -291,136 +308,80 @@ class AccountApiController extends Controller
                 'user_id',
             ]);
 
-        $transactionTypeTransfer = TransactionType::where('name', 'transfer')->first();
+        // Get the calculated summary for all or the selected account
+        // We need only the fact data_type, not the forecast or budget data
+        // We need the sum of all standard transactions and the latest value for investments
+        $standardSummary = DB::table('account_monthly_summaries')
+            ->select('account_entity_id')
+            ->selectRaw('sum(amount) as total_amount')
+            ->where('transaction_type', 'account_balance')
+            ->where('data_type', 'fact')
+            ->when(
+                $accountEntity !== null,
+                fn ($query) => $query->where('account_entity_id', $accountEntity->id)
+            )
+            ->when(
+                $accountEntity === null,
+                fn ($query) => $query->whereIn('account_entity_id', $user->accounts()->get()->pluck('id'))
+            )
+            ->groupBy('account_entity_id')
+            ->get();
+
+        // For the investments, we need to determine the latest date for each account
+        $latestDates = DB::table('account_monthly_summaries')
+            ->select('account_entity_id')
+            ->selectRaw('MAX(date) as max_date')
+            ->where('transaction_type', 'investment_value')
+            ->where('data_type', 'fact')
+            ->where('user_id', $user->id)
+            ->when(
+                $accountEntity !== null,
+                fn ($query) => $query->where('account_entity_id', $accountEntity->id),
+            )
+            ->groupBy('account_entity_id');
+
+        $investmentSummary = DB::table('account_monthly_summaries')
+            ->select('account_monthly_summaries.account_entity_id')
+            ->selectRaw('sum(amount) as total_amount')
+            ->where('transaction_type', 'investment_value')
+            ->where('data_type', 'fact')
+            ->where('account_monthly_summaries.user_id', $user->id)
+            ->when(
+                $accountEntity !== null,
+                fn ($query) => $query->where('account_monthly_summaries.account_entity_id', $accountEntity->id)
+            )
+            ->joinSub($latestDates, 'latest_dates', function ($join) {
+                $join->on('account_monthly_summaries.account_entity_id', '=', 'latest_dates.account_entity_id')
+                    ->on('account_monthly_summaries.date', '=', 'latest_dates.max_date');
+            })
+            ->groupBy('account_monthly_summaries.account_entity_id')
+            ->get();
 
         $accounts
-            ->map(function ($account) use ($currencies, $baseCurrency, $transactionTypeTransfer, $user) {
-                // Get account group name for later grouping
-                $account['account_group'] = $account->config->accountGroup->name;
-                $account['account_group_id'] = $account->config->accountGroup->id;  //TODO: should we pass the entire object instead?
+            ->map(function ($account) use ($currencies, $baseCurrency, $standardSummary, $investmentSummary) {
+                // Get the account group name for later grouping
+                $account['account_group_name'] = $account->config->accountGroup->name;
+                $account['account_group_id'] = $account->config->accountGroup->id;
 
-                // Get all standard transfer transactions
-                $standardTransactions = Transaction::with(
-                    [
-                        'config',
-                        'transactionType',
-                    ]
-                )
-                    ->byScheduleType('none')
-                    ->where('transaction_type_id', '=', $transactionTypeTransfer->id)
-                    ->whereHasMorph(
-                        'config',
-                        [TransactionDetailStandard::class],
-                        function (Builder $query) use ($account) {
-                            $query->Where('account_from_id', $account->id);
-                            $query->orWhere('account_to_id', $account->id);
-                        }
-                    )
-                    ->get();
+                // Summarize the standard value and investment value for this account
+                $account['cash'] = $standardSummary->where('account_entity_id', $account->id)
+                    ->first()
+                    ->total_amount ?? 0;
 
-                // Get summary for all standard transaction (withdrawal / deposit)
-                $transactionsWithdrawalValue = DB::table('transactions')
-                    ->select(
-                        DB::raw('sum(-transaction_details_standard.amount_from) AS amount')
-                    )
-                    ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
-                    ->where(function ($query) use ($user) {
-                        $this->commonFilters($query, $user);
-                    })
-                    ->where('transactions.config_type', 'transaction_detail_standard')
-                    ->whereIn('transactions.transaction_type_id', function ($query) {
-                        $query->from('transaction_types')
-                            ->select('id')
-                            ->where('type', 'Standard')
-                            ->where('name', 'withdrawal');
-                    })
-                    ->where('transaction_details_standard.account_from_id', $account->id)
-                    ->first();
+                $account['investments'] = $investmentSummary->where('account_entity_id', $account->id)
+                    ->first()
+                    ->total_amount ?? 0;
 
-                $transactionsDepositValue = DB::table('transactions')
-                    ->select(
-                        DB::raw('sum(transaction_details_standard.amount_to) AS amount')
-                    )
-                    ->leftJoin('transaction_details_standard', 'transactions.config_id', '=', 'transaction_details_standard.id')
-                    ->where(function ($query) use ($user) {
-                        $this->commonFilters($query, $user);
-                    })
-                    ->where('transactions.config_type', 'transaction_detail_standard')
-                    ->whereIn('transactions.transaction_type_id', function ($query) {
-                        $query->from('transaction_types')
-                            ->select('id')
-                            ->where('type', 'Standard')
-                            ->where('name', 'deposit');
-                    })
-                    ->where('transaction_details_standard.account_to_id', $account->id)
-                    ->first();
+                $account['sum'] = $account['cash'] + $account['investments'];
 
-                // Get summary for all investment transactions
-                $investmentTransactionsValue = DB::table('transactions')
-                    ->select(
-                        DB::raw('sum(
-                                    (CASE WHEN transaction_types.amount_operator = "plus" THEN 1 ELSE -1 END)
-                                  * (IFNULL(transaction_details_investment.price, 0) * IFNULL(transaction_details_investment.quantity, 0))
+                $account['currency'] = $account->config->currency;
 
-                                  + IFNULL(transaction_details_investment.dividend, 0)
-                                  - IFNULL(transaction_details_investment.tax, 0)
-                                  - IFNULL(transaction_details_investment.commission, 0)
-                                  ) AS amount')
-                    )
-                    ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
-                    ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
-                    ->where(function ($query) use ($user) {
-                        $this->commonFilters($query, $user);
-                    })
-                    ->where('transactions.config_type', 'transaction_detail_investment')
-                    ->whereIn('transactions.transaction_type_id', function ($query) {
-                        $query->from('transaction_types')
-                            ->select('id')
-                            ->where('type', 'Investment')
-                            ->whereNotNull('amount_operator');
-                    })
-                    ->where('transaction_details_investment.account_id', $account->id)
-                    ->first();
-
-                // Get summary of transfer transaction values
-                $account['sum'] = $standardTransactions
-                    ->sum(fn ($transaction) => $transaction->cashflowValue($account));
-
-                // Add standard transaction result
-                $account['sum'] += $transactionsWithdrawalValue->amount ?? 0;
-                $account['sum'] += $transactionsDepositValue->amount ?? 0;
-
-                // Add investment transaction result
-                $account['sum'] += $investmentTransactionsValue->amount ?? 0;
-
-                // Add opening balance
-                $account['sum'] += $account->config->opening_balance;
-
-                // Store this result as cash value
-                $account['cash'] = $account['sum'];
-
-                // Add value of investments
-                $investments = $account->config->getAssociatedInvestmentsAndQuantity();
-                $account['investments'] = $investments->sum(function ($item) {
-                    if ($item->quantity === 0) {
-                        return 0;
-                    }
-
-                    $investment = Investment::find($item->investment_id);
-
-                    return $item->quantity * $investment->getLatestPrice();
-                });
-
-                $account['sum'] += $account['investments'];
-
-                // Apply currency exchange, if necesary
+                // Apply currency exchange, only if necesary
                 if ($account->config->currency_id === $baseCurrency->id) {
-                    $account['currency'] = $account->config->currency;
-
                     return $account;
                 }
 
-                $rate = $currencies->find($account->config->currency_id)->rate();
+                $rate = $currencies->find($account->config->currency_id)->rate() ?? 1;
 
                 $account['sum_foreign'] = $account['sum'];
                 $account['sum'] *= $rate;
@@ -431,25 +392,17 @@ class AccountApiController extends Controller
                 $account['investments_foreign'] = $account['investments'];
                 $account['investments'] *= $rate;
 
-                $account['currency'] = $account->config->currency;
-
                 return $account;
             });
 
         return response()
             ->json(
                 [
+                    'result' => 'success',
                     'accountBalanceData' => $accounts,
                     'account' => $accountEntity,
                 ],
                 Response::HTTP_OK
             );
-    }
-
-    private function commonFilters($query, $user)
-    {
-        $query->where('transactions.user_id', $user->id)
-            ->where('transactions.schedule', 0)
-            ->where('transactions.budget', 0);
     }
 }

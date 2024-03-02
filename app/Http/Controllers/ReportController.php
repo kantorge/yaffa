@@ -30,7 +30,7 @@ class ReportController extends Controller
         $withForecast = $request->get('withForecast') ?? false;
 
         JavaScript::put([
-            'presetAccount' => $request->get('account'),
+            'presetAccount' => $request->get('accountEntity'),
         ]);
 
         return view(

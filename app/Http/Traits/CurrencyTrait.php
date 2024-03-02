@@ -6,6 +6,7 @@ use App\Models\Currency;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 trait CurrencyTrait
@@ -13,41 +14,41 @@ trait CurrencyTrait
     /**
      * Load a collection for all currencies, with an average rate by month
      *
-     * @param bool $withCarbonDates
-     * @param bool $onlyToBaseCurrency
      * @return Collection
      */
-    public function allCurrencyRatesByMonth(bool $withCarbonDates = true, bool $onlyToBaseCurrency = true): Collection
+    public function allCurrencyRatesByMonth(): Collection
     {
         $baseCurrency = $this->getBaseCurrency();
         if (!$baseCurrency) {
             return new Collection();
         }
 
-        $rates = DB::table('currency_rates')
-            ->select(
-                DB::raw('SUBDATE(`date`, (day(`date`)-1)) AS `month`'),
-                'from_id',
-                'to_id',
-                DB::raw('avg(rate) as rate')
-            )
-            ->when($onlyToBaseCurrency, function ($query) use ($baseCurrency) {
-                $query->where('to_id', '=', $baseCurrency->id);
-            })
-            ->groupBy(DB::raw('SUBDATE(`date`, (day(`date`)-1))'))
-            ->groupBy('from_id')
-            ->groupBy('to_id')
-            ->get();
+        $userId = auth()->user()->id;
+        $cacheKey = "allCurrencyRatesByMonth_forUser_{$userId}";
 
-        if ($withCarbonDates) {
+        return Cache::remember($cacheKey, now()->addDay(), function () use ($baseCurrency) {
+            $rates = DB::table('currency_rates')
+                ->select(
+                    DB::raw('SUBDATE(`date`, (DAY(`date`)-1)) AS `month`'),
+                    'from_id',
+                    DB::raw('AVG(rate) AS rate')
+                )
+                // Rates are retrieved only towards the base currency
+                ->where('to_id', '=', $baseCurrency->id)
+                ->groupBy(
+                    DB::raw('SUBDATE(`date`, (DAY(`date`)-1))'),
+                    'from_id'
+                )
+                ->get();
+
             $rates->transform(function ($rate) {
                 $rate->date_from = Carbon::parse($rate->month);
 
                 return $rate;
             });
-        }
 
-        return $rates;
+            return $rates;
+        });
     }
 
     /**
@@ -61,9 +62,21 @@ trait CurrencyTrait
             return null;
         }
 
-        return Auth::user()
-            ->currencies()
-            ->where('base', 1)
-            ->firstOr(fn () => Auth::user()->currencies()->orderBy('id')->firstOr(fn () => null));
+        // Define the cache key for the current user
+        $userId = auth()->user()->id;
+        $cacheKey = "baseCurrency_forUser_{$userId}";
+
+        // The base currency is not expected to change often, so it is cached for a month
+        return Cache::remember($cacheKey, now()->addMonth(), function () {
+            return Auth::user()
+                ->currencies()
+                ->where('base', 1)
+                ->firstOr(
+                    fn () => Auth::user()
+                        ->currencies()
+                        ->orderBy('id')
+                        ->firstOr(fn () => null)
+                );
+        });
     }
 }

@@ -57,8 +57,7 @@ chart.numberFormatter.intlLocales = window.YAFFA.locale;
 chart.numberFormatter.numberFormat = {
     style: 'currency',
     currency: window.YAFFA.baseCurrency.iso_code,
-    minimumFractionDigits: window.YAFFA.baseCurrency.num_digits,
-    maximumFractionDigits: window.YAFFA.baseCurrency.num_digits
+    minimumFractionDigits: 0
 };
 
 var dateAxis = chart.xAxes.push(new am4charts.DateAxis());

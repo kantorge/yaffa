@@ -12,7 +12,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     /**
      * Register any application services.
      */
-    public function register()
+    public function register(): void
     {
         Telescope::night();
 

@@ -5,7 +5,7 @@ import {
     booleanToTableIcon,
     genericDataTablesActionButton,
     initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+} from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 

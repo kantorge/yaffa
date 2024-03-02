@@ -30,7 +30,7 @@ class ProcessIncomingEmailByAi implements ShouldQueue, ShouldBeUnique
 
     public ReceivedMail $mail;
 
-    private const AI_PROMPT_MAIN = <<<'EOF'
+    private const string AI_PROMPT_MAIN = <<<'EOF'
 I will provide you the text body of an email, which is a receipt of a financial transaction.
 The language used in the email is unknown.
 I'd like you to extract certain information from it.
@@ -62,7 +62,7 @@ The text to process is the following:
 """
 EOF;
 
-    private const AI_PROMPT_ACCOUNT = <<<'EOF'
+    private const string AI_PROMPT_ACCOUNT = <<<'EOF'
 I will provide you a list of accounts and their IDs in the following format: "ID: Account name|Optional list of aliases"
 I'd like you to identify the ID of the account used for payment in the email,
 based on the account name or any of the aliases.
@@ -82,7 +82,7 @@ The text to process is the following:
 """
 EOF;
 
-    private const AI_PROMPT_PAYEE = <<<'EOF'
+    private const string AI_PROMPT_PAYEE = <<<'EOF'
 I will provide you a list of payees and their IDs in the following format: "ID: Payee name"
 I'd like you to identify the ID of the payee where the purchase happened in the email, based on the payee name.
 Please provide the ID of the payee, without its name or any further explanation.
@@ -173,7 +173,7 @@ EOF;
         $data = [
             'transaction_type_id' => $values['transaction_type_id'],
             'date' => $values['date'],
-            'config_type' => 'transaction_detail_standard',
+            'config_type' => 'standard',
             'config' => [
                 'amount_from' => floatval($values['amount']),
                 'amount_to' => floatval($values['amount']),

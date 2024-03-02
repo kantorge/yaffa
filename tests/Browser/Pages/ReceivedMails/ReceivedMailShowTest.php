@@ -103,7 +103,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "account_to_id" => null,
                         "account_from_id" => 385
                     ],
-                    "config_type" => "transaction_detail_standard",
+                    "config_type" => "standard",
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],
@@ -145,8 +145,6 @@ class ReceivedMailShowTest extends DuskTestCase
                 ->assertAttributeContains('@button-received-mail-tab-html', 'class', 'active')
                 ->assertAttributeContains('@received-mail-tab-html', 'class', 'active');
 
-            // TODO: validate the content of the three tabs
-
             // Validate the behavior of the finalize button
             $browser->waitForReload(function (Browser $browser) {
                 $browser->click('@button-received-mail-finalize');
@@ -185,7 +183,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "account_to_id" => null,
                         "account_from_id" => 385
                     ],
-                    "config_type" => "transaction_detail_standard",
+                    "config_type" => "standard",
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],
@@ -251,7 +249,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "account_to_id" => null,
                         "account_from_id" => 385
                     ],
-                    "config_type" => "transaction_detail_standard",
+                    "config_type" => "standard",
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],

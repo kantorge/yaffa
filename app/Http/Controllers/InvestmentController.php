@@ -65,6 +65,7 @@ class InvestmentController extends Controller
         // Pass data for DataTables
         JavaScriptFacade::put([
             'investments' => $investments,
+            'investmentGroups' => Auth::user()->investmentGroups,
         ]);
 
         return view('investment.index');
@@ -91,7 +92,7 @@ class InvestmentController extends Controller
         );
     }
 
-    public function update(InvestmentRequest $request, Investment $investment)
+    public function update(InvestmentRequest $request, Investment $investment): RedirectResponse
     {
         /**
          * @methods('PUT', PATCH')
@@ -112,15 +113,39 @@ class InvestmentController extends Controller
     /**
      * Display form to create new resource.
      *
-     * @return View
+     * @return View|RedirectResponse
      */
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
         /**
          * @get('/investment/create')
          * @name('investment.create')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
+        // Redirect the user to the investment group form, if no investment groups are available
+        if (Auth::user()->investmentGroups()->count() === 0) {
+            $this->addMessage(
+                __('investment.requirement.investmentGroup'),
+                'info',
+                __('No investment groups found'),
+                'info-circle'
+            );
+
+            return redirect()->route('investment-group.create');
+        }
+
+        // Redirect to currency form, if empty
+        if (Auth::user()->currencies()->count() === 0) {
+            $this->addMessage(
+                __('investment.requirement.currency'),
+                'info',
+                __('No currencies found'),
+                'info-circle'
+            );
+
+            return redirect()->route('currency.create');
+        }
+
         return view('investment.form');
     }
 

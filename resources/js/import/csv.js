@@ -692,7 +692,7 @@ $(tableSelector).on('click', 'button.record', function () {
 
     // Further data preparation
     transaction.action = 'create';
-    transaction.config_type = 'transaction_detail_standard';
+    transaction.config_type = 'standard';
     transaction.items = [];
     transaction.fromModal = true;
     transaction.config.account_from_id = transaction.config.account_from.id;

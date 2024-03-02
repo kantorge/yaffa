@@ -20,7 +20,7 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
-                href="{{ route('currencies.index') }}"
+                href="{{ route('currency.index') }}"
                 iconClasses="fa-solid fa-money-bill"
                 text="{{ __('Currencies') }}"
             />

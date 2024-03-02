@@ -7,8 +7,12 @@ $.fn.select2.amd.define(
 );
 
 // Add select2 functionality to payee_source select
-$('#category_source').select2({
+const selectorSourceCategory = '#category_source';
+const selectorTargetCategory = '#category_target';
+
+$(selectorSourceCategory).select2({
     placeholder: () => __('Select category to be merged'),
+    theme: 'bootstrap-5',
     allowClear: true,
     selectOnClose: false,
     ajax: {
@@ -23,8 +27,8 @@ $('#category_source').select2({
             };
         },
         processResults: function (data) {
-            //Exclude category in target select
-            let targetCategory = $('#category_target').select2('data');
+            // Exclude category in target select
+            let targetCategory = $(selectorTargetCategory).select2('data');
             if (targetCategory.length > 0) {
                 data = data.filter(function (item) {
                     return item.id != targetCategory[0].id;
@@ -46,16 +50,17 @@ $('#category_source').select2({
         }
     })
     .done(data => {
-        $('#category_source').data('parent', !data.parent);
+        $(selectorSourceCategory).data('parent', !data.parent);
     });
 })
 .on('select2:unselect', function () {
-    $('#category_source').data('parent', null);
+    $(selectorSourceCategory).data('parent', null);
 });
 
 // Load default value for source category if provided in query parameter
+let categorySource = window.categorySource || null;
 if (categorySource) {
-    $('#category_source')
+    $(selectorSourceCategory)
         .append(new Option(categorySource.full_name, categorySource.id, true, true))
         .trigger({
             type: 'select2:select',
@@ -67,8 +72,9 @@ if (categorySource) {
 }
 
 // Add select2 functionality to category_target select
-$('#category_target').select2({
+$(selectorTargetCategory).select2({
     placeholder: () => __('Select category to be merged into'),
+    theme: 'bootstrap-5',
     allowClear: true,
     selectOnClose: false,
     ajax: {
@@ -84,7 +90,7 @@ $('#category_target').select2({
         },
         processResults: function (data) {
             //Exclude caegory in source select
-            let sourceCategory = $('#category_source').select2('data');
+            let sourceCategory = $(selectorSourceCategory).select2('data');
             if (sourceCategory.length > 0) {
                 data = data.filter(function (item) {
                     return item.id != sourceCategory[0].id;
@@ -106,26 +112,26 @@ $('#category_target').select2({
         }
     })
     .done(data => {
-        $('#category_target').data('parent', !data.parent);
+        $(selectorTargetCategory).data('parent', !data.parent);
     });
 })
 .on('select2:unselect', function () {
-    $('#category_target').data('parent', null);
+    $(selectorTargetCategory).data('parent', null);
 });
 
 // Add confirm dialog to submit button
 $('#merge-categories-form').on('submit', function (e) {
     // Validate if both select2 inputs are not empty
-    let source = $('#category_source').select2('data');
-    let target = $('#category_target').select2('data');
+    let source = $(selectorSourceCategory).select2('data');
+    let target = $(selectorTargetCategory).select2('data');
 
-    if (source.length == 0 || target.length == 0) {
+    if (source.length === 0 || target.length === 0) {
         e.preventDefault();
         alert(__('Please select categories to be merged'));
         return;
     } else {
         // Validate if both select2 inputs are not the same
-        if (source[0].id == target[0].id) {
+        if (source[0].id === target[0].id) {
             e.preventDefault();
             alert(__('Please select different categories to be merged'));
             return;
@@ -134,14 +140,14 @@ $('#merge-categories-form').on('submit', function (e) {
 
     // Validate if action radio button is selected
     let action = $('input[name=action]:checked').val();
-    if (action == undefined) {
+    if (typeof action === 'undefined') {
         e.preventDefault();
         alert(__('Please select an action'));
         return;
     }
 
     // Validate invalid combination where source category is a parent, and target category is a child
-    if ($('#category_source').data('parent') === true && $('#category_target').data('parent') === false) {
+    if ($(selectorSourceCategory).data('parent') === true && $(selectorTargetCategory).data('parent') === false) {
         e.preventDefault();
         alert(__('Cannot merge a parent category into a child category.'));
         return;
@@ -153,7 +159,7 @@ $('#merge-categories-form').on('submit', function (e) {
 });
 
 // Cancel button behaviour
-$('#cancel').on('click', function (e) {
+$('#cancel').on('click', function () {
     if(confirm(__('Are you sure you want to discard any changes?'))) {
         window.history.back();
     }

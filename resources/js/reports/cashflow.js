@@ -17,8 +17,7 @@ chart.numberFormatter.numberFormat = {
     style: 'currency',
     currency: window.YAFFA.baseCurrency.iso_code,
     currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: window.YAFFA.baseCurrency.num_digits,
-    maximumFractionDigits: window.YAFFA.baseCurrency.num_digits
+    minimumFractionDigits: 0
 };
 
 chart.dateFormatter.dateFormat = {
@@ -48,21 +47,29 @@ dateAxis.events.on("datavalidated", function (ev) {
 
 let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
 
-// Monthly bars
+// Monthly account balance fact bars
 let seriesMonhtly = chart.series.push(new am4charts.ColumnSeries());
-seriesMonhtly.dataFields.valueY = "value";
+seriesMonhtly.dataFields.valueY = "account_balance";
 seriesMonhtly.yAxis = valueAxis;
 seriesMonhtly.dataFields.dateX = "month";
-seriesMonhtly.name = __('Monthly change');
+seriesMonhtly.name = __('Monthly balance change');
 seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
 
-// Running total line
+// Running total line for account balance fact
 let seriesTotal = chart.series.push(new am4charts.LineSeries());
-seriesTotal.dataFields.valueY = "runningTotal";
+seriesTotal.dataFields.valueY = "account_balance_running_total";
 seriesTotal.dataFields.dateX = "month";
 seriesTotal.strokeWidth = 2;
 seriesTotal.name = __('Running total');
 seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
+
+// Line for the investment value fact
+let seriesInvestment = chart.series.push(new am4charts.LineSeries());
+seriesInvestment.dataFields.valueY = "investment_value";
+seriesInvestment.dataFields.dateX = "month";
+seriesInvestment.strokeWidth = 2;
+seriesInvestment.name = __('Investment value');
+seriesInvestment.tooltipText = "{dateX}: [b]{valueY}[/]";
 
 let valueAxisTotal = chart.yAxes.push(new am4charts.ValueAxis());
 valueAxisTotal.renderer.opposite = true;
@@ -76,21 +83,38 @@ chart.cursor = new am4charts.XYCursor();
 
 
 function reloadData() {
-    // API endpoint depends on account being selected.
-    let url;
-    if ($(elementAccountSelector).val()) {
-        url = '/api/reports/account_history_by_month/' + $(elementAccountSelector).val() + '/' + document.getElementById('withForecast').checked;
-    } else {
-        url = window.route('api.reports.cashflow', {
+    const url = window.route('api.reports.cashflow', {
             withForecast: document.getElementById('withForecast').checked,
+            accountEntity: $(elementAccountSelector).val() ? $(elementAccountSelector).val() : undefined,
         });
-    }
 
     document.getElementById('btnReload').disabled = true;
 
     fetch(url)
         .then(response => response.json())
         .then(function (data) {
+            // Check if the result is busy, which means the data is not ready yet
+            if (data.result === 'busy') {
+                document.getElementById('placeholder').classList.remove('hidden');
+                document.getElementById('chartdiv').classList.add('hidden');
+
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('notification', {
+                    detail: {
+                        notification: {
+                            type: 'warning',
+                            message: data.message,
+                            title: null,
+                            icon: null,
+                            dismissible: true,
+                        }
+                    },
+                });
+                window.dispatchEvent(notificationEvent);
+
+                return;
+            }
+
             chart.data = data.chartData;
             chart.invalidateData();
             document.getElementById('placeholder').classList.add('hidden');
@@ -109,7 +133,7 @@ function rebuildUrl() {
 
     // Accounts
     if ($(elementAccountSelector).val()) {
-        params.push('account=' + $(elementAccountSelector).val());
+        params.push('accountEntity=' + $(elementAccountSelector).val());
     }
 
     // With forecast
@@ -151,6 +175,21 @@ $(elementAccountSelector).select2({
     .on('select2:select', rebuildUrl)
     .on('select2:unselect', rebuildUrl);
 
+// Input event listeners
+document.getElementById('singleAxis').addEventListener('change', function(){
+    if (seriesTotal.yAxis == valueAxis) {
+        seriesTotal.yAxis = valueAxisTotal;
+
+        valueAxisTotal.disabled = false;
+    } else {
+        seriesTotal.yAxis = valueAxis;
+
+        valueAxisTotal.disabled = true;
+    }
+});
+document.getElementById('withForecast').addEventListener('change', rebuildUrl);
+document.getElementById('btnReload').addEventListener('click', reloadData);
+
 // Default account
 if (window.presetAccount) {
     $.ajax({
@@ -172,23 +211,11 @@ if (window.presetAccount) {
                         }
                     }
                 });
+
+            // Initial data for the preset account
+            reloadData();
         });
+} else {
+    // Initial data for all accounts
+    reloadData();
 }
-
-// Input event listeners
-document.getElementById('singleAxis').addEventListener('change', function(){
-    if (seriesTotal.yAxis == valueAxis) {
-        seriesTotal.yAxis = valueAxisTotal;
-
-        valueAxisTotal.disabled = false;
-    } else {
-        seriesTotal.yAxis = valueAxis;
-
-        valueAxisTotal.disabled = true;
-    }
-});
-document.getElementById('withForecast').addEventListener('change', rebuildUrl);
-document.getElementById('btnReload').addEventListener('click', reloadData);
-
-// Finally, load data
-reloadData();

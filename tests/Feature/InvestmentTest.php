@@ -75,7 +75,12 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
+        /** @var User $user */
         $user = User::factory()->create();
+
+        // Create an investment group and a currency, which are prerequisites for creating an investment
+        InvestmentGroup::factory()->for($user)->create();
+        Currency::factory()->for($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -83,6 +88,40 @@ class InvestmentTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertViewIs("{$this->base_route}.form");
+    }
+
+    /** @test */
+    public function investment_form_requires_investment_group_and_currency()
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create"));
+
+        // Assert that the user is redirected to the investment group creation page
+        $response->assertRedirect(route('investment-group.create'));
+
+        // Create the investment group
+        InvestmentGroup::factory()->for($user)->create();
+
+        // Assert that the user is redirected to the currency creation page
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create"));
+
+        $response->assertRedirect(route('currency.create'));
+
+        // Create the currency
+        Currency::factory()->for($user)->create();
+
+        // Assert that the user can access the investment creation page
+        $response = $this
+            ->actingAs($user)
+            ->get(route("{$this->base_route}.create"));
+
+        $response->assertStatus(Response::HTTP_OK);
     }
 
     /** @test */
@@ -203,8 +242,10 @@ class InvestmentTest extends TestCase
             );
 
         $response->assertRedirect(route("{$this->base_route}.index"));
-        //TODO: make this dynamic instead of fixed 1st element
-        $response->assertSessionHas('notification_collection.0.type', 'success');
+        $notifications = session('notification_collection');
+        $successNotificationExists = collect($notifications)
+            ->contains(fn ($notification) => $notification['type'] === 'success');
+        $this->assertTrue($successNotificationExists);
     }
 
     /** @test */
