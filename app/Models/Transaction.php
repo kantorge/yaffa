@@ -206,7 +206,7 @@ class Transaction extends Model
      * @param AccountEntity|null $account
      * @return float|int
      */
-    public function accountBalanceChange(AccountEntity $account = null): float|int
+    public function accountBalanceChange(AccountEntity|null $account = null): float|int
     {
         if ($this->isStandard()) {
             $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');

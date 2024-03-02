@@ -188,7 +188,7 @@ class TransactionSchedule extends Model
      * @throws InvalidArgument
      * @throws Exception
      */
-    private function getRecurrence(Carbon $afterDate = null): RecurrenceCollection
+    private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
     {
         $rule = (new Rule())
             ->setStartDate(new DateTime($this->start_date))

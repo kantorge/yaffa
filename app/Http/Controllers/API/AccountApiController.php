@@ -257,7 +257,7 @@ class AccountApiController extends Controller
      * @return JsonResponse
      * @throws AuthorizationException
      */
-    public function getAccountBalance(Request $request, AccountEntity $accountEntity = null): JsonResponse
+    public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
     {
         /**
          * @get('/api/account/balance/{accountEntity?}')

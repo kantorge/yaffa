@@ -194,7 +194,7 @@ class ReportApiController extends Controller
      * @param int|null $month
      * @return JsonResponse
      */
-    public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int $month = null): JsonResponse
+    public function getCategoryWaterfallData(string $transactionType, string $dataType, int $year, int|null $month = null): JsonResponse
     {
         /**
          * @get('/api/reports/waterfall/{type}/{year}/{month?}')

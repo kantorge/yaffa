@@ -365,7 +365,7 @@ class Investment extends Model
      * @param bool $refill Future option to request reload of prices
      * @throws GuzzleException
      */
-    public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void
+    public function getInvestmentPriceFromAlphaVantage(Carbon|null $from = null, bool $refill = false): void
     {
         // Get 3 days data by default, assuming that scheduler is running
         if (! $from) {

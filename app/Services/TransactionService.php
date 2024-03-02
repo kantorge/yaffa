@@ -62,7 +62,8 @@ class TransactionService
 
         if ($transaction->transactionType->name === 'deposit') {
             return $transaction->config->accountTo?->config->currency_id;
-        } elseif ($transaction->transactionType->name === 'withdrawal') {
+        }
+        if ($transaction->transactionType->name === 'withdrawal') {
             return $transaction->config->accountFrom?->config->currency_id;
         }
 
@@ -103,7 +104,8 @@ class TransactionService
 
         if ($transaction->transactionType->name === 'deposit') {
             return $transaction->config->amount_from;
-        } elseif ($transaction->transactionType->name === 'withdrawal') {
+        }
+        if ($transaction->transactionType->name === 'withdrawal') {
             return $transaction->config->amount_from * -1;
         }
 
