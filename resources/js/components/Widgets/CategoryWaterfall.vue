@@ -117,8 +117,7 @@ export default {
     chart.numberFormatter.numberFormat = {
       style: 'currency',
       currency: this.baseCurrency.iso_code,
-      minimumFractionDigits: this.baseCurrency.num_digits,
-      maximumFractionDigits: this.baseCurrency.num_digits
+      minimumFractionDigits: 0
     };
 
     chart.data = this.chartData;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection as IlluminateCollection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -99,7 +100,7 @@ class Account extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function openingBalance()
+    public function openingBalance(): object
     {
         return (object) [
             'id' => null,
@@ -126,22 +127,39 @@ class Account extends Model
         ];
     }
 
-    public function getAssociatedInvestmentsAndQuantity()
+    public function getAssociatedInvestmentsAndQuantity(Carbon $untilDate = null): IlluminateCollection
     {
         return DB::table('transactions')
             ->select(
                 'transaction_details_investment.investment_id',
-                DB::raw('sum(CASE WHEN transaction_types.quantity_operator = "plus" THEN 1 ELSE -1 END * IFNULL(transaction_details_investment.quantity, 0)) AS quantity')
+                DB::raw('sum(
+                                 CASE WHEN transaction_types.quantity_operator = "plus" THEN 1 ELSE -1 END
+                                 * IFNULL(transaction_details_investment.quantity, 0)
+                               ) AS quantity')
             )
             ->groupBy(
                 'transaction_details_investment.investment_id',
             )
-            ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
-            ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
-            ->where('transactions.user_id', Auth::user()->id)
+            ->leftJoin(
+                'transaction_details_investment',
+                'transactions.config_id',
+                '=',
+                'transaction_details_investment.id'
+            )
+            ->leftJoin(
+                'transaction_types',
+                'transactions.transaction_type_id',
+                '=',
+                'transaction_types.id'
+            )
+            ->when(
+                $untilDate,
+                function ($query, $untilDate) {
+                    $query->where('transactions.date', '<=', $untilDate);
+                }
+            )
             ->where('transactions.schedule', 0)
-            ->where('transactions.budget', 0)
-            ->where('transactions.config_type', 'transaction_detail_investment')
+            ->where('transactions.config_type', 'investment')
             ->whereIn('transactions.transaction_type_id', function ($query) {
                 $query->from('transaction_types')
                     ->select('id')

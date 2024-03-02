@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Eloquent;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Builder;
@@ -135,7 +135,7 @@ class Investment extends Model
         )
             ->where(
                 'config_type',
-                'transaction_detail_investment'
+                'investment'
             );
     }
 
@@ -152,7 +152,7 @@ class Investment extends Model
             ->byScheduleType('none')
             ->where(
                 'config_type',
-                'transaction_detail_investment'
+                'investment'
             );
     }
 
@@ -169,7 +169,7 @@ class Investment extends Model
             ->byScheduleType('schedule')
             ->where(
                 'config_type',
-                'transaction_detail_investment'
+                'investment'
             );
     }
 
@@ -188,27 +188,31 @@ class Investment extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function getCurrentQuantity(AccountEntity $account = null)
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getCurrentQuantity(AccountEntity $account = null): float
     {
         $investmentId = $this->id;
 
-        // Get all investment transactions for current investment
-        $transactions = Transaction::with(
-            [
-                'config',
-                'transactionType',
-            ]
-        )
+        // Get all investment transactions for the current investment
+        $transactions = Transaction::with([
+            'config',
+            'transactionType',
+        ])
             ->byScheduleType('none')
-            ->where('config_type', 'transaction_detail_investment')
+            ->where('config_type', 'investment')
             ->whereHasMorph(
                 'config',
                 [TransactionDetailInvestment::class],
                 function (Builder $query) use ($investmentId, $account) {
-                    $query->Where('investment_id', $investmentId);
-                    if ($account !== null) {
-                        $query->where('account_id', '=', $account->id);
-                    }
+                    $query
+                        ->where('investment_id', $investmentId)
+                        ->when($account !== null, function ($query) use ($account) {
+                            $query->where('account_id', '=', $account->id);
+                        });
                 }
             )
             ->get();
@@ -223,51 +227,66 @@ class Investment extends Model
         });
     }
 
-    public function getLatestPrice($type = 'combined', Carbon $onOrBefore = null)
+    /**
+     * Get the latest price of the investment
+     *
+     * @param string $type Can be 'stored', 'transaction' or 'combined'
+     * @param Carbon|null $onOrBefore
+     * @return float|null
+     */
+    public function getLatestPrice(string $type = 'combined', Carbon $onOrBefore = null): ?float
     {
-        $investmentId = $this->id;
-
-        if ($type === 'stored' || $type === 'combined') {
-            $price = InvestmentPrice::where('investment_id', $investmentId)
-                ->when($onOrBefore, function ($query) use ($onOrBefore) {
-                    $query->where('date', '<=', $onOrBefore);
-                })
-                ->latest('date')
-                ->first();
-        }
-
-        if ($type === 'transaction' || $type === 'combined') {
-            $transaction = Transaction::with(
-                [
-                    'config',
-                ]
-            )
-                ->byScheduleType('none')
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investmentId) {
-                        $query
-                            ->Where('investment_id', $investmentId)
-                            ->WhereNotNull('price');
-                    }
-                )
-                ->when($onOrBefore, function ($query) use ($onOrBefore) {
-                    $query->where('date', '<=', $onOrBefore);
-                })
-                ->latest('date')
-                ->first();
-        }
-
         if ($type === 'stored') {
+            $price = $this->getLatestStoredPrice($onOrBefore);
             return $price instanceof InvestmentPrice ? $price->price : null;
         }
 
         if ($type === 'transaction') {
+            $transaction = $this->getLatestTransactionWithPrice($onOrBefore);
             return $transaction instanceof Transaction ? $transaction->config->price : null;
         }
 
-        // Combined is needed and we have both data: get latest
+        // Proceed with combined price
+        return $this->getLatestCombinedPrice($onOrBefore);
+    }
+
+    private function getLatestStoredPrice(Carbon $onOrBefore = null)
+    {
+        return InvestmentPrice::where('investment_id', $this->id)
+            ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                $query->where('date', '<=', $onOrBefore);
+            })
+            ->latest('date')
+            ->first();
+    }
+
+    private function getLatestTransactionWithPrice(Carbon $onOrBefore = null)
+    {
+        return Transaction::with([
+            'config',
+        ])
+            ->byScheduleType('none')
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) {
+                    $query
+                        ->where('investment_id', $this->id)
+                        ->whereNotNull('price');
+                }
+            )
+            ->when($onOrBefore, function ($query) use ($onOrBefore) {
+                $query->where('date', '<=', $onOrBefore);
+            })
+            ->latest('date')
+            ->first();
+    }
+
+    private function getLatestCombinedPrice(Carbon $onOrBefore = null)
+    {
+        $price = $this->getLatestStoredPrice($onOrBefore);
+        $transaction = $this->getLatestTransactionWithPrice($onOrBefore);
+
         if (($price instanceof InvestmentPrice) && ($transaction instanceof Transaction)) {
             if ($price->date > $transaction->date) {
                 return $price->price;
@@ -287,11 +306,6 @@ class Investment extends Model
         }
 
         return null;
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /**
@@ -346,12 +360,12 @@ class Investment extends Model
     }
 
     /**
-     * TODO: this should have a contract to have standard parameters
+     * TODO: this should have a contract to have standard parameters, and to force the silent save
      * @param Carbon|null $from Optionnally specify the date to retrieve data from
      * @param bool $refill Future option to request reload of prices
      * @throws GuzzleException
      */
-    public function getInvestmentPriceFromAlphaVantage(Carbon $from = null, bool $refill = false): void
+    public function getInvestmentPriceFromAlphaVantage(Carbon|null $from = null, bool $refill = false): void
     {
         // Get 3 days data by default, assuming that scheduler is running
         if (! $from) {
@@ -381,15 +395,17 @@ class Investment extends Model
                 continue;
             }
 
-            InvestmentPrice::updateOrCreate(
+            $investmentPrice = InvestmentPrice::firstOrNew(
                 [
                     'investment_id' => $this->id,
                     'date' => $date,
-                ],
-                [
-                    'price' => $daily_data->{'4. close'},
                 ]
             );
+            $investmentPrice->price = $daily_data->{'4. close'};
+
+            // We are intentionally not triggering the observer here, as there can be multiple similar operations
+            // It means, that it's the responsibility of the caller to trigger the observer or any related actions
+            $investmentPrice->saveQuietly();
         }
     }
 }

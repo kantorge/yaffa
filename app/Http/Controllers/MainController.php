@@ -106,7 +106,7 @@ class MainController extends Controller
                     $transaction->transactionGroup = 'history';
                 }
 
-                if ($transaction->config_type === 'transaction_detail_standard') {
+                if ($transaction->isStandard()) {
                     $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                     $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
@@ -114,8 +114,8 @@ class MainController extends Controller
                     $transaction->amount_to = $transaction->config->amount_to;
                     $transaction->tags = $transaction->tags()->values();
                     $transaction->categories = $transaction->categories()->values();
-                } elseif ($transaction->config_type === 'transaction_detail_investment') {
-                    $amount = $transaction->cashflowValue();
+                } elseif ($transaction->isInvestment()) {
+                    $amount = $transaction->accountBalanceChange();
 
                     $transaction->transactionOperator = $transaction->transactionType->amount_operator;
                     $transaction->quantityOperator = $transaction->transactionType->quantity_operator;

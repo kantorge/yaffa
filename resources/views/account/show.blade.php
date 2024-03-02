@@ -58,12 +58,20 @@
                 <div class="collapse card-body" aria-expanded="true" id="cardActions">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link"
-                               href="{{ route('account.history', ['account' => $account]) }}">{{ __('Load account transaction history') }}</a>
+                            <a
+                                    class="nav-link"
+                                    href="{{ route('account.history', ['account' => $account]) }}"
+                            >
+                                {{ __('Load account transaction history') }}
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link"
-                               href="{{ route('reports.cashflow', ['account' => $account->id]) }}">{{ __('Show account monthly history') }}</a>
+                            <a
+                                    class="nav-link"
+                                    href="{{ route('reports.cashflow', ['account' => $account->id]) }}"
+                            >
+                                {{ __('Show account monthly history') }}
+                            </a>
                         </li>
                     </ul>
                 </div>

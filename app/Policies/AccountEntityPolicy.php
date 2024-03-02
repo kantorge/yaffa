@@ -10,7 +10,7 @@ class AccountEntityPolicy
 {
     use HandlesAuthorization;
 
-    public function isOwnItem(User $user, AccountEntity $accountEntity)
+    public function isOwnItem(User $user, AccountEntity $accountEntity): bool
     {
         return $user->id === $accountEntity->user_id;
     }
@@ -18,10 +18,9 @@ class AccountEntityPolicy
     /**
      * Determine whether the user can view any models.
      *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @return bool
      */
-    public function viewAny(User $user)
+    public function viewAny(): bool
     {
         return true;
     }
@@ -29,11 +28,11 @@ class AccountEntityPolicy
     /**
      * Determine whether the user can view the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param AccountEntity $accountEntity
+     * @return bool
      */
-    public function view(User $user, AccountEntity $accountEntity)
+    public function view(User $user, AccountEntity $accountEntity): bool
     {
         return $this->isOwnItem($user, $accountEntity);
     }
@@ -41,10 +40,9 @@ class AccountEntityPolicy
     /**
      * Determine whether the user can create models.
      *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @return bool
      */
-    public function create(User $user)
+    public function create(): bool
     {
         return true;
     }
@@ -52,35 +50,11 @@ class AccountEntityPolicy
     /**
      * Determine whether the user can update the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param AccountEntity $accountEntity
+     * @return bool
      */
-    public function update(User $user, AccountEntity $accountEntity)
-    {
-        return $this->isOwnItem($user, $accountEntity);
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function delete(User $user, AccountEntity $accountEntity)
-    {
-        return $this->isOwnItem($user, $accountEntity);
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function restore(User $user, AccountEntity $accountEntity)
+    public function update(User $user, AccountEntity $accountEntity): bool
     {
         return $this->isOwnItem($user, $accountEntity);
     }
@@ -88,11 +62,11 @@ class AccountEntityPolicy
     /**
      * Determine whether the user can permanently delete the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountEntity  $accountEntity
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param AccountEntity $accountEntity
+     * @return bool
      */
-    public function forceDelete(User $user, AccountEntity $accountEntity)
+    public function forceDelete(User $user, AccountEntity $accountEntity): bool
     {
         return $this->isOwnItem($user, $accountEntity);
     }

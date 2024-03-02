@@ -90,7 +90,8 @@ window.summary = {
     },
 };
 
-window.table = $('#table').DataTable({
+const selectorDataTable = "#table";
+window.table = $(selectorDataTable).DataTable({
     data: transactions,
     columns: [
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
@@ -186,7 +187,7 @@ window.table = $('#table').DataTable({
     responsive: true,
 });
 
-$("#table").on("click", ".data-delete", function() {
+$(selectorDataTable).on("click", ".data-delete", function() {
     if (!confirm(__('Are you sure to want to delete this item?'))) {
         return;
     }
@@ -196,7 +197,7 @@ $("#table").on("click", ".data-delete", function() {
     form.submit();
 });
 
-$("#table").on("click", ".set-date", function(_event) {
+$(selectorDataTable).on("click", ".set-date", function(_event) {
     //TODO: catch invalid combinations
     if (this.dataset.type === 'from') {
         datepickerFrom.setDate(
@@ -362,30 +363,30 @@ $.fn.dataTable.ext.search.push(
 
 // Initialize charts
 if (prices.length > 0) {
-    var chartPrice = am4core.create("chartPrice", am4charts.XYChart);
+    let chartPrice = am4core.create("chartPrice", am4charts.XYChart);
     chartPrice.data = prices;
 
     chartPrice.dateFormatter.inputDateFormat = "yyyy-MM-dd";
 
-    var categoryAxis = chartPrice.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "date";
-    var valueAxis = chartPrice.yAxes.push(new am4charts.ValueAxis());
+    let categoryAxisPrice = chartPrice.xAxes.push(new am4charts.DateAxis());
+    categoryAxisPrice.dataFields.category = "date";
+    let valueAxisPrice = chartPrice.yAxes.push(new am4charts.ValueAxis());
 
-    var series = chartPrice.series.push(new am4charts.LineSeries());
-    series.dataFields.valueY = "price";
-    series.dataFields.dateX = "date";
-    series.strokeWidth = 3;
+    let seriesPrice = chartPrice.series.push(new am4charts.LineSeries());
+    seriesPrice.dataFields.valueY = "price";
+    seriesPrice.dataFields.dateX = "date";
+    seriesPrice.strokeWidth = 3;
 
-    var bullet = series.bullets.push(new am4charts.Bullet());
-    var square = bullet.createChild(am4core.Rectangle);
+    let bullet = seriesPrice.bullets.push(new am4charts.Bullet());
+    let square = bullet.createChild(am4core.Rectangle);
     square.width = 5;
     square.height = 5;
     square.horizontalCenter = "middle";
     square.verticalCenter = "middle";
 
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(series);
-    chartPrice.scrollbarX = scrollbarX;
+    let scrollbarXprice = new am4charts.XYChartScrollbar();
+    scrollbarXprice.series.push(seriesPrice);
+    chartPrice.scrollbarX = scrollbarXprice;
 } else {
     document.getElementById('chartPrice').remove();
     document.getElementById('priceChartNoData').classList.remove('hidden');
@@ -395,27 +396,27 @@ if (quantities.length > 0) {
     window.chartQuantity = am4core.create("chartQuantity", am4charts.XYChart);
     chartQuantity.data = quantities;
 
-    var categoryAxis = chartQuantity.xAxes.push(new am4charts.DateAxis());
-    categoryAxis.dataFields.category = "date";
-    var valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
+    let categoryAxisQuantity = chartQuantity.xAxes.push(new am4charts.DateAxis());
+    categoryAxisQuantity.dataFields.category = "date";
+    let valueAxis = chartQuantity.yAxes.push(new am4charts.ValueAxis());
 
-    var seriesHistory = chartQuantity.series.push(new am4charts.StepLineSeries());
+    let seriesHistory = chartQuantity.series.push(new am4charts.StepLineSeries());
     seriesHistory.dataFields.valueY = "quantity";
     seriesHistory.dataFields.dateX = "date";
     seriesHistory.strokeWidth = 3;
     seriesHistory.startLocation = 1;
 
-    var seriesSchedule = chartQuantity.series.push(new am4charts.StepLineSeries());
+    let seriesSchedule = chartQuantity.series.push(new am4charts.StepLineSeries());
     seriesSchedule.dataFields.valueY = "schedule";
     seriesSchedule.dataFields.dateX = "date";
     seriesSchedule.strokeWidth = 3;
     seriesSchedule.strokeDasharray = "3,3";
     seriesSchedule.startLocation = 1;
 
-    var scrollbarX = new am4charts.XYChartScrollbar();
-    scrollbarX.series.push(seriesHistory);
-    scrollbarX.series.push(seriesSchedule);
-    chartQuantity.scrollbarX = scrollbarX;
+    let scrollbarXquantity = new am4charts.XYChartScrollbar();
+    scrollbarXquantity.series.push(seriesHistory);
+    scrollbarXquantity.series.push(seriesSchedule);
+    chartQuantity.scrollbarX = scrollbarXquantity;
 } else {
     document.getElementById('chartQuantity').remove();
     document.getElementById('quantityChartNoData').classList.remove('hidden');

@@ -57,9 +57,9 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: "transaction_id",
             title: __('Linked transaction'),
-            render: function (data, type, row) {
+            render: function (data, _type, _row) {
                 if (!data) {
-                    return 'Not available';
+                    return __('Not available');
                 }
 
                 return dataTableHelpers.dataTablesActionButton(data, 'quickView') +

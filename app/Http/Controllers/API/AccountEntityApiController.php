@@ -4,20 +4,17 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
-use App\Services\AccountEntityService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class AccountEntityApiController extends Controller
 {
-    protected AccountEntityService $accountEntityService;
-
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-
-        $this->accountEntityService = new AccountEntityService();
+        $this->middleware(['auth:sanctum', 'verified']);
     }
 
     /**
@@ -47,6 +44,7 @@ class AccountEntityApiController extends Controller
      *
      * @param AccountEntity $accountEntity
      * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function destroy(AccountEntity $accountEntity): JsonResponse
     {
@@ -55,22 +53,33 @@ class AccountEntityApiController extends Controller
          * @name('api.accountentity.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
-        $this->authorize('delete', $accountEntity);
-        $result = $this->accountEntityService->delete($accountEntity);
+        $this->authorize('forceDelete', $accountEntity);
 
-        if ($result['success']) {
+        try {
+            $accountEntity->delete();
+            $accountEntity->config->delete();
+
             return response()
                 ->json(
                     ['accountEntity' => $accountEntity],
                     Response::HTTP_OK
                 );
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] === 1451) {
+                $error = __(
+                    ':type is in use, cannot be deleted',
+                    ['type' => Str::ucfirst($accountEntity->config_type)]
+                );
+            } else {
+                $error = __('Database error:') . ' ' . $e->errorInfo[2];
+            }
         }
 
         return response()
             ->json(
                 [
                     'accountEntity' => $accountEntity,
-                    'error' => $result['error'],
+                    'error' => $error,
                 ],
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );

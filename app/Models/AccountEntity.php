@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\AccountEntityFactory;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * App\Models\AccountEntity
@@ -57,7 +56,6 @@ use Illuminate\Support\Facades\Auth;
  * @method static Builder|AccountEntity whereName($value)
  * @method static Builder|AccountEntity whereUpdatedAt($value)
  * @method static Builder|AccountEntity whereUserId($value)
- * @method static Builder|AccountEntity forCurrentUser()
  * @mixin Eloquent
  */
 class AccountEntity extends Model
@@ -103,7 +101,7 @@ class AccountEntity extends Model
         )
             ->where(
                 'config_type',
-                'transaction_detail_investment'
+                'investment'
             );
     }
 
@@ -119,7 +117,7 @@ class AccountEntity extends Model
         )
             ->where(
                 'config_type',
-                'transaction_detail_standard'
+                'standard'
             );
     }
 
@@ -135,8 +133,17 @@ class AccountEntity extends Model
         )
             ->where(
                 'config_type',
-                'transaction_detail_standard'
+                'standard'
             );
+    }
+
+    public function allTransactionDates(): Builder
+    {
+        $transactionsInvestment = $this->transactionsInvestment()->select('date')->getQuery();
+        $transactionsStandardFrom = $this->transactionsStandardFrom()->select('date')->getQuery();
+        $transactionsStandardTo = $this->transactionsStandardTo()->select('date')->getQuery();
+
+        return $transactionsInvestment->union($transactionsStandardFrom)->union($transactionsStandardTo);
     }
 
     /**
@@ -159,31 +166,6 @@ class AccountEntity extends Model
     {
         return $this->belongsToMany(Category::class, 'account_entity_category_preference')
             ->where('preferred', false);
-    }
-
-    // Relation to transactions where this account is the from account or the to account
-    public function transactionsFrom()
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailStandard::class,
-            'account_from_id',
-            'config_id',
-            'id',
-            'id'
-        );
-    }
-
-    public function transactionsTo()
-    {
-        return $this->hasManyThrough(
-            Transaction::class,
-            TransactionDetailStandard::class,
-            'account_to_id',
-            'config_id',
-            'id',
-            'id'
-        );
     }
 
     /**
@@ -219,19 +201,18 @@ class AccountEntity extends Model
         return $query->where('config_type', 'payee');
     }
 
-    /**
-     * Scope a query to only include account entities of authenticated user.
-     *
-     * @param  Builder  $query
-     * @return Builder
-     */
-    public function scopeForCurrentUser($query)
-    {
-        return $query->where('user_id', Auth::user()->id);
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isAccount(): bool
+    {
+        return $this->config_type === 'account';
+    }
+
+    public function isPayee(): bool
+    {
+        return $this->config_type === 'payee';
     }
 }

@@ -13,7 +13,7 @@ class InvestmentPriceRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'date' => [
@@ -22,7 +22,7 @@ class InvestmentPriceRequest extends FormRequest
                 Rule::unique('investment_prices')->where(function ($query) {
                     return $query
                         ->where('investment_id', $this->investment_id);
-                }),
+                })->ignore($this->id),
             ],
             'price' => [
                 'required',

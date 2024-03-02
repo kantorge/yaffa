@@ -13,21 +13,25 @@ class GetCurrencyRatesTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COMMAND_SIGNATURE = 'app:currency-rates:get';
+    private const string COMMAND_SIGNATURE = 'app:currency-rates:get';
 
     /**
      * Base currency is not queued for currency rate retrieval.
-     *
-     * @test
      */
-    public function base_currency_is_not_queued_for_currency_rate_retrieval()
+    public function test_base_currency_is_not_queued_for_currency_rate_retrieval()
     {
+        // Ensure that the database is empty
+        $this->artisan('migrate:fresh');
+
+        /** @var User $user */
         $user = User::factory()->create();
-        Currency::factory()->create([
-            'user_id' => $user->id,
-            'base' => true,
-            'auto_update' => true,
-        ]);
+
+        Currency::factory()
+            ->for($user)
+            ->create([
+                'base' => true,
+                'auto_update' => true,
+            ]);
 
         // Prevent actual job processing
         $queue = Queue::fake();
@@ -40,17 +44,21 @@ class GetCurrencyRatesTest extends TestCase
 
     /**
      * Currency rate retrieval is not queued for currencies with auto_update set to false.
-     *
-     * @test
      */
-    public function currency_rate_retrieval_is_not_queued_for_currencies_with_auto_update_set_to_false()
+    public function test_currency_rate_retrieval_is_not_queued_for_currencies_with_auto_update_set_to_false()
     {
+        // Ensure that the database is empty
+        $this->artisan('migrate:fresh');
+
+        /** @var User $user */
         $user = User::factory()->create();
-        Currency::factory()->create([
-            'user_id' => $user->id,
-            'base' => null,
-            'auto_update' => false,
-        ]);
+
+        Currency::factory()
+            ->for($user)
+            ->create([
+                'base' => null,
+                'auto_update' => false,
+            ]);
 
         // Prevent actual job processing
         $queue = Queue::fake();
@@ -63,17 +71,19 @@ class GetCurrencyRatesTest extends TestCase
 
     /**
      * Currency rate retrieval is queued for currencies with auto_update set to true.
-     *
-     * @test
      */
-    public function currency_rate_retrieval_is_queued_for_currencies_with_auto_update_set_to_true()
+    public function test_currency_rate_retrieval_is_queued_for_currencies_with_auto_update_set_to_true()
     {
+        /** @var User $user */
         $user = User::factory()->create();
-        $currency = Currency::factory()->create([
-            'user_id' => $user->id,
-            'base' => null,
-            'auto_update' => true,
-        ]);
+
+        /** @var Currency $currency */
+        $currency = Currency::factory()
+            ->for($user)
+            ->create([
+                'base' => null,
+                'auto_update' => true,
+            ]);
 
         // Prevent actual job processing
         $queue = Queue::fake();

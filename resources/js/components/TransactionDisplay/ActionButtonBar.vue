@@ -34,10 +34,20 @@
             {{ __('Open') }}
         </a>
 
-        <a v-if="controls.edit" :href="getRoute('edit')" class="btn btn-primary ms-2" :title="__('Edit')">
-            <i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}</a>
-        <a v-if="controls.clone" :href="getRoute('clone')" class="btn btn-primary ms-2" :title="__('Clone')">
-            <i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}</a>
+        <a v-if="controls.edit"
+           :href="getRoute('edit', {callback: 'show'})"
+           class="btn btn-primary ms-2"
+           :title="__('Edit')"
+        >
+            <i class="fa fa-fw fa-edit"></i> {{ __('Edit') }}
+        </a>
+        <a v-if="controls.clone"
+           :href="getRoute('clone')"
+           class="btn btn-primary ms-2"
+           :title="__('Clone')"
+        >
+            <i class="fa fa-fw fa-clone"></i> {{ __('Clone') }}
+        </a>
 
         <button
                 class="btn btn-secondary ms-2"
@@ -53,6 +63,9 @@
 </template>
 
 <script>
+
+import * as helpers from '../../helpers';
+
 export default {
     name: "ActionButtonBar",
     props: {
@@ -85,8 +98,9 @@ export default {
         'transactionUpdated'
     ],
     methods: {
-        getRoute(action) {
-            return window.route('transaction.open', {transaction: this.transaction.id, action: action})
+        getRoute(action, additionalParams = {}) {
+            const routeParams = Object.assign({transaction: this.transaction.id, action: action}, additionalParams);
+            return window.route('transaction.open', routeParams);
         },
         skipInstance() {
             // Prevent double clicks
@@ -110,6 +124,13 @@ export default {
                 .finally(() => {
                     this.skipInstanceButtonBusy = false;
                 });
+        },
+
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
         },
     }
 }

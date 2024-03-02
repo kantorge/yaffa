@@ -10,7 +10,6 @@
                 v-if="!fromModal"
         ></payee-form>
 
-        <!-- form start -->
         <form
                 accept-charset="UTF-8"
                 @submit.prevent="onSubmit"
@@ -19,53 +18,128 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between">
+                            <div class="card-title">
+                                {{ __('Settings') }}
+                            </div>
+                            <span class="fa fa-info-circle text-primary"
+                                  data-coreui-toggle="tooltip"
+                                  data-coreui-placement="right"
+                                  :title="__('These settings cannot be changed after saving the transaction.')"
+                            ></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col btn-group mb-3 mb-xl-0">
+                                    <button
+                                            class="btn"
+                                            :class="transactionTypeBaseClass('withdrawal')"
+                                            :disabled="!isBaseSettingsEditsAllowed"
+                                            dusk="transaction-type-withdrawal"
+                                            type="button"
+                                            value="withdrawal"
+                                            @click="changeTransactionType"
+                                    >
+                                        <span class="fa fa-circle-minus text-danger"></span><br>
+                                        {{ __('Withdraw') }}
+                                    </button>
+                                    <button
+                                            class="btn btn-outline-primary"
+                                            :class="transactionTypeBaseClass('deposit')"
+                                            :disabled="!isBaseSettingsEditsAllowed"
+                                            dusk="transaction-type-deposit"
+                                            type="button"
+                                            value="deposit"
+                                            @click="changeTransactionType"
+                                    >
+                                        <span class="fa fa-circle-plus text-success"></span><br>
+                                        {{ __('Deposit') }}
+                                    </button>
+                                    <button
+                                            class="btn btn-outline-primary"
+                                            :class="transactionTypeBaseClass('transfer')"
+                                            :disabled="form.budget || !isBaseSettingsEditsAllowed"
+                                            dusk="transaction-type-transfer"
+                                            type="button"
+                                            value="transfer"
+                                            @click="changeTransactionType"
+                                    >
+                                        <span class="fa fa-exchange-alt"></span><br>
+                                        {{ __('Transfer') }}
+                                    </button>
+                                </div>
+                                <div class="col d-flex justify-content-between gap-2 mb-0" v-if="!simplified">
+                                    <input
+                                            class="btn-check"
+                                            :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
+                                            id="checkbox-transaction-schedule"
+                                            type="checkbox"
+                                            autocomplete="off"
+                                            value="1"
+                                            v-model="form.schedule"
+                                    >
+                                    <label
+                                            class="btn btn-outline-dark w-100"
+                                            dusk="checkbox-transaction-schedule"
+                                            for="checkbox-transaction-schedule"
+                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
+                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
+                                    >
+                                        <span class="fa-solid fa-arrows-rotate"></span><br>
+                                        {{ __('Scheduled') }}
+                                    </label>
+                                    <input
+                                            class="btn-check"
+                                            :disabled="form.reconciled || form.transaction_type == 'transfer' || !isBaseSettingsEditsAllowed"
+                                            id="checkbox-transaction-budget"
+                                            type="checkbox"
+                                            autocomplete="off"
+                                            value="1"
+                                            v-model="form.budget"
+                                    >
+                                    <label
+                                            class="btn btn-outline-dark w-100"
+                                            dusk="checkbox-transaction-budget"
+                                            for="checkbox-transaction-budget"
+                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
+                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
+                                    >
+                                        <span class="fa-solid fa-hourglass-half"></span><br>
+                                        {{ __('Budget') }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card mb-3">
                         <div class="card-header">
                             <div class="card-title">
                                 {{ __('Properties') }}
                             </div>
                         </div>
                         <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <label class="block-label">
-                                        {{ __('Type') }}
+                            <div class="row">
+                                <div class="col-6 col-sm-2 mb-3 mb-sm-0 d-flex justify-content-center">
+                                    <input
+                                            class="btn-check"
+                                            :disabled="form.schedule || form.budget"
+                                            id="checkbox-transaction-reconciled"
+                                            type="checkbox"
+                                            autocomplete="off"
+                                            value="1"
+                                            v-model="form.reconciled"
+                                    >
+                                    <label
+                                            class="btn btn-outline-success"
+                                            for="checkbox-transaction-reconciled"
+                                    >
+                                        <span class="fa fa-check"></span><br>
+                                        {{ __('Reconciled') }}
                                     </label>
-                                    <div class="btn-group">
-                                        <button
-                                                class="btn btn-outline-primary"
-                                                :class="{ active : form.transaction_type === 'withdrawal'}"
-                                                dusk="transaction-type-withdrawal"
-                                                type="button"
-                                                value="withdrawal"
-                                                @click="changeTransactionType"
-                                        >
-                                            {{ __('Withdrawal') }}
-                                        </button>
-                                        <button
-                                                class="btn btn-outline-primary"
-                                                :class="{ active : form.transaction_type === 'deposit'}"
-                                                dusk="transaction-type-deposit"
-                                                type="button"
-                                                value="deposit"
-                                                @click="changeTransactionType"
-                                        >
-                                            {{ __('Deposit') }}
-                                        </button>
-                                        <button
-                                                class="btn btn-outline-primary"
-                                                :class="{ active : form.transaction_type === 'transfer'}"
-                                                dusk="transaction-type-transfer"
-                                                type="button"
-                                                value="transfer"
-                                                @click="changeTransactionType"
-                                                :disabled="form.budget"
-                                        >
-                                            {{ __('Transfer') }}
-                                        </button>
-                                    </div>
                                 </div>
-                                <div
-                                        class="col-12 col-sm-6"
+                                <div class="col-6 col-sm-2 mb-3 mb-sm-0"
                                         :class="{ 'has-error' : form.errors.has('date')}"
                                 >
                                     <label class="block-label" for="date">
@@ -73,20 +147,19 @@
                                     </label>
                                     <DatePicker
                                             :columns=2
-                                            :disabled="form.schedule"
                                             :initial-page="datePickerInitialPage"
-                                            is-required
                                             :masks="{
                                                     L: 'YYYY-MM-DD',
                                                     modelValue: 'YYYY-MM-DD'
                                                 }"
                                             mode="date"
-                                            :popover="{ visibility: 'click' }"
+                                            :popover="{ visibility: 'click', showDelay: 0, hideDelay: 0}"
                                             v-model.string="form.date"
                                     >
                                         <template #default="{inputValue, inputEvents}">
                                             <input
                                                     class="form-control"
+                                                    :disabled="form.schedule || form.budget"
                                                     id="date"
                                                     :value="inputValue"
                                                     v-on="inputEvents"
@@ -94,10 +167,63 @@
                                         </template>
                                     </DatePicker>
                                 </div>
+                                <div class="col-12 col-sm-8 mb-0"
+                                        :class="form.errors.has('comment') ? 'has-error' : ''"
+                                >
+                                    <label for="comment" class="control-label block-label">
+                                        {{ __('Comment') }}
+                                    </label>
+                                    <input
+                                            class="form-control"
+                                            id="comment"
+                                            maxlength="255"
+                                            type="text"
+                                            v-model="form.comment"
+                                    />
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <transaction-schedule
+                            v-if="form.schedule || form.budget"
+                            :isSchedule="form.schedule"
+                            :isBudget="form.budget"
+                            :schedule="form.schedule_config"
+                            :form="form"
+                            key="current"
+                    ></transaction-schedule>
+                </div>
+                <div class="col-12">
+                    <transaction-schedule
+                            v-if="(form.schedule || form.budget) && action === 'replace'"
+                            :withCheckbox="true"
+                            title="Update base schedule"
+                            :allowCustomization="false"
+
+                            :isSchedule="form.schedule"
+                            :isBudget="form.budget"
+                            :schedule="form.original_schedule_config"
+                            :form="form"
+                            ref="scheduleOriginal"
+                            key="original"
+                    ></transaction-schedule>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Details') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
                             <div class="row mb-3">
-                                <div
-                                        class="col-12 col-sm-6"
+                                <div class="col-12 mb-3"
                                         :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
                                 >
                                     <label class="control-label block-label">
@@ -120,9 +246,7 @@
                                         ><span class="fa fa-fw fa-plus"></span></button>
                                     </div>
                                 </div>
-
-                                <div
-                                        class="col-12 col-sm-6"
+                                <div class="col-12"
                                         :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
                                 >
                                     <label class="control-label block-label">
@@ -146,76 +270,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mb-3">
-                                <div
-                                        class="col-12"
-                                        :class="form.errors.has('comment') ? 'has-error' : ''"
-                                >
-                                    <label for="comment" class="control-label block-label">
-                                        {{ __('Comment') }}
-                                    </label>
-                                    <input
-                                            class="form-control"
-                                            id="comment"
-                                            maxlength="255"
-                                            type="text"
-                                            v-model="form.comment"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col" v-if="!simplified">
-                                    <label
-                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
-                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                    >
-                                        <input
-                                                :disabled="form.reconciled || action === 'replace'"
-                                                dusk="checkbox-transaction-schedule"
-                                                type="checkbox"
-                                                value="1"
-                                                v-model="form.schedule"
-                                        >
-                                        {{ __('Scheduled') }}
-                                    </label>
-                                </div>
-                                <div class="col" v-if="!simplified">
-                                    <label
-                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
-                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                    >
-                                        <input
-                                                :disabled="form.reconciled || form.transaction_type == 'transfer' || action === 'replace'"
-                                                dusk="checkbox-transaction-budget"
-                                                type="checkbox"
-                                                value="1"
-                                                v-model="form.budget"
-                                        >
-                                        {{ __('Budget') }}
-                                    </label>
-                                </div>
-                                <div class="col">
-                                    <label>
-                                        <input
-                                                :disabled="form.schedule || form.budget"
-                                                type="checkbox"
-                                                value="1"
-                                                v-model="form.reconciled"
-                                        >
-                                        {{ __('Reconciled') }}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <div class="card-title">
-                                {{ __('Amounts') }}
-                            </div>
-                        </div>
-                        <div class="card-body">
                             <div class="row mb-3">
                                 <div
                                         class="col-4"
@@ -255,7 +309,7 @@
                                         class="col-4"
                                         :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
                                 >
-                                    <label for="transaction_amount_slave" class="control-label">
+                                    <label for="transaction_amount_to" class="control-label">
                                         {{ __('Amount to') }}
                                         <span v-if="to.account_currency"
                                               dusk="label-amountTo-currency">({{ to.account_currency }})</span>
@@ -268,62 +322,38 @@
                                 </div>
                             </div>
                             <dl class="row" v-if="!transactionTypeIsTransfer">
-                                <dt class="col-sm-8">
-                                    {{ __('Total amount') }}:
+                                <dt class="col-8">
+                                    {{ __('Total amount') }}
                                 </dt>
-                                <dd class="col-sm-4">
+                                <dd class="col-4">
                                     {{ form.config.amount_from || 0 }}
                                     <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
                                 </dd>
-                                <dt class="col-sm-8">
-                                    {{ __('Total allocated') }}:
+                                <dt class="col-8">
+                                    {{ __('Total allocated') }}
                                 </dt>
-                                <dd class="col-sm-4">
+                                <dd class="col-4">
                                     {{ allocatedAmount }}
                                     <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
                                 </dd>
-                                <dt class="col-sm-8" v-show="payeeCategory.id">
+                                <dt class="col-8" v-show="payeeCategory.id">
                                     {{ __('Remaining amount to') }}
-                                    <span class="notbold"><br>{{ payeeCategory.text }}</span>:
+                                    <span class="notbold"><br>{{ payeeCategory.text }}</span>
                                 </dt>
-                                <dd class="col-sm-4" v-show="payeeCategory.id">
+                                <dd class="col-4" v-show="payeeCategory.id">
                                     {{ remainingAmountToPayeeDefault }}
                                     <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
                                 </dd>
-                                <dt class="col-sm-8" v-show="!payeeCategory.id">
+                                <dt class="col-8" v-show="!payeeCategory.id">
                                     {{ __('Not allocated') }}:
                                 </dt>
-                                <dd class="col-sm-4" v-show="!payeeCategory.id">
+                                <dd class="col-4" v-show="!payeeCategory.id">
                                     {{ remainingAmountNotAllocated }}
                                     <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
                                 </dd>
                             </dl>
                         </div>
                     </div>
-
-                    <transaction-schedule
-                            v-if="form.schedule || form.budget"
-                            :isSchedule="form.schedule"
-                            :isBudget="form.budget"
-                            :schedule="form.schedule_config"
-                            :form="form"
-                            key="current"
-                    ></transaction-schedule>
-
-                    <transaction-schedule
-                            v-if="(form.schedule || form.budget) && action === 'replace'"
-                            :withCheckbox="true"
-                            title="Update base schedule"
-                            :allowCustomization="false"
-
-                            :isSchedule="form.schedule"
-                            :isBudget="form.budget"
-                            :schedule="form.original_schedule_config"
-                            :form="form"
-                            ref="scheduleOriginal"
-                            key="original"
-                    ></transaction-schedule>
-
                 </div>
                 <div class="col-md-8">
                     <transaction-item-container
@@ -428,6 +458,7 @@ import TransactionItemContainer from './TransactionItemContainer.vue'
 import TransactionSchedule from './TransactionSchedule.vue'
 
 import PayeeForm from './../components/PayeeForm.vue'
+import * as helpers from "../helpers";
 
 export default {
     components: {
@@ -488,7 +519,7 @@ export default {
         data.form = new Form({
             fromModal: this.fromModal,
             transaction_type: 'withdrawal',
-            config_type: 'transaction_detail_standard',
+            config_type: 'standard',
             date: todayInUTC(),
             comment: null,
             schedule: false,
@@ -663,11 +694,23 @@ export default {
         },
 
         datePickerInitialPage() {
-            const date = this.form.date || new Date();
+            let date = this.form.date || new Date();
+            if (typeof date === 'string') {
+                date = new Date(date);
+            }
             return {
                 year: date.getFullYear(),
                 month: date.getMonth(),
             };
+        },
+
+        // Do we allow the user to edit the base settings?
+        isBaseSettingsEditsAllowed() {
+            return [
+                'create',
+                'clone',
+                'finalize'
+            ].includes(this.action);
         },
     },
 
@@ -765,9 +808,20 @@ export default {
 
         // Initial sync between schedules, if applicable
         this.syncScheduleStartDate(this.form.schedule_config.start_date);
+
+        // Initialize tooltips
+        this.applyTooltips();
     },
 
     methods: {
+        applyTooltips() {
+            const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]:not(.handled)');
+            Array.from(tooltipTriggerList).forEach(tooltipTriggerEl => {
+                new coreui.Tooltip(tooltipTriggerEl);
+                tooltipTriggerEl.classList.add('handled');
+            });
+        },
+
         getCurrencySymbol,
         initializeTransaction() {
             if (this.transaction && Object.keys(this.transaction).length > 0) {
@@ -1138,6 +1192,27 @@ export default {
             let date = this.copyDateObject(newDate);
             this.form.original_schedule_config.end_date = new Date(date.getTime() - 24 * 60 * 60 * 1000);
         },
+
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
+        },
+
+        transactionTypeBaseClass(transactionType) {
+            // Are edits allowed?
+            if (this.isBaseSettingsEditsAllowed) {
+                return 'btn-outline-primary' + (this.form.transaction_type === transactionType ? ' active' : '');
+            }
+
+            // Edits are not allowed, so we need to disable the button, while still making it optionally look selected
+            if (this.form.transaction_type === transactionType) {
+                return 'btn-primary';
+            }
+
+            return 'btn-outline-primary';
+        },
     },
 
     watch: {
@@ -1168,14 +1243,25 @@ export default {
             // Load default value for accounts
             this.getDefaultAccountDetails(transaction.config.account_from_id, 'from');
             this.getDefaultAccountDetails(transaction.config.account_to_id, 'to');
-        }
+        },
+
+        // Remove the form date value when schedule or budget is enabled, and restore it when disabled
+        "form.schedule": function (newState) {
+            if (newState || this.form.budget) {
+                this.form.date = null;
+            } else {
+                this.form.date = todayInUTC();
+            }
+        },
+        "form.budget": function (newState) {
+            if (newState || this.form.schedule) {
+                this.form.date = null;
+            } else {
+                this.form.date = todayInUTC();
+            }
+        },
     }
 }
-
-// Initialize tooltips
-// TODO: how to better support dynamic icons?
-const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]');
-Array.from(tooltipTriggerList).map(tooltipTriggerEl => new coreui.Tooltip(tooltipTriggerEl));
 </script>
 
 <style scoped>

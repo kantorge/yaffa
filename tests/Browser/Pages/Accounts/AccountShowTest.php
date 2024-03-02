@@ -44,7 +44,7 @@ class AccountShowTest extends DuskTestCase
         // Create various transactions for this user
         $baseData = [
             'date' => $date->format('Y-m-d'),
-            'config_type' => 'transaction_detail_standard',
+            'config_type' => 'standard',
             'comment' => null
         ];
 
@@ -55,8 +55,8 @@ class AccountShowTest extends DuskTestCase
             ->for($user)
             ->for(
                 TransactionDetailStandard::factory()->create([
-                    'amount_from' => 1,
-                    'amount_to' => 1,
+                    'amount_from' => 1.11,
+                    'amount_to' => 1.11,
                     'account_from_id' => $accountEUR->id,
                     'account_to_id' => $payee->id,
                 ]),
@@ -133,10 +133,10 @@ class AccountShowTest extends DuskTestCase
                 ->waitFor('#historyTable')
                 ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 4)
                 // Verify the currency and amount in the table for each transaction
-                ->assertSeeIn('#historyTable tbody', '€1.00')
-                ->assertSeeIn('#historyTable tbody', '€2.00')
-                ->assertSeeIn('#historyTable tbody', '€3.00')
-                ->assertSeeIn('#historyTable tbody', '€5.00');
+                ->assertSeeIn('#historyTable tbody', '€1.11')
+                ->assertSeeIn('#historyTable tbody', '€2')
+                ->assertSeeIn('#historyTable tbody', '€3')
+                ->assertSeeIn('#historyTable tbody', '€5');
         });
     }
 }

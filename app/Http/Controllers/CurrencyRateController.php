@@ -23,6 +23,14 @@ class CurrencyRateController extends Controller
         $this->currencyRate = $currencyRate;
     }
 
+    /**
+     * Display a listing of the resource, based on the selected currencies.
+     *
+     * @param Currency $from
+     * @param Currency $to
+     * @return View
+     * @throws AuthorizationException
+     */
     public function index(Currency $from, Currency $to): View
     {
         /**
@@ -43,13 +51,11 @@ class CurrencyRateController extends Controller
 
         JavaScriptFacade::put(['currencyRates' => $currencyRates]);
 
-        return view(
-            'currency-rate.index',
-            [
-                'from' => $from,
-                'to' => $to,
-            ]
-        );
+        return view('currency-rate.index', [
+            'from' => $from,
+            'to' => $to,
+            'currencyRates' => $currencyRates,
+        ]);
     }
 
     /**

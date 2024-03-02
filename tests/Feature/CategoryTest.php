@@ -171,8 +171,10 @@ class CategoryTest extends TestCase
             );
 
         $response->assertRedirect(route("{$this->base_route}.index"));
-        //TODO: make this dynamic instead of fixed 1st element
-        $response->assertSessionHas('notification_collection.0.type', 'success');
+        $notifications = session('notification_collection');
+        $successNotificationExists = collect($notifications)
+            ->contains(fn ($notification) => $notification['type'] === 'success');
+        $this->assertTrue($successNotificationExists);
     }
 
     /** @test */

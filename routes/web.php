@@ -25,15 +25,17 @@ Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('hom
 Route::view('/terms', 'pages.terms')->name('terms');
 
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
-Route::resource('account-entity', AccountEntityController::class);
+Route::resource('account-entity', AccountEntityController::class)
+    // Destroy is expected to be handled only using the AccountEntityApiController
+    ->except(['destroy']);
 
 Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
     ->name('account.history');
 
 Route::resource('categories', CategoryController::class)->except(['show']);
-Route::resource('currencies', CurrencyController::class)->except(['show']);
-Route::get('currencies/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
-    ->name('currencies.setDefault');
+Route::resource('currency', CurrencyController::class)->except(['show']);
+Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
+    ->name('currency.setDefault');
 
 Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase'])
     ->name('currency-rate.retreiveMissing');

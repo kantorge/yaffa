@@ -21,7 +21,6 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @property int $user_id
  * @property string $name
  * @property string $iso_code
- * @property int $num_digits
  * @property bool|null $base
  * @property bool $auto_update
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -65,7 +64,6 @@ class Currency extends Model
     protected $fillable = [
         'name',
         'iso_code',
-        'num_digits',
         'base',
         'auto_update',
     ];

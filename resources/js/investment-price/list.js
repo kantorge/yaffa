@@ -11,8 +11,7 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 
 // Table currency overrides default currency settings, fixing digits to 4
-let currency = Object.assign({}, window.investment.currency, {num_digits: 4});
-
+let currency = Object.assign({}, window.investment.currency, {max_digits: 4});
 
 // Parse prices from string to float
 window.prices = window.prices.map(function(price) {
@@ -74,8 +73,7 @@ chart.numberFormatter.intlLocales = window.YAFFA.locale;
 chart.numberFormatter.numberFormat = {
     style: 'currency',
     currency: window.investment.currency.iso_code,
-    minimumFractionDigits: window.investment.currency.num_digits,
-    maximumFractionDigits: window.investment.currency.num_digits
+    minimumFractionDigits: 0
 };
 
 let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());

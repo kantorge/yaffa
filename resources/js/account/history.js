@@ -65,7 +65,7 @@ $(selectorHistoryTable).DataTable({
                 if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                        ? (row.reconciled == 1
+                        ? (row.reconciled
                             ? __('Reconciled')
                             : __('Uncleared')
                         )
@@ -74,7 +74,7 @@ $(selectorHistoryTable).DataTable({
                 }
                 return (!row.schedule
                     && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                    ? (row.reconciled == 1
+                    ? (row.reconciled
                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
                     )
@@ -207,7 +207,7 @@ $(selectorScheduleTable).DataTable({
         {
             data: 'id',
             title: __("Actions"),
-            render: function (data, _type, row) {
+            render: function (data, _type, _row) {
                 return '<a href="' + route('transaction.open' , { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
                     '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> ' +
                     dataTableHelpers.dataTablesActionButton(data, 'edit') +
