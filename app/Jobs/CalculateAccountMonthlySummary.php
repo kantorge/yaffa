@@ -77,6 +77,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             case 'account_balance-budget':
                 $this->handleAccountBalanceBudget();
                 break;
+            default:
+                // At the moment, we don't expect any other tasks
+                break;
         }
     }
 
