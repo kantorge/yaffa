@@ -19,12 +19,12 @@ class OnboardingStepsServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             Onboard::addStep(__('Have at least one currency added'))
-                ->link(route('currencies.create'))
+                ->link(route('currency.create'))
                 ->cta(__('Add a currency'))
                 ->completeIf(fn (User $model) => Currency::whereUserId($model->id)->count() > 0);
 
             Onboard::addStep(__('Have your base currency set'))
-                ->link(route('currencies.index'))
+                ->link(route('currency.index'))
                 ->cta(__('Review currency settings'))
                 ->completeIf(fn (User $model) => $model->baseCurrency() !== null);
 

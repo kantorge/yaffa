@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
@@ -34,6 +33,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property string|null $comment
  * @property string|null $config_type
  * @property int|null $config_id
+ * @property int|null $currency_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Model|Eloquent $config
@@ -42,6 +42,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read TransactionSchedule|null $transactionSchedule
  * @property-read TransactionType $transactionType
  * @method static Builder|Transaction byScheduleType($type)
+ * @method static Builder|Transaction byType($type)
  * @method static TransactionFactory factory(...$parameters)
  * @method static Builder|Transaction newModelQuery()
  * @method static Builder|Transaction newQuery()
@@ -100,7 +101,7 @@ class Transaction extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'date' => 'datetime',
+        'date' => 'date',
         'reconciled' => 'boolean',
         'schedule' => 'boolean',
         'budget' => 'boolean',
@@ -155,6 +156,16 @@ class Transaction extends Model
             ->unique('id');
     }
 
+    public function isStandard(): bool
+    {
+        return $this->config_type === 'standard';
+    }
+
+    public function isInvestment(): bool
+    {
+        return $this->config_type === 'investment';
+    }
+
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
      *
@@ -177,16 +188,15 @@ class Transaction extends Model
     }
 
     /**
-     * Override the default delete method to delete the transaction configuration as well
-     *
-     * @return bool|null
+     * Create a dynamic scope to filter transactions by their type
      */
-    public function delete(): bool|null
+    public function scopeByType(Builder $query, string $type): Builder
     {
-        // Remove the transaction configuration
-        $this->config()->delete();
-
-        return parent::delete();
+        return match ($type) {
+            'standard' => $query->where('config_type', 'standard'),
+            'investment' => $query->where('config_type', 'investment'),
+            default => $query,
+        };
     }
 
     /**
@@ -196,22 +206,16 @@ class Transaction extends Model
      * @param AccountEntity|null $account
      * @return float|int
      */
-    public function cashflowValue(AccountEntity $account = null): float|int
+    public function accountBalanceChange(AccountEntity|null $account = null): float|int
     {
-        if ($this->config_type === 'transaction_detail_standard') {
+        if ($this->isStandard()) {
             $operator = $this->transactionType->amount_operator ?? ($this->config->account_from_id === $account->id ? 'minus' : 'plus');
 
             return $operator === 'minus' ? -$this->config->amount_from : $this->config->amount_to;
         }
 
-        if ($this->config_type === 'transaction_detail_investment') {
-            $operator = $this->transactionType->amount_operator;
-            if ($operator) {
-                return ($operator === 'minus' ? -1 : 1) * $this->config->price * $this->config->quantity
-                    + $this->config->dividend
-                    - $this->config->tax
-                    - $this->config->commission;
-            }
+        if ($this->isInvestment()) {
+            return $this->cashflow_value ?? 0;
         }
 
         return 0;
@@ -284,46 +288,18 @@ class Transaction extends Model
 
     public function getTransactionCurrencyAttribute(): ?Currency
     {
-        return $this->transactionCurrency() ?? $this->getBaseCurrency();
+        return Currency::findOr($this->currency_id, fn () => $this->getBaseCurrency());
     }
 
-    public function transactionCurrency()
-    {
-        if ($this->config_type === 'transaction_detail_standard') {
-            if ($this->transaction_type === 'deposit') {
-                $this->loadMissing([
-                    'config',
-                    'config.accountTo',
-                    'config.accountTo.config',
-                    'config.accountTo.config.currency',
-                ]);
-
-                return $this->config?->accountTo?->config->currency;
-            }
-
-            return $this->config?->accountFrom?->config->currency;
-        }
-
-        if ($this->config_type === 'transaction_detail_investment') {
-            $this->loadMissing([
-                'config',
-                'config.account',
-                'config.account.config',
-                'config.account.config.currency',
-            ]);
-
-            return $this->config->account->config->currency;
-        }
-
-        return null;
-    }
-
-    public function scheduleInstances(?Carbon $constraintStart = null, ?Carbon $maxLookAhead = null, ?int $virtualLimit = 500)
-    {
+    public function scheduleInstances(
+        ?Carbon $constraintStart = null,
+        ?Carbon $maxLookAhead = null,
+        ?int $virtualLimit = 500
+    ): Collection {
         $scheduleInstances = new Collection();
 
         if ($maxLookAhead === null) {
-            $maxLookAhead = Auth::user()->end_date;
+            $maxLookAhead = $this->user->end_date;
         }
 
         if ($constraintStart === null) {

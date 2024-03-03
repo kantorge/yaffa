@@ -1,9 +1,10 @@
 /**
  * @param {number} input The number to be formatted as currency.
  * @param {string} locale The locale to be used for formatting.
- * @param {Object} currencySettings Object with settings to apply. Expected keys: iso_code, num_digits.
+ * @param {Object} currencySettings Object with settings to apply. Expected key(s): iso_code. Optional key(s): min_digits, max_digits.
  * @property {string} currencySettings.iso_code
- * @property {number} currencySettings.num_digits
+ * @property {number} currencySettings.min_digits
+ * @property {number} currencySettings.max_digits
  *
  * @type {string}
  */
@@ -13,14 +14,19 @@ export function toFormattedCurrency(input, locale, currencySettings) {
         return input.toString();
     }
 
-    return input?.toLocaleString(
+    // If input is not a number, return it as is
+    if (isNaN(input)) {
+        return input.toString();
+    }
+
+    return input.toLocaleString(
         locale,
         {
             style: 'currency',
             currency: currencySettings.iso_code,
             currencyDisplay: 'narrowSymbol',
-            minimumFractionDigits: currencySettings.num_digits,
-            maximumFractionDigits: currencySettings.num_digits
+            minimumFractionDigits: currencySettings.min_digits || 0,
+            maximumFractionDigits: currencySettings.max_digits
         }
     );
 }
@@ -109,16 +115,32 @@ import { RRule } from 'rrule';
 
 export function processScheduledTransaction(transaction) {
     if (transaction.transaction_schedule) {
-        // Create rule
         transaction.transaction_schedule.rule = new RRule({
+            dtstart: transaction.transaction_schedule.start_date,
             freq: RRule[transaction.transaction_schedule.frequency],
             interval: transaction.transaction_schedule.interval,
-            dtstart: transaction.transaction_schedule.start_date,
             until: transaction.transaction_schedule.end_date,
         });
-
-        transaction.transaction_schedule.active = !!transaction.transaction_schedule.rule.after(new Date(), true);
     }
 
     return transaction;
+}
+
+/**
+ * Function to translate strings using the predefined translations in the window.YAFFA.translations object.
+ *
+ * @param {string} key The translation key.
+ * @param {Object} replace An object with key/value pairs to replace in the translation string.
+ * @property {string} replace.key The key to replace in the translation string.
+ * @property {string} replace.value The value to replace the key with.
+ * @returns {string}
+ */
+export function __(key, replace){
+    let translation = window.YAFFA.translations[key] || key;
+
+    for (const [key, value] of Object.entries(replace || {})) {
+        translation = translation.replace(':' + key, value);
+    }
+
+    return translation;
 }

@@ -1,22 +1,21 @@
-# For more information: https://laravel.com/docs/sail
 version: '3'
 services:
     yaffa.test:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.1
+            context: ./vendor/laravel/sail/runtimes/8.3
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
                 XDEBUG: '${SAIL_XDEBUG_ENABLED:-false}'
                 XDEBUG_PORT: '${SAIL_XDEBUG_PORT:-9003}'
-        image: sail-8.1/app
+        image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         expose:
-            - "9003"
+            - '9003'
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -37,7 +36,7 @@ services:
             - '${FORWARD_DB_PORT:-3306}:3306'
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: "%"
+            MYSQL_ROOT_HOST: '%'
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
@@ -48,7 +47,7 @@ services:
         networks:
             - sail
         healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
             retries: 3
             timeout: 5s
     mailhog:
@@ -59,13 +58,13 @@ services:
         networks:
             - sail
     selenium:
-        image: 'selenium/standalone-chrome'
+        image: selenium/standalone-chrome
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         volumes:
             - '/dev/shm:/dev/shm'
         ports:
-            - 4444:4444
+            - '4444:4444'
         networks:
             - sail
 networks:

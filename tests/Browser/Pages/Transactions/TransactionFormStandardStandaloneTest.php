@@ -29,7 +29,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             static::$migrationRun = true;
         }
 
-        $this->user = User::firstWhere('email', $this::USER_EMAIL);
+        $this->user = User::where('email', $this::USER_EMAIL)->firstOrFail();
     }
 
     private function fillStandardWithdrawalForm(Browser $browser): Browser
@@ -612,7 +612,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             )
             ->create([
                 'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
-                'config_type' => 'transaction_detail_standard',
+                'config_type' => 'standard',
             ]);
 
         // Load the transaction form to edit the transaction
@@ -699,7 +699,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Click the date input to open the date picker
                 ->click('#date')
                 // Wait for the calendar to be visible
-                ->waitFor('.vc-pane-container')
+                ->waitFor('.vc-pane-container', 10)
                 // Click the first day of the month, which is in the second column
                 ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
                 // Wait for the date picker to close

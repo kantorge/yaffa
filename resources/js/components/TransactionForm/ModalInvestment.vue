@@ -111,7 +111,7 @@ export default {
         // Set up event listener for global scope about new schedule instance to be opened in modal editor
         window.addEventListener('initiateEnterInstance', function (event) {
             // Validate that transaction type is investment
-            if (event.detail.transaction.config_type !== 'transaction_detail_investment') {
+            if (event.detail.transaction.config_type !== 'investment') {
                 return;
             }
 

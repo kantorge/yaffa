@@ -8,16 +8,21 @@
                 autocomplete="off"
         >
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card mb-3">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between">
                             <div class="card-title">
-                                {{ __('Properties') }}
+                                {{ __('Settings') }}
                             </div>
+                            <span class="fa fa-info-circle text-primary"
+                                    data-coreui-toggle="tooltip"
+                                    data-coreui-placement="right"
+                                    :title="__('These settings cannot be changed after saving the transaction.')"
+                            ></span>
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-8 mb-2">
                                     <div class="form-group">
                                         <label for="transaction_type" class="control-label">
                                             {{ __('Transaction type') }}
@@ -26,6 +31,7 @@
                                                 id="transaction_type"
                                                 class="form-select"
                                                 v-model="form.transaction_type"
+                                                :disabled="!isBaseSettingsEditsAllowed"
                                                 @change="transactionTypeChanged($event)"
                                         >
                                             <option
@@ -38,38 +44,117 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-group">
-                                        <label for="date" class="control-label">
-                                            {{ __('Date') }}
-                                        </label>
-                                        <DatePicker
-                                                :columns=2
-                                                :disabled="form.schedule"
-                                                :initial-page="datePickerInitialPage"
-                                                is-required
-                                                :masks="{
+                                <div class="col d-flex justify-content-between gap-2 mb-0" v-if="!simplified">
+                                    <input
+                                            class="btn-check"
+                                            :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
+                                            id="checkbox-transaction-schedule"
+                                            type="checkbox"
+                                            autocomplete="off"
+                                            value="1"
+                                            v-model="form.schedule"
+                                    >
+                                    <label
+                                            class="btn btn-outline-dark w-100"
+                                            dusk="checkbox-transaction-schedule"
+                                            for="checkbox-transaction-schedule"
+                                            :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
+                                            :data-toggle="(action === 'replace' ? 'tooltip' : '')"
+                                    >
+                                        <span class="fa-solid fa-arrows-rotate"></span><br>
+                                        {{ __('Scheduled') }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Properties') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6 col-sm-2 mb-3 mb-sm-0 d-flex justify-content-center">
+                                    <input
+                                            class="btn-check"
+                                            :disabled="form.schedule"
+                                            id="checkbox-transaction-reconciled"
+                                            type="checkbox"
+                                            autocomplete="off"
+                                            value="1"
+                                            v-model="form.reconciled"
+                                    >
+                                    <label
+                                            class="btn btn-outline-success"
+                                            for="checkbox-transaction-reconciled"
+                                    >
+                                        <span class="fa fa-check"></span><br>
+                                        {{ __('Reconciled') }}
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-2 mb-3 mb-sm-0"
+                                     :class="{ 'has-error' : form.errors.has('date')}"
+                                >
+                                    <label class="block-label" for="date">
+                                        {{ __('Date') }}
+                                    </label>
+                                    <DatePicker
+                                            :columns=2
+                                            :initial-page="datePickerInitialPage"
+                                            :masks="{
                                                     L: 'YYYY-MM-DD',
                                                     modelValue: 'YYYY-MM-DD'
                                                 }"
-                                                mode="date"
-                                                :popover="{ visibility: 'click' }"
-                                                v-model.string="form.date"
-                                        >
-                                            <template #default="{inputValue, inputEvents}">
-                                                <input
-                                                        class="form-control"
-                                                        id="date"
-                                                        :value="inputValue"
-                                                        v-on="inputEvents"
-                                                >
-                                            </template>
-                                        </DatePicker>
-                                    </div>
+                                            mode="date"
+                                            :popover="{ visibility: 'click', showDelay: 0, hideDelay: 0}"
+                                            v-model.string="form.date"
+                                    >
+                                        <template #default="{inputValue, inputEvents}">
+                                            <input
+                                                    class="form-control"
+                                                    :disabled="form.schedule"
+                                                    id="date"
+                                                    :value="inputValue"
+                                                    v-on="inputEvents"
+                                            >
+                                        </template>
+                                    </DatePicker>
+                                </div>
+                                <div class="col-12 col-sm-8 mb-0"
+                                     :class="form.errors.has('comment') ? 'has-error' : ''"
+                                >
+                                    <label for="comment" class="control-label block-label">
+                                        {{ __('Comment') }}
+                                    </label>
+                                    <input
+                                            class="form-control"
+                                            id="comment"
+                                            maxlength="255"
+                                            type="text"
+                                            v-model="form.comment"
+                                    />
                                 </div>
                             </div>
-                            <div class="row align-items-end">
-                                <div class="col-md-6 mb-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="card-title">
+                                {{ __('Details') }}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-12 mb-3">
                                     <div class="form-group">
                                         <label for="account" class="control-label">
                                             {{ __('Account') }}
@@ -81,7 +166,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-12 mb-2">
                                     <div class="form-group">
                                         <label for="investment" class="control-label">
                                             {{ __('Investment') }}
@@ -94,68 +179,28 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-2 align-self-end">
-                                    <div class="form-check" v-if="!simplified">
-                                        <input
-                                                id="entry_type_schedule"
-                                                class="form-check-input"
-                                                :disabled="form.reconciled || action === 'replace'"
-                                                type="checkbox"
-                                                value="1"
-                                                v-model="form.schedule"
-                                        >
-                                        <label
-                                                for="entry_type_schedule"
-                                                class="form-check-label"
-                                                :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
-                                                :data-toggle="(action === 'replace' ? 'tooltip' : '')"
-                                        >
-                                            {{ __('Scheduled') }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-2 align-self-end">
-                                    <div class="form-check">
-                                        <label>
-                                            <input
-                                                    :disabled="form.schedule || form.budget"
-                                                    type="checkbox"
-                                                    value="1"
-                                                    v-model="form.reconciled"
-                                            >
-                                            {{ __('Reconciled') }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-group">
-                                        <label for="comment" class="control-label">
-                                            {{ __('Comment') }}
-                                        </label>
-                                        <input
-                                                class="form-control"
-                                                id="comment"
-                                                maxlength="255"
-                                                type="text"
-                                                v-model="form.comment"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <dl class="row">
+                                <dt class="col-8">
+                                    {{ __('Total cashflow value') }}
+                                </dt>
+                                <dd class="col-4">
+                                    <span class="me-1">{{ total }}</span>
+                                    <span v-if="currency" dusk="label-currency">{{ currency }}</span>
+                                </dd>
+                            </dl>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-8">
                     <div class="card mb-3">
                         <div class="card-header">
                             <div class="card-title">
-                                {{ __('Ammounts') }}
+                                {{ __('Details') }}
                             </div>
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-6 mb-3">
                                     <div class="form-group">
                                         <label for="transaction_quantity" class="control-label">
                                             {{ __('Quantity') }}
@@ -168,7 +213,7 @@
                                         ></MathInput>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-6 mb-3">
                                     <div class="form-group">
                                         <label for="transaction_price" class="control-label">
                                             {{ __('Price') }}
@@ -183,7 +228,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-6 mb-3">
                                     <div class="form-group">
                                         <label for="transaction_commission" class="control-label">
                                             {{ __('Commission') }}
@@ -195,7 +240,7 @@
                                         ></MathInput>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-6 mb-3">
                                     <div class="form-group">
                                         <label for="transaction_tax" class="control-label">
                                             {{ __('Tax') }}
@@ -209,7 +254,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="transaction_dividend" class="control-label">
                                             {{ __('Dividend') }}
@@ -220,15 +265,6 @@
                                                 v-model="form.config.dividend"
                                                 :disabled="!transactionTypeSettings.dividend"
                                         ></MathInput>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-group">
-                                        <label class="control-label">
-                                            {{ __('Total cashflow') }}
-                                            <span v-if="currency" dusk="label-currency">({{ currency }})</span>
-                                        </label>
-                                        <input type="text" :value="total" class="form-control" disabled="disabled">
                                     </div>
                                 </div>
                             </div>
@@ -381,7 +417,7 @@ export default {
         data.form = new Form({
             fromModal: this.fromModal,
             transaction_type: 'Buy',
-            config_type: 'transaction_detail_investment',
+            config_type: 'investment',
             date: toIsoDateString(),
             comment: null,
             schedule: false,
@@ -462,11 +498,23 @@ export default {
         },
 
         datePickerInitialPage() {
-            const date = this.form.date || new Date();
+            let date = this.form.date || new Date();
+            if (typeof date === 'string') {
+                date = new Date(date);
+            }
             return {
                 year: date.getFullYear(),
                 month: date.getMonth(),
             };
+        },
+
+        // Do we allow the user to edit the base settings?
+        isBaseSettingsEditsAllowed() {
+            return [
+                'create',
+                'clone',
+                'finalize'
+            ].includes(this.action);
         },
     },
 

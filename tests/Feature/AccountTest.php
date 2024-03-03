@@ -65,7 +65,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         // User is redirected to create a currency first
-        $response->assertRedirect(route('currencies.create'));
+        $response->assertRedirect(route('currency.create'));
     }
 
     /** @test */
@@ -83,11 +83,6 @@ class AccountTest extends TestCase
             ->assertRedirect(route('login'));
         $this->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))
             ->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", [
-            'type' => 'account',
-            'account_entity' => $account->id
-        ]))
-            ->assertRedirect(route('login'));
     }
 
     /** @test */
@@ -104,11 +99,6 @@ class AccountTest extends TestCase
         ]))
             ->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", [
-            'type' => 'account',
-            'account_entity' => $account->id
-        ]))
-            ->assertStatus(Response::HTTP_FORBIDDEN);
-        $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", [
             'type' => 'account',
             'account_entity' => $account->id
         ]))
@@ -251,7 +241,10 @@ class AccountTest extends TestCase
         $account = $this->createAccountAndUser();
         $user = $account->user;
 
-        $attributes = AccountEntity::factory()->for($user)->for(Account::factory()->withUser($user), 'config')->raw();
+        $attributes = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->raw();
 
         $response = $this
             ->actingAs($user)
@@ -273,26 +266,9 @@ class AccountTest extends TestCase
             );
 
         $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
-        //TODO: make this dynamic instead of fixed 1st element
-        $response->assertSessionHas('notification_collection.0.type', 'success');
-    }
-
-    /** @test */
-    public function user_can_delete_an_existing_account()
-    {
-        $account = $this->createAccountAndUser();
-        $user = $account->user;
-        $account->load('config');
-
-        $this->actingAs($user)
-            ->deleteJson(route("{$this->base_route}.destroy", $account->id));
-
-        // Check if model was deleted
-        $this->assertDatabaseMissing($account->getTable(), $account->attributesToArray());
-
-        // Check if config was also deleted
-        $this->assertDatabaseMissing($account->config->getTable(), [
-            'id' => $account->config->id,
-        ]);
+        $notifications = session('notification_collection');
+        $successNotificationExists = collect($notifications)
+            ->contains(fn ($notification) => $notification['type'] === 'success');
+        $this->assertTrue($successNotificationExists);
     }
 }

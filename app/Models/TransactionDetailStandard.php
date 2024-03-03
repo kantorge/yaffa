@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Database\Factories\TransactionDetailStandardFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * App\Models\TransactionDetailStandard
@@ -30,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder|TransactionDetailStandard whereAmountFrom($value)
  * @method static Builder|TransactionDetailStandard whereAmountTo($value)
  * @method static Builder|TransactionDetailStandard whereId($value)
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionItem[] $transactionItems
+ * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
  * @property-read TransactionType $transactionType
@@ -66,7 +68,7 @@ class TransactionDetailStandard extends Model
         'amount_to' => 'float',
     ];
 
-    public function config()
+    public function transaction(): MorphOne
     {
         return $this->morphOne(Transaction::class, 'config');
     }

@@ -65,7 +65,7 @@ document.querySelector('.reprocessIcon').addEventListener('click', function () {
     const id = window.mail.id;
 
     axios.patch(window.route('api.received-mail.reset-processed', {'receivedMail': id}))
-        .then(function (response) {
+        .then(function () {
             // Reload the page
             location.reload();
 

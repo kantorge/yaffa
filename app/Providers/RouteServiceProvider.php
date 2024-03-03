@@ -10,7 +10,7 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * The path to the "home" route for your application.
      */
-    public const HOME = '/';
+    public const string HOME = '/';
 
     /**
      * This namespace is applied to your controller routes.

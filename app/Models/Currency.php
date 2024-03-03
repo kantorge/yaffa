@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +21,6 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @property int $user_id
  * @property string $name
  * @property string $iso_code
- * @property int $num_digits
  * @property bool|null $base
  * @property bool $auto_update
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -65,7 +64,6 @@ class Currency extends Model
     protected $fillable = [
         'name',
         'iso_code',
-        'num_digits',
         'base',
         'auto_update',
     ];
@@ -127,9 +125,9 @@ class Currency extends Model
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
      *
-     * @return string|null
+     * @return float|null
      */
-    public function rate(): ?string
+    public function rate(): ?float
     {
         $baseCurrency = $this->baseCurrency();
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {

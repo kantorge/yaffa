@@ -43,7 +43,7 @@ class TransactionRequest extends FormRequest
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
-            'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
+            'config_type' => 'required|in:standard,investment',
 
             'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
         ];
@@ -115,7 +115,7 @@ class TransactionRequest extends FormRequest
         }
 
         // Adjustments based on transaction type
-        if ($this->get('config_type') === 'transaction_detail_standard') {
+        if ($this->get('config_type') === 'standard') {
             //any standard transactions have common rules for items
             $rules = array_merge($rules, [
                 'items' => 'array',
@@ -187,7 +187,7 @@ class TransactionRequest extends FormRequest
                     'config.amount_to' => 'required|numeric|gt:0',
                 ]);
             }
-        } elseif ($this->get('config_type') === 'transaction_detail_investment') {
+        } elseif ($this->get('config_type') === 'investment') {
             // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
                 'config.account_id' => [
@@ -227,12 +227,14 @@ class TransactionRequest extends FormRequest
             ];
         }
 
-        // Dividend OR Cap gains
-        if ($transactionTypeId === 8 || $transactionTypeId === 9 || $transactionTypeId === 10) {
+        // Dividend OR Interest yield
+        if ($transactionTypeId === 8 || $transactionTypeId === 11) {
             return [
                 'config.dividend' => 'required|numeric|gt:0',
             ];
         }
+
+        // Earlier cap gains (9 and 10) are not used currently
 
         // Fallback
         return [];

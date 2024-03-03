@@ -2,6 +2,11 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CalculateAccountMonthlySummaries;
+use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
+use App\Console\Commands\GetCurrencyRates;
+use App\Console\Commands\GetInvestmentPrices;
+use App\Console\Commands\RecordScheduledTransactions;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -25,14 +30,28 @@ class Kernel extends ConsoleKernel
             $schedule->command('telescope:prune')->daily();
         }
 
-        // Run the investment price retrieval command
-        $schedule->command('app:investment-prices:get')->dailyAt('05:00');
-
-        // Run the currency rate retrieval command
-        $schedule->command('app:currency-rates:get')->dailyAt('06:00');
+        // Recalculate the active flags for transaction schedules and budgets every day
+        $schedule->command(CalculateTransactionScheduleActiveFlags::class)->dailyAt('00:00');
 
         // Run the command to record scheduled transactions
-        $schedule->command('app:record-scheduled-transactions')->dailyAt('06:00');
+        // This can also modify the active flag of the schedule, handled by the TransactionSchedule model
+        $schedule->command(RecordScheduledTransactions::class)->dailyAt('00:05');
+
+        // Run the currency rate retrieval command
+        $schedule->command(GetCurrencyRates::class)->dailyAt('04:00');
+
+        // Run the investment price retrieval command
+        $schedule->command(GetInvestmentPrices::class)->dailyAt('04:15');
+
+        // Recalculate account monthly summaries daily
+        // TODO: chain this command with the investment price retrieval command
+        $schedule->command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00');
+
+        // Redis cache cleanup
+        $schedule->command('cache:prune-stale-tags')->hourly();
+
+        // Batch job cleanup
+        $schedule->command('queue:prune-batches')->daily();
     }
 
     /**

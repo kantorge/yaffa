@@ -4,16 +4,20 @@ namespace App\Models;
 
 use Database\Factories\TransactionScheduleFactory;
 use DateTime;
-use Eloquent;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Recurr\Exception\InvalidArgument;
+use Recurr\Exception\InvalidWeekday;
+use Recurr\RecurrenceCollection;
 use Recurr\Rule;
 use Recurr\Transformer\ArrayTransformer;
 use Recurr\Transformer\ArrayTransformerConfig;
 use Recurr\Transformer\Constraint\AfterConstraint;
+use Exception;
 
 /**
  * App\Models\TransactionSchedule
@@ -29,6 +33,8 @@ use Recurr\Transformer\Constraint\AfterConstraint;
  * @property float|null $inflation
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property bool $automatic_recording
+ * @property bool $active
  * @property-read Transaction $transaction
  * @method static TransactionScheduleFactory factory(...$parameters)
  * @method static Builder|TransactionSchedule newModelQuery()
@@ -81,7 +87,8 @@ class TransactionSchedule extends Model
         'next_date' => 'date',
         'start_date' => 'date',
         'end_date' => 'date',
-        'automatic_recording' => 'boolean'
+        'automatic_recording' => 'boolean',
+        'active' => 'boolean'
     ];
 
     public function transaction(): BelongsTo
@@ -89,34 +96,30 @@ class TransactionSchedule extends Model
         return $this->belongsTo(Transaction::class);
     }
 
+    // Define closures for creating and updating a schedule, so that the active flag can be set
+    protected static function booted(): void
+    {
+        static::creating(function (TransactionSchedule $schedule) {
+            $schedule->active = $schedule->isActive();
+        });
+
+        static::updating(function (TransactionSchedule $schedule) {
+            $schedule->active = $schedule->isActive();
+        });
+    }
+
+    /**
+     * @throws InvalidWeekday
+     * @throws InvalidArgument
+     * @throws Exception
+     */
     public function getNextInstance()
     {
-        $constraint = new AfterConstraint(new DateTime($this->next_date), false);
-        $rule = new Rule();
-
-        $rule->setStartDate(new DateTime($this->start_date));
-
-        if ($this->end_date) {
-            $rule->setUntil(new DateTime($this->end_date));
+        if (!$this->next_date) {
+            return null;
         }
 
-        $rule->setFreq($this->frequency);
-
-        if ($this->count) {
-            $rule->setCount($this->count);
-        }
-        if ($this->interval) {
-            $rule->setInterval($this->interval);
-        }
-
-        $transformer = new ArrayTransformer();
-
-        $transformerConfig = new ArrayTransformerConfig();
-
-        $transformerConfig->enableLastDayOfMonthFix();
-        $transformer->setConfig($transformerConfig);
-
-        $recurrence = $transformer->transform($rule, $constraint);
+        $recurrence = $this->getRecurrence($this->next_date);
 
         if ($recurrence->count() === 0) {
             return null;
@@ -125,10 +128,91 @@ class TransactionSchedule extends Model
         return $recurrence[0]->getStart();
     }
 
+    /**
+     * Skip the next instance of this schedule, and return if it was successful.
+     *
+     * @return bool
+     */
     public function skipNextInstance(): bool
     {
-        $this->next_date = $this->getNextInstance();
+        try {
+            $this->next_date = $this->getNextInstance();
+        } catch (InvalidArgument|InvalidWeekday|Exception) {
+            return false;
+        }
 
         return $this->save();
+    }
+
+    /**
+     * Determine if the schedule is determined to be active.
+     *
+     * The transaction schedule is active, if it has a next date defined. This is the case for not finished schedules.
+     * Otherwise we need to process the rule and check if any of the occurrences are in the future.
+     * This is the case for budgets or ended schedules.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        if ($this->next_date) {
+            return true;
+        }
+
+        try {
+            $recurrence = $this->getRecurrence(Carbon::now());
+        } catch (InvalidArgument|InvalidWeekday|Exception) {
+            // TODO: somehow the user should be notified about this error
+            return false;
+        }
+
+        if ($recurrence->count() === 0) {
+            return false;
+        }
+
+        $now = Carbon::now();
+
+        foreach ($recurrence as $occurrence) {
+            if ($occurrence->getStart() > $now) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build the recurrence rule for the transaction schedule.
+     *
+     * @throws InvalidWeekday
+     * @throws InvalidArgument
+     * @throws Exception
+     */
+    private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
+    {
+        $rule = (new Rule())
+            ->setStartDate(new DateTime($this->start_date))
+            ->setFreq($this->frequency);
+
+        if ($this->end_date) {
+            $rule->setUntil(new DateTime($this->end_date));
+        }
+
+        if ($this->count) {
+            $rule->setCount($this->count);
+        }
+
+        if ($this->interval) {
+            $rule->setInterval($this->interval);
+        }
+
+        $transformer = new ArrayTransformer();
+        $transformerConfig = new ArrayTransformerConfig();
+        $transformerConfig->enableLastDayOfMonthFix();
+        $transformer->setConfig($transformerConfig);
+
+        $constraint = ($afterDate ? new AfterConstraint(new DateTime($afterDate), false) : null);
+
+        return $transformer->transform($rule, $constraint);
     }
 }

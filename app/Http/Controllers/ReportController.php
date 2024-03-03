@@ -6,7 +6,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class ReportController extends Controller
 {
@@ -30,7 +30,7 @@ class ReportController extends Controller
         $withForecast = $request->get('withForecast') ?? false;
 
         JavaScript::put([
-            'presetAccount' => $request->get('account'),
+            'presetAccount' => $request->get('accountEntity'),
         ]);
 
         return view(

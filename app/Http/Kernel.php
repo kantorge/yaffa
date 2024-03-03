@@ -15,7 +15,6 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         Middleware\TrustProxies::class,
-        \Fruitcake\Cors\HandleCors::class,
         Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         Middleware\TrimStrings::class,
@@ -52,7 +51,7 @@ class Kernel extends HttpKernel
      *
      * @var array
      */
-    protected $routeMiddleware = [
+    protected $middlewareAliases = [
         'auth' => Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,

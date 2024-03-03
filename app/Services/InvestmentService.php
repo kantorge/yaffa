@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Investment;
+use App\Models\TransactionDetailInvestment;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Artisan;
 
 class InvestmentService
 {
@@ -27,5 +29,22 @@ class InvestmentService
             'success' => $success,
             'error' => $error,
         ];
+    }
+
+    public function recalculateRelatedAccounts(Investment $investment): void
+    {
+        // Get all transactions related to this investment
+        $transactionConfigs = TransactionDetailInvestment::where('investment_id', $investment->id)->get();
+
+        // Get all distinct accounts related to this investment
+        $accounts = $transactionConfigs->map(fn ($transactionConfig) => $transactionConfig->account_id)->unique();
+
+        // Recalculate the summaries for each account
+        $accounts->each(function ($accountId) {
+            Artisan::call('app:cache:account-monthly-summaries', [
+                '--accountEntityId' => $accountId,
+                '--transactionType' => 'investment_value'
+            ]);
+        });
     }
 }

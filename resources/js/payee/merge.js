@@ -6,7 +6,9 @@ $.fn.select2.amd.define(
 );
 
 // Add select2 functionality to payee_source select
-$('#payee_source').select2({
+const selectorSourcePayee = '#payee_source';
+const selectorTargetPayee = '#payee_target';
+$(selectorSourcePayee).select2({
     theme: "bootstrap-5",
     placeholder: __('Select payee to be merged'),
     allowClear: true,
@@ -25,7 +27,7 @@ $('#payee_source').select2({
         },
         processResults: function (data) {
             // Exclude payee in target select
-            let targetPayee = $('#payee_target').select2('data');
+            let targetPayee = $(selectorTargetPayee).select2('data');
             if (targetPayee.length > 0) {
                 data = data.filter(function (item) {
                     return item.id != targetPayee[0].id;
@@ -41,14 +43,15 @@ $('#payee_source').select2({
 });
 
 // Load default value for source payee if provided in query parameter
+let payeeSource = window.payeeSource || null;
 if (payeeSource) {
-    $('#payee_source')
+    $(selectorSourcePayee)
         .append(new Option(payeeSource.name, payeeSource.id, true, true))
         .trigger('change');
 }
 
 // Add select2 functionality to payee_target select
-$('#payee_target').select2({
+$(selectorTargetPayee).select2({
     theme: "bootstrap-5",
     placeholder: __('Select payee to be merged into'),
     allowClear: true,
@@ -67,7 +70,7 @@ $('#payee_target').select2({
         },
         processResults: function (data) {
             // Exclude payee in source select
-            let sourcePayee = $('#payee_source').select2('data');
+            let sourcePayee = $(selectorSourcePayee).select2('data');
             if (sourcePayee.length > 0) {
                 data = data.filter(function (item) {
                     return item.id != sourcePayee[0].id;
@@ -85,8 +88,8 @@ $('#payee_target').select2({
 // Add confirm dialog to submit button
 $('#merge-payees-form').on('submit', function (e) {
     // Validate if both select2 inputs are not empty
-    let source = $('#payee_source').select2('data');
-    let target = $('#payee_target').select2('data');
+    let source = $(selectorSourcePayee).select2('data');
+    let target = $(selectorTargetPayee).select2('data');
 
     if (source.length === 0 || target.length === 0) {
         e.preventDefault();
@@ -115,7 +118,7 @@ $('#merge-payees-form').on('submit', function (e) {
 });
 
 // Cancel button behaviour
-$('#cancel').on('click', function (e) {
+$('#cancel').on('click', function () {
     if (confirm(__('Are you sure you want to discard any changes?'))) {
         window.history.back();
     }

@@ -157,6 +157,14 @@ export function commentIcon(comment, type) {
     return ' <i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
 }
 
+/**
+ * This function is used to render a formatted currency value in a DataTables column
+ * @param {string} type
+ * @param {number} input
+ * @param {string} locale
+ * @param {Object} currency
+ * @returns {number|string}
+ */
 export function toFormattedCurrency(type, input, locale, currency) {
     if (type === 'filter' || type === 'sort') {
         return input;
@@ -228,7 +236,7 @@ export function muteCellWithValue(column, mutedValue) {
 
 // These objects can be used to standard data display in various dataTable column definitions
 // The usage assumes that the underlying transaction object has also unified format
-export let transactionColumnDefiniton = {
+export const transactionColumnDefinition = {
     // Generic date field
     dateFromCustomField: function (fieldName, title, locale) {
         return {
@@ -343,7 +351,11 @@ export let transactionColumnDefiniton = {
                         prefix = '+ ';
                     }
 
-                    return prefix + helpers.toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.transaction_currency);
+                    return prefix + helpers.toFormattedCurrency(
+                        row.config.amount_to,
+                        window.YAFFA.locale,
+                        row.transaction_currency
+                    );
                 }
                 if (row.transaction_type.type === 'investment') {
                     let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
@@ -351,12 +363,73 @@ export let transactionColumnDefiniton = {
                     if (row.transaction_type.amount_operator === 'minus') {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            row.transaction_currency
+                        );
                     }
                     if (row.transaction_type.amount_operator === 'plus') {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            row.transaction_currency
+                        );
+                    }
+                }
+            }
+
+            if (row.transaction_type.type === 'standard') {
+                return row.config.amount_to;
+            }
+        },
+        className: 'dt-nowrap',
+        type: 'num',
+    },
+
+    // Amount referring to the global account currency
+    amountCustom: {
+        title: __("Amount"),
+        defaultContent: '',
+        render: function (_data, type, row) {
+            if (type === 'display') {
+                let prefix = '';
+                if (row.transaction_type.type === 'standard') {
+                    if (row.transaction_type.amount_operator === 'minus') {
+                        prefix = '- ';
+                    }
+                    if (row.transaction_type.amount_operator === 'plus') {
+                        prefix = '+ ';
+                    }
+
+                    return prefix + helpers.toFormattedCurrency(
+                        row.config.amount_to,
+                        window.YAFFA.locale,
+                        window.account.config.currency
+                    );
+                }
+                if (row.transaction_type.type === 'investment') {
+                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
+
+                    if (row.transaction_type.amount_operator === 'minus') {
+                        prefix = '- ';
+                        amount = amount + row.config.commission + row.config.tax ;
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            window.account.config.currency
+                        );
+                    }
+                    if (row.transaction_type.amount_operator === 'plus') {
+                        prefix = '+ ';
+                        amount = amount - row.config.commission - row.config.tax ;
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            window.account.config.currency
+                        );
                     }
                 }
             }

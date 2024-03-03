@@ -7,7 +7,7 @@ routeMap.set('payees.merge.form', 'payee/merge');
 routeMap.set('account.history', 'account/history');
 routeMap.set('categories.index', 'categories/index');
 routeMap.set('categories.merge.form', 'categories/merge');
-routeMap.set('currencies.index', 'currencies/index');
+routeMap.set('currency.index', 'currency/index');
 routeMap.set('currency-rate.index', 'currencyrates/index');
 routeMap.set('investment-group.index', 'investment-group/index');
 routeMap.set('investment.index', 'investment/index');

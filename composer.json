@@ -10,22 +10,20 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "beyondcode/laravel-mailbox": "^3.1",
         "biscolab/laravel-recaptcha": "^6.0",
         "bkwld/cloner": "^3.11",
         "enlightn/enlightn": "^2.1",
         "fakerphp/faker": "^1.13",
-        "fideloper/proxy": "^4.4",
-        "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "kantorge/laravel-currency-exchange-rates": "^0.0.3",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^9.0",
-        "laravel/sanctum": "^2.12",
+        "laravel/framework": "^10.0",
+        "laravel/sanctum": "^3.3",
         "laravel/ui": "^4.2",
         "nesbot/carbon": "^2.40",
-        "openai-php/laravel": "^0.5.2",
+        "openai-php/laravel": "^0.8.1",
         "sentry/sentry-laravel": "^4.1",
         "simshaun/recurr": "^5.0",
         "spatie/laravel-model-flags": "^1.1",
@@ -39,6 +37,7 @@
         "deployer/deployer": "^7.3",
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.17",
+        "larastan/larastan": "^2.0",
         "laravel/dusk": "7.9.3",
         "laravel/pint": "^1.1",
         "laravel/sail": "^1.16",
@@ -46,12 +45,11 @@
         "laravel/tinker": "^2.5",
         "mockery/mockery": "^1.4.2",
         "nikaia/translation-sheet": "dev-feature/config_empty_behavior",
-        "nunomaduro/collision": "^6.1",
-        "nunomaduro/larastan": "^2.0",
+        "nunomaduro/collision": "^7.0",
         "nunomaduro/phpinsights": "^2.0",
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^10.0",
         "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
-        "spatie/laravel-ignition": "^1.6.4"
+        "spatie/laravel-ignition": "^2.0"
     },
     "config": {
         "discard-changes": true,
@@ -83,7 +81,6 @@
             "Tests\\": "tests/"
         }
     },
-    "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
         "post-autoload-dump": [

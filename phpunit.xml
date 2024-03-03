@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
         bootstrap="vendor/autoload.php"
         colors="true"
 >
-  <coverage processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">./app</directory>
-    </include>
-  </coverage>
   <testsuites>
     <testsuite name="Unit">
       <directory suffix="Test.php">./tests/Unit</directory>
@@ -29,10 +24,14 @@
     <env name="MAIL_MAILER" value="array"/>
     <env name="QUEUE_CONNECTION" value="sync"/>
     <env name="SESSION_DRIVER" value="array"/>
-    <env name="DB_CONNECTION" value="mysql"/>
     <env name="DB_DATABASE" value="testing"/>
     <env name="DB_USERNAME" value="default"/>
     <env name="DB_PASSWORD" value="password"/>
     <env name="TELESCOPE_ENABLED" value="false"/>
   </php>
+  <source>
+    <include>
+      <directory suffix=".php">./app</directory>
+    </include>
+  </source>
 </phpunit>

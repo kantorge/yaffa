@@ -4,7 +4,7 @@ namespace App\Http\Traits;
 
 trait ModelOwnedByUserTrait
 {
-    public static function bootModelOwnedByUserTrait()
+    public static function bootModelOwnedByUserTrait(): void
     {
         if (! auth()->check()) {
             return;

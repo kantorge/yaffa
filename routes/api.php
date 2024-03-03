@@ -66,10 +66,6 @@ Route::get(
     ->where('transactionType', 'standard|investment|all')
     ->where('type', 'budget|result|all');
 Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])->name('api.reports.cashflow');
-Route::get(
-    '/reports/account_history_by_month/{accountEntity}/{withForecast?}',
-    [ReportApiController::class, 'getAccountHistoryByMonth']
-);
 
 Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiController::class, 'resetProcessed'])
     ->name('api.received-mail.reset-processed');
