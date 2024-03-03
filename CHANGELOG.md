@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.0.0](https://github.com/kantorge/yaffa/compare/v0.5.1...v1.0.0) (2024-03-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* The application relies on scheduled and ad-hoc jobs. Earlier these were only convenience features.
+* Increase the minimum PHP version required
+
+### Feature
+
+* account summaries ([#145](https://github.com/kantorge/yaffa/issues/145)) ([c129a6c](https://github.com/kantorge/yaffa/commit/c129a6c28cb335fae40fb1f22fa5962bb565199e))
+
+
+### Bug Fixes
+
+* adjust automated testing workflow ([299f83e](https://github.com/kantorge/yaffa/commit/299f83ea0c881dda8b16017297f23a39fbe38f80))
+* code smells and other issues ([12ad61e](https://github.com/kantorge/yaffa/commit/12ad61e93f140d33d673baeccab3f8d74a9d4923))
+* code smells and other issues ([7f02185](https://github.com/kantorge/yaffa/commit/7f021855c83cf8766bd3357c64aed20d22d192e3))
+* currency in account view ([50b9409](https://github.com/kantorge/yaffa/commit/50b9409fa66aae69caf2a4c9d9c7d3bef7d8e04a))
+* phpunit.xml coverage ([7ba32bd](https://github.com/kantorge/yaffa/commit/7ba32bd65e0c958c546bc6895ae190d9ef31f80c))
+* remove code duplication from test strings ([8ac690f](https://github.com/kantorge/yaffa/commit/8ac690fa5f9117afa16768c70c5c916f9c07a68c))
+* upgrade vue from 3.3.11 to 3.3.12 ([e2137d4](https://github.com/kantorge/yaffa/commit/e2137d4a64c95637821d071556db9592e327c97d))
+* upgrade vue from 3.3.12 to 3.3.13 ([c5d7ef2](https://github.com/kantorge/yaffa/commit/c5d7ef22ef64fd29dafc1aac3cb0fe9ed079bce6))
+
+
+### Miscellaneous Chores
+
+* composer update ([f4017a7](https://github.com/kantorge/yaffa/commit/f4017a7bc62635ba1f45b2d295ba2e706ef6feff))
+* pint updates ([4548758](https://github.com/kantorge/yaffa/commit/454875865c3b3f492c0102a2959bdb610f512e8b))
+* update NPM packages ([16d9285](https://github.com/kantorge/yaffa/commit/16d9285821b0435548220b7638959bbd1c9043ca))
+* update NPM packages ([4e0d2b6](https://github.com/kantorge/yaffa/commit/4e0d2b6acd10df7c08fb3cbe9e77c3d9698b479d))
+* upgrade Laravel to version 10 ([0267367](https://github.com/kantorge/yaffa/commit/026736716deed206045d32b862113763adfcdba4))
+* upgrade minimum PHP version to 8.3 ([1d96b5d](https://github.com/kantorge/yaffa/commit/1d96b5d170668898cd2187084885591cd91e10d1))
+
 ## [0.5.1](https://github.com/kantorge/yaffa/compare/v0.5.0...v0.5.1) (2024-01-05)
 
 
