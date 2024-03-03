@@ -257,12 +257,12 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
     axios.patch('/api/transactions/' + id + '/skip')
         .then(function (response) {
             // Find and update original row in schedule table
-            var row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
+            let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
                 return data.id == id;
             });
 
-            var data = row.data();
-            var newNextDate = response.data.transaction.transaction_schedule.next_date;
+            let data = row.data();
+            let newNextDate = response.data.transaction.transaction_schedule.next_date;
             // If next date exists, update the row. Otherwise remove it.
             if (newNextDate) {
                 data.transaction_schedule.next_date = new Date(newNextDate);
@@ -510,7 +510,7 @@ $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', fun
     recentTransactionDraftId = Number($(this).data('draft'));
 
     const draft = dtSchedule.row($(this).parentsUntil('tr')).data();
-    const transaction = Object.assign({}, draft);
+    const transaction = {...draft};
 
     // Remove schedule and budget data
     transaction.schedule = false;
