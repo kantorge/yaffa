@@ -125,9 +125,9 @@ class Currency extends Model
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
      *
-     * @return string|null
+     * @return float|null
      */
-    public function rate(): ?string
+    public function rate(): ?float
     {
         $baseCurrency = $this->baseCurrency();
         if ($baseCurrency === null || $baseCurrency->id === $this->id) {
