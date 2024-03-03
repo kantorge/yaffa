@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/kantorge/yaffa/compare/v1.0.0...v1.0.1) (2024-03-03)
+
+
+### Bug Fixes
+
+* migration update to chunks ([e63ee08](https://github.com/kantorge/yaffa/commit/e63ee081c1d2a4c18ff33d3e4bbbf40574c465d5))
+
 ## [1.0.0](https://github.com/kantorge/yaffa/compare/v0.5.1...v1.0.0) (2024-03-03)
 
 
