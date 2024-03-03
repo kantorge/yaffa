@@ -179,7 +179,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     private function getAccountBalanceFactData(): Collection
     {
         // Get the dates of the first and last transaction for this account
-        $firstTransactionDate = $this->dateFrom ?? Carbon::parse($this->accountEntity->allTransactionDates()->min('date'));
+        $firstTransactionDate = $this->dateFrom ??
+            Carbon::parse($this->accountEntity->allTransactionDates()->min('date'));
         $lastTransactionDate = Carbon::parse($this->accountEntity->allTransactionDates()->max('date'));
 
         // Loop through all months between the first and last transaction, using the first day of the month
@@ -281,8 +282,14 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         }
 
         // Get all instances, added to a new transactions collection
-        $scheduledStandardTransactionInstances = $this->getScheduleInstances($scheduledStandardTransactions, 'next');
-        $scheduledInvestmentTransactionInstances = $this->getScheduleInstances($scheduledInvestmentTransactions, 'next');
+        $scheduledStandardTransactionInstances = $this->getScheduleInstances(
+            $scheduledStandardTransactions,
+            'next'
+        );
+        $scheduledInvestmentTransactionInstances = $this->getScheduleInstances(
+            $scheduledInvestmentTransactions,
+            'next'
+        );
 
         // Convert the transaction dates to 'Y-m' format and group by the formatted date
         $scheduledStandardTransactionInstances = $scheduledStandardTransactionInstances
@@ -338,7 +345,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         }
 
         // Get the date of the first last transaction for this account. The last date is the end of this month.
-        // The dates need to be taken only for investment transactions, as the investment value is not dependent on standard transactions.
+        // The dates need to be taken only for investment transactions,
+        // as the investment value is not dependent on standard transactions.
         $firstTransactionDate = Carbon::parse($this->accountEntity->transactionsInvestment()->min('date'));
         $lastTransactionDate = Carbon::now()->endOfMonth();
 
@@ -375,9 +383,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     /**
      * Get the monthly summary data for investment transactions for the account (accountEntity) provided at class level.
      *
-     * This is a relatively complex calculation, as every month's value is calculated based on the previous month's value.
+     * This is a relatively complex calculation, as every month's value is calculated based on the previous month.
      * In this case, it involves both previous fact values, and forecast values.
-     * The price is still taken from known fact values, but the quantity is calculated based on the forecast values, too.
+     * The price is still taken from known fact values, but the quantity is calculated based on the forecast values, too
      *
      * @return Collection
      */
@@ -518,8 +526,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * Get the monthly summary data for the budget of the account (accountEntity) provided at class level.
      * Optionally, we use the transactions of the user, if the account is not provided.
      *
-     * This function uses a custom calculation. All active budget transactions are retrieved, all instances are calculated,
-     * and then the sum of the cashflow_value is calculated for each month, starting from the current month.
+     * This function uses a custom calculation. All active budget transactions are retrieved,
+     * all instances are calculated, and then the sum of the cashflow_value is calculated for each month,
+     * starting from the current month.
      */
     private function getAccountBalanceBudgetData(): Collection
     {
@@ -548,8 +557,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                                 ->where('account_from_id', $this->accountEntity->id)
                                 ->orWhere('account_to_id', $this->accountEntity->id)
                         ),
-                        // If no account is specified, then we need to take the transactions of the user without an account
-                        // This needs to be checked separately to withdrawal and deposit transactions, as the proper acocunt needs to be null
+                        // If no account is specified, then we take the transactions of the user without an account
+                        // This needs to be checked separately to withdrawal and deposit transactions,
+                        // as the proper acocunt needs to be null.
                         // (Not expected, but the payee can be set as the other account.)
                         fn ($query) => $query->where(
                             // Withdrawals without an account_from_id
@@ -583,7 +593,11 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         }
 
         // Get all instances, added to a new transactions collection, only from the current month
-        $budgetTransactionInstances = $this->getScheduleInstances($budgetTransactions, 'custom', Carbon::now()->startOfMonth());
+        $budgetTransactionInstances = $this->getScheduleInstances(
+            $budgetTransactions,
+            'custom',
+            Carbon::now()->startOfMonth()
+        );
 
         // Convert the transaction dates to 'Y-m' format and group by the formatted date
         $budgetTransactionInstances = $budgetTransactionInstances
