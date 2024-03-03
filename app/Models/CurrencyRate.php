@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $to_id
  * @property \Illuminate\Support\Carbon $date
  * @property string $rate
- * @property-read \App\Models\Currency $currencyFrom
- * @property-read \App\Models\Currency $currencyTo
+ * @property-read Currency $currencyFrom
+ * @property-read Currency $currencyTo
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CurrencyRate query()
