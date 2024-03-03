@@ -57,6 +57,8 @@ Route::get(
 
 Route::get('/assets/tag', [TagApiController::class, 'getList']);
 Route::get('/assets/tag/{tag}', [TagApiController::class, 'getItem']);
+Route::put('/assets/tag/{tag}/active/{active}', [TagApiController::class, 'updateActive'])
+    ->name('api.tag.updateActive');
 
 Route::get('/budgetchart', [ReportApiController::class, 'budgetChart']);
 Route::get(

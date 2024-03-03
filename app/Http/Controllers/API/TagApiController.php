@@ -4,9 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 
 class TagApiController extends Controller
 {
@@ -15,13 +16,13 @@ class TagApiController extends Controller
         $this->middleware(['auth:sanctum', 'verified']);
     }
 
-    public function getList(Request $request)
+    public function getList(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/tag')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $tags = Auth::user()
+        $tags = $request->user()
             ->tags()
             ->when($request->missing('withInactive'), function ($query) {
                 $query->active();
@@ -38,13 +39,37 @@ class TagApiController extends Controller
         return response()->json($tags, Response::HTTP_OK);
     }
 
-    public function getItem(Tag $tag)
+    /**
+     * @throws AuthorizationException
+     */
+    public function getItem(Tag $tag): JsonResponse
     {
         /**
          * @get('/api/assets/tag/{tag}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
         $this->authorize('view', $tag);
+
+        return response()
+            ->json(
+                $tag,
+                Response::HTTP_OK
+            );
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function updateActive(Tag $tag, string $active): JsonResponse
+    {
+        /**
+         * @put('/api/assets/tag/{tag}/active/{active}')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        $this->authorize('update', $tag);
+
+        $tag->active = $active === '1';
+        $tag->save();
 
         return response()
             ->json(
