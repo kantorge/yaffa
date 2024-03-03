@@ -23,7 +23,7 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type) {
                 return booleanToTableIcon(data, type);
             },
-            className: "text-center",
+            className: "text-center activeIcon",
         },
         {
             data: "transaction_count",
@@ -60,6 +60,36 @@ window.table = $(dataTableSelector).DataTable({
     stateSave: false,
     processing: true,
     paging: false,
+    initComplete: function (settings) {
+        $(settings.nTable).on("click", "td.activeIcon > i:not(.inProgress)", function () {
+            var row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+
+            // Change icon to spinner
+            $(this).removeClass().addClass('fa fa-spinner fa-spin inProgress');
+
+            // Send request to change tag active state
+            $.ajax({
+                type: 'PUT',
+                url: '/api/assets/tag/' + row.data().id + '/active/' + (row.data().active ? 0 : 1),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data source
+                    window.tags.filter(tag => tag.id === data.id)[0].active = data.active;
+                },
+                error: function (_data) {
+                    alert(__('Error changing tag active state'));
+                },
+                complete: function (_data) {
+                    // Re-render row
+                    row.invalidate();
+                }
+            });
+        });
+    },
 });
 
 initializeDeleteButtonListener(dataTableSelector, 'tag.destroy');

@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -90,6 +91,9 @@ class InvestmentApiController extends Controller
         return response()->json($prices, Response::HTTP_OK);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function updateActive(Investment $investment, $active): JsonResponse
     {
         /**
