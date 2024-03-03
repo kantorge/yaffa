@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/kantorge/yaffa/compare/v1.0.2...v1.1.0) (2024-03-03)
+
+
+### Features
+
+* change the active status of tags from the index view ([f704a57](https://github.com/kantorge/yaffa/commit/f704a57fcf8d4180c4b28a456f1b799a18288467))
+
+
+### Bug Fixes
+
+* code smells and other issues ([6b66262](https://github.com/kantorge/yaffa/commit/6b66262bcfd453fe293fcc1705c026e3646a3262))
+
 ## [1.0.2](https://github.com/kantorge/yaffa/compare/v1.0.1...v1.0.2) (2024-03-03)
 
 
