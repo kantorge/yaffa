@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/kantorge/yaffa/compare/v1.0.1...v1.0.2) (2024-03-03)
+
+
+### Bug Fixes
+
+* migration update to direct DB query ([22ebd4a](https://github.com/kantorge/yaffa/commit/22ebd4a256ed1deeaba47fd1ed3191e5bdce97c6))
+
 ## [1.0.1](https://github.com/kantorge/yaffa/compare/v1.0.0...v1.0.1) (2024-03-03)
 
 
