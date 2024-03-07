@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\TransactionType;
 use App\Rules\IsFalsy;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -261,7 +260,7 @@ class TransactionRequest extends FormRequest
         // Get transaction type ID by name
         if ($this->transaction_type) {
             $this->merge([
-                'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id,
+                'transaction_type_id' => config('transaction_types')[$this->transaction_type]['id']
             ]);
         }
 

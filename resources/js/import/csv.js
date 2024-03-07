@@ -396,10 +396,10 @@ window.table = $(tableSelector).DataTable({
                     return 'Not set';
                 }
                 let prefix = '';
-                if (row.transaction_type.amount_operator === 'minus') {
+                if (row.transaction_type.amount_multiplier === -1) {
                     prefix = '- ';
                 }
-                if (row.transaction_type.amount_operator === 'plus') {
+                if (row.transaction_type.amount_multiplier === 1) {
                     prefix = '+ ';
                 }
                 return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);

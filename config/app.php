@@ -196,7 +196,7 @@ return [
         //App\Providers\TelescopeServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
         App\Providers\OnboardingStepsServiceProvider::class,
-
+        App\Providers\TransactionTypeServiceProvider::class,
     ],
 
     /*

@@ -109,7 +109,7 @@ class Account extends Model
                 'name' => 'Opening balance',
                 'type' => 'Opening balance',
             ],
-            'transactionOperator' => 'plus',
+            'transactionOperator' => 1,
             'config' => [
                 'account_from_id' => null,
                 'account_to_id' => null,
@@ -133,7 +133,7 @@ class Account extends Model
             ->select(
                 'transaction_details_investment.investment_id',
                 DB::raw('sum(
-                                 CASE WHEN transaction_types.quantity_operator = "plus" THEN 1 ELSE -1 END
+                                 IFNULL(transaction_types.quantity_multiplier, 0)
                                  * IFNULL(transaction_details_investment.quantity, 0)
                                ) AS quantity')
             )
@@ -164,7 +164,7 @@ class Account extends Model
                 $query->from('transaction_types')
                     ->select('id')
                     ->where('type', 'investment')
-                    ->whereNotNull('quantity_operator');
+                    ->whereNotNull('quantity_multiplier');
             })
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();

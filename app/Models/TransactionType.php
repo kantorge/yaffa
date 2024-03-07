@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id
  * @property string $name
  * @property string $type
- * @property string|null $amount_operator
- * @property string|null $quantity_operator
+ * @property int|null $amount_multiplier
+ * @property int|null $quantity_multiplier
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TransactionType query()
@@ -26,4 +26,14 @@ class TransactionType extends Model
 {
     public $timestamps = false;
     protected $table = 'transaction_types';
+
+    protected $guarded = [
+        'amount_multiplier',
+        'quantity_multiplier',
+    ];
+
+    protected $casts = [
+        'amount_multiplier' => 'integer',
+        'quantity_multiplier' => 'integer',
+    ];
 }

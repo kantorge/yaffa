@@ -482,7 +482,7 @@ export default {
                 + (this.form.config.dividend || 0)
                 - ((this.form.config.commission || 0) + (this.form.config.tax || 0))
                 // Taxes and commissions are added to the value when the transaction is a buy
-                * (this.transactionTypeSettings.amount_operator === 'minus' ? -1 : 1);
+                * this.transactionTypeSettings.amount_multiplier;
         },
 
         transactionTypeSettings() {
@@ -529,42 +529,42 @@ export default {
                 quantity: true,
                 price: true,
                 dividend: false,
-                amount_operator: 'minus',
+                amount_multiplier: -1,
             },
             {
                 name: 'Sell',
                 quantity: true,
                 price: true,
                 dividend: false,
-                amount_operator: 'plus',
+                amount_multiplier: 1,
             },
             {
                 name: 'Add shares',
                 quantity: true,
                 price: false,
                 dividend: false,
-                amount_operator: null,
+                amount_multiplier: null,
             },
             {
                 name: 'Remove shares',
                 quantity: true,
                 price: false,
                 dividend: false,
-                amount_operator: null,
+                amount_multiplier: null,
             },
             {
                 name: 'Dividend',
                 quantity: false,
                 price: false,
                 dividend: true,
-                amount_operator: 'plus',
+                amount_multiplier: 1,
             },
             {
                 name: 'Interest yield',
                 quantity: false,
                 price: false,
                 dividend: true,
-                amount_operator: 'plus',
+                amount_multiplier: 1,
             },
         ];
 

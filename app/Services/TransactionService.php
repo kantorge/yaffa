@@ -119,9 +119,8 @@ class TransactionService
             'transactionType'
         ]);
 
-        $operator = $transaction->transactionType->amount_operator;
-        if ($operator) {
-            return ($operator === 'minus' ? -1 : 1)
+        if ($transaction->transactionType->amount_multiplier !== null) {
+            return $transaction->transactionType->amount_multiplier
                 * $transaction->config->price
                 * $transaction->config->quantity
 
