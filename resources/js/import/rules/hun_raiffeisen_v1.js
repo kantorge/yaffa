@@ -92,8 +92,8 @@ engine.addRule({
                     customValue: 'withdrawal',
                 },
                 {
-                    transactionField: 'transaction_type.amount_operator',
-                    customValue: 'minus',
+                    transactionField: 'transaction_type.amount_multiplier',
+                    customValue: 1,
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -201,8 +201,8 @@ engine.addRule({
                     customValue: 'withdrawal',
                 },
                 {
-                    transactionField: 'transaction_type.amount_operator',
-                    customValue: 'minus',
+                    transactionField: 'transaction_type.amount_multiplier',
+                    customValue: 1,
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -308,8 +308,8 @@ engine.addRule({
                     customValue: 'deposit',
                 },
                 {
-                    transactionField: 'transaction_type.amount_operator',
-                    customValue: 'plus',
+                    transactionField: 'transaction_type.amount_multiplier',
+                    customValue: 1,
                 },
                 {
                     transactionField: 'config.amount_from',
@@ -430,7 +430,7 @@ engine.addRule({
                     customValue: 'transfer',
                 },
                 {
-                    transactionField: 'transaction_type.amount_operator',
+                    transactionField: 'transaction_type.amount_multiplier',
                     customValue: '',
                 },
                 {

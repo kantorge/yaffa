@@ -49,6 +49,7 @@ class InvestmentTest extends TestCase
         /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
+        /** @var User $user2 */
         $user2 = User::factory()->create();
 
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $investment->id))
@@ -62,6 +63,7 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_can_view_list_of_investments()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         Investment::factory()->for($user)->count(5)->create();
@@ -127,6 +129,7 @@ class InvestmentTest extends TestCase
     /** @test */
     public function user_cannot_create_an_investment_with_missing_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         [$currency, $investmentGroup] = $this->createPrerequisites($user);
 

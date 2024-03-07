@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id
  * @property int $transaction_id
  * @property int|null $category_id
- * @property string $amount
+ * @property float $amount
  * @property string|null $comment
  * @property-read Category|null $category
  * @property-read Collection|Tag[] $tags
@@ -64,6 +64,10 @@ class TransactionItem extends Model
         'category_id',
         'amount',
         'comment',
+    ];
+
+    protected $casts = [
+        'amount' => 'float',
     ];
 
     protected $cloneable_relations = [

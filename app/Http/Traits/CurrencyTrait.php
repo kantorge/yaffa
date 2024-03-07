@@ -14,13 +14,13 @@ trait CurrencyTrait
     /**
      * Load a collection for all currencies, with an average rate by month
      *
-     * @return Collection
+     * @return array
      */
-    public function allCurrencyRatesByMonth(): Collection
+    public function allCurrencyRatesByMonth(): array
     {
         $baseCurrency = $this->getBaseCurrency();
         if (!$baseCurrency) {
-            return new Collection();
+            return [];
         }
 
         $userId = auth()->user()->id;
@@ -47,7 +47,18 @@ trait CurrencyTrait
                 return $rate;
             });
 
-            return $rates;
+            // Pre-process the $allRates collection into a map
+            $allRatesMap = [];
+            foreach ($rates as $rate) {
+                $allRatesMap[$rate->from_id][$rate->date_from->format('Y-m-d')] = $rate->rate;
+            }
+
+            // Sort the map by date for each currency in reverse order
+            foreach ($allRatesMap as $currencyId => $rates) {
+                rsort($allRatesMap[$currencyId]);
+            }
+
+            return $allRatesMap;
         });
     }
 
@@ -78,5 +89,21 @@ trait CurrencyTrait
                         ->firstOr(fn () => null)
                 );
         });
+    }
+
+    public function getLatestRateFromMap(int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
+    {
+        if ($currencyId === $baseCurrencyID ||
+            !array_key_exists($currencyId, $allRatesMap)) {
+            return null;
+        }
+
+        foreach ($allRatesMap[$currencyId] as $rateDate => $rate) {
+            if ($date->lte($rateDate)) {
+                return $rate;
+            }
+        }
+
+        return null;
     }
 }

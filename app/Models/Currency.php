@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 
@@ -239,6 +240,8 @@ class Currency extends Model
             $this->save();
 
             DB::commit();
+
+            Cache::forget("allCurrencyRatesByMonth_forUser_{$this->user->id}");
         } catch (Exception $e) {
             DB::rollback();
             return false;

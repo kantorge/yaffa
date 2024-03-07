@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 /**
  * App\Models\Investment
@@ -195,36 +196,34 @@ class Investment extends Model
 
     public function getCurrentQuantity(AccountEntity $account = null): float
     {
-        $investmentId = $this->id;
-
-        // Get all investment transactions for the current investment
-        $transactions = Transaction::with([
-            'config',
-            'transactionType',
-        ])
-            ->byScheduleType('none')
-            ->where('config_type', 'investment')
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investmentId, $account) {
-                    $query
-                        ->where('investment_id', $investmentId)
-                        ->when($account !== null, function ($query) use ($account) {
-                            $query->where('account_id', '=', $account->id);
-                        });
-                }
+        $quantity = DB::table('transactions')
+            ->select(
+                DB::raw('sum(
+                                  IFNULL(transaction_types.quantity_multiplier, 0)
+                                  * IFNULL(transaction_details_investment.quantity, 0)
+                                ) AS quantity')
             )
+            ->leftJoin(
+                'transaction_types',
+                'transactions.transaction_type_id',
+                '=',
+                'transaction_types.id'
+            )
+            ->leftJoin(
+                'transaction_details_investment',
+                'transactions.config_id',
+                '=',
+                'transaction_details_investment.id'
+            )
+            ->where('transactions.schedule', 0)
+            ->where('transactions.config_type', 'investment')
+            ->where('transaction_details_investment.investment_id', $this->id)
+            ->when($account !== null, function ($query) use ($account) {
+                $query->where('transaction_details_investment.account_id', '=', $account->id);
+            })
             ->get();
 
-        return $transactions->sum(function ($transaction) {
-            $operator = $transaction->transactionType->quantity_operator;
-            if (! $operator) {
-                return 0;
-            }
-
-            return $transaction->config->quantity * ($operator === 'minus' ? -1 : 1);
-        });
+        return $quantity->first()->quantity ?? 0;
     }
 
     /**
