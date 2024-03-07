@@ -209,7 +209,8 @@ class Transaction extends Model
     public function accountBalanceChange(AccountEntity|null $account = null): float|int
     {
         if ($this->isStandard()) {
-            $operator = $this->transactionType->amount_multiplier ?? ($this->config->account_from_id === $account->id ? -1 : 1);
+            $operator = $this->transactionType->amount_multiplier ??
+                ($this->config->account_from_id === $account->id ? -1 : 1);
 
             return $operator === -1 ? -$this->config->amount_from : $this->config->amount_to;
         }
