@@ -95,7 +95,7 @@ class MainController extends Controller
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
-            ->merge($investmentTransactions)
+            ->concat($investmentTransactions)
         // Add custom and pre-calculated attributes
             ->map(function ($transaction) use ($account) {
                 if ($transaction->schedule) {

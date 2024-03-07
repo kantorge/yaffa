@@ -438,13 +438,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         // Get all instances of the schedules, added to a new transactions collection
         $scheduledTransactionInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
 
-        $allTransactionsInstances = $factTransactions->merge($scheduledTransactionInstances);
-
-        // Log the count and ids of the scheduled transactions
-        logger()->debug('Scheduled transactions count: ' . $scheduledTransactions->count(), [
-            'scheduled_transaction_ids' => $scheduledTransactions->pluck('id')->toArray(),
-            'all transaction count' => $allTransactionsInstances->count(),
-        ]);
+        $allTransactionsInstances = $factTransactions->concat($scheduledTransactionInstances);
 
         // If no investment transactions are found at all, we can return an empty collection
         if ($allTransactionsInstances->isEmpty()) {
@@ -485,11 +479,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                             $transaction->transactionType->quantity_multiplier
                     )
                 );
-
-                logger()->debug('Transactions count: ' . $transactions->count(), [
-                    'transaction_ids' => $transactions->pluck('id')->toArray(),
-                    'date' => $month->format('Y-m-d'),
-                ]);
             }
 
             $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth) {

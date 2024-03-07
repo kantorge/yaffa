@@ -47,7 +47,7 @@ trait ScheduleTrait
                     $constraintStart = $customStart;
                 }
 
-                $scheduleInstances = $scheduleInstances->merge(
+                $scheduleInstances = $scheduleInstances->concat(
                     $transaction->scheduleInstances($constraintStart, $maxLookAhead, $virtualLimit)
                 );
             }
