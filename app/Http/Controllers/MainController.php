@@ -150,13 +150,19 @@ class MainController extends Controller
         $subTotal = 0;
 
         $data = $transactions
-            ->filter(fn ($transaction) => $transaction->transactionGroup === 'history' || $transaction->transactionGroup === 'forecast')
+            ->filter(
+                fn ($transaction) =>
+                $transaction->transactionGroup === 'history'
+                || $transaction->transactionGroup === 'forecast'
+            )
             ->sortByDesc('transactionType')
             ->sortBy(['date', 'transactionType.amount_multiplier'])
             // Add the opening balance dummy item to the beginning of transaction list
             ->prepend($account->config->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
-                $subTotal += ($transaction->transactionOperator === 1 ? $transaction->amount_to : -$transaction->amount_from);
+                $subTotal += ($transaction->transactionOperator === 1
+                    ? $transaction->amount_to
+                    : -1 * $transaction->amount_from);
                 $transaction->running_total = $subTotal;
 
                 return $transaction;

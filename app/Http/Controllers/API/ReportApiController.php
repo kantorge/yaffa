@@ -247,7 +247,12 @@ class ReportApiController extends Controller
                 // Get the currency (from the transaction's cached value) and determine currency rate
                 $currency_id = $item->transaction->currency_id;
 
-                $rate = $this->getLatestRateFromMap($currency_id, $item->transaction->date, $allRatesMap, $baseCurrency->id);
+                $rate = $this->getLatestRateFromMap(
+                    $currency_id,
+                    $item->transaction->date,
+                    $allRatesMap,
+                    $baseCurrency->id
+                );
 
                 $dataByCategory[$category] +=
                     ($item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
@@ -291,7 +296,12 @@ class ReportApiController extends Controller
                 }
 
                 // Get the currency (from the cached column) and determine currency rate
-                $rate = $this->getLatestRateFromMap($transaction->currency_id, $transaction->date, $allRatesMap, $baseCurrency->id);
+                $rate = $this->getLatestRateFromMap(
+                    $transaction->currency_id,
+                    $transaction->date,
+                    $allRatesMap,
+                    $baseCurrency->id
+                );
 
                 $dataByCategory[$category] += $transaction->accountBalanceChange() * ($rate ?? 1);
             });
