@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Models\TransactionType;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Exception;
 
 class TransactionTypeServiceProvider extends ServiceProvider
 {
@@ -22,16 +22,17 @@ class TransactionTypeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (Schema::hasTable('transaction_types')) {
-            $transactionTypeData = Cache::remember(
-                'transaction_types',
-                60 * 60 * 24 * 30,
-                fn () => TransactionType::all()->keyBy('name')->toArray()
-            );
-        } else {
-            Cache::forget('transaction_types');
+        if (!app()->runningInConsole()) {
+            try {
+                $transactionTypeData = Cache::remember(
+                    'transaction_types',
+                    60 * 60 * 24 * 30,
+                    fn () => TransactionType::all()->keyBy('name')->toArray()
+                );
+            } catch (Exception $e) {
+                $transactionTypeData = [];
+            }
+            config()->set('transaction_types', $transactionTypeData ?? []);
         }
-
-        config()->set('transaction_types', $transactionTypeData ?? []);
     }
 }
