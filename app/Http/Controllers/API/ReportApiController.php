@@ -53,14 +53,11 @@ class ReportApiController extends Controller
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
-        $allRates = $this->allCurrencyRatesByMonth()->sortByDesc('date_from');
+        $allRatesMap = $this->allCurrencyRatesByMonth();
 
         // Get all standard transactions with related categories
         $standardTransactions = TransactionItem::with([
             'transaction',
-            'transaction.transactionType',
-            'transaction.config.accountFrom.config',
-            'transaction.config.accountTo.config',
         ])
             ->whereIn('category_id', $categories->pluck('id'))
             ->whereHas('transaction', function ($query) use ($request) {
@@ -73,17 +70,28 @@ class ReportApiController extends Controller
         // Group standard transactions by selected period, and get all relevant details
         $standardCompact = [];
         $standardTransactions->each(function ($item) use (&$standardCompact, $periodFormat) {
+            /** @var TransactionItem $item */
             $period = $item->transaction->date->format($periodFormat);
-            $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
+            $currency_id = $item->transaction->currency_id;
+            $amount = $item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+                ? -1 * $item->amount
+                : $item->amount;
 
-            $standardCompact[$period][$currency_id][] = ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount;
+            if (!array_key_exists($period, $standardCompact)) {
+                $standardCompact[$period] = [];
+            }
+            if (!array_key_exists($currency_id, $standardCompact[$period])) {
+                $standardCompact[$period][$currency_id] = 0;
+            }
+            $standardCompact[$period][$currency_id] += $amount;
         });
 
         // Summarize items, applying currency rate
         $dataByPeriod = [];
 
         foreach ($standardCompact as $period => $periodData) {
-            foreach ($periodData as $currency => $items) {
+            $carbonPeriod = Carbon::parse($period);
+            foreach ($periodData as $currency => $value) {
                 if (!array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
@@ -91,28 +99,23 @@ class ReportApiController extends Controller
                     ];
                 }
 
-                $rate = $allRates
-                    ->where('from_id', $currency)
-                    ->firstWhere('date_from', '<=', $period);
+                $rate = $this->getLatestRateFromMap($currency, $carbonPeriod, $allRatesMap, $baseCurrency->id);
 
-                $dataByPeriod[$period]['actual'] += array_sum($items) * ($rate ? $rate->rate : 1);
+                $dataByPeriod[$period]['actual'] += $value * ($rate ?? 1);
             }
         }
 
         // Get all budget transactions with related categories
         $budgetTransactions = Transaction::with([
             'transactionItems',
-            'transactionType',
             'transactionSchedule',
-            'config.accountFrom.config',
-            'config.accountTo.config',
         ])
             ->whereHas('transactionItems', function ($query) use ($categories) {
                 $query->whereIn('category_id', $categories->pluck('id'));
             })
-            ->where('user_id', Auth::user()->id)
-            ->where('budget', 1)
-            ->where('config_type', 'standard')
+            ->where('user_id', $request->user()->id)
+            ->byType('standard')
+            ->byScheduleType('budget')
             ->get();
 
         // Unify currencies and calculate amounts only for given categories
@@ -135,25 +138,22 @@ class ReportApiController extends Controller
         $budgetCompact = [];
         $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency, $periodFormat) {
             $period = $transaction->date->format($periodFormat);
-            if ($transaction->transactionType->name === 'withdrawal') {
-                if ($transaction->config->accountFrom) {
-                    $currency_id = $transaction->config->accountFrom->config->currency_id;
-                } else {
-                    $currency_id = $baseCurrency->id;
-                }
-            } else {
-                if ($transaction->config->accountTo) {
-                    $currency_id = $transaction->config->accountTo->config->currency_id;
-                } else {
-                    $currency_id = $baseCurrency->id;
-                }
+            $currency_id = $transaction->currency_id ?? $baseCurrency->id;
+
+            if (!array_key_exists($period, $budgetCompact)) {
+                $budgetCompact[$period] = [];
+            }
+            if (!array_key_exists($currency_id, $budgetCompact[$period])) {
+                $budgetCompact[$period][$currency_id] = 0;
             }
 
-            $budgetCompact[$period][$currency_id][] = ($transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $transaction->sum;
+            $budgetCompact[$period][$currency_id] += $transaction->sum
+                * ($transaction->transaction_type_id === config('transaction_types')['withdrawal']['id'] ? -1 : 1);
         });
 
         foreach ($budgetCompact as $period => $periodData) {
-            foreach ($periodData as $currency => $items) {
+            $carbonPeriod = Carbon::parse($period);
+            foreach ($periodData as $currency => $value) {
                 if (!array_key_exists($period, $dataByPeriod)) {
                     $dataByPeriod[$period] = [
                         'actual' => null,
@@ -161,11 +161,9 @@ class ReportApiController extends Controller
                     ];
                 }
 
-                $rate = $allRates
-                    ->where('from_id', $currency)
-                    ->firstWhere('date_from', '<=', $period);
+                $rate = $this->getLatestRateFromMap($currency, $carbonPeriod, $allRatesMap, $baseCurrency->id);
 
-                $dataByPeriod[$period]['budget'] += array_sum($items) * ($rate ? $rate->rate : 1);
+                $dataByPeriod[$period]['budget'] += $value * ($rate ?? 1);
             }
         }
 
@@ -207,7 +205,7 @@ class ReportApiController extends Controller
 
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
-        $allRates = $this->allCurrencyRatesByMonth()->sortByDesc('date_from');
+        $allRatesMap = $this->allCurrencyRatesByMonth();
 
         // Final result placeholder
         $dataByCategory = [];
@@ -217,7 +215,6 @@ class ReportApiController extends Controller
             $standardTransactions = TransactionItem::with([
                 'category',
                 'transaction',
-                'transaction.transactionType',
                 'transaction.config.accountFrom.config',
                 'transaction.config.accountTo.config',
             ])
@@ -229,35 +226,40 @@ class ReportApiController extends Controller
                                 ->whereRaw('MONTH(date) = ?', [$month]);
                         })
                         ->byScheduleType('none')
-                        ->where('config_type', 'standard')
+                        ->byType('standard')
                         ->where(
                             'transaction_type_id',
                             '!=',
-                            TransactionType::where('name', '=', 'transfer')->first()->id
+                            config('transaction_types')['transfer']['id']
                         );
                 })
                 ->get();
 
-            $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRates) {
+            $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = $item->category?->parent?->name ?? $item->category?->name ?? 'No category assigned';
+                $category = $item->category?->parent?->name ?? $item->category?->name ?? __('No category assigned');
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
                     $dataByCategory[$category] = 0;
                 }
 
-                // Get the currency and determine currency rate
-                $currency_id = ($item->transaction->transactionType->name === 'withdrawal' ? $item->transaction->config->accountFrom->config->currency_id : $item->transaction->config->accountTo->config->currency_id);
-                if ($currency_id !== $baseCurrency->id) {
-                    $rate = $allRates
-                        ->where('from_id', $currency_id)
-                        ->firstWhere('date_from', '<=', $item->transaction->date);
-                } else {
-                    $rate = null;
-                }
+                // Get the currency (from the transaction's cached value) and determine currency rate
+                $currency_id = $item->transaction->currency_id;
 
-                $dataByCategory[$category] += ($item->transaction->transactionType->name === 'withdrawal' ? -1 : 1) * $item->amount * ($rate ? $rate->rate : 1);
+                $rate = $this->getLatestRateFromMap(
+                    $currency_id,
+                    $item->transaction->date,
+                    $allRatesMap,
+                    $baseCurrency->id
+                );
+
+                $dataByCategory[$category] +=
+                    ($item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+                        ? -1
+                        : 1)
+                    * $item->amount
+                    * ($rate ?? 1);
             });
         }
 
@@ -265,12 +267,14 @@ class ReportApiController extends Controller
             // Add investment transaction results
             $investmentTransactions = Transaction::with([
                 'transactionType',
-                'config.account.config',
             ])
-                //->where('config_type', 'investment')
+                ->byType('investment')
                 ->whereIn(
                     'transaction_type_id',
-                    TransactionType::where('type', 'investment')->whereNotNull('amount_operator')->get()->pluck('id')
+                    TransactionType::where('type', 'investment')
+                        ->whereNotNull('amount_multiplier')
+                        ->get()
+                        ->pluck('id')
                 )
                 ->where('user_id', Auth::user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
@@ -280,26 +284,26 @@ class ReportApiController extends Controller
                 })
                 ->get();
 
-            $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRates) {
+            $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = ($transaction->transactionType->amount_operator === 'plus' ? 'Investment income' : 'Investment payment');
+                $category = ($transaction->transactionType->amount_multiplier === 1
+                    ? __('Investment income')
+                    : __('Investment payment'));
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {
                     $dataByCategory[$category] = 0;
                 }
 
-                // Get the currency and determine currency rate
-                $currency_id = $transaction->config->account->config->currency_id;
-                if ($currency_id !== $baseCurrency->id) {
-                    $rate = $allRates
-                        ->where('from_id', $currency_id)
-                        ->firstWhere('date_from', '<=', $transaction->date);
-                } else {
-                    $rate = null;
-                }
+                // Get the currency (from the cached column) and determine currency rate
+                $rate = $this->getLatestRateFromMap(
+                    $transaction->currency_id,
+                    $transaction->date,
+                    $allRatesMap,
+                    $baseCurrency->id
+                );
 
-                $dataByCategory[$category] += $transaction->accountBalanceChange() * ($rate ? $rate->rate : 1);
+                $dataByCategory[$category] += $transaction->accountBalanceChange() * ($rate ?? 1);
             });
         }
 
@@ -347,14 +351,7 @@ class ReportApiController extends Controller
 
         // Get monthly average currency rate for all currencies
         $baseCurrency = $this->getBaseCurrency();
-
-        $allRates = $this->allCurrencyRatesByMonth()->sortByDesc('date_from');
-
-        // Pre-process the $allRates collection into a map
-        $allRatesMap = [];
-        foreach ($allRates as $rate) {
-            $allRatesMap[$rate->from_id][$rate->date_from->format('Y-m-d')] = $rate->rate;
-        }
+        $allRatesMap = $this->allCurrencyRatesByMonth();
 
         // Get all monthly summaries for the user
         // We don't need the model capabilities, so we can use the query builder directly
@@ -418,7 +415,7 @@ class ReportApiController extends Controller
 
             // Calculate the amount in the base currency, using the currency rate closest to the given date
             // If the accountEntity is missing (for generic budgets), use the base currency, too
-            if ($summary->currency_id !== $baseCurrency->id) {
+            if ($summary->currency_id !== $baseCurrency->id && array_key_exists($summary->currency_id, $allRatesMap)) {
                 // Get the dates for this currency sorted in descending order
                 $dates = array_keys($allRatesMap[$summary->currency_id]);
                 rsort($dates);

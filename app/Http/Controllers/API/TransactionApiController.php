@@ -324,7 +324,7 @@ class TransactionApiController extends Controller
             ])
             ->get();
 
-        $transactions = $standardTransactions->merge($investmentTransactions);
+        $transactions = $standardTransactions->concat($investmentTransactions);
 
         return response()->json(
             [

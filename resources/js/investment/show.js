@@ -142,13 +142,12 @@ window.table = $(selectorDataTable).DataTable({
         },
         {
             defaultContent: '',
-            title: __("Amount"),
+            title: __("Cash flow value"),
             render: function (_data, type, row) {
-                var operator = row.amount_operator;
-                if (!operator) {
+                if (isNaN(row.amount_multiplier)) {
                     return 0;
                 }
-                var result = (  operator === 'minus'
+                const result = (  row.amount_multiplier === -1
                               ? - row.price * row.quantity
                               : row.dividend + row.price * row.quantity )
                             - row.tax
@@ -254,32 +253,51 @@ document.getElementById('date_to').addEventListener("changeDate", function(event
 
 // Summary calculations
 window.calculateSummary = function() {
-    var min = datepickerFrom.getDate();
-    var max = datepickerTo.getDate();
+    const min = datepickerFrom.getDate();
+    const max = datepickerTo.getDate();
 
     if (typeof max === 'undefined' || typeof min === 'undefined') {
         return;
     }
 
-    var filtered = transactions.filter(function(transaction) {
+    const filtered = transactions.filter(function(transaction) {
         return (transaction.date.getTime() >= min.getTime() && transaction.date.getTime() <= max.getTime());
     });
 
-    window.summary.Buying.value = filtered.filter(trx => trx.transaction_type.name === 'Buy').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-    window.summary.Added.value = filtered.filter(trx => trx.transaction_type.name === 'Add').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Removed.value = filtered.filter(trx => trx.transaction_type.name === 'Remove').reduce((sum, trx) => sum + trx.quantity, 0);
-    window.summary.Selling.value = filtered.filter(trx => trx.transaction_type.name === 'Sell').reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
-    window.summary.Dividend.value = filtered.reduce((sum, trx) => sum + trx.dividend, 0);
-    window.summary.Commission.value = filtered.reduce((sum, trx) => sum + trx.commission, 0);
-    window.summary.Taxes.value = filtered.reduce((sum, trx) => sum + trx.tax, 0);
-    window.summary.Quantity.value = filtered.reduce((sum, trx) => sum + (trx.transaction_type.quantity_operator == 'minus' ? -1 : + 1) * trx.quantity, 0);
+    window.summary.Buying.value = filtered
+        .filter(trx => trx.transaction_type.name === 'Buy')
+        .reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
 
-    var lastPrice;
+    window.summary.Added.value = filtered
+        .filter(trx => trx.transaction_type.name === 'Add')
+        .reduce((sum, trx) => sum + trx.quantity, 0);
+
+    window.summary.Removed.value = filtered
+        .filter(trx => trx.transaction_type.name === 'Remove')
+        .reduce((sum, trx) => sum + trx.quantity, 0);
+
+    window.summary.Selling.value = filtered
+        .filter(trx => trx.transaction_type.name === 'Sell')
+        .reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+
+    window.summary.Dividend.value = filtered
+        .reduce((sum, trx) => sum + trx.dividend, 0);
+
+    window.summary.Commission.value = filtered
+        .reduce((sum, trx) => sum + trx.commission, 0);
+
+    window.summary.Taxes.value = filtered
+        .reduce((sum, trx) => sum + trx.tax, 0);
+
+    window.summary.Quantity.value = filtered
+        .reduce((sum, trx) => sum + trx.transaction_type.quantity_multiplier * trx.quantity, 0);
+
+    let lastPrice;
     if (prices.length > 0) {
         lastPrice = prices.slice(-1)[0].price;
-    } else if (filtered.filter(trx => !!trx.price).length > 0) {  //TODO: remove filter duplicate
+    } else if (filtered.filter(trx => !isNaN(trx.price)).length > 0) {
         lastPrice = filtered
-        .filter(trx => !!trx.price)  //TODO: do we have to account for price of 0
+        .filter(trx => !isNaN(trx.price))
         .sort(function (a, b) {
             if (a.date.getTime() < b.date.getTime()) {
                 return 1;

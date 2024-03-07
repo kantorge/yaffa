@@ -397,8 +397,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionType',
             'transactionSchedule',
         ])
-            ->where('config_type', 'investment')
-            ->where('schedule', true)
+            ->byType('investment')
+            ->byScheduleType('schedule')
             ->whereHas(
                 'transactionSchedule',
                 fn ($query) => $query->where('active', true)
@@ -411,7 +411,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Additionally, exclude items where the transactiontype is not associated with a quantity operator
             ->whereHas(
                 'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_operator')
+                fn ($query) => $query->whereNotNull('quantity_multiplier')
             )
             ->get();
 
@@ -421,10 +421,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'transactionType',
             'transactionSchedule',
         ])
-            ->where('config_type', 'investment')
-            ->where('schedule', false)
-            // Investment transactions should never be budget transactions
-            ->where('budget', false)
+            ->byType('investment')
+            ->byScheduleType('none')
             ->whereHasMorph(
                 'config',
                 TransactionDetailInvestment::class,
@@ -433,32 +431,25 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Additionally, exclude items where the transactiontype is not associated with a quantity operator
             ->whereHas(
                 'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_operator')
+                fn ($query) => $query->whereNotNull('quantity_multiplier')
             )
             ->get();
 
         // Get all instances of the schedules, added to a new transactions collection
         $scheduledTransactionInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
-        $allTransactionsInstances = $factTransactions->merge($scheduledTransactionInstances);
+
+        $allTransactionsInstances = $factTransactions->concat($scheduledTransactionInstances);
 
         // If no investment transactions are found at all, we can return an empty collection
         if ($allTransactionsInstances->isEmpty()) {
             return new Collection();
         }
 
-        // We need to get the first and last transaction dates for the later loop,
-        // but starting only after the last known fact date
-        $firstTransactionDate = Carbon::parse($allTransactionsInstances->min('date'));
-
-        // The first date to calculate the forecast is the next month after the last known fact date
-        // or the next month after now, if there are no fact transactions
+        // The first date to calculate the forecast is the next month after now
         $firstForecastDate = Carbon::now()->addMonth();
 
-        // We can't forecast until the last known date, or the user's end date
-        $lastForecastDate = max(
-            Carbon::parse($allTransactionsInstances->max('date')),
-            $this->user->end_date
-        );
+        // We need to forecast until the user's end date
+        $lastForecastDate = $this->user->end_date;
 
         $period = $firstForecastDate->startOfMonth()->monthsUntil($lastForecastDate);
 
@@ -467,18 +458,14 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
         foreach ($period as $month) {
             // Create a Carbon instance of the month
-            $carbonStartofMonth = Carbon::instance($month)->startOfMonth();
-            $carbonEndofMonth = $carbonStartofMonth->clone()->endOfMonth();
+            $carbonEndOfMonth = Carbon::instance($month)->endOfMonth();
 
             // This loop reproduces the functionality of the calculateInvestmentValueFact method,
             // and that of the getAssociatedInvestmentsAndQuantity method in the Account model,
             // using the already loaded transactions.
 
             // First, we need to get all the transactions up to the given month
-            $transactions = $allTransactionsInstances->whereBetween(
-                'date',
-                [$firstTransactionDate, $carbonEndofMonth]
-            );
+            $transactions = $allTransactionsInstances->where('date', '<=', $carbonEndOfMonth);
 
             // The quantity does not need to be calculated, if there are no new transactions
             if ($transactions->count() > $currentTransactionCount || $currentTransactionCount === 0) {
@@ -488,17 +475,16 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 // For all groups, let's calculate the cummulated quantity up to the end of the month
                 $quantities = $groupedTransactions->map(
                     fn ($group) => $group->sum(
-                        fn ($transaction) => $transaction->transactionType->quantity_operator === 'plus'
-                            ? $transaction->config->quantity
-                            : -$transaction->config->quantity
+                        fn ($transaction) => $transaction->config->quantity *
+                            $transaction->transactionType->quantity_multiplier
                     )
                 );
             }
 
-            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndofMonth) {
+            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth) {
                 // Get the latest known price up to this date
                 $latestPrice = Investment::find($investmentId)
-                    ->getLatestPrice('combined', $carbonEndofMonth);
+                    ->getLatestPrice('combined', $carbonEndOfMonth);
 
                 return $quantity * $latestPrice;
             })
@@ -507,7 +493,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Here we intentionally store zero values, as it's valid to have a zero value for a month
             // and we don't want to get stuck with a previous non-zero value
             $results->push([
-                'date' => $carbonStartofMonth,
+                'date' => $month->startOfMonth(),
                 'user_id' => $this->accountEntity->user_id,
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'investment_value',

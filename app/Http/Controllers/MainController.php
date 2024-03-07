@@ -95,7 +95,7 @@ class MainController extends Controller
 
         // Unify and merge two transaction types
         $transactions = $standardTransactions
-            ->merge($investmentTransactions)
+            ->concat($investmentTransactions)
         // Add custom and pre-calculated attributes
             ->map(function ($transaction) use ($account) {
                 if ($transaction->schedule) {
@@ -107,7 +107,8 @@ class MainController extends Controller
                 }
 
                 if ($transaction->isStandard()) {
-                    $transaction->transactionOperator = $transaction->transactionType->amount_operator ?? ($transaction->config->account_from_id === $this->currentAccount->id ? 'minus' : 'plus');
+                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier
+                        ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                     $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
                     $transaction->amount_from = $transaction->config->amount_from;
@@ -117,8 +118,7 @@ class MainController extends Controller
                 } elseif ($transaction->isInvestment()) {
                     $amount = $transaction->accountBalanceChange();
 
-                    $transaction->transactionOperator = $transaction->transactionType->amount_operator;
-                    $transaction->quantityOperator = $transaction->transactionType->quantity_operator;
+                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier;
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
                     $transaction->account_to_name = $transaction->config->investment->name;
                     $transaction->amount_from = ($amount < 0 ? -$amount : null);
@@ -150,13 +150,19 @@ class MainController extends Controller
         $subTotal = 0;
 
         $data = $transactions
-            ->filter(fn ($transaction) => $transaction->transactionGroup === 'history' || $transaction->transactionGroup === 'forecast')
+            ->filter(
+                fn ($transaction) =>
+                $transaction->transactionGroup === 'history'
+                || $transaction->transactionGroup === 'forecast'
+            )
             ->sortByDesc('transactionType')
-            ->sortBy('date')
-            // Add opening item to beginning of transaction list
+            ->sortBy(['date', 'transactionType.amount_multiplier'])
+            // Add the opening balance dummy item to the beginning of transaction list
             ->prepend($account->config->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
-                $subTotal += ($transaction->transactionOperator === 'plus' ? $transaction->amount_to : -$transaction->amount_from);
+                $subTotal += ($transaction->transactionOperator === 1
+                    ? $transaction->amount_to
+                    : -1 * $transaction->amount_from);
                 $transaction->running_total = $subTotal;
 
                 return $transaction;

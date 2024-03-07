@@ -7,7 +7,6 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
-use App\Models\TransactionType;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -73,7 +72,7 @@ class AccountApiController extends Controller
                 return $query->where(
                     'transaction_type_id',
                     '=',
-                    TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
+                    config('transaction_types')[$request->get('transaction_type')]['id']
                 );
             })
             // Search within account and transactions of the user
@@ -211,7 +210,7 @@ class AccountApiController extends Controller
                 ->where(
                     'transaction_type_id',
                     '=',
-                    TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
+                    config('transaction_types')[$request->get('transaction_type')]['id']
                 )
                 ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')
@@ -364,13 +363,13 @@ class AccountApiController extends Controller
                 $account['account_group_id'] = $account->config->accountGroup->id;
 
                 // Summarize the standard value and investment value for this account
-                $account['cash'] = $standardSummary->where('account_entity_id', $account->id)
+                $account['cash'] = ($standardSummary->where('account_entity_id', $account->id)
                     ->first()
-                    ->total_amount ?? 0;
+                    ->total_amount ?? 0) * 1;
 
-                $account['investments'] = $investmentSummary->where('account_entity_id', $account->id)
+                $account['investments'] = ($investmentSummary->where('account_entity_id', $account->id)
                     ->first()
-                    ->total_amount ?? 0;
+                    ->total_amount ?? 0) * 1;
 
                 $account['sum'] = $account['cash'] + $account['investments'];
 

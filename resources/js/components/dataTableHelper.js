@@ -302,6 +302,15 @@ export const transactionColumnDefinition = {
     category: {
         title: __('Category'),
         defaultContent: '',
+        /**
+         * @param _data
+         * @param _type
+         * @param {Object} row
+         * @property {Object} row.transaction_type
+         * @property {string} row.transaction_type.type
+         * @property {number} row.transaction_type.quantity_multiplier
+         * @property {number} row.transaction_type.amount_multiplier
+         */
         render: function (_data, _type, row) {
             // Standard transaction
             if (row.transaction_type.type === 'standard') {
@@ -320,10 +329,10 @@ export const transactionColumnDefinition = {
             }
             // Investment transaction
             if (row.transaction_type.type === 'investment') {
-                if (!row.transaction_type.quantity_operator) {
+                if (!isNaN(row.transaction_type.quantity_multiplier)) {
                     return row.transaction_type.name;
                 }
-                if (!row.transaction_type.amount_operator) {
+                if (!isNaN(row.transaction_type.amount_multiplier)) {
                     return row.transaction_type.name + " " + row.config.quantity;
                 }
 
@@ -340,14 +349,24 @@ export const transactionColumnDefinition = {
     amount: {
         title: __("Amount"),
         defaultContent: '',
+        /**
+         * @param _data
+         * @param type
+         * @param {Object} row
+         * @property {Object} row.transaction_type
+         * @property {string} row.transaction_type.type
+         * @property {number} row.transaction_type.quantity_multiplier
+         * @property {number} row.transaction_type.amount_multiplier
+         * @property {Object} row.transaction_currency
+         */
         render: function (_data, type, row) {
             if (type === 'display') {
                 let prefix = '';
                 if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                     }
 
@@ -360,7 +379,7 @@ export const transactionColumnDefinition = {
                 if (row.transaction_type.type === 'investment') {
                     let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
 
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
                         return prefix + helpers.toFormattedCurrency(
@@ -369,7 +388,7 @@ export const transactionColumnDefinition = {
                             row.transaction_currency
                         );
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
                         return prefix + helpers.toFormattedCurrency(
@@ -397,10 +416,10 @@ export const transactionColumnDefinition = {
             if (type === 'display') {
                 let prefix = '';
                 if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                     }
 
@@ -413,7 +432,7 @@ export const transactionColumnDefinition = {
                 if (row.transaction_type.type === 'investment') {
                     let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
 
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
                         return prefix + helpers.toFormattedCurrency(
@@ -422,7 +441,7 @@ export const transactionColumnDefinition = {
                             window.account.config.currency
                         );
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
                         return prefix + helpers.toFormattedCurrency(

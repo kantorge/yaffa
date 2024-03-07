@@ -32,7 +32,6 @@ return new class () extends Migration {
               t.id,
               tt.type,
               tt.name,
-              tds.account_from_id,
               CASE tt.type
                 WHEN 'standard' THEN
                   CASE tt.name
@@ -41,11 +40,10 @@ return new class () extends Migration {
                     ELSE null
                   END
                 WHEN 'investment' THEN 
-                  (  IFNULL(tdi.price, 0) * IFNULL(tdi.quantity, 0) 
+                   (IFNULL(tdi.price, 0) * IFNULL(tdi.quantity, 0)) * IF(tt.amount_operator = 'minus', -1, 1) 
                    + IFNULL(tdi.dividend, 0)
                    - IFNULL(tdi.tax, 0)
-                   - IFNULL(tdi.commission, 0)) 
-                   * IF(tt.amount_operator = 'minus', -1, 1)
+                   - IFNULL(tdi.commission, 0)                    
               END AS cashflow_value,
               CASE tt.type
                 WHEN 'standard' THEN
@@ -63,8 +61,8 @@ return new class () extends Migration {
             FROM transactions AS t 
             
             LEFT JOIN transaction_types AS tt ON t.transaction_type_id = tt.id
-            LEFT JOIN transaction_details_standard AS tds ON t.config_id = tds.id AND t.config_type = 'transaction_detail_standard' -- 'standard'
-            LEFT JOIN transaction_details_investment AS tdi ON t.config_id = tdi.id AND t.config_type = 'transaction_detail_investment' -- 'investment' 
+            LEFT JOIN transaction_details_standard AS tds ON t.config_id = tds.id AND t.config_type = 'standard'
+            LEFT JOIN transaction_details_investment AS tdi ON t.config_id = tdi.id AND t.config_type = 'investment' 
             )
             
             UPDATE transactions

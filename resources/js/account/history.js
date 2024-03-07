@@ -36,7 +36,7 @@ var dtColumnSettingPayee = {
                 return row.account_from_name;
             }
             if (row.transaction_type.name === 'transfer') {
-                if (row.transactionOperator === 'minus') {
+                if (row.transactionOperator === -1) {
                     return __('Transfer to :account', {account: row.account_to_name});
                 } else {
                     return __('Transfer from :account', {account: row.account_from_name});
@@ -89,7 +89,7 @@ $(selectorHistoryTable).DataTable({
             title: __('Withdrawal'),
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'minus') {
+                if (row.transactionOperator !== -1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
@@ -100,7 +100,7 @@ $(selectorHistoryTable).DataTable({
             title: __('Deposit'),
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'plus') {
+                if (row.transactionOperator !== 1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
@@ -184,7 +184,7 @@ $(selectorScheduleTable).DataTable({
             title: "Withdrawal",
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'minus') {
+                if (row.transactionOperator !== -1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
@@ -195,7 +195,7 @@ $(selectorScheduleTable).DataTable({
             title: "Deposit",
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'plus') {
+                if (row.transactionOperator !== 1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
