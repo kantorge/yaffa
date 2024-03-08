@@ -77,10 +77,8 @@ class ReportApiController extends Controller
                 ? -1 * $item->amount
                 : $item->amount;
 
-            if (!array_key_exists($period, $standardCompact)) {
-                $standardCompact[$period] = [];
-            }
-            if (!array_key_exists($currency_id, $standardCompact[$period])) {
+            if (!array_key_exists($period, $standardCompact)
+                || !array_key_exists($currency_id, $standardCompact[$period])) {
                 $standardCompact[$period][$currency_id] = 0;
             }
             $standardCompact[$period][$currency_id] += $amount;
@@ -140,10 +138,8 @@ class ReportApiController extends Controller
             $period = $transaction->date->format($periodFormat);
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
-            if (!array_key_exists($period, $budgetCompact)) {
-                $budgetCompact[$period] = [];
-            }
-            if (!array_key_exists($currency_id, $budgetCompact[$period])) {
+            if (!array_key_exists($period, $budgetCompact)
+                || !array_key_exists($currency_id, $budgetCompact[$period])) {
                 $budgetCompact[$period][$currency_id] = 0;
             }
 
