@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/kantorge/yaffa/compare/v1.1.1...v1.1.2) (2024-03-08)
+
+
+### Bug Fixes
+
+* currency rate cache ([d640cd6](https://github.com/kantorge/yaffa/commit/d640cd6e8d4f7023f51133ca9aa3c18451252222))
+
 ## [1.1.1](https://github.com/kantorge/yaffa/compare/v1.1.0...v1.1.1) (2024-03-07)
 
 
