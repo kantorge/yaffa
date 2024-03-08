@@ -12,12 +12,14 @@ use Illuminate\Support\Facades\DB;
 trait CurrencyTrait
 {
     /**
-     * Load a collection for all currencies, with an average rate by month
+     * Load an array for all currencies, with an average rate by month
+     * As this data is not expected to change often, it is cached for a day
      *
      * @return array
      */
     public function allCurrencyRatesByMonth(): array
     {
+        // If, for any reason, we cannot retrieve the base currency, we return an empty array
         $baseCurrency = $this->getBaseCurrency();
         if (!$baseCurrency) {
             return [];
@@ -33,29 +35,20 @@ trait CurrencyTrait
                     'from_id',
                     DB::raw('AVG(rate) AS rate')
                 )
-                // Rates are retrieved only towards the base currency
+                // Rates are retrieved only towards the base currency, which also defines the user
                 ->where('to_id', '=', $baseCurrency->id)
                 ->groupBy(
                     DB::raw('SUBDATE(`date`, (DAY(`date`)-1))'),
                     'from_id'
                 )
+                ->orderBy('from_id')
+                ->orderByDesc('month')
                 ->get();
 
-            $rates->transform(function ($rate) {
-                $rate->date_from = Carbon::parse($rate->month);
-
-                return $rate;
-            });
-
-            // Pre-process the $allRates collection into a map
+            // Pre-process the $rates collection into a map array
             $allRatesMap = [];
             foreach ($rates as $rate) {
-                $allRatesMap[$rate->from_id][$rate->date_from->format('Y-m-d')] = $rate->rate;
-            }
-
-            // Sort the map by date for each currency in reverse order
-            foreach ($allRatesMap as $currencyId => $rates) {
-                rsort($allRatesMap[$currencyId]);
+                $allRatesMap[$rate->from_id][$rate->month] = (float) $rate->rate;
             }
 
             return $allRatesMap;
@@ -99,7 +92,9 @@ trait CurrencyTrait
         }
 
         foreach ($allRatesMap[$currencyId] as $rateDate => $rate) {
-            if ($date->lte($rateDate)) {
+            $rateDateCarbon = Carbon::parse($rateDate);
+            // We return the first rate from the map that is less than or equal to the given date
+            if ($rateDateCarbon->lte($date)) {
                 return $rate;
             }
         }
