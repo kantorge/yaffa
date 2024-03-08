@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1](https://github.com/kantorge/yaffa/compare/v1.1.0...v1.1.1) (2024-03-07)
+
+
+### Bug Fixes
+
+* investment calculation for account monthly summary ([1f1f1c1](https://github.com/kantorge/yaffa/commit/1f1f1c12eee45e4a87478d270111b5441250ac9c))
+* show account view bugs ([ee5567c](https://github.com/kantorge/yaffa/commit/ee5567c2e4504718917386714cadb713aaf6926a))
+* transaction cache calculation in migration ([c098bd5](https://github.com/kantorge/yaffa/commit/c098bd5d12e33bf0189cd13da580e948acfcd619))
+
 ## [1.1.0](https://github.com/kantorge/yaffa/compare/v1.0.2...v1.1.0) (2024-03-03)
 
 
