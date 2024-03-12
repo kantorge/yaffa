@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/kantorge/yaffa/compare/v1.1.2...v1.2.0) (2024-03-12)
+
+
+### Features
+
+* account filter on the budget report ([b98b329](https://github.com/kantorge/yaffa/commit/b98b329360fe4a3f36a967cf0f508ff8b217508d))
+
 ## [1.1.2](https://github.com/kantorge/yaffa/compare/v1.1.1...v1.1.2) (2024-03-08)
 
 
