@@ -98,7 +98,6 @@
                             v-model.string="schedule.next_date"
                             :disabled="!allowCustomizationData"
                             mode="date"
-                            is-required
                             :popover="{ visibility: 'click' }"
                             :masks="{
                                 L: 'YYYY-MM-DD',
@@ -165,7 +164,6 @@
                             v-model.string="schedule.end_date"
                             :disabled="!allowCustomizationData"
                             mode="date"
-                            is-required
                             :popover="{ visibility: 'click' }"
                             :masks="{
                                 L: 'YYYY-MM-DD',
