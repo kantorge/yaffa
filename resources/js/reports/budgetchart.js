@@ -131,6 +131,26 @@ let reloadData = function () {
                 return item;
             });
 
+            // Add the missing months to the data
+            const minDate = data[0].date;
+            const maxDate = data[data.length - 1].date;
+            let currentDate = new Date(minDate);
+            while (currentDate < maxDate) {
+                if (!data.find(item => item.date.getTime() === currentDate.getTime())) {
+                    data.push({
+                        date: new Date(currentDate),
+                        period: currentDate.toISOString().slice(0, 7),
+                        actual: 0,
+                        budget: 0,
+                        movingAverage: 0,
+                    });
+                }
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+
+            // Sort the data by date
+            data.sort((a, b) => a.date - b.date);
+
             // Add moving average (assuming data is ordered)
             if (data.length > 0) {
                 data = computeMovingAverage(data, 12 * (window.byYears ? 5 : 1));
