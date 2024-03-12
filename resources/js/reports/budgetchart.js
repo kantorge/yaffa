@@ -279,7 +279,7 @@ window.table = $(tableSelector).DataTable({
 });
 
 dataTableHelpers.initializeSkipInstanceButton(tableSelector);
-dataTableHelpers.initializeDeleteButton(tableSelector);
+dataTableHelpers.initializeAjaxDeleteButton(tableSelector);
 
 // Initialize an object which checks if preset filters are populated.
 // This is used to trigger initial chart and table content.

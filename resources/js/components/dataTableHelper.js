@@ -177,18 +177,6 @@ export function toFormattedCurrency(type, input, locale, currency) {
     return helpers.toFormattedCurrency(input, locale, currency);
 }
 
-export function initializeDeleteButton(selector) {
-    $(selector).on("click", ".data-delete", function () {
-        if (!confirm(__('Are you sure to want to delete this item?'))) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('api.transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
-}
-
 export function initializeSkipInstanceButton(selector) {
     $(selector).on("click", ".data-skip", function () {
         let form = document.getElementById('form-skip');
