@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/kantorge/yaffa/compare/v1.2.0...v1.2.1) (2024-03-12)
+
+
+### Bug Fixes
+
+* build app.js ([782cc4b](https://github.com/kantorge/yaffa/commit/782cc4b613137b9bedec0b0cfd1dca8ef67a1381))
+
 ## [1.2.0](https://github.com/kantorge/yaffa/compare/v1.1.2...v1.2.0) (2024-03-12)
 
 
