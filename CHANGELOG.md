@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/kantorge/yaffa/compare/v1.2.1...v1.2.2) (2024-03-12)
+
+
+### Bug Fixes
+
+* non-required schedule dates ([8f35b1c](https://github.com/kantorge/yaffa/commit/8f35b1c58fb14f86991ff46097a227252b0fda1a))
+* table header on budget report ([48c3031](https://github.com/kantorge/yaffa/commit/48c3031229f7e08e4b73edc4e9c9791df506863c))
+
 ## [1.2.1](https://github.com/kantorge/yaffa/compare/v1.2.0...v1.2.1) (2024-03-12)
 
 
