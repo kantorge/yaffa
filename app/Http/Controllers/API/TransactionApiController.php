@@ -22,7 +22,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
@@ -54,10 +53,7 @@ class TransactionApiController extends Controller
         $transaction->reconciled = boolval($newState);
         $transaction->save();
 
-        return response()->json(
-            [],
-            Response::HTTP_OK
-        );
+        return response()->json([], Response::HTTP_OK);
     }
 
     public function getItem(Transaction $transaction): JsonResponse
@@ -84,13 +80,18 @@ class TransactionApiController extends Controller
          */
 
         // Return empty response if categories are required, but not set or empty
-        if ($request->has('category_required') && (!$request->has('categories') || !$request->input('categories'))) {
+        if ($request->has('category_required')
+            && (!$request->has('categories') || !$request->input('categories'))) {
             return response()->json([], Response::HTTP_OK);
         }
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
         $categories = $this->categoryService->getChildCategories($request);
+
+        // Get the account selection properties
+        $accountSelection = $request->get('accountSelection');
+        $accountEntity = $request->get('accountEntity');
 
         // Get all standard transactions
         $standardTransactions = Transaction::with([
@@ -103,19 +104,44 @@ class TransactionApiController extends Controller
             'transactionItems.category',
             'transactionItems.tags',
         ])
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $request->user()->id)
             ->byScheduleType($type)
             ->byType('standard')
             // Optionally add account filter
-            ->when($request->has('account'), function ($query) use ($request) {
+            ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
                 $query->whereHasMorph(
                     'config',
                     [TransactionDetailStandard::class],
-                    function (Builder $query) use ($request) {
-                        $query->where('account_from_id', $request->get('account'));
-                        $query->orWhere('account_to_id', $request->get('account'));
+                    function (Builder $query) use ($accountEntity) {
+                        $query->where('account_from_id', $accountEntity);
+                        $query->orWhere('account_to_id', $accountEntity);
                     }
                 );
+            })
+            // Optionally exclude transactions with a specified account
+            ->when($accountSelection === 'none', function ($query) {
+                return $query->where(function ($query) {
+
+                    return $query
+                        // Withdrawal with empty account_from_id
+                        ->where(function ($query) {
+                            $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_from_id')
+                                );
+                        })
+                        // Or deposit with empty account_to_id
+                        ->orWhere(function ($query) {
+                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_to_id')
+                                );
+                        });
+                });
             })
             // Optionally add category filter
             ->when($categories->count() > 0, function ($query) use ($categories) {
@@ -123,15 +149,7 @@ class TransactionApiController extends Controller
                     $query->whereIn('category_id', $categories->pluck('id'));
                 });
             })
-            ->get()
-            ->loadMorph(
-                'config.accountFrom',
-                [Account::class => ['config', 'config.currency'],]
-            )
-            ->loadMorph(
-                'config.accountTo',
-                [Account::class => ['config', 'config.currency'],]
-            );
+            ->get();
 
         // Return empty collection if categories are required
         if ($request->has('category_required')) {
@@ -141,8 +159,6 @@ class TransactionApiController extends Controller
             $investmentTransactions = Transaction::with([
                 'config',
                 'config.account',
-                'config.account.config',
-                'config.account.config.currency',
                 'config.investment',
                 'transactionType',
                 'transactionSchedule',
@@ -151,15 +167,16 @@ class TransactionApiController extends Controller
                 ->byScheduleType($type)
                 ->byType('investment')
                 // Optionally add account filter
-                ->when($request->has('account'), function ($query) use ($request) {
+                ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
                     $query->whereHasMorph(
                         'config',
                         [TransactionDetailInvestment::class],
-                        function (Builder $query) use ($request) {
-                            $query->where('account_id', $request->get('account'));
+                        function (Builder $query) use ($accountEntity) {
+                            $query->where('account_id', $accountEntity);
                         }
                     );
                 })
+                // Investment transactions always have an account, so the 'none' account selection is not relevant
                 ->get();
         }
 
@@ -197,7 +214,7 @@ class TransactionApiController extends Controller
             );
         }
 
-        $user = Auth::user();
+        $user = $request->user();
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
@@ -343,12 +360,12 @@ class TransactionApiController extends Controller
          */
         $validated = $request->validated();
 
-        $transaction = DB::transaction(function () use ($validated) {
+        $transaction = DB::transaction(function () use ($validated, $request) {
             // Create the configuration first
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
 
             $transaction = new Transaction($validated);
-            $transaction->user_id = Auth::user()->id;
+            $transaction->user_id = $request->user()->id;
             $transaction->config()->associate($transactionDetails);
             $transaction->push();
 

@@ -2,18 +2,21 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
-
-require('datatables.net-bs5');
 import * as dataTableHelpers from './../components/dataTableHelper'
+import * as helpers from "../helpers";
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
-import * as helpers from "../helpers";
+
+require('datatables.net-bs5');
+require('select2');
+
+const elementAccountSelector = '#accountList';
 
 const getAverage = (data, attribute) => data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
 
 const computeMovingAverage = (baseData, period) => {
-    var maxActualDate = null;
-    for (var i = baseData.length; i > 0; i--) {
+    let maxActualDate = null;
+    for (let i = baseData.length; i > 0; i--) {
         if (baseData[i - 1].actual) {
             maxActualDate = baseData[i - 1].date;
             break;
@@ -32,11 +35,11 @@ const computeMovingAverage = (baseData, period) => {
             return currentItem;
         }
 
-        var intervalStart = new Date(currentItem.date.getTime());
+        const intervalStart = new Date(currentItem.date.getTime());
         intervalStart.setMonth(intervalStart.getMonth() - period);
-        var intervalEnd = currentItem.date;
+        const intervalEnd = currentItem.date;
 
-        var previousPeriod = baseData.filter(function (item) {
+        const previousPeriod = baseData.filter(function (item) {
             return item.date >= intervalStart && item.date <= intervalEnd;
         });
 
@@ -60,18 +63,19 @@ chart.numberFormatter.numberFormat = {
     minimumFractionDigits: 0
 };
 
-var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+const dateAxis = chart.xAxes.push(new am4charts.DateAxis());
 dateAxis.dataFields.category = "period";
 
-var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+// This is not used later, so it is not assigned to a variable
+chart.yAxes.push(new am4charts.ValueAxis());
 
-var seriesActual = chart.series.push(new am4charts.ColumnSeries());
+const seriesActual = chart.series.push(new am4charts.ColumnSeries());
 seriesActual.dataFields.valueY = "actual";
 seriesActual.dataFields.dateX = "date";
 seriesActual.name = __("Actual");
 seriesActual.tooltipText = "[bold]" + __('Actual') + ":[/] {valueY}";
 
-var seriesBudget = chart.series.push(new am4charts.LineSeries());
+const seriesBudget = chart.series.push(new am4charts.LineSeries());
 seriesBudget.strokeWidth = 3;
 seriesBudget.strokeDasharray = "8,4";
 seriesBudget.dataFields.valueY = "budget";
@@ -79,14 +83,14 @@ seriesBudget.dataFields.dateX = "date";
 seriesBudget.name = __("Budget");
 seriesBudget.tooltipText = "[bold]" + __('Budget') + ":[/] {valueY}";
 
-var seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
+const seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
 seriesMovingAverage.strokeWidth = 3;
 seriesMovingAverage.dataFields.valueY = "movingAverage";
 seriesMovingAverage.dataFields.dateX = "date";
 seriesMovingAverage.name = __("Moving average");
 seriesMovingAverage.tooltipText = "[bold]" + __('Moving average') + ":[/] {valueY}";
 
-var scrollbarX = new am4charts.XYChartScrollbar();
+const scrollbarX = new am4charts.XYChartScrollbar();
 scrollbarX.series.push(seriesBudget);
 scrollbarX.series.push(seriesActual);
 scrollbarX.series.push(seriesMovingAverage);
@@ -100,7 +104,7 @@ const btnZoomIn = document.getElementById('btnZoomIn')
 if (btnZoomIn) {
     btnZoomIn.addEventListener('click', function () {
         // Zoom to current month +/- 13 months
-        var currentDate = new Date();
+        const currentDate = new Date();
         dateAxis.zoomToDates(
             new Date(currentDate.setMonth(currentDate.getMonth() - 13)),
             new Date(currentDate.setMonth(currentDate.getMonth() + 26))
@@ -115,7 +119,9 @@ let reloadData = function () {
         url: '/api/budgetchart',
         data: {
             categories: ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked') : []),
-            byYears: (byYears ? 1 : 0),
+            accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
+            accountEntity: $(elementAccountSelector).val(),
+            byYears: (window.byYears ? 1 : 0),
         }
     })
         .done(function (data) {
@@ -127,7 +133,7 @@ let reloadData = function () {
 
             // Add moving average (assuming data is ordered)
             if (data.length > 0) {
-                data = computeMovingAverage(data, 12 * (byYears ? 5 : 1));
+                data = computeMovingAverage(data, 12 * (window.byYears ? 5 : 1));
             }
             chart.data = data;
             chart.invalidateData();
@@ -136,30 +142,35 @@ let reloadData = function () {
             elementRefreshButton.disabled = false;
         });
 
-    window.table.ajax.reload();
-
-    // (Re-)Initialize tooltips in table
-    $('[data-toggle="tooltip"]').tooltip();
+    // We need to reload the table content, too
+    window.table.ajax.reload(function () {
+        // (Re-)Initialize tooltips in table, once data is reloaded
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 }
 
 // Attach event listener to refresh button
+// TODO: if the account selection is enabled, but no account is selected, the button should be disabled
 elementRefreshButton.addEventListener('click', reloadData);
 
 // Initially we need to prevent dataTables from calling AJAX, as JStree will not be initialized
 let initialTableLoad = true;
 const tableSelector = '#table';
 
-
 window.table = $(tableSelector).DataTable({
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',
         dataSrc: function (data) {
+            if (!data.transactions) {
+                return [];
+            }
             return data.transactions
                 .map(helpers.processTransaction)
                 .map(helpers.processScheduledTransaction);
         },
         data: function () {
+            // As the first load, we are intentionally not loading any data. It will be loaded once the tree is ready.
             if (initialTableLoad) {
                 initialTableLoad = false;
                 return {
@@ -171,6 +182,8 @@ window.table = $(tableSelector).DataTable({
             return Object.assign({}, {
                 categories: ($(treeSelector).jstree() ? $(treeSelector).jstree('get_checked') : []),
                 category_required: 1,
+                accountSelection: $('input[name=table_filter_account_scope]:checked').val(),
+                accountEntity: $(elementAccountSelector).val(),
             });
         },
     },
@@ -181,7 +194,7 @@ window.table = $(tableSelector).DataTable({
             title: __("Schedule"),
             render: function (data) {
                 // Return human readable format
-                // TODO: translation
+                // TODO: translate the RRule string
                 return data.toText();
             }
         },
@@ -193,7 +206,7 @@ window.table = $(tableSelector).DataTable({
             data: "transaction_type.type",
             title: __("Type"),
             render: function (data, type) {
-                if (type == 'filter') {
+                if (type === 'filter') {
                     return data;
                 }
                 return (data === 'standard'
@@ -253,9 +266,6 @@ window.table = $(tableSelector).DataTable({
             $(row).addClass('warning');
         }
     },
-    initComplete: function (_settings, _json) {
-        $('[data-toggle="tooltip"]').tooltip();
-    },
     order: [
         [0, "asc"]
     ],
@@ -274,27 +284,44 @@ dataTableHelpers.initializeDeleteButton(tableSelector);
 // Initialize an object which checks if preset filters are populated.
 // This is used to trigger initial chart and table content.
 let presetFilters = {
+    categories: {},
+    account: undefined,
     ready: function () {
-        for (let key in presetFilters) {
-            if (presetFilters[key] === false) {
+        for (let key in presetFilters.categories) {
+            if (presetFilters.categories[key] === false) {
                 return false;
             }
         }
+
+        if (presetFilters.account === false) {
+            return false;
+        }
+
         return true;
     }
 };
 
-// Loop filter categories and populate presetFilters array.
-window.presetCategories.forEach(category => presetFilters[category] = false);
+// Loop filter categories and populate presetFilters object.
+/** @property {Array} presetCategories Array of initially selected category IDs, set by the controller */
+window.presetCategories.forEach(category => presetFilters.categories[category] = false);
 
-// Disable refresh, if any filters are preset, as an initial load will be performed
-if (!presetFilters.ready()) {
-    elementRefreshButton.disabled = true;
+/** @property {number} presetAccount ID of initially selected account, set by the controller */
+if (window.presetAccount) {
+    presetFilters.account = false;
 }
 
 // Update URL params based on JS Tree selection
 let rebuildUrl = function () {
-    let params = $(treeSelector).jstree('get_checked').map((category) => 'categories[]=' + category);
+    let params = []
+
+    // Accounts
+    if ($(elementAccountSelector).val()) {
+        params.push('accountEntity=' + $(elementAccountSelector).val());
+    }
+
+    // Categories
+    params. push($(treeSelector).jstree('get_checked').map((category) => 'categories[]=' + category));
+
     window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
 
     // Finally, adjust reload button availability
@@ -309,9 +336,17 @@ $(treeSelector)
                 fetch('/api/assets/categories?withInactive=1')
                     .then(response => response.json())
                     .then(data => {
+                        /**
+                         * category represents an instance of a category model
+                         * @var {Object} category
+                         * @property {number} id
+                         * @property {number} parent_id - ID of the parent category, or null if it is a root category
+                         */
                         let categories = data.map(function (category) {
-                            var i = presetCategories.findIndex(cat => cat == category.id);
-                            presetCategories[i] = false;
+                            // Mark this preset item as ready, if it is preset
+                            if (presetFilters.categories[category.id] !== undefined) {
+                                presetFilters.categories[category.id] = true;
+                            }
 
                             return {
                                 id: category.id,
@@ -320,7 +355,7 @@ $(treeSelector)
                                 full_name: category.full_name,
                                 icon: (!category.parent ? 'fa fa-folder text-info' : (category.active ? 'fa fa-check text-success' : 'fa fa-remove text-danger')),
                                 state: {
-                                    selected: (i > -1)
+                                    selected: presetCategories.includes(category.id)
                                 }
                             }
                         });
@@ -341,9 +376,81 @@ $(treeSelector)
     .on('select_node.jstree', rebuildUrl)
     .on('deselect_node.jstree', rebuildUrl)
     .on('ready.jstree', function () {
-        elementRefreshButton.disabled = ($(treeSelector).jstree('get_checked').length === 0);
-        reloadData();
+        if (($(treeSelector).jstree('get_checked').length > 0)) {
+            if (presetFilters.ready()) {
+                reloadData();
+            }
+        } else {
+            elementRefreshButton.disabled = true;
+        }
     });
+
+// Account filter
+$(elementAccountSelector).select2({
+    theme: "bootstrap-5",
+    ajax: {
+        url: '/api/assets/account',
+        dataType: 'json',
+        delay: 150,
+        data: function (params) {
+            return {
+                q: params.term,
+                withInactive: true,
+            };
+        },
+        processResults: function (data) {
+            return {
+                results: data.map(function (account) {
+                    return {
+                        id: account.id,
+                        text: account.name,
+                    }
+                }),
+            };
+        },
+        cache: true
+    },
+    placeholder: __("Select account"),
+    allowClear: true
+})
+    .on('select2:select', rebuildUrl)
+    .on('select2:unselect', rebuildUrl);
+
+// Default account
+if (window.presetAccount) {
+    $.ajax({
+        url: '/api/assets/account/' + window.presetAccount,
+        data: {
+            _token: window.csrfToken,
+        }
+    })
+        .done(data => {
+            // Create the option and append to Select2
+            $(elementAccountSelector).append(new Option(data.name, data.id, true, true))
+                .trigger('change')
+                .trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: {
+                            id: data.id,
+                            name: data.name,
+                        }
+                    }
+                });
+
+            presetFilters.account = true;
+
+            // Initial data for the preset account, if other preset filters are ready
+            if (presetFilters.ready() && $(treeSelector).jstree('get_checked').length > 0) {
+                reloadData();
+            }
+        });
+} else {
+    // Initial data for the preset account, if other preset filters are ready
+    if (presetFilters.ready() && $(treeSelector).jstree('get_checked').length > 0) {
+        reloadData();
+    }
+}
 
 // Select all button function
 document.getElementById('all').addEventListener('click', function() {
@@ -356,3 +463,18 @@ document.getElementById('clear').addEventListener('click', function() {
     $(treeSelector).jstree('uncheck_all');
     rebuildUrl()
 });
+
+// Account type switch
+$('input[name=table_filter_account_scope]').on("change", function() {
+    // Only selected items are needed, so we need to enable the account selector
+    $(elementAccountSelector).prop('disabled', this.value !== 'selected');
+
+    // If the account selector is disabled, we need to clear the account filter
+    if (this.value !== 'selected') {
+        $(elementAccountSelector).val(null).trigger('change');
+        rebuildUrl();
+    }
+});
+
+// Set initial state of account selector
+$(elementAccountSelector).prop('disabled', $('input[name=table_filter_account_scope]:checked').val() !== 'selected');

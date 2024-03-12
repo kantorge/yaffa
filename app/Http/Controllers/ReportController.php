@@ -41,7 +41,7 @@ class ReportController extends Controller
         );
     }
 
-    public function budgetChart(Request $request)
+    public function budgetChart(Request $request): View
     {
         /**
          * @get('/reports/budgetchart')
@@ -51,9 +51,9 @@ class ReportController extends Controller
         // Get requested aggregation period
         $byYears = $request->get('byYears') ?? false;
 
-        // Pass currency related data for amCharts
         JavaScript::put([
-            'presetCategories' => $request->get('categories', []),
+            'presetCategories' => array_map('intval', $request->get('categories', [])),
+            'presetAccount' => ($request->get('accountEntity') ? intval($request->get('accountEntity')) : null),
             'byYears' => $byYears,
         ]);
 
