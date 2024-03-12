@@ -166,7 +166,9 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 
 let dtSchedule = $(selectorScheduleTable).DataTable({
     ajax: {
-        url: '/api/transactions/get_scheduled_items/schedule?account=' + account.id,
+        url: '/api/transactions/get_scheduled_items/schedule' +
+            '?accountEntity=' + window.account.id +
+            '&accountSelection=selected',
         type: 'GET',
         dataSrc: function (data) {
             return data.transactions

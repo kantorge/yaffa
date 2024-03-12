@@ -7,6 +7,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionType;
 use App\Services\CategoryService;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -51,21 +53,37 @@ class ReportApiController extends Controller
         // Ensure, that child categories are loaded for all parents
         $categories = $this->categoryService->getChildCategories($request);
 
+        // Get the account selection properties
+        $accountSelection = $request->get('accountSelection');
+        $accountEntity = $request->get('accountEntity');
+
         // Get monthly average currency rate for all currencies against base currency
         $baseCurrency = $this->getBaseCurrency();
         $allRatesMap = $this->allCurrencyRatesByMonth();
 
         // Get all standard transactions with related categories
-        $standardTransactions = TransactionItem::with([
-            'transaction',
-        ])
-            ->whereIn('category_id', $categories->pluck('id'))
-            ->whereHas('transaction', function ($query) use ($request) {
-                $query->whereUserId($request->user()->id)
-                    ->byScheduleType('none')
-                    ->byType('standard');
-            })
-            ->get();
+        if ($accountSelection === 'none') {
+            $standardTransactions = new Collection();
+        } else {
+            $standardTransactions = TransactionItem::with([
+                'transaction',
+            ])
+                ->whereIn('category_id', $categories->pluck('id'))
+                ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
+                    $query->whereUserId($request->user()->id)
+                        ->byScheduleType('none')
+                        ->byType('standard')
+                        ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
+                            return $query->whereHasMorph(
+                                'config',
+                                TransactionDetailStandard::class,
+                                fn ($query) => $query->where('account_from_id', $accountEntity)
+                                    ->orWhere('account_to_id', $accountEntity)
+                            );
+                        });
+                })
+                ->get();
+        }
 
         // Group standard transactions by selected period, and get all relevant details
         $standardCompact = [];
@@ -114,6 +132,36 @@ class ReportApiController extends Controller
             ->where('user_id', $request->user()->id)
             ->byType('standard')
             ->byScheduleType('budget')
+            ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
+                return $query->whereHasMorph(
+                    'config',
+                    TransactionDetailStandard::class,
+                    fn ($query) => $query->where('account_from_id', $accountEntity)
+                        ->orWhere('account_to_id', $accountEntity)
+                );
+            })
+            ->when($accountSelection === 'none', function ($query) {
+                return $query->where(function ($query) {
+                    // Withdrawal with empty account_from_id
+                    return $query->where(function ($query) {
+                        $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                            ->whereHasMorph(
+                                'config',
+                                TransactionDetailStandard::class,
+                                fn ($query) => $query->whereNull('account_from_id')
+                            );
+                    })
+                        // Or deposit with empty account_to_id
+                        ->orWhere(function ($query) {
+                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_to_id')
+                                );
+                        });
+                });
+            })
             ->get();
 
         // Unify currencies and calculate amounts only for given categories
