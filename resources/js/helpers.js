@@ -15,6 +15,9 @@ export function toFormattedCurrency(input, locale, currencySettings) {
     }
 
     // If input is not a number, return it as is
+    if (input === null || input === undefined) {
+        return '';
+    }
     if (isNaN(input)) {
         return input.toString();
     }
