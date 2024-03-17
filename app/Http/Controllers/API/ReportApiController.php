@@ -178,7 +178,7 @@ class ReportApiController extends Controller
             $budgetTransactions,
             'start',
             null,
-            (new Carbon())->addYears(50)
+            $request->user()->end_date
         );
 
         $budgetCompact = [];

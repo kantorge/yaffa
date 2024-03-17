@@ -16,6 +16,8 @@ Route::get('/assets/account', [AccountApiController::class, 'getList']);
 Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
 Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
 Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'getAccountBalance']);
+Route::put('/account/monthlySummary/{accountEntity}', [AccountApiController::class, 'updateMonthlySummary'])
+    ->name('api.account.updateMonthlySummary');
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class, 'updateActive'])
     ->name('api.accountentity.updateActive');

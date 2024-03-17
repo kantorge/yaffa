@@ -14,7 +14,7 @@ class ProcessTransactionUpdated implements ShouldQueue
     use InteractsWithQueue;
 
     public const string CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE = 'app:cache:account-monthly-summaries';
-    public const string CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM = '--accountEntityId';
+    public const string CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM = 'accountEntityId';
     protected TransactionService $transactionService;
 
     /**

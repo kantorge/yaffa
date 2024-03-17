@@ -16,10 +16,10 @@ class CalculateAccountMonthlySummaries extends Command
      *
      * @var string
      */
-    protected $signature = 'app:cache:account-monthly-summaries'
-        . '{--accountEntityId= : The ID of the account entity to process directly.}'
-        . '{--transactionType= : One of \'account_balance\', \'investment_value\'. All types get processed if not set.}'
-        . '{--dataType= : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.}';
+    protected $signature = 'app:cache:account-monthly-summaries '
+        . '{accountEntityId? : The ID of the account entity to process directly.} '
+        . '{transactionType? : One of \'account_balance\', \'investment_value\'. All types get processed if not set.} '
+        . '{dataType? : One of \'fact\', \'forecast\', \'budget\'. If not set, all types get processed.} ';
 
     /**
      * The console command description.
@@ -35,7 +35,7 @@ class CalculateAccountMonthlySummaries extends Command
     public function handle(): void
     {
         // Get the optional parameters
-        $accountEntityId = $this->option('accountEntityId');
+        $accountEntityId = $this->argument('accountEntityId');
 
         // The accountEntity must be a valid account entity ID, or null
         if ($accountEntityId !== null) {
@@ -135,7 +135,7 @@ class CalculateAccountMonthlySummaries extends Command
         $user = $accountEntity->user;
 
         // Transaction type and data type are only needed if accountEntity is set
-        $transactionType = $this->option('transactionType');
+        $transactionType = $this->argument('transactionType');
 
         // The transactionType must be 'account_balance' or 'investment_value' or null
         if ($transactionType !== null && !in_array($transactionType, ['account_balance', 'investment_value'])) {
@@ -143,7 +143,7 @@ class CalculateAccountMonthlySummaries extends Command
             return;
         }
 
-        $dataType = $this->option('dataType');
+        $dataType = $this->argument('dataType');
 
         // The dataType must be 'fact', 'forecast', 'budget' or null
         if ($dataType !== null && !in_array($dataType, ['fact', 'forecast', 'budget'])) {

@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -400,6 +401,48 @@ class AccountApiController extends Controller
                     'result' => 'success',
                     'accountBalanceData' => $accounts,
                     'account' => $accountEntity,
+                ],
+                Response::HTTP_OK
+            );
+    }
+
+    /**
+     * Trigger the related job to update the monthly summary for the given account entity.
+     *
+     * @throws AuthorizationException
+     */
+    public function updateMonthlySummary(AccountEntity $accountEntity): JsonResponse
+    {
+        /**
+         * @put('/api/account/monthlySummary/{accountEntity}')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        $this->authorize('update', $accountEntity);
+
+        // Check if the account entity is an account
+        if ($accountEntity->config_type !== 'account') {
+            return response()
+                ->json(
+                    [
+                        'result' => 'error',
+                        'message' => __('This account entity is not an account.'),
+                    ],
+                    Response::HTTP_BAD_REQUEST
+                );
+        }
+
+        // TODO: prevent the job from running if there is already a job running for this account entity
+
+        // Dispatch the job to update all types of monthly summaries using the related command
+        Artisan::call('app:cache:account-monthly-summaries', [
+            'accountEntityId' => $accountEntity->id,
+        ]);
+
+        return response()
+            ->json(
+                [
+                    'result' => 'success',
+                    'message' => __('The monthly summary for this account entity is being updated.'),
                 ],
                 Response::HTTP_OK
             );
