@@ -6,7 +6,6 @@ use App\Console\Commands\CalculateAccountMonthlySummaries;
 use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
 use App\Console\Commands\GetCurrencyRates;
 use App\Console\Commands\GetInvestmentPrices;
-use App\Console\Commands\ProcessIncomingEmails;
 use App\Console\Commands\RecordScheduledTransactions;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -18,14 +17,7 @@ class Kernel extends ConsoleKernel
      *
      * @var array
      */
-    protected $commands = [
-        CalculateAccountMonthlySummaries::class,
-        CalculateTransactionScheduleActiveFlags::class,
-        GetCurrencyRates::class,
-        GetInvestmentPrices::class,
-        ProcessIncomingEmails::class,
-        RecordScheduledTransactions::class,
-    ];
+    protected $commands = [];
 
     /**
      * Define the application's command schedule.

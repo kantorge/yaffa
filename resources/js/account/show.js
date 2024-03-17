@@ -631,6 +631,56 @@ let rebuildUrl = function () {
 document.getElementById('date_from').addEventListener('changeDate', rebuildUrl);
 document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
 
+// Add event listener for the cache update button
+document.getElementById('recalculateMonthlyCachedData').addEventListener('click', function () {
+    // Prevent running multiple times in parallel
+    if (this.classList.contains("busy")) {
+        return false;
+    }
+
+    this.classList.add('busy');
+    const button = this;
+
+    axios.put(window.route(
+        'api.account.updateMonthlySummary',
+        {accountEntity: window.account.id}
+    ))
+        .then(function (response) {
+            const data = response.data;
+            // Emit a custom event to global scope about the result
+            let notificationEvent = new CustomEvent('notification', {
+                detail: {
+                    notification: {
+                        type: data.result === 'success' ? 'success' : 'danger',
+                        message: data.message,
+                        title: null,
+                        icon: null,
+                        dismissible: true,
+                    }
+                },
+            });
+            window.dispatchEvent(notificationEvent);
+        })
+        .catch(function (error) {
+            // Emit a custom event to global scope about the result
+            let notificationEvent = new CustomEvent('notification', {
+                detail: {
+                    notification: {
+                        type: 'danger',
+                        message: error.message,
+                        title: null,
+                        icon: null,
+                        dismissible: true,
+                    }
+                },
+            });
+            window.dispatchEvent(notificationEvent);
+        })
+        .finally(function () {
+            button.classList.remove('busy');
+        });
+});
+
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
 
@@ -648,3 +698,8 @@ app.component('transaction-create-standard-modal', CreateStandardTransactionModa
 app.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
 
 app.mount('#app')
+
+// Initialize tooltips in table
+$(document).ready(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+});
