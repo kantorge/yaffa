@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/kantorge/yaffa/compare/v1.2.2...v1.3.0) (2024-03-17)
+
+
+### Features
+
+* option to manually trigger account summary calculation ([e5baf62](https://github.com/kantorge/yaffa/commit/e5baf62ee218c031c31375681c1beaa97d241a86))
+
+
+### Bug Fixes
+
+* budget calculation for specific schedule intervals ([8eaed0f](https://github.com/kantorge/yaffa/commit/8eaed0f6b7be86902da71067577e68cd11712a5f))
+* manually add commands to kernel ([eaa2690](https://github.com/kantorge/yaffa/commit/eaa2690ac319866d482f20ee5a027a0fedb3fdc9))
+* show investment view ([f3d8a93](https://github.com/kantorge/yaffa/commit/f3d8a935dd1ead75b28cc902d85b9ea2e82fda85))
+* transaction delete behavior on budget report ([b9cd90f](https://github.com/kantorge/yaffa/commit/b9cd90f5d99763e7566f52fbe8c7fbb07af944e0))
+
 ## [1.2.2](https://github.com/kantorge/yaffa/compare/v1.2.1...v1.2.2) (2024-03-12)
 
 
