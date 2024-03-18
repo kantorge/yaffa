@@ -173,6 +173,11 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         } else if (data.current_cash_flow < 0) {
             $('td', row).eq(4).addClass('text-danger');
         }
+
+        // Mute category cell with 'not set' value
+        if (data.categories.length === 0) {
+            $('td', row).eq(3).addClass('text-muted text-italic');
+        }
     },
     initComplete: function () {
         // Get the Datatable API instance
@@ -249,6 +254,18 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
             } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
                 $(row).addClass('table-warning');
             }
+        }
+
+        // Color coding for the amount column
+        if (data.current_cash_flow > 0) {
+            $('td', row).eq(3).addClass('text-success');
+        } else if (data.current_cash_flow < 0) {
+            $('td', row).eq(3).addClass('text-danger');
+        }
+
+        // Mute category cell with 'not set' value
+        if (data.categories.length === 0) {
+            $('td', row).eq(2).addClass('text-muted text-italic');
         }
     },
     initComplete: function () {
