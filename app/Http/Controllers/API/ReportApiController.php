@@ -347,7 +347,7 @@ class ReportApiController extends Controller
                     $baseCurrency->id
                 );
 
-                $dataByCategory[$category] += $transaction->accountBalanceChange() * ($rate ?? 1);
+                $dataByCategory[$category] += ($transaction->cashflow_value ?? 0) * ($rate ?? 1);
             });
         }
 

@@ -105,6 +105,7 @@ class Transaction extends Model
         'reconciled' => 'boolean',
         'schedule' => 'boolean',
         'budget' => 'boolean',
+        'cashflow_value' => 'float',
     ];
 
     protected $appends = [
@@ -197,29 +198,6 @@ class Transaction extends Model
             'investment' => $query->where('config_type', 'investment'),
             default => $query,
         };
-    }
-
-    /**
-     * Get a numeric value representing the net financial result of the current transaction.
-     * Reference account must be passed, as result for some transaction types (e.g. transfer) depend on related account.
-     *
-     * @param AccountEntity|null $account
-     * @return float|int
-     */
-    public function accountBalanceChange(AccountEntity|null $account = null): float|int
-    {
-        if ($this->isStandard()) {
-            $operator = $this->transactionType->amount_multiplier ??
-                ($this->config->account_from_id === $account->id ? -1 : 1);
-
-            return $operator === -1 ? -$this->config->amount_from : $this->config->amount_to;
-        }
-
-        if ($this->isInvestment()) {
-            return $this->cashflow_value ?? 0;
-        }
-
-        return 0;
     }
 
     // Generic function to load necessary relations, based on transaction type

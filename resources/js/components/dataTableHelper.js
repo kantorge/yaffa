@@ -397,53 +397,20 @@ export const transactionColumnDefinition = {
     },
 
     // Amount referring to the global account currency
-    amountCustom: {
+    amountCustom:  {
         title: __("Amount"),
+        data: 'current_cash_flow',
         defaultContent: '',
-        render: function (_data, type, row) {
+        render: function (data, type) {
             if (type === 'display') {
-                let prefix = '';
-                if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_multiplier === -1) {
-                        prefix = '- ';
-                    }
-                    if (row.transaction_type.amount_multiplier === 1) {
-                        prefix = '+ ';
-                    }
-
-                    return prefix + helpers.toFormattedCurrency(
-                        row.config.amount_to,
-                        window.YAFFA.locale,
-                        window.account.config.currency
-                    );
-                }
-                if (row.transaction_type.type === 'investment') {
-                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
-
-                    if (row.transaction_type.amount_multiplier === -1) {
-                        prefix = '- ';
-                        amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
-                            amount,
-                            window.YAFFA.locale,
-                            window.account.config.currency
-                        );
-                    }
-                    if (row.transaction_type.amount_multiplier === 1) {
-                        prefix = '+ ';
-                        amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
-                            amount,
-                            window.YAFFA.locale,
-                            window.account.config.currency
-                        );
-                    }
-                }
+                return helpers.toFormattedCurrency(
+                    data,
+                    window.YAFFA.locale,
+                    window.account.config.currency
+                );
             }
 
-            if (row.transaction_type.type === 'standard') {
-                return row.config.amount_to;
-            }
+            return data;
         },
         className: 'dt-nowrap',
         type: 'num',

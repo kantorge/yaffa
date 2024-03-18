@@ -47,6 +47,32 @@ const dateRangePicker = new DateRangePicker(
     }
 );
 
+/**
+ * Helper function to get adjusted cash flow in the context of the current account
+ * @param transaction
+ * @property {string} transaction.config_type
+ * @property {number} transaction.cashflow_value
+ * @return {*}
+ */
+const processTransaction = function (transaction) {
+    if (transaction.config_type === 'standard') {
+        // If the cashflow value is a number, use it
+        if (typeof transaction.cashflow_value === 'number') {
+            transaction.current_cash_flow = transaction.cashflow_value;
+        } else {
+            // Otherwise this is a transfer, and we need to decide based on the input account
+            if (transaction.config.account_from_id === window.account.id) {
+                transaction.current_cash_flow = -transaction.config.amount_from;
+            } else {
+                transaction.current_cash_flow = transaction.config.amount_to;
+            }
+        }
+    } else if (transaction.config_type === 'investment') {
+        transaction.current_cash_flow = transaction.cashflow_value ?? 0;
+    }
+    return transaction;
+};
+
 let initialLoad = true;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
@@ -81,7 +107,8 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             .then((response) => response.json())
             .then((data) => {
                 let result = data.data
-                    .map(helpers.processTransaction);
+                    .map(helpers.processTransaction)
+                    .map(processTransaction);
 
                 callback({data: result});
             });
@@ -132,16 +159,19 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         }
     ],
     /**
-     * Callback for every row created: mute scheduled transactions
+     * Callback for every row created: row and column specific formatting.
      *
      * @param {Node} row
      * @param {Object} data
-     * @property {boolean} data.schedule
+     * @property {Number} data.current_cash_flow
      * @returns {void}
      */
     createdRow: function (row, data) {
-        if (data.schedule) {
-            $(row).addClass('text-muted text-italic');
+        // Color coding for the amount column
+        if (data.current_cash_flow > 0) {
+            $('td', row).eq(4).addClass('text-success');
+        } else if (data.current_cash_flow < 0) {
+            $('td', row).eq(4).addClass('text-danger');
         }
     },
     initComplete: function () {
@@ -173,6 +203,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         dataSrc: function (data) {
             return data.transactions
                 .map(helpers.processTransaction)
+                .map(processTransaction)
                 .filter(transaction => transaction.transaction_schedule.next_date);
         },
         deferRender: true
@@ -212,19 +243,17 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
      */
     createdRow: function (row, data) {
         // This data is required, but just to be on the safe side, let's validate it
-        if (!data.transaction_schedule.next_date) {
-            return;
-        }
-
-        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
-            $(row).addClass('table-danger');
-        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
-            $(row).addClass('table-warning');
+        if (data.transaction_schedule.next_date) {
+            if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+                $(row).addClass('table-danger');
+            } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+                $(row).addClass('table-warning');
+            }
         }
     },
     initComplete: function () {
         // Get the Datatable API instance
-        var api = this.api();
+        const api = this.api();
         setTimeout(function () {
             api.columns.adjust().draw();
         }, 2000);
@@ -260,7 +289,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         .then(function (response) {
             // Find and update original row in schedule table
             let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
-                return data.id == id;
+                return data.id === id;
             });
 
             let data = row.data();
@@ -303,6 +332,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
 
             // The redraw will also remove the busy class
             // TODO: is this reliable, or should there be an other flag, which needs to be reset manually?
+            // TODO: we need to redraw the row background color
         });
 });
 
