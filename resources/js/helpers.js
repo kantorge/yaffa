@@ -138,12 +138,36 @@ export function processScheduledTransaction(transaction) {
  * @property {string} replace.value The value to replace the key with.
  * @returns {string}
  */
-export function __(key, replace){
+export function __(key, replace = {}){
     let translation = window.YAFFA.translations[key] || key;
 
-    for (const [key, value] of Object.entries(replace || {})) {
-        translation = translation.replace(':' + key, value);
+    // If the replace object is empty, return the translation as is
+    if (Object.keys(replace).length === 0) {
+        return translation;
+    }
+
+    for (const [key, value] of Object.entries(replace)) {
+        translation = translation.replace(':' + key, String(value));
     }
 
     return translation;
+}
+
+/**
+ * Function to generate an anchor element with a link to a transaction.
+ *
+ * @param {number} id The transaction ID.
+ * @param {string} text The text to display in the link.
+ * @returns {string}
+ */
+export function transactionLink(id, text) {
+    const url = window.route(
+        'transaction.open',
+        {
+            action: 'show',
+            transaction: id,
+        }
+    );
+
+    return `<a href="${url}">${text}</a>`;
 }

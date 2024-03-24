@@ -7,17 +7,19 @@ import {
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
+import { __ } from '../helpers';
+
 const dataTableSelector = '#table';
 
 // Loop categories and prepare data for datatable
 window.categories = window.categories.map(function(category) {
     // Parse first date if it exists
     if (category.transactions_min_date) {
-        category.transactions_min_date = new Date(Date.parse(category.transactions_min_date));
+        category.transactions_min_date = new Date(category.transactions_min_date);
     }
     // Parse last date if it exists
     if (category.transactions_max_date) {
-        category.transactions_max_date = new Date(Date.parse(category.transactions_max_date));
+        category.transactions_max_date = new Date(category.transactions_max_date);
     }
 
     return category;
@@ -184,18 +186,24 @@ window.table = $(dataTableSelector).DataTable({
                 success: function (data) {
                     // Update row in table data souerce
                     categories.filter(category => category.id === data.id)[0].active = data.active;
+
+                    // Emit a custom event to global scope about the change
+                    let notificationEvent = new CustomEvent('toast', {
+                        detail: {
+                            header: __('Success'),
+                            body: __('Category active state changed'),
+                            toastClass: "bg-success",
+                        },
+                    });
+                    window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
                     // Emit a custom event to global scope about the problem
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: () => __('Error while changing category active state'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
+                            header: __('Error'),
+                            body: __('Error while changing category active state.'),
+                            toastClass: "bg-danger",
                         },
                     });
                     window.dispatchEvent(notificationEvent);
@@ -234,30 +242,22 @@ window.table = $(dataTableSelector).DataTable({
                     window.categories = window.categories.filter(category => category.id !== data.category.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Category deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Success'),
+                            body: __('Category deleted'),
+                            toastClass: 'bg-success',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete category:') + ' ' + data.responseJSON.error,
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete category: ') + data.responseJSON.error,
+                            toastClass: 'bg-danger',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },

@@ -461,16 +461,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Transaction deleted (#' + id + ')',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 
@@ -481,16 +477,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
             })
             .catch(function (error) {
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'danger',
-                            message: 'Error deleting transaction (#' + id + '): ' + error,
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Error'),
+                        body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
+                        toastClass: "bg-danger"
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 

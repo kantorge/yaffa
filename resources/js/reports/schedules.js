@@ -129,6 +129,4 @@ $('input[name=budget]').on("change", function() {
     table.column(4).search(this.value).draw();
 });
 
-$('input[name=active]').on("change", function() {
-    table.column(5).search(this.value).draw();
-});
+dataTableHelpers.initializeFilterButtonsActive(table, 5);

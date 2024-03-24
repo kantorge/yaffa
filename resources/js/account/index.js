@@ -1,3 +1,5 @@
+import * as helpers from "../helpers";
+
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
@@ -119,7 +121,7 @@ window.table = $(dataTableSelector).DataTable({
     responsive: true,
     initComplete : function(settings) {
         $(settings.nTable).on("click", "td.activeIcon > i", function() {
-            var row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
+            let row = $(settings.nTable).DataTable().row( $(this).parents('tr') );
 
             // Do not request change if previous request is still in progress
             if ($(this).hasClass("fa-spinner")) {
@@ -144,16 +146,13 @@ window.table = $(dataTableSelector).DataTable({
                 },
                 error: function (_data) {
                     // Emit a custom event to global scope about the problem
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: 'Error while changing account active state',
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            headerSmall: helpers.transactionLink(row.data().id, __('Go to transaction')),
+                            body: __('Error while changing account active state.'),
+                            toastClass: "bg-danger",
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
@@ -191,30 +190,22 @@ window.table = $(dataTableSelector).DataTable({
                     window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Account deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Success'),
+                            body: __('Account deleted'),
+                            toastClass: "bg-success",
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete account'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete account'),
+                            toastClass: "bg-danger",
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 }

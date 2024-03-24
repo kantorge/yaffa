@@ -1,3 +1,5 @@
+import {transactionLink} from "../helpers";
+
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
@@ -298,7 +300,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         return false;
     }
 
-    let id = this.dataset.id;
+    let id = Number(this.dataset.id);
 
     $(this).addClass('busy');
 
@@ -306,7 +308,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         .then(function (response) {
             // Find and update original row in schedule table
             let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
-                return data.id === id;
+                return Number(data.id) === id;
             });
 
             let data = row.data();
@@ -317,39 +319,31 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
                 row.data(data).draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Schedule instance skipped (#' + id + ')',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                        body: __('Schedule instance skipped.'),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
             } else {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Schedule instance skipped. (#' + id + '). This schedule has ended.',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                        body: __('Schedule instance skipped. This schedule has ended.'),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
             }
 
             // The redraw will also remove the busy class
-            // TODO: is this reliable, or should there be an other flag, which needs to be reset manually?
-            // TODO: we need to redraw the row background color
         });
 });
 
@@ -695,31 +689,23 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
         .then(function (response) {
             const data = response.data;
             // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: data.result === 'success' ? 'success' : 'danger',
-                        message: data.message,
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                    header: data.result === 'success' ? __('Success') : __('Error'),
+                    body: data.message,
+                    toastClass: data.result === 'success' ? 'bg-success' : 'bg-danger',
+                }
             });
             window.dispatchEvent(notificationEvent);
         })
         .catch(function (error) {
             // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: 'danger',
-                        message: error.message,
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                    header: __('Error'),
+                    body: error.message,
+                    toastClass: 'bg-danger'
+                }
             });
             window.dispatchEvent(notificationEvent);
         })
