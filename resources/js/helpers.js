@@ -147,3 +147,22 @@ export function __(key, replace){
 
     return translation;
 }
+
+/**
+ * Function to generate an anchor element with a link to a transaction.
+ *
+ * @param {number} id The transaction ID.
+ * @param {string} text The text to display in the link.
+ * @returns {string}
+ */
+export function transactionLink(id, text) {
+    const url = window.route(
+        'transaction.open',
+        {
+            action: 'show',
+            transaction: id,
+        }
+    );
+
+    return `<a href="${url}">${text}</a>`;
+}

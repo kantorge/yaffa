@@ -629,7 +629,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertInputValue('#transaction_amount_from', '10')
                 ->assertInputValue('#transaction_amount_to', '20')
                 // The exchange rate should also be visible
-                ->assertSeeIn('@label-transaction-exchange-rate', '2.0000');
+                ->waitForTextIn('@label-transaction-exchange-rate', '2.0000', 10);
         });
     }
 

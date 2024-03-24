@@ -44,7 +44,7 @@
                                         {{ __('Withdraw') }}
                                     </button>
                                     <button
-                                            class="btn btn-outline-primary"
+                                            class="btn"
                                             :class="transactionTypeBaseClass('deposit')"
                                             :disabled="!isBaseSettingsEditsAllowed"
                                             dusk="transaction-type-deposit"
@@ -56,7 +56,7 @@
                                         {{ __('Deposit') }}
                                     </button>
                                     <button
-                                            class="btn btn-outline-primary"
+                                            class="btn"
                                             :class="transactionTypeBaseClass('transfer')"
                                             :disabled="form.budget || !isBaseSettingsEditsAllowed"
                                             dusk="transaction-type-transfer"
