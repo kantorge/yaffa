@@ -7,17 +7,19 @@ import {
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
+import { __ } from '../helpers';
+
 const dataTableSelector = '#table';
 
 // Loop categories and prepare data for datatable
 window.categories = window.categories.map(function(category) {
     // Parse first date if it exists
     if (category.transactions_min_date) {
-        category.transactions_min_date = new Date(Date.parse(category.transactions_min_date));
+        category.transactions_min_date = new Date(category.transactions_min_date);
     }
     // Parse last date if it exists
     if (category.transactions_max_date) {
-        category.transactions_max_date = new Date(Date.parse(category.transactions_max_date));
+        category.transactions_max_date = new Date(category.transactions_max_date);
     }
 
     return category;
