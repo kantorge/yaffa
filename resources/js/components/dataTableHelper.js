@@ -63,18 +63,6 @@ export function dataTablesActionButton(id, action) {
         skip: function () {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
         },
-        skip_reload: function () {
-            return `
-                <button 
-                    class="btn btn-xs btn-warning data-skip"
-                    data-skip
-                    data-id="${id}"
-                    type="button"
-                    title="${__('Skip current schedule')}"
-                >
-                    <i class="fa fa-fw fa-forward"></i>
-                </button> `;
-        },
         enter: function () {
             return `
                 <a 
@@ -124,9 +112,15 @@ export function initializeDeleteButtonListener(tableSelector, route) {
     });
 }
 
-export function initializeFilterButtonsActive(table, column) {
-    $('input[name=active]').on("change", function () {
+export function initializeFilterToggle(table, column, name) {
+    $('input[name=' + name + ']').on("change", function () {
         table.column(column).search(this.value).draw();
+    });
+}
+
+export function initializeStandardExternalSearch(table, searchSelector = '#table_filter_search_text') {
+    $(searchSelector).on('input', function () {
+        table.search(this.value).draw();
     });
 }
 
