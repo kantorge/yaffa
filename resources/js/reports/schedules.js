@@ -111,7 +111,6 @@ window.table = $(tableSelector).DataTable({
     deferRender:    true,
     scrollY:        '500px',
     scrollCollapse: true,
-    scroller:       true,
     stateSave:      false,
     processing:     true,
     paging:         false,

@@ -54,7 +54,6 @@ $(dataTableSelector).DataTable({
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: true,
     processing: true,
     paging: false,
