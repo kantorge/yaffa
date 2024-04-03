@@ -9,8 +9,10 @@ use App\Models\Currency;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
+use App\Models\TransactionSchedule;
 use App\Models\TransactionType;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -49,6 +51,7 @@ class TransactionScheduleTest extends TestCase
             ->for(Payee::factory()->withUser($user), 'config')
             ->create();
 
+        /** @var Transaction $transaction */
         $transaction = Transaction::factory()
             ->for($user)
             ->for(
@@ -93,5 +96,56 @@ class TransactionScheduleTest extends TestCase
 
         // Assert that the active flag is set to false
         $this->assertFalse($transaction->transactionSchedule->active);
+    }
+
+    public function testIsActiveReturnsTrueWhenNextDateIsSet()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'next_date' => Carbon::now()->addDay(),
+        ]);
+
+        $this->assertTrue($schedule->isActive());
+    }
+
+    public function testIsActiveReturnsFalseWhenNextDateIsNotSetAndNoFutureRecurrences()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'next_date' => null,
+            'start_date' => Carbon::now()->subDays(10),
+            'end_date' => Carbon::now()->subDay(),
+            'frequency' => 'DAILY',
+        ]);
+
+        $this->assertFalse($schedule->isActive());
+    }
+
+    public function testIsActiveReturnsTrueWhenNextDateIsNotSetButHasFutureRecurrences()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'next_date' => null,
+            'start_date' => Carbon::now()->subDays(10),
+            'end_date' => Carbon::now()->addDays(10),
+            'count' => null,
+            'interval' => 1,
+            'frequency' => 'DAILY',
+        ]);
+
+        $this->assertTrue($schedule->isActive());
+    }
+
+    public function testIsActiveReturnsFalseWhenRecurrenceThrowsException()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'next_date' => null,
+            'start_date' => Carbon::now()->subDays(10),
+            'end_date' => Carbon::now()->addDay(),
+            'frequency' => 'INVALID_FREQUENCY',
+        ]);
+
+        $this->assertFalse($schedule->isActive());
     }
 }

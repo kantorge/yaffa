@@ -238,22 +238,7 @@ window.table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,
-        {
-            data: 'comment',
-            title: __("Comment"),
-            render: function (data, type) {
-                return dataTableHelpers.commentIcon(data, type);
-            },
-            className: "text-center",
-        },
-        {
-            data: "tags",
-            title: __("Tags"),
-            render: function (data, type) {
-                return dataTableHelpers.tagIcon(data, type);
-            },
-            className: "text-center",
-        },
+        dataTableHelpers.transactionColumnDefinition.extra,
         {
             data: 'id',
             title: __("Actions"),

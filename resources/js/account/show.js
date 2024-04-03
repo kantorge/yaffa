@@ -177,7 +177,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         }
 
         // Mute category cell with 'not set' value
-        if (data.categories.length === 0) {
+        if (data.config_type === 'standard' && data.categories.length === 0) {
             $('td', row).eq(3).addClass('text-muted text-italic');
         }
     },

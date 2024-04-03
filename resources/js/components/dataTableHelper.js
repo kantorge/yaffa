@@ -198,15 +198,15 @@ export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-minus text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
             customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-plus text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
             customTitle = customTitle || __("Transfer");
-            return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-exchange-alt text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'investment') {
         customTitle = customTitle || name;
@@ -437,7 +437,33 @@ export const transactionColumnDefinition = {
                 return data.map(tag => tag.name).join(', ');
             }
         }
-    }
+    },
+
+    // Combined icons for comment and tags
+    extra: {
+        title: __("Extra"),
+        defaultContent: '',
+        render: function (_data, type, row) {
+            return commentIcon(row.comment, type) + tagIcon(row.tags, type);
+        },
+        className: "text-center",
+        orderable: false,
+    },
+
+    // Icon for the main transaction type (standard or investment)
+    type: {
+        title: __('Type'),
+        defaultContent: '',
+        render: function(_data, type, row) {
+            if (type === 'filter') {
+                // TODO: this should be translated
+                return row.transaction_type.type;
+            }
+
+            return transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
+        },
+        className: "text-center",
+    },
 }
 
 export function initializeAjaxDeleteButton(selector, successCallback) {

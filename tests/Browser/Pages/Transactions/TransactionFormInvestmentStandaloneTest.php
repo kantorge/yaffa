@@ -433,8 +433,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->click('#date')
                 // Wait for the date picker to open
                 ->waitFor('.vc-pane-container', 10)
-                // Click the first day of the month
-                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
+                // Click the first day of the previous month, which is in the first column
+                // (This is to avoid clicking the current day on the 1st of the month, which would remove the date)
+                ->click('.vc-pane-container .vc-pane.column-1 .vc-day.in-month')
                 // Wait for the date picker to close
                 ->waitUntilMissing('.vc-pane-container', 10)
                 // Select callback to show the transaction
@@ -445,8 +446,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             // Get the last transaction from the database
             $transaction = Transaction::orderBy('id', 'desc')->first();
 
+            // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->startOfMonth()->format('Y-m-d'),
+                now()->subMonth()->startOfMonth()->format('Y-m-d'),
                 $transaction->date->format('Y-m-d')
             );
         });

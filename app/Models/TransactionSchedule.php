@@ -166,19 +166,7 @@ class TransactionSchedule extends Model
             return false;
         }
 
-        if ($recurrence->count() === 0) {
-            return false;
-        }
-
-        $now = Carbon::now();
-
-        foreach ($recurrence as $occurrence) {
-            if ($occurrence->getStart() > $now) {
-                return true;
-            }
-        }
-
-        return false;
+        return $recurrence->count() > 0;
     }
 
     /**
