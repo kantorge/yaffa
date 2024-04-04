@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/kantorge/yaffa/compare/v1.4.0...v1.5.0) (2024-04-04)
+
+
+### Features
+
+* command to recalculate transaction cached data ([d3d2c42](https://github.com/kantorge/yaffa/commit/d3d2c42112f1c6ce568db8cecc77c704a989d8a0))
+
+
+### Bug Fixes
+
+* onboarding tour button trigger ([c7ec108](https://github.com/kantorge/yaffa/commit/c7ec10837021759ec0ecb4cd39e0d23c4b4ae0b7))
+
 ## [1.4.0](https://github.com/kantorge/yaffa/compare/v1.3.0...v1.4.0) (2024-04-04)
 
 
