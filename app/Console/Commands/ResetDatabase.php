@@ -85,10 +85,15 @@ class ResetDatabase extends Command
             ]);
         $this->info("Transaction schedules updated: {$affected}");
 
-        // Finally, run automated data retrieval commands to populate the database with current data.
+        // Next, run automated data retrieval commands to populate the database with current data.
         $this->info('Retrieving investment data...');
         Artisan::call('app:investment-prices:get');
 
+        // Next, run the commands to recalculate various stored data
+        Artisan::call('app:cache:transaction-schedule-active-flags');
+        Artisan::call('app:cache:account-monthly-summaries');
+
+        // Finally, put the site live
         $this->info('Database refresh ready, putting site live...');
         Artisan::call('up');
 
