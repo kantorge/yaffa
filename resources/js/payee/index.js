@@ -1,5 +1,5 @@
-require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
+import 'datatables.net-bs5';
+import 'datatables.net-responsive-bs5';
 
 import {
     booleanToTableIcon,
@@ -157,7 +157,6 @@ window.table = $(dataTableSelector).DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,
@@ -224,30 +223,22 @@ window.table = $(dataTableSelector).DataTable({
                     window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Payee deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Success'),
+                            body: __('Payee deleted'),
+                            toastClass: 'bg-success',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete payee'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete payee'),
+                            toastClass: 'bg-danger',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },

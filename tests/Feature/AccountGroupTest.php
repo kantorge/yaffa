@@ -174,8 +174,10 @@ class AccountGroupTest extends TestCase
             );
 
         $response->assertRedirect($this->base_route);
-        //TODO: make this dynamic instead of fixed 1st element
-        $response->assertSessionHas('notification_collection.0.type', 'success');
+        $notifications = session('notification_collection');
+        $successNotificationExists = collect($notifications)
+            ->contains(fn ($notification) => $notification['type'] === 'success');
+        $this->assertTrue($successNotificationExists);
     }
 
     /** @test */

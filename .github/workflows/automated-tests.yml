@@ -7,6 +7,22 @@ on:
       - main
       - other/sandbox
 
+    # Only run tests if relevant file types (php, js, css, etc) are changed
+    paths:
+      - '**.php'
+      - '**.js'
+      - '**.css'
+      - '**.vue'
+      - '**.scss'
+      - '**.env.ci'
+      - '**.env.dusk.ci'
+      - '**.json'
+      - '**.lock'
+      - '**.xml'
+      - '**.yml'
+      - '**.gitignore'
+      - '**.gitattributes'
+
 jobs:
   phpunit:
     runs-on: ubuntu-latest
@@ -28,7 +44,7 @@ jobs:
       - name: Setup PHP Action
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'
           extensions: mbstring, dom, fileinfo, mysql
           coverage: xdebug
         env:
@@ -64,7 +80,7 @@ jobs:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
       - name: Run Testsuite
-        run: vendor/bin/phpunit --colors=never --verbose --coverage-clover=coverage.xml --testsuite AllNonDusk
+        run: vendor/bin/phpunit --colors=never --coverage-clover=coverage.xml --testsuite AllNonDusk
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
@@ -79,6 +95,12 @@ jobs:
       DB_PASSWORD: root
       MAIL_MAILER: log
     steps:
+      - name: Setup PHP Action
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, fileinfo, mysql
+
       - uses: actions/checkout@v4
 
       - name: Prepare The Environment

@@ -13,7 +13,7 @@ class CurrencyRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
@@ -36,11 +36,6 @@ class CurrencyRequest extends FormRequest
                         ->when($this->currency, fn ($query) => $query->where('id', '!=', $this->currency->id));
                 }),
             ],
-            'num_digits' => [
-                'required',
-                'numeric',
-                'between:0,4',
-            ],
             'auto_update' => [
                 'boolean',
             ],
@@ -50,7 +45,7 @@ class CurrencyRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         // Ensure that checkbox values are available
         $this->merge([

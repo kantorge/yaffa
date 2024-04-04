@@ -9,7 +9,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <dl class="row">
+                        <dl class="row mb-0">
                             <dt class="col-6">
                                 {{ __('Type') }}
                             </dt>
@@ -106,7 +106,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <dl class="row">
+                        <dl class="row mb-0">
                             <dt class="col-6">
                                 {{ ammountFromFieldLabel }}
                             </dt>
@@ -266,7 +266,13 @@ export default {
         },
         capitalize(string) {
             return string[0].toUpperCase() + string.slice(1);
-        }
+        },
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
+        },
     }
 }
 </script>

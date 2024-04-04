@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
+use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
 use App\Models\Currency;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -30,8 +33,8 @@ class CurrencyController extends Controller
     public function index(): View
     {
         /**
-         * @get('/currencies')
-         * @name('currencies.index')
+         * @get('/currency')
+         * @name('currency.index')
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
@@ -50,24 +53,24 @@ class CurrencyController extends Controller
             'currencies' => $currencies,
         ]);
 
-        return view('currencies.index');
+        return view('currency.index');
     }
 
     public function create(): View
     {
         /**
-         * @get('/currencies/create')
-         * @name('currencies.create')
+         * @get('/currency/create')
+         * @name('currency.create')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
-        return view('currencies.form');
+        return view('currency.form');
     }
 
     public function store(CurrencyRequest $request): RedirectResponse
     {
         /**
-         * @post('/currencies')
-         * @name('currencies.store')
+         * @post('/currency')
+         * @name('currency.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Currency')
          */
         $currency = $request->user()->currencies()->create($request->validated());
@@ -80,7 +83,7 @@ class CurrencyController extends Controller
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
-        return redirect()->route('currencies.index');
+        return redirect()->route('currency.index');
     }
 
     /**
@@ -92,8 +95,8 @@ class CurrencyController extends Controller
     public function edit(Currency $currency): View
     {
         /**
-         * @get('/currencies/{currency}/edit')
-         * @name('currencies.edit')
+         * @get('/currency/{currency}/edit')
+         * @name('currency.edit')
          * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
 
@@ -102,7 +105,7 @@ class CurrencyController extends Controller
             ->currencies()
             ->get();
 
-        return view('currencies.form')
+        return view('currency.form')
             ->with('currency', $currency)
             ->with('currencies', $currencies);
     }
@@ -111,8 +114,8 @@ class CurrencyController extends Controller
     {
         /**
          * @methods('PUT', PATCH')
-         * @uri('/currencies/{currency}')
-         * @name('currencies.update')
+         * @uri('/currency/{currency}')
+         * @name('currency.update')
          * @middlewares('web', 'auth', 'verified', 'can:update,currency')
          */
         $validated = $request->validated();
@@ -122,7 +125,7 @@ class CurrencyController extends Controller
 
         self::addSimpleSuccessMessage(__('Currency updated'));
 
-        return redirect()->route('currencies.index');
+        return redirect()->route('currency.index');
     }
 
     /**
@@ -134,8 +137,8 @@ class CurrencyController extends Controller
     public function destroy(Currency $currency): Response|RedirectResponse
     {
         /**
-         * @delete('/currencies/{currency}')
-         * @name('currencies.destroy')
+         * @delete('/currency/{currency}')
+         * @name('currency.destroy')
          * @middlewares('web', 'auth', 'verified', 'can:delete,currency')
          */
         // Base currency cannot be deleted
@@ -149,7 +152,7 @@ class CurrencyController extends Controller
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));
 
-            return redirect()->route('currencies.index');
+            return redirect()->route('currency.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleDangerMessage(__('Currency is in use, cannot be deleted'));
@@ -161,15 +164,35 @@ class CurrencyController extends Controller
         }
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function setDefault(Currency $currency): RedirectResponse
     {
         /**
-         * @get('/currencies/{currency}/setDefault')
-         * @name('currencies.setDefault')
+         * @get('/currency/{currency}/setDefault')
+         * @name('currency.setDefault')
          * @middlewares('web', 'auth', 'verified')
          */
+        // Authenticate the user against the currency using CurrencyPolicy
+        $this->authorize('update', $currency);
+
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));
+
+            // Invalidate the cache for the base currency for the current user
+            $cacheKey = "baseCurrency_forUser_{$currency->user_id}";
+            Cache::forget($cacheKey);
+
+            // Get all non-base, updateable currencies of the user, and dispatch the currency rate retrieval job
+            $currencies = $currency->user
+                ->currencies()
+                ->notBase()
+                ->autoUpdate()
+                ->get();
+            $currencies->each(function ($currency) {
+                GetCurrencyRatesJob::dispatch($currency);
+            });
         } else {
             self::addSimpleDangerMessage(__('Failed to change base currency'));
         }

@@ -36,7 +36,7 @@ var dtColumnSettingPayee = {
                 return row.account_from_name;
             }
             if (row.transaction_type.name === 'transfer') {
-                if (row.transactionOperator === 'minus') {
+                if (row.transactionOperator === -1) {
                     return __('Transfer to :account', {account: row.account_to_name});
                 } else {
                     return __('Transfer from :account', {account: row.account_from_name});
@@ -56,7 +56,7 @@ var dtColumnSettingPayee = {
 $(selectorHistoryTable).DataTable({
     data: transactionData,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -65,7 +65,7 @@ $(selectorHistoryTable).DataTable({
                 if (type === 'filter') {
                     return (!row.schedule
                         && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                        ? (row.reconciled == 1
+                        ? (row.reconciled
                             ? __('Reconciled')
                             : __('Uncleared')
                         )
@@ -74,7 +74,7 @@ $(selectorHistoryTable).DataTable({
                 }
                 return (!row.schedule
                     && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
-                    ? (row.reconciled == 1
+                    ? (row.reconciled
                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
                     )
@@ -84,12 +84,12 @@ $(selectorHistoryTable).DataTable({
             orderable: false,
         },
         dtColumnSettingPayee,
-        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefinition.category,
         {
             title: __('Withdrawal'),
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'minus') {
+                if (row.transactionOperator !== -1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
@@ -100,7 +100,7 @@ $(selectorHistoryTable).DataTable({
             title: __('Deposit'),
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'plus') {
+                if (row.transactionOperator !== 1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
@@ -121,8 +121,8 @@ $(selectorHistoryTable).DataTable({
                 }
             }
         },
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             title: __("Actions"),
             defaultContent: '',
@@ -168,7 +168,6 @@ $(selectorHistoryTable).DataTable({
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: true,
     processing: true,
     paging: false,
@@ -177,14 +176,14 @@ $(selectorHistoryTable).DataTable({
 $(selectorScheduleTable).DataTable({
     data: scheduleData,
     columns: [
-        dataTableHelpers.transactionColumnDefiniton.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dtColumnSettingPayee,
-        dataTableHelpers.transactionColumnDefiniton.category,
+        dataTableHelpers.transactionColumnDefinition.category,
         {
             title: "Withdrawal",
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'minus') {
+                if (row.transactionOperator !== -1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
@@ -195,19 +194,19 @@ $(selectorScheduleTable).DataTable({
             title: "Deposit",
             defaultContent: '',
             render: function (_data, type, row) {
-                if (row.transactionOperator !== 'plus') {
+                if (row.transactionOperator !== 1) {
                     return;
                 }
                 return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
             },
             className: 'dt-nowrap'
         },
-        dataTableHelpers.transactionColumnDefiniton.comment,
-        dataTableHelpers.transactionColumnDefiniton.tags,
+        dataTableHelpers.transactionColumnDefinition.comment,
+        dataTableHelpers.transactionColumnDefinition.tags,
         {
             data: 'id',
             title: __("Actions"),
-            render: function (data, _type, row) {
+            render: function (data, _type, _row) {
                 return '<a href="' + route('transaction.open' , { transaction: data, action: 'enter' }) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-pencil" title="' + __('Edit and insert instance') +'"></i></a> ' +
                     '<button class="btn btn-xs btn-warning data-skip" data-id="' + data + '" type="button"><i class="fa fa-fw fa-forward" title="' + __('Skip current schedule') + '"></i></i></button> ' +
                     dataTableHelpers.dataTablesActionButton(data, 'edit') +
@@ -234,7 +233,6 @@ $(selectorScheduleTable).DataTable({
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: true,
     processing: true,
     paging: false,

@@ -16,6 +16,8 @@ Route::get('/assets/account', [AccountApiController::class, 'getList']);
 Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
 Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'getItem']);
 Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'getAccountBalance']);
+Route::put('/account/monthlySummary/{accountEntity}', [AccountApiController::class, 'updateMonthlySummary'])
+    ->name('api.account.updateMonthlySummary');
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class, 'updateActive'])
     ->name('api.accountentity.updateActive');
@@ -57,6 +59,8 @@ Route::get(
 
 Route::get('/assets/tag', [TagApiController::class, 'getList']);
 Route::get('/assets/tag/{tag}', [TagApiController::class, 'getItem']);
+Route::put('/assets/tag/{tag}/active/{active}', [TagApiController::class, 'updateActive'])
+    ->name('api.tag.updateActive');
 
 Route::get('/budgetchart', [ReportApiController::class, 'budgetChart']);
 Route::get(
@@ -66,10 +70,6 @@ Route::get(
     ->where('transactionType', 'standard|investment|all')
     ->where('type', 'budget|result|all');
 Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])->name('api.reports.cashflow');
-Route::get(
-    '/reports/account_history_by_month/{accountEntity}/{withForecast?}',
-    [ReportApiController::class, 'getAccountHistoryByMonth']
-);
 
 Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiController::class, 'resetProcessed'])
     ->name('api.received-mail.reset-processed');
@@ -96,5 +96,6 @@ Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiCo
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
     ->name('api.transactions.destroy');
 
-Route::get('/onboarding', [OnboardingApiController::class, 'getOnboardingData']);
-Route::put('/onboadding/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
+Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
+Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
+Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);

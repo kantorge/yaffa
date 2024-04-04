@@ -11,7 +11,7 @@
 @if(isset($currency))
 <form
     accept-charset="UTF-8"
-    action="{{ route('currencies.update', $currency->id) }}"
+    action="{{ route('currency.update', $currency->id) }}"
     autocomplete="off"
     method="POST"
 >
@@ -19,7 +19,7 @@
 @else
 <form
     accept-charset="UTF-8"
-    action="{{ route('currencies.store') }}"
+    action="{{ route('currency.store') }}"
     autocomplete="off"
     method="POST"
 >
@@ -65,20 +65,7 @@
                     >
                 </div>
             </div>
-            <div class="row mb-3">
-                <label for="num_digits" class="col-form-label col-sm-3">
-                    {{ __('Number of decimal digits to display') }}
-                </label>
-                <div class="col-sm-9">
-                    <input
-                        class="form-control"
-                        id="num_digits"
-                        name="num_digits"
-                        type="text"
-                        value="{{old('num_digits', $currency->num_digits ?? '0' )}}"
-                    >
-                </div>
-            </div>
+
             <div class="row mb-3">
                 <label for="auto_update" class="col-form-label col-sm-3">
                     {{ __('Automatic update') }}
@@ -100,7 +87,7 @@
         <div class="card-footer">
             @csrf
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
-            <a href="{{ route('currencies.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <a href="{{ route('currency.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
     </div>
 </form>

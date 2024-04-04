@@ -20,7 +20,7 @@
         <div class="card-body">
             <div class="row">
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
                     <label for="schedule_frequency" class="control-label">
@@ -39,7 +39,7 @@
                     </select>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
                     <label for="schedule_interval" class="control-label">
@@ -53,7 +53,7 @@
                     ></MathInput>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.start_date')}"
                 >
                     <label
@@ -82,7 +82,7 @@
                     </DatePicker>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.next_date')}"
                         v-if="isSchedule"
                 >
@@ -98,7 +98,6 @@
                             v-model.string="schedule.next_date"
                             :disabled="!allowCustomizationData"
                             mode="date"
-                            is-required
                             :popover="{ visibility: 'click' }"
                             :masks="{
                                 L: 'YYYY-MM-DD',
@@ -116,7 +115,7 @@
                     </DatePicker>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.automatic_recording')}"
                         v-if="isSchedule"
                 >
@@ -141,7 +140,7 @@
                     </div>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-1 col-6 mb-2"
                         :class="{ 'has-error' : form.errors.has('schedule_config.count')}"
                 >
                     <label for="schedule_count" class="control-label">
@@ -155,7 +154,7 @@
                     ></MathInput>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.end_date')}"
                 >
                     <label for="schedule_end" class="control-label">
@@ -165,7 +164,6 @@
                             v-model.string="schedule.end_date"
                             :disabled="!allowCustomizationData"
                             mode="date"
-                            is-required
                             :popover="{ visibility: 'click' }"
                             :masks="{
                                 L: 'YYYY-MM-DD',
@@ -183,21 +181,24 @@
                     </DatePicker>
                 </div>
                 <div
-                        class="col-6 col-sm-4 mb-2"
+                        class="col-lg-1 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.inflation')}"
                         v-if="isBudget"
                 >
                     <label for="schedule_inflation" class="control-label">
-                        {{ __('Budget inflation, %') }}
+                        {{ __('Budget inflation') }}
                     </label>
-                    <input
-                            class="form-control"
-                            id="schedule_inflation"
-                            v-model="schedule.inflation"
-                            type="number"
-                            step=".01"
-                            :disabled="!allowCustomizationData"
-                    >
+                    <div class="input-group">
+                        <input
+                                class="form-control"
+                                id="schedule_inflation"
+                                v-model="schedule.inflation"
+                                type="number"
+                                step=".01"
+                                :disabled="!allowCustomizationData"
+                        >
+                        <span class="input-group-text">%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -207,6 +208,7 @@
 <script>
 import {DatePicker} from 'v-calendar';
 import MathInput from './MathInput.vue'
+import * as helpers from '../helpers';
 
 export default {
     components: {
@@ -221,7 +223,7 @@ export default {
         form: Object,
         title: {
             type: String,
-            default: 'Schedule',
+            default: __('Schedule'),
         },
         withCheckbox: {
             type: Boolean,
@@ -246,6 +248,15 @@ export default {
             monthBeforeYear: false,
         };
         return data;
+    },
+
+    methods: {
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
+        },
     },
 }
 </script>

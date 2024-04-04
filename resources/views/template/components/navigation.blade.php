@@ -20,7 +20,7 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
-                href="{{ route('currencies.index') }}"
+                href="{{ route('currency.index') }}"
                 iconClasses="fa-solid fa-money-bill"
                 text="{{ __('Currencies') }}"
             />
@@ -81,7 +81,7 @@
             <x-nav-link
                 href="{{ route('report.schedules') }}"
                 iconClasses="fa-solid fa-list"
-                text="{{ __('List of schedules and budgets') }}"
+                text="{{ __('Schedules and budgets') }}"
             />
             <x-nav-link
                 href="{{ route('investment.timeline') }}"

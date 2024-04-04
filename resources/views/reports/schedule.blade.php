@@ -7,65 +7,100 @@
 @section('content_header', __('Scheduled and budgeted transactions'))
 
 @section('content')
-<div class="card">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="form-group d-inline-block">
-                    <label class="control-label">
-                        {{ __('Schedule') }}
-                    </label>
-                    <div>
-                        <div class="btn-group" role="group" aria-label="Toggle button group for schedules">
-                            <input type="radio" class="btn-check" name="schedule" id="schedule_yes" value="{{ __('Yes') }}">
-                            <label class="btn btn-outline-primary" for="schedule_yes" title="{{ __('Yes') }}">
-                                <span class="fa fa-fw fa-check"></span>
-                            </label>
-
-                            <input type="radio" class="btn-check" name="schedule" id="schedule_any" value="" checked>
-                            <label class="btn btn-outline-primary" for="schedule_any" title="{{ __('Any') }}">
-                                <span class="fa fa-fw fa-circle"></span>
-                            </label>
-
-                            <input type="radio" class="btn-check" name="schedule" id="schedule_no" value="{{ __('No') }}">
-                            <label class="btn btn-outline-primary" for="schedule_no" title="{{ __('No') }}">
-                                <span class="fa fa-fw fa-close"></span>
-                            </label>
-                        </div>
-                    </div>
+<div class="row">
+    <div class="col-12 col-lg-3">
+        <div id="onboarding-card">
+            <onboarding-card
+                    card-title="{{ __('Guided tour') }}"
+                    completed-message="{{ __('You can dismiss this widget to hide it forever.') }}"
+                    topic="ReportsSchedules"
+            ></onboarding-card>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header">
+                <div
+                        class="card-title collapse-control"
+                        data-coreui-toggle="collapse"
+                        data-coreui-target="#cardActions"
+                >
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Actions') }}
                 </div>
-                <div class="form-group d-inline-block">
-                    <label class="control-label">
-                        {{ __('Budget') }}
-                    </label>
-                    <div>
-                        <div class="btn-group" role="group" aria-label="Toggle button group for budgets">
-                            <input type="radio" class="btn-check" name="budget" id="budget_yes" value="{{ __('Yes') }}">
-                            <label class="btn btn-outline-primary" for="budget_yes" title="{{ __('Yes') }}">
-                                <span class="fa fa-fw fa-check"></span>
-                            </label>
-
-                            <input type="radio" class="btn-check" name="budget" id="budget_any" value="" checked>
-                            <label class="btn btn-outline-primary" for="budget_any" title="{{ __('Any') }}">
-                                <span class="fa fa-fw fa-circle"></span>
-                            </label>
-
-                            <input type="radio" class="btn-check" name="budget" id="budget_no" value="{{ __('No') }}">
-                            <label class="btn btn-outline-primary" for="budget_no" title="{{ __('No') }}">
-                                <span class="fa fa-fw fa-close"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                @include('template.components.tablefilter-active')
             </div>
+            <ul
+                    class="list-group list-group-flush collapse show"
+                    aria-expanded="true"
+                    id="cardActions"
+            >
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ __('New scheduled, standard transaction') }}
+                    <a class="btn btn-sm btn-success"
+                       dusk="button-new-payee"
+                       href="{{ route('transaction.create', [
+                            'type' => 'standard',
+                            'schedule' => '1',
+                            'callback' => 'back'
+                            ]) }}"
+                       title="{{ __('New scheduled, standard transaction') }}"
+                    >
+                        <i class="fa fa-cart-plus"></i>
+                    </a>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ __('New scheduled, investment transaction') }}
+                    <a class="btn btn-sm btn-success"
+                       dusk="button-new-payee"
+                       href="{{ route('transaction.create', [
+                            'type' => 'investment',
+                            'schedule' => '1',
+                            'callback' => 'back'
+                            ]) }}"
+                       title="{{ __('New scheduled, investment transaction') }}"
+                    >
+                        <i class="fa fa-line-chart"></i>
+                    </a>
+                </li>
+            </ul>
         </div>
 
-        <table class="table table-bordered table-hover no-footer" id="table"></table>
+        <div class="card mb-3">
+            <div class="card-header">
+                <div
+                        class="card-title collapse-control"
+                        data-coreui-toggle="collapse"
+                        data-coreui-target="#cardFilters"
+                >
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Filters') }}
+                </div>
+            </div>
+            <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                <x-tablefilter-sidebar-switch
+                        label=" {{ __('Schedule') }}"
+                        property="schedule"
+                />
+                <x-tablefilter-sidebar-switch
+                        label=" {{ __('Budget') }}"
+                        property="budget"
+                />
+                <x-tablefilter-sidebar-switch
+                        label=" {{ __('Active') }}"
+                        property="active"
+                />
+                @include('template.components.tablefilter-sidebar-search')
+            </ul>
+        </div>
+    </div>
+    <div class="col-12 col-lg-9">
+        <div class="card">
+            <div class="card-body no-datatable-search">
+                <table
+                        class="table table-bordered table-hover"
+                        id="table"
+                ></table>
+            </div>
+        </div>
     </div>
 </div>
-
-@include('template.components.model-delete-form')
-@include('template.components.transaction-skip-form')
 
 @stop

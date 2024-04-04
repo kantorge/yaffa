@@ -7,7 +7,6 @@ use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Payee;
-use App\Services\AccountEntityService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,14 +19,10 @@ use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class AccountEntityController extends Controller
 {
-    protected AccountEntityService $accountEntityService;
-
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
         $this->authorizeResource(AccountEntity::class);
-
-        $this->accountEntityService = new AccountEntityService();
     }
 
     /*
@@ -175,9 +170,9 @@ class AccountEntityController extends Controller
         // Redirect to account group form, if empty
         if (Auth::user()->accountGroups()->count() === 0) {
             $this->addMessage(
-                'Before creating an account, please add at least one account group. E.g. cash, bank accounts, savings, etc. Account groups help to organize your accounts.',
+                __('account.requirement.accountGroup'),
                 'info',
-                'No account groups found',
+                __('No account groups found'),
                 'info-circle'
             );
 
@@ -187,13 +182,13 @@ class AccountEntityController extends Controller
         // Redirect to currency form, if empty
         if (Auth::user()->currencies()->count() === 0) {
             $this->addMessage(
-                'Before creating an account, please add at least one currency. Accounts must have a currency assigned.',
+                __('account.requirement.currency'),
                 'info',
-                'No currencies found',
+                __('No currencies found'),
                 'info-circle'
             );
 
-            return redirect()->route('currencies.create');
+            return redirect()->route('currency.create');
         }
 
         return view('account.form');
@@ -397,33 +392,6 @@ class AccountEntityController extends Controller
         }
 
         // This redirect is theoretically not used
-        return redirect()->back();
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param AccountEntity $accountEntity
-     * @return RedirectResponse
-     */
-    public function destroy(AccountEntity $accountEntity): RedirectResponse
-    {
-        /**
-         * @delete('/account-entity/{account_entity}')
-         * @name('account-entity.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,account_entity')
-         */
-        $result = $this->accountEntityService->delete($accountEntity);
-
-        if ($result['success']) {
-            self::addSimpleSuccessMessage(
-                __(':type deleted', ['type' => Str::ucfirst($accountEntity->config_type)])
-            );
-
-            return redirect()->route('account-entity.index', ['type' => $accountEntity->config_type]);
-        }
-
-        self::addSimpleDangerMessage($result['error']);
         return redirect()->back();
     }
 

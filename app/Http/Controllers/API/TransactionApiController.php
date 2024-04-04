@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Events\TransactionCreated;
+use App\Events\TransactionDeleted;
+use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
 use App\Models\Account;
@@ -19,7 +22,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
@@ -51,10 +53,7 @@ class TransactionApiController extends Controller
         $transaction->reconciled = boolval($newState);
         $transaction->save();
 
-        return response()->json(
-            [],
-            Response::HTTP_OK
-        );
+        return response()->json([], Response::HTTP_OK);
     }
 
     public function getItem(Transaction $transaction): JsonResponse
@@ -81,13 +80,18 @@ class TransactionApiController extends Controller
          */
 
         // Return empty response if categories are required, but not set or empty
-        if ($request->has('category_required') && (!$request->has('categories') || !$request->input('categories'))) {
+        if ($request->has('category_required')
+            && (!$request->has('categories') || !$request->input('categories'))) {
             return response()->json([], Response::HTTP_OK);
         }
 
         // Get list of requested categories
         // Ensure, that child categories are loaded for all parents
         $categories = $this->categoryService->getChildCategories($request);
+
+        // Get the account selection properties
+        $accountSelection = $request->get('accountSelection');
+        $accountEntity = $request->get('accountEntity');
 
         // Get all standard transactions
         $standardTransactions = Transaction::with([
@@ -100,23 +104,44 @@ class TransactionApiController extends Controller
             'transactionItems.category',
             'transactionItems.tags',
         ])
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $request->user()->id)
             ->byScheduleType($type)
-            ->where(
-                'config_type',
-                '=',
-                'transaction_detail_standard'
-            )
+            ->byType('standard')
             // Optionally add account filter
-            ->when($request->has('account'), function ($query) use ($request) {
+            ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
                 $query->whereHasMorph(
                     'config',
                     [TransactionDetailStandard::class],
-                    function (Builder $query) use ($request) {
-                        $query->where('account_from_id', $request->get('account'));
-                        $query->orWhere('account_to_id', $request->get('account'));
+                    function (Builder $query) use ($accountEntity) {
+                        $query->where('account_from_id', $accountEntity);
+                        $query->orWhere('account_to_id', $accountEntity);
                     }
                 );
+            })
+            // Optionally exclude transactions with a specified account
+            ->when($accountSelection === 'none', function ($query) {
+                return $query->where(function ($query) {
+
+                    return $query
+                        // Withdrawal with empty account_from_id
+                        ->where(function ($query) {
+                            $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_from_id')
+                                );
+                        })
+                        // Or deposit with empty account_to_id
+                        ->orWhere(function ($query) {
+                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_to_id')
+                                );
+                        });
+                });
             })
             // Optionally add category filter
             ->when($categories->count() > 0, function ($query) use ($categories) {
@@ -124,19 +149,7 @@ class TransactionApiController extends Controller
                     $query->whereIn('category_id', $categories->pluck('id'));
                 });
             })
-            ->get()
-            ->loadMorph(
-                'config.accountFrom',
-                [
-                    Account::class => ['config', 'config.currency'],
-                ]
-            )
-            ->loadMorph(
-                'config.accountTo',
-                [
-                    Account::class => ['config', 'config.currency'],
-                ]
-            );
+            ->get();
 
         // Return empty collection if categories are required
         if ($request->has('category_required')) {
@@ -146,29 +159,24 @@ class TransactionApiController extends Controller
             $investmentTransactions = Transaction::with([
                 'config',
                 'config.account',
-                'config.account.config',
-                'config.account.config.currency',
                 'config.investment',
                 'transactionType',
                 'transactionSchedule',
             ])
                 ->where('user_id', $request->user()->id)
                 ->byScheduleType($type)
-                ->where(
-                    'config_type',
-                    '=',
-                    'transaction_detail_investment'
-                )
+                ->byType('investment')
                 // Optionally add account filter
-                ->when($request->has('account'), function ($query) use ($request) {
+                ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
                     $query->whereHasMorph(
                         'config',
                         [TransactionDetailInvestment::class],
-                        function (Builder $query) use ($request) {
-                            $query->where('account_id', $request->get('account'));
+                        function (Builder $query) use ($accountEntity) {
+                            $query->where('account_id', $accountEntity);
                         }
                     );
                 })
+                // Investment transactions always have an account, so the 'none' account selection is not relevant
                 ->get();
         }
 
@@ -206,12 +214,12 @@ class TransactionApiController extends Controller
             );
         }
 
-        $user = Auth::user();
+        $user = $request->user();
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
             ->byScheduleType('none')
-            ->where('config_type', 'transaction_detail_standard')
+            ->byType('standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
                 $query->where('date', '>=', $request->get('date_from'));
             })
@@ -262,7 +270,7 @@ class TransactionApiController extends Controller
         ])) {
             $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
-                ->where('config_type', 'transaction_detail_investment')
+                ->byType('investment')
                 ->when($request->has('date_from'), function ($query) use ($request) {
                     $query->where('date', '>=', $request->get('date_from'));
                 })
@@ -279,7 +287,7 @@ class TransactionApiController extends Controller
         } else {
             $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
-                ->where('config_type', 'transaction_detail_investment')
+                ->byType('investment')
                 // TODO: How to create a query with no results in a more simple way?
                 ->where('id', null);
         }
@@ -333,7 +341,7 @@ class TransactionApiController extends Controller
             ])
             ->get();
 
-        $transactions = $standardTransactions->merge($investmentTransactions);
+        $transactions = $standardTransactions->concat($investmentTransactions);
 
         return response()->json(
             [
@@ -352,12 +360,12 @@ class TransactionApiController extends Controller
          */
         $validated = $request->validated();
 
-        $transaction = DB::transaction(function () use ($validated) {
+        $transaction = DB::transaction(function () use ($validated, $request) {
             // Create the configuration first
             $transactionDetails = TransactionDetailStandard::create($validated['config']);
 
             $transaction = new Transaction($validated);
-            $transaction->user_id = Auth::user()->id;
+            $transaction->user_id = $request->user()->id;
             $transaction->config()->associate($transactionDetails);
             $transaction->push();
 
@@ -387,22 +395,7 @@ class TransactionApiController extends Controller
             return $transaction;
         });
 
-        // Adjust source transaction schedule, if entering schedule instance
-        if ($validated['action'] === 'enter') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-            $sourceTransaction->transactionSchedule->skipNextInstance();
-        }
-
-        // Adjust source transaction schedule, if creating a new schedule clone
-        if ($validated['action'] === 'replace') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-
-            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
-
-            $sourceTransaction->push();
-        }
+        $this->handleSourceTransactionUpdates($validated);
 
         // Save reference to incoming mail, if finalizing a transaction from email
         if ($validated['action'] === 'finalize' && $validated['source_id']) {
@@ -413,10 +406,13 @@ class TransactionApiController extends Controller
         }
 
         // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way?
+        // TODO: can this be done in a better way, so that the controller is not aware of the caller context?
         if (!$validated['fromModal']) {
             self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
         }
+
+        // Generate an event for the new transaction
+        event(new TransactionCreated($transaction));
 
         // Ensure that the transaction is loaded with all relations
         $transaction->loadDetails();
@@ -458,28 +454,16 @@ class TransactionApiController extends Controller
             return $transaction;
         });
 
-        // Adjust source transaction schedule, if entering schedule instance
-        if ($validated['action'] === 'enter') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-            $sourceTransaction->transactionSchedule->skipNextInstance();
-        }
-
-        // Adjust source transaction schedule, if creating a new schedule clone
-        if ($validated['action'] === 'replace') {
-            $sourceTransaction = Transaction::find($validated['id'])
-                ->load(['transactionSchedule']);
-
-            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
-
-            $sourceTransaction->push();
-        }
+        $this->handleSourceTransactionUpdates($validated);
 
         // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way?
+        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
         if (!$validated['fromModal']) {
             self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
         }
+
+        // Generate an event for the new transaction
+        event(new TransactionCreated($transaction));
 
         // Ensure that the transaction is loaded with all relations
         $transaction->loadDetails();
@@ -498,6 +482,9 @@ class TransactionApiController extends Controller
          */
         $validated = $request->validated();
 
+        // Define a variable to keep track of changes
+        $attributeChanges = [];
+
         // Load all relevant relations
         $transaction->load([
             'transactionItems',
@@ -507,18 +494,26 @@ class TransactionApiController extends Controller
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
+        // Store the original values of the changed attributes
+        $changedAttributes = $transaction->getDirty();
+        foreach ($changedAttributes as $key => $value) {
+            $attributeChanges['transaction'][$key] = $transaction->getOriginal($key);
+        }
+
+        $changedAttributes = $transaction->config->getDirty();
+        foreach ($changedAttributes as $key => $value) {
+            $attributeChanges['config'][$key] = $transaction->config->getOriginal($key);
+        }
+
         if ($transaction->schedule || $transaction->budget) {
-            // Update existing or create new
-            if ($transaction->transactionSchedule) {
-                $transaction->transactionSchedule->fill($validated['schedule_config']);
-            } else {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
-                $transactionSchedule->fill($validated['schedule_config']);
-                $transaction->transactionSchedule()->save($transactionSchedule);
+            // At this point, the schedule or budget flag cannot be changed,
+            // so we can safely assume that the schedule exists
+            $transaction->transactionSchedule->fill($validated['schedule_config']);
+
+            // Store changes to schedule_config
+            $changedAttributes = $transaction->transactionSchedule->getDirty();
+            foreach ($changedAttributes as $key => $value) {
+                $attributeChanges['schedule_config'][$key] = $transaction->transactionSchedule->getOriginal($key);
             }
 
             // Ensure that the date of the transaction is not set
@@ -544,6 +539,7 @@ class TransactionApiController extends Controller
         }
 
         $transaction->transactionItems()->saveMany($transactionItems);
+        // Transaction items are not stored as changes, as they are not triggering updates to monthly summaries
 
         // Save entire transaction
         $transaction->push();
@@ -554,6 +550,9 @@ class TransactionApiController extends Controller
             self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
         }
 
+        // Generate an event for the updated transaction
+        event(new TransactionUpdated($transaction, $attributeChanges));
+
         // Ensure that the transaction is loaded with all relations
         $transaction->loadDetails();
 
@@ -562,6 +561,7 @@ class TransactionApiController extends Controller
         ]);
     }
 
+    // TODO: unify the update methods, account for the differences in the update process
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
@@ -571,21 +571,32 @@ class TransactionApiController extends Controller
          */
         $validated = $request->validated();
 
+        // Define a variable to keep track of changes
+        $attributeChanges = [];
+
         $transaction->fill($validated);
         $transaction->config->fill($validated['config']);
 
+        // Store the original values of the changed attributes
+        $changedAttributes = $transaction->getDirty();
+        foreach ($changedAttributes as $key => $value) {
+            $attributeChanges['transaction'][$key] = $transaction->getOriginal($key);
+        }
+
+        $changedAttributes = $transaction->config->getDirty();
+        foreach ($changedAttributes as $key => $value) {
+            $attributeChanges['config'][$key] = $transaction->config->getOriginal($key);
+        }
+
         if ($transaction->schedule) {
-            // Update existing or create new
-            if ($transaction->transactionSchedule) {
-                $transaction->transactionSchedule->fill($validated['schedule_config']);
-            } else {
-                $transactionSchedule = new TransactionSchedule(
-                    [
-                        'transaction_id' => $transaction->id,
-                    ]
-                );
-                $transactionSchedule->fill($validated['schedule_config']);
-                $transaction->transactionSchedule()->save($transactionSchedule);
+            // At this point, the schedule or budget flag cannot be changed,
+            // so we can safely assume that the schedule exists
+            $transaction->transactionSchedule->fill($validated['schedule_config']);
+
+            // Store changes to schedule_config
+            $changedAttributes = $transaction->transactionSchedule->getDirty();
+            foreach ($changedAttributes as $key => $value) {
+                $attributeChanges['schedule_config'][$key] = $transaction->transactionSchedule->getOriginal($key);
             }
 
             // Ensure that the date of the transaction is not set
@@ -600,6 +611,9 @@ class TransactionApiController extends Controller
         if (!$validated['fromModal']) {
             self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
         }
+
+        // Generate an event for the updated transaction
+        event(new TransactionUpdated($transaction, $attributeChanges));
 
         // Ensure that the transaction is loaded with all relations
         $transaction->loadDetails();
@@ -679,8 +693,61 @@ class TransactionApiController extends Controller
          * @name('api.transactions.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
+
+        // Load the details of the transaction for the event
+        $transaction->loadDetails();
+
         $transaction->delete();
 
-        return response()->json();
+        event(new TransactionDeleted($transaction));
+
+        return response()->json(
+            [
+                'transaction' => $transaction,
+            ],
+            Response::HTTP_OK
+        );
+    }
+
+    /**
+     * Handle additional updates to a source transaction
+     *
+     * @param array $validated
+     *
+     */
+    private function handleSourceTransactionUpdates(array $validated): void
+    {
+        // Adjust source transaction schedule, if entering schedule instance
+        if ($validated['action'] === 'enter') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+
+            $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
+
+            $sourceTransaction->transactionSchedule->skipNextInstance();
+
+            // This also triggers a TransactionUpdated event for the source transaction
+            event(new TransactionUpdated($sourceTransaction, [
+                'schedule_config' => $originalScheduleConfig,
+            ]));
+
+            return;
+        }
+
+        // Adjust source transaction schedule, if creating a new schedule clone
+        if ($validated['action'] === 'replace') {
+            $sourceTransaction = Transaction::find($validated['id'])
+                ->load(['transactionSchedule']);
+
+            $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
+
+            $sourceTransaction->transactionSchedule->fill($validated['original_schedule_config']);
+            $sourceTransaction->push();
+
+            // This also triggers a TransactionUpdated event for the source transaction
+            event(new TransactionUpdated($sourceTransaction, [
+                'schedule_config' => $originalScheduleConfig,
+            ]));
+        }
     }
 }

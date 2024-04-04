@@ -55,18 +55,42 @@
                         {{ __('Actions') }}
                     </div>
                 </div>
-                <div class="collapse card-body" aria-expanded="true" id="cardActions">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               href="{{ route('account.history', ['account' => $account]) }}">{{ __('Load account transaction history') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               href="{{ route('reports.cashflow', ['account' => $account->id]) }}">{{ __('Show account monthly history') }}</a>
-                        </li>
-                    </ul>
-                </div>
+                <ul class="list-group list-group-flush collapse" aria-expanded="false" id="cardActions">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a
+                                class="nav-link"
+                                href="{{ route('account.history', ['account' => $account]) }}"
+                        >
+                            {{ __('Load account transaction history') }}
+                        </a>
+                        <i
+                                class="fa-solid fa-clock text-warning"
+                                data-toggle="tooltip"
+                                title="{{ __('This page can load slowly based on the number of transactions.') }}"
+                        ></i>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a
+                                class="nav-link"
+                                href="{{ route('reports.cashflow', ['account' => $account->id]) }}"
+                        >
+                            {{ __('Show account monthly history') }}
+                        </a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span
+                                class="nav-link"
+                        >
+                            {{ __('Recalculate monthly cached data') }}
+                        </span>
+                        <button
+                                class="btn btn-sm btn-outline-primary"
+                                id="recalculateMonthlyCachedData"
+                        >
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </li>
+                </ul>
             </div>
 
             <h2>{{ __('Transaction filters') }}</h2>

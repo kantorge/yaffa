@@ -90,14 +90,7 @@
                                 {{ __('Quantity') }}
                             </dt>
                             <dd class="col-6" dusk="label-quantity">
-                                {{
-                                    transaction.config.quantity?.toLocaleString(
-                                            locale,
-                                            {
-                                                minimumFractionDigits: 0,
-                                                maximumFractionDigits: 4,
-                                            })
-                                }}
+                                {{ formattedQuantity }}
                             </dd>
 
                             <dt class="col-6">
@@ -106,6 +99,7 @@
                             <dd class="col-6" dusk="label-price">
                                 {{
                                     toFormattedCurrency(transaction.config.price, locale, transaction.config.account.config.currency)
+                                    || __('Not set')
                                 }}
                             </dd>
 
@@ -187,6 +181,20 @@ export default {
                 + (this.transaction.config.dividend || 0)
                 - (this.transaction.config.commission || 0)
                 - (this.transaction.config.tax || 0);
+        },
+        formattedQuantity() {
+            // Check if quantity is not null
+            if (!this.transaction.config.quantity) {
+                return __('Not set');
+            }
+
+            return this.transaction.config.quantity.toLocaleString(
+                this.locale,
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4,
+                }
+            );
         },
     },
     methods: {

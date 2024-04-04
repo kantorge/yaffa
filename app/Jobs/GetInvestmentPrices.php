@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Investment;
+use App\Services\InvestmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,5 +34,9 @@ class GetInvestmentPrices implements ShouldQueue
     {
         // Invoke provider's getInvestmentPrice method
         $this->investment->getInvestmentPriceFromProvider();
+
+        // Use the InvestmentService to recalculate the related accounts
+        $investmentService = new InvestmentService();
+        $investmentService->recalculateRelatedAccounts($this->investment);
     }
 }

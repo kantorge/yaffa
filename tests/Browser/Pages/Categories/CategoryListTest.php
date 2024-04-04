@@ -245,7 +245,5 @@ class CategoryListTest extends DuskTestCase
                 TABLESELECTOR . " button[data-id='{$payeeDeferredCategory->id}']:not(.deleteIcon)"
             );
         });
-
-        // TODO: assert the disabled button titles
     }
 }

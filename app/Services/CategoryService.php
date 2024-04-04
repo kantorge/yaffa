@@ -53,7 +53,7 @@ class CategoryService
                     ->categories()
                     ->where('parent_id', '=', $category->id)
                     ->get();
-                $categories = $categories->merge($children);
+                $categories = $categories->concat($children);
             }
 
             $categories->push($category);

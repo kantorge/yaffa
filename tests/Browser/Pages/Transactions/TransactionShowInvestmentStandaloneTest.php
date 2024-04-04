@@ -80,6 +80,55 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
     }
 
     /**
+     * Test that a transaction with 'Dividend' type can be loaded
+     */
+    public function test_user_can_load_the_dividend_transaction_details()
+    {
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // Create a dividend transaction with specific data
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->dividend(
+                $user,
+                [
+                    'account_id' => AccountEntity::where('name', 'Investment account USD')->first()->id,
+                    'investment_id' => Investment::where('name', 'Test investment USD')->first()->id,
+                    'quantity' => null,
+                    'price' => null,
+                    'dividend' => 100,
+                    'tax' => 20,
+                    'commission' => 10,
+                ]
+            )
+            ->create();
+
+        $this->browse(function (Browser $browser) use ($user, $transaction) {
+            $browser->loginAs($user)
+                // Load the transaction page
+                ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
+                // Check the details container is present
+                ->assertPresent('#transactionShowInvestment')
+                // Check the details are correct
+                // Transaction type is 'Dividend'
+                ->assertSeeIn('@label-transaction-type', 'Dividend')
+                // Investment is 'Test investment USD'
+                ->assertSeeIn('@label-investment-name', 'Test investment USD')
+                // Account is 'Investment account USD'
+                ->assertSeeIn('@label-account-name', 'Investment account USD')
+                // Quantity is rounded to 4 decimal places
+                ->assertSeeIn('@label-quantity', 'Not set')
+                // Dividend is rounded to 2 decimal places
+                // and has the currency symbol according to the account currency and user locale
+                ->assertSeeIn('@label-dividend', '100')
+                // Price is not present, labelled as 'Not set'
+                ->assertSeeIn('@label-price', 'Not set')
+                // Action button bar is present
+                ->assertPresent('@action-bar');
+        });
+    }
+
+    /**
      * Test that a scheduled transaction can be loaded
      * and it has buttons for skipping and entering an instance
      **/

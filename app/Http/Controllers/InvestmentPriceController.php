@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -169,6 +170,10 @@ class InvestmentPriceController extends Controller
         $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
         $investment->getInvestmentPriceFromProvider($date);
+
+        // Use the InvestmentService to recalculate the related accounts
+        $investmentService = new InvestmentService();
+        $investmentService->recalculateRelatedAccounts($investment);
 
         self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
 

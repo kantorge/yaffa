@@ -38,10 +38,6 @@ $(dataTableSelector).DataTable({
             title: __("ISO Code"),
         },
         {
-            data: "num_digits",
-            title: __("Number of decimal digits displayed"),
-        },
-        {
             data: "auto_update",
             title: __("Automatic update"),
             render: function (data, type) {
@@ -66,10 +62,11 @@ $(dataTableSelector).DataTable({
                     return row.latest_rate;
                 }
                 // Formatted text is returned for display in a specific way
-                let sourceCurrency = Object.assign({}, row, {num_digits: 0});
-                let targetCurrency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 4});
+                const targetCurrency = Object.assign({}, window.YAFFA.baseCurrency, {max_digits: 4});
 
-                return toFormattedCurrency(1, window.YAFFA.locale, sourceCurrency) + " = " + toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, targetCurrency);
+                return toFormattedCurrency(1, window.YAFFA.locale, row) +
+                    " = " +
+                    toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -91,10 +88,11 @@ $(dataTableSelector).DataTable({
                     return 1 / row.latest_rate;
                 }
                 // Formatted text is returned for display in a specific way
-                let sourceCurrency = Object.assign({}, window.YAFFA.baseCurrency, {num_digits: 0});
-                let targetCurrency = Object.assign({}, row, {num_digits: 4});
+                const targetCurrency = Object.assign({}, row, {max_digits: 4});
 
-                return toFormattedCurrency(1, window.YAFFA.locale, sourceCurrency) + " = " + toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, targetCurrency);
+                return toFormattedCurrency(1, window.YAFFA.locale, window.YAFFA.baseCurrency) +
+                    " = " +
+                    toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -103,12 +101,12 @@ $(dataTableSelector).DataTable({
             data: "id",
             title: __('Actions'),
             render: function (data, _type, row) {
-                return genericDataTablesActionButton(data, 'edit', 'currencies.edit') +
+                return genericDataTablesActionButton(data, 'edit', 'currency.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
                         ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-xs btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-fw fa-chart-line"></i></a> ' +
                         genericDataTablesActionButton(data, 'delete') +
-                        '<a href="' + window.route('currencies.setDefault', data) + '" class="btn btn-xs btn-primary" title="' + __('Set as default') + '"><i class="fa-solid fa-fw fa-building-columns"></i></a>'
+                        '<a href="' + window.route('currency.setDefault', data) + '" class="btn btn-xs btn-primary data-set-default" title="' + __('Set as default') + '"><i class="fa-solid fa-fw fa-building-columns"></i></a>'
                         : '');
             },
             className: "dt-nowrap",
@@ -122,4 +120,14 @@ $(dataTableSelector).DataTable({
     responsive: true,
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'currencies.destroy');
+initializeDeleteButtonListener(dataTableSelector, 'currency.destroy');
+
+// Create a confirmation dialog for the "Set as default" button
+$(dataTableSelector).on('click', 'a.data-set-default', function (event) {
+    event.preventDefault();
+    const url = $(this).attr('href');
+    if (!confirm(__('Are you sure you want to set this currency as the default one?\n\nWhile this action is reversible, it starts a process that may take a while to complete.'))) {
+        return;
+    }
+    window.location.href = url;
+});

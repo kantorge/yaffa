@@ -63,18 +63,6 @@ export function dataTablesActionButton(id, action) {
         skip: function () {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
         },
-        skip_reload: function () {
-            return `
-                <button 
-                    class="btn btn-xs btn-warning data-skip"
-                    data-skip
-                    data-id="${id}"
-                    type="button"
-                    title="${__('Skip current schedule')}"
-                >
-                    <i class="fa fa-fw fa-forward"></i>
-                </button> `;
-        },
         enter: function () {
             return `
                 <a 
@@ -124,9 +112,15 @@ export function initializeDeleteButtonListener(tableSelector, route) {
     });
 }
 
-export function initializeFilterButtonsActive(table, column) {
-    $('input[name=active]').on("change", function () {
+export function initializeFilterToggle(table, column, name) {
+    $('input[name=' + name + ']').on("change", function () {
         table.column(column).search(this.value).draw();
+    });
+}
+
+export function initializeStandardExternalSearch(table, searchSelector = '#table_filter_search_text') {
+    $(searchSelector).on('input', function () {
+        table.search(this.value).draw();
     });
 }
 
@@ -157,6 +151,14 @@ export function commentIcon(comment, type) {
     return ' <i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
 }
 
+/**
+ * This function is used to render a formatted currency value in a DataTables column
+ * @param {string} type
+ * @param {number} input
+ * @param {string} locale
+ * @param {Object} currency
+ * @returns {number|string}
+ */
 export function toFormattedCurrency(type, input, locale, currency) {
     if (type === 'filter' || type === 'sort') {
         return input;
@@ -167,18 +169,6 @@ export function toFormattedCurrency(type, input, locale, currency) {
     }
 
     return helpers.toFormattedCurrency(input, locale, currency);
-}
-
-export function initializeDeleteButton(selector) {
-    $(selector).on("click", ".data-delete", function () {
-        if (!confirm(__('Are you sure to want to delete this item?'))) {
-            return;
-        }
-
-        let form = document.getElementById('form-delete');
-        form.action = route('api.transactions.destroy', {transaction: this.dataset.id});
-        form.submit();
-    });
 }
 
 export function initializeSkipInstanceButton(selector) {
@@ -202,15 +192,15 @@ export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-minus text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
             customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-plus text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
             customTitle = customTitle || __("Transfer");
-            return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-exchange-alt text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'investment') {
         customTitle = customTitle || name;
@@ -228,7 +218,7 @@ export function muteCellWithValue(column, mutedValue) {
 
 // These objects can be used to standard data display in various dataTable column definitions
 // The usage assumes that the underlying transaction object has also unified format
-export let transactionColumnDefiniton = {
+export const transactionColumnDefinition = {
     // Generic date field
     dateFromCustomField: function (fieldName, title, locale) {
         return {
@@ -294,6 +284,15 @@ export let transactionColumnDefiniton = {
     category: {
         title: __('Category'),
         defaultContent: '',
+        /**
+         * @param _data
+         * @param _type
+         * @param {Object} row
+         * @property {Object} row.transaction_type
+         * @property {string} row.transaction_type.type
+         * @property {number} row.transaction_type.quantity_multiplier
+         * @property {number} row.transaction_type.amount_multiplier
+         */
         render: function (_data, _type, row) {
             // Standard transaction
             if (row.transaction_type.type === 'standard') {
@@ -312,10 +311,10 @@ export let transactionColumnDefiniton = {
             }
             // Investment transaction
             if (row.transaction_type.type === 'investment') {
-                if (!row.transaction_type.quantity_operator) {
+                if (!isNaN(row.transaction_type.quantity_multiplier)) {
                     return row.transaction_type.name;
                 }
-                if (!row.transaction_type.amount_operator) {
+                if (!isNaN(row.transaction_type.amount_multiplier)) {
                     return row.transaction_type.name + " " + row.config.quantity;
                 }
 
@@ -332,31 +331,53 @@ export let transactionColumnDefiniton = {
     amount: {
         title: __("Amount"),
         defaultContent: '',
+        /**
+         * @param _data
+         * @param type
+         * @param {Object} row
+         * @property {Object} row.transaction_type
+         * @property {string} row.transaction_type.type
+         * @property {number} row.transaction_type.quantity_multiplier
+         * @property {number} row.transaction_type.amount_multiplier
+         * @property {Object} row.transaction_currency
+         */
         render: function (_data, type, row) {
             if (type === 'display') {
                 let prefix = '';
                 if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                     }
 
-                    return prefix + helpers.toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, row.transaction_currency);
+                    return prefix + helpers.toFormattedCurrency(
+                        row.config.amount_to,
+                        window.YAFFA.locale,
+                        row.transaction_currency
+                    );
                 }
                 if (row.transaction_type.type === 'investment') {
                     let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
 
-                    if (row.transaction_type.amount_operator === 'minus') {
+                    if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            row.transaction_currency
+                        );
                     }
-                    if (row.transaction_type.amount_operator === 'plus') {
+                    if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(amount, window.YAFFA.locale, row.transaction_currency);
+                        return prefix + helpers.toFormattedCurrency(
+                            amount,
+                            window.YAFFA.locale,
+                            row.transaction_currency
+                        );
                     }
                 }
             }
@@ -364,6 +385,26 @@ export let transactionColumnDefiniton = {
             if (row.transaction_type.type === 'standard') {
                 return row.config.amount_to;
             }
+        },
+        className: 'dt-nowrap',
+        type: 'num',
+    },
+
+    // Amount referring to the global account currency
+    amountCustom:  {
+        title: __("Amount"),
+        data: 'current_cash_flow',
+        defaultContent: '',
+        render: function (data, type) {
+            if (type === 'display') {
+                return helpers.toFormattedCurrency(
+                    data,
+                    window.YAFFA.locale,
+                    window.account.config.currency
+                );
+            }
+
+            return data;
         },
         className: 'dt-nowrap',
         type: 'num',
@@ -390,7 +431,33 @@ export let transactionColumnDefiniton = {
                 return data.map(tag => tag.name).join(', ');
             }
         }
-    }
+    },
+
+    // Combined icons for comment and tags
+    extra: {
+        title: __("Extra"),
+        defaultContent: '',
+        render: function (_data, type, row) {
+            return commentIcon(row.comment, type) + tagIcon(row.tags, type);
+        },
+        className: "text-center",
+        orderable: false,
+    },
+
+    // Icon for the main transaction type (standard or investment)
+    type: {
+        title: __('Type'),
+        defaultContent: '',
+        render: function(_data, type, row) {
+            if (type === 'filter') {
+                // TODO: this should be translated
+                return row.transaction_type.type;
+            }
+
+            return transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
+        },
+        className: "text-center",
+    },
 }
 
 export function initializeAjaxDeleteButton(selector, successCallback) {
@@ -405,7 +472,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
         $(this).addClass('busy');
 
         axios.delete(window.route('api.transactions.destroy', {transaction: id}))
-            .then(function (_response) {
+            .then(function () {
                 // Find and remove original row in schedule table
                 let row = $(selector).dataTable().api().row(function (_idx, data, _node) {
                     return data.id === id;
@@ -414,16 +481,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Transaction deleted (#' + id + ')',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 
@@ -434,16 +497,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
             })
             .catch(function (error) {
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'danger',
-                            message: 'Error deleting transaction (#' + id + '): ' + error,
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Error'),
+                        body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
+                        toastClass: "bg-danger"
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 

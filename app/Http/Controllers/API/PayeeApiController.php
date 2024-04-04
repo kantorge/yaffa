@@ -7,8 +7,8 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
-use App\Models\TransactionType;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -65,13 +65,13 @@ class PayeeApiController extends Controller
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->where('account_entities.active', true);
                 })
-                ->where('transactions.user_id', Auth::user()->id)
-                ->where('account_entities.user_id', Auth::user()->id)
+                ->where('transactions.user_id', $request->user()->id)
+                ->where('account_entities.user_id', $request->user()->id)
                 ->where(
                     // TODO: fallback to query without this, if no results are found
                     'transaction_type_id',
                     '=',
-                    TransactionType::where('name', '=', $request->get('transaction_type'))->first()->id
+                    config('transaction_types')[$request->get('transaction_type')]['id']
                 )
                 ->when($accountId, function ($query) use ($accountDirection, $accountId) {
                     return $query->where(
@@ -231,6 +231,9 @@ class PayeeApiController extends Controller
         return response($payee, Response::HTTP_OK);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
     {
         /**
@@ -246,6 +249,9 @@ class PayeeApiController extends Controller
         return Response::HTTP_OK;
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
     {
         /**

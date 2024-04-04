@@ -23,6 +23,7 @@
 
 <script>
 import TransactionFormInvestment from "../TransactionFormInvestment.vue";
+import * as helpers from "../../helpers";
 
 export default {
     name: 'CreateInvestmentTransactionModal',
@@ -66,17 +67,13 @@ export default {
         },
         onSuccess(transaction) {
             // Emit a custom event to global scope about the new transaction to be displayed as a notification
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: 'success',
-                        message: __('Transaction added (#:transactionId)', {transactionId: transaction.id}),
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                        timeout: 5000,
-                    }
-                },
+                    header: __('Success'),
+                    headerSmall: helpers.transactionLink(transaction.id, __('Go to transaction')),
+                    body: __('Transaction added.'),
+                    toastClass: "bg-success",
+                }
             });
             window.dispatchEvent(notificationEvent);
 
@@ -111,7 +108,7 @@ export default {
         // Set up event listener for global scope about new schedule instance to be opened in modal editor
         window.addEventListener('initiateEnterInstance', function (event) {
             // Validate that transaction type is investment
-            if (event.detail.transaction.config_type !== 'transaction_detail_investment') {
+            if (event.detail.transaction.config_type !== 'investment') {
                 return;
             }
 

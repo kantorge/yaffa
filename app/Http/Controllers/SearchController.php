@@ -30,27 +30,29 @@ class SearchController extends Controller
         $searchTerm = $request->get('q');
         $results = [];
 
-        if ($searchTerm && mb_strlen($searchTerm) > 2) {
-            $user = $request->user();
-
-            // Search for accounts of the user
-            $results['accounts'] = $this->searchAccounts($user, $searchTerm);
-
-            // Search payees of the user
-            $results['payees'] = $this->searchPayees($user, $searchTerm);
-
-            // Search tags of the user
-            $results['tags'] = $this->searchTags($user, $searchTerm);
-
-            // Search categories of the user
-            $results['categories'] = $this->searchCategories($user, $searchTerm);
-
-            // Search investments of the user
-            $results['investments'] = $this->searchInvestments($user, $searchTerm);
-
-            // Search transactions of the user for transaction or transaction item comments
-            $results['transactions'] = $this->searchTransactions($user, $searchTerm);
+        if (!($searchTerm && mb_strlen($searchTerm) > 2)) {
+            return view('search.search', compact('results', 'searchTerm'));
         }
+
+        $user = $request->user();
+
+        // Search for accounts of the user
+        $results['accounts'] = $this->searchAccounts($user, $searchTerm);
+
+        // Search payees of the user
+        $results['payees'] = $this->searchPayees($user, $searchTerm);
+
+        // Search tags of the user
+        $results['tags'] = $this->searchTags($user, $searchTerm);
+
+        // Search categories of the user
+        $results['categories'] = $this->searchCategories($user, $searchTerm);
+
+        // Search investments of the user
+        $results['investments'] = $this->searchInvestments($user, $searchTerm);
+
+        // Search transactions of the user for transaction or transaction item comments
+        $results['transactions'] = $this->searchTransactions($user, $searchTerm);
 
         return view('search.search', compact('results', 'searchTerm'));
     }

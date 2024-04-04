@@ -1,5 +1,142 @@
 # Changelog
 
+## [1.4.0](https://github.com/kantorge/yaffa/compare/v1.3.0...v1.4.0) (2024-04-04)
+
+
+### Features
+
+* amount color coding on the account view ([52a7421](https://github.com/kantorge/yaffa/commit/52a742172e302f56ad92c16049b317f0e6cf1208))
+* convert in-page notifications to toast ([8086ba3](https://github.com/kantorge/yaffa/commit/8086ba32da26abd9c442e491e2c411fa10603242))
+* enable pasting into math input fields ([102238f](https://github.com/kantorge/yaffa/commit/102238ff19184d3fd3cccf0760926a3238bab71c))
+* redesign the schedules report view and add basic onboarding tour ([4a87fc1](https://github.com/kantorge/yaffa/commit/4a87fc1f1ddcdf938fcdda8e3a47ac749bb14d7d))
+
+
+### Bug Fixes
+
+* amount value on account detail view ([79ab918](https://github.com/kantorge/yaffa/commit/79ab918e1ff0561c7c3b7d6a7b178455475547b3))
+* code cleanup ([aab4253](https://github.com/kantorge/yaffa/commit/aab425364595210826c4a6cb7aaf6071060e0a56))
+* minor code cleanup ([ec58e9c](https://github.com/kantorge/yaffa/commit/ec58e9cdd5f5192868c33f48718cd56f24e7bca0))
+* remove unused DataTables scroller reference ([4904959](https://github.com/kantorge/yaffa/commit/490495970e8e9e7b3d9b260fdd2510bce4f98432))
+* unrelated fixes and refactoring ([75122d1](https://github.com/kantorge/yaffa/commit/75122d1b2bcfdcef31090430b8ec29b983f17557))
+
+
+### Miscellaneous Chores
+
+* remove unused Qodana config ([3cfab5e](https://github.com/kantorge/yaffa/commit/3cfab5eb3f5611af102a387094132ad837cff4da))
+
+## [1.3.0](https://github.com/kantorge/yaffa/compare/v1.2.2...v1.3.0) (2024-03-17)
+
+
+### Features
+
+* option to manually trigger account summary calculation ([e5baf62](https://github.com/kantorge/yaffa/commit/e5baf62ee218c031c31375681c1beaa97d241a86))
+
+
+### Bug Fixes
+
+* budget calculation for specific schedule intervals ([8eaed0f](https://github.com/kantorge/yaffa/commit/8eaed0f6b7be86902da71067577e68cd11712a5f))
+* manually add commands to kernel ([eaa2690](https://github.com/kantorge/yaffa/commit/eaa2690ac319866d482f20ee5a027a0fedb3fdc9))
+* show investment view ([f3d8a93](https://github.com/kantorge/yaffa/commit/f3d8a935dd1ead75b28cc902d85b9ea2e82fda85))
+* transaction delete behavior on budget report ([b9cd90f](https://github.com/kantorge/yaffa/commit/b9cd90f5d99763e7566f52fbe8c7fbb07af944e0))
+
+## [1.2.2](https://github.com/kantorge/yaffa/compare/v1.2.1...v1.2.2) (2024-03-12)
+
+
+### Bug Fixes
+
+* non-required schedule dates ([8f35b1c](https://github.com/kantorge/yaffa/commit/8f35b1c58fb14f86991ff46097a227252b0fda1a))
+* table header on budget report ([48c3031](https://github.com/kantorge/yaffa/commit/48c3031229f7e08e4b73edc4e9c9791df506863c))
+
+## [1.2.1](https://github.com/kantorge/yaffa/compare/v1.2.0...v1.2.1) (2024-03-12)
+
+
+### Bug Fixes
+
+* build app.js ([782cc4b](https://github.com/kantorge/yaffa/commit/782cc4b613137b9bedec0b0cfd1dca8ef67a1381))
+
+## [1.2.0](https://github.com/kantorge/yaffa/compare/v1.1.2...v1.2.0) (2024-03-12)
+
+
+### Features
+
+* account filter on the budget report ([b98b329](https://github.com/kantorge/yaffa/commit/b98b329360fe4a3f36a967cf0f508ff8b217508d))
+
+## [1.1.2](https://github.com/kantorge/yaffa/compare/v1.1.1...v1.1.2) (2024-03-08)
+
+
+### Bug Fixes
+
+* currency rate cache ([d640cd6](https://github.com/kantorge/yaffa/commit/d640cd6e8d4f7023f51133ca9aa3c18451252222))
+
+## [1.1.1](https://github.com/kantorge/yaffa/compare/v1.1.0...v1.1.1) (2024-03-07)
+
+
+### Bug Fixes
+
+* investment calculation for account monthly summary ([1f1f1c1](https://github.com/kantorge/yaffa/commit/1f1f1c12eee45e4a87478d270111b5441250ac9c))
+* show account view bugs ([ee5567c](https://github.com/kantorge/yaffa/commit/ee5567c2e4504718917386714cadb713aaf6926a))
+* transaction cache calculation in migration ([c098bd5](https://github.com/kantorge/yaffa/commit/c098bd5d12e33bf0189cd13da580e948acfcd619))
+
+## [1.1.0](https://github.com/kantorge/yaffa/compare/v1.0.2...v1.1.0) (2024-03-03)
+
+
+### Features
+
+* change the active status of tags from the index view ([f704a57](https://github.com/kantorge/yaffa/commit/f704a57fcf8d4180c4b28a456f1b799a18288467))
+
+
+### Bug Fixes
+
+* code smells and other issues ([6b66262](https://github.com/kantorge/yaffa/commit/6b66262bcfd453fe293fcc1705c026e3646a3262))
+
+## [1.0.2](https://github.com/kantorge/yaffa/compare/v1.0.1...v1.0.2) (2024-03-03)
+
+
+### Bug Fixes
+
+* migration update to direct DB query ([22ebd4a](https://github.com/kantorge/yaffa/commit/22ebd4a256ed1deeaba47fd1ed3191e5bdce97c6))
+
+## [1.0.1](https://github.com/kantorge/yaffa/compare/v1.0.0...v1.0.1) (2024-03-03)
+
+
+### Bug Fixes
+
+* migration update to chunks ([e63ee08](https://github.com/kantorge/yaffa/commit/e63ee081c1d2a4c18ff33d3e4bbbf40574c465d5))
+
+## [1.0.0](https://github.com/kantorge/yaffa/compare/v0.5.1...v1.0.0) (2024-03-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* The application relies on scheduled and ad-hoc jobs. Earlier these were only convenience features.
+* Increase the minimum PHP version required
+
+### Feature
+
+* account summaries ([#145](https://github.com/kantorge/yaffa/issues/145)) ([c129a6c](https://github.com/kantorge/yaffa/commit/c129a6c28cb335fae40fb1f22fa5962bb565199e))
+
+
+### Bug Fixes
+
+* adjust automated testing workflow ([299f83e](https://github.com/kantorge/yaffa/commit/299f83ea0c881dda8b16017297f23a39fbe38f80))
+* code smells and other issues ([12ad61e](https://github.com/kantorge/yaffa/commit/12ad61e93f140d33d673baeccab3f8d74a9d4923))
+* code smells and other issues ([7f02185](https://github.com/kantorge/yaffa/commit/7f021855c83cf8766bd3357c64aed20d22d192e3))
+* currency in account view ([50b9409](https://github.com/kantorge/yaffa/commit/50b9409fa66aae69caf2a4c9d9c7d3bef7d8e04a))
+* phpunit.xml coverage ([7ba32bd](https://github.com/kantorge/yaffa/commit/7ba32bd65e0c958c546bc6895ae190d9ef31f80c))
+* remove code duplication from test strings ([8ac690f](https://github.com/kantorge/yaffa/commit/8ac690fa5f9117afa16768c70c5c916f9c07a68c))
+* upgrade vue from 3.3.11 to 3.3.12 ([e2137d4](https://github.com/kantorge/yaffa/commit/e2137d4a64c95637821d071556db9592e327c97d))
+* upgrade vue from 3.3.12 to 3.3.13 ([c5d7ef2](https://github.com/kantorge/yaffa/commit/c5d7ef22ef64fd29dafc1aac3cb0fe9ed079bce6))
+
+
+### Miscellaneous Chores
+
+* composer update ([f4017a7](https://github.com/kantorge/yaffa/commit/f4017a7bc62635ba1f45b2d295ba2e706ef6feff))
+* pint updates ([4548758](https://github.com/kantorge/yaffa/commit/454875865c3b3f492c0102a2959bdb610f512e8b))
+* update NPM packages ([16d9285](https://github.com/kantorge/yaffa/commit/16d9285821b0435548220b7638959bbd1c9043ca))
+* update NPM packages ([4e0d2b6](https://github.com/kantorge/yaffa/commit/4e0d2b6acd10df7c08fb3cbe9e77c3d9698b479d))
+* upgrade Laravel to version 10 ([0267367](https://github.com/kantorge/yaffa/commit/026736716deed206045d32b862113763adfcdba4))
+* upgrade minimum PHP version to 8.3 ([1d96b5d](https://github.com/kantorge/yaffa/commit/1d96b5d170668898cd2187084885591cd91e10d1))
+
 ## [0.5.1](https://github.com/kantorge/yaffa/compare/v0.5.0...v0.5.1) (2024-01-05)
 
 

@@ -74,7 +74,7 @@ export default {
             }
 
             if (urlParams.get('account_to')) {
-                data.transactionData.config.account_from_id = urlParams.get('account_to');
+                data.transactionData.config.account_to_id = urlParams.get('account_to');
             }
 
             if (urlParams.get('schedule')) {

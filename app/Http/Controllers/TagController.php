@@ -7,7 +7,7 @@ use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
-use JavaScript;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class TagController extends Controller
 {

@@ -123,9 +123,14 @@
                                         <td class="{{ $payee->active ? '' : 'text-muted text-italic' }}">{{ $payee->name }}</td>
                                         <td class="transactionCount" data-id="{{ $payee->id }}" data-type="payee"></td>
                                         <td class="payeeAction">
-                                            {{-- TODO: planned feature
-                                            <a href="{{ route('transaction.create', ['type' => 'standard', 'account_to' => $payee->id ]) }}" class="btn btn-sm btn-success" title="New transaction"><i class="fa fa-plus"></i></a>
-                                            --}}
+                                            <a
+                                                    href="{{ route('transaction.create',
+                                                        ['type' => 'standard', 'account_to' => $payee->id ]) }}"
+                                                    class="btn btn-xs btn-success"
+                                                    title="{{ __('New transaction') }}"
+                                            >
+                                                <i class="fa fa-plus"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

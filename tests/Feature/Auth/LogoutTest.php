@@ -10,12 +10,12 @@ class LogoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function logoutRoute()
+    protected function logoutRoute(): string
     {
         return route('logout');
     }
 
-    protected function successfulLogoutRoute()
+    protected function successfulLogoutRoute(): string
     {
         return '/';
     }
@@ -23,6 +23,7 @@ class LogoutTest extends TestCase
     /** @test */
     public function test_user_can_logout()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->be($user);
 
@@ -33,7 +34,7 @@ class LogoutTest extends TestCase
     }
 
     /** @test */
-    public function test_usser_cannot_logout_when_not_authenticated()
+    public function test_user_cannot_logout_when_not_authenticated()
     {
         $response = $this->post($this->logoutRoute());
 

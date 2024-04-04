@@ -19,7 +19,7 @@ td.dt-nowrap {
 }
 
 // Hide the DataTables search box
-.no-datatable-search .dataTables_filter {
+.no-datatable-search .dt-search {
     display: none;
 }
 
@@ -79,9 +79,17 @@ ul.search-result-list li.inactive:before {
     text-decoration: none;
 }
 
-// Workaround for dataTable scroll header space
-.dataTables_scrollHead .table {
-    margin-bottom: 0 !important;
+// Custom row color for DataTables
+table.dataTable tr.table-danger {
+    background-color: #fadddd !important;
+}
+table.dataTable tr.table-warning {
+    background-color: #feefd0 !important;
+}
+
+:root {
+    --dt-row-selected: 235, 237, 239;
+    --dt-row-selected-text: 0, 0, 0;
 }
 
 // Sidebar form settings

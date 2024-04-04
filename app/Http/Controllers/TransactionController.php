@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class TransactionController extends Controller
         // Sanity check for necessary assets
         if (Auth::user()->accounts()->active()->count() === 0) {
             $this->addMessage(
-                __('Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.'),
+                __('transaction.requirement.account'),
                 'info',
                 __('No accounts found'),
                 'info-circle'
@@ -53,6 +54,7 @@ class TransactionController extends Controller
      * @param Transaction $transaction
      * @param string $action
      * @return View
+     * @throws AuthorizationException
      */
     public function openTransaction(Transaction $transaction, string $action): View
     {
@@ -61,6 +63,15 @@ class TransactionController extends Controller
          * @name('transaction.open')
          * @middlewares('web', 'auth', 'verified')
          */
+
+        // Authorize user for transaction
+        $this->authorize('view', $transaction);
+
+        // Validate if action is supported
+        $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
+        if (! in_array($action, $availableActions)) {
+            abort(404);
+        }
 
         // Load all relevant relations
         $transaction->loadDetails();
@@ -100,6 +111,7 @@ class TransactionController extends Controller
      *
      * @param Transaction $transaction
      * @return RedirectResponse
+     * @throws AuthorizationException
      */
     public function destroy(Transaction $transaction): RedirectResponse
     {
@@ -108,7 +120,13 @@ class TransactionController extends Controller
          * @name('transactions.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
+
+        // Authorize user for transaction
+        $this->authorize('forceDelete', $transaction);
+
+        // Remove the transaction and its config
         $transaction->delete();
+        $transaction->config()->delete();
 
         self::addMessage('Transaction #' . $transaction->id . ' deleted', 'success', '', '', true);
 

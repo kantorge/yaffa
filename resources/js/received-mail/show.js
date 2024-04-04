@@ -65,7 +65,7 @@ document.querySelector('.reprocessIcon').addEventListener('click', function () {
     const id = window.mail.id;
 
     axios.patch(window.route('api.received-mail.reset-processed', {'receivedMail': id}))
-        .then(function (response) {
+        .then(function () {
             // Reload the page
             location.reload();
 
@@ -73,20 +73,16 @@ document.querySelector('.reprocessIcon').addEventListener('click', function () {
         })
         .catch(function (error) {
             // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: 'danger',
-                        message: 'Error reseting email processed status (#' + id + '): ' + error,
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                    header: __('Error'),
+                    body: __('Error reseting email processed status: ' + error),
+                    toastClass: "bg-danger",
+                }
             });
             window.dispatchEvent(notificationEvent);
 
-            $(selector).find(".busy[data-delete]").removeClass('busy')
+            $(".busy[data-delete]").removeClass('busy')
         });
 
 });

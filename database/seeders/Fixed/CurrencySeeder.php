@@ -16,7 +16,6 @@ class CurrencySeeder extends Seeder
         Currency::factory()->create([
             'name' => 'Hungarian Forint',
             'iso_code' => 'HUF',
-            'num_digits' => 0,
             'base' => null,
             'auto_update' => false,
             'user_id' => $user->id,
@@ -25,7 +24,6 @@ class CurrencySeeder extends Seeder
         Currency::factory()->create([
             'name' => 'US Dollar',
             'iso_code' => 'USD',
-            'num_digits' => 2,
             'base' => null,
             'auto_update' => true,
             'user_id' => $user->id,
@@ -34,7 +32,6 @@ class CurrencySeeder extends Seeder
         Currency::factory()->create([
             'name' => 'Euro',
             'iso_code' => 'EUR',
-            'num_digits' => 2,
             'base' => true,
             'auto_update' => true,
             'user_id' => $user->id,

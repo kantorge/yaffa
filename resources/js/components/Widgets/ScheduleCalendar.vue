@@ -33,7 +33,7 @@
                                     v-for="item in attributes"
                                     :key="item.key"
                                     style="margin: 0 1px;"
-                                    :href="getTransactionLink(item.customData.id)"
+                                    :href="getTransactionLink(item.customData?.id || 0)"
                                     v-html="getTransactionTypeIcon(item.customData)"
                             ></a>
                         </div>
@@ -65,6 +65,10 @@ export default {
 
     methods: {
         getTransactionTypeIcon: function (transaction) {
+            if (!transaction) {
+                return '';
+            }
+
             return dataTableHelpers.transactionTypeIcon(
                 transaction.transaction_type.type,
                 transaction.transaction_type.name,
@@ -75,6 +79,10 @@ export default {
             return window.route('transaction.open', {transaction: id, action: 'enter'});
         },
         getTransactionLabel: function (transaction) {
+            if (!transaction) {
+                return '';
+            }
+
             if (transaction.transaction_type.type === 'standard') {
                 // Capitalize first letter of transaction type
                 const type = transaction.transaction_type.name.charAt(0).toUpperCase() + transaction.transaction_type.name.slice(1);

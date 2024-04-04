@@ -183,7 +183,7 @@ class ReceivedMailListTest extends DuskTestCase
                 // Confirm the dialog
                 ->acceptDialog()
                 // Wait for the notification to appear
-                ->waitFor('#BootstrapNotificationContainer .alert-success')
+                ->waitFor('.toast-container .toast.bg-success')
                 // Check that the mail is gone from the table
                 ->assertMissing(TABLESELECTOR . ' button.deleteIcon[data-id="' . $mail->id . '"]');
 

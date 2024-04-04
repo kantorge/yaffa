@@ -35,7 +35,6 @@ class CurrencyFactory extends Factory
         return [
             'name' => $currency['name'],
             'iso_code' => $currency['iso_code'],
-            'num_digits' => $currency['num_digits'],
             'base' => null,
             'auto_update' => $this->faker->boolean,
             'user_id' => $user->id,
@@ -55,7 +54,6 @@ class CurrencyFactory extends Factory
             return [
                 'name' => $currency['name'],
                 'iso_code' => $currency['iso_code'],
-                'num_digits' => $currency['num_digits'],
                 'base' => null,
                 'auto_update' => $this->faker->boolean,
                 'user_id' => $attributes['user_id'] ?? User::factory()->create()->id,

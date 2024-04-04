@@ -4,7 +4,7 @@ require("datatables.net-responsive-bs5");
 import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
-} from './../components/dataTableHelper';
+} from '../components/dataTableHelper';
 
 const dataTableSelector = '#table';
 

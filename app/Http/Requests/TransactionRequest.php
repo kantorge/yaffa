@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\TransactionType;
 use App\Rules\IsFalsy;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +26,14 @@ class TransactionRequest extends FormRequest
             'config.tax' => __('tax'),
             // Standard fields
             'config.amount_to' => __('amount to'),
+            // Schedule fields
+            'schedule_config.start_date' => __('schedule start date'),
+            'schedule_config.next_date' => __('schedule next date'),
+            'schedule_config.end_date' => __('schedule end date'),
+            'schedule_config.frequency' => __('schedule frequency'),
+            'schedule_config.interval' => __('schedule interval'),
+            'schedule_config.count' => __('schedule count'),
+            'schedule_config.inflation' => __('schedule inflation'),
         ];
     }
 
@@ -43,7 +49,7 @@ class TransactionRequest extends FormRequest
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
-            'config_type' => 'required|in:transaction_detail_standard,transaction_detail_investment',
+            'config_type' => 'required|in:standard,investment',
 
             'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
         ];
@@ -75,13 +81,22 @@ class TransactionRequest extends FormRequest
                     'nullable',
                     'date',
                     'after_or_equal:schedule_config.start_date',
+                    'after_or_equal:schedule_config.next_date',
+                    // Must be empty, if count is provided
+                    'prohibits:schedule_config.count',
                 ],
                 'schedule_config.frequency' => [
                     'required',
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
                 ],
                 'schedule_config.interval' => 'nullable|integer|gte:1',
-                'schedule_config.count' => 'nullable|integer|gte:1',
+                'schedule_config.count' => [
+                    'nullable',
+                    'integer',
+                    'gte:1',
+                    // Must be empty, if end_date is provided
+                    'prohibits:schedule_config.end_date',
+                ],
                 'schedule_config.inflation' => 'nullable|numeric',
             ]);
         } else {
@@ -115,7 +130,7 @@ class TransactionRequest extends FormRequest
         }
 
         // Adjustments based on transaction type
-        if ($this->get('config_type') === 'transaction_detail_standard') {
+        if ($this->get('config_type') === 'standard') {
             //any standard transactions have common rules for items
             $rules = array_merge($rules, [
                 'items' => 'array',
@@ -187,7 +202,7 @@ class TransactionRequest extends FormRequest
                     'config.amount_to' => 'required|numeric|gt:0',
                 ]);
             }
-        } elseif ($this->get('config_type') === 'transaction_detail_investment') {
+        } elseif ($this->get('config_type') === 'investment') {
             // Adjust detail related rules, based on transaction type
             $rules = array_merge($rules, [
                 'config.account_id' => [
@@ -227,28 +242,17 @@ class TransactionRequest extends FormRequest
             ];
         }
 
-        // Dividend OR Cap gains
-        if ($transactionTypeId === 8 || $transactionTypeId === 9 || $transactionTypeId === 10) {
+        // Dividend OR Interest yield
+        if ($transactionTypeId === 8 || $transactionTypeId === 11) {
             return [
                 'config.dividend' => 'required|numeric|gt:0',
             ];
         }
 
+        // Earlier cap gains (9 and 10) are not used currently
+
         // Fallback
         return [];
-    }
-
-    /**
-     * Configure conditional rules for some items
-     */
-    public function withValidator(Validator $validator): void
-    {
-        // Schedule start/next date rule is needed if schedule AND/OR budget is used, AND end_date is provided
-        $validator->sometimes(
-            ['schedule_config.next_date', 'schedule_config.start_date'],
-            'before_or_equal:schedule_config.end_date',
-            fn ($input) => ($input->schedule || $input->budget) && array_key_exists('end_date', $input->schedule_config) && $input->schedule_config['end_date']
-        );
     }
 
     /**
@@ -259,13 +263,15 @@ class TransactionRequest extends FormRequest
         // Get transaction type ID by name
         if ($this->transaction_type) {
             $this->merge([
-                'transaction_type_id' => TransactionType::where('name', $this->transaction_type)->first()->id,
+                'transaction_type_id' => config('transaction_types')[$this->transaction_type]['id']
             ]);
         }
 
-        // Ensure that reconciled flag is set to false if not provided
+        // Ensure that flags are set to false if not provided
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
+            'schedule' => $this->schedule ?? 0,
+            'budget' => $this->budget ?? 0,
         ]);
     }
 }

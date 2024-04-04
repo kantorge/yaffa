@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,11 +23,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Carbon|null $updated_at
  * @property-read mixed $full_name
  * @property-read Category|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|AccountEntity[] $payeesNotPreferring
+ * @property-read Collection|AccountEntity[] $payeesNotPreferring
  * @property-read int|null $payees_not_preferring_count
- * @property-read \Illuminate\Database\Eloquent\Collection|Transaction[] $transaction
+ * @property-read Collection|Transaction[] $transaction
  * @property-read int|null $transaction_count
- * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItem
+ * @property-read Collection|TransactionItem[] $transactionItem
  * @property-read int|null $transaction_item_count
  * @property-read User $user
  * @method static Builder|Category active()
@@ -58,7 +59,7 @@ class Category extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',

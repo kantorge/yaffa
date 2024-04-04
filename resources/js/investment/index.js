@@ -1,10 +1,13 @@
-import {renderDeleteAssetButton} from "./../components/dataTableHelper";
+import {renderDeleteAssetButton} from "../components/dataTableHelper";
 
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 import {toFormattedCurrency} from '../helpers';
+import 'jstree';
+import 'jstree/src/themes/default/style.css'
+
 
 /**
  * Define the conditions for the delete button, as required by the DataTables helper.
@@ -168,30 +171,22 @@ let table = $('#investmentSummary').DataTable({
                     // Remove row from table
                     $(settings.nTable).DataTable().row($(this).parents('tr')).remove().draw();
 
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Investment deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Success'),
+                            body: __('Investment deleted'),
+                            toastClass: 'bg-success',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete investment'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete investment'),
+                            toastClass: 'bg-danger',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
@@ -205,11 +200,65 @@ let table = $('#investmentSummary').DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: true,
     processing: true,
     paging: false,
 });
 
-// Listeners for button filter(s)
-dataTableHelpers.initializeFilterButtonsActive(table, 1);
+// Initialize the "tree" for the investment group filter list
+const selectorTreeContainer = '#investment-group-tree-container';
+let investmentGroups = window.investmentGroups || [];
+// Convert the investment groups to the format required by jstree
+const treeData = investmentGroups
+    .map(group => {
+        return {
+            id:  group.id,
+            parent: 0,
+            text: group.name,
+            state: {
+                selected: false,
+            },
+        };
+    })
+    .sort((a, b) => a.text.localeCompare(b.text));
+
+// Artificially add a root node
+treeData.push({
+    id: 0,
+    parent: '#',
+    text: __('Investment groups'),
+    state: {
+        selected: true,
+        opened: true,
+    }
+});
+
+$(selectorTreeContainer)
+    .jstree({
+        core: {
+            data: treeData,
+            themes: {
+                dots: false,
+                icons: false,
+            },
+        },
+        plugins: ['checkbox'],
+        checkbox: {
+            keep_selected_style: false
+        }
+    })
+    .on('select_node.jstree', filterInvestmentGroup)
+    .on('deselect_node.jstree', filterInvestmentGroup);
+
+// Listeners for filters
+function filterInvestmentGroup() {
+    const selectedNodes = $(selectorTreeContainer).jstree().get_checked(true);
+    const selectedInvestmentGroupNames = selectedNodes.map(node => '^' + node.text + '$');
+    table.column(2).search(selectedInvestmentGroupNames.join('|'), true, false).draw();
+}
+$('input[name=table_filter_active]').on("change", function() {
+    table.column(1).search(this.value).draw();
+});
+$('#table_filter_search_text').keyup(function(){
+    table.search($(this).val()).draw() ;
+})

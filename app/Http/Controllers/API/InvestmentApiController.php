@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -90,6 +91,9 @@ class InvestmentApiController extends Controller
         return response()->json($prices, Response::HTTP_OK);
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function updateActive(Investment $investment, $active): JsonResponse
     {
         /**
@@ -155,8 +159,8 @@ class InvestmentApiController extends Controller
                         [
                             'id' => $transaction->id,
                             'transaction_type' => $transaction->transactionType->toArray(),
-                            'amount_operator' => $transaction->transactionType->amount_operator,
-                            'quantity_operator' => $transaction->transactionType->quantity_operator,
+                            'amount_multiplier' => $transaction->transactionType->amount_multiplier,
+                            'quantity_multiplier' => $transaction->transactionType->quantity_multiplier,
 
                             'reconciled' => $transaction->reconciled,
                             'comment' => $transaction->comment,
@@ -251,12 +255,9 @@ class InvestmentApiController extends Controller
                 // TODO: group by date
                 ->sortBy('date')
                 ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
-                    $operator = $transaction['quantity_operator'];
-                    if (! $operator) {
-                        $quantity = 0;
-                    } else {
-                        $quantity = ($operator === 'minus' ? -1 : 1) * $transaction['quantity'];
-                    }
+                    // Quantity operator can be 1, -1 or null.
+                    // It's the expected behavior to set the quantity to 0 if the operator is null.
+                    $quantity = $transaction['quantity_multiplier'] * $transaction['quantity'];
 
                     $runningSchedule += $quantity;
                     if ($transaction['transaction_group'] === 'history') {

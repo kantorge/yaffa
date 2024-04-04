@@ -16,7 +16,7 @@ class CurrencyTest extends TestCase
     {
         parent::setUp();
 
-        $this->setBaseRoute('currencies');
+        $this->setBaseRoute('currency');
         $this->setBaseModel(Currency::class);
     }
 
@@ -40,11 +40,12 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_access_other_users_resource()
     {
+        /** @var User $user1 */
         $user1 = User::factory()->create();
         $currency = $this->createForUser($user1, $this->base_model);
 
+        /** @var User $user2 */
         $user2 = User::factory()->create();
-        /** @var \Illuminate\Contracts\Auth\Authenticatable $user2 */
         $this->actingAs($user2)->get(route("{$this->base_route}.edit", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->patch(route("{$this->base_route}.update", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
@@ -53,6 +54,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_view_list_of_currencies()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model);
 
@@ -65,6 +67,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_access_create_form()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this
@@ -78,6 +81,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_create_a_currency_with_missing_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this
@@ -95,6 +99,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_create_a_currency()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user, [
             'base' => true, // The first currency is expected to be the base currency
@@ -104,6 +109,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_edit_an_existing_currency()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);
@@ -117,6 +123,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_cannot_update_a_currency_with_missing_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);
@@ -138,6 +145,7 @@ class CurrencyTest extends TestCase
     /** @test */
     public function user_can_update_a_currency_with_proper_data()
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $currency = $this->createForUser($user, $this->base_model);
@@ -150,20 +158,22 @@ class CurrencyTest extends TestCase
                     'id' => $currency->id,
                     'name' => $currency->name . '_2',
                     'iso_code' => $currency->iso_code,
-                    'num_digits' => $currency->num_digits,
                     'base' => $currency->base,
                     'auto_update' => $currency->auto_update,
                 ]
             );
 
         $response->assertRedirect($this->base_route);
-        //TODO: make this dynamic instead of fixed 1st element
-        $response->assertSessionHas('notification_collection.0.type', 'success');
+        $notifications = session('notification_collection');
+        $successNotificationExists = collect($notifications)
+            ->contains(fn ($notification) => $notification['type'] === 'success');
+        $this->assertTrue($successNotificationExists);
     }
 
     /** @test */
     public function user_can_delete_an_existing_currency()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
