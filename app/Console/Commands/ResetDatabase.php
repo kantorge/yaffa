@@ -91,6 +91,7 @@ class ResetDatabase extends Command
 
         // Next, run the commands to recalculate various stored data
         Artisan::call('app:cache:transaction-schedule-active-flags');
+        Artisan::call('app:calculate-transaction-cached-data');
         Artisan::call('app:cache:account-monthly-summaries');
 
         // Finally, put the site live
