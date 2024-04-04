@@ -71,14 +71,14 @@ let table = $(tableSelector).DataTable({
     select: {
         select: true,
         info: false,
-        style: 'os',
+        style: 'os'
     },
     deferRender:    true,
     scrollY:        '500px',
     scrollCollapse: true,
     stateSave:      false,
     processing:     true,
-    paging:         false,
+    paging:         false
 });
 
 // Initialize the contextual actions plugin
@@ -88,10 +88,10 @@ table.contextualActions({
     contextMenu: {
         enabled: true,
         isMulti: false,
-        headerRenderer: false,
+        headerRenderer: false
     },
     buttonList: {
-        enabled: false,
+        enabled: false
     },
     items: [
         {
@@ -100,7 +100,7 @@ table.contextualActions({
             iconClass: 'fa fa-pencil',
             contextMenuClasses: ['text-success fw-bold'],
             action: function (row) {
-                window.location.href = route('transaction.open', {
+                window.location.href = window.route('transaction.open', {
                     transaction: row[0].id,
                     action: 'enter'
                 })
@@ -128,7 +128,7 @@ table.contextualActions({
                 });
                 window.dispatchEvent(notificationEvent);
 
-                axios.patch(route('api.transactions.skipScheduleInstance', {transaction: id}))
+                window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
                         let row = $(tableSelector).dataTable().api().row(function (_idx, data, _node) {
@@ -168,7 +168,7 @@ table.contextualActions({
                         // Close the toast with a small delay
                         setTimeout(function () {
                             let toastElement = document.querySelector(`.toast-transaction-${id}`);
-                            let toastInstance = new bootstrap.Toast(toastElement);
+                            let toastInstance = new window.bootstrap.Toast(toastElement);
                             toastInstance.hide();
                         }, 250);
                     });
@@ -239,8 +239,8 @@ table.contextualActions({
                 });
                 window.dispatchEvent(notificationEvent);
 
-                axios.delete(window.route('api.transactions.destroy', {transaction: id}))
-                    .then(function (_response) {
+                window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+                    .then(function () {
                         // Find and remove original row in schedule table
                         let row = $(tableSelector).dataTable().api().row(function (_idx, data, _node) {
                             return data.id === id;
@@ -275,7 +275,7 @@ table.contextualActions({
                         // Close the toast with a small delay
                         setTimeout(function () {
                             let toastElement = document.querySelector(`.toast-transaction-${id}`);
-                            let toastInstance = new bootstrap.Toast(toastElement);
+                            let toastInstance = new window.bootstrap.Toast(toastElement);
                             toastInstance.hide();
                         }, 250);
                     });

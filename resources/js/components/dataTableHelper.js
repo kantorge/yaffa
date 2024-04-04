@@ -472,7 +472,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
         $(this).addClass('busy');
 
         axios.delete(window.route('api.transactions.destroy', {transaction: id}))
-            .then(function (_response) {
+            .then(function () {
                 // Find and remove original row in schedule table
                 let row = $(selector).dataTable().api().row(function (_idx, data, _node) {
                     return data.id === id;
