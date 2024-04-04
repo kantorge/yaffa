@@ -144,9 +144,9 @@ export default {
                 vue.ready = true;
                 vue.busy = false;
 
-                // Initialize the tour
+                // Initialize the tour button, if it exists
                 document.querySelector('.tour-trigger')
-                    .addEventListener('click', function () {
+                    ?.addEventListener('click', function () {
                         vue.tourData.drive();
                     });
             });
