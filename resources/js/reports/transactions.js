@@ -83,14 +83,7 @@ window.table = $(tableSelector).DataTable({
     },
     columns: [
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
-        {
-            title: __('Type'),
-            defaultContent: '',
-            render: function(_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
-            },
-            className: "text-center",
-        },
+        dataTableHelpers.transactionColumnDefinition.type,
         {
             title: __('From'),
             defaultContent: '',
@@ -103,15 +96,7 @@ window.table = $(tableSelector).DataTable({
         },
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,
-        {
-            title: __("Extra"),
-            defaultContent: '',
-            render: function (_data, type, row) {
-                return dataTableHelpers.commentIcon(row.comment, type) + dataTableHelpers.tagIcon(row.tags, type);
-            },
-            className: "text-center",
-            orderable: false,
-        },
+        dataTableHelpers.transactionColumnDefinition.extra,
         {
             data: 'id',
             defaultContent: '',

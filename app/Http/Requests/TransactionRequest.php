@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Rules\IsFalsy;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,6 +26,14 @@ class TransactionRequest extends FormRequest
             'config.tax' => __('tax'),
             // Standard fields
             'config.amount_to' => __('amount to'),
+            // Schedule fields
+            'schedule_config.start_date' => __('schedule start date'),
+            'schedule_config.next_date' => __('schedule next date'),
+            'schedule_config.end_date' => __('schedule end date'),
+            'schedule_config.frequency' => __('schedule frequency'),
+            'schedule_config.interval' => __('schedule interval'),
+            'schedule_config.count' => __('schedule count'),
+            'schedule_config.inflation' => __('schedule inflation'),
         ];
     }
 
@@ -74,13 +81,22 @@ class TransactionRequest extends FormRequest
                     'nullable',
                     'date',
                     'after_or_equal:schedule_config.start_date',
+                    'after_or_equal:schedule_config.next_date',
+                    // Must be empty, if count is provided
+                    'prohibits:schedule_config.count',
                 ],
                 'schedule_config.frequency' => [
                     'required',
                     Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
                 ],
                 'schedule_config.interval' => 'nullable|integer|gte:1',
-                'schedule_config.count' => 'nullable|integer|gte:1',
+                'schedule_config.count' => [
+                    'nullable',
+                    'integer',
+                    'gte:1',
+                    // Must be empty, if end_date is provided
+                    'prohibits:schedule_config.end_date',
+                ],
                 'schedule_config.inflation' => 'nullable|numeric',
             ]);
         } else {
@@ -240,19 +256,6 @@ class TransactionRequest extends FormRequest
     }
 
     /**
-     * Configure conditional rules for some items
-     */
-    public function withValidator(Validator $validator): void
-    {
-        // Schedule start/next date rule is needed if schedule AND/OR budget is used, AND end_date is provided
-        $validator->sometimes(
-            ['schedule_config.next_date', 'schedule_config.start_date'],
-            'before_or_equal:schedule_config.end_date',
-            fn ($input) => ($input->schedule || $input->budget) && array_key_exists('end_date', $input->schedule_config) && $input->schedule_config['end_date']
-        );
-    }
-
-    /**
      * Prepare the data for validation.
      */
     protected function prepareForValidation(): void
@@ -264,9 +267,11 @@ class TransactionRequest extends FormRequest
             ]);
         }
 
-        // Ensure that reconciled flag is set to false if not provided
+        // Ensure that flags are set to false if not provided
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
+            'schedule' => $this->schedule ?? 0,
+            'budget' => $this->budget ?? 0,
         ]);
     }
 }

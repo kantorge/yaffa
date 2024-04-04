@@ -177,7 +177,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         }
 
         // Mute category cell with 'not set' value
-        if (data.categories.length === 0) {
+        if (data.config_type === 'standard' && data.categories.length === 0) {
             $('td', row).eq(3).addClass('text-muted text-italic');
         }
     },
@@ -195,7 +195,6 @@ let dtHistory = $(selectorHistoryTable).DataTable({
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,
@@ -285,7 +284,6 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,

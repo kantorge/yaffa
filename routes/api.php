@@ -96,5 +96,6 @@ Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiCo
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
     ->name('api.transactions.destroy');
 
-Route::get('/onboarding', [OnboardingApiController::class, 'getOnboardingData']);
-Route::put('/onboadding/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
+Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
+Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
+Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);

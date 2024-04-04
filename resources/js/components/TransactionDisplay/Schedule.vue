@@ -6,9 +6,9 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="row">
+            <div class="row mb-0">
                 <div class="col-12 col-md-6">
-                    <dl class="row">
+                    <dl class="row mb-0">
                         <dt class="col-6 mb-2">
                             {{ __('Frequency') }}
                         </dt>
@@ -27,7 +27,10 @@
                             {{ __('Count') }}
                         </dt>
                         <dd class="col-6 mb-2">
-                            {{ schedule.count }}
+                            <span v-if="typeof schedule.count !== 'undefined' && schedule.count !== null">
+                                {{ schedule.count }}
+                            </span>
+                            <span v-else class="text-muted text-italic">{{ __('Not set') }}</span>
                         </dd>
 
                         <dt class="col-6 mb-2" v-if="isBudget">
@@ -42,7 +45,7 @@
                     </dl>
                 </div>
                 <div class="col-12 col-md-6">
-                    <dl class="row">
+                    <dl class="row mb-0">
                         <dt class="col-6 mb-2">
                             {{ __('Start date') }}
                         </dt>
@@ -95,6 +98,8 @@
 </template>
 
 <script>
+import * as helpers from "../../helpers";
+
 /**
  * @property {Object} schedule
  * @property {String} schedule.frequency
@@ -104,6 +109,7 @@
  * @property {Date} schedule.next_date
  * @property {Date} schedule.end_date
  * @property {Number} schedule.inflation
+ * @property {Boolean} schedule.automatic_recording
  * @property {Object} window.YAFFA
  */
 export default {
@@ -134,6 +140,12 @@ export default {
 
             return newDate.toLocaleDateString(this.locale);
         },
-    }
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
+        },
+    },
 }
 </script>
