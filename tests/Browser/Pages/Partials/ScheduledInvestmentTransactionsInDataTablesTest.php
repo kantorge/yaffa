@@ -66,7 +66,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->assertPresent('#table tbody tr[data-id="' . $transaction->id . '"]')
+                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
                 // The 8th column is the payee, which contains the account name
                 ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
@@ -131,7 +131,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->assertPresent('#table tbody tr[data-id="' . $transaction->id . '"]')
+                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
                 // The 8th column is the payee, which contains the account name
                 ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
@@ -198,7 +198,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->assertPresent('#table tbody tr[data-id="' . $transaction->id . '"]')
+                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
                 // The 8th column is the payee, which contains the account name
                 ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
                 // The 9th column is the category, which contains the investment type

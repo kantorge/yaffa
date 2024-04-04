@@ -1,3 +1,5 @@
+import {transactionLink} from "../helpers";
+
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
@@ -47,6 +49,32 @@ const dateRangePicker = new DateRangePicker(
     }
 );
 
+/**
+ * Helper function to get adjusted cash flow in the context of the current account
+ * @param transaction
+ * @property {string} transaction.config_type
+ * @property {number} transaction.cashflow_value
+ * @return {*}
+ */
+const processTransaction = function (transaction) {
+    if (transaction.config_type === 'standard') {
+        // If the cashflow value is a number, use it
+        if (typeof transaction.cashflow_value === 'number') {
+            transaction.current_cash_flow = transaction.cashflow_value;
+        } else {
+            // Otherwise this is a transfer, and we need to decide based on the input account
+            if (transaction.config.account_from_id === window.account.id) {
+                transaction.current_cash_flow = -transaction.config.amount_from;
+            } else {
+                transaction.current_cash_flow = transaction.config.amount_to;
+            }
+        }
+    } else if (transaction.config_type === 'investment') {
+        transaction.current_cash_flow = transaction.cashflow_value ?? 0;
+    }
+    return transaction;
+};
+
 let initialLoad = true;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
@@ -81,7 +109,8 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             .then((response) => response.json())
             .then((data) => {
                 let result = data.data
-                    .map(helpers.processTransaction);
+                    .map(helpers.processTransaction)
+                    .map(processTransaction);
 
                 callback({data: result});
             });
@@ -132,16 +161,24 @@ let dtHistory = $(selectorHistoryTable).DataTable({
         }
     ],
     /**
-     * Callback for every row created: mute scheduled transactions
+     * Callback for every row created: row and column specific formatting.
      *
      * @param {Node} row
      * @param {Object} data
-     * @property {boolean} data.schedule
+     * @property {Number} data.current_cash_flow
      * @returns {void}
      */
     createdRow: function (row, data) {
-        if (data.schedule) {
-            $(row).addClass('text-muted text-italic');
+        // Color coding for the amount column
+        if (data.current_cash_flow > 0) {
+            $('td', row).eq(4).addClass('text-success');
+        } else if (data.current_cash_flow < 0) {
+            $('td', row).eq(4).addClass('text-danger');
+        }
+
+        // Mute category cell with 'not set' value
+        if (data.config_type === 'standard' && data.categories.length === 0) {
+            $('td', row).eq(3).addClass('text-muted text-italic');
         }
     },
     initComplete: function () {
@@ -158,7 +195,6 @@ let dtHistory = $(selectorHistoryTable).DataTable({
     deferRender: true,
     scrollY: '400px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,
@@ -173,6 +209,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         dataSrc: function (data) {
             return data.transactions
                 .map(helpers.processTransaction)
+                .map(processTransaction)
                 .filter(transaction => transaction.transaction_schedule.next_date);
         },
         deferRender: true
@@ -212,19 +249,29 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
      */
     createdRow: function (row, data) {
         // This data is required, but just to be on the safe side, let's validate it
-        if (!data.transaction_schedule.next_date) {
-            return;
+        if (data.transaction_schedule.next_date) {
+            if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
+                $(row).addClass('table-danger');
+            } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
+                $(row).addClass('table-warning');
+            }
         }
 
-        if (data.transaction_schedule.next_date < new Date(new Date().setHours(0, 0, 0, 0))) {
-            $(row).addClass('table-danger');
-        } else if (data.transaction_schedule.next_date < new Date(new Date().setHours(24, 0, 0, 0))) {
-            $(row).addClass('table-warning');
+        // Color coding for the amount column
+        if (data.current_cash_flow > 0) {
+            $('td', row).eq(3).addClass('text-success');
+        } else if (data.current_cash_flow < 0) {
+            $('td', row).eq(3).addClass('text-danger');
+        }
+
+        // Mute category cell with 'not set' value
+        if (data.categories.length === 0) {
+            $('td', row).eq(2).addClass('text-muted text-italic');
         }
     },
     initComplete: function () {
         // Get the Datatable API instance
-        var api = this.api();
+        const api = this.api();
         setTimeout(function () {
             api.columns.adjust().draw();
         }, 2000);
@@ -237,7 +284,6 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,
@@ -252,7 +298,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         return false;
     }
 
-    let id = this.dataset.id;
+    let id = Number(this.dataset.id);
 
     $(this).addClass('busy');
 
@@ -260,7 +306,7 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
         .then(function (response) {
             // Find and update original row in schedule table
             let row = $(selectorScheduleTable).dataTable().api().row(function (_idx, data, _node) {
-                return data.id == id;
+                return Number(data.id) === id;
             });
 
             let data = row.data();
@@ -271,38 +317,31 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
                 row.data(data).draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Schedule instance skipped (#' + id + ')',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                        body: __('Schedule instance skipped.'),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
             } else {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Schedule instance skipped. (#' + id + '). This schedule has ended.',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        headerSmall: helpers.transactionLink(id, __('Go to transaction')),
+                        body: __('Schedule instance skipped. This schedule has ended.'),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
             }
 
             // The redraw will also remove the busy class
-            // TODO: is this reliable, or should there be an other flag, which needs to be reset manually?
         });
 });
 
@@ -648,31 +687,23 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
         .then(function (response) {
             const data = response.data;
             // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: data.result === 'success' ? 'success' : 'danger',
-                        message: data.message,
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                    header: data.result === 'success' ? __('Success') : __('Error'),
+                    body: data.message,
+                    toastClass: data.result === 'success' ? 'bg-success' : 'bg-danger',
+                }
             });
             window.dispatchEvent(notificationEvent);
         })
         .catch(function (error) {
             // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: 'danger',
-                        message: error.message,
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                    }
-                },
+                    header: __('Error'),
+                    body: error.message,
+                    toastClass: 'bg-danger'
+                }
             });
             window.dispatchEvent(notificationEvent);
         })

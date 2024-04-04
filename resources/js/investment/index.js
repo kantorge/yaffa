@@ -171,30 +171,22 @@ let table = $('#investmentSummary').DataTable({
                     // Remove row from table
                     $(settings.nTable).DataTable().row($(this).parents('tr')).remove().draw();
 
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Investment deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Success'),
+                            body: __('Investment deleted'),
+                            toastClass: 'bg-success',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete investment'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete investment'),
+                            toastClass: 'bg-danger',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 },
@@ -208,7 +200,6 @@ let table = $('#investmentSummary').DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: true,
     processing: true,
     paging: false,

@@ -629,7 +629,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertInputValue('#transaction_amount_from', '10')
                 ->assertInputValue('#transaction_amount_to', '20')
                 // The exchange rate should also be visible
-                ->assertSeeIn('@label-transaction-exchange-rate', '2.0000');
+                ->waitForTextIn('@label-transaction-exchange-rate', '2.0000', 10);
         });
     }
 
@@ -700,8 +700,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#date')
                 // Wait for the calendar to be visible
                 ->waitFor('.vc-pane-container', 10)
-                // Click the first day of the month, which is in the second column
-                ->click('.vc-pane-container .vc-pane.column-2 .vc-day.in-month')
+                // Click the first day of the previous month, which is in the first column
+                // (This is to avoid clicking the current day on the 1st of the month, which would remove the date)
+                ->click('.vc-pane-container .vc-pane.column-1 .vc-day.in-month')
                 // Wait for the date picker to close
                 ->waitUntilMissing('.vc-pane-container', 10)
                 // Select callback to show transaction
@@ -712,9 +713,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Get the latest transaction from the database
             $transaction = Transaction::orderBy('id', 'desc')->first();
 
-            // Confirm that the transaction date is the first day of the month
+            // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->startOfMonth()->format('Y-m-d'),
+                now()->subMonth()->startOfMonth()->format('Y-m-d'),
                 $transaction->date->format('Y-m-d')
             );
         });

@@ -63,18 +63,6 @@ export function dataTablesActionButton(id, action) {
         skip: function () {
             return '<button class="btn btn-xs btn-warning" data-skip data-id="' + id + '" type="button" title="' + __('Skip current schedule') + '"><i class="fa fa-fw fa-spinner fa-spin"></i><i class="fa fa-fw fa-forward"></i></button> '
         },
-        skip_reload: function () {
-            return `
-                <button 
-                    class="btn btn-xs btn-warning data-skip"
-                    data-skip
-                    data-id="${id}"
-                    type="button"
-                    title="${__('Skip current schedule')}"
-                >
-                    <i class="fa fa-fw fa-forward"></i>
-                </button> `;
-        },
         enter: function () {
             return `
                 <a 
@@ -124,9 +112,15 @@ export function initializeDeleteButtonListener(tableSelector, route) {
     });
 }
 
-export function initializeFilterButtonsActive(table, column) {
-    $('input[name=active]').on("change", function () {
+export function initializeFilterToggle(table, column, name) {
+    $('input[name=' + name + ']').on("change", function () {
         table.column(column).search(this.value).draw();
+    });
+}
+
+export function initializeStandardExternalSearch(table, searchSelector = '#table_filter_search_text') {
+    $(searchSelector).on('input', function () {
+        table.search(this.value).draw();
     });
 }
 
@@ -198,15 +192,15 @@ export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-minus-square text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-minus text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
             customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-plus-square text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-plus text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
             customTitle = customTitle || __("Transfer");
-            return '<i class="fa  fa-arrows-h text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-exchange-alt text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'investment') {
         customTitle = customTitle || name;
@@ -397,53 +391,20 @@ export const transactionColumnDefinition = {
     },
 
     // Amount referring to the global account currency
-    amountCustom: {
+    amountCustom:  {
         title: __("Amount"),
+        data: 'current_cash_flow',
         defaultContent: '',
-        render: function (_data, type, row) {
+        render: function (data, type) {
             if (type === 'display') {
-                let prefix = '';
-                if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_multiplier === -1) {
-                        prefix = '- ';
-                    }
-                    if (row.transaction_type.amount_multiplier === 1) {
-                        prefix = '+ ';
-                    }
-
-                    return prefix + helpers.toFormattedCurrency(
-                        row.config.amount_to,
-                        window.YAFFA.locale,
-                        window.account.config.currency
-                    );
-                }
-                if (row.transaction_type.type === 'investment') {
-                    let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
-
-                    if (row.transaction_type.amount_multiplier === -1) {
-                        prefix = '- ';
-                        amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
-                            amount,
-                            window.YAFFA.locale,
-                            window.account.config.currency
-                        );
-                    }
-                    if (row.transaction_type.amount_multiplier === 1) {
-                        prefix = '+ ';
-                        amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
-                            amount,
-                            window.YAFFA.locale,
-                            window.account.config.currency
-                        );
-                    }
-                }
+                return helpers.toFormattedCurrency(
+                    data,
+                    window.YAFFA.locale,
+                    window.account.config.currency
+                );
             }
 
-            if (row.transaction_type.type === 'standard') {
-                return row.config.amount_to;
-            }
+            return data;
         },
         className: 'dt-nowrap',
         type: 'num',
@@ -470,7 +431,33 @@ export const transactionColumnDefinition = {
                 return data.map(tag => tag.name).join(', ');
             }
         }
-    }
+    },
+
+    // Combined icons for comment and tags
+    extra: {
+        title: __("Extra"),
+        defaultContent: '',
+        render: function (_data, type, row) {
+            return commentIcon(row.comment, type) + tagIcon(row.tags, type);
+        },
+        className: "text-center",
+        orderable: false,
+    },
+
+    // Icon for the main transaction type (standard or investment)
+    type: {
+        title: __('Type'),
+        defaultContent: '',
+        render: function(_data, type, row) {
+            if (type === 'filter') {
+                // TODO: this should be translated
+                return row.transaction_type.type;
+            }
+
+            return transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
+        },
+        className: "text-center",
+    },
 }
 
 export function initializeAjaxDeleteButton(selector, successCallback) {
@@ -485,7 +472,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
         $(this).addClass('busy');
 
         axios.delete(window.route('api.transactions.destroy', {transaction: id}))
-            .then(function (_response) {
+            .then(function () {
                 // Find and remove original row in schedule table
                 let row = $(selector).dataTable().api().row(function (_idx, data, _node) {
                     return data.id === id;
@@ -494,16 +481,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'success',
-                            message: 'Transaction deleted (#' + id + ')',
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Success'),
+                        body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
+                        toastClass: "bg-success",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 
@@ -514,16 +497,12 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
             })
             .catch(function (error) {
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'danger',
-                            message: 'Error deleting transaction (#' + id + '): ' + error,
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Error'),
+                        body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
+                        toastClass: "bg-danger"
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 

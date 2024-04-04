@@ -208,6 +208,7 @@
 <script>
 import {DatePicker} from 'v-calendar';
 import MathInput from './MathInput.vue'
+import * as helpers from '../helpers';
 
 export default {
     components: {
@@ -222,7 +223,7 @@ export default {
         form: Object,
         title: {
             type: String,
-            default: 'Schedule',
+            default: __('Schedule'),
         },
         withCheckbox: {
             type: Boolean,
@@ -247,6 +248,15 @@ export default {
             monthBeforeYear: false,
         };
         return data;
+    },
+
+    methods: {
+        /**
+         * Import the translation helper function.
+         */
+        __: function (string, replace) {
+            return helpers.__(string, replace);
+        },
     },
 }
 </script>

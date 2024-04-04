@@ -44,7 +44,7 @@
                                         {{ __('Withdraw') }}
                                     </button>
                                     <button
-                                            class="btn btn-outline-primary"
+                                            class="btn"
                                             :class="transactionTypeBaseClass('deposit')"
                                             :disabled="!isBaseSettingsEditsAllowed"
                                             dusk="transaction-type-deposit"
@@ -56,7 +56,7 @@
                                         {{ __('Deposit') }}
                                     </button>
                                     <button
-                                            class="btn btn-outline-primary"
+                                            class="btn"
                                             :class="transactionTypeBaseClass('transfer')"
                                             :disabled="form.budget || !isBaseSettingsEditsAllowed"
                                             dusk="transaction-type-transfer"
@@ -148,12 +148,17 @@
                                     <DatePicker
                                             :columns=2
                                             :initial-page="datePickerInitialPage"
+                                            :is-required="false"
                                             :masks="{
                                                     L: 'YYYY-MM-DD',
                                                     modelValue: 'YYYY-MM-DD'
                                                 }"
                                             mode="date"
-                                            :popover="{ visibility: 'click', showDelay: 0, hideDelay: 0}"
+                                            :popover="{
+                                                visibility: 'click',
+                                                showDelay: 0,
+                                                hideDelay: 0
+                                            }"
                                             v-model.string="form.date"
                                     >
                                         <template #default="{inputValue, inputEvents}">
@@ -458,7 +463,7 @@ import TransactionItemContainer from './TransactionItemContainer.vue'
 import TransactionSchedule from './TransactionSchedule.vue'
 
 import PayeeForm from './../components/PayeeForm.vue'
-import * as helpers from "../helpers";
+import * as helpers from '../helpers';
 
 export default {
     components: {

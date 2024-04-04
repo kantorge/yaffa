@@ -1,6 +1,7 @@
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+import * as helpers from "../helpers";
 
 am4core.useTheme(am4themes_animated);
 require('select2');
@@ -99,16 +100,12 @@ function reloadData() {
                 document.getElementById('chartdiv').classList.add('hidden');
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('notification', {
+                let notificationEvent = new CustomEvent('toast', {
                     detail: {
-                        notification: {
-                            type: 'warning',
-                            message: data.message,
-                            title: null,
-                            icon: null,
-                            dismissible: true,
-                        }
-                    },
+                        header: __('Warning'),
+                        body: data.message,
+                        toastClass: "bg-warning",
+                    }
                 });
                 window.dispatchEvent(notificationEvent);
 

@@ -95,7 +95,6 @@ window.table = $(dataTableSelector).DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    scroller: true,
     stateSave: false,
     processing: true,
     paging: false,
@@ -162,30 +161,23 @@ window.table = $(dataTableSelector).DataTable({
                     window.mails = window.mails.filter(mail => mail.id !== data.receivedMail.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'success',
-                                message: __('Email deleted'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
+                            header: __('Success'),
+                            body: __('Email deleted'),
+                            toastClass: 'bg-success',
+                            delay: 2000,
                         },
                     });
                     window.dispatchEvent(notificationEvent);
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('notification', {
+                    let notificationEvent = new CustomEvent('toast', {
                         detail: {
-                            notification: {
-                                type: 'danger',
-                                message: __('Error while trying to delete email'),
-                                title: null,
-                                icon: null,
-                                dismissible: true,
-                            }
-                        },
+                            header: __('Error'),
+                            body: __('Error while trying to delete email'),
+                            toastClass: 'bg-danger',
+                        }
                     });
                     window.dispatchEvent(notificationEvent);
                 }

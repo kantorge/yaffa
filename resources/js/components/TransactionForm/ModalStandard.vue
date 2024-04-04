@@ -23,6 +23,7 @@
 
 <script>
 import TransactionFormStandard from './../TransactionFormStandard.vue'
+import * as helpers from "../../helpers";
 
 export default {
     name: 'CreateStandardTransactionModal',
@@ -63,17 +64,13 @@ export default {
         },
         onSuccess(transaction) {
             // Emit a custom event to global scope about the new transaction to be displayed as a notification
-            let notificationEvent = new CustomEvent('notification', {
+            let notificationEvent = new CustomEvent('toast', {
                 detail: {
-                    notification: {
-                        type: 'success',
-                        message: __('Transaction added (#:transactionId)', {transactionId: transaction.id}),
-                        title: null,
-                        icon: null,
-                        dismissible: true,
-                        timeout: 5000,
-                    }
-                },
+                    header: __('Success'),
+                    headerSmall: helpers.transactionLink(transaction.id, __('Go to transaction')),
+                    body: __('Transaction added.'),
+                    toastClass: "bg-success",
+                }
             });
             window.dispatchEvent(notificationEvent);
 

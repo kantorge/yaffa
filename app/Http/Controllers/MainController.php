@@ -116,7 +116,7 @@ class MainController extends Controller
                     $transaction->tags = $transaction->tags()->values();
                     $transaction->categories = $transaction->categories()->values();
                 } elseif ($transaction->isInvestment()) {
-                    $amount = $transaction->accountBalanceChange();
+                    $amount = $transaction->cashflow_value ?? 0;
 
                     $transaction->transactionOperator = $transaction->transactionType->amount_multiplier;
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];

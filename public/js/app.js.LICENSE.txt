@@ -1,12 +1,4 @@
 /*!
-   *  decimal.js v10.4.3
-   *  An arbitrary-precision Decimal type for JavaScript.
-   *  https://github.com/MikeMcl/decimal.js
-   *  Copyright (c) 2022 Michael Mclaughlin <M8ch88l@gmail.com>
-   *  MIT Licence
-   */
-
-/*!
   * Bootstrap v5.3.3 (https://getbootstrap.com/)
   * Copyright 2011-2024 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
@@ -17,6 +9,14 @@
   * Copyright 2023 The CoreUI Team (https://github.com/orgs/coreui/people)
   * Licensed under MIT (https://github.com/coreui/coreui/blob/main/LICENSE)
   */
+
+/*!
+ *  decimal.js v10.4.3
+ *  An arbitrary-precision Decimal type for JavaScript.
+ *  https://github.com/MikeMcl/decimal.js
+ *  Copyright (c) 2022 Michael Mclaughlin <M8ch88l@gmail.com>
+ *  MIT Licence
+ */
 
 /*!
  * The buffer module from node.js, for the browser.
@@ -31,34 +31,28 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 1.13.11
- * ©2008-2024 SpryMedia Ltd - datatables.net/license
+/*! DataTables 2.0.3
+ * © SpryMedia Ltd - datatables.net/license
  */
 
 /*! DataTables Bootstrap 5 integration
  * 2020 SpryMedia Ltd - datatables.net/license
  */
 
-/*! Responsive 2.5.0
+/*! Responsive 3.0.0
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+/*! Select for DataTables 2.0.0
+ * © SpryMedia Ltd - datatables.net/license/mit
+ */
 
-/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
  * @license Complex.js v2.1.1 12/05/2020
  *
  * Copyright (c) 2020, Robert Eisele (robert@xarg.org)
- * Dual licensed under the MIT or GPL Version 2 licenses.
- **/
-
-/**
- * @license Fraction.js v4.3.7 31/08/2023
- * https://www.xarg.org/2014/03/rational-numbers-in-javascript/
- *
- * Copyright (c) 2023, Robert Eisele (robert@raw.org)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  **/
 
