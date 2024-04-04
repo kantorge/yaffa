@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.4.0](https://github.com/kantorge/yaffa/compare/v1.3.0...v1.4.0) (2024-04-04)
+
+
+### Features
+
+* amount color coding on the account view ([52a7421](https://github.com/kantorge/yaffa/commit/52a742172e302f56ad92c16049b317f0e6cf1208))
+* convert in-page notifications to toast ([8086ba3](https://github.com/kantorge/yaffa/commit/8086ba32da26abd9c442e491e2c411fa10603242))
+* enable pasting into math input fields ([102238f](https://github.com/kantorge/yaffa/commit/102238ff19184d3fd3cccf0760926a3238bab71c))
+* redesign the schedules report view and add basic onboarding tour ([4a87fc1](https://github.com/kantorge/yaffa/commit/4a87fc1f1ddcdf938fcdda8e3a47ac749bb14d7d))
+
+
+### Bug Fixes
+
+* amount value on account detail view ([79ab918](https://github.com/kantorge/yaffa/commit/79ab918e1ff0561c7c3b7d6a7b178455475547b3))
+* code cleanup ([aab4253](https://github.com/kantorge/yaffa/commit/aab425364595210826c4a6cb7aaf6071060e0a56))
+* minor code cleanup ([ec58e9c](https://github.com/kantorge/yaffa/commit/ec58e9cdd5f5192868c33f48718cd56f24e7bca0))
+* remove unused DataTables scroller reference ([4904959](https://github.com/kantorge/yaffa/commit/490495970e8e9e7b3d9b260fdd2510bce4f98432))
+* unrelated fixes and refactoring ([75122d1](https://github.com/kantorge/yaffa/commit/75122d1b2bcfdcef31090430b8ec29b983f17557))
+
+
+### Miscellaneous Chores
+
+* remove unused Qodana config ([3cfab5e](https://github.com/kantorge/yaffa/commit/3cfab5eb3f5611af102a387094132ad837cff4da))
+
 ## [1.3.0](https://github.com/kantorge/yaffa/compare/v1.2.2...v1.3.0) (2024-03-17)
 
 
