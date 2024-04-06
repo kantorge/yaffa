@@ -10,12 +10,15 @@ class FormRequest extends IlluminationFormRequest
 {
     use FlashMessages;
 
+    protected const int DEFAULT_STRING_MIN_LENGTH = 2;
+    protected const int DEFAULT_STRING_MAX_LENGTH = 191;
+
     /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }

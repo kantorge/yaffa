@@ -2,9 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Currency;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * @property Currency $currency
+ * @property string $iso_code
+ */
 class CurrencyRequest extends FormRequest
 {
     /**
@@ -18,8 +23,8 @@ class CurrencyRequest extends FormRequest
         return [
             'name' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('currencies')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)

@@ -2,8 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\InvestmentGroup;
 use Illuminate\Validation\Rule;
 
+/**
+ * @property InvestmentGroup $investmentGroup
+ */
 class InvestmentGroupRequest extends FormRequest
 {
     /**
@@ -12,13 +16,13 @@ class InvestmentGroupRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('investment_groups')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
