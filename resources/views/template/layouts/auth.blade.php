@@ -1,5 +1,10 @@
 @extends('template.master')
 
+{{-- Add canonical link to mitigate language parameter issues via meta_tags yield --}}
+@section('meta_tags')
+    <link rel="canonical" href="{{ url()->current() }}">
+@endsection
+
 {{-- Conditionally load Google Recaptcha --}}
 @if(config('recaptcha.api_site_key'))
 @section('head_scripts')

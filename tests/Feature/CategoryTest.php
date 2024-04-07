@@ -180,7 +180,98 @@ class CategoryTest extends TestCase
     /** @test */
     public function user_can_delete_an_existing_category()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
+    }
+
+    /**
+     * Various tests to validate the CategoryRequest
+     */
+    /** @test */
+    public function test_the_name_must_unique_among_parent_categories()
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Category $category */
+        $category = Category::factory()->for($user)->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => $category->name,
+                    'active' => 1,
+                    'parent_id' => null,
+                ]
+            );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['name']);
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => $category->name . '2',
+                    'active' => 1,
+                    'parent_id' => $category->parent_id,
+                ]
+            );
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('categories', ['name' => $category->name . '2']);
+    }
+
+    /** @test */
+    public function test_the_name_must_be_unique_within_the_same_parent(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        /** @var Category $parentCategory */
+        $parentCategory = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => null,
+            ]);
+        /** @var Category $category */
+        $category = Category::factory()
+            ->for($user)
+            ->create([
+                'parent_id' => $parentCategory->id,
+            ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => $category->name,
+                    'active' => 1,
+                    'parent_id' => $category->parent_id,
+                ]
+            );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['name']);
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store"),
+                [
+                    'name' => $category->name . '2',
+                    'active' => 1,
+                    'parent_id' => $category->parent_id,
+                ]
+            );
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('categories', [
+            'name' => $category->name . '2',
+            'parent_id' => $category->parent_id,
+        ]);
     }
 }

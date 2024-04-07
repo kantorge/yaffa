@@ -2,8 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\AccountGroup;
 use Illuminate\Validation\Rule;
 
+/**
+ * @property AccountGroup $account_group
+ */
 class AccountGroupRequest extends FormRequest
 {
     /**
@@ -12,13 +16,13 @@ class AccountGroupRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('account_groups')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)

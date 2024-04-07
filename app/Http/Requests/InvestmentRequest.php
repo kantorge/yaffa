@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * @property Investment $investment
+ */
 class InvestmentRequest extends FormRequest
 {
-    public function rules()
+    public function rules(): array
     {
         // Get all available investment price providers from Investment modell and add them to the validation rules
         // Only array keys are used in the validation rules
@@ -20,8 +23,8 @@ class InvestmentRequest extends FormRequest
         return [
             'name' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('investments')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
@@ -30,8 +33,8 @@ class InvestmentRequest extends FormRequest
             ],
             'symbol' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('investments')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
@@ -50,7 +53,7 @@ class InvestmentRequest extends FormRequest
             ],
             'comment' => [
                 'nullable',
-                'max:191',
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
             ],
             'active' => [
                 'boolean',
@@ -76,7 +79,7 @@ class InvestmentRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         // Check for checkboxes and dropdown empty values
         $this->merge([

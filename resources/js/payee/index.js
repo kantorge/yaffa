@@ -20,19 +20,6 @@ const deleteButtonConditions = [
     },
 ];
 
-let compareDates = function(date1, date2) {
-    if (!date1 && !date2) {
-        return null;
-    } else if (!date1) {
-        return date2;
-    } else if (!date2) {
-        return date1;
-    }
-
-    // Compare the Date objects and return the smaller one
-    return date1 < date2 ? date1 : date2;
-}
-
 // Loop payees and prepare data for datatable
 window.payees = window.payees.map(function(payee) {
     // Summarize all transactions
@@ -44,9 +31,13 @@ window.payees = window.payees.map(function(payee) {
     payee.to_min_date = payee.to_min_date ? new Date(Date.parse(payee.to_min_date)) : null;
     payee.to_max_date = payee.to_max_date ? new Date(Date.parse(payee.to_max_date)) : null;
 
-    // Calculate min and max dates, based on from and to dates
-    payee.transactions_min_date = compareDates(payee.from_min_date, payee.to_min_date);
-    payee.transactions_max_date = compareDates(payee.from_max_date, payee.to_max_date);
+    // Calculate min and max dates, based on the two from and to dates
+    payee.transactions_min_date = payee.from_min_date && payee.to_min_date
+        ? new Date(Math.min(payee.from_min_date, payee.to_min_date))
+        : payee.from_min_date || payee.to_min_date;
+    payee.transactions_max_date = payee.from_max_date && payee.to_max_date
+        ? new Date(Math.max(payee.from_max_date, payee.to_max_date))
+        : payee.from_max_date || payee.to_max_date;
 
     return payee;
 });
