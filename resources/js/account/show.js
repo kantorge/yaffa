@@ -360,6 +360,19 @@ let getAccountBalance = function () {
 
     axios.get('/api/account/balance/' + window.account.id)
         .then(function (response) {
+            // Check if the response is valid data
+            if (response.data.result === 'busy') {
+                elementOpeningBalance.innerHTML =
+                    elementCurrentCash.innerHTML =
+                        elementCurrentBalance.innerHTML =
+                            `<i 
+                                 class="text-warning fa-solid fa-triangle-exclamation" 
+                                 title="${response.data.message}"
+                         ></i>`;
+
+                setTimeout(getAccountBalance, 5000);
+                return;
+            }
             let balance = response.data.accountBalanceData[0];
 
             elementOpeningBalance.innerText = helpers.toFormattedCurrency(
@@ -400,8 +413,19 @@ let getAccountBalance = function () {
             elementOpeningBalance.innerHTML =
                 elementCurrentCash.innerHTML =
                     elementCurrentBalance.innerHTML =
-                        '<i class="text-danger fa-solid fa-triangle-exclamation" title="' + __('Error while retrieving data') + '"></i>';
-            console.error(error)
+                        `<i 
+                                 class="text-danger fa-solid fa-triangle-exclamation" 
+                                 title="${__('Error while retrieving data')}"
+                         ></i>`;
+
+            let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                    header: __('Error while fetching account balance data'),
+                    body: error.message,
+                    toastClass: "bg-danger",
+                }
+            });
+            window.dispatchEvent(notificationEvent);
         })
 }
 getAccountBalance();
@@ -572,11 +596,14 @@ $(selectorScheduleTable).on('click', 'button.create-transaction-from-draft', fun
 // Set up an event listener for the recently created transaction
 window.addEventListener('transaction-created', function (event) {
     // Transform incoming data
-    let transaction = event.detail.transaction;
+    let transaction = processTransaction(helpers.processTransaction(event.detail.transaction));
     transaction.date = new Date(transaction.date);
 
     // Add the newly created transaction to the history table, regardless if the date range and account matches
     dtHistory.row.add(transaction).draw();
+
+    // Reload the account balance with a static delay
+    setTimeout(getAccountBalance, 15000);
 
     // Adjust columns
     setTimeout(function () {
@@ -695,6 +722,9 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
                 }
             });
             window.dispatchEvent(notificationEvent);
+
+            // Reload the account balance with a static delay
+            setTimeout(getAccountBalance, 5000);
         })
         .catch(function (error) {
             // Emit a custom event to global scope about the result

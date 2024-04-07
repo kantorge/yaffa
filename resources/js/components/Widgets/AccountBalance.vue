@@ -202,7 +202,14 @@ export default {
                     $vm.state = 'error';
                     $vm.errorMessage = error.message;
 
-                    console.log(error)
+                    let notificationEvent = new CustomEvent('toast', {
+                        detail: {
+                            header: __('Error while fetching account balance data'),
+                            body: error.message,
+                            toastClass: "bg-danger",
+                        }
+                    });
+                    window.dispatchEvent(notificationEvent);
                 })
         },
 
