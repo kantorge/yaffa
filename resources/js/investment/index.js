@@ -200,7 +200,7 @@ let table = $('#investmentSummary').DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    stateSave: true,
+    stateSave: false,
     processing: true,
     paging: false,
 });
