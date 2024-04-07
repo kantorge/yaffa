@@ -16,11 +16,11 @@ class CategoryRequest extends FormRequest
                 Rule::unique('categories')->where(function ($query) {
                     // If it's a parent category
                     if (empty($this->parent_id)) {
-                        $query->whereNull('parent_id');
-                    } else { // If it's a child category
-                        $query->where('parent_id', $this->parent_id);
+                        return $query->whereNull('parent_id');
                     }
-                    return $query;
+
+                    // If it's a child category
+                    return $query->where('parent_id', $this->parent_id);
                 }),
             ],
             'active' => [
