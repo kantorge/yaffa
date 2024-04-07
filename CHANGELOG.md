@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.1](https://github.com/kantorge/yaffa/compare/v1.5.0...v1.5.1) (2024-04-07)
+
+
+### Bug Fixes
+
+* account balance handling ([8f1f301](https://github.com/kantorge/yaffa/commit/8f1f301223cee6f37e3c6057d10a373db5ce5e94))
+* add canonical tag to auth pages for the sandbox ([bb5dcf8](https://github.com/kantorge/yaffa/commit/bb5dcf866189e180c3fb1542e0518a1d7d51c6fd))
+* date calculation on the payee list ([5ceef9f](https://github.com/kantorge/yaffa/commit/5ceef9fa3f399718350724a326c4fe4e56f6bb9e))
+
 ## [1.5.0](https://github.com/kantorge/yaffa/compare/v1.4.0...v1.5.0) (2024-04-04)
 
 
