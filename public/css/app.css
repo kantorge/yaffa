@@ -15346,6 +15346,50 @@ div.card-header > div.card-title {
   vertical-align: middle;
 }
 
+.sidebar-light {
+  --cui-sidebar-color: rgba(44, 56, 74, 0.95);
+  --cui-sidebar-bg: #fff;
+  --cui-sidebar-border-width: 0;
+  --cui-sidebar-border-color: transparent;
+  --cui-sidebar-brand-color: #fff;
+  --cui-sidebar-brand-bg: #321fdb;
+  --cui-sidebar-header-bg: rgba(0, 0, 21, 0.2);
+  --cui-sidebar-footer-bg: rgba(0, 0, 21, 0.1);
+  --cui-sidebar-toggler-bg: rgba(0, 0, 21, 0.1);
+  --cui-sidebar-toggler-hover-bg: rgba(0, 0, 0, 0.2);
+  --cui-sidebar-toggler-indicator: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 14'%3E%3Cpath fill='rgba(44, 56, 74, 0.681)' d='M9.148 2.352l-4.148 4.148 4.148 4.148q0.148 0.148 0.148 0.352t-0.148 0.352l-1.297 1.297q-0.148 0.148-0.352 0.148t-0.352-0.148l-5.797-5.797q-0.148-0.148-0.148-0.352t0.148-0.352l5.797-5.797q0.148-0.148 0.352-0.148t0.352 0.148l1.297 1.297q0.148 0.148 0.148 0.352t-0.148 0.352z'/%3E%3C/svg%3E");
+  --cui-sidebar-toggler-indicator-hover: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 14'%3E%3Cpath fill='rgba(44, 56, 74, 0.95)' d='M9.148 2.352l-4.148 4.148 4.148 4.148q0.148 0.148 0.148 0.352t-0.148 0.352l-1.297 1.297q-0.148 0.148-0.352 0.148t-0.352-0.148l-5.797-5.797q-0.148-0.148-0.148-0.352t0.148-0.352l5.797-5.797q0.148-0.148 0.352-0.148t0.352 0.148l1.297 1.297q0.148 0.148 0.148 0.352t-0.148 0.352z'/%3E%3C/svg%3E");
+  --cui-sidebar-nav-title-color: rgba(44, 56, 74, 0.681);
+  --cui-sidebar-nav-link-color: rgba(44, 56, 74, 0.681);
+  --cui-sidebar-nav-link-bg: transparent;
+  --cui-sidebar-nav-link-icon-color: rgba(44, 56, 74, 0.681);
+  --cui-sidebar-nav-link-hover-color: rgba(44, 56, 74, 0.95);
+  --cui-sidebar-nav-link-hover-bg: theme-color("primary");
+  --cui-sidebar-nav-link-hover-icon-color: rgba(44, 56, 74, 0.95);
+  --cui-sidebar-nav-link-active-color: rgba(44, 56, 74, 0.95);
+  --cui-sidebar-nav-link-active-bg: rgba(255, 255, 255, 0.05);
+  --cui-sidebar-nav-link-active-icon-color: rgba(44, 56, 74, 0.95);
+  --cui-sidebar-nav-link-disabled-color: rgba(44, 56, 74, 0.38);
+  --cui-sidebar-nav-link-disabled-icon-color: rgba(44, 56, 74, 0.681);
+  --cui-sidebar-nav-group-bg: rgba(0, 0, 0, 0.05);
+  --cui-sidebar-nav-group-toggle-show-color: rgba(44, 56, 74, 0.681);
+}
+
+.sidebar-close-custom {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: var(--cui-sidebar-color);
+  background: transparent;
+  border: 0;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--cui-sidebar-color);
+}
+
 .select2-container {
   box-sizing: border-box;
   display: inline-block;

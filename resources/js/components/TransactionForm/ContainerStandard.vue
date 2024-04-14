@@ -81,6 +81,19 @@ export default {
                 data.transactionData.schedule = !!urlParams.get('schedule');
                 data.transactionData.date = undefined;
             }
+
+            if (urlParams.get('budget')) {
+                data.transactionData.budget = !!urlParams.get('budget');
+                data.transactionData.date = undefined;
+            }
+
+            const transactionType = urlParams.get('transaction_type');
+            if (transactionType) {
+                // Sanitize transaction type
+                if (['deposit', 'withdrawal', 'transfer'].includes(transactionType)) {
+                    data.transactionData.transaction_type.name = transactionType;
+                }
+            }
         }
 
         return data;
