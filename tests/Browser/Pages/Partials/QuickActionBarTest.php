@@ -36,7 +36,7 @@ class QuickActionBarTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visit(route('home'))
-                ->assertMissing(QUICK_ACTION_BAR_SELECTOR);
+                ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');
         });
     }
 
@@ -51,11 +51,11 @@ class QuickActionBarTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visit(route('home'))
-                ->assertMissing(QUICK_ACTION_BAR_SELECTOR)
+                ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)')
                 ->click('@quick-action-bar-toggler')
                 ->waitFor(QUICK_ACTION_BAR_SELECTOR)
                 ->click('@quick-action-bar-close')
-                ->waitUntilMissing(QUICK_ACTION_BAR_SELECTOR);
+                ->waitUntilMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');
         });
     }
 }
