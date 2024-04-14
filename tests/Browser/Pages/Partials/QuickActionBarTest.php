@@ -7,6 +7,8 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 use Throwable;
 
+const QUICK_ACTION_BAR_SELECTOR = '@quick-action-bar';
+
 class QuickActionBarTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -34,7 +36,7 @@ class QuickActionBarTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visit(route('home'))
-                ->assertMissing('@quick-action-bar');
+                ->assertMissing(QUICK_ACTION_BAR_SELECTOR);
         });
     }
 
@@ -49,11 +51,11 @@ class QuickActionBarTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visit(route('home'))
-                ->assertMissing('@quick-action-bar')
+                ->assertMissing(QUICK_ACTION_BAR_SELECTOR)
                 ->click('@quick-action-bar-toggler')
-                ->waitFor('@quick-action-bar')
+                ->waitFor(QUICK_ACTION_BAR_SELECTOR)
                 ->click('@quick-action-bar-close')
-                ->waitUntilMissing('@quick-action-bar');
+                ->waitUntilMissing(QUICK_ACTION_BAR_SELECTOR);
         });
     }
 }
