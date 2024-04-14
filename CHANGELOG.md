@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.0](https://github.com/kantorge/yaffa/compare/v1.5.1...v1.6.0) (2024-04-14)
+
+
+### Features
+
+* add quick bar ([#167](https://github.com/kantorge/yaffa/issues/167)) ([559c727](https://github.com/kantorge/yaffa/commit/559c72722904f75cefec90c7afb440e56f73afa4))
+
+
+### Bug Fixes
+
+* incorrectly used DataTables state save for investments ([dbfda19](https://github.com/kantorge/yaffa/commit/dbfda1908511a052096b1e482030f766ea0b4b89))
+
+
+### Miscellaneous Chores
+
+* update tar package ([5340ec9](https://github.com/kantorge/yaffa/commit/5340ec98106653204fd206aac24e42278e00f42e))
+
 ## [1.5.1](https://github.com/kantorge/yaffa/compare/v1.5.0...v1.5.1) (2024-04-07)
 
 
