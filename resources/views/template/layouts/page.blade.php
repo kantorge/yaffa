@@ -46,7 +46,7 @@
     <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
 </div>
 
-{{-- @include('template.components.right-sidebar') --}}
+@include('template.components.quick-actions')
 
 <div class="wrapper d-flex flex-column min-vh-100 bg-light">
     <header class="header header-sticky mb-4 @env('local') header-local-mode @endenv">
@@ -84,11 +84,14 @@
                     </div>
                 </li>
             </ul>
-            {{--
-            <button class="header-toggler px-md-0 me-md-3" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#aside')).show()">
-                <i class="fa fa-bolt"></i>
+            <button
+                    class="header-toggler px-md-0 me-md-3"
+                    dusk="quick-action-bar-toggler"
+                    type="button"
+                    onclick="coreui.Sidebar.getInstance(document.querySelector('#quick-action-bar')).show()"
+            >
+                <i class="fa fa-fw fa-bolt"></i>
             </button>
-            --}}
         </div>
     </header>
     <div class="body flex-grow-1 px-3">
