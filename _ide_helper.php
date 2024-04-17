@@ -6,7 +6,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 10.46.0.
+ * Generated for Laravel 10.48.8.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -6094,11 +6094,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $target
          * @param string $link
+         * @return bool|null
          * @static
          */        public static function link($target, $link)
         {
             /** @var \Illuminate\Filesystem\Filesystem $instance */
-            $instance->link($target, $link);
+            return $instance->link($target, $link);
         }
         /**
          * Create a relative symlink to the target file or directory.
@@ -8523,6 +8524,17 @@ namespace Illuminate\Support\Facades {
         {
             /** @var \Illuminate\Support\Testing\Fakes\NotificationFake $instance */
             return $instance->hasSent($notifiable, $notification);
+        }
+        /**
+         * Specify if notification should be serialized and restored when being "pushed" to the queue.
+         *
+         * @param bool $serializeAndRestore
+         * @return \Illuminate\Support\Testing\Fakes\NotificationFake
+         * @static
+         */        public static function serializeAndRestore($serializeAndRestore = true)
+        {
+            /** @var \Illuminate\Support\Testing\Fakes\NotificationFake $instance */
+            return $instance->serializeAndRestore($serializeAndRestore);
         }
         /**
          * Get the notifications that have been sent.
@@ -16682,7 +16694,7 @@ namespace Biscolab\ReCaptcha\Facades {
          *
          * @param array|null $configuration
          * @return string
-         * @throws Exception
+         * @throws \Exception
          * @static
          */        public static function htmlScriptTagJsApi($configuration = [])
         {
@@ -16693,7 +16705,7 @@ namespace Biscolab\ReCaptcha\Facades {
          *
          *
          * @return string
-         * @throws Exception
+         * @throws \Exception
          * @static
          */        public static function getFormId()
         {
@@ -17740,7 +17752,7 @@ namespace  {
              * Create and return an un-saved model instance.
              *
              * @param array $attributes
-             * @return \Illuminate\Database\Eloquent\Model|static
+             * @return Illuminate\Database\Eloquent\Model|static
              * @static
              */            public static function make($attributes = [])
     {
@@ -17751,8 +17763,8 @@ namespace  {
          * Register a new global scope.
          *
          * @param string $identifier
-         * @param \Illuminate\Database\Eloquent\Scope|\Closure $scope
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Scope|Closure $scope
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withGlobalScope($identifier, $scope)
         {
@@ -17762,8 +17774,8 @@ namespace  {
         /**
          * Remove a registered global scope.
          *
-         * @param \Illuminate\Database\Eloquent\Scope|string $scope
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Scope|string $scope
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withoutGlobalScope($scope)
         {
@@ -17774,7 +17786,7 @@ namespace  {
          * Remove all or passed registered global scopes.
          *
          * @param array|null $scopes
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withoutGlobalScopes($scopes = null)
         {
@@ -17795,7 +17807,7 @@ namespace  {
          * Add a where clause on the primary key to the query.
          *
          * @param mixed $id
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereKey($id)
         {
@@ -17806,7 +17818,7 @@ namespace  {
          * Add a where clause on the primary key to the query.
          *
          * @param mixed $id
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereKeyNot($id)
         {
@@ -17816,11 +17828,11 @@ namespace  {
         /**
          * Add a basic where clause to the query.
          *
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function where($column, $operator = null, $value = null, $boolean = 'and')
         {
@@ -17830,11 +17842,11 @@ namespace  {
         /**
          * Add a basic where clause to the query, and return the first result.
          *
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
-         * @return \Illuminate\Database\Eloquent\Model|static|null
+         * @return Illuminate\Database\Eloquent\Model|static|null
          * @static
          */            public static function firstWhere($column, $operator = null, $value = null, $boolean = 'and')
         {
@@ -17844,10 +17856,10 @@ namespace  {
         /**
          * Add an "or where" clause to the query.
          *
-         * @param \Closure|array|string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|array|string|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhere($column, $operator = null, $value = null)
         {
@@ -17857,11 +17869,11 @@ namespace  {
         /**
          * Add a basic "where not" clause to the query.
          *
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
          * @param string $boolean
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereNot($column, $operator = null, $value = null, $boolean = 'and')
         {
@@ -17871,10 +17883,10 @@ namespace  {
         /**
          * Add an "or where not" clause to the query.
          *
-         * @param \Closure|array|string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|array|string|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereNot($column, $operator = null, $value = null)
         {
@@ -17884,8 +17896,8 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function latest($column = null)
         {
@@ -17895,8 +17907,8 @@ namespace  {
         /**
          * Add an "order by" clause for a timestamp to the query.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function oldest($column = null)
         {
@@ -17931,7 +17943,7 @@ namespace  {
          *
          * @param mixed $id
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection|static[]|static|null
+         * @return Illuminate\Database\Eloquent\Model|Illuminate\Database\Eloquent\Collection|static[]|static|null
          * @static
          */            public static function find($id, $columns = [])
         {
@@ -17941,7 +17953,7 @@ namespace  {
         /**
          * Find multiple models by their primary keys.
          *
-         * @param \Illuminate\Contracts\Support\Arrayable|array $ids
+         * @param Illuminate\Contracts\Support\Arrayable|array $ids
          * @param array|string $columns
          * @return Illuminate\Database\Eloquent\Collection
          * @static
@@ -17955,7 +17967,7 @@ namespace  {
          *
          * @param mixed $id
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection|static|static[]
+         * @return Illuminate\Database\Eloquent\Model|Illuminate\Database\Eloquent\Collection|static|static[]
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @static
          */            public static function findOrFail($id, $columns = [])
@@ -17968,7 +17980,7 @@ namespace  {
          *
          * @param mixed $id
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function findOrNew($id, $columns = [])
         {
@@ -17979,9 +17991,9 @@ namespace  {
          * Find a model by its primary key or call a callback.
          *
          * @param mixed $id
-         * @param \Closure|array|string $columns
+         * @param Closure|array|string $columns
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection|static[]|static|mixed
+         * @return Illuminate\Database\Eloquent\Model|Illuminate\Database\Eloquent\Collection|static[]|static|mixed
          * @static
          */            public static function findOr($id, $columns = [], $callback = null)
         {
@@ -17993,7 +18005,7 @@ namespace  {
          *
          * @param array $attributes
          * @param array $values
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function firstOrNew($attributes = [], $values = [])
         {
@@ -18005,7 +18017,7 @@ namespace  {
          *
          * @param array $attributes
          * @param array $values
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function firstOrCreate($attributes = [], $values = [])
         {
@@ -18017,7 +18029,7 @@ namespace  {
          *
          * @param array $attributes
          * @param array $values
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function createOrFirst($attributes = [], $values = [])
         {
@@ -18029,7 +18041,7 @@ namespace  {
          *
          * @param array $attributes
          * @param array $values
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function updateOrCreate($attributes, $values = [])
         {
@@ -18040,7 +18052,7 @@ namespace  {
          * Execute the query and get the first result or throw an exception.
          *
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @static
          */            public static function firstOrFail($columns = [])
@@ -18051,9 +18063,9 @@ namespace  {
         /**
          * Execute the query and get the first result or call a callback.
          *
-         * @param \Closure|array|string $columns
+         * @param Closure|array|string $columns
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Model|static|mixed
+         * @return Illuminate\Database\Eloquent\Model|static|mixed
          * @static
          */            public static function firstOr($columns = [], $callback = null)
         {
@@ -18076,7 +18088,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of a query.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @static
          */            public static function value($column)
@@ -18087,7 +18099,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of a query if it's the sole matching record.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @throws Illuminate\Database\MultipleRecordsFoundException
@@ -18100,7 +18112,7 @@ namespace  {
         /**
          * Get a single column's value from the first result of the query or throw an exception.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
          * @return mixed
          * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<\Illuminate\Database\Eloquent\Model>
          * @static
@@ -18113,7 +18125,7 @@ namespace  {
          * Execute the query as a "select" statement.
          *
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Collection|static[]
+         * @return Illuminate\Database\Eloquent\Collection|static[]
          * @static
          */            public static function get($columns = [])
         {
@@ -18155,7 +18167,7 @@ namespace  {
         /**
          * Get a collection with the values of a given column.
          *
-         * @param string|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|Illuminate\Contracts\Database\Query\Expression $column
          * @param string|null $key
          * @return Illuminate\Support\Collection
          * @static
@@ -18167,11 +18179,11 @@ namespace  {
         /**
          * Paginate the given query.
          *
-         * @param int|null|\Closure $perPage
+         * @param int|null|Closure $perPage
          * @param array|string $columns
          * @param string $pageName
          * @param int|null $page
-         * @param \Closure|int|null $total
+         * @param Closure|int|null $total
          * @return Illuminate\Contracts\Pagination\LengthAwarePaginator
          * @throws InvalidArgumentException
          * @static
@@ -18200,7 +18212,7 @@ namespace  {
          * @param int|null $perPage
          * @param array|string $columns
          * @param string $cursorName
-         * @param \Illuminate\Pagination\Cursor|string|null $cursor
+         * @param Illuminate\Pagination\Cursor|string|null $cursor
          * @return Illuminate\Contracts\Pagination\CursorPaginator
          * @static
          */            public static function cursorPaginate($perPage = null, $columns = [], $cursorName = 'cursor', $cursor = null)
@@ -18212,7 +18224,7 @@ namespace  {
          * Save a new model and return the instance.
          *
          * @param array $attributes
-         * @return \Illuminate\Database\Eloquent\Model|$this
+         * @return Illuminate\Database\Eloquent\Model|$this
          * @static
          */            public static function create($attributes = [])
         {
@@ -18223,7 +18235,7 @@ namespace  {
          * Save a new model and return the instance. Allow mass-assignment.
          *
          * @param array $attributes
-         * @return \Illuminate\Database\Eloquent\Model|$this
+         * @return Illuminate\Database\Eloquent\Model|$this
          * @static
          */            public static function forceCreate($attributes)
         {
@@ -18234,7 +18246,7 @@ namespace  {
          * Save a new model instance with mass assignment without raising model events.
          *
          * @param array $attributes
-         * @return \Illuminate\Database\Eloquent\Model|$this
+         * @return Illuminate\Database\Eloquent\Model|$this
          * @static
          */            public static function forceCreateQuietly($attributes = [])
         {
@@ -18289,7 +18301,7 @@ namespace  {
          * Prevent the specified relations from being eager loaded.
          *
          * @param mixed $relations
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function without($relations)
         {
@@ -18300,7 +18312,7 @@ namespace  {
          * Set the relationships that should be eager loaded while removing any previously added eager loading specifications.
          *
          * @param mixed $relations
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withOnly($relations)
         {
@@ -18311,7 +18323,7 @@ namespace  {
          * Create a new instance of the model being queried.
          *
          * @param array $attributes
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function newModelInstance($attributes = [])
         {
@@ -18322,7 +18334,7 @@ namespace  {
          * Apply query-time casts to the model instance.
          *
          * @param array $casts
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withCasts($casts)
         {
@@ -18355,7 +18367,7 @@ namespace  {
          * Set the underlying query builder instance.
          *
          * @param Illuminate\Database\Query\Builder $query
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function setQuery($query)
         {
@@ -18386,7 +18398,7 @@ namespace  {
          * Set the relationships being eagerly loaded.
          *
          * @param array $eagerLoad
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function setEagerLoads($eagerLoad)
         {
@@ -18397,7 +18409,7 @@ namespace  {
          * Indicate that the given relationships should not be eagerly loaded.
          *
          * @param array $relations
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withoutEagerLoad($relations)
         {
@@ -18407,7 +18419,7 @@ namespace  {
         /**
          * Flush the relationships being eagerly loaded.
          *
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withoutEagerLoads()
         {
@@ -18417,7 +18429,7 @@ namespace  {
         /**
          * Get the model instance being queried.
          *
-         * @return \Illuminate\Database\Eloquent\Model|static
+         * @return Illuminate\Database\Eloquent\Model|static
          * @static
          */            public static function getModel()
         {
@@ -18428,7 +18440,7 @@ namespace  {
          * Set a model instance for the model being queried.
          *
          * @param Illuminate\Database\Eloquent\Model $model
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function setModel($model)
         {
@@ -18625,7 +18637,7 @@ namespace  {
          * Execute the query and get the first result.
          *
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|object|static|null
+         * @return Illuminate\Database\Eloquent\Model|object|static|null
          * @static
          */            public static function first($columns = [])
         {
@@ -18636,7 +18648,7 @@ namespace  {
          * Execute the query and get the first result if it's the sole matching record.
          *
          * @param array|string $columns
-         * @return \Illuminate\Database\Eloquent\Model|object|static|null
+         * @return Illuminate\Database\Eloquent\Model|object|static|null
          * @throws Illuminate\Database\RecordsNotFoundException
          * @throws Illuminate\Database\MultipleRecordsFoundException
          * @static
@@ -18649,7 +18661,7 @@ namespace  {
          * Pass the query to a given callback.
          *
          * @param callable $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function tap($callback)
         {
@@ -18689,12 +18701,12 @@ namespace  {
         /**
          * Add a relationship count / exists condition to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\Relation|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\Relation|string $relation
          * @param string $operator
          * @param int $count
          * @param string $boolean
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @throws RuntimeException
          * @static
          */            public static function has($relation, $operator = '>=', $count = 1, $boolean = 'and', $callback = null)
@@ -18708,7 +18720,7 @@ namespace  {
          * @param string $relation
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orHas($relation, $operator = '>=', $count = 1)
         {
@@ -18721,7 +18733,7 @@ namespace  {
          * @param string $relation
          * @param string $boolean
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function doesntHave($relation, $boolean = 'and', $callback = null)
         {
@@ -18732,7 +18744,7 @@ namespace  {
          * Add a relationship count / exists condition to the query with an "or".
          *
          * @param string $relation
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orDoesntHave($relation)
         {
@@ -18746,7 +18758,7 @@ namespace  {
          * @param Closure|null $callback
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereHas($relation, $callback = null, $operator = '>=', $count = 1)
         {
@@ -18762,7 +18774,7 @@ namespace  {
          * @param Closure|null $callback
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withWhereHas($relation, $callback = null, $operator = '>=', $count = 1)
         {
@@ -18776,7 +18788,7 @@ namespace  {
          * @param Closure|null $callback
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereHas($relation, $callback = null, $operator = '>=', $count = 1)
         {
@@ -18788,7 +18800,7 @@ namespace  {
          *
          * @param string $relation
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereDoesntHave($relation, $callback = null)
         {
@@ -18800,7 +18812,7 @@ namespace  {
          *
          * @param string $relation
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereDoesntHave($relation, $callback = null)
         {
@@ -18810,13 +18822,13 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param string $operator
          * @param int $count
          * @param string $boolean
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function hasMorph($relation, $types, $operator = '>=', $count = 1, $boolean = 'and', $callback = null)
         {
@@ -18826,11 +18838,11 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with an "or".
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orHasMorph($relation, $types, $operator = '>=', $count = 1)
         {
@@ -18840,11 +18852,11 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param string $boolean
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function doesntHaveMorph($relation, $types, $boolean = 'and', $callback = null)
         {
@@ -18854,9 +18866,9 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with an "or".
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orDoesntHaveMorph($relation, $types)
         {
@@ -18866,12 +18878,12 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with where clauses.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param Closure|null $callback
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereHasMorph($relation, $types, $callback = null, $operator = '>=', $count = 1)
         {
@@ -18881,12 +18893,12 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with where clauses and an "or".
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param Closure|null $callback
          * @param string $operator
          * @param int $count
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereHasMorph($relation, $types, $callback = null, $operator = '>=', $count = 1)
         {
@@ -18896,10 +18908,10 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with where clauses.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereDoesntHaveMorph($relation, $types, $callback = null)
         {
@@ -18909,10 +18921,10 @@ namespace  {
         /**
          * Add a polymorphic relationship count / exists condition to the query with where clauses and an "or".
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
          * @param Closure|null $callback
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereDoesntHaveMorph($relation, $types, $callback = null)
         {
@@ -18923,10 +18935,10 @@ namespace  {
          * Add a basic where clause to a relationship query.
          *
          * @param string $relation
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereRelation($relation, $column, $operator = null, $value = null)
         {
@@ -18937,10 +18949,10 @@ namespace  {
          * Add an "or where" clause to a relationship query.
          *
          * @param string $relation
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereRelation($relation, $column, $operator = null, $value = null)
         {
@@ -18950,12 +18962,12 @@ namespace  {
         /**
          * Add a polymorphic relationship condition to the query with a where clause.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereMorphRelation($relation, $types, $column, $operator = null, $value = null)
         {
@@ -18965,12 +18977,12 @@ namespace  {
         /**
          * Add a polymorphic relationship condition to the query with an "or where" clause.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
          * @param string|array $types
-         * @param \Closure|string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param Closure|string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @param mixed $operator
          * @param mixed $value
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereMorphRelation($relation, $types, $column, $operator = null, $value = null)
         {
@@ -18980,9 +18992,9 @@ namespace  {
         /**
          * Add a morph-to relationship condition to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string|null $model
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Model|string|null $model
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereMorphedTo($relation, $model, $boolean = 'and')
         {
@@ -18992,9 +19004,9 @@ namespace  {
         /**
          * Add a not morph-to relationship condition to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string $model
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Model|string $model
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function whereNotMorphedTo($relation, $model, $boolean = 'and')
         {
@@ -19004,9 +19016,9 @@ namespace  {
         /**
          * Add a morph-to relationship condition to the query with an "or where" clause.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string|null $model
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Model|string|null $model
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereMorphedTo($relation, $model)
         {
@@ -19016,9 +19028,9 @@ namespace  {
         /**
          * Add a not morph-to relationship condition to the query with an "or where" clause.
          *
-         * @param \Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
-         * @param \Illuminate\Database\Eloquent\Model|string $model
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Database\Eloquent\Relations\MorphTo|string $relation
+         * @param Illuminate\Database\Eloquent\Model|string $model
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function orWhereNotMorphedTo($relation, $model)
         {
@@ -19028,10 +19040,10 @@ namespace  {
         /**
          * Add a "belongs to" relationship where clause to the query.
          *
-         * @param \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<\Illuminate\Database\Eloquent\Model> $related
+         * @param Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Collection<\Illuminate\Database\Eloquent\Model> $related
          * @param string|null $relationshipName
          * @param string $boolean
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @throws Illuminate\Database\Eloquent\RelationNotFoundException
          * @static
          */            public static function whereBelongsTo($related, $relationshipName = null, $boolean = 'and')
@@ -19044,7 +19056,7 @@ namespace  {
          *
          * @param Illuminate\Database\Eloquent\Model $related
          * @param string|null $relationshipName
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @throws RuntimeException
          * @static
          */            public static function orWhereBelongsTo($related, $relationshipName = null)
@@ -19056,9 +19068,9 @@ namespace  {
          * Add subselect queries to include an aggregate value for a relationship.
          *
          * @param mixed $relations
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param string $function
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withAggregate($relations, $column, $function = null)
         {
@@ -19069,7 +19081,7 @@ namespace  {
          * Add subselect queries to count the relations.
          *
          * @param mixed $relations
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withCount($relations)
         {
@@ -19080,8 +19092,8 @@ namespace  {
          * Add subselect queries to include the max of the relation's column.
          *
          * @param string|array $relation
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withMax($relation, $column)
         {
@@ -19092,8 +19104,8 @@ namespace  {
          * Add subselect queries to include the min of the relation's column.
          *
          * @param string|array $relation
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withMin($relation, $column)
         {
@@ -19104,8 +19116,8 @@ namespace  {
          * Add subselect queries to include the sum of the relation's column.
          *
          * @param string|array $relation
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withSum($relation, $column)
         {
@@ -19116,8 +19128,8 @@ namespace  {
          * Add subselect queries to include the average of the relation's column.
          *
          * @param string|array $relation
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withAvg($relation, $column)
         {
@@ -19128,7 +19140,7 @@ namespace  {
          * Add subselect queries to include the existence of related models.
          *
          * @param string|array $relation
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function withExists($relation)
         {
@@ -19139,7 +19151,7 @@ namespace  {
          * Merge the where constraints from another query to the current query.
          *
          * @param Illuminate\Database\Eloquent\Builder $from
-         * @return \Illuminate\Database\Eloquent\Builder|static
+         * @return Illuminate\Database\Eloquent\Builder|static
          * @static
          */            public static function mergeConstraintsFrom($from)
         {
@@ -19160,7 +19172,7 @@ namespace  {
         /**
          * Add a subselect expression to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
          * @return Illuminate\Database\Query\Builder
          * @throws InvalidArgumentException
@@ -19185,7 +19197,7 @@ namespace  {
         /**
          * Makes "from" fetch from a subquery.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
          * @return Illuminate\Database\Query\Builder
          * @throws InvalidArgumentException
@@ -19231,7 +19243,7 @@ namespace  {
         /**
          * Set the table which the query is targeting.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $table
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $table
          * @param string|null $as
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19276,10 +19288,10 @@ namespace  {
         /**
          * Add a join clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @param string $type
          * @param bool $where
          * @return Illuminate\Database\Query\Builder
@@ -19292,10 +19304,10 @@ namespace  {
         /**
          * Add a "join where" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string $second
          * @param string $type
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19307,11 +19319,11 @@ namespace  {
         /**
          * Add a subquery join clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
-         * @param \Closure|string $first
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @param string $type
          * @param bool $where
          * @return Illuminate\Database\Query\Builder
@@ -19325,7 +19337,7 @@ namespace  {
         /**
          * Add a lateral join clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
          * @param string $type
          * @return Illuminate\Database\Query\Builder
@@ -19338,7 +19350,7 @@ namespace  {
         /**
          * Add a lateral left join to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19350,10 +19362,10 @@ namespace  {
         /**
          * Add a left join to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function leftJoin($table, $first, $operator = null, $second = null)
@@ -19364,10 +19376,10 @@ namespace  {
         /**
          * Add a "join where" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function leftJoinWhere($table, $first, $operator, $second)
@@ -19378,11 +19390,11 @@ namespace  {
         /**
          * Add a subquery left join to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
-         * @param \Closure|string $first
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function leftJoinSub($query, $as, $first, $operator = null, $second = null)
@@ -19393,10 +19405,10 @@ namespace  {
         /**
          * Add a right join to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function rightJoin($table, $first, $operator = null, $second = null)
@@ -19407,10 +19419,10 @@ namespace  {
         /**
          * Add a "right join where" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function rightJoinWhere($table, $first, $operator, $second)
@@ -19421,11 +19433,11 @@ namespace  {
         /**
          * Add a subquery right join to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
-         * @param \Closure|string $first
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function rightJoinSub($query, $as, $first, $operator = null, $second = null)
@@ -19436,10 +19448,10 @@ namespace  {
         /**
          * Add a "cross join" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $table
-         * @param \Closure|string|null $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string $table
+         * @param Closure|Illuminate\Contracts\Database\Query\Expression|string|null $first
          * @param string|null $operator
-         * @param \Illuminate\Contracts\Database\Query\Expression|string|null $second
+         * @param Illuminate\Contracts\Database\Query\Expression|string|null $second
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function crossJoin($table, $first = null, $operator = null, $second = null)
@@ -19450,7 +19462,7 @@ namespace  {
         /**
          * Add a subquery cross join to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @param string $as
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19488,7 +19500,7 @@ namespace  {
         /**
          * Add a "where" clause comparing two columns to the query.
          *
-         * @param string|array $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string|array $first
          * @param string|null $operator
          * @param string|null $second
          * @param string|null $boolean
@@ -19502,7 +19514,7 @@ namespace  {
         /**
          * Add an "or where" clause comparing two columns to the query.
          *
-         * @param string|array $first
+         * @param Illuminate\Contracts\Database\Query\Expression|string|array $first
          * @param string|null $operator
          * @param string|null $second
          * @return Illuminate\Database\Query\Builder
@@ -19540,7 +19552,7 @@ namespace  {
         /**
          * Add a "where in" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @param string $boolean
          * @param bool $not
@@ -19554,7 +19566,7 @@ namespace  {
         /**
          * Add an "or where in" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19566,7 +19578,7 @@ namespace  {
         /**
          * Add a "where not in" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -19579,7 +19591,7 @@ namespace  {
         /**
          * Add an "or where not in" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param mixed $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19592,7 +19604,7 @@ namespace  {
          * Add a "where in raw" clause for integer values to the query.
          *
          * @param string $column
-         * @param \Illuminate\Contracts\Support\Arrayable|array $values
+         * @param Illuminate\Contracts\Support\Arrayable|array $values
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -19606,7 +19618,7 @@ namespace  {
          * Add an "or where in raw" clause for integer values to the query.
          *
          * @param string $column
-         * @param \Illuminate\Contracts\Support\Arrayable|array $values
+         * @param Illuminate\Contracts\Support\Arrayable|array $values
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereIntegerInRaw($column, $values)
@@ -19618,7 +19630,7 @@ namespace  {
          * Add a "where not in raw" clause for integer values to the query.
          *
          * @param string $column
-         * @param \Illuminate\Contracts\Support\Arrayable|array $values
+         * @param Illuminate\Contracts\Support\Arrayable|array $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19631,7 +19643,7 @@ namespace  {
          * Add an "or where not in raw" clause for integer values to the query.
          *
          * @param string $column
-         * @param \Illuminate\Contracts\Support\Arrayable|array $values
+         * @param Illuminate\Contracts\Support\Arrayable|array $values
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereIntegerNotInRaw($column, $values)
@@ -19642,7 +19654,7 @@ namespace  {
         /**
          * Add a "where null" clause to the query.
          *
-         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $columns
+         * @param string|array|Illuminate\Contracts\Database\Query\Expression $columns
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -19655,7 +19667,7 @@ namespace  {
         /**
          * Add an "or where null" clause to the query.
          *
-         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $column
+         * @param string|array|Illuminate\Contracts\Database\Query\Expression $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereNull($column)
@@ -19666,7 +19678,7 @@ namespace  {
         /**
          * Add a "where not null" clause to the query.
          *
-         * @param string|array|\Illuminate\Contracts\Database\Query\Expression $columns
+         * @param string|array|Illuminate\Contracts\Database\Query\Expression $columns
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19678,7 +19690,7 @@ namespace  {
         /**
          * Add a where between statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @param string $boolean
          * @param bool $not
@@ -19692,7 +19704,7 @@ namespace  {
         /**
          * Add a where between statement using columns to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @param string $boolean
          * @param bool $not
@@ -19706,7 +19718,7 @@ namespace  {
         /**
          * Add an or where between statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19718,7 +19730,7 @@ namespace  {
         /**
          * Add an or where between statement using columns to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19730,7 +19742,7 @@ namespace  {
         /**
          * Add a where not between statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -19743,7 +19755,7 @@ namespace  {
         /**
          * Add a where not between statement using columns to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
@@ -19756,7 +19768,7 @@ namespace  {
         /**
          * Add an or where not between statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param Illuminate\Database\Query\iterable $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19768,7 +19780,7 @@ namespace  {
         /**
          * Add an or where not between statement using columns to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @param array $values
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19780,7 +19792,7 @@ namespace  {
         /**
          * Add an "or where not null" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereNotNull($column)
@@ -19791,9 +19803,9 @@ namespace  {
         /**
          * Add a "where date" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|null $operator
-         * @param \DateTimeInterface|string|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|null $operator
+         * @param DateTimeInterface|string|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19805,9 +19817,9 @@ namespace  {
         /**
          * Add an "or where date" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|null $operator
-         * @param \DateTimeInterface|string|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|null $operator
+         * @param DateTimeInterface|string|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereDate($column, $operator, $value = null)
@@ -19818,9 +19830,9 @@ namespace  {
         /**
          * Add a "where time" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|null $operator
-         * @param \DateTimeInterface|string|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|null $operator
+         * @param DateTimeInterface|string|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19832,9 +19844,9 @@ namespace  {
         /**
          * Add an "or where time" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|null $operator
-         * @param \DateTimeInterface|string|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|null $operator
+         * @param DateTimeInterface|string|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereTime($column, $operator, $value = null)
@@ -19845,9 +19857,9 @@ namespace  {
         /**
          * Add a "where day" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19859,9 +19871,9 @@ namespace  {
         /**
          * Add an "or where day" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereDay($column, $operator, $value = null)
@@ -19872,9 +19884,9 @@ namespace  {
         /**
          * Add a "where month" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19886,9 +19898,9 @@ namespace  {
         /**
          * Add an "or where month" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereMonth($column, $operator, $value = null)
@@ -19899,9 +19911,9 @@ namespace  {
         /**
          * Add a "where year" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19913,9 +19925,9 @@ namespace  {
         /**
          * Add an "or where year" statement to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
-         * @param \DateTimeInterface|string|int|null $operator
-         * @param \DateTimeInterface|string|int|null $value
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param DateTimeInterface|string|int|null $operator
+         * @param DateTimeInterface|string|int|null $value
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereYear($column, $operator, $value = null)
@@ -19960,7 +19972,7 @@ namespace  {
         /**
          * Add an exists clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $callback
          * @param string $boolean
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
@@ -19973,7 +19985,7 @@ namespace  {
         /**
          * Add an or exists clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $callback
          * @param bool $not
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19985,7 +19997,7 @@ namespace  {
         /**
          * Add a where not exists clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $callback
          * @param string $boolean
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -19997,7 +20009,7 @@ namespace  {
         /**
          * Add a where not exists clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $callback
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $callback
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orWhereNotExists($callback)
@@ -20209,9 +20221,63 @@ namespace  {
             return $instance->orWhereFullText($columns, $value, $options);
         }
         /**
+         * Add a "where" clause to the query for multiple columns with "and" conditions between them.
+         *
+         * @param string[] $columns
+         * @param mixed $operator
+         * @param mixed $value
+         * @param string $boolean
+         * @return Illuminate\Database\Query\Builder
+         * @static
+         */            public static function whereAll($columns, $operator = null, $value = null, $boolean = 'and')
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->whereAll($columns, $operator, $value, $boolean);
+        }
+        /**
+         * Add an "or where" clause to the query for multiple columns with "and" conditions between them.
+         *
+         * @param string[] $columns
+         * @param string $operator
+         * @param mixed $value
+         * @return Illuminate\Database\Query\Builder
+         * @static
+         */            public static function orWhereAll($columns, $operator = null, $value = null)
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->orWhereAll($columns, $operator, $value);
+        }
+        /**
+         * Add an "where" clause to the query for multiple columns with "or" conditions between them.
+         *
+         * @param string[] $columns
+         * @param string $operator
+         * @param mixed $value
+         * @param string $boolean
+         * @return Illuminate\Database\Query\Builder
+         * @static
+         */            public static function whereAny($columns, $operator = null, $value = null, $boolean = 'and')
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->whereAny($columns, $operator, $value, $boolean);
+        }
+        /**
+         * Add an "or where" clause to the query for multiple columns with "or" conditions between them.
+         *
+         * @param string[] $columns
+         * @param string $operator
+         * @param mixed $value
+         * @return Illuminate\Database\Query\Builder
+         * @static
+         */            public static function orWhereAny($columns, $operator = null, $value = null)
+        {
+            /** @var Illuminate\Database\Query\Builder $instance */
+            return $instance->orWhereAny($columns, $operator, $value);
+        }
+        /**
          * Add a "group by" clause to the query.
          *
-         * @param array|\Illuminate\Contracts\Database\Query\Expression|string $groups
+         * @param array|Illuminate\Contracts\Database\Query\Expression|string $groups
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function groupBy(...$groups)
@@ -20234,7 +20300,7 @@ namespace  {
         /**
          * Add a "having" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|\Closure|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|Closure|string $column
          * @param string|int|float|null $operator
          * @param string|int|float|null $value
          * @param string $boolean
@@ -20248,7 +20314,7 @@ namespace  {
         /**
          * Add an "or having" clause to the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|\Closure|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|Closure|string $column
          * @param string|int|float|null $operator
          * @param string|int|float|null $value
          * @return Illuminate\Database\Query\Builder
@@ -20371,7 +20437,7 @@ namespace  {
         /**
          * Add an "order by" clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|Illuminate\Contracts\Database\Query\Expression|string $column
          * @param string $direction
          * @return Illuminate\Database\Query\Builder
          * @throws InvalidArgumentException
@@ -20384,7 +20450,7 @@ namespace  {
         /**
          * Add a descending "order by" clause to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|Illuminate\Contracts\Database\Query\Expression|string $column
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function orderByDesc($column)
@@ -20500,7 +20566,7 @@ namespace  {
         /**
          * Remove all existing orders and optionally add a new order.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Contracts\Database\Query\Expression|string|null $column
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Contracts\Database\Query\Expression|string|null $column
          * @param string $direction
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20512,7 +20578,7 @@ namespace  {
         /**
          * Add a union statement to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $query
          * @param bool $all
          * @return Illuminate\Database\Query\Builder
          * @static
@@ -20524,7 +20590,7 @@ namespace  {
         /**
          * Add a union all statement to the query.
          *
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder $query
          * @return Illuminate\Database\Query\Builder
          * @static
          */            public static function unionAll($query)
@@ -20683,7 +20749,7 @@ namespace  {
         /**
          * Retrieve the "count" result of the query.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $columns
+         * @param Illuminate\Contracts\Database\Query\Expression|string $columns
          * @return int
          * @static
          */            public static function count($columns = '*')
@@ -20694,7 +20760,7 @@ namespace  {
         /**
          * Retrieve the minimum value of a given column.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */            public static function min($column)
@@ -20705,7 +20771,7 @@ namespace  {
         /**
          * Retrieve the maximum value of a given column.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */            public static function max($column)
@@ -20716,7 +20782,7 @@ namespace  {
         /**
          * Retrieve the sum of the values of a given column.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */            public static function sum($column)
@@ -20727,7 +20793,7 @@ namespace  {
         /**
          * Retrieve the average of the values of a given column.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */            public static function avg($column)
@@ -20738,7 +20804,7 @@ namespace  {
         /**
          * Alias for the "avg" method.
          *
-         * @param \Illuminate\Contracts\Database\Query\Expression|string $column
+         * @param Illuminate\Contracts\Database\Query\Expression|string $column
          * @return mixed
          * @static
          */            public static function average($column)
@@ -20808,7 +20874,7 @@ namespace  {
          * Insert new records into the table using a subquery.
          *
          * @param array $columns
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @return int
          * @static
          */            public static function insertUsing($columns, $query)
@@ -20820,7 +20886,7 @@ namespace  {
          * Insert new records into the table using a subquery while ignoring errors.
          *
          * @param array $columns
-         * @param \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|string $query
+         * @param Closure|Illuminate\Database\Query\Builder|Illuminate\Database\Eloquent\Builder|string $query
          * @return int
          * @static
          */            public static function insertOrIgnoreUsing($columns, $query)
