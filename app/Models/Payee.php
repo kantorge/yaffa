@@ -17,14 +17,14 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string|null $import_alias
- * @property-read \App\Models\Category|null $category
- * @property-read \App\Models\AccountEntity|null $config
+ * @property-read Category|null $category
+ * @property-read AccountEntity|null $config
  * @property-read mixed $first_transaction_date
  * @property-read mixed $latest_transaction_date
  * @property-read mixed $transaction_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static Builder|AccountEntity accounts()
  * @method static Builder|AccountEntity active()
  * @method static \Database\Factories\PayeeFactory factory(...$parameters)

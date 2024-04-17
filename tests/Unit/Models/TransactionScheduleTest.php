@@ -112,10 +112,12 @@ class TransactionScheduleTest extends TestCase
     {
         /** @var TransactionSchedule $schedule */
         $schedule = TransactionSchedule::factory()->make([
-            'next_date' => null,
             'start_date' => Carbon::now()->subDays(10),
+            'next_date' => null,
             'end_date' => Carbon::now()->subDay(),
             'frequency' => 'DAILY',
+            'count' => null,
+            'interval' => 1,
         ]);
 
         $this->assertFalse($schedule->isActive());

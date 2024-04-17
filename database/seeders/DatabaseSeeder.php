@@ -18,30 +18,30 @@ class DatabaseSeeder extends Seeder
         // Main user
         $demoUser = User::where('email', 'demo@yaffa.cc')->first();
 
-        $this->callWith(\Database\Seeders\Fixed\AccountGroupSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\CurrencySeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Random\CurrencyRateSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\AccountSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\CategorySeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\PayeeSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\InvestmentGroupSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Fixed\InvestmentSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\AccountGroupSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\CurrencySeeder::class, ['user' => $demoUser]);
+        $this->callWith(Random\CurrencyRateSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\AccountSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\CategorySeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\PayeeSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\InvestmentGroupSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\InvestmentSeeder::class, ['user' => $demoUser]);
         // TODO: seed investment prices
-        $this->callWith(\Database\Seeders\Fixed\TagSeeder::class, ['user' => $demoUser]);
-        $this->callWith(\Database\Seeders\Random\TransactionSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Fixed\TagSeeder::class, ['user' => $demoUser]);
+        $this->callWith(Random\TransactionSeeder::class, ['user' => $demoUser]);
 
         // Other user
         $otherUser = User::where('email', 'other@yaffa.cc')->first();
 
-        $this->callWith(\Database\Seeders\Random\AccountGroupSeeder::class, ['user' => $otherUser, 'count' => 3]);
-        $this->callWith(\Database\Seeders\Random\CurrencySeeder::class, ['user' => $otherUser, 'count' => 2]);
-        $this->callWith(\Database\Seeders\Random\AccountSeeder::class, ['user' => $otherUser, 'count' => 5]);
-        $this->callWith(\Database\Seeders\Random\CategorySeeder::class, ['user' => $otherUser, 'count' => 5]);
-        $this->callWith(\Database\Seeders\Random\PayeeSeeder::class, ['user' => $otherUser, 'count' => 5]);
-        $this->callWith(\Database\Seeders\Random\InvestmentGroupSeeder::class, ['user' => $otherUser, 'count' => 3]);
-        $this->callWith(\Database\Seeders\Random\InvestmentSeeder::class, ['user' => $otherUser, 'count' => 5]);
+        $this->callWith(Random\AccountGroupSeeder::class, ['user' => $otherUser, 'count' => 3]);
+        $this->callWith(Random\CurrencySeeder::class, ['user' => $otherUser, 'count' => 2]);
+        $this->callWith(Random\AccountSeeder::class, ['user' => $otherUser, 'count' => 5]);
+        $this->callWith(Random\CategorySeeder::class, ['user' => $otherUser, 'count' => 5]);
+        $this->callWith(Random\PayeeSeeder::class, ['user' => $otherUser, 'count' => 5]);
+        $this->callWith(Random\InvestmentGroupSeeder::class, ['user' => $otherUser, 'count' => 3]);
+        $this->callWith(Random\InvestmentSeeder::class, ['user' => $otherUser, 'count' => 5]);
         // TODO: seed investment prices
-        $this->callWith(\Database\Seeders\Random\TagSeeder::class, ['user' => $otherUser, 'count' => 5]);
-        $this->callWith(\Database\Seeders\Random\TransactionSeeder::class, ['user' => $otherUser]);
+        $this->callWith(Random\TagSeeder::class, ['user' => $otherUser, 'count' => 5]);
+        $this->callWith(Random\TransactionSeeder::class, ['user' => $otherUser]);
     }
 }
