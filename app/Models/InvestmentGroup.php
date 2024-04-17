@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static \Database\Factories\InvestmentGroupFactory factory(...$parameters)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup newQuery()
