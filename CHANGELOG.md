@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.6.1](https://github.com/kantorge/yaffa/compare/v1.6.0...v1.6.1) (2024-04-17)
+
+
+### Bug Fixes
+
+* budget chart layout ([ccc8ae0](https://github.com/kantorge/yaffa/commit/ccc8ae06fa2d5eeca22cf5b60c2409c2c389fb90))
+* risky unit test ([a10e244](https://github.com/kantorge/yaffa/commit/a10e244523d1dce15079eba72c8b0b22df684d2b))
+* upgrade axios from 1.6.7 to 1.6.8 ([f2da011](https://github.com/kantorge/yaffa/commit/f2da0112527cb97890888843e33865eecf2743db))
+* upgrade datatables.net-responsive-bs5 from 3.0.0 to 3.0.1 ([#170](https://github.com/kantorge/yaffa/issues/170)) ([6ab9b1e](https://github.com/kantorge/yaffa/commit/6ab9b1e71f78c4277b9512204806be6bfde5180c))
+* upgrade webpack from 5.90.3 to 5.91.0 ([#171](https://github.com/kantorge/yaffa/issues/171)) ([6cc8cdd](https://github.com/kantorge/yaffa/commit/6cc8cdd0ebb5f0f4ba0243893eec714d09ad80f8))
+
+
+### Miscellaneous Chores
+
+* bump cache action version ([b230d7c](https://github.com/kantorge/yaffa/commit/b230d7cea99aefcc04970a3d4078c4630babe19d))
+* composer update ([0711cf8](https://github.com/kantorge/yaffa/commit/0711cf8c4aa3a085d48e7d103a6e40a35173e5f5))
+* minor code cleanups ([79dc4e0](https://github.com/kantorge/yaffa/commit/79dc4e0fc086da498e6a826d291764390267725d))
+
 ## [1.6.0](https://github.com/kantorge/yaffa/compare/v1.5.1...v1.6.0) (2024-04-14)
 
 
