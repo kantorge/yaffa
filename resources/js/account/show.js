@@ -1,5 +1,3 @@
-import {transactionLink} from "../helpers";
-
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 

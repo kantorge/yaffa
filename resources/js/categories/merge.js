@@ -129,13 +129,13 @@ $('#merge-categories-form').on('submit', function (e) {
         e.preventDefault();
         alert(__('Please select categories to be merged'));
         return;
-    } else {
-        // Validate if both select2 inputs are not the same
-        if (source[0].id === target[0].id) {
-            e.preventDefault();
-            alert(__('Please select different categories to be merged'));
-            return;
-        }
+    }
+
+    // Validate if both select2 inputs are not the same
+    if (source[0].id === target[0].id) {
+        e.preventDefault();
+        alert(__('Please select different categories to be merged'));
+        return;
     }
 
     // Validate if action radio button is selected
