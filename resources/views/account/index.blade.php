@@ -63,7 +63,6 @@
                             class="table table-striped table-bordered table-hover"
                             dusk="table-accounts"
                             id="table"
-                            role="grid"
                     ></table>
                 </div>
             </div>

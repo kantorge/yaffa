@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="card-body">
-            <table class="table table-striped table-bordered table-hover" role="grid" id="table"></table>
+            <table class="table table-striped table-bordered table-hover" id="table"></table>
         </div>
     </div>
 
