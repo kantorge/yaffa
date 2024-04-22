@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
+use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\OnboardingApiController;
@@ -23,6 +24,9 @@ Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEnti
     ->name('api.accountentity.updateActive');
 Route::delete('/assets/accountentity/{accountEntity}', [AccountEntityApiController::class, 'destroy'])
     ->name('api.accountentity.destroy');
+
+Route::delete('/assets/accountgroup/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
+    ->name('api.accountgroup.destroy');
 
 Route::get('/assets/category', [CategoryApiController::class, 'getList']);
 Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
