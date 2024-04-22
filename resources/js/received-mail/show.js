@@ -49,40 +49,43 @@ document.querySelector('.deleteIcon').addEventListener('click', function () {
 });
 
 // Initialize the reset processed button
-document.querySelector('.reprocessIcon').addEventListener('click', function () {
-    // Confirm the action with the user
-    if (!confirm(__('Are you sure to want to reprocess this email? Current data will be overwritten.'))) {
-        return;
-    }
+const reprocessIcon = document.querySelector('.reprocessIcon');
+if (reprocessIcon) {
+    reprocessIcon.addEventListener('click', function () {
+        // Confirm the action with the user
+        if (!confirm(__('Are you sure to want to reprocess this email? Current data will be overwritten.'))) {
+            return;
+        }
 
-    // Prevent running multiple times in parallel
-    if ($(this).hasClass("busy")) {
-        return false;
-    }
+        // Prevent running multiple times in parallel
+        if ($(this).hasClass("busy")) {
+            return false;
+        }
 
-    $(this).addClass('busy');
+        $(this).addClass('busy');
 
-    const id = window.mail.id;
+        const id = window.mail.id;
 
-    axios.patch(window.route('api.received-mail.reset-processed', {'receivedMail': id}))
-        .then(function () {
-            // Reload the page
-            location.reload();
+        axios.patch(window.route('api.received-mail.reset-processed', {'receivedMail': id}))
+            .then(function () {
+                // Reload the page
+                location.reload();
 
-            // TODO: handle update of the page without reloading
-        })
-        .catch(function (error) {
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: __('Error'),
-                    body: __('Error reseting email processed status: ' + error),
-                    toastClass: "bg-danger",
-                }
+                // TODO: handle update of the page without reloading
+            })
+            .catch(function (error) {
+                // Emit a custom event to global scope about the result
+                let notificationEvent = new CustomEvent('toast', {
+                    detail: {
+                        header: __('Error'),
+                        body: __('Error reseting email processed status: ' + error),
+                        toastClass: "bg-danger",
+                    }
+                });
+                window.dispatchEvent(notificationEvent);
+
+                $(".busy[data-delete]").removeClass('busy')
             });
-            window.dispatchEvent(notificationEvent);
 
-            $(".busy[data-delete]").removeClass('busy')
-        });
-
-});
+    });
+}
