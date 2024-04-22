@@ -20,20 +20,22 @@
                         {{ __('Actions') }}
                     </div>
                 </div>
-                <div class="card-body collapse show" aria-expanded="true" id="cardActions">
-                    <ul class="nav flex-column">
-                        <li class="nav-item d-flex justify-content-between align-items-center">
-                            {{ __('New account') }}
-                            <a class="btn btn-success"
-                               dusk="button-new-account"
-                               href="{{ route('account-entity.create', ['type' => 'account']) }}"
-                               title="{{ __('New account') }}"
-                            >
-                                <i class="fa fa-plus"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                <ul
+                        class="list-group list-group-flush collapse show"
+                        aria-expanded="true"
+                        id="cardActions"
+                >
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ __('New account') }}
+                        <a class="btn btn-success btn-sm"
+                           dusk="button-new-account"
+                           href="{{ route('account-entity.create', ['type' => 'account']) }}"
+                           title="{{ __('New account') }}"
+                        >
+                            <i class="fa fa-plus"></i>
+                        </a>
+                    </li>
+                </ul>
             </div>
 
             <div class="card mb-3">

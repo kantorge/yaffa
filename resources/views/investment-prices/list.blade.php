@@ -5,8 +5,7 @@
 @section('content_container_classes', 'container-fluid')
 
 @section('content_header')
-    {{ __('Investment prices') }} -
-    <a href="{{ route('investment.show', $investment) }}">{{$investment->name}}</a>
+    {{ __('Investment prices') }} of {{$investment->name}}
 @stop
 
 @section('content')
