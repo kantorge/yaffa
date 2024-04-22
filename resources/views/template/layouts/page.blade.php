@@ -95,6 +95,8 @@
         </div>
     </header>
     <div class="body flex-grow-1 px-3">
+        {{ Breadcrumbs::render() }}
+
         <div class="@yield('content_container_classes', 'container-fluid')">
             <h2 class="mb-3">
                 @yield('content_header')
