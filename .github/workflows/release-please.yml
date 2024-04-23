@@ -20,26 +20,8 @@ jobs:
         with:
           target-branch: main
 
-
-
-      - name: Download "Release Please" output
-        if: ${{ steps.release.outputs.release_created }}
-        uses: actions/download-artifact@v4
-        with:
-          name: release-output
-
-      - name: Read and evaluate output
-        if: ${{ steps.release.outputs.release_created }}
-        run: |
-          output=$(cat release-created.txt)
-          echo "Release Please Output: $output"
-          if [ "$output" = "true" ]; then
-            echo "::set-output name=release_created::true"
-          else
-            echo "::set-output name=release_created::false"
-          fi
-
       - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Setup PHP
         if: ${{ steps.release.outputs.release_created }}
