@@ -154,7 +154,7 @@ class TransactionController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
 
-        $transactionData = json_decode($request->input('transaction'), true);
+        $transactionData = json_decode($request->input('transaction'), true) ?? [];
 
         // Make a new transaction from the draft
         $transaction = new Transaction($transactionData);

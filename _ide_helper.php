@@ -16871,6 +16871,193 @@ namespace Biscolab\ReCaptcha\Facades {
     }
 }
 
+namespace Diglactic\Breadcrumbs {
+    /**
+     * Breadcrumbs facade - allows easy access to the Manager instance.
+     *
+     * @method static array getCurrentRoute()
+     * @mixin \Illuminate\Support\Traits\Macroable
+     * @see Manager
+     */        class Breadcrumbs
+    {
+        /**
+         * Register a breadcrumb-generating callback for a page.
+         *
+         * @param string $name The name of the page.
+         * @param callable $callback The callback, which should accept a Generator instance as the first parameter and may
+         *                           accept additional parameters.
+         * @throws Exceptions\DuplicateBreadcrumbException If the given name has already been used.
+         * @static
+         */        public static function for($name, $callback)
+        {
+            /** @var Manager $instance */
+            $instance->for($name, $callback);
+        }
+        /**
+         * Register a closure to call before generating breadcrumbs for the current page.
+         *
+         * For example, this can be used to always prepend the homepage without needing to manually add it to each page.
+         *
+         * @param callable $callback The callback, which should accept a Generator instance as the first and only parameter.
+         * @static
+         */        public static function before($callback)
+        {
+            /** @var Manager $instance */
+            $instance->before($callback);
+        }
+        /**
+         * Register a closure to call after generating breadcrumbs for the current page.
+         *
+         * For example, this can be used to append the current page number when using pagination.
+         *
+         * @param callable $callback The callback, which should accept a Generator instance as the first and only parameter.
+         * @static
+         */        public static function after($callback)
+        {
+            /** @var Manager $instance */
+            $instance->after($callback);
+        }
+        /**
+         * Check if a breadcrumb with the given name exists.
+         *
+         * If no name is given, defaults to the current route name.
+         *
+         * @param string|null $name The page name.
+         * @return bool Whether there is a registered callback with that name.
+         * @static
+         */        public static function exists($name = null)
+        {
+            /** @var Manager $instance */
+            return $instance->exists($name);
+        }
+        /**
+         * Generate a set of breadcrumbs for a page.
+         *
+         * @param string|null $name The name of the current page.
+         * @param mixed $params The parameters to pass to the closure for the current page.
+         * @return \Illuminate\Support\Collection The generated breadcrumbs.
+         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         *                                                                 have an associated name.
+         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names  are)
+         *                                                                      not registered.
+         * @static
+         */        public static function generate($name = null, ...$params)
+        {
+            /** @var Manager $instance */
+            return $instance->generate($name, ...$params);
+        }
+        /**
+         * Render breadcrumbs for a page with the specified view.
+         *
+         * @param string $view The name of the view to render.
+         * @param string|null $name The name of the current page.
+         * @param mixed $params The parameters to pass to the closure for the current page.
+         * @return \Illuminate\View\View The generated HTML.
+         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         *                                                                      not registered.
+         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         *                                                                 have an associated name.
+         * @static
+         */        public static function view($view, $name = null, ...$params)
+        {
+            /** @var Manager $instance */
+            return $instance->view($view, $name, ...$params);
+        }
+        /**
+         * Render breadcrumbs for a page with the default view.
+         *
+         * @param string|null $name The name of the current page.
+         * @param mixed $params The parameters to pass to the closure for the current page.
+         * @return \Illuminate\Contracts\View\View The generated view.
+         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         *                                                                      not registered.
+         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         *                                                                 have an associated name.
+         * @throws Exceptions\ViewNotSetException if no view has been set.
+         * @static
+         */        public static function render($name = null, ...$params)
+        {
+            /** @var Manager $instance */
+            return $instance->render($name, ...$params);
+        }
+        /**
+         * Get the last breadcrumb for the current page.
+         *
+         * @return object|null The breadcrumb for the current page.
+         * @throws Exceptions\UnnamedRouteException if the current route doesn't have an associated
+         *                                                                 name.
+         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         *                                                                      not registered.
+         * @static
+         */        public static function current()
+        {
+            /** @var Manager $instance */
+            return $instance->current();
+        }
+        /**
+         * Set the current route name and parameters to use when calling render() or generate() with no parameters.
+         *
+         * @param string $name The name of the current page.
+         * @param mixed $params The parameters to pass to the closure for the current page.
+         * @static
+         */        public static function setCurrentRoute($name, ...$params)
+        {
+            /** @var Manager $instance */
+            $instance->setCurrentRoute($name, ...$params);
+        }
+        /**
+         * Clear the previously set route name and parameters to use when calling render() or generate() with no parameters.
+         *
+         * Next time it will revert to the default behaviour of using the current route from Laravel.
+         *
+         * @static
+         */        public static function clearCurrentRoute()
+        {
+            /** @var Manager $instance */
+            $instance->clearCurrentRoute();
+        }
+        /**
+         * Register a custom macro.
+         *
+         * @param string $name
+         * @param object|callable $macro
+         * @static
+         */        public static function macro($name, $macro)
+        {
+            Manager::macro($name, $macro);
+        }
+        /**
+         * Mix another object into the class.
+         *
+         * @param object $mixin
+         * @param bool $replace
+         * @throws \ReflectionException
+         * @static
+         */        public static function mixin($mixin, $replace = true)
+        {
+            Manager::mixin($mixin, $replace);
+        }
+        /**
+         * Checks if macro is registered.
+         *
+         * @param string $name
+         * @return bool
+         * @static
+         */        public static function hasMacro($name)
+        {
+            return Manager::hasMacro($name);
+        }
+        /**
+         * Flush the existing macros.
+         *
+         * @static
+         */        public static function flushMacros()
+        {
+            Manager::flushMacros();
+        }
+    }
+}
+
 namespace Kantorge\CurrencyExchangeRates\Facades {
     /**
      *
@@ -21270,6 +21457,9 @@ namespace  {
     {
     }
     class ReCaptcha extends Biscolab\ReCaptcha\Facades\ReCaptcha
+    {
+    }
+    class Breadcrumbs extends Diglactic\Breadcrumbs\Breadcrumbs
     {
     }
     class CurrencyExchangeRates extends Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates

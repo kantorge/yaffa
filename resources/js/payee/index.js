@@ -174,7 +174,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     payees.filter(payee => payee.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
@@ -210,7 +210,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
 
                     row.remove().draw();

@@ -183,7 +183,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     categories.filter(category => category.id === data.id)[0].active = data.active;
 
                     // Emit a custom event to global scope about the change
@@ -237,7 +237,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.categories = window.categories.filter(category => category.id !== data.category.id);
 
                     row.remove().draw();
