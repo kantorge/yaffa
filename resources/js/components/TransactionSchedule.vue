@@ -23,7 +23,7 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
-                    <label for="schedule_frequency" class="control-label">
+                    <label for="schedule_frequency" class="form-label">
                         {{ __('Frequency') }}
                     </label>
                     <select
@@ -42,7 +42,7 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
-                    <label for="schedule_interval" class="control-label">
+                    <label for="schedule_interval" class="form-label">
                         {{ __('Interval') }}
                     </label>
                     <MathInput
@@ -57,7 +57,7 @@
                         :class="{'has-error' : form.errors.has('schedule_config.start_date')}"
                 >
                     <label
-                            :for="'schedule_start_' + this.$.vnode.key" class="control-label">
+                            :for="'schedule_start_' + this.$.vnode.key" class="form-label">
                         {{ __('Start date') }}
                     </label>
                     <DatePicker
@@ -86,7 +86,7 @@
                         :class="{'has-error' : form.errors.has('schedule_config.next_date')}"
                         v-if="isSchedule"
                 >
-                    <label for="schedule_next" class="control-label">
+                    <label for="schedule_next" class="form-label">
                         {{ __('Next date') }}
                         <span
                                 class="fa"
@@ -143,7 +143,7 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="{ 'has-error' : form.errors.has('schedule_config.count')}"
                 >
-                    <label for="schedule_count" class="control-label">
+                    <label for="schedule_count" class="form-label">
                         {{ __('Count') }}
                     </label>
                     <MathInput
@@ -157,7 +157,7 @@
                         class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.end_date')}"
                 >
-                    <label for="schedule_end" class="control-label">
+                    <label for="schedule_end" class="form-label">
                         {{ __('End date') }}
                     </label>
                     <DatePicker
@@ -185,7 +185,7 @@
                         :class="{'has-error' : form.errors.has('schedule_config.inflation')}"
                         v-if="isBudget"
                 >
-                    <label for="schedule_inflation" class="control-label">
+                    <label for="schedule_inflation" class="form-label">
                         {{ __('Budget inflation') }}
                     </label>
                     <div class="input-group">

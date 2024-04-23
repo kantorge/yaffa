@@ -140,7 +140,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.accounts.filter(account => account.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
@@ -185,7 +185,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
 
                     row.remove().draw();

@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
+use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\InvestmentApiController;
+use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReceivedMailApiController;
@@ -24,6 +26,9 @@ Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEnti
 Route::delete('/assets/accountentity/{accountEntity}', [AccountEntityApiController::class, 'destroy'])
     ->name('api.accountentity.destroy');
 
+Route::delete('/assets/accountgroup/{accountGroup}', [AccountGroupApiController::class, 'destroy'])
+    ->name('api.accountgroup.destroy');
+
 Route::get('/assets/category', [CategoryApiController::class, 'getList']);
 Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
 Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])
@@ -41,6 +46,9 @@ Route::delete('/assets/investment/{investment}', [InvestmentApiController::class
 Route::get('/assets/investment/price/{investment}', [InvestmentApiController::class, 'getPriceHistory']);
 Route::put('/assets/investment/{investment}/active/{active}', [InvestmentApiController::class, 'updateActive'])
     ->name('api.investment.updateActive');
+
+Route::delete('/assets/investmentgroup/{investmentGroup}', [InvestmentGroupApiController::class, 'destroy'])
+    ->name('api.investmentgroup.destroy');
 
 Route::get('/assets/payee', [PayeeApiController::class, 'getList']);
 Route::post('/assets/payee', [PayeeApiController::class, 'storePayee'])->name('api.payee.store');

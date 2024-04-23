@@ -146,7 +146,7 @@ class TransactionController extends Controller
         return redirect()->back();
     }
 
-    public function createFromDraft(Request $request)
+    public function createFromDraft(Request $request): View
     {
         /**
          * @post('/transactions/create-from-draft')
@@ -154,7 +154,7 @@ class TransactionController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
 
-        $transactionData = json_decode($request->input('transaction'), true);
+        $transactionData = json_decode($request->input('transaction'), true) ?? [];
 
         // Make a new transaction from the draft
         $transaction = new Transaction($transactionData);
@@ -192,7 +192,7 @@ class TransactionController extends Controller
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
-            'type' => 'standard', // TODO: Make this dynamic to support investments
+            'type' => 'standard',
             'source_id' => $request->input('mail_id'),
         ]);
     }

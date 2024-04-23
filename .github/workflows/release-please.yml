@@ -7,16 +7,26 @@ permissions:
   contents: write
   pull-requests: write
 
-name: release-please
+name: Release Please
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v3
+      - name: Run Release Please
+        uses: google-github-actions/release-please-action@v4
         with:
           default-branch: main
           release-type: php
           package-name: kantorge/yaffa
           release-search-depth: 100
           commit-search-depth: 100
+
+      - name: Store output
+        run: echo "${{ steps.release.outputs.release_created }}" > release-created.txt
+
+      - name: Archive output
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-output
+          path: ./release-created.txt

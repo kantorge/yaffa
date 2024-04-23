@@ -34,6 +34,7 @@ class InvestmentGroupController extends Controller
         $investmentGroups = Auth::user()
             ->investmentGroups()
             ->select('id', 'name')
+            ->withCount('investments')
             ->get();
 
         // Pass data for DataTables

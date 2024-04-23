@@ -8,11 +8,15 @@ import Datepicker from 'vanillajs-datepicker/Datepicker';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+
+/** @property {Array} transactions */
+/** @property {Object} investment */
+
 am4core.useTheme(am4themes_animated);
 
 window.calculateYears = function (from, to) {
-    var diffMs = to - from;
-    var diffDate = new Date(diffMs); // miliseconds from epoch
+    const diffMs = to - from;
+    const diffDate = new Date(diffMs); // miliseconds from epoch
     return Math.abs(diffDate.getUTCFullYear() - 1970);
 }
 
@@ -100,7 +104,7 @@ window.table = $(selectorDataTable).DataTable({
             title: __("Transaction"),
         },
         {
-            data: "quantity",
+            data: "config.quantity",
             title: __("Quantity"),
             render: function(data) {
                 if (data !== null) {
@@ -110,14 +114,14 @@ window.table = $(selectorDataTable).DataTable({
             }
         },
         {
-            data: "price",
+            data: "config.price",
             title: __("Price"),
             render: function (data, type) {
                 return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             },
         },
         {
-            data: "dividend",
+            data: "config.dividend",
             defaultContent: '',
             title: __("Dividend"),
             render: function (data, type) {
@@ -125,7 +129,7 @@ window.table = $(selectorDataTable).DataTable({
             },
         },
         {
-            data: "commission",
+            data: "config.commission",
             defaultContent: '',
             title: __("Commission"),
             render: function (data, type) {
@@ -133,7 +137,7 @@ window.table = $(selectorDataTable).DataTable({
             },
         },
         {
-            data: "tax",
+            data: "config.tax",
             defaultContent: '',
             title: __("Tax"),
             render: function (data, type) {
@@ -141,31 +145,29 @@ window.table = $(selectorDataTable).DataTable({
             },
         },
         {
+            data: "cashflow_value",
             defaultContent: '',
             title: __("Cash flow value"),
-            render: function (_data, type, row) {
-                if (isNaN(row.amount_multiplier)) {
+            render: function (data, type) {
+                if (isNaN(data)) {
                     return 0;
                 }
-                const result = (  row.amount_multiplier === -1
-                              ? - row.price * row.quantity
-                              : row.dividend + row.price * row.quantity )
-                            - row.tax
-                            - row.commission;
 
-                return dataTableHelpers.toFormattedCurrency(type, result, window.YAFFA.locale, investment.currency);
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, investment.currency);
             }
         },
         {
-            data: "id",
+            data: 'id',
+            defaultContent: '',
             title: __("Actions"),
-            render: function (data, _type, row) {
-                var actions = '<button class="btn btn-xs btn-outline-dark set-date" data-type="from" data-date="' + row.date + '" title="' + __('Make this the start date') + '"><i class="fa fa-fw fa-caret-left"></i></button> ' +
+            render: function (_data, _type, row) {
+                let actions = '<button class="btn btn-xs btn-outline-dark set-date" data-type="from" data-date="' + row.date + '" title="' + __('Make this the start date') + '"><i class="fa fa-fw fa-caret-left"></i></button> ' +
                               '<button class="btn btn-xs btn-outline-dark set-date" data-type="to" data-date="' + row.date + '" title="' + __('Make this the end date') + '"><i class="fa fa-fw  fa-caret-right"></i></button> ';
                 if (!row.schedule) {
-                    actions += '<a href="' + route('transaction.open', {transaction: data, action: 'edit'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-edit" title="' + __('Edit') + '"></i></a> ' +
-                               '<a href="' + route('transaction.open', {transaction: data, action: 'clone'}) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-clone" title="' + __('Clone') + '"></i></a> ' +
-                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + data + '" type="button"><i class="fa fa-fw fa-trash" title="' + __('Delete') + '"></i></button> ';
+                    const id = row.id;
+                    actions += '<a href="' + route('transaction.open', {transaction: id, action: 'edit'}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-fw fa-edit"></i></a> ' +
+                               '<a href="' + route('transaction.open', {transaction: id, action: 'clone'}) + '" class="btn btn-xs btn-primary" title="' + __('Clone') + '"><i class="fa fa-fw fa-clone"></i></a> ' +
+                               '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="button" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
                 }
 
                 return actions;
@@ -197,7 +199,6 @@ $(selectorDataTable).on("click", ".data-delete", function() {
 });
 
 $(selectorDataTable).on("click", ".set-date", function(_event) {
-    //TODO: catch invalid combinations
     if (this.dataset.type === 'from') {
         datepickerFrom.setDate(
             new Date(this.dataset.date),
@@ -218,7 +219,7 @@ $(selectorDataTable).on("click", ".set-date", function(_event) {
 });
 
 // Initialize date filter inputs
-var datePickerStandardSettings = {
+const datePickerStandardSettings = {
     weekStart: 1,
     todayBtn: true,
     todayBtnMode: 1,
@@ -266,31 +267,31 @@ window.calculateSummary = function() {
 
     window.summary.Buying.value = filtered
         .filter(trx => trx.transaction_type.name === 'Buy')
-        .reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+        .reduce((sum, trx) => sum + trx.config.price * trx.config.quantity, 0);
 
     window.summary.Added.value = filtered
         .filter(trx => trx.transaction_type.name === 'Add')
-        .reduce((sum, trx) => sum + trx.quantity, 0);
+        .reduce((sum, trx) => sum + trx.config.quantity, 0);
 
     window.summary.Removed.value = filtered
         .filter(trx => trx.transaction_type.name === 'Remove')
-        .reduce((sum, trx) => sum + trx.quantity, 0);
+        .reduce((sum, trx) => sum + trx.config.quantity, 0);
 
     window.summary.Selling.value = filtered
         .filter(trx => trx.transaction_type.name === 'Sell')
-        .reduce((sum, trx) => sum + trx.price * trx.quantity, 0);
+        .reduce((sum, trx) => sum + trx.config.price * trx.config.quantity, 0);
 
     window.summary.Dividend.value = filtered
-        .reduce((sum, trx) => sum + trx.dividend, 0);
+        .reduce((sum, trx) => sum + trx.config.dividend, 0);
 
     window.summary.Commission.value = filtered
-        .reduce((sum, trx) => sum + trx.commission, 0);
+        .reduce((sum, trx) => sum + trx.config.commission, 0);
 
     window.summary.Taxes.value = filtered
-        .reduce((sum, trx) => sum + trx.tax, 0);
+        .reduce((sum, trx) => sum + trx.config.tax, 0);
 
     window.summary.Quantity.value = filtered
-        .reduce((sum, trx) => sum + trx.transaction_type.quantity_multiplier * trx.quantity, 0);
+        .reduce((sum, trx) => sum + trx.transaction_type.quantity_multiplier * trx.config.quantity, 0);
 
     let lastPrice;
     if (prices.length > 0) {
@@ -324,14 +325,14 @@ window.calculateSummary = function() {
                                 - window.summary.Taxes.value;
 
     // Calculate ROI
-    var ROI = (window.summary.Buying.value == 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
-    var years = calculateYears(datepickerTo.getDate(), datepickerFrom.getDate());
-    var AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
+    const ROI = (window.summary.Buying.value === 0 ? 0 : window.summary.Result.value / window.summary.Buying.value);
+    const years = calculateYears(datepickerTo.getDate(), datepickerFrom.getDate());
+    const AROI = (years > 0 ? Math.pow(1 + ROI, 1 / years) - 1 : 0);
     document.getElementById('summaryROI').innerHTML = (ROI * 100).toFixed(2) + '%';
     document.getElementById('summaryAROI').innerHTML = (AROI * 100).toFixed(2) + '%';
 
     // Assign calculated data to respective fields
-    for (var prop in window.summary) {
+    for (const prop in window.summary) {
         if (Object.prototype.hasOwnProperty.call(window.summary, prop)) {
             document.getElementById('summary' + prop).innerHTML = (window.summary[prop].isCurrency
                                                                     ? toFormattedCurrency(window.summary[prop].value, window.YAFFA.locale, investment.currency)
@@ -371,9 +372,9 @@ $("#clear_dates").on('click', dateReset);
 // Datatables filtering
 $.fn.dataTable.ext.search.push(
     function (settings, data) {
-        var min = datepickerFrom.getDate();
-        var max = datepickerTo.getDate();
-        var date = new Date(data[0]);
+        const min = datepickerFrom.getDate();
+        const max = datepickerTo.getDate();
+        const date = new Date(data[0]);
 
         return (date.getTime() >= min.getTime() && date.getTime() <= max.getTime());
     }

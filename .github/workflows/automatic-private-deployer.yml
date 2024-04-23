@@ -1,29 +1,52 @@
-name: Deploy to private instance
+name: Deploy to private instance after release-please
 
 on:
-  release:
-    types: [released]
+  workflow_run:
+    workflows:
+      - Release Please
+    types:
+      - completed
 
 concurrency: production_environment
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: Private
     name: Deploy Tag to Production
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Download "Release Please" output
+        uses: actions/download-artifact@v2
+        with:
+          name: release-output
+
+      - name: Read and evaluate output
+        run: |
+          output=$(cat release-created.txt)
+          echo "Release Please Output: $output"
+          if [ "$output" = "true" ]; then
+            echo "::set-output name=release_created::true"
+          else
+            echo "::set-output name=release_created::false"
+          fi
+
+      - uses: actions/checkout@v4
+        if: ${{ steps.output.outputs.release_created == 'true' }}
 
       - name: Setup PHP
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
 
       - name: Get composer cache directory
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         run: echo "COMPOSER_CACHE_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
 
       - name: Cache composer dependencies
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         uses: actions/cache@v4
         with:
           path: ${{ env.COMPOSER_CACHE_DIR }}
@@ -31,9 +54,11 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Configure SSH
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
@@ -53,6 +78,7 @@ jobs:
           END
 
       - name: Deploy Yaffa
+        if: ${{ steps.output.outputs.release_created == 'true' }}
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}

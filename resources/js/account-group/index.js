@@ -1,15 +1,30 @@
 require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
 
 import {
     genericDataTablesActionButton,
-    initializeDeleteButtonListener
+    renderDeleteAssetButton,
+    initializeStandardExternalSearch
 } from '../components/dataTableHelper';
+
+import { __ } from '../helpers';
 
 const dataTableSelector = '#table';
 
+/**
+ * Define the conditions for the delete button
+ */
+const deleteButtonConditions = [
+    {
+        property: 'account_entities_count',
+        value: 0,
+        negate: false,
+        errorMessage: __("This account group cannot be deleted because it is still in use.")
+    }
+];
+
+/** @property {Array} accountGroups */
 window.table = $(dataTableSelector).DataTable({
-    data: accountGroups,
+    data: window.accountGroups,
     columns: [
         {
             data: "name",
@@ -18,9 +33,9 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: "id",
             title: __("Actions"),
-            render: function (data) {
+            render: function (data, _type, row) {
                 return  genericDataTablesActionButton(data, 'edit', 'account-group.edit') +
-                        genericDataTablesActionButton(data, 'delete');
+                        renderDeleteAssetButton(row, deleteButtonConditions, __("This account group cannot be deleted."));
             },
             className: "dt-nowrap",
             orderable: false,
@@ -30,7 +45,93 @@ window.table = $(dataTableSelector).DataTable({
     order: [
         [0, 'asc']
     ],
-    responsive: true,
+    deferRender:    true,
+    scrollY:        '500px',
+    scrollCollapse: true,
+    stateSave:      false,
+    processing:     true,
+    paging:         false,
+    initComplete: function (settings) {
+        // Listener for delete button
+        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
+            // Confirm the action with the user
+            if (!confirm(__('Are you sure to want to delete this item?'))) {
+                return;
+            }
+
+            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
+
+            // Change icon to spinner
+            let element = $(this);
+            element.addClass('busy');
+
+            // Send request to change investment active state
+            $.ajax({
+                type: 'DELETE',
+                url: window.route('api.accountgroup.destroy', row.data().id),
+                data: {
+                    "_token": csrfToken,
+                },
+                dataType: "json",
+                context: this,
+                success: function (data) {
+                    // Update row in table data source
+                    window.accountGroups = window.accountGroups
+                        .filter(accountGroup => accountGroup.id !== data.accountGroup.id);
+
+                    row.remove().draw();
+                    let notificationEvent = new CustomEvent('toast', {
+                        detail: {
+                            header: __('Success'),
+                            body: __('Account group deleted'),
+                            toastClass: 'bg-success',
+                        }
+                    });
+                    window.dispatchEvent(notificationEvent);
+                },
+                error: function (data) {
+                    let notificationEvent = new CustomEvent('toast', {
+                        detail: {
+                            header: __('Error'),
+                            body: __('Error while trying to delete account group: ') + data.responseJSON.error,
+                            toastClass: 'bg-danger',
+                        }
+                    });
+                    window.dispatchEvent(notificationEvent);
+                },
+                complete: function (_data) {
+                    // Restore button icon
+                    element.removeClass('busy');
+                }
+            });
+        });
+    }
 });
 
-initializeDeleteButtonListener(dataTableSelector, 'account-group.destroy');
+// Listener for external search field
+initializeStandardExternalSearch(table);
+
+// Define the steps for the onboarding widget
+window.onboardingTourSteps = [
+    {
+        element: '#table',
+        popover: {
+            title: __('Account Groups'),
+            description: __('Account groups serve as an organizational tool to streamline your financial overview.'),
+        }
+    },
+    {
+        element: '#cardActions',
+        popover: {
+            title: __('New account group'),
+            description: __('You can create new account groups to organize your accounts.'),
+        }
+    }
+];
+
+// Initialize the onboarding widget
+import OnboardingCard from "../components/Widgets/OnboardingCard.vue";
+import { createApp } from 'vue';
+const app = createApp({});
+app.component('onboarding-card', OnboardingCard);
+app.mount('#onboarding-card');

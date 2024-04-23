@@ -25,7 +25,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="category_source">
+                            <label for="category_source" class="form-label">
                                 {{ __('Category to be merged') }}
                             </label>
                             <select
@@ -37,7 +37,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="category_target">
+                            <label for="category_target" class="form-label">
                                 {{ __('Where to merge category') }}
                             </label>
                             <select
@@ -51,7 +51,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="row mb-3">
-                            <label>
+                            <label class="form-label">
                                 {{ __('After merging') }}
                             </label>
                             <div>
@@ -71,7 +71,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <span class="help-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
+                        <span class="form-label d-block">{{ __('This action cannot be undone. Proceed with caution.') }}</span>
                         @csrf
                         <button
                             class="btn btn-sm btn-outline-dark"
