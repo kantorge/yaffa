@@ -22,7 +22,7 @@ jobs:
         run: echo "${{ steps.release.outputs.release_created }}" > release-created.txt
 
       - name: Archive output
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: release-output
           path: ./release-created.txt
