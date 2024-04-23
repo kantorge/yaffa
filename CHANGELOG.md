@@ -1,5 +1,94 @@
 # Changelog
 
+## 1.0.0 (2024-04-23)
+
+
+### 🛠️ Chores
+
+* bump cache action version ([b230d7c](https://github.com/kantorge/yaffa/commit/b230d7cea99aefcc04970a3d4078c4630babe19d))
+* composer update ([0711cf8](https://github.com/kantorge/yaffa/commit/0711cf8c4aa3a085d48e7d103a6e40a35173e5f5))
+* **main:** release 1.1.0 ([c60c790](https://github.com/kantorge/yaffa/commit/c60c7903b9be75d0d315ad6cc4c88ffed42df915))
+* **main:** release 1.1.1 ([ab4357d](https://github.com/kantorge/yaffa/commit/ab4357d6dc5f1af958fdaa208652297a9afe7a32))
+* **main:** release 1.1.2 ([8cb5580](https://github.com/kantorge/yaffa/commit/8cb558043ff658bace5a346aa1e91b3a15e62c13))
+* **main:** release 1.2.0 ([1f29af2](https://github.com/kantorge/yaffa/commit/1f29af2c0fe10bc057f76a0e7e758093ae5f9672))
+* **main:** release 1.2.1 ([b1a3cb7](https://github.com/kantorge/yaffa/commit/b1a3cb7708f894588e9b94110e2ab198985bd2a5))
+* **main:** release 1.2.2 ([362dd99](https://github.com/kantorge/yaffa/commit/362dd998b9a553267905bbe9813568383f52c5a6))
+* **main:** release 1.3.0 ([94ceff2](https://github.com/kantorge/yaffa/commit/94ceff2e5c411894d9c075022e6d1df811ca5b7e))
+* **main:** release 1.4.0 ([60da6db](https://github.com/kantorge/yaffa/commit/60da6db4a94cffd10c4279b06260406ee1184bb2))
+* **main:** release 1.5.0 ([e1feec9](https://github.com/kantorge/yaffa/commit/e1feec95a4394af3ebba9849389a67b60029a1b0))
+* **main:** release 1.5.1 ([197aebb](https://github.com/kantorge/yaffa/commit/197aebb72ca722ba8e02bf4b1434ac48b744d8f7))
+* **main:** release 1.6.0 ([dee2f26](https://github.com/kantorge/yaffa/commit/dee2f26cd2deb93cca398e34110a5e1a292e7b14))
+* **main:** release 1.6.1 ([7b4d584](https://github.com/kantorge/yaffa/commit/7b4d584eecfb1803cce75d8c3f1127575e9b3c60))
+* minor code cleanups ([79dc4e0](https://github.com/kantorge/yaffa/commit/79dc4e0fc086da498e6a826d291764390267725d))
+* remove unused Qodana config ([3cfab5e](https://github.com/kantorge/yaffa/commit/3cfab5eb3f5611af102a387094132ad837cff4da))
+* update tar package ([5340ec9](https://github.com/kantorge/yaffa/commit/5340ec98106653204fd206aac24e42278e00f42e))
+
+
+### 🎡 Continuous Integration
+
+* link release and private deployment workflows ([8e4369f](https://github.com/kantorge/yaffa/commit/8e4369f795b7bdaa4163e8a243d84844e88c1d16))
+
+
+### ✨ Features
+
+* account filter on the budget report ([b98b329](https://github.com/kantorge/yaffa/commit/b98b329360fe4a3f36a967cf0f508ff8b217508d))
+* add quick bar ([#167](https://github.com/kantorge/yaffa/issues/167)) ([559c727](https://github.com/kantorge/yaffa/commit/559c72722904f75cefec90c7afb440e56f73afa4))
+* amount color coding on the account view ([52a7421](https://github.com/kantorge/yaffa/commit/52a742172e302f56ad92c16049b317f0e6cf1208))
+* command to recalculate transaction cached data ([d3d2c42](https://github.com/kantorge/yaffa/commit/d3d2c42112f1c6ce568db8cecc77c704a989d8a0))
+* convert in-page notifications to toast ([8086ba3](https://github.com/kantorge/yaffa/commit/8086ba32da26abd9c442e491e2c411fa10603242))
+* enable pasting into math input fields ([102238f](https://github.com/kantorge/yaffa/commit/102238ff19184d3fd3cccf0760926a3238bab71c))
+* option to manually trigger account summary calculation ([e5baf62](https://github.com/kantorge/yaffa/commit/e5baf62ee218c031c31375681c1beaa97d241a86))
+* redesign the schedules report view and add basic onboarding tour ([4a87fc1](https://github.com/kantorge/yaffa/commit/4a87fc1f1ddcdf938fcdda8e3a47ac749bb14d7d))
+
+
+### 🐛 Bug Fixes
+
+* account balance handling ([8f1f301](https://github.com/kantorge/yaffa/commit/8f1f301223cee6f37e3c6057d10a373db5ce5e94))
+* add canonical tag to auth pages for the sandbox ([bb5dcf8](https://github.com/kantorge/yaffa/commit/bb5dcf866189e180c3fb1542e0518a1d7d51c6fd))
+* amount value on account detail view ([79ab918](https://github.com/kantorge/yaffa/commit/79ab918e1ff0561c7c3b7d6a7b178455475547b3))
+* budget calculation for specific schedule intervals ([8eaed0f](https://github.com/kantorge/yaffa/commit/8eaed0f6b7be86902da71067577e68cd11712a5f))
+* budget chart layout ([ccc8ae0](https://github.com/kantorge/yaffa/commit/ccc8ae06fa2d5eeca22cf5b60c2409c2c389fb90))
+* build app.js ([782cc4b](https://github.com/kantorge/yaffa/commit/782cc4b613137b9bedec0b0cfd1dca8ef67a1381))
+* code cleanup ([aab4253](https://github.com/kantorge/yaffa/commit/aab425364595210826c4a6cb7aaf6071060e0a56))
+* currency rate cache ([d640cd6](https://github.com/kantorge/yaffa/commit/d640cd6e8d4f7023f51133ca9aa3c18451252222))
+* date calculation on the payee list ([5ceef9f](https://github.com/kantorge/yaffa/commit/5ceef9fa3f399718350724a326c4fe4e56f6bb9e))
+* incorrectly used DataTables state save for investments ([dbfda19](https://github.com/kantorge/yaffa/commit/dbfda1908511a052096b1e482030f766ea0b4b89))
+* investment calculation for account monthly summary ([1f1f1c1](https://github.com/kantorge/yaffa/commit/1f1f1c12eee45e4a87478d270111b5441250ac9c))
+* manually add commands to kernel ([eaa2690](https://github.com/kantorge/yaffa/commit/eaa2690ac319866d482f20ee5a027a0fedb3fdc9))
+* minor code cleanup ([ec58e9c](https://github.com/kantorge/yaffa/commit/ec58e9cdd5f5192868c33f48718cd56f24e7bca0))
+* non-required schedule dates ([8f35b1c](https://github.com/kantorge/yaffa/commit/8f35b1c58fb14f86991ff46097a227252b0fda1a))
+* onboarding tour button trigger ([c7ec108](https://github.com/kantorge/yaffa/commit/c7ec10837021759ec0ecb4cd39e0d23c4b4ae0b7))
+* release please configuration ([afe9d4c](https://github.com/kantorge/yaffa/commit/afe9d4ce766c591b2b33a41acfcef5c6189a903b))
+* remove unused DataTables scroller reference ([4904959](https://github.com/kantorge/yaffa/commit/490495970e8e9e7b3d9b260fdd2510bce4f98432))
+* risky unit test ([a10e244](https://github.com/kantorge/yaffa/commit/a10e244523d1dce15079eba72c8b0b22df684d2b))
+* show account view bugs ([ee5567c](https://github.com/kantorge/yaffa/commit/ee5567c2e4504718917386714cadb713aaf6926a))
+* show investment view ([f3d8a93](https://github.com/kantorge/yaffa/commit/f3d8a935dd1ead75b28cc902d85b9ea2e82fda85))
+* table header on budget report ([48c3031](https://github.com/kantorge/yaffa/commit/48c3031229f7e08e4b73edc4e9c9791df506863c))
+* transaction cache calculation in migration ([c098bd5](https://github.com/kantorge/yaffa/commit/c098bd5d12e33bf0189cd13da580e948acfcd619))
+* transaction delete behavior on budget report ([b9cd90f](https://github.com/kantorge/yaffa/commit/b9cd90f5d99763e7566f52fbe8c7fbb07af944e0))
+* unify deploy with release ([1753999](https://github.com/kantorge/yaffa/commit/17539990197cf1ebd475d8e9f1349b34db33df26))
+* unrelated fixes and refactoring ([75122d1](https://github.com/kantorge/yaffa/commit/75122d1b2bcfdcef31090430b8ec29b983f17557))
+* update GitHub action version for artifact sharing ([9e91959](https://github.com/kantorge/yaffa/commit/9e919599bda5f14c9c532ea99e6ca313009bac2b))
+* upgrade axios from 1.6.7 to 1.6.8 ([f2da011](https://github.com/kantorge/yaffa/commit/f2da0112527cb97890888843e33865eecf2743db))
+* upgrade datatables.net-responsive-bs5 from 3.0.0 to 3.0.1 ([#170](https://github.com/kantorge/yaffa/issues/170)) ([6ab9b1e](https://github.com/kantorge/yaffa/commit/6ab9b1e71f78c4277b9512204806be6bfde5180c))
+* upgrade webpack from 5.90.3 to 5.91.0 ([#171](https://github.com/kantorge/yaffa/issues/171)) ([6cc8cdd](https://github.com/kantorge/yaffa/commit/6cc8cdd0ebb5f0f4ba0243893eec714d09ad80f8))
+* various code cleanups ([7f9974f](https://github.com/kantorge/yaffa/commit/7f9974fa32d227da4d1f5809583c4797ba75cbbd))
+* various code cleanups ([25a22d8](https://github.com/kantorge/yaffa/commit/25a22d8c3d9a1fff882db35acf2e67694e4d60eb))
+
+
+### 🔨 Code Refactoring
+
+* category form request rules ([8051c29](https://github.com/kantorge/yaffa/commit/8051c290f02c6cb64ee1355bd0b399b2c2f7206f))
+* removed some code duplications ([f9a8fbc](https://github.com/kantorge/yaffa/commit/f9a8fbcccd39c3d3ca7cd46bdfa1d943942dcfd6))
+* simplify investment show calculations ([c051414](https://github.com/kantorge/yaffa/commit/c05141420b99f84b33d1e3cae872853b9a45a4d4))
+* simplify the transaction operator handling ([#151](https://github.com/kantorge/yaffa/issues/151)) ([33ae30a](https://github.com/kantorge/yaffa/commit/33ae30a3b7fa2f14ed141f122cc48720b4664702))
+* unify FormRequest string length handling ([9946721](https://github.com/kantorge/yaffa/commit/9946721b52a5242b40faed60d82a03a346d7676d))
+
+
+### 🧪 Tests
+
+* fix controller API folder name ([1fa127a](https://github.com/kantorge/yaffa/commit/1fa127ac2ec7ce9944509292be352f011077dc85))
+
 ## [1.6.1](https://github.com/kantorge/yaffa/compare/v1.6.0...v1.6.1) (2024-04-17)
 
 
