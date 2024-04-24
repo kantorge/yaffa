@@ -6,6 +6,8 @@ $.fn.select2.amd.define(
     require("select2/src/js/select2/i18n/" + window.YAFFA.language)
 );
 
+import { __ } from '../helpers';
+
 // Add select2 functionality to payee_source select
 const selectorSourceCategory = '#category_source';
 const selectorTargetCategory = '#category_target';
@@ -30,8 +32,9 @@ $(selectorSourceCategory).select2({
             // Exclude category in target select
             let targetCategory = $(selectorTargetCategory).select2('data');
             if (targetCategory.length > 0) {
+                const targetCategoryId = Number(targetCategory[0].id);
                 data = data.filter(function (item) {
-                    return item.id != targetCategory[0].id;
+                    return item.id !== targetCategoryId;
                 });
             }
 
@@ -43,6 +46,7 @@ $(selectorSourceCategory).select2({
     },
 })
 .on('select2:select', function (e) {
+    // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
         url:  '/api/assets/category/' + e.params.data.id,
         data: {
@@ -59,7 +63,7 @@ $(selectorSourceCategory).select2({
 
 // Load default value for source category if provided in query parameter
 let categorySource = window.categorySource || null;
-if (categorySource) {
+if (categorySource.id) {
     $(selectorSourceCategory)
         .append(new Option(categorySource.full_name, categorySource.id, true, true))
         .trigger({
@@ -92,8 +96,9 @@ $(selectorTargetCategory).select2({
             //Exclude caegory in source select
             let sourceCategory = $(selectorSourceCategory).select2('data');
             if (sourceCategory.length > 0) {
+                const sourceCategoryId = Number(sourceCategory[0].id);
                 data = data.filter(function (item) {
-                    return item.id != sourceCategory[0].id;
+                    return item.id !== sourceCategoryId;
                 });
             }
 
@@ -105,6 +110,7 @@ $(selectorTargetCategory).select2({
     },
 })
 .on('select2:select', function (e) {
+    // When a category is selected, get all its details and mark if it is a parent category
     $.ajax({
         url:  '/api/assets/category/' + e.params.data.id,
         data: {
@@ -129,13 +135,13 @@ $('#merge-categories-form').on('submit', function (e) {
         e.preventDefault();
         alert(__('Please select categories to be merged'));
         return;
-    } else {
-        // Validate if both select2 inputs are not the same
-        if (source[0].id === target[0].id) {
-            e.preventDefault();
-            alert(__('Please select different categories to be merged'));
-            return;
-        }
+    }
+
+    // Validate if both select2 inputs are not the same
+    if (source[0].id === target[0].id) {
+        e.preventDefault();
+        alert(__('Please select different categories to be merged'));
+        return;
     }
 
     // Validate if action radio button is selected
@@ -149,7 +155,7 @@ $('#merge-categories-form').on('submit', function (e) {
     // Validate invalid combination where source category is a parent, and target category is a child
     if ($(selectorSourceCategory).data('parent') === true && $(selectorTargetCategory).data('parent') === false) {
         e.preventDefault();
-        alert(__('Cannot merge a parent category into a child category.'));
+        alert(__('You cannot merge a parent category into a child category.'));
         return;
     }
 
@@ -159,8 +165,8 @@ $('#merge-categories-form').on('submit', function (e) {
 });
 
 // Cancel button behaviour
-$('#cancel').on('click', function () {
-    if(confirm(__('Are you sure you want to discard any changes?'))) {
+document.getElementById('cancel').addEventListener('click', function () {
+    if (confirm(__('Are you sure you want to discard any changes?'))) {
         window.history.back();
     }
 });

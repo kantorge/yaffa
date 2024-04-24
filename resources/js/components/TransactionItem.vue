@@ -5,9 +5,9 @@
     >
         <div class="row">
             <div class="col-12 col-sm-4 form-group">
-                <label>
+                <span class="form-label">
                     {{ __('Category') }}
-                </label>
+                </span>
                 <select
                     class="form-select category"
                     v-model.number="categoryIdData"
@@ -15,10 +15,10 @@
                 </select>
             </div>
             <div class="col-12 col-sm-2 form-group">
-                <label class="control-label">
+                <span class="form-label">
                     {{ __('Amount') }}
                     <span v-if="currency">({{currency}})</span>
-                </label>
+                </span>
                 <div class="input-group">
                     <MathInput
                         class="form-control transaction_item_amount"
@@ -34,9 +34,9 @@
                 </div>
             </div>
             <div class="col-12 col-sm-2 form-group transaction_detail_container d-none d-md-block">
-                <label class="control-label">
+                <span class="form-label">
                     {{ __('Tags') }}
-                </label>
+                </span>
                 <select
                     class="form-select tag"
                     multiple="multiple"
@@ -45,9 +45,9 @@
                 </select>
             </div>
             <div class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block">
-                <label class="control-label">
+                <span class="form-label">
                     {{ __('Comment') }}
-                </label>
+                </span>
                 <input
                     class="form-control transaction_item_comment"
                     v-model="commentData"
@@ -81,7 +81,8 @@
         require("select2/src/js/select2/i18n/" + window.YAFFA.language)
     );
 
-    import MathInput from './MathInput.vue'
+    import MathInput from './MathInput.vue';
+    import * as helpers from '../helpers';
 
     export default {
         components: {
@@ -160,7 +161,7 @@
             if (this.category_id) {
                 const data = this.category;
 
-                var option = new Option(data.full_name, data.id, true, true);
+                const option = new Option(data.full_name, data.id, true, true);
                 elementCategory.append(option).trigger('change');
 
                 // Manually trigger the `select2:select` event
@@ -188,7 +189,7 @@
                     data.push(tag);
                 },
                 templateResult: function (data) {
-                    var $result = $("<span></span>");
+                    let $result = $("<span></span>");
 
                     $result.text(data.text);
 
@@ -230,7 +231,7 @@
                         name: tag.name,
                     });
 
-                    var option = new Option(tag.name, tag.id, true, true);
+                    const option = new Option(tag.name, tag.id, true, true);
                     elementTags.append(option).trigger('change');
                 })
 
@@ -261,12 +262,19 @@
 
             // Add the currently available remainder amount to this item
             loadRemainder() {
-                var element = $(this.$el).find("input.transaction_item_amount");
-                var amount = (this.amount || 0) + this.remainingAmount;
+                const element = $(this.$el).find("input.transaction_item_amount");
+                const amount = (this.amount || 0) + this.remainingAmount;
 
                 element.val(amount);
                 this.$emit('update:amount', amount);
-            }
+            },
+
+            /**
+             * Import the translation helper function.
+             */
+            __: function (string, replace) {
+                return helpers.__(string, replace);
+            },
         },
 
         watch: {

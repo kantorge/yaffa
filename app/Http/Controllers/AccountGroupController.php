@@ -34,6 +34,7 @@ class AccountGroupController extends Controller
         $accountGroups = Auth::user()
             ->accountGroups()
             ->select('id', 'name')
+            ->withCount('accountEntities')
             ->get();
 
         // Pass data for DataTables

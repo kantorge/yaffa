@@ -131,7 +131,7 @@ table.contextualActions({
                 window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
                     .then(function(response) {
                         // Find and update the original row in the table
-                        let row = $(tableSelector).dataTable().api().row(function (_idx, data, _node) {
+                        let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
                             return data.id === id;
                         });
 
@@ -242,7 +242,7 @@ table.contextualActions({
                 window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
                     .then(function () {
                         // Find and remove original row in schedule table
-                        let row = $(tableSelector).dataTable().api().row(function (_idx, data, _node) {
+                        let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
                             return data.id === id;
                         });
 

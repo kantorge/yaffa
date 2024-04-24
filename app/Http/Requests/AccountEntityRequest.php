@@ -2,8 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Models\AccountEntity;
 use Illuminate\Validation\Rule;
 
+/**
+ * @property AccountEntity $account_entity
+ * @property string $config_type
+ */
 class AccountEntityRequest extends FormRequest
 {
     public function rules(): array
@@ -11,8 +16,8 @@ class AccountEntityRequest extends FormRequest
         $rules = [
             'name' => [
                 'required',
-                'min:2',
-                'max:191',
+                'min:' . self::DEFAULT_STRING_MIN_LENGTH,
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('account_entities')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
@@ -81,7 +86,7 @@ class AccountEntityRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         // Ensure that checkbox values are available
         $this->merge([

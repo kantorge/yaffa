@@ -165,7 +165,7 @@ let table = $('#investmentSummary').DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.investments = window.investments.filter(investment => investment.id !== data.investment.id);
 
                     // Remove row from table
@@ -200,7 +200,7 @@ let table = $('#investmentSummary').DataTable({
     deferRender: true,
     scrollY: '500px',
     scrollCollapse: true,
-    stateSave: true,
+    stateSave: false,
     processing: true,
     paging: false,
 });

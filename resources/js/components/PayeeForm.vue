@@ -21,7 +21,7 @@
                         <AlertSuccess :form="form" :message="__('Your changes have been saved!')" />
 
                         <div class="row mb-3">
-                            <label for="name" class="control-label col-sm-3">
+                            <label for="name" class="form-label col-sm-3">
                                 {{ __('Name') }}
                             </label>
                             <div class="col-sm-9">
@@ -37,7 +37,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="active" class="control-label col-sm-3">
+                            <label for="active" class="form-label col-sm-3">
                                 {{ __('Active') }}
                             </label>
                             <div class="col-sm-9">
@@ -52,7 +52,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="category_id" class="control-label col-sm-3">
+                            <label for="category_id" class="form-label col-sm-3">
                                 {{ __('Default category') }}
                             </label>
                             <div class="col-sm-9">
@@ -67,9 +67,9 @@
                         </div>
                         <div class="row mb-3" v-show="similarPayees.length > 0">
                             <hr>
-                            <label class="control-label col-sm-3">
+                            <span class="form-label col-sm-3">
                                 {{ __('Are you looking for any of these payees?') }}
-                            </label>
+                            </span>
                             <div class="col-sm-9">
                                 <ul class="list-unstyled" id="similar-payee-list">
                                     <li

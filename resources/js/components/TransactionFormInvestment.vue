@@ -24,7 +24,7 @@
                             <div class="row">
                                 <div class="col-md-8 mb-2">
                                     <div class="form-group">
-                                        <label for="transaction_type" class="control-label">
+                                        <label for="transaction_type" class="form-label">
                                             {{ __('Transaction type') }}
                                         </label>
                                         <select
@@ -128,7 +128,7 @@
                                 <div class="col-12 col-sm-8 mb-0"
                                      :class="form.errors.has('comment') ? 'has-error' : ''"
                                 >
-                                    <label for="comment" class="control-label block-label">
+                                    <label for="comment" class="form-label block-label">
                                         {{ __('Comment') }}
                                     </label>
                                     <input
@@ -156,7 +156,7 @@
                             <div class="row mb-3">
                                 <div class="col-12 mb-3">
                                     <div class="form-group">
-                                        <label for="account" class="control-label">
+                                        <label for="account" class="form-label">
                                             {{ __('Account') }}
                                         </label>
                                         <select
@@ -168,7 +168,7 @@
                                 </div>
                                 <div class="col-12 mb-2">
                                     <div class="form-group">
-                                        <label for="investment" class="control-label">
+                                        <label for="investment" class="form-label">
                                             {{ __('Investment') }}
                                         </label>
                                         <select
@@ -202,7 +202,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <div class="form-group">
-                                        <label for="transaction_quantity" class="control-label">
+                                        <label for="transaction_quantity" class="form-label">
                                             {{ __('Quantity') }}
                                         </label>
                                         <MathInput
@@ -215,7 +215,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <div class="form-group">
-                                        <label for="transaction_price" class="control-label">
+                                        <label for="transaction_price" class="form-label">
                                             {{ __('Price') }}
                                         </label>
                                         <MathInput
@@ -230,7 +230,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <div class="form-group">
-                                        <label for="transaction_commission" class="control-label">
+                                        <label for="transaction_commission" class="form-label">
                                             {{ __('Commission') }}
                                         </label>
                                         <MathInput
@@ -242,7 +242,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <div class="form-group">
-                                        <label for="transaction_tax" class="control-label">
+                                        <label for="transaction_tax" class="form-label">
                                             {{ __('Tax') }}
                                         </label>
                                         <MathInput
@@ -256,7 +256,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="transaction_dividend" class="control-label">
+                                        <label for="transaction_dividend" class="form-label">
                                             {{ __('Dividend') }}
                                         </label>
                                         <MathInput
@@ -321,12 +321,13 @@
                         </div>
                         <div class="col-12 d-block d-md-none">
                             <div v-show="!fromModal">
-                                <label class="control-label block-label">
+                                <label class="form-label block-label" for="callback-selector-mobile">
                                     {{ __('Action after saving') }}
                                 </label>
                                 <select
                                         class="form-control"
                                         v-model="callback"
+                                        id="callback-selector-mobile"
                                 >
                                     <option
                                             v-for="item in activeCallbackOptions"

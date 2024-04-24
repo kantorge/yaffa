@@ -66,11 +66,11 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
+                ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(9)', 'Buy');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
@@ -88,7 +88,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(10)', $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
         });
     }
 
@@ -131,11 +131,11 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
+                ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(9)', 'Sell');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
@@ -153,7 +153,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(10)', $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
         });
     }
 
@@ -198,11 +198,11 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                 // Wait for the table to load, when the placeholder is gone
                 ->waitUntilMissing('#table .dataTables_empty', 10)
                 // Check that a row with the transaction is present
-                ->waitFor('#table tbody tr[data-id="' . $transaction->id . '"]', 10)
+                ->waitFor($this->getTableRowSelector($transaction), 10)
                 // The 8th column is the payee, which contains the account name
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(8)', 'Investment account USD')
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
                 // The 9th column is the category, which contains the investment type
-                ->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(9)', 'Dividend');
+                ->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
 
             // Calculate the formatted value of the transaction using JavaScript
             $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
@@ -220,7 +220,17 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
                     });")[0];
 
             // The 10th column is the amount, which contains the formatted value
-            $browser->assertSeeIn('#table tbody tr[data-id="' . $transaction->id . '"] td:nth-child(10)', $formattedValue);
+            $browser->assertSeeIn($this->getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
         });
+    }
+
+    /**
+     * @param Transaction $transaction
+     * @param string $postfix
+     * @return string
+     */
+    private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
+    {
+        return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');
     }
 }

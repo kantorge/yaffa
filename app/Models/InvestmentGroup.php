@@ -6,6 +6,7 @@ use App\Http\Traits\ModelOwnedByUserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * App\Models\InvestmentGroup
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
+ * @property-read User $user
  * @method static \Database\Factories\InvestmentGroupFactory factory(...$parameters)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup newQuery()
@@ -51,5 +52,10 @@ class InvestmentGroup extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function investments(): HasMany
+    {
+        return $this->hasMany(Investment::class);
     }
 }

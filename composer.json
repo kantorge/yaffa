@@ -1,7 +1,7 @@
 {
     "name": "kantorge/yaffa",
     "description": "Yet Another Free Financial Application: a free, self-hosted personal finance app",
-    "version": "1.4.0",
+    "version": "1.6.1",
     "type": "project",
     "keywords": [
         "personal finance",
@@ -14,6 +14,7 @@
         "beyondcode/laravel-mailbox": "^3.1",
         "biscolab/laravel-recaptcha": "^6.0",
         "bkwld/cloner": "^3.11",
+        "diglactic/laravel-breadcrumbs": "^9.0",
         "enlightn/enlightn": "^2.1",
         "fakerphp/faker": "^1.13",
         "guzzlehttp/guzzle": "^7.0.1",

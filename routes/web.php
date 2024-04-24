@@ -21,10 +21,17 @@ use App\Mail\TransactionCreatedFromEmail;
 use App\Models\ReceivedMail;
 use Illuminate\Support\Facades\Route;
 
+/*********************
+ * Generic routes
+ ********************/
 Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('home');
 Route::view('/terms', 'pages.terms')->name('terms');
 
+/*********************
+ * Account and payee related routes
+ ********************/
 Route::resource('account-group', AccountGroupController::class)->except(['show']);
+
 Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
     ->except(['destroy']);
@@ -32,7 +39,23 @@ Route::resource('account-entity', AccountEntityController::class)
 Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
     ->name('account.history');
 
+// Routes to display form to merge two payees
+Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
+    ->name('payees.merge.form');
+Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->name('payees.merge.submit');
+
+/*********************
+ * Category related routes
+ ********************/
 Route::resource('categories', CategoryController::class)->except(['show']);
+// Routes to display form to merge two categories
+Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
+    ->name('categories.merge.form');
+Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+
+/*********************
+ * Currency and currency rate related routes
+ ********************/
 Route::resource('currency', CurrencyController::class)->except(['show']);
 Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currency.setDefault');
@@ -48,6 +71,9 @@ Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'
 
 Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy']);
 
+/*********************
+ * Investment related routes
+ ********************/
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
 Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
@@ -61,9 +87,15 @@ Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceControl
 Route::resource('investment-price', InvestmentPriceController::class)
     ->except(['index', 'show']);
 
+/*********************
+ * Tag related routes
+ ********************/
 Route::resource('tag', TagController::class)
     ->except(['show']);
 
+/*******************
+ * Transaction related routes
+ ******************/
 Route::get('/transactions/create/{type}', [TransactionController::class, 'create'])
     ->where('type', 'standard|investment')
     ->name('transaction.create');
@@ -79,24 +111,22 @@ Route::post('/transactions/create-from-draft', [TransactionController::class, 'c
 Route::resource('transactions', TransactionController::class)
     ->only(['destroy']);
 
-Route::resource('received-mail', ReceivedMailController::class)
-    ->only(['index', 'show', 'destroy']);
-
+/*******************
+ * Report related routes
+ ******************/
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
 Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->name('reports.budgetchart');
 Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
 
-// Routes to display form to merge two payees
-Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
-    ->name('payees.merge.form');
-Route::post('/payees/merge', [AccountEntityController::class, 'mergePayees'])->name('payees.merge.submit');
+/*******************
+ * Miscellanous routes
+ *******************/
 
-// Routes to display form to merge two categories
-Route::get('/categories/merge/{categorySource?}', [CategoryController::class, 'mergeCategoriesForm'])
-    ->name('categories.merge.form');
-Route::post('/categories/merge', [CategoryController::class, 'mergeCategories'])->name('categories.merge.submit');
+// Received emails
+Route::resource('received-mail', ReceivedMailController::class)
+    ->only(['index', 'show', 'destroy']);
 
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');
@@ -108,6 +138,9 @@ Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
 Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
 
+/*******************
+ * Authentication and verification routes
+ *******************/
 Auth::routes();
 Route::get('/email/verify', [VerificationController::class, 'notice'])
     ->middleware('auth')
@@ -119,15 +152,19 @@ Route::post('/email/verification-notification', [VerificationController::class, 
     ->middleware(['auth', 'throttle:6,1'])
     ->name('verification.send');
 
-/* Test routes, only available if environment is local */
+/********************
+ * Test routes, only available if environment is local
+ ********************/
 if (app()->environment('local')) {
     Route::get('/test/email/transactioncreatedbyai', function () {
+        /** @var ReceivedMail $mail */
         $mail = ReceivedMail::factory()->withTransaction()->create();
         $message = (new TransactionCreatedFromEmail($mail));
         return $message->render();
     });
 
     Route::get('/test/email/transactionerrorfromemail', function () {
+        /** @var ReceivedMail $mail */
         $mail = ReceivedMail::factory()->create();
         $message = (new App\Mail\TransactionErrorFromEmail($mail, 'This is a test error'));
         return $message->render();

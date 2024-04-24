@@ -34,11 +34,13 @@ class RecordScheduledTransactionTest extends TestCase
         // By default, a transaction schedule will be created
         // We need to adjust its properties to better suite our test
         $transaction->transactionSchedule->update([
+            'start_date' => now(),
+            'next_date' => now(),
             'end_date' => null,
             'automatic_recording' => true,
             'count' => null,
             'interval' => 1,
-            'frequency' => 'MONTHLY',
+            'frequency' => 'DAILY',
         ]);
 
         $start = $transaction->transactionSchedule->next_date;
@@ -54,6 +56,6 @@ class RecordScheduledTransactionTest extends TestCase
         $this->assertEquals($start, $newTransaction->date);
 
         // Check that the next date was adjusted
-        $this->assertEquals($start->addMonth(), $transaction->transactionSchedule->next_date);
+        $this->assertEquals($start->addDay(), $transaction->transactionSchedule->next_date);
     }
 }

@@ -3,16 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Rules\IsFalsy;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function attributes(): array
     {
         return [
@@ -45,7 +39,10 @@ class TransactionRequest extends FormRequest
 
             'id' => 'nullable|exists:transactions,id',
             'transaction_type_id' => 'required|exists:transaction_types,id',
-            'comment' => 'nullable|max:191',
+            'comment' => [
+                'nullable',
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
+            ],
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',

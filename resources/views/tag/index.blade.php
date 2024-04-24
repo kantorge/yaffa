@@ -20,19 +20,21 @@
                         {{ __('Actions') }}
                     </div>
                 </div>
-                <div class="card-body collapse show" aria-expanded="true" id="cardActions">
-                    <ul class="nav flex-column">
-                        <li class="nav-item d-flex justify-content-between align-items-center">
-                            {{ __('New tag') }}
-                            <a class="btn btn-success btn-sm"
-                               dusk="button-new-tag"
-                               href="{{ route('tag.create') }}" title="{{ __('New tag') }}"
-                            >
-                                <i class="fa fa-fw fa-plus" title="{{ __('New tag') }}"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                <ul
+                        class="list-group list-group-flush collapse show"
+                        aria-expanded="true"
+                        id="cardActions"
+                >
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ __('New tag') }}
+                        <a class="btn btn-success btn-sm"
+                           dusk="button-new-tag"
+                           href="{{ route('tag.create') }}" title="{{ __('New tag') }}"
+                        >
+                            <i class="fa fa-fw fa-plus" title="{{ __('New tag') }}"></i>
+                        </a>
+                    </li>
+                </ul>
             </div>
 
             <div class="card mb-3">

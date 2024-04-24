@@ -9,6 +9,8 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 const TABLESELECTOR = '#table';
+const SELECTOR_TABLE_RECEIVED_MAILS = '@table-received-mails';
+
 class ReceivedMailListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -69,9 +71,9 @@ class ReceivedMailListTest extends DuskTestCase
                 // Load the account list
                 ->visitRoute('received-mail.index')
                 // Wait for the table to load
-                ->waitFor('@table-received-mails')
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS)
                 // Check that the account list is visible
-                ->assertPresent('@table-received-mails');
+                ->assertPresent(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Get the number of mails in the table using JavaScript
             $this->assertEquals(
@@ -150,7 +152,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $mail) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails');
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Click the view transaction button
             $browser->click(TABLESELECTOR . ' button.transaction-quickview[data-id="' . $mail->transaction_id . '"]');
@@ -163,7 +165,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $mail) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails')
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS)
                 ->assertPresent(
                     TABLESELECTOR . ' a[href="' . route('transaction.open', [
                         'action' => 'show',
@@ -176,7 +178,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user, $mail) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails');
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Click the delete button
             $browser->click(TABLESELECTOR . ' button.deleteIcon[data-id="' . $mail->id . '"]')
@@ -202,7 +204,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails');
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Filter the table to show only unprocessed mails
             $browser->click('label[for=table_filter_processed_no]');
@@ -214,7 +216,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails');
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Filter the table to show only handled mails
             $browser->click('label[for=table_filter_handled_yes]');
@@ -226,7 +228,7 @@ class ReceivedMailListTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
                 ->visitRoute('received-mail.index')
-                ->waitFor('@table-received-mails');
+                ->waitFor(SELECTOR_TABLE_RECEIVED_MAILS);
 
             // Filter the table to show only processed mails
             $browser->click('label[for=table_filter_processed_yes]');

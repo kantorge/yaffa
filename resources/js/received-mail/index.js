@@ -157,7 +157,7 @@ window.table = $(dataTableSelector).DataTable({
                 dataType: "json",
                 context: this,
                 success: function (data) {
-                    // Update row in table data souerce
+                    // Update row in table data source
                     window.mails = window.mails.filter(mail => mail.id !== data.receivedMail.id);
 
                     row.remove().draw();

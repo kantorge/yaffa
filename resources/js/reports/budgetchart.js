@@ -47,7 +47,7 @@ const computeMovingAverage = (baseData, period) => {
 
         return currentItem;
     })
-}
+};
 
 const elementRefreshButton = document.getElementById('reload');
 const treeSelector = '#category_tree';
@@ -65,6 +65,11 @@ chart.numberFormatter.numberFormat = {
 
 const dateAxis = chart.xAxes.push(new am4charts.DateAxis());
 dateAxis.dataFields.category = "period";
+dateAxis.baseInterval = {
+    timeUnit: "month",
+    count: 1
+}
+dateAxis.dateFormats.setKey("month", "yyyy MMM");
 
 // This is not used later, so it is not assigned to a variable
 chart.yAxes.push(new am4charts.ValueAxis());
@@ -136,7 +141,11 @@ let reloadData = function () {
             const maxDate = data[data.length - 1].date;
             let currentDate = new Date(minDate);
             while (currentDate < maxDate) {
-                if (!data.find(item => item.date.getTime() === currentDate.getTime())) {
+                if (!data.find(
+                        item => item.date.getFullYear() === currentDate.getFullYear()
+                        && item.date.getMonth() === currentDate.getMonth()
+                        && item.date.getDate() === currentDate.getDate())
+                ) {
                     data.push({
                         date: new Date(currentDate),
                         period: currentDate.toISOString().slice(0, 7),

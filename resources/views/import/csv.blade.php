@@ -38,7 +38,7 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="form-group d-inline-block">
-                                <label class="control-label">
+                                <label class="form-label-label">
                                     {{ __('Has similar transaction') }}
                                 </label>
                                 <div class="btn-group" role="group" aria-label="Toggle button group for similar transactions">
@@ -59,7 +59,7 @@
                                 </div>
                             </div>
                             <div class="form-group d-inline-block">
-                                <label class="control-label">
+                                <label class="form-label-label">
                                     {{ __('Already handled') }}
                                 </label>
                                 <div class="btn-group" role="group" aria-label="Toggle button group for already handled_transactions">

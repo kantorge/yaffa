@@ -19,10 +19,9 @@ class CurrencyPolicy
     /**
      * Determine whether the user can view any models.
      *
-     * @param User $user
      * @return Response|bool
      */
-    public function viewAny(User $user): Response|bool
+    public function viewAny(): Response|bool
     {
         return true;
     }
@@ -42,10 +41,9 @@ class CurrencyPolicy
     /**
      * Determine whether the user can create models.
      *
-     * @param User $user
      * @return Response|bool
      */
-    public function create(User $user): Response|bool
+    public function create(): Response|bool
     {
         return true;
     }

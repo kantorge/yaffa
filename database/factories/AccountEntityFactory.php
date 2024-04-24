@@ -27,7 +27,13 @@ class AccountEntityFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->word(),
+            // Ensure the name is unique and at least 3 characters long
+            'name' => function () {
+                do {
+                    $word = $this->faker->unique()->word();
+                } while (mb_strlen($word) < 3);
+                return $word;
+            },
             'active' => $this->faker->boolean(80),
             'alias' => $this->faker->boolean(30) ? $this->faker->word() : null,
             'user_id' => User::factory(),

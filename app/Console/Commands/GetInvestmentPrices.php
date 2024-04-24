@@ -23,14 +23,6 @@ class GetInvestmentPrices extends Command
     protected $description = 'Run retrieval of investment prices for all investments with known price providers.';
 
     /**
-     * Create a new command instance.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int

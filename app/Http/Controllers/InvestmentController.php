@@ -3,24 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\InvestmentRequest;
+use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
-use Recurr\Rule;
-use Recurr\Transformer\ArrayTransformer;
-use Recurr\Transformer\ArrayTransformerConfig;
-use Recurr\Transformer\Constraint\BetweenConstraint;
 
 class InvestmentController extends Controller
 {
+    use ScheduleTrait;
+
     protected InvestmentService $investmentService;
 
     public function __construct()
@@ -207,135 +205,45 @@ class InvestmentController extends Controller
         ]);
 
         // Get all transactions related to selected investment
-        $rawTransactions =
-            Transaction::with([
+        $rawTransactions = Transaction::with([
+            'config',
+            'transactionType',
+            'transactionSchedule'
+        ])
+            ->whereHasMorph(
                 'config',
-                'transactionType',
-            ])
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investment) {
-                        $query->Where('investment_id', $investment->id);
-                    }
-                )
-                ->orderBy('date')
-                ->get();
-
-        // Process data for table and chart
-        $rawTransactions
-            ->transform(function ($transaction) {
-                $commonData =
-                    [
-                        'id' => $transaction->id,
-                        'transaction_type' => $transaction->transactionType->toArray(),
-                        'amount_multiplier' => $transaction->transactionType->amount_multiplier,
-                        'quantity_multiplier' => $transaction->transactionType->quantity_multiplier,
-
-                        'reconciled' => $transaction->reconciled,
-                        'comment' => $transaction->comment,
-                    ];
-
-                $baseData = [
-                    'quantity' => $transaction->config->quantity,
-                    'price' => $transaction->config->price,
-                    'dividend' => $transaction->config->dividend,
-                    'commission' => $transaction->config->commission,
-                    'tax' => $transaction->config->tax,
-                ];
-
-                if ($transaction->schedule) {
-                    $transaction->load(['transactionSchedule']);
-
-                    $dateData = [
-                        'schedule' => $transaction->transactionSchedule,
-                        'transaction_group' => 'schedule',
-                    ];
-                } else {
-                    $dateData = [
-                        'date' => $transaction->date,
-                        'transaction_group' => 'history',
-                    ];
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($investment) {
+                    $query->where('investment_id', $investment->id);
                 }
+            )
+            ->orderBy('date')
+            ->get();
 
-                return array_merge($commonData, $baseData, $dateData);
-            });
-
-        // Get all historical transactions
-        $transactions = $rawTransactions->where('transaction_group', 'history');
+        // Split the transactions into historical and scheduled, based on the schedule flag
+        [$scheduledTransactions, $transactions] = $rawTransactions->partition('schedule');
 
         // Add all scheduled items to list of transactions
-        $rawTransactions
-            ->where('transaction_group', 'schedule')
-            ->each(function ($transaction) use (&$transactions) {
-                $rule = new Rule();
-                $rule->setStartDate(new Carbon($transaction['schedule']->start_date));
-
-                if ($transaction['schedule']->end_date) {
-                    $rule->setUntil(new Carbon($transaction['schedule']->end_date));
-                }
-
-                $rule->setFreq($transaction['schedule']->frequency);
-
-                if ($transaction['schedule']->count) {
-                    $rule->setCount($transaction['schedule']->count);
-                }
-                if ($transaction['schedule']->interval) {
-                    $rule->setInterval($transaction['schedule']->interval);
-                }
-
-                $transformerConfig = new ArrayTransformerConfig();
-                $transformerConfig->enableLastDayOfMonthFix();
-                // Avoid overloading too frequent schedules. TODO: notify user if limit is reached.
-                $transformerConfig->setVirtualLimit(500);
-
-                $transformer = new ArrayTransformer();
-                $transformer->setConfig($transformerConfig);
-
-                $startDate = new Carbon($transaction['schedule']->next_date);
-                $startDate->startOfDay();
-
-                if ($transaction['schedule']->end_date === null) {
-                    $endDate = Auth::user()->end_date;
-                } else {
-                    $endDate = new Carbon($transaction['schedule']->end_date);
-                }
-                $endDate->startOfDay();
-
-                $constraint = new BetweenConstraint($startDate, $endDate, true);
-
-                $first = true;
-
-                foreach ($transformer->transform($rule, $constraint) as $instance) {
-                    $newTransaction = $transaction;
-                    $newTransaction['date'] = new Carbon($instance->getStart());
-                    $newTransaction['transaction_group'] = 'forecast';
-                    $newTransaction['schedule_is_first'] = $first;
-
-                    $transactions->push($newTransaction);
-
-                    $first = false;
-                }
-            });
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
+        $transactions = $transactions->concat($scheduleInstances);
 
         // Calculate historical and scheduled quantity changes for chart
         $runningTotal = 0;
         $runningSchedule = 0;
         $quantities = $transactions
-            // TODO: group by date
             ->sortBy('date')
-            ->map(function ($transaction) use (&$runningTotal, &$runningSchedule) {
+            ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
                 // Quantity operator can be 1, -1 or null.
                 // It's the expected behavior to set the quantity to 0 if the operator is null.
-                $quantity = $transaction['quantity_multiplier'] * $transaction['quantity'];
+                $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
 
                 $runningSchedule += $quantity;
-                if ($transaction['transaction_group'] === 'history') {
+                if (!$transaction->schedule) {
                     $runningTotal += $quantity;
                 }
 
                 return [
-                    'date' => $transaction['date']->format('Y-m-d'),
+                    'date' => $transaction->date->format('Y-m-d'),
                     'quantity' => $runningTotal,
                     'schedule' => $runningSchedule,
                 ];

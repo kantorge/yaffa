@@ -28,8 +28,8 @@ class AccountGroupPolicy
     /**
      * Determine whether the user can view the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountGroup  $accountGroup
+     * @param  User  $user
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function view(User $user, AccountGroup $accountGroup)
@@ -50,8 +50,8 @@ class AccountGroupPolicy
     /**
      * Determine whether the user can update the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountGroup  $accountGroup
+     * @param  User  $user
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function update(User $user, AccountGroup $accountGroup)
@@ -62,8 +62,8 @@ class AccountGroupPolicy
     /**
      * Determine whether the user can delete the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountGroup  $accountGroup
+     * @param  User  $user
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function delete(User $user, AccountGroup $accountGroup)
@@ -74,8 +74,8 @@ class AccountGroupPolicy
     /**
      * Determine whether the user can restore the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountGroup  $accountGroup
+     * @param  User  $user
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function restore(User $user, AccountGroup $accountGroup)
@@ -86,8 +86,8 @@ class AccountGroupPolicy
     /**
      * Determine whether the user can permanently delete the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\AccountGroup  $accountGroup
+     * @param  User  $user
+     * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function forceDelete(User $user, AccountGroup $accountGroup)

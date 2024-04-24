@@ -175,7 +175,7 @@
                                 <div class="col-12 col-sm-8 mb-0"
                                         :class="form.errors.has('comment') ? 'has-error' : ''"
                                 >
-                                    <label for="comment" class="control-label block-label">
+                                    <label for="comment" class="form-label block-label">
                                         {{ __('Comment') }}
                                     </label>
                                     <input
@@ -231,9 +231,9 @@
                                 <div class="col-12 mb-3"
                                         :class="form.errors.has('config.account_from_id') ? 'has-error' : ''"
                                 >
-                                    <label class="control-label block-label">
+                                    <span class="form-label block-label">
                                         {{ accountFromFieldLabel }}
-                                    </label>
+                                    </span>
                                     <div class="input-group" id="account_from_container">
                                         <select
                                                 class="form-select"
@@ -254,9 +254,9 @@
                                 <div class="col-12"
                                         :class="form.errors.has('config.account_to_id') ? 'has-error' : ''"
                                 >
-                                    <label class="control-label block-label">
+                                    <span class="form-label block-label">
                                         {{ accountToFieldLabel }}
-                                    </label>
+                                    </span>
                                     <div class="input-group" id="account_to_container">
                                         <select
                                                 class="form-select"
@@ -280,7 +280,7 @@
                                         class="col-4"
                                         :class="form.errors.has('config.amount_from') ? 'has-error' : ''"
                                 >
-                                    <label for="transaction_amount_from" class="control-label">
+                                    <label for="transaction_amount_from" class="form-label">
                                         {{ ammountFromFieldLabel }}
                                         <span v-if="ammountFromCurrencyLabel" dusk="label-amountFrom-currency">
                                             ({{ ammountFromCurrencyLabel }})
@@ -314,7 +314,7 @@
                                         class="col-4"
                                         :class="form.errors.has('config.amount_to') ? 'has-error' : ''"
                                 >
-                                    <label for="transaction_amount_to" class="control-label">
+                                    <label for="transaction_amount_to" class="form-label">
                                         {{ __('Amount to') }}
                                         <span v-if="to.account_currency"
                                               dusk="label-amountTo-currency">({{ to.account_currency }})</span>
@@ -400,12 +400,13 @@
                         </div>
                         <div class="col-12 d-block d-md-none">
                             <div v-show="!fromModal">
-                                <label class="control-label block-label">
+                                <label class="form-label block-label" for="callback-selector-mobile">
                                     {{ __('Action after saving') }}
                                 </label>
                                 <select
                                         class="form-control"
                                         v-model="callback"
+                                        id="callback-selector-mobile"
                                 >
                                     <option
                                             v-for="item in activeCallbackOptions"
@@ -445,7 +446,6 @@
 import {todayInUTC, getCurrencySymbol, processTransaction} from "../helpers";
 
 require('select2');
-
 $.fn.select2.amd.define(
     'select2/i18n/' + window.YAFFA.language,
     [],

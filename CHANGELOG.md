@@ -1,5 +1,61 @@
 # Changelog
 
+## [1.6.1](https://github.com/kantorge/yaffa/compare/v1.6.0...v1.6.1) (2024-04-17)
+
+
+### Bug Fixes
+
+* budget chart layout ([ccc8ae0](https://github.com/kantorge/yaffa/commit/ccc8ae06fa2d5eeca22cf5b60c2409c2c389fb90))
+* risky unit test ([a10e244](https://github.com/kantorge/yaffa/commit/a10e244523d1dce15079eba72c8b0b22df684d2b))
+* upgrade axios from 1.6.7 to 1.6.8 ([f2da011](https://github.com/kantorge/yaffa/commit/f2da0112527cb97890888843e33865eecf2743db))
+* upgrade datatables.net-responsive-bs5 from 3.0.0 to 3.0.1 ([#170](https://github.com/kantorge/yaffa/issues/170)) ([6ab9b1e](https://github.com/kantorge/yaffa/commit/6ab9b1e71f78c4277b9512204806be6bfde5180c))
+* upgrade webpack from 5.90.3 to 5.91.0 ([#171](https://github.com/kantorge/yaffa/issues/171)) ([6cc8cdd](https://github.com/kantorge/yaffa/commit/6cc8cdd0ebb5f0f4ba0243893eec714d09ad80f8))
+
+
+### Miscellaneous Chores
+
+* bump cache action version ([b230d7c](https://github.com/kantorge/yaffa/commit/b230d7cea99aefcc04970a3d4078c4630babe19d))
+* composer update ([0711cf8](https://github.com/kantorge/yaffa/commit/0711cf8c4aa3a085d48e7d103a6e40a35173e5f5))
+* minor code cleanups ([79dc4e0](https://github.com/kantorge/yaffa/commit/79dc4e0fc086da498e6a826d291764390267725d))
+
+## [1.6.0](https://github.com/kantorge/yaffa/compare/v1.5.1...v1.6.0) (2024-04-14)
+
+
+### Features
+
+* add quick bar ([#167](https://github.com/kantorge/yaffa/issues/167)) ([559c727](https://github.com/kantorge/yaffa/commit/559c72722904f75cefec90c7afb440e56f73afa4))
+
+
+### Bug Fixes
+
+* incorrectly used DataTables state save for investments ([dbfda19](https://github.com/kantorge/yaffa/commit/dbfda1908511a052096b1e482030f766ea0b4b89))
+
+
+### Miscellaneous Chores
+
+* update tar package ([5340ec9](https://github.com/kantorge/yaffa/commit/5340ec98106653204fd206aac24e42278e00f42e))
+
+## [1.5.1](https://github.com/kantorge/yaffa/compare/v1.5.0...v1.5.1) (2024-04-07)
+
+
+### Bug Fixes
+
+* account balance handling ([8f1f301](https://github.com/kantorge/yaffa/commit/8f1f301223cee6f37e3c6057d10a373db5ce5e94))
+* add canonical tag to auth pages for the sandbox ([bb5dcf8](https://github.com/kantorge/yaffa/commit/bb5dcf866189e180c3fb1542e0518a1d7d51c6fd))
+* date calculation on the payee list ([5ceef9f](https://github.com/kantorge/yaffa/commit/5ceef9fa3f399718350724a326c4fe4e56f6bb9e))
+
+## [1.5.0](https://github.com/kantorge/yaffa/compare/v1.4.0...v1.5.0) (2024-04-04)
+
+
+### Features
+
+* command to recalculate transaction cached data ([d3d2c42](https://github.com/kantorge/yaffa/commit/d3d2c42112f1c6ce568db8cecc77c704a989d8a0))
+
+
+### Bug Fixes
+
+* onboarding tour button trigger ([c7ec108](https://github.com/kantorge/yaffa/commit/c7ec10837021759ec0ecb4cd39e0d23c4b4ae0b7))
+
 ## [1.4.0](https://github.com/kantorge/yaffa/compare/v1.3.0...v1.4.0) (2024-04-04)
 
 
