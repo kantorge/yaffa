@@ -6,7 +6,7 @@ require 'recipe/laravel.php';
 
 set('repository', 'https://github.com/kantorge/yaffa.git');
 set('keep_releases', 5);
-set('identity_file', '$HOME/.ssh/private_key');
+set('identity_file', '~/.ssh/private_key');
 set('branch', 'main');
 
 host('private')
