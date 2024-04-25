@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.0...kantorge/yaffa-v1.7.1) (2024-04-25)
+
+
+### 🐛 Bug Fixes
+
+* key path in private deploy script ([05783cb](https://github.com/kantorge/yaffa/commit/05783cbea726eff721874319744c542017a1174b))
+* undefined variable in Investment API ([adf56b9](https://github.com/kantorge/yaffa/commit/adf56b9e1e7b290ce126273ae0d9aebcdff15152))
+
 ## 1.7.0 (2024-04-23)
 
 
