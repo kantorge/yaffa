@@ -202,6 +202,7 @@ class InvestmentApiController extends Controller
         })
             ->each(function ($investment) use (&$positions) {
                 $start = true;
+                $period = [];
 
                 foreach ($investment->quantities as $item) {
                     if ($start && $item['schedule'] > 0) {
@@ -234,7 +235,7 @@ class InvestmentApiController extends Controller
                     $period['quantity'] = $item['schedule'];
                 }
 
-                // If period start was set but end date is missiong, set it to app config end date
+                // If period start was set but the end date is missing, then set it to the app config end date
                 if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
                     $period['end'] = Auth::user()->end_date;
                     $period['last_price'] = $investment->getLatestPrice('combined');
