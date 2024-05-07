@@ -6,7 +6,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 10.48.8.
+ * Generated for Laravel 10.48.10.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -16886,12 +16886,12 @@ namespace Diglactic\Breadcrumbs {
          * @param string $name The name of the page.
          * @param callable $callback The callback, which should accept a Generator instance as the first parameter and may
          *                           accept additional parameters.
-         * @throws Exceptions\DuplicateBreadcrumbException If the given name has already been used.
+         * @throws DuplicateBreadcrumbException If the given name has already been used.
          * @static
          */        public static function for($name, $callback)
         {
             /** @var Manager $instance */
-            $instance->for($name, $callback);
+            return $instance->for($name, $callback);
         }
         /**
          * Register a closure to call before generating breadcrumbs for the current page.
@@ -16903,7 +16903,7 @@ namespace Diglactic\Breadcrumbs {
          */        public static function before($callback)
         {
             /** @var Manager $instance */
-            $instance->before($callback);
+            return $instance->before($callback);
         }
         /**
          * Register a closure to call after generating breadcrumbs for the current page.
@@ -16915,7 +16915,7 @@ namespace Diglactic\Breadcrumbs {
          */        public static function after($callback)
         {
             /** @var Manager $instance */
-            $instance->after($callback);
+            return $instance->after($callback);
         }
         /**
          * Check if a breadcrumb with the given name exists.
@@ -16936,9 +16936,9 @@ namespace Diglactic\Breadcrumbs {
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
          * @return \Illuminate\Support\Collection The generated breadcrumbs.
-         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         * @throws UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
-         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names  are)
+         * @throws InvalidBreadcrumbException if the name is (or any ancestor names  are)
          *                                                                      not registered.
          * @static
          */        public static function generate($name = null, ...$params)
@@ -16953,9 +16953,9 @@ namespace Diglactic\Breadcrumbs {
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
          * @return \Illuminate\View\View The generated HTML.
-         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
-         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         * @throws UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
          * @static
          */        public static function view($view, $name = null, ...$params)
@@ -16968,12 +16968,12 @@ namespace Diglactic\Breadcrumbs {
          *
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
-         * @return \Illuminate\Contracts\View\View The generated view.
-         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @return \View The generated view.
+         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
-         * @throws Exceptions\UnnamedRouteException if no name is given and the current route doesn't
+         * @throws UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
-         * @throws Exceptions\ViewNotSetException if no view has been set.
+         * @throws ViewNotSetException if no view has been set.
          * @static
          */        public static function render($name = null, ...$params)
         {
@@ -16984,9 +16984,9 @@ namespace Diglactic\Breadcrumbs {
          * Get the last breadcrumb for the current page.
          *
          * @return object|null The breadcrumb for the current page.
-         * @throws Exceptions\UnnamedRouteException if the current route doesn't have an associated
+         * @throws UnnamedRouteException if the current route doesn't have an associated
          *                                                                 name.
-         * @throws Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
          * @static
          */        public static function current()
@@ -17003,7 +17003,7 @@ namespace Diglactic\Breadcrumbs {
          */        public static function setCurrentRoute($name, ...$params)
         {
             /** @var Manager $instance */
-            $instance->setCurrentRoute($name, ...$params);
+            return $instance->setCurrentRoute($name, ...$params);
         }
         /**
          * Clear the previously set route name and parameters to use when calling render() or generate() with no parameters.
@@ -17014,7 +17014,7 @@ namespace Diglactic\Breadcrumbs {
          */        public static function clearCurrentRoute()
         {
             /** @var Manager $instance */
-            $instance->clearCurrentRoute();
+            return $instance->clearCurrentRoute();
         }
         /**
          * Register a custom macro.
@@ -17488,10 +17488,10 @@ namespace Spatie\LaravelIgnition\Facades {
          *
          *
          * @static
-         */        public static function registerErrorHandler()
+         */        public static function registerErrorHandler($errorLevels = null)
         {
             /** @var \Spatie\FlareClient\Flare $instance */
-            return $instance->registerErrorHandler();
+            return $instance->registerErrorHandler($errorLevels);
         }
         /**
          *
@@ -17559,10 +17559,19 @@ namespace Spatie\LaravelIgnition\Facades {
          *
          *
          * @static
-         */        public static function report($throwable, $callback = null, $report = null)
+         */        public static function report($throwable, $callback = null, $report = null, $handled = null)
         {
             /** @var \Spatie\FlareClient\Flare $instance */
-            return $instance->report($throwable, $callback, $report);
+            return $instance->report($throwable, $callback, $report, $handled);
+        }
+        /**
+         *
+         *
+         * @static
+         */        public static function reportHandled($throwable)
+        {
+            /** @var \Spatie\FlareClient\Flare $instance */
+            return $instance->reportHandled($throwable);
         }
         /**
          *
@@ -17882,7 +17891,7 @@ namespace Illuminate\Console\Scheduling {
         /**
          *
          *
-         * @see \Sentry\Laravel\Features\ConsoleIntegration::onBootInactive()
+         * @see \Sentry\Laravel\Features\ConsoleSchedulingIntegration::onBootInactive()
          * @param string|null $monitorSlug
          * @param int|null $checkInMargin
          * @param int|null $maxRuntime
