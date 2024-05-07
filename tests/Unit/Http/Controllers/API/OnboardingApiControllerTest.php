@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Http\Controller\API;
+namespace Tests\Unit\Http\Controllers\API;
 
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Models\User;

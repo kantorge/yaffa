@@ -1,6 +1,6 @@
 <?php
 
-namespace Http\Controller\API;
+namespace Tests\Unit\Http\Controllers\API;
 
 use App\Models\Account;
 use App\Models\AccountEntity;
