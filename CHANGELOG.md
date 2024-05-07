@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.1...kantorge/yaffa-v1.7.2) (2024-05-07)
+
+
+### 🐛 Bug Fixes
+
+* key path in private deploy script ([10574f8](https://github.com/kantorge/yaffa/commit/10574f824faa5041980e6776ad6e768a7e4b280f))
+* store items for automatically recorded transaction ([50ccbe1](https://github.com/kantorge/yaffa/commit/50ccbe1968c41978acfcda6dbf8271d6a2df058f))
+* upgrade datatables.net-select-bs5 from 2.0.0 to 2.0.1 ([c162d3c](https://github.com/kantorge/yaffa/commit/c162d3c89619f59c2059fde8b47b6e50443be200))
+* upgrade vue from 3.4.21 to 3.4.22 ([7c6790f](https://github.com/kantorge/yaffa/commit/7c6790ff316c328f3e16b22e02cfad5fa9f981ed))
+
 ## [1.7.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.0...kantorge/yaffa-v1.7.1) (2024-04-25)
 
 
