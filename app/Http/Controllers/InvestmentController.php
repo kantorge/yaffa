@@ -154,7 +154,9 @@ class InvestmentController extends Controller
          * @name('investment.store')
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
-        Investment::create($request->validated());
+        $investment = Investment::make($request->validated());
+        $investment->user()->associate(Auth::user());
+        $investment->save();
 
         self::addSimpleSuccessMessage(__('Investment added'));
 

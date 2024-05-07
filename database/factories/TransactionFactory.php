@@ -242,4 +242,22 @@ class TransactionFactory extends Factory
             ];
         });
     }
+
+    /**
+     * Transaction type is BUY investment and has SCHEDULE
+     */
+    public function buy_schedule(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(function (array $attributes) use ($user, $configAttributes) {
+            return [
+                'date' => null,
+                'schedule' => 1,
+                'budget' => 0,
+                'reconciled' => 0,
+                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'config_type' => 'investment',
+                'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
+            ];
+        });
+    }
 }
