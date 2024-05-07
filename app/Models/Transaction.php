@@ -114,6 +114,7 @@ class Transaction extends Model
 
     protected $cloneable_relations = [
         'config',
+        'transactionItems',
     ];
 
     public function config(): MorphTo
