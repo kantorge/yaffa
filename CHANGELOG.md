@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.3](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.2...kantorge/yaffa-v1.7.3) (2024-05-07)
+
+
+### 🛠️ Chores
+
+* update Composer dependencies ([0b91ce2](https://github.com/kantorge/yaffa/commit/0b91ce272a2d4ddd720f30c40d27b46446cb3065))
+
+
+### 🐛 Bug Fixes
+
+* namespace of some test files ([de12e59](https://github.com/kantorge/yaffa/commit/de12e5960fd8df80959983cb20dadc78edf879b6))
+
 ## [1.7.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.1...kantorge/yaffa-v1.7.2) (2024-05-07)
 
 
