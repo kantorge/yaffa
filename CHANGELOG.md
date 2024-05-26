@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.4](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.3...kantorge/yaffa-v1.7.4) (2024-05-26)
+
+
+### 🛠️ Chores
+
+* npm update ([1d4d49e](https://github.com/kantorge/yaffa/commit/1d4d49e012bcd360a4d1fb753d15fc1c725203c4))
+
+
+### 🐛 Bug Fixes
+
+* result calculation for monthly waterfall summary ([8b4992b](https://github.com/kantorge/yaffa/commit/8b4992bd403d3ce82c9b5ee974743069d4c3ae93))
+* upgrade datatables.net-bs5 from 2.0.3 to 2.0.4 ([c7ca86b](https://github.com/kantorge/yaffa/commit/c7ca86bb0dec6729d1abe36a3cac484a2fb8d617))
+* upgrade mathjs from 12.4.1 to 12.4.2 ([4ee06a4](https://github.com/kantorge/yaffa/commit/4ee06a415821303e79667c72f9c20bc841293c68))
+
 ## [1.7.3](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.2...kantorge/yaffa-v1.7.3) (2024-05-07)
 
 
