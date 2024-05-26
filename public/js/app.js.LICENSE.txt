@@ -31,19 +31,19 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 2.0.3
+/*! DataTables 2.0.7
  * © SpryMedia Ltd - datatables.net/license
  */
 
 /*! DataTables Bootstrap 5 integration
- * 2020 SpryMedia Ltd - datatables.net/license
- */
-
-/*! Responsive 3.0.1
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 2.0.1
+/*! Responsive 3.0.2
+ * © SpryMedia Ltd - datatables.net/license
+ */
+
+/*! Select for DataTables 2.0.2
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
@@ -57,7 +57,7 @@
  **/
 
 /**
-* @vue/shared v3.4.22
+* @vue/shared v3.4.27
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
