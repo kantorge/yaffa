@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,6 +45,19 @@ class AppServiceProvider extends ServiceProvider
         //Model::preventLazyLoading(! app()->isProduction());
 
         Schema::defaultStringLength(191);
+
+        // Define the default password strength rules for the entire application
+        Password::defaults(function () {
+            $rule = Password::min(8);
+
+            return $this->app->isProduction()
+                ? $rule->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
+                : $rule;
+        });
 
         Relation::morphMap([
             'account' => Account::class,

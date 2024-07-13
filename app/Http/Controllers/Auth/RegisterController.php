@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisterController extends Controller
@@ -117,8 +118,7 @@ class RegisterController extends Controller
             ],
             'password' => [
                 'required',
-                'string',
-                'min:8',
+                Password::defaults(),
                 'confirmed'
             ],
             'language' => [
