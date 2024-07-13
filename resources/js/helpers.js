@@ -171,3 +171,30 @@ export function transactionLink(id, text) {
 
     return `<a href="${url}">${text}</a>`;
 }
+
+/**
+ * Function to display a Toast notification.
+ *
+ * @param {string} header The header of the toast.
+ * @param {string} body The body of the toast.
+ * @param {string} toastClass The class of the toast.
+ * @param {Object} otherProperties Other properties to pass to the toast.
+ *
+ * @returns {void}
+ */
+export function showToast(header, body, toastClass, otherProperties ) {
+    otherProperties = otherProperties || {};
+
+    // Emit a custom event to global scope to display the Toast
+    let notificationEvent = new CustomEvent('toast', {
+        detail: {
+            ...otherProperties,
+            ...{
+                header: header,
+                body: body,
+                toastClass: toastClass,
+            }
+        }
+    });
+    window.dispatchEvent(notificationEvent);
+}
