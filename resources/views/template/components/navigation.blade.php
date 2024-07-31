@@ -98,6 +98,11 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
+                href="{{ route('gocardless.index') }}"
+                iconClasses="fa-solid fa-plug"
+                text="{{ __('Bank connections') }}"
+            />
+            <x-nav-link
                 href="{{ route('received-mail.index') }}"
                 iconClasses="fa-solid fa-envelope"
                 text="{{ __('Received emails')  }}"

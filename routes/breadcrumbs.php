@@ -246,3 +246,19 @@ Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('My Profile'), route('user.settings'));
 });
+
+// GoCardless
+Breadcrumbs::for('gocardless.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Bank connections'), route('gocardless.index'));
+});
+Breadcrumbs::for('gocardless.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Bank connections'), route('gocardless.index'));
+    $trail->push(__('New bank connection'), route('gocardless.create'));
+});
+Breadcrumbs::for('gocardless.linkAccounts', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Bank connections'), route('gocardless.index'));
+    $trail->push(__('Link accounts'), route('gocardless.linkAccounts'));
+});

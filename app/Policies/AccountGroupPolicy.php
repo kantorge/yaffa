@@ -10,7 +10,7 @@ class AccountGroupPolicy
 {
     use HandlesAuthorization;
 
-    public function isOwnItem(User $user, AccountGroup $accountGroup)
+    public function isOwnItem(User $user, AccountGroup $accountGroup): bool
     {
         return $user->id === $accountGroup->user_id;
     }

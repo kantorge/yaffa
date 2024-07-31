@@ -23,7 +23,9 @@ class AccountEntityRequest extends FormRequest
                         ->where('user_id', $this->user()->id)
                         ->when($this->account_entity, function ($query) {
                             return $query
+                                // Check if the entity is of the same type
                                 ->where('config_type', $this->account_entity->config_type)
+                                // Check if the entity is not the same entity
                                 ->where('id', '!=', $this->account_entity->id);
                         });
                 }),

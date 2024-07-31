@@ -83,6 +83,7 @@ class Account extends Model
         'opening_balance',
         'account_group_id',
         'currency_id',
+        'gocardless_account_id',
     ];
 
     public function config(): MorphOne
@@ -98,6 +99,11 @@ class Account extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function gocardlessAccount(): BelongsTo
+    {
+        return $this->belongsTo(GocardlessAccount::class);
     }
 
     public function openingBalance(): object

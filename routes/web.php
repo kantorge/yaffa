@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\GocardlessController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
@@ -112,6 +113,16 @@ Route::resource('transactions', TransactionController::class)
     ->only(['destroy']);
 
 /*******************
+ * GoCardless related routes
+ *******************/
+Route::get('/gocardless', [GocardlessController::class, 'index'])->name('gocardless.index');
+Route::get('/gocardless/create', [GocardlessController::class, 'create'])->name('gocardless.create');
+Route::get('/gocardless/link', [GocardlessController::class, 'linkAccounts'])->name('gocardless.linkAccounts');
+Route::get('/gocardless/callback', [GocardlessController::class, 'callback'])->name('gocardless.callback');
+Route::get('/gocardless/transactions/{gocardlessAccount}', [GocardlessController::class, 'transactions'])
+    ->name('gocardless.transactions');
+
+/*******************
  * Report related routes
  ******************/
 Route::get('/reports/cashflow', [ReportController::class, 'cashFlow'])->name('reports.cashflow');
@@ -121,7 +132,7 @@ Route::get('/reports/transactions', [ReportController::class, 'transactionsByCri
     ->name('reports.transactions');
 
 /*******************
- * Miscellanous routes
+ * Miscellaneous routes
  *******************/
 
 // Received emails

@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
+use App\Http\Controllers\API\GoCardlessApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\OnboardingApiController;
@@ -12,7 +13,9 @@ use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 Route::get('/assets/account', [AccountApiController::class, 'getList']);
 Route::get('/assets/account/investment', [AccountApiController::class, 'getAccountListForInvestments']);
@@ -107,3 +110,15 @@ Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'd
 Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
 Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
 Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);
+
+// GoCardless API
+Route::get('/gocardless/access-token', [GoCardlessApiController::class, 'showAccessToken']);
+Route::get('/gocardless/institutions-by-country/{countryCode}', [GoCardlessApiController::class, 'getListOfInstitutesForCountry']);
+Route::get('/gocardless/institutions/{institutionId}', [GoCardlessApiController::class, 'getInstitutionDetails']);
+Route::get('/gocardless/authentication-url/{institutionId}', [GoCardlessApiController::class, 'getAuthenticationUrl']);
+Route::post('/gocardless/create-link/{account}/{gocardlessAccount}', [GoCardlessApiController::class, 'createLink'])->name('api.gocardless.createLink');
+Route::post('/gocardless/delete-link/{account}/{gocardlessAccount}', [GoCardlessApiController::class, 'deleteLink'])->name('api.gocardless.deleteLink');
+Route::get('/gocardless/account/{gocardlessAccount}/get-transactions', [GoCardlessApiController::class, 'getTransactions'])->name('api.gocardless.getTransactions');
+
+// Testing only
+Route::get('/gocardless/requisitions', [GoCardlessApiController::class, 'getAllRequisitions']);

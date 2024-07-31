@@ -13,4 +13,8 @@ return [
     // Optional settings, used primarily for the public facing Sandbox environment
     'gtm_container_id' => env('GTM_CONTAINER_ID'),
     'cookieyes_id' => env('COOKIEYES_ID'),
+
+    // Optional settings for GoCardless integration
+    'gocardless_secret_id' => env('GOCARDLESS_SECRET_ID'),
+    'gocardless_access_key' => env('GOCARDLESS_SECRET_KEY'),
 ];

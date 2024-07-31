@@ -194,4 +194,9 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     {
         return $this->hasMany(ReceivedMail::class)->unhandled();
     }
+
+    public function gocardlessRequisitions(): HasMany
+    {
+        return $this->hasMany(GocardlessRequisition::class);
+    }
 }
