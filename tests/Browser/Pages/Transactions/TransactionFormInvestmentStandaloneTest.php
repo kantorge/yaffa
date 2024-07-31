@@ -448,7 +448,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
-                now()->subMonth()->startOfMonth()->format('Y-m-d'),
+                now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
                 $transaction->date->format('Y-m-d')
             );
         });
