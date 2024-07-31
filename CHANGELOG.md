@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.8.0](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.4...kantorge/yaffa-v1.8.0) (2024-07-31)
+
+
+### 🛠️ Chores
+
+* **deps-dev:** bump ws in the npm_and_yarn group across 1 directory ([4f2d652](https://github.com/kantorge/yaffa/commit/4f2d652c928464359163fe94888cbfbc8cb673d2))
+
+
+### ✨ Features
+
+* rework and extend the user settings page ([b62a682](https://github.com/kantorge/yaffa/commit/b62a68249dfba9002015ff54cf7a6ac57321ba60))
+
+
+### 🐛 Bug Fixes
+
+* correctly apply filter for transaction search ([b8f3354](https://github.com/kantorge/yaffa/commit/b8f3354b5a31e8aa49b0fbffb84ccc99bf27d3f1))
+* Dusk test failing on specific dates ([a5df8ae](https://github.com/kantorge/yaffa/commit/a5df8ae8f61c50803ef98fe38b878d5f38be171b))
+* upgrade @amcharts/amcharts4 from 4.10.38 to 4.10.39 ([371ad5f](https://github.com/kantorge/yaffa/commit/371ad5f2808cf9f3a82704425e49d0fcc208854a))
+* upgrade datatables.net-bs5 from 2.0.7 to 2.0.8 ([55d7ac7](https://github.com/kantorge/yaffa/commit/55d7ac7f3eb6a545511e8d873e3d51a0e4aa83cb))
+* upgrade datatables.net-select-bs5 from 2.0.2 to 2.0.3 ([e1221cb](https://github.com/kantorge/yaffa/commit/e1221cbabb145a6c7cb1b7f71fda27e4df763f68))
+* upgrade mathjs from 12.4.2 to 12.4.3 ([ba15d84](https://github.com/kantorge/yaffa/commit/ba15d842eef8ef86b0d04a5c563dad6ecb3f5287))
+* upgrade vue from 3.4.27 to 3.4.29 ([f6e60d0](https://github.com/kantorge/yaffa/commit/f6e60d0b94e0af2eff4797fbdd8c18dd2eff7084))
+* upgrade vue from 3.4.29 to 3.4.30 ([1bb44cf](https://github.com/kantorge/yaffa/commit/1bb44cf39287cb1da66875cd5dcd72b1c8ab6831))
+* upgrade webpack from 5.91.0 to 5.92.0 ([96e6ed1](https://github.com/kantorge/yaffa/commit/96e6ed14a7a087d44a10b65a9b221ead148f4094))
+* upgrade webpack from 5.92.0 to 5.92.1 ([2b8b01d](https://github.com/kantorge/yaffa/commit/2b8b01dbb180ba62feab4cd464f7b6b8a8335f7d))
+
 ## [1.7.4](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.3...kantorge/yaffa-v1.7.4) (2024-05-26)
 
 
