@@ -194,9 +194,7 @@ class TransactionApiController extends Controller
          * @get('/api/transactions')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        // Check if only count is requested
-        $onlyCount = $request->has('only_count');
-
+        // A request without any search criteria will return an empty response to avoid loading all transactions
         if (!$request->hasAny([
             'date_from',
             'date_to',
@@ -215,6 +213,9 @@ class TransactionApiController extends Controller
         }
 
         $user = $request->user();
+
+        // Check if only count is requested
+        $onlyCount = $request->has('only_count');
 
         // Get standard transactions matching any provided criteria
         $standardQuery = Transaction::where('user_id', $user->id)
@@ -262,12 +263,9 @@ class TransactionApiController extends Controller
             });
 
         // Get investment transactions matching any provided criteria
-        // This part of the query is run only if relevant search criteria is provided
-        if ($request->hasAny([
-            'date_from',
-            'date_to',
-            'accounts',
-        ])) {
+        // This part of the query is run only if relevant search criteria is provided, and no other search criteria is provided
+        if ($request->hasAny(['date_from', 'date_to','accounts'])
+            && !($request->hasAny(['categories', 'payees', 'tags']))) {
             $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
                 ->byType('investment')
@@ -285,11 +283,9 @@ class TransactionApiController extends Controller
                     });
                 });
         } else {
-            $investmentQuery = Transaction::where('user_id', $user->id)
-                ->byScheduleType('none')
-                ->byType('investment')
-                // TODO: How to create a query with no results in a more simple way?
-                ->where('id', null);
+            $investmentQuery = Transaction::where('user_id', $user->id)  // User ID is used for security reasons
+                ->byScheduleType('none')->byType('investment') // Pretend that we are searching for investment transactions
+                ->whereRaw('1 = 0'); // Make sure that the query returns no results
         }
 
         // Return only count of transactions if requested

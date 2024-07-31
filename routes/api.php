@@ -12,6 +12,7 @@ use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/assets/account', [AccountApiController::class, 'getList']);
@@ -107,3 +108,8 @@ Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'd
 Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
 Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
 Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);
+
+Route::patch('/user/settings', [UserApiController::class, 'updateSettings'])
+    ->name('user.settings.update');
+Route::patch('/user/change_password', [UserApiController::class, 'changePassword'])
+    ->name('user.change_password');

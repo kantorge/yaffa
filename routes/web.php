@@ -136,7 +136,6 @@ Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
-Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
 
 /*******************
  * Authentication and verification routes
