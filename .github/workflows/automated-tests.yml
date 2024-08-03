@@ -94,6 +94,7 @@ jobs:
       DB_USERNAME: root
       DB_PASSWORD: root
       MAIL_MAILER: log
+
     steps:
       - name: Setup PHP Action
         uses: shivammathur/setup-php@v2
@@ -116,6 +117,14 @@ jobs:
 
       - name: Generate Application Key
         run: php artisan key:generate
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libgtk2.0-0
+          sudo apt-get install chromium-browser
+          sudo apt-get -y install gtk2-engines-pixbuf
+          Xvfb -ac :0 -screen 0 1280x1024x16 &
 
       - name: Upgrade Chrome Driver
         run: php artisan dusk:chrome-driver --detect
