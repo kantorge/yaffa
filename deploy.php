@@ -3,6 +3,7 @@
 namespace Deployer;
 
 require 'recipe/laravel.php';
+require 'contrib/php-fpm.php';
 
 set('repository', 'https://github.com/kantorge/yaffa.git');
 set('keep_releases', 5);
