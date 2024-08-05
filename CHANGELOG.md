@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.1...kantorge/yaffa-v1.8.2) (2024-08-05)
+
+
+### 🐛 Bug Fixes
+
+* deployment script dependencies ([8ce5fe3](https://github.com/kantorge/yaffa/commit/8ce5fe39d2408af5aaca0acd277075dc35b04b78))
+
 ## [1.8.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.0...kantorge/yaffa-v1.8.1) (2024-08-05)
 
 
