@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.2...kantorge/yaffa-v1.8.3) (2024-08-05)
+
+
+### 🐛 Bug Fixes
+
+* remove php-fpm reload from deployer ([65a3ccd](https://github.com/kantorge/yaffa/commit/65a3ccdb4c0857ee8c910be26372cdfcab698cad))
+
 ## [1.8.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.1...kantorge/yaffa-v1.8.2) (2024-08-05)
 
 
