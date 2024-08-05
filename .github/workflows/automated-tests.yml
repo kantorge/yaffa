@@ -118,7 +118,9 @@ jobs:
         run: php artisan key:generate
 
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver --detect
+        run: php artisan dusk:chrome-driver 126
+        # Workaround until Dusk error gets fixed: https://github.com/laravel/dusk/issues/1109
+        # run: php artisan dusk:chrome-driver --detect
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
