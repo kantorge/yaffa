@@ -710,7 +710,7 @@ RegExp.escape = function (s) {
         separator: config.separator,
         onParseEntry: options.onParseEntry,
         onParseValue: options.onParseValue,
-        state: state
+        state
       }
 
       const entry = $.csv.parsers.parseEntry(csv, options)
@@ -37175,23 +37175,13 @@ function configFactory(config, emit) {
 }
 
 /**
- * Test whether an Array contains a specific item.
- * @param {Array.<string>} array
- * @param {string} item
- * @return {boolean}
- */
-function contains(array, item) {
-  return array.indexOf(item) !== -1;
-}
-
-/**
  * Validate an option
  * @param {Object} options         Object with options
  * @param {string} name            Name of the option to validate
  * @param {Array.<string>} values  Array with valid values for this option
  */
 function validateOption(options, name, values) {
-  if (options[name] !== undefined && !contains(values, options[name])) {
+  if (options[name] !== undefined && !values.includes(options[name])) {
     // unknown value
     console.warn('Warning: Unknown value "' + options[name] + '" for configuration option "' + name + '". ' + 'Available options: ' + values.map(value => JSON.stringify(value)).join(', ') + '.');
   }
@@ -53898,7 +53888,7 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
   }
 
   /**
-   * multiply, divide, modulus
+   * multiply, divide
    * @return {Node} node
    * @private
    */
@@ -53962,7 +53952,7 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
    * @private
    */
   function parseRule2(state) {
-    var node = parsePercentage(state);
+    var node = parseModulusPercentage(state);
     var last = node;
     var tokenStates = [];
     while (true) {
@@ -53984,7 +53974,7 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
             // Rewind once and build the "number / number" node; the symbol will be consumed later
             (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0__["default"])(state, tokenStates.pop());
             tokenStates.pop();
-            last = parsePercentage(state);
+            last = parseModulusPercentage(state);
             node = new OperatorNode('/', 'divide', [node, last]);
           } else {
             // Not a match, so rewind
@@ -54005,11 +53995,11 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
   }
 
   /**
-   * percentage or mod
+   * modulus and percentage
    * @return {Node} node
    * @private
    */
-  function parsePercentage(state) {
+  function parseModulusPercentage(state) {
     var node, name, fn, params;
     node = parseUnary(state);
     var operators = {
@@ -54172,7 +54162,7 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
       if ((0,_utils_object_js__WEBPACK_IMPORTED_MODULE_3__.hasOwnProperty)(CONSTANTS, name)) {
         // true, false, null, ...
         node = new ConstantNode(CONSTANTS[name]);
-      } else if (NUMERIC_CONSTANTS.indexOf(name) !== -1) {
+      } else if (NUMERIC_CONSTANTS.includes(name)) {
         // NaN, Infinity
         node = new ConstantNode(numeric(name, 'number'));
       } else {
@@ -54202,7 +54192,7 @@ var createParse = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_1
    */
   function parseAccessors(state, node, types) {
     var params;
-    while ((state.token === '(' || state.token === '[' || state.token === '.') && (!types || types.indexOf(state.token) !== -1)) {
+    while ((state.token === '(' || state.token === '[' || state.token === '.') && (!types || types.includes(state.token))) {
       // eslint-disable-line no-unmodified-loop-condition
       params = [];
       if (state.token === '(') {
@@ -57217,7 +57207,7 @@ var createDerivative = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MOD
       return constTag(constNodes, node.content, varName);
     },
     'Object, FunctionAssignmentNode, string': function ObjectFunctionAssignmentNodeString(constNodes, node, varName) {
-      if (node.params.indexOf(varName) === -1) {
+      if (!node.params.includes(varName)) {
         constNodes[node] = true;
         return true;
       }
@@ -58095,7 +58085,7 @@ var createRationalize = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MO
             recPoly(node.args[0]);
           }
         } else {
-          if (oper.indexOf(node.op) === -1) {
+          if (!oper.includes(node.op)) {
             throw new Error('Operator ' + node.op + ' invalid in polynomial expression');
           }
           for (var i = 0; i < node.args.length; i++) {
@@ -58593,7 +58583,7 @@ var createRationalize = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MO
         throw new Error('There is an unsolved function call');
       } else if (tp === 'OperatorNode') {
         // ***** OperatorName *****
-        if ('+-*^'.indexOf(node.op) === -1) throw new Error('Operator ' + node.op + ' invalid');
+        if (!'+-*^'.includes(node.op)) throw new Error('Operator ' + node.op + ' invalid');
         if (noPai !== null) {
           // -(unary),^  : children of *,+,-
           if ((node.fn === 'unaryMinus' || node.fn === 'pow') && noPai.fn !== 'add' && noPai.fn !== 'subtract' && noPai.fn !== 'multiply') {
@@ -60749,7 +60739,7 @@ var createSimplifyConstant = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORT
         {
           // Process operators as OperatorNode
           var operatorFunctions = ['add', 'multiply'];
-          if (operatorFunctions.indexOf(node.name) === -1) {
+          if (!operatorFunctions.includes(node.name)) {
             var args = node.args.map(arg => foldFraction(arg, options));
 
             // If all args are numbers
@@ -82818,7 +82808,7 @@ var createMad = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_0__
         return abs(subtract(value, med));
       }));
     } catch (err) {
-      if (err instanceof TypeError && err.message.indexOf('median') !== -1) {
+      if (err instanceof TypeError && err.message.includes('median')) {
         throw new TypeError(err.message.replace('median', 'mad'));
       } else {
         throw (0,_utils_improveErrorMessage_js__WEBPACK_IMPORTED_MODULE_2__.improveErrorMessage)(err, 'mad');
@@ -83782,7 +83772,7 @@ var createStd = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODULE_0__
         return sqrt(v);
       }
     } catch (err) {
-      if (err instanceof TypeError && err.message.indexOf(' variance') !== -1) {
+      if (err instanceof TypeError && err.message.includes(' variance')) {
         throw new TypeError(err.message.replace(' variance', ' std'));
       } else {
         throw err;
@@ -83921,11 +83911,11 @@ __webpack_require__.r(__webpack_exports__);
 function improveErrorMessage(err, fnName, value) {
   // TODO: add information with the index (also needs transform in expression parser)
   var details;
-  if (String(err).indexOf('Unexpected type') !== -1) {
+  if (String(err).includes('Unexpected type')) {
     details = arguments.length > 2 ? ' (type: ' + (0,_utils_is_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(value) + ', value: ' + JSON.stringify(value) + ')' : ' (type: ' + err.data.actual + ')';
     return new TypeError('Cannot calculate ' + fnName + ', unexpected type of argument' + details);
   }
-  if (String(err).indexOf('complex numbers') !== -1) {
+  if (String(err).includes('complex numbers')) {
     details = arguments.length > 2 ? ' (type: ' + (0,_utils_is_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(value) + ', value: ' + JSON.stringify(value) + ')' : '';
     return new TypeError('Cannot calculate ' + fnName + ', no ordering relation is defined for complex numbers' + details);
   }
@@ -96688,7 +96678,7 @@ var createUnitClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODU
     return {
       mathjs: 'Unit',
       value: this._denormalize(this.value),
-      unit: this.formatUnits(),
+      unit: this.units.length > 0 ? this.formatUnits() : null,
       fixPrefix: this.fixPrefix
     };
   };
@@ -96701,7 +96691,8 @@ var createUnitClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_MODU
    * @return {Unit}
    */
   Unit.fromJSON = function (json) {
-    var unit = new Unit(json.value, json.unit);
+    var _json$unit;
+    var unit = new Unit(json.value, (_json$unit = json.unit) !== null && _json$unit !== void 0 ? _json$unit : undefined);
     unit.fixPrefix = json.fixPrefix || false;
     return unit;
   };
@@ -100264,7 +100255,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   checkBroadcastingRules: () => (/* binding */ checkBroadcastingRules),
 /* harmony export */   clone: () => (/* binding */ clone),
 /* harmony export */   concat: () => (/* binding */ concat),
-/* harmony export */   contains: () => (/* binding */ contains),
 /* harmony export */   filter: () => (/* binding */ filter),
 /* harmony export */   filterRegExp: () => (/* binding */ filterRegExp),
 /* harmony export */   flatten: () => (/* binding */ flatten),
@@ -100912,16 +100902,6 @@ function last(array) {
  */
 function initial(array) {
   return array.slice(0, array.length - 1);
-}
-
-/**
- * Test whether an array or string contains an item
- * @param {Array | string} array
- * @param {*} item
- * @return {boolean}
- */
-function contains(array, item) {
-  return array.indexOf(item) !== -1;
 }
 
 /**
@@ -101809,7 +101789,7 @@ function toEngineering(value, precision) {
   // find difference in exponents, and calculate the value without exponent
   var valueWithoutExp = value.mul(Math.pow(10, -newExp));
   var valueStr = valueWithoutExp.toPrecision(precision);
-  if (valueStr.indexOf('e') !== -1) {
+  if (valueStr.includes('e')) {
     var BigNumber = value.constructor;
     valueStr = new BigNumber(valueStr).toFixed();
   }
@@ -102328,9 +102308,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   sortFactories: () => (/* binding */ sortFactories),
 /* harmony export */   stripOptionalNotation: () => (/* binding */ stripOptionalNotation)
 /* harmony export */ });
-/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./array.js */ "./node_modules/mathjs/lib/esm/utils/array.js");
 /* harmony import */ var _object_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./object.js */ "./node_modules/mathjs/lib/esm/utils/object.js");
-
 
 
 /**
@@ -102389,7 +102367,7 @@ function sortFactories(factories) {
   function containsDependency(factory, dependency) {
     // TODO: detect circular references
     if (isFactory(factory)) {
-      if ((0,_array_js__WEBPACK_IMPORTED_MODULE_1__.contains)(factory.dependencies, dependency.fn || dependency.name)) {
+      if (factory.dependencies.includes(dependency.fn || dependency.name)) {
         return true;
       }
       if (factory.dependencies.some(d => containsDependency(factoriesByName[d], dependency))) {
@@ -104774,7 +104752,7 @@ function pickShallow(object, properties) {
 
 // helper function to test whether a string contains a path like 'user.name'
 function isPath(str) {
-  return str.indexOf('.') !== -1;
+  return str.includes('.');
 }
 
 /***/ }),
@@ -105115,7 +105093,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   version: () => (/* binding */ version)
 /* harmony export */ });
-var version = '12.4.2';
+var version = '12.4.3';
 // Note: This file is automatically generated when building math.js.
 // Changes made in this file will be overwritten.
 
