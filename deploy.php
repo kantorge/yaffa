@@ -19,6 +19,10 @@ task('yaffa', [
     'deploy'
 ]);
 
+// Restarting PHP-FPM is not recommended for production environments, but we don't have too many users
+set('php_fpm_version', '8.3');
+after('deploy', 'php-fpm:reload');
+
 after('deploy:publish', 'artisan:queue:restart');
 
 after('deploy:failed', 'deploy:unlock');
