@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.8.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.0...kantorge/yaffa-v1.8.1) (2024-08-05)
+
+
+### 🛠️ Chores
+
+* npm update ([43fb9ad](https://github.com/kantorge/yaffa/commit/43fb9ada8ab3bd830bf5657ffdd14c5bab5c7e72))
+
+
+### 🐛 Bug Fixes
+
+* add php-fpm restart to deployment script ([f172352](https://github.com/kantorge/yaffa/commit/f172352b0467d9033670c2648cf521c507af49b5))
+* upgrade vue from 3.4.30 to 3.4.31 ([9bf400a](https://github.com/kantorge/yaffa/commit/9bf400a956f132143f3d3a7c383c90ffd96088f2))
+
 ## [1.8.0](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.4...kantorge/yaffa-v1.8.0) (2024-07-31)
 
 
