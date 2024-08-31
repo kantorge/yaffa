@@ -660,7 +660,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->waitFor('.vc-pane-container', 10)
                 // Click the current date which is highlighted
                 ->click('.vc-pane-container .vc-day.is-today')
-
+                // Scroll to the bottom of the page to make the save button visible, including the callback buttons
+                ->scrollTo('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
                 ->click('@action-after-save-desktop-button-group button[value="show"]')
 
