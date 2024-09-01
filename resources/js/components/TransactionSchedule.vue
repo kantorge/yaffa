@@ -1,9 +1,9 @@
 <template>
     <div class="card mb-3" dusk="card-transaction-schedule">
         <div class="card-header d-flex justify-content-between">
-            <div
-                    class="card-title"
-                    v-html="title"></div>
+            <div class="card-title">
+                {{ title }}
+            </div>
             <div v-if="withCheckbox">
                 <div class="checkbox">
                     <label>
