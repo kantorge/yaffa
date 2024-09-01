@@ -663,8 +663,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
-                ->click('@action-after-save-desktop-button-group button[value="show"]')
-
+                ->whenAvailable('@action-after-save-desktop-button-group button[value="show"]', function (Browser $modal) {
+                    $modal->click('@action-after-save-desktop-button-group button[value="show"]');
+                })
                 // Submit form
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
