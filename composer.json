@@ -39,7 +39,7 @@
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.17",
         "larastan/larastan": "^2.0",
-        "laravel/dusk": "7.9.3",
+        "laravel/dusk": "^8.2",
         "laravel/pint": "^1.1",
         "laravel/sail": "^1.16",
         "laravel/telescope": "^4.6",

@@ -1,8 +1,7 @@
 {
   "packages": {
     ".": {
-      "release-type": "php",
-      "package-name": "kantorge/yaffa"
+      "release-type": "php"
     }
   },
   "commit-search-depth": 100,

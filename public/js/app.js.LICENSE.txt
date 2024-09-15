@@ -31,7 +31,7 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 2.1.3
+/*! DataTables 2.1.4
  * © SpryMedia Ltd - datatables.net/license
  */
 
@@ -43,7 +43,7 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 2.0.4
+/*! Select for DataTables 2.0.5
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
@@ -57,7 +57,7 @@
  **/
 
 /**
-* @vue/shared v3.4.35
+* @vue/shared v3.4.38
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
