@@ -71,7 +71,7 @@ Route::get('/assets/tag/{tag}', [TagApiController::class, 'getItem']);
 Route::put('/assets/tag/{tag}/active/{active}', [TagApiController::class, 'updateActive'])
     ->name('api.tag.updateActive');
 
-Route::get('/budgetchart', [ReportApiController::class, 'budgetChart']);
+Route::get('/budgetchart', [ReportApiController::class, 'budgetChart'])->name('api.reports.budgetchart');
 Route::get(
     '/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}',
     [ReportApiController::class, 'getCategoryWaterfallData']
@@ -88,7 +88,8 @@ Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 
 Route::get('/transactions/get_scheduled_items/{type}', [TransactionApiController::class, 'getScheduledItems'])
-    ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none');
+    ->where('type', 'schedule|schedule_only|budget|budget_only|any|both|none')
+    ->name('api.transactions.getScheduledItems');
 
 Route::post('/transactions/standard', [TransactionApiController::class, 'storeStandard'])
     ->name('api.transactions.storeStandard');
