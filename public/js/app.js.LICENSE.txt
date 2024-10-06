@@ -31,7 +31,7 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 2.1.4
+/*! DataTables 2.1.8
  * © SpryMedia Ltd - datatables.net/license
  */
 
@@ -39,25 +39,30 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Responsive 3.0.2
+/*! Responsive 3.0.3
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 2.0.5
+/*! Select for DataTables 2.1.0
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
- * @license Complex.js v2.1.1 12/05/2020
- *
- * Copyright (c) 2020, Robert Eisele (robert@xarg.org)
- * Dual licensed under the MIT or GPL Version 2 licenses.
- **/
+* @vue/runtime-core v3.5.11
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
 
 /**
-* @vue/shared v3.4.38
+* @vue/runtime-dom v3.5.11
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
+
+/**
+* @vue/shared v3.5.11
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/

@@ -65,6 +65,7 @@ class Category extends Model
         'name',
         'active',
         'parent_id',
+        'default_aggregation',
     ];
 
     protected $casts = [

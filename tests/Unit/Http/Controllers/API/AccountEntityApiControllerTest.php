@@ -167,7 +167,9 @@ class AccountEntityApiControllerTest extends TestCase
     public function test_user_cannot_delete_an_already_used_payee_or_account()
     {
         /** @var User $user */
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'language' => 'en',
+        ]);
 
         // Create a transaction for this category, which also needs other models:
         // account group, currency, account, payee

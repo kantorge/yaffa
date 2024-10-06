@@ -108,6 +108,23 @@
                     </select>
                 </div>
             </div>
+
+            <div class="row mb-3">
+                <label for="default_aggregation" class="col-form-label col-sm-3">
+                    {{ __('Default aggregation') }}
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-control"
+                        id="default_aggregation"
+                        name="default_aggregation"
+                    >
+                        <option value="month" @if (old('default_aggregation') == 'month') selected="selected" @elseif(isset($category) && $category->default_aggregation == 'month') selected="selected" @endif>{{ __('Month') }}</option>
+                        <option value="quarter" @if (old('default_aggregation') == 'quarter') selected="selected" @elseif(isset($category) && $category->default_aggregation == 'quarter') selected="selected" @endif>{{ __('Quarter') }}</option>
+                        <option value="year" @if (old('default_aggregation') == 'year') selected="selected" @elseif(isset($category) && $category->default_aggregation == 'year') selected="selected" @endif>{{ __('Year') }}</option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             @csrf

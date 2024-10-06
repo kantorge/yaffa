@@ -243,7 +243,7 @@
                                         <button
                                                 class="btn btn-success"
                                                 style="padding: 0.05rem 0.25rem;"
-                                                :title="__('Add a new payee')"
+                                                :title="__('Add new payee')"
                                                 type="button"
                                                 data-coreui-toggle="modal"
                                                 data-coreui-target="#newPayeeModal"
@@ -266,7 +266,7 @@
                                         <button
                                                 class="btn btn-success"
                                                 style="padding: 0.05rem 0.25rem;"
-                                                :title="__('Add a new payee')"
+                                                :title="__('Add new payee')"
                                                 type="button"
                                                 data-coreui-toggle="modal"
                                                 data-coreui-target="#newPayeeModal"
