@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/kantorge/yaffa/compare/v1.10.0...v1.10.1) (2024-10-06)
+
+
+### 🐛 Bug Fixes
+
+* better handling of decimal separators in math inputs ([04466ca](https://github.com/kantorge/yaffa/commit/04466ca1b58725a602904b46e4ec96f6c99bd01b))
+
 ## [1.10.0](https://github.com/kantorge/yaffa/compare/v1.9.0...v1.10.0) (2024-10-06)
 
 
