@@ -229,6 +229,7 @@
     "Have your base currency set": "Have your base currency set",
     "Hide": "Hide",
     "Hide this recommendation, but it might be displayed later": "Hide this recommendation, but it might be displayed later",
+    "Home": "Home",
     "How long would you like YAFFA to calculate forecasts.": "How long would you like YAFFA to calculate forecasts.",
     "Hungarian": "Hungarian",
     "I accept the <a href=\":toslink\" target=\"_blank\">terms of service</a>": "I accept the <a href=\":toslink\" target=\"_blank\">terms of service</a>",
@@ -375,6 +376,7 @@
     "Payee added": "Payee added",
     "Payee deleted": "Payee deleted",
     "Payee details": "Payee details",
+    "Payee is in use, cannot be deleted": "Payee is in use, cannot be deleted",
     "Payee to be merged": "Payee to be merged",
     "Payee updated": "Payee updated",
     "Payees": "Payees",
@@ -619,6 +621,5 @@
     "tax": "tax",
     "transaction": "transaction",
     "transaction.requirement.account": "Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.",
-    "transactions": "transactions",
-    "Home": "Home"
+    "transactions": "transactions"
 }

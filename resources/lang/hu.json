@@ -90,6 +90,7 @@
     "Guided tour": "Ismertető lépések",
     "HTML": "HTML nézet",
     "Hide": "Elrejt",
+    "Home": "Kezdő oldal",
     "How long would you like YAFFA to calculate forecasts.": "A dátum ameddig a YAFFA kiszámítsa az előrejelzéseket.",
     "Hungarian": "Magyar",
     "I accept the <a href=\":toslink\" target=\"_blank\">terms of service</a>": "Elfogadom a szolgáltatás <a href=\":toslink\" target=\"_blank\">használati feltételeit</a>",
@@ -151,6 +152,7 @@
     "Payee added": "Üzlet létrehozva",
     "Payee deleted": "Üzlet törölve",
     "Payee details": "Üzlet részletei",
+    "Payee is in use, cannot be deleted": "Az üzlet nem törölhető, mert használatban van",
     "Payee updated": "Üzlet módosítva",
     "Payees": "Üzletek",
     "Price": "Ár",
@@ -237,6 +239,5 @@
     "YAFFA is an easy to use personal finance tracker.": "Egy könnyen használható személyes pénzügyi alkalmazás",
     "Yearly": "Évente",
     "Yes": "Igen",
-    "You can dismiss this widget to hide it forever.": "Örökre eltűntetheted ezt az ablakot.",
-    "Home": "Kezdő oldal"
+    "You can dismiss this widget to hide it forever.": "Örökre eltűntetheted ezt az ablakot."
 }
