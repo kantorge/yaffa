@@ -68,7 +68,7 @@ class AccountEntityApiController extends Controller
             if ($e->errorInfo[1] === 1451) {
                 $error = __(
                     ':type is in use, cannot be deleted',
-                    ['type' => Str::ucfirst($accountEntity->config_type)]
+                    ['type' => __(Str::ucfirst($accountEntity->config_type))]
                 );
             } else {
                 $error = __('Database error:') . ' ' . $e->errorInfo[2];

@@ -48,7 +48,7 @@
                 </div>
                 <div class="row mb-3">
                     <label for="password_confirmation" class="col-form-label col-sm-3">
-                        {{ __('Confirm Password') }}
+                        {{ __('Confirm password') }}
                     </label>
                     <div class="col-sm-9">
                         <input
