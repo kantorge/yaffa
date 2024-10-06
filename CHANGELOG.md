@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.10.0](https://github.com/kantorge/yaffa/compare/v1.9.0...v1.10.0) (2024-10-06)
+
+
+### 🛠️ Chores
+
+* composer update ([fe69878](https://github.com/kantorge/yaffa/commit/fe698781e3758fcdb70c570fb8e53f6aae0102b0))
+* npm update ([89e3d1b](https://github.com/kantorge/yaffa/commit/89e3d1ba4dfcea8ac33eef50819876c49dc7fd95))
+
+
+### ✨ Features
+
+* default category aggregation for better budgeting view ([afaa163](https://github.com/kantorge/yaffa/commit/afaa1632a720948405c1edf1b9f30e9b4a860a72))
+
+
+### 🐛 Bug Fixes
+
+* add some missing translations for Hungarian, and related fixes ([#228](https://github.com/kantorge/yaffa/issues/228)) ([1382fb3](https://github.com/kantorge/yaffa/commit/1382fb301b531f47fe79b70d38bceb41a1eac114))
+* upgrade jstree from 3.3.16 to 3.3.17 ([1ee7151](https://github.com/kantorge/yaffa/commit/1ee7151d96e6bd18498ec4aab7d2633fef50bf6e))
+* upgrade vue from 3.4.38 to 3.5.0 ([219b7b2](https://github.com/kantorge/yaffa/commit/219b7b22446d6498a5fe05016b12624416d3eb68))
+* upgrade vue from 3.5.0 to 3.5.1 ([#223](https://github.com/kantorge/yaffa/issues/223)) ([66cf038](https://github.com/kantorge/yaffa/commit/66cf038d60f15e035f05d2e35ddbcfceab93ded0))
+* upgrade vue from 3.5.1 to 3.5.5 ([4854dbc](https://github.com/kantorge/yaffa/commit/4854dbc72fd35ec21fac511d97e751faba1e3158))
+
 ## [1.9.0](https://github.com/kantorge/yaffa/compare/v1.8.3...v1.9.0) (2024-09-15)
 
 
