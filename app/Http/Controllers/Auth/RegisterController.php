@@ -32,7 +32,7 @@ class RegisterController extends Controller
 
     use RegistersUsers;
 
-    // Define ptions for default assets. (Translation happens in Blade view.)
+    // Define options for default assets. (Translation happens in Blade view.)
     private array $defaultAssetOptions = [
         'default' => 'Default',
         'basic' => 'Basic',

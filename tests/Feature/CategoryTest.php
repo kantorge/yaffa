@@ -167,6 +167,7 @@ class CategoryTest extends TestCase
                     'name' => $attributes['name'],
                     'active' => $category->active,
                     'parent_id' => $category->parent_id,
+                    'default_aggregation' => 'month',
                 ]
             );
 
@@ -218,6 +219,7 @@ class CategoryTest extends TestCase
                     'name' => $category->name . '2',
                     'active' => 1,
                     'parent_id' => $category->parent_id,
+                    'default_aggregation' => 'month',
                 ]
             );
 
@@ -251,6 +253,7 @@ class CategoryTest extends TestCase
                     'name' => $category->name,
                     'active' => 1,
                     'parent_id' => $category->parent_id,
+                    'default_aggregation' => 'month',
                 ]
             );
 
@@ -265,6 +268,7 @@ class CategoryTest extends TestCase
                     'name' => $category->name . '2',
                     'active' => 1,
                     'parent_id' => $category->parent_id,
+                    'default_aggregation' => 'month',
                 ]
             );
 
