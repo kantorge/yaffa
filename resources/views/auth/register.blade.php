@@ -84,7 +84,7 @@
                                 data-coreui-target="#customizeOnboarding"
                             >
                                 <i class="fa fa-angle-down"></i>
-                                {{ __('Customize your experience') }}
+                                {{ __('Customize YAFFA') }}
                             </h4>
                             <div class="collapse" aria-expanded="false" id="customizeOnboarding">
                                 <div class="input-group mb-3">
@@ -104,7 +104,7 @@
                                                     selected="selected"
                                                 @endif
                                             >
-                                                {{ $language }}
+                                                {{ __($language) }}
                                             </option>
                                         @endforeach
                                     </select>

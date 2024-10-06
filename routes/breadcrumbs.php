@@ -217,7 +217,7 @@ Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
     $trail->push(__('Transactions'), route('reports.transactions'));
 });
 
-// Miscellanous routes - received mails resource views
+// Miscellaneous routes - received mails resource views
 Breadcrumbs::for('received-mail.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
@@ -244,5 +244,5 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
 // User related routes
 Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('My Profile'), route('user.settings'));
+    $trail->push(__('My profile'), route('user.settings'));
 });
