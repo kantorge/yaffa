@@ -175,7 +175,7 @@
                                 <div class="col-12 col-sm-8 mb-0"
                                         :class="form.errors.has('comment') ? 'has-error' : ''"
                                 >
-                                    <label for="comment" class="form-label block-label">
+                                    <label for="comment" class="block-label">
                                         {{ __('Comment') }}
                                     </label>
                                     <input
