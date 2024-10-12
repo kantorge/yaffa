@@ -12,7 +12,7 @@ class DefaultAssetNameTranslationsExistTest extends TestCase
     public function testAllStringsAreAvailableInDefaultAssets()
     {
         // Load the default assets array
-        $defaultAssets = include base_path('resources/lang/en/default_assets.php');
+        $defaultAssets = include_once base_path('resources/lang/en/default_assets.php');
 
         // Create an instance of the listener
         $listener = new CreateDefaultAssetsForNewUser();
