@@ -48,21 +48,8 @@ class ReportController extends Controller
          * @name('reports.budgetchart')
          * @middlewares('web', 'auth', 'verified')
          */
-        // Get requested aggregation period
-        $byYears = $request->get('byYears') ?? false;
 
-        JavaScript::put([
-            'presetCategories' => array_map('intval', $request->get('categories', [])),
-            'presetAccount' => ($request->get('accountEntity') ? intval($request->get('accountEntity')) : null),
-            'byYears' => $byYears,
-        ]);
-
-        return view(
-            'reports.budgetchart',
-            [
-                'byYears' => $byYears,
-            ]
-        );
+        return view('reports.budgetchart');
     }
 
     /**

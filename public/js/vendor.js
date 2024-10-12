@@ -13725,7 +13725,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 }(function ($, undefined) {
 	"use strict";
 /*!
- * jsTree 3.3.16
+ * jsTree 3.3.17
  * http://jstree.com/
  *
  * Copyright (c) 2014 Ivan Bozhanov (http://vakata.com)
@@ -13775,7 +13775,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 		 * specifies the jstree version in use
 		 * @name $.jstree.version
 		 */
-		version : '3.3.16',
+		version : '3.3.17',
 		/**
 		 * holds all the default options used when creating new instances
 		 * @name $.jstree.defaults
@@ -18294,58 +18294,60 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 							"lineHeight" : (this._data.core.li_height) + "px",
 							"width" : "150px" // will be set a bit further down
 						},
-						"blur" : function (e) {
-							e.stopImmediatePropagation();
-							e.preventDefault();
-							var i = s.children(".jstree-rename-input"),
-								v = i.val(),
-								f = this.settings.core.force_text,
-								nv;
-							if(v === "") { v = t; }
-							h1.remove();
-							s.replaceWith(a);
-							s.remove();
-							t = f ? t : $('<div></div>').append($.parseHTML(t)).html();
-							obj = this.get_node(obj);
-							this.set_text(obj, t);
-							nv = !!this.rename_node(obj, f ? $('<div></div>').text(v).text() : $('<div></div>').append($.parseHTML(v)).html());
-							if(!nv) {
-								this.set_text(obj, t); // move this up? and fix #483
-							}
-							this._data.core.focused = tmp.id;
-							setTimeout(function () {
-								var node = this.get_node(tmp.id, true);
-								if(node.length) {
-									this._data.core.focused = tmp.id;
-									node.children('.jstree-anchor').trigger('focus');
-								}
-							}.bind(this), 0);
-							if(callback) {
-								callback.call(this, tmp, nv, cancel, v);
-							}
-							h2 = null;
-						}.bind(this),
-						"keydown" : function (e) {
-							var key = e.which;
-							if(key === 27) {
-								cancel = true;
-								this.value = t;
-							}
-							if(key === 27 || key === 13 || key === 37 || key === 38 || key === 39 || key === 40 || key === 32) {
+						"on" : {
+							"blur" : function (e) {
 								e.stopImmediatePropagation();
-							}
-							if(key === 27 || key === 13) {
 								e.preventDefault();
-								this.blur();
+								var i = s.children(".jstree-rename-input"),
+									v = i.val(),
+									f = this.settings.core.force_text,
+									nv;
+								if(v === "") { v = t; }
+								h1.remove();
+								s.replaceWith(a);
+								s.remove();
+								t = f ? t : $('<div></div>').append($.parseHTML(t)).html();
+								obj = this.get_node(obj);
+								this.set_text(obj, t);
+								nv = !!this.rename_node(obj, f ? $('<div></div>').text(v).text() : $('<div></div>').append($.parseHTML(v)).html());
+								if(!nv) {
+									this.set_text(obj, t); // move this up? and fix #483
+								}
+								this._data.core.focused = tmp.id;
+								setTimeout(function () {
+									var node = this.get_node(tmp.id, true);
+									if(node.length) {
+										this._data.core.focused = tmp.id;
+										node.children('.jstree-anchor').trigger('focus');
+									}
+								}.bind(this), 0);
+								if(callback) {
+									callback.call(this, tmp, nv, cancel, v);
+								}
+								h2 = null;
+							}.bind(this),
+							"keydown" : function (e) {
+								var key = e.which;
+								if(key === 27) {
+									cancel = true;
+									this.value = t;
+								}
+								if(key === 27 || key === 13 || key === 37 || key === 38 || key === 39 || key === 40 || key === 32) {
+									e.stopImmediatePropagation();
+								}
+								if(key === 27 || key === 13) {
+									e.preventDefault();
+									this.blur();
+								}
+							},
+							"click" : function (e) { e.stopImmediatePropagation(); },
+							"mousedown" : function (e) { e.stopImmediatePropagation(); },
+							"keyup" : function (e) {
+								h2.width(Math.min(h1.text("pW" + this.value).width(),w));
+							},
+							"keypress" : function(e) {
+								if(e.which === 13) { return false; }
 							}
-						},
-						"click" : function (e) { e.stopImmediatePropagation(); },
-						"mousedown" : function (e) { e.stopImmediatePropagation(); },
-						"keyup" : function (e) {
-							h2.width(Math.min(h1.text("pW" + this.value).width(),w));
-						},
-						"keypress" : function(e) {
-							if(e.which === 13) { return false; }
 						}
 					});
 				fn = {
@@ -88429,7 +88431,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createComplexClass: () => (/* binding */ createComplexClass)
 /* harmony export */ });
-/* harmony import */ var complex_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! complex.js */ "./node_modules/complex.js/complex.js");
+/* harmony import */ var complex_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! complex.js */ "./node_modules/complex.js/dist/complex.mjs");
 /* harmony import */ var _utils_number_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../utils/number.js */ "./node_modules/mathjs/lib/esm/utils/number.js");
 /* harmony import */ var _utils_is_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils/is.js */ "./node_modules/mathjs/lib/esm/utils/is.js");
 /* harmony import */ var _utils_factory_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils/factory.js */ "./node_modules/mathjs/lib/esm/utils/factory.js");
@@ -88443,19 +88445,19 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
   /**
    * Attach type information
    */
-  Object.defineProperty(complex_js__WEBPACK_IMPORTED_MODULE_0__, 'name', {
+  Object.defineProperty(complex_js__WEBPACK_IMPORTED_MODULE_0__["default"], 'name', {
     value: 'Complex'
   });
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.constructor = complex_js__WEBPACK_IMPORTED_MODULE_0__;
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.type = 'Complex';
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.isComplex = true;
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.constructor = complex_js__WEBPACK_IMPORTED_MODULE_0__["default"];
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.type = 'Complex';
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.isComplex = true;
 
   /**
    * Get a JSON representation of the complex number
    * @returns {Object} Returns a JSON object structured as:
    *                   `{"mathjs": "Complex", "re": 2, "im": 3}`
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.toJSON = function () {
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.toJSON = function () {
     return {
       mathjs: 'Complex',
       re: this.re,
@@ -88468,7 +88470,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
    * The angle phi will be set in the interval of [-pi, pi].
    * @return {{r: number, phi: number}} Returns and object with properties r and phi.
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.toPolar = function () {
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.toPolar = function () {
     return {
       r: this.abs(),
       phi: this.arg()
@@ -88484,7 +88486,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
    *                                                options.
    * @return {string} str
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.format = function (options) {
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.format = function (options) {
     var str = '';
     var im = this.im;
     var re = this.re;
@@ -88544,13 +88546,13 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
    * @param {*} args...
    * @return {Complex}
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.fromPolar = function (args) {
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].fromPolar = function (args) {
     switch (arguments.length) {
       case 1:
         {
           var arg = arguments[0];
           if (typeof arg === 'object') {
-            return complex_js__WEBPACK_IMPORTED_MODULE_0__(arg);
+            return (0,complex_js__WEBPACK_IMPORTED_MODULE_0__["default"])(arg);
           } else {
             throw new TypeError('Input has to be an object with r and phi keys.');
           }
@@ -88565,7 +88567,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
               phi = phi.toNumber('rad');
             }
             if ((0,_utils_is_js__WEBPACK_IMPORTED_MODULE_3__.isNumber)(phi)) {
-              return new complex_js__WEBPACK_IMPORTED_MODULE_0__({
+              return new complex_js__WEBPACK_IMPORTED_MODULE_0__["default"]({
                 r,
                 phi
               });
@@ -88579,7 +88581,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
         throw new SyntaxError('Wrong number of arguments in function fromPolar');
     }
   };
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.valueOf = complex_js__WEBPACK_IMPORTED_MODULE_0__.prototype.toString;
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.valueOf = complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.toString;
 
   /**
    * Create a Complex number from a JSON object
@@ -88589,8 +88591,8 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
    *                       for `re` and `im` are 0.
    * @return {Complex} Returns a new Complex number
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.fromJSON = function (json) {
-    return new complex_js__WEBPACK_IMPORTED_MODULE_0__(json);
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].fromJSON = function (json) {
+    return new complex_js__WEBPACK_IMPORTED_MODULE_0__["default"](json);
   };
 
   /**
@@ -88608,7 +88610,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
    * @params {Complex} b
    * @returns {number} Returns the comparison result: -1, 0, or 1
    */
-  complex_js__WEBPACK_IMPORTED_MODULE_0__.compare = function (a, b) {
+  complex_js__WEBPACK_IMPORTED_MODULE_0__["default"].compare = function (a, b) {
     if (a.re > b.re) {
       return 1;
     }
@@ -88623,7 +88625,7 @@ var createComplexClass = /* #__PURE__ */(0,_utils_factory_js__WEBPACK_IMPORTED_M
     }
     return 0;
   };
-  return complex_js__WEBPACK_IMPORTED_MODULE_0__;
+  return complex_js__WEBPACK_IMPORTED_MODULE_0__["default"];
 }, {
   isClass: true
 });

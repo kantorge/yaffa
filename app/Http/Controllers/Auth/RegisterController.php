@@ -36,6 +36,7 @@ class RegisterController extends Controller
     private array $defaultAssetOptions = [
         'default' => 'Default',
         'basic' => 'Basic',
+        'advanced' => 'Advanced',
         'none' => 'None',
     ];
 
