@@ -18,7 +18,7 @@ class CreateDefaultAssetsForNewUser
     private User $user;
 
     private array $configBasic = [
-        // Accounts are not child elements of account groups in the model, but it is more efficient to seed the data in this way
+        // Accounts are not children of account groups in the model, but it is more efficient to seed the data this way
         'accountGroups' => [
             [
                 'name' => 'default_assets.account_groups.cash',
@@ -82,7 +82,7 @@ class CreateDefaultAssetsForNewUser
             ['name' => 'default_assets.account_groups.credits'],
         ],
 
-        // The concept of child categories is not used in the model itself, but it is more efficient to seed the data in this way
+        // The concept of child categories is not used in the model, but it is more efficient to seed the data this way
         'categories' => [
             [
                 'name' => 'default_assets.categories.salary',
@@ -205,7 +205,7 @@ class CreateDefaultAssetsForNewUser
             ],
         ],
 
-        // The concept of child categories is not used in the model itself, but it is more efficient to seed the data in this way
+        // The concept of child categories is not used in the model, but it is more efficient to seed the data this way
         'categories' => [
             [
                 'name' => 'default_assets.categories.salary',
