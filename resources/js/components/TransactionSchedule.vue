@@ -1,5 +1,5 @@
 <template>
-    <div class="card mb-3" dusk="card-transaction-schedule">
+    <div class="card mb-3" dusk="card-transaction-schedule" :id="'transaction_schedule_' + this.$.vnode.key">
         <div class="card-header d-flex justify-content-between">
             <div class="card-title">
                 {{ title }}

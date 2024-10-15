@@ -789,4 +789,56 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->assertSelected('#transaction_item_1 select.tag', $transaction->transactionItems->last()->tags->first()->id);
         });
     }
+
+    public function test_replace_scheduled_item_resets_next_date_of_the_original_transaction_by_default()
+    {
+        // Create a new scheduled transaction
+        // The transaction factory also creates a schedule, which we don't need to do separately
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->for(
+                TransactionDetailStandard::factory()->withdrawal($this->user)->create(),
+                'config'
+            )
+            ->create([
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'config_type' => 'standard',
+                'schedule' => true,
+                'reconciled' => false,
+            ]);
+
+        // Load the transaction form to replace the scheduled transaction
+        $this->browse(function (Browser $browser) use ($transaction) {
+            $browser->loginAs($this->user)
+                // Open the transaction edit form
+                ->visitRoute('transaction.open', ['action' => 'replace', 'transaction' => $transaction->id])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+
+                // Assert that two schedules are visible
+                ->assertVisible('#transaction_schedule_current')
+                ->assertVisible('#transaction_schedule_original')
+
+                // Scroll to the bottom of the page to make the save button visible, including the callback buttons
+                ->scrollIntoView('#transactionFormStandard-Save')
+
+                // Select the "show transaction" callback
+                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $modal) {
+                    $modal->click('button[value="show"]');
+                })
+
+                // The default settings are otherwise fine, so we can submit the form
+                ->clickAndWaitForReload('#transactionFormStandard-Save');
+
+            // Get the latest transaction from the database
+            $newTransaction = Transaction::orderBy('id', 'desc')->with('transactionSchedule')->first();
+
+            // Check that the new transaction has a schedule start and next date set to today
+            $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->start_date->format('Y-m-d'));
+            $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->next_date->format('Y-m-d'));
+
+            // Check that the original transaction has no next date set
+            $this->assertNull($transaction->next_date);
+        });
+    }
 }

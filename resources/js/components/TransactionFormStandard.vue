@@ -884,8 +884,8 @@ export default {
                     this.form.original_schedule_config.start_date = this.copyDateObject(this.form.schedule_config.start_date);
                     this.form.original_schedule_config.automatic_recording = this.form.schedule_config.automatic_recording;
 
-                    // Reset next date of original schedule config to set it ended
-                    this.form.original_schedule_config.next_date = undefined;
+                    // Reset the next date of the original schedule config to set it ended
+                    this.form.original_schedule_config.next_date = null;
 
                     // Set new schedule start date to today
                     this.form.schedule_config.start_date = todayInUTC();
