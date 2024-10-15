@@ -87,6 +87,7 @@
                         label=" {{ __('Active') }}"
                         property="active"
                 />
+                @include('template.components.tablefilter-sidebar-transaction-type')
                 @include('template.components.tablefilter-sidebar-search')
             </ul>
         </div>
