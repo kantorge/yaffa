@@ -663,9 +663,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
-                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $modal) {
-                    $modal->click('button[value="show"]');
-                })
+                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
+                    $buttonBar->click('button[value="show"]');
+                }, 10)
                 // Submit form
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
@@ -814,19 +814,19 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->visitRoute('transaction.open', ['action' => 'replace', 'transaction' => $transaction->id])
                 // Wait for the form to load
                 ->waitFor('#transactionFormStandard')
-
                 // Assert that two schedules are visible
                 ->assertVisible('#transaction_schedule_current')
                 ->assertVisible('#transaction_schedule_original')
-
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
-                ->scrollIntoView('#transactionFormStandard-Save')
-
+                ->scrollIntoView('@action-after-save-desktop-button-group')
+                // Ensure the button is visible and clickable
+                ->waitFor('@action-after-save-desktop-button-group button[value="show"]')
+                // Pause to ensure any animations are complete
+                ->pause(1000)
                 // Select the "show transaction" callback
-                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $modal) {
-                    $modal->click('button[value="show"]');
-                })
-
+                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
+                    $buttonBar->click('button[value="show"]');
+                }, 10)
                 // The default settings are otherwise fine, so we can submit the form
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
