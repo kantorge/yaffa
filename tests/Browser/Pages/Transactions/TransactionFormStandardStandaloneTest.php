@@ -663,9 +663,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Scroll to the bottom of the page to make the save button visible, including the callback buttons
                 ->scrollIntoView('#transactionFormStandard-Save')
                 // Select the "show transaction" callback
-                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $modal) {
-                    $modal->click('button[value="show"]');
-                })
+                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
+                    $buttonBar->click('button[value="show"]');
+                }, 10)
                 // Submit form
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
@@ -720,6 +720,127 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d'),
                 $transaction->date->format('Y-m-d')
             );
+        });
+    }
+
+    public function test_cloned_transaction_loads_all_details_of_the_source_transaction()
+    {
+        // Create a new withdrawal transaction with transaction items and all details
+        // We will use make and save instead of create, to avoid the afterCreating callback, which would add random items
+        Transaction::factory()
+            ->for($this->user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 100,
+                    'amount_to' => 100,
+                    'account_from_id' => $this->user->accounts->first()->id,
+                    'account_to_id' => $this->user->payees->first()->id,
+                ]),
+                'config'
+            )
+            ->make([
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'config_type' => 'standard',
+            ])
+            ->save();
+
+        $transaction = Transaction::orderBy('id', 'desc')->first();
+
+        // Add transaction items
+        $transaction->transactionItems()
+            ->create([
+                'category_id' => $this->user->categories->first()->id,
+                'amount' => 50,
+                'comment' => 'Test comment',
+            ]);
+        $transaction->transactionItems()
+            ->create([
+                'category_id' => $this->user->categories->last()->id,
+                'amount' => 50,
+                'comment' => null,
+            ])
+            ->tags()
+            ->attach($this->user->tags->first()->id);
+
+        // Load the transaction form to clone the transaction and assert the details of the cloned transaction
+        $this->browse(function (Browser $browser) use ($transaction) {
+            $browser->loginAs($this->user)
+                // Open the transaction edit form
+                ->visitRoute('transaction.open', ['action' => 'clone', 'transaction' => $transaction->id])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+
+                // Assert that the form is loaded correctly, especially the amount and currency fields
+                #->assertSelected('#account_from', $transaction->config->accountFrom->id)
+                #->assertSelected('#account_to', $transaction->config->accountTo->id)
+                ->assertInputValue('#transaction_amount_from', '100')
+                ->assertInputValue('#transaction_amount_to', '100')
+
+                // Assert that the transaction items are loaded correctly
+                // We assume the order of the transaction items follows the order of creation
+                #->assertSelected('#transaction_item_0 select.category', $transaction->transactionItems->first()->category_id)
+                ->assertInputValue('#transaction_item_0 input.transaction_item_amount', '50')
+                ->assertInputValue('#transaction_item_0 input.transaction_item_comment', 'Test comment')
+                ->assertSelectMissingOptions('#transaction_item_0 select.tag', [])
+
+                ->assertSelected('#transaction_item_1 select.category', $transaction->transactionItems->last()->category_id)
+                ->assertInputValue('#transaction_item_1 input.transaction_item_amount', '50')
+                ->assertInputValue('#transaction_item_1 input.transaction_item_comment', '')
+                ->assertSelected('#transaction_item_1 select.tag', $transaction->transactionItems->last()->tags->first()->id);
+        });
+    }
+
+    public function test_replace_scheduled_item_resets_next_date_of_the_original_transaction_by_default()
+    {
+        // Create a new scheduled transaction
+        // The transaction factory also creates a schedule, which we don't need to do separately
+        $transaction = Transaction::factory()
+            ->for($this->user)
+            ->for(
+                TransactionDetailStandard::factory()->withdrawal($this->user)->create(),
+                'config'
+            )
+            ->create([
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'config_type' => 'standard',
+                'schedule' => true,
+                'reconciled' => false,
+            ]);
+
+        // Load the transaction form to replace the scheduled transaction
+        $this->browse(function (Browser $browser) use ($transaction) {
+            $browser->loginAs($this->user)
+                // Open the transaction edit form
+                ->visitRoute('transaction.open', ['action' => 'replace', 'transaction' => $transaction->id])
+                // Wait for the form to load
+                ->waitFor('#transactionFormStandard')
+                // Assert that two schedules are visible
+                ->assertVisible('#transaction_schedule_current')
+                ->assertVisible('#transaction_schedule_original')
+                // Scroll to the bottom of the page to make the save button visible, including the callback buttons
+                ->scrollIntoView('@action-after-save-desktop-button-group')
+                // Ensure the button is visible and clickable
+                ->waitFor('@action-after-save-desktop-button-group button[value="show"]')
+                // Pause to ensure any animations are complete
+                ->pause(1000)
+                // Select the "show transaction" callback
+                ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
+                    $buttonBar->click('button[value="show"]');
+                }, 10)
+                // Make sure that the schedule end date is empty, by clearing the input
+                ->clear('#schedule_end_current')
+                // The default settings are otherwise fine, so we can submit the form
+                ->clickAndWaitForReload('#transactionFormStandard-Save');
+
+            // Get the latest transaction from the database
+            $newTransaction = Transaction::orderBy('id', 'desc')->with('transactionSchedule')->first();
+
+            // Check that the new transaction has a schedule start and next date set to today
+            $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->start_date->format('Y-m-d'));
+            $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->next_date->format('Y-m-d'));
+
+            // Check that the original transaction has no next date set
+            $this->assertNull($transaction->next_date);
         });
     }
 }

@@ -45,12 +45,8 @@ class ReportApiController extends Controller
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
 
-        // Get requested aggregation period
-        $byYears = $request->get('byYears') ?? false;
-        $periodFormat = $byYears ? 'Y-01-01' : 'Y-m-01';
-
         // Get list of requested categories
-        // Ensure, that child categories are loaded for all parents
+        // This also ensures that child categories are loaded for all parents
         $categories = $this->categoryService->getChildCategories($request);
 
         // Get the account selection properties
@@ -87,9 +83,9 @@ class ReportApiController extends Controller
 
         // Group standard transactions by selected period, and get all relevant details
         $standardCompact = [];
-        $standardTransactions->each(function ($item) use (&$standardCompact, $periodFormat) {
+        $standardTransactions->each(function ($item) use (&$standardCompact) {
             /** @var TransactionItem $item */
-            $period = $item->transaction->date->format($periodFormat);
+            $period = $item->transaction->date->format('Y-m-01');
             $currency_id = $item->transaction->currency_id;
             $amount = $item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
                 ? -1 * $item->amount
@@ -182,8 +178,8 @@ class ReportApiController extends Controller
         );
 
         $budgetCompact = [];
-        $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency, $periodFormat) {
-            $period = $transaction->date->format($periodFormat);
+        $budgetInstances->each(function ($transaction) use (&$budgetCompact, $baseCurrency) {
+            $period = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
             if (!array_key_exists($period, $budgetCompact)

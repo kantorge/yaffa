@@ -12,7 +12,7 @@
                 <button
                         class="btn-close"
                         :disabled="busy"
-                        :title="__('Temporarly hide this widget')"
+                        :title="__('Temporarily hide this widget')"
                         type="button"
                         @click="hide"
                 ></button>

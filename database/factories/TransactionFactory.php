@@ -51,8 +51,8 @@ class TransactionFactory extends Factory
                     );
 
                 $transaction->config->update([
-                    'amount_from' => $transaction->transactionItems->sum('amount_primary'),
-                    'amount_to' => $transaction->transactionItems->sum('amount_primary'),
+                    'amount_from' => $transaction->transactionItems->sum('amount'),
+                    'amount_to' => $transaction->transactionItems->sum('amount'),
                 ]);
 
                 // Attach tags of the same user to some of the newly created transaction items
@@ -81,8 +81,8 @@ class TransactionFactory extends Factory
                     );
 
                 $transaction->config->update([
-                    'amount_from' => $transaction->transactionItems->sum('amount_primary'),
-                    'amount_to' => $transaction->transactionItems->sum('amount_primary'),
+                    'amount_from' => $transaction->transactionItems->sum('amount'),
+                    'amount_to' => $transaction->transactionItems->sum('amount'),
                 ]);
 
                 // With a 25% chance, attach tags of the same user to the newly created transaction item

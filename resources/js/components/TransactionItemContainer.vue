@@ -40,6 +40,7 @@
                     :category_id="item.category_id ? Number(item.category_id) : null"
                     :category="item.category"
                     :tags="item.tags || []"
+                    :comment="item.comment"
                     :currency="currency"
                     :remainingAmount="remainingAmount"
                     :payee="payee"
@@ -48,7 +49,7 @@
             <div v-if="!enabled">
                 {{ __('Transaction items are disabled for this transaction type') }}
             </div>
-            <div v-if="enabled && transactionItems.length === 0">
+            <div v-if="enabled && transactionItems.length === 0" class="text-muted text-italic">
                 {{ __('No items added') }}
             </div>
         </div>
@@ -76,6 +77,7 @@
 
 <script>
     import TransactionItem from './TransactionItem.vue'
+    import * as helpers from '../helpers';
 
     export default {
         components: {
@@ -149,7 +151,14 @@
 
             itemListExpand() {
                 $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-xs-none');
-            }
+            },
+
+            /**
+             * Import the translation helper function.
+             */
+            __: function (string, replace) {
+                return helpers.__(string, replace);
+            },
         }
     }
 </script>

@@ -23,7 +23,7 @@
                         </div>
                     </div>
                     <div class="card-body collapse show" aria-expanded="true" id="cardCategories">
-                        <div id="category_tree"></div>
+                        <div id="categoryTree"></div>
                         <div class="text-end">
                             <button name="reload" type="button" id="clear" class="btn btn-default btn-sm">{{ __('Clear selection') }}</button>
                             <button name="reload" type="button" id="all" class="btn btn-default btn-sm">{{ __('Select all') }}</button>
@@ -62,18 +62,30 @@
                     <button name="reload" type="button" id="reload" class="btn btn-primary">{{ __('Load data') }}</button>
                 </div>
                 <div class="text-end">
-                    @if(!$byYears)
-                        <button type="button" class="btn btn-sm btn-primary" title="{{ __('Zoom in') }}" id="btnZoomIn">
-                            <i class="fa fa-search"></i>
-                        </button>
-                    @endif
+                    <div
+                            aria-label="Toggle button group for time interval"
+                            class="btn-group"
+                            role="group"
+                    >
+                        <input type="radio" class="btn-check" name="chart_time_interval" id="chart_time_interval_month" value="month" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="chart_time_interval_month" title="{{ __('Month') }}">
+                            <span class="fa fa-fw fa-solid fa-calendar-day"></span>
+                        </label>
 
-                    <a
-                        class="btn btn-sm {{($byYears ? 'btn-primary' : 'btn-info') }}"
-                        href="{{ route('reports.budgetchart', ['byYears' => ($byYears ? '' : 'byYears')]) }}"
-                        title="{{($byYears ? __('Switch to monthly view') : __('Switch to yearly view') ) }}">
-                        <i class="fa fa-calendar"></i>
-                    </a>
+                        <input type="radio" class="btn-check" name="chart_time_interval" id="chart_time_interval_quarter" value="quarter">
+                        <label class="btn btn-outline-primary btn-sm" for="chart_time_interval_quarter" title="{{ __('Quarter') }}">
+                            <span class="fa fa-fw fa-regular fa-calendar-days"></span>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="chart_time_interval" id="chart_time_interval_year" value="year">
+                        <label class="btn btn-outline-primary btn-sm" for="chart_time_interval_year" title="{{ __('Year') }}">
+                            <span class="fa fa-fw fa-regular fa-calendar"></span>
+                        </label>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-primary" title="{{ __('Zoom in') }}" id="btnZoomIn">
+                        <i class="fa fa-search"></i>
+                    </button>
                 </div>
             </div>
             <div class="card-body">
