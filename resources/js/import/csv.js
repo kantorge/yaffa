@@ -582,7 +582,7 @@ $(tableSelector).on('click', 'button.transaction-similar.transaction-basic.trans
             }
 
             // Emit global event for modal to display
-            let event = new CustomEvent('showTransactionQuickviewModal', {
+            let event = new CustomEvent('showTransactionQuickViewModal', {
                 detail: {
                     transaction: transaction,
                     controls: {
@@ -647,7 +647,7 @@ $(tableSelector).on('click', 'button.transaction-related.transaction-quickview',
             }
 
             // Emit global event for modal to display
-            let event = new CustomEvent('showTransactionQuickviewModal', {
+            let event = new CustomEvent('showTransactionQuickViewModal', {
                 detail: {
                     transaction: transaction,
                     controls: {

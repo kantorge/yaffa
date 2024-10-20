@@ -82,7 +82,7 @@ export default {
         let $vm = this;
 
         // Set up global event listener for displaying a transaction in the modal
-        window.addEventListener('showTransactionQuickviewModal', function (event) {
+        window.addEventListener('showTransactionQuickViewModal', function (event) {
             $vm.showTransaction(event.detail.transaction, event.detail.controls);
         });
 
