@@ -659,7 +659,7 @@ export function investmentGroupTree(selector, data, changeHandler) {
                 parent: 0,
                 text: group.name,
                 state: {
-                    selected: false,
+                    selected: false
                 }
             };
         })
