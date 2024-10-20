@@ -11838,10 +11838,6 @@ var _debug2 = _interopRequireDefault(_debug);
 
 var _jsonpathPlus = __webpack_require__(/*! jsonpath-plus */ "./node_modules/jsonpath-plus/dist/index-browser-esm.js");
 
-var _lodash = __webpack_require__(/*! lodash.isobjectlike */ "./node_modules/lodash.isobjectlike/index.js");
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -11977,7 +11973,7 @@ var Almanac = function () {
       } else {
         fact = new _fact2.default(id, valueOrMethod, options);
       }
-      (0, _debug2.default)('almanac::addFact id:' + factId);
+      (0, _debug2.default)('almanac::addFact', { id: factId });
       this.factMap.set(factId, fact);
       if (fact.isConstant()) {
         this._setFactValue(fact, {}, fact.value);
@@ -11995,7 +11991,7 @@ var Almanac = function () {
   }, {
     key: 'addRuntimeFact',
     value: function addRuntimeFact(factId, value) {
-      (0, _debug2.default)('almanac::addRuntimeFact id:' + factId);
+      (0, _debug2.default)('almanac::addRuntimeFact', { id: factId });
       var fact = new _fact2.default(factId, value);
       return this._addConstantFact(fact);
     }
@@ -12033,21 +12029,21 @@ var Almanac = function () {
         var cacheVal = cacheKey && this.factResultsCache.get(cacheKey);
         if (cacheVal) {
           factValuePromise = Promise.resolve(cacheVal);
-          (0, _debug2.default)('almanac::factValue cache hit for fact:' + factId);
+          (0, _debug2.default)('almanac::factValue cache hit for fact', { id: factId });
         } else {
-          (0, _debug2.default)('almanac::factValue cache miss for fact:' + factId + '; calculating');
+          (0, _debug2.default)('almanac::factValue cache miss, calculating', { id: factId });
           factValuePromise = this._setFactValue(fact, params, fact.calculate(params, this));
         }
       }
       if (path) {
-        (0, _debug2.default)('condition::evaluate extracting object property ' + path);
+        (0, _debug2.default)('condition::evaluate extracting object', { property: path });
         return factValuePromise.then(function (factValue) {
-          if ((0, _lodash2.default)(factValue)) {
+          if (factValue != null && (typeof factValue === 'undefined' ? 'undefined' : _typeof(factValue)) === 'object') {
             var pathValue = _this.pathResolver(factValue, path);
-            (0, _debug2.default)('condition::evaluate extracting object property ' + path + ', received: ' + JSON.stringify(pathValue));
+            (0, _debug2.default)('condition::evaluate extracting object', { property: path, received: pathValue });
             return pathValue;
           } else {
-            (0, _debug2.default)('condition::evaluate could not compute object path(' + path + ') of non-object: ' + factValue + ' <' + (typeof factValue === 'undefined' ? 'undefined' : _typeof(factValue)) + '>; continuing with ' + factValue);
+            (0, _debug2.default)('condition::evaluate could not compute object path of non-object', { path: path, factValue: factValue, type: typeof factValue === 'undefined' ? 'undefined' : _typeof(factValue) });
             return factValue;
           }
         });
@@ -12063,7 +12059,7 @@ var Almanac = function () {
   }, {
     key: 'getValue',
     value: function getValue(value) {
-      if ((0, _lodash2.default)(value) && Object.prototype.hasOwnProperty.call(value, 'fact')) {
+      if (value != null && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && Object.prototype.hasOwnProperty.call(value, 'fact')) {
         // value = { fact: 'xyz' }
         return this.factValue(value.fact, value.params, value.path);
       }
@@ -12233,7 +12229,12 @@ var Condition = function () {
             leftHandSideValue = _ref2[1];
 
         var result = op.evaluate(leftHandSideValue, rightHandSideValue);
-        (0, _debug2.default)('condition::evaluate <' + JSON.stringify(leftHandSideValue) + ' ' + _this.operator + ' ' + JSON.stringify(rightHandSideValue) + '?> (' + result + ')');
+        (0, _debug2.default)('condition::evaluate', {
+          leftHandSideValue: leftHandSideValue,
+          operator: _this.operator,
+          rightHandSideValue: rightHandSideValue,
+          result: result
+        });
         return {
           result: result,
           leftHandSideValue: leftHandSideValue,
@@ -12316,16 +12317,71 @@ exports["default"] = Condition;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports["default"] = debug;
-function debug(message) {
+
+function createDebug() {
   try {
     if (typeof process !== 'undefined' && process.env && process.env.DEBUG && process.env.DEBUG.match(/json-rules-engine/) || typeof window !== 'undefined' && window.localStorage && window.localStorage.debug && window.localStorage.debug.match(/json-rules-engine/)) {
-      console.log(message);
+      return console.debug.bind(console);
     }
   } catch (ex) {
     // Do nothing
   }
+  return function () {};
 }
+
+exports["default"] = createDebug();
+
+/***/ }),
+
+/***/ "./node_modules/json-rules-engine/dist/engine-default-operator-decorators.js":
+/*!***********************************************************************************!*\
+  !*** ./node_modules/json-rules-engine/dist/engine-default-operator-decorators.js ***!
+  \***********************************************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+
+var _operatorDecorator = __webpack_require__(/*! ./operator-decorator */ "./node_modules/json-rules-engine/dist/operator-decorator.js");
+
+var _operatorDecorator2 = _interopRequireDefault(_operatorDecorator);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var OperatorDecorators = [];
+
+OperatorDecorators.push(new _operatorDecorator2.default('someFact', function (factValue, jsonValue, next) {
+  return factValue.some(function (fv) {
+    return next(fv, jsonValue);
+  });
+}, Array.isArray));
+OperatorDecorators.push(new _operatorDecorator2.default('someValue', function (factValue, jsonValue, next) {
+  return jsonValue.some(function (jv) {
+    return next(factValue, jv);
+  });
+}));
+OperatorDecorators.push(new _operatorDecorator2.default('everyFact', function (factValue, jsonValue, next) {
+  return factValue.every(function (fv) {
+    return next(fv, jsonValue);
+  });
+}, Array.isArray));
+OperatorDecorators.push(new _operatorDecorator2.default('everyValue', function (factValue, jsonValue, next) {
+  return jsonValue.every(function (jv) {
+    return next(factValue, jv);
+  });
+}));
+OperatorDecorators.push(new _operatorDecorator2.default('swap', function (factValue, jsonValue, next) {
+  return next(jsonValue, factValue);
+}));
+OperatorDecorators.push(new _operatorDecorator2.default('not', function (factValue, jsonValue, next) {
+  return !next(factValue, jsonValue);
+}));
+
+exports["default"] = OperatorDecorators;
 
 /***/ }),
 
@@ -12415,10 +12471,6 @@ var _rule = __webpack_require__(/*! ./rule */ "./node_modules/json-rules-engine/
 
 var _rule2 = _interopRequireDefault(_rule);
 
-var _operator = __webpack_require__(/*! ./operator */ "./node_modules/json-rules-engine/dist/operator.js");
-
-var _operator2 = _interopRequireDefault(_operator);
-
 var _almanac = __webpack_require__(/*! ./almanac */ "./node_modules/json-rules-engine/dist/almanac.js");
 
 var _almanac2 = _interopRequireDefault(_almanac);
@@ -12431,6 +12483,10 @@ var _engineDefaultOperators = __webpack_require__(/*! ./engine-default-operators
 
 var _engineDefaultOperators2 = _interopRequireDefault(_engineDefaultOperators);
 
+var _engineDefaultOperatorDecorators = __webpack_require__(/*! ./engine-default-operator-decorators */ "./node_modules/json-rules-engine/dist/engine-default-operator-decorators.js");
+
+var _engineDefaultOperatorDecorators2 = _interopRequireDefault(_engineDefaultOperatorDecorators);
+
 var _debug = __webpack_require__(/*! ./debug */ "./node_modules/json-rules-engine/dist/debug.js");
 
 var _debug2 = _interopRequireDefault(_debug);
@@ -12438,6 +12494,10 @@ var _debug2 = _interopRequireDefault(_debug);
 var _condition = __webpack_require__(/*! ./condition */ "./node_modules/json-rules-engine/dist/condition.js");
 
 var _condition2 = _interopRequireDefault(_condition);
+
+var _operatorMap = __webpack_require__(/*! ./operator-map */ "./node_modules/json-rules-engine/dist/operator-map.js");
+
+var _operatorMap2 = _interopRequireDefault(_operatorMap);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -12471,7 +12531,7 @@ var Engine = function (_EventEmitter) {
     _this.allowUndefinedConditions = options.allowUndefinedConditions || false;
     _this.replaceFactsInEventParams = options.replaceFactsInEventParams || false;
     _this.pathResolver = options.pathResolver;
-    _this.operators = new Map();
+    _this.operators = new _operatorMap2.default();
     _this.facts = new Map();
     _this.conditions = new Map();
     _this.status = READY;
@@ -12480,6 +12540,9 @@ var Engine = function (_EventEmitter) {
     });
     _engineDefaultOperators2.default.map(function (o) {
       return _this.addOperator(o);
+    });
+    _engineDefaultOperatorDecorators2.default.map(function (d) {
+      return _this.addOperatorDecorator(d);
     });
     return _this;
   }
@@ -12601,33 +12664,41 @@ var Engine = function (_EventEmitter) {
   }, {
     key: 'addOperator',
     value: function addOperator(operatorOrName, cb) {
-      var operator = void 0;
-      if (operatorOrName instanceof _operator2.default) {
-        operator = operatorOrName;
-      } else {
-        operator = new _operator2.default(operatorOrName, cb);
-      }
-      (0, _debug2.default)('engine::addOperator name:' + operator.name);
-      this.operators.set(operator.name, operator);
+      this.operators.addOperator(operatorOrName, cb);
     }
 
     /**
      * Remove a custom operator definition
      * @param {string}   operatorOrName - operator identifier within the condition; i.e. instead of 'equals', 'greaterThan', etc
-     * @param {function(factValue, jsonValue)} callback - the method to execute when the operator is encountered.
      */
 
   }, {
     key: 'removeOperator',
     value: function removeOperator(operatorOrName) {
-      var operatorName = void 0;
-      if (operatorOrName instanceof _operator2.default) {
-        operatorName = operatorOrName.name;
-      } else {
-        operatorName = operatorOrName;
-      }
+      return this.operators.removeOperator(operatorOrName);
+    }
 
-      return this.operators.delete(operatorName);
+    /**
+     * Add a custom operator decorator
+     * @param {string}   decoratorOrName - decorator identifier within the condition; i.e. instead of 'someFact', 'everyValue', etc
+     * @param {function(factValue, jsonValue, next)} callback - the method to execute when the decorator is encountered.
+     */
+
+  }, {
+    key: 'addOperatorDecorator',
+    value: function addOperatorDecorator(decoratorOrName, cb) {
+      this.operators.addOperatorDecorator(decoratorOrName, cb);
+    }
+
+    /**
+     * Remove a custom operator decorator
+     * @param {string}   decoratorOrName - decorator identifier within the condition; i.e. instead of 'someFact', 'everyValue', etc
+     */
+
+  }, {
+    key: 'removeOperatorDecorator',
+    value: function removeOperatorDecorator(decoratorOrName) {
+      return this.operators.removeOperatorDecorator(decoratorOrName);
     }
 
     /**
@@ -12648,7 +12719,7 @@ var Engine = function (_EventEmitter) {
       } else {
         fact = new _fact2.default(id, valueOrMethod, options);
       }
-      (0, _debug2.default)('engine::addFact id:' + factId);
+      (0, _debug2.default)('engine::addFact', { id: factId });
       this.facts.set(factId, fact);
       return this;
     }
@@ -12736,11 +12807,11 @@ var Engine = function (_EventEmitter) {
 
       return Promise.all(ruleArray.map(function (rule) {
         if (_this2.status !== RUNNING) {
-          (0, _debug2.default)('engine::run status:' + _this2.status + '; skipping remaining rules');
+          (0, _debug2.default)('engine::run, skipping remaining rules', { status: _this2.status });
           return Promise.resolve();
         }
         return rule.evaluate(almanac).then(function (ruleResult) {
-          (0, _debug2.default)('engine::run ruleResult:' + ruleResult.result);
+          (0, _debug2.default)('engine::run', { ruleResult: ruleResult.result });
           almanac.addResult(ruleResult);
           if (ruleResult.result) {
             almanac.addEvent(ruleResult.event, 'success');
@@ -12790,7 +12861,7 @@ var Engine = function (_EventEmitter) {
         }
 
         almanac.addFact(fact);
-        (0, _debug2.default)('engine::run initialized runtime fact:' + fact.id + ' with ' + fact.value + '<' + _typeof(fact.value) + '>');
+        (0, _debug2.default)('engine::run initialized runtime fact', { id: fact.id, value: fact.value, type: _typeof(fact.value) });
       }
       var orderedSets = this.prioritizeRules();
       var cursor = Promise.resolve();
@@ -13041,7 +13112,7 @@ module.exports = __webpack_require__(/*! ./json-rules-engine */ "./node_modules/
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.Almanac = exports.Engine = exports.Operator = exports.Rule = exports.Fact = undefined;
+exports.OperatorDecorator = exports.Almanac = exports.Engine = exports.Operator = exports.Rule = exports.Fact = undefined;
 
 exports["default"] = function (rules, options) {
   return new _engine2.default(rules, options);
@@ -13067,6 +13138,10 @@ var _almanac = __webpack_require__(/*! ./almanac */ "./node_modules/json-rules-e
 
 var _almanac2 = _interopRequireDefault(_almanac);
 
+var _operatorDecorator = __webpack_require__(/*! ./operator-decorator */ "./node_modules/json-rules-engine/dist/operator-decorator.js");
+
+var _operatorDecorator2 = _interopRequireDefault(_operatorDecorator);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.Fact = _fact2.default;
@@ -13074,6 +13149,265 @@ exports.Rule = _rule2.default;
 exports.Operator = _operator2.default;
 exports.Engine = _engine2.default;
 exports.Almanac = _almanac2.default;
+exports.OperatorDecorator = _operatorDecorator2.default;
+
+/***/ }),
+
+/***/ "./node_modules/json-rules-engine/dist/operator-decorator.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/json-rules-engine/dist/operator-decorator.js ***!
+  \*******************************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _operator = __webpack_require__(/*! ./operator */ "./node_modules/json-rules-engine/dist/operator.js");
+
+var _operator2 = _interopRequireDefault(_operator);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var OperatorDecorator = function () {
+  /**
+   * Constructor
+   * @param {string}   name - decorator identifier
+   * @param {function(factValue, jsonValue, next)} callback - callback that takes the next operator as a parameter
+   * @param {function}  [factValueValidator] - optional validator for asserting the data type of the fact
+   * @returns {OperatorDecorator} - instance
+   */
+  function OperatorDecorator(name, cb, factValueValidator) {
+    _classCallCheck(this, OperatorDecorator);
+
+    this.name = String(name);
+    if (!name) throw new Error('Missing decorator name');
+    if (typeof cb !== 'function') throw new Error('Missing decorator callback');
+    this.cb = cb;
+    this.factValueValidator = factValueValidator;
+    if (!this.factValueValidator) this.factValueValidator = function () {
+      return true;
+    };
+  }
+
+  /**
+   * Takes the fact result and compares it to the condition 'value', using the callback
+   * @param   {Operator} operator - fact result
+   * @returns {Operator} - whether the values pass the operator test
+   */
+
+
+  _createClass(OperatorDecorator, [{
+    key: 'decorate',
+    value: function decorate(operator) {
+      var _this = this;
+
+      var next = operator.evaluate.bind(operator);
+      return new _operator2.default(this.name + ':' + operator.name, function (factValue, jsonValue) {
+        return _this.cb(factValue, jsonValue, next);
+      }, this.factValueValidator);
+    }
+  }]);
+
+  return OperatorDecorator;
+}();
+
+exports["default"] = OperatorDecorator;
+
+/***/ }),
+
+/***/ "./node_modules/json-rules-engine/dist/operator-map.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/json-rules-engine/dist/operator-map.js ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _operator = __webpack_require__(/*! ./operator */ "./node_modules/json-rules-engine/dist/operator.js");
+
+var _operator2 = _interopRequireDefault(_operator);
+
+var _operatorDecorator = __webpack_require__(/*! ./operator-decorator */ "./node_modules/json-rules-engine/dist/operator-decorator.js");
+
+var _operatorDecorator2 = _interopRequireDefault(_operatorDecorator);
+
+var _debug = __webpack_require__(/*! ./debug */ "./node_modules/json-rules-engine/dist/debug.js");
+
+var _debug2 = _interopRequireDefault(_debug);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var OperatorMap = function () {
+  function OperatorMap() {
+    _classCallCheck(this, OperatorMap);
+
+    this.operators = new Map();
+    this.decorators = new Map();
+  }
+
+  /**
+     * Add a custom operator definition
+     * @param {string}   operatorOrName - operator identifier within the condition; i.e. instead of 'equals', 'greaterThan', etc
+     * @param {function(factValue, jsonValue)} callback - the method to execute when the operator is encountered.
+     */
+
+
+  _createClass(OperatorMap, [{
+    key: 'addOperator',
+    value: function addOperator(operatorOrName, cb) {
+      var operator = void 0;
+      if (operatorOrName instanceof _operator2.default) {
+        operator = operatorOrName;
+      } else {
+        operator = new _operator2.default(operatorOrName, cb);
+      }
+      (0, _debug2.default)('operatorMap::addOperator', { name: operator.name });
+      this.operators.set(operator.name, operator);
+    }
+
+    /**
+       * Remove a custom operator definition
+       * @param {string}   operatorOrName - operator identifier within the condition; i.e. instead of 'equals', 'greaterThan', etc
+       * @param {function(factValue, jsonValue)} callback - the method to execute when the operator is encountered.
+       */
+
+  }, {
+    key: 'removeOperator',
+    value: function removeOperator(operatorOrName) {
+      var operatorName = void 0;
+      if (operatorOrName instanceof _operator2.default) {
+        operatorName = operatorOrName.name;
+      } else {
+        operatorName = operatorOrName;
+      }
+
+      // Delete all the operators that end in :operatorName these
+      // were decorated on-the-fly leveraging this operator
+      var suffix = ':' + operatorName;
+      var operatorNames = Array.from(this.operators.keys());
+      for (var i = 0; i < operatorNames.length; i++) {
+        if (operatorNames[i].endsWith(suffix)) {
+          this.operators.delete(operatorNames[i]);
+        }
+      }
+
+      return this.operators.delete(operatorName);
+    }
+
+    /**
+       * Add a custom operator decorator
+       * @param {string}   decoratorOrName - decorator identifier within the condition; i.e. instead of 'everyFact', 'someValue', etc
+       * @param {function(factValue, jsonValue, next)} callback - the method to execute when the decorator is encountered.
+       */
+
+  }, {
+    key: 'addOperatorDecorator',
+    value: function addOperatorDecorator(decoratorOrName, cb) {
+      var decorator = void 0;
+      if (decoratorOrName instanceof _operatorDecorator2.default) {
+        decorator = decoratorOrName;
+      } else {
+        decorator = new _operatorDecorator2.default(decoratorOrName, cb);
+      }
+      (0, _debug2.default)('operatorMap::addOperatorDecorator', { name: decorator.name });
+      this.decorators.set(decorator.name, decorator);
+    }
+
+    /**
+       * Remove a custom operator decorator
+       * @param {string}   decoratorOrName - decorator identifier within the condition; i.e. instead of 'everyFact', 'someValue', etc
+       */
+
+  }, {
+    key: 'removeOperatorDecorator',
+    value: function removeOperatorDecorator(decoratorOrName) {
+      var decoratorName = void 0;
+      if (decoratorOrName instanceof _operatorDecorator2.default) {
+        decoratorName = decoratorOrName.name;
+      } else {
+        decoratorName = decoratorOrName;
+      }
+
+      // Delete all the operators that include decoratorName: these
+      // were decorated on-the-fly leveraging this decorator
+      var prefix = decoratorName + ':';
+      var operatorNames = Array.from(this.operators.keys());
+      for (var i = 0; i < operatorNames.length; i++) {
+        if (operatorNames[i].includes(prefix)) {
+          this.operators.delete(operatorNames[i]);
+        }
+      }
+
+      return this.decorators.delete(decoratorName);
+    }
+
+    /**
+     * Get the Operator, or null applies decorators as needed
+     * @param {string} name - the name of the operator including any decorators
+     * @returns an operator or null
+     */
+
+  }, {
+    key: 'get',
+    value: function get(name) {
+      var decorators = [];
+      var opName = name;
+      // while we don't already have this operator
+      while (!this.operators.has(opName)) {
+        // try splitting on the decorator symbol (:)
+        var firstDecoratorIndex = opName.indexOf(':');
+        if (firstDecoratorIndex > 0) {
+          // if there is a decorator, and it's a valid decorator
+          var decoratorName = opName.slice(0, firstDecoratorIndex);
+          var decorator = this.decorators.get(decoratorName);
+          if (!decorator) {
+            (0, _debug2.default)('operatorMap::get invalid decorator', { name: decoratorName });
+            return null;
+          }
+          // we're going to apply this later, use unshift since we'll apply in reverse order
+          decorators.unshift(decorator);
+          // continue looking for a known operator with the rest of the name
+          opName = opName.slice(firstDecoratorIndex + 1);
+        } else {
+          (0, _debug2.default)('operatorMap::get no operator', { name: opName });
+          return null;
+        }
+      }
+
+      var op = this.operators.get(opName);
+      // apply all the decorators
+      for (var i = 0; i < decorators.length; i++) {
+        op = decorators[i].decorate(op);
+        // create an entry for the decorated operation so we don't need
+        // to do this again
+        this.operators.set(op.name, op);
+      }
+      // return the operation
+      return op;
+    }
+  }]);
+
+  return OperatorMap;
+}();
+
+exports["default"] = OperatorMap;
 
 /***/ }),
 
@@ -13150,15 +13484,13 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _clone = __webpack_require__(/*! clone */ "./node_modules/clone/clone.js");
 
 var _clone2 = _interopRequireDefault(_clone);
-
-var _lodash = __webpack_require__(/*! lodash.isobjectlike */ "./node_modules/lodash.isobjectlike/index.js");
-
-var _lodash2 = _interopRequireDefault(_lodash);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -13185,7 +13517,7 @@ var RuleResult = function () {
     value: function resolveEventParams(almanac) {
       var _this = this;
 
-      if ((0, _lodash2.default)(this.event.params)) {
+      if (this.event.params !== null && _typeof(this.event.params) === 'object') {
         var updates = [];
 
         var _loop = function _loop(key) {
@@ -13546,7 +13878,7 @@ var Rule = function (_EventEmitter) {
         return Promise.all(conditions.map(function (condition) {
           return evaluateCondition(condition);
         })).then(function (conditionResults) {
-          (0, _debug2.default)('rule::evaluateConditions results', conditionResults);
+          (0, _debug2.default)('rule::evaluateConditions', { results: conditionResults });
           return method.call(conditionResults, function (result) {
             return result === true;
           });
@@ -13573,33 +13905,15 @@ var Rule = function (_EventEmitter) {
           // this also covers the 'not' case which should only ever have a single condition
           return evaluateCondition(conditions[0]);
         }
-        var method = Array.prototype.some;
-        if (operator === 'all') {
-          method = Array.prototype.every;
-        }
         var orderedSets = _this3.prioritizeConditions(conditions);
-        var cursor = Promise.resolve();
+        var cursor = Promise.resolve(operator === 'all');
         // use for() loop over Array.forEach to support IE8 without polyfill
 
         var _loop = function _loop(i) {
           var set = orderedSets[i];
-          var stop = false;
           cursor = cursor.then(function (setResult) {
-            // after the first set succeeds, don't fire off the remaining promises
-            if (operator === 'any' && setResult === true || stop) {
-              (0, _debug2.default)('prioritizeAndRun::detected truthy result; skipping remaining conditions');
-              stop = true;
-              return true;
-            }
-
-            // after the first set fails, don't fire off the remaining promises
-            if (operator === 'all' && setResult === false || stop) {
-              (0, _debug2.default)('prioritizeAndRun::detected falsey result; skipping remaining conditions');
-              stop = true;
-              return false;
-            }
-            // all conditions passed; proceed with running next set in parallel
-            return evaluateConditions(set, method);
+            // rely on the short-circuiting behavior of || and && to avoid evaluating subsequent conditions
+            return operator === 'any' ? setResult || evaluateConditions(set, Array.prototype.some) : setResult && evaluateConditions(set, Array.prototype.every);
           });
         };
 
