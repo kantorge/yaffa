@@ -660,7 +660,7 @@ export function investmentGroupTree(selector, data, changeHandler) {
                 text: group.name,
                 state: {
                     selected: false,
-                },
+                }
             };
         })
         .sort((a, b) => a.text.localeCompare(b.text));
@@ -672,7 +672,7 @@ export function investmentGroupTree(selector, data, changeHandler) {
         text: __('Investment groups'),
         state: {
             selected: true,
-            opened: true,
+            opened: true
         }
     });
 
@@ -684,8 +684,8 @@ export function investmentGroupTree(selector, data, changeHandler) {
                 data: treeData,
                 themes: {
                     dots: false,
-                    icons: false,
-                },
+                    icons: false
+                }
             },
             plugins: ['checkbox'],
             checkbox: {
