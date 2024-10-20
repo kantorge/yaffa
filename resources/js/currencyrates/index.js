@@ -1,4 +1,4 @@
-require('datatables.net-bs5');
+import 'datatables.net-bs5';
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 

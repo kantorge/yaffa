@@ -1,7 +1,7 @@
 import * as helpers from "../helpers";
 
-require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
+import 'datatables.net-bs5';
+import "datatables.net-responsive-bs5";
 
 import { toFormattedCurrency } from '../helpers';
 

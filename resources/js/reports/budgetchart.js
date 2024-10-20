@@ -7,8 +7,8 @@ import * as helpers from "../helpers";
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
 
-require('datatables.net-bs5');
-require('select2');
+import 'datatables.net-bs5';
+import 'select2';
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
