@@ -13,7 +13,7 @@
         </a>
     </li>
 
-    <li class="nav-group" aria-expanded="false">
+    <li class="nav-group">
         <a class="nav-link nav-group-toggle" href="#">
             <i class="nav-icon fa-solid fa-database"></i>
             {{ __('Assets') }}
@@ -57,7 +57,7 @@
         </ul>
     </li>
 
-    <li class="nav-group" aria-expanded="false">
+    <li class="nav-group">
         <a class="nav-link nav-group-toggle" href="#">
             <i class="nav-icon fa-solid fa-table-list"></i>
             {{ __('Reports') }}
@@ -84,14 +84,14 @@
                 text="{{ __('Schedules and budgets') }}"
             />
             <x-nav-link
-                href="{{ route('investment.timeline') }}"
-                iconClasses="fa-solid fa-chart-line"
+                href="{{ route('reports.investment_timeline') }}"
+                iconClasses="fa-solid fa-chart-gantt"
                 text="{{ __('Investment timeline') }}"
             />
         </ul>
     </li>
 
-    <li class="nav-group" aria-expanded="false">
+    <li class="nav-group">
         <a class="nav-link nav-group-toggle" href="#">
             <i class="nav-icon fa-solid fa-microchip"></i>
             {{ __('Automation') }}
@@ -111,7 +111,7 @@
         </ul>
     </li>
 
-    <li class="nav-group" aria-expanded="false">
+    <li class="nav-group">
         <a class="nav-link nav-group-toggle" href="#">
             <i class="nav-icon fa fa-bolt"></i>
             {{ __('Quick actions') }}

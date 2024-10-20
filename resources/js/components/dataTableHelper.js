@@ -635,3 +635,63 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
             <i class="fa fa-fw fa-trash"></i>
         </button> `;
 }
+
+// Import the jstree plugin
+import 'jstree/src/themes/default/style.css';
+import 'jstree';
+
+/**
+ * Initialize a jsTree plugin for investment groups
+ *
+ * @param {string} selector
+ * @param {array} data
+ * @param {function} changeHandler
+ *
+ * @returns {void}
+ */
+export function investmentGroupTree(selector, data, changeHandler) {
+    // The data is expected to be an array of objects with the raw properties from the database
+    // Convert them to the format expected by the jstree plugin
+    const treeData = (data || [])
+        .map(group => {
+            return {
+                id:  group.id,
+                parent: 0,
+                text: group.name,
+                state: {
+                    selected: false
+                }
+            };
+        })
+        .sort((a, b) => a.text.localeCompare(b.text));
+
+    // Artificially add a root node
+    treeData.push({
+        id: 0,
+        parent: '#',
+        text: __('Investment groups'),
+        state: {
+            selected: true,
+            opened: true
+        }
+    });
+
+    // Initialize the jstree plugin, including the checkbox plugin and the callback for change events
+    // Assume the jQuery plugin is available at global scope
+    $(selector)
+        .jstree({
+            core: {
+                data: treeData,
+                themes: {
+                    dots: false,
+                    icons: false
+                }
+            },
+            plugins: ['checkbox'],
+            checkbox: {
+                keep_selected_style: false
+            }
+        })
+        .on('select_node.jstree', changeHandler)
+        .on('deselect_node.jstree', changeHandler);
+}

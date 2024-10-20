@@ -23,12 +23,12 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.frequency') ? 'has-error' : ''"
                 >
-                    <label for="schedule_frequency" class="form-label">
+                    <label :for="'schedule_frequency_' + this.$.vnode.key" class="form-label">
                         {{ __('Frequency') }}
                     </label>
                     <select
                             class="form-select"
-                            id="schedule_frequency"
+                            :id="'schedule_frequency_' + this.$.vnode.key"
                             v-model="schedule.frequency"
                             :disabled="!allowCustomizationData"
                     >
@@ -42,13 +42,13 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="form.errors.has('schedule_config.interval') ? 'has-error' : ''"
                 >
-                    <label for="schedule_interval" class="form-label">
+                    <label :for="'schedule_interval_' + this.$.vnode.key" class="form-label">
                         {{ __('Interval') }}
                     </label>
                     <MathInput
                             :disabled="!allowCustomizationData"
                             class="form-control"
-                            id="schedule_interval"
+                            :id="'schedule_interval_' + this.$.vnode.key"
                             v-model="schedule.interval"
                     ></MathInput>
                 </div>
@@ -86,7 +86,7 @@
                         :class="{'has-error' : form.errors.has('schedule_config.next_date')}"
                         v-if="isSchedule"
                 >
-                    <label for="schedule_next" class="form-label">
+                    <label :for="'schedule_next_' + this.$.vnode.key" class="form-label">
                         {{ __('Next date') }}
                         <span
                                 class="fa"
@@ -107,7 +107,7 @@
                         <template #default="{inputValue, inputEvents}">
                             <input
                                     class="form-control"
-                                    :id="'schedule_next' + this.$.vnode.key"
+                                    :id="'schedule_next_' + this.$.vnode.key"
                                     :value="inputValue"
                                     v-on="inputEvents"
                             >
@@ -127,10 +127,10 @@
                                 type="checkbox"
                                 value="1"
                                 v-model="schedule.automatic_recording"
-                                id="schedule_automatic_recording"
+                                :id="'schedule_automatic_recording_' + this.$.vnode.key"
                                 :disabled="!allowCustomizationData"
                         >
-                        <label class="form-check-label" for="schedule_automatic_recording">
+                        <label class="form-check-label" :for="'schedule_automatic_recording_' + this.$.vnode.key">
                             {{ __('Automatic recording') }}
                             <i
                                     class="fa fa-info-circle text-primary"
@@ -143,12 +143,12 @@
                         class="col-lg-1 col-6 mb-2"
                         :class="{ 'has-error' : form.errors.has('schedule_config.count')}"
                 >
-                    <label for="schedule_count" class="form-label">
+                    <label :for="'schedule_count' + this.$.vnode.key" class="form-label">
                         {{ __('Count') }}
                     </label>
                     <MathInput
                             class="form-control"
-                            id="schedule_count"
+                            :id="'schedule_count_' + this.$.vnode.key"
                             v-model="schedule.count"
                             :disabled="!allowCustomizationData"
                     ></MathInput>
@@ -157,7 +157,7 @@
                         class="col-lg-2 col-6 mb-2"
                         :class="{'has-error' : form.errors.has('schedule_config.end_date')}"
                 >
-                    <label for="schedule_end" class="form-label">
+                    <label :for="'schedule_end_' + this.$.vnode.key" class="form-label">
                         {{ __('End date') }}
                     </label>
                     <DatePicker
@@ -173,7 +173,7 @@
                         <template #default="{inputValue, inputEvents}">
                             <input
                                     class="form-control"
-                                    :id="'schedule_end' + this.$.vnode.key"
+                                    :id="'schedule_end_' + this.$.vnode.key"
                                     :value="inputValue"
                                     v-on="inputEvents"
                             >
@@ -185,13 +185,13 @@
                         :class="{'has-error' : form.errors.has('schedule_config.inflation')}"
                         v-if="isBudget"
                 >
-                    <label for="schedule_inflation" class="form-label">
+                    <label :for="'schedule_inflation_' + this.$.vnode.key" class="form-label">
                         {{ __('Budget inflation') }}
                     </label>
                     <div class="input-group">
                         <input
                                 class="form-control"
-                                id="schedule_inflation"
+                                :id="'schedule_inflation_' + this.$.vnode.key"
                                 v-model="schedule.inflation"
                                 type="number"
                                 step=".01"

@@ -827,6 +827,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->whenAvailable('@action-after-save-desktop-button-group', function (Browser $buttonBar) {
                     $buttonBar->click('button[value="show"]');
                 }, 10)
+                // Make sure that the schedule end date is empty, by clearing the input
+                ->clear('#schedule_end_current')
                 // The default settings are otherwise fine, so we can submit the form
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 

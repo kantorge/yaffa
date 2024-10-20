@@ -75,7 +75,6 @@ Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy'
  * Investment related routes
  ********************/
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
-Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
@@ -119,6 +118,7 @@ Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->na
 Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
+Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
 
 /*******************
  * Miscellanous routes

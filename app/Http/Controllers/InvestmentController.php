@@ -206,75 +206,24 @@ class InvestmentController extends Controller
             'currency',
         ]);
 
-        // Get all transactions related to selected investment
-        $rawTransactions = Transaction::with([
-            'config',
-            'transactionType',
-            'transactionSchedule'
-        ])
-            ->whereHasMorph(
+        $investmentService = new InvestmentService();
+        $investment = $investmentService->enrichInvestmentWithQuantityHistory($investment);
+
+        $transactions = $investment->transactionsBasic()
+            ->with([
                 'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($investment) {
-                    $query->where('investment_id', $investment->id);
-                }
-            )
-            ->orderBy('date')
+                'transactionType',
+            ])
             ->get();
-
-        // Split the transactions into historical and scheduled, based on the schedule flag
-        [$scheduledTransactions, $transactions] = $rawTransactions->partition('schedule');
-
-        // Add all scheduled items to list of transactions
-        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
-        $transactions = $transactions->concat($scheduleInstances);
-
-        // Calculate historical and scheduled quantity changes for chart
-        $runningTotal = 0;
-        $runningSchedule = 0;
-        $quantities = $transactions
-            ->sortBy('date')
-            ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
-                // Quantity operator can be 1, -1 or null.
-                // It's the expected behavior to set the quantity to 0 if the operator is null.
-                $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
-
-                $runningSchedule += $quantity;
-                if (!$transaction->schedule) {
-                    $runningTotal += $quantity;
-                }
-
-                return [
-                    'date' => $transaction->date->format('Y-m-d'),
-                    'quantity' => $runningTotal,
-                    'schedule' => $runningSchedule,
-                ];
-            });
 
         JavaScriptFacade::put([
             'investment' => $investment,
             'transactions' => array_values($transactions->toArray()),
-            'prices' => $prices,
-            'quantities' => array_values($quantities->toArray()),
+            'prices' => $prices
         ]);
 
         return view('investment.show', [
             'investment' => $investment,
         ]);
-    }
-
-    /**
-     * Display view with timeline chart.
-     *
-     * @return View
-     */
-    public function timeline(): View
-    {
-        /**
-         * @get('/investment/timeline')
-         * @name('investment.timeline')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        return view('investment.timeline');
     }
 }

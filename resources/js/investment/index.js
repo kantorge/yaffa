@@ -1,12 +1,8 @@
-import {renderDeleteAssetButton} from "../components/dataTableHelper";
-
 require('datatables.net-bs5');
 require("datatables.net-responsive-bs5");
 
 import * as dataTableHelpers from './../components/dataTableHelper';
-import {toFormattedCurrency} from '../helpers';
-import 'jstree';
-import 'jstree/src/themes/default/style.css'
+import { toFormattedCurrency } from '../helpers';
 
 
 /**
@@ -101,7 +97,7 @@ let table = $('#investmentSummary').DataTable({
                 return '<a href="' + route('investment.show', data) + '" class="btn btn-xs btn-success"><i class="fa fa-fw fa-search" title="' + __('View investment details') + '"></i></a> ' +
                     '<a href="' + route('investment-price.list', data) + '" class="btn btn-xs btn-primary"><i class="fa fa-fw fa-dollar" title="' + __('View investment price list') + '"></i></a> ' +
                     dataTableHelpers.genericDataTablesActionButton(data, 'edit', 'investment.edit') +
-                    renderDeleteAssetButton(row, deleteButtonConditions, __("This investment cannot be deleted."));
+                    dataTableHelpers.renderDeleteAssetButton(row, deleteButtonConditions, __("This investment cannot be deleted."));
             },
             className: "dt-nowrap",
             orderable: false,
@@ -207,48 +203,11 @@ let table = $('#investmentSummary').DataTable({
 
 // Initialize the "tree" for the investment group filter list
 const selectorTreeContainer = '#investment-group-tree-container';
-let investmentGroups = window.investmentGroups || [];
-// Convert the investment groups to the format required by jstree
-const treeData = investmentGroups
-    .map(group => {
-        return {
-            id:  group.id,
-            parent: 0,
-            text: group.name,
-            state: {
-                selected: false,
-            },
-        };
-    })
-    .sort((a, b) => a.text.localeCompare(b.text));
-
-// Artificially add a root node
-treeData.push({
-    id: 0,
-    parent: '#',
-    text: __('Investment groups'),
-    state: {
-        selected: true,
-        opened: true,
-    }
-});
-
-$(selectorTreeContainer)
-    .jstree({
-        core: {
-            data: treeData,
-            themes: {
-                dots: false,
-                icons: false,
-            },
-        },
-        plugins: ['checkbox'],
-        checkbox: {
-            keep_selected_style: false
-        }
-    })
-    .on('select_node.jstree', filterInvestmentGroup)
-    .on('deselect_node.jstree', filterInvestmentGroup);
+dataTableHelpers.investmentGroupTree(
+    selectorTreeContainer,
+    window.investmentGroups,
+    filterInvestmentGroup
+);
 
 // Listeners for filters
 function filterInvestmentGroup() {
@@ -262,3 +221,7 @@ $('input[name=table_filter_active]').on("change", function() {
 $('#table_filter_search_text').keyup(function(){
     table.search($(this).val()).draw() ;
 })
+document.getElementById('table_filter_search_text_clear').addEventListener('click', function() {
+    document.getElementById('table_filter_search_text').value = '';
+    table.search($(this).val()).draw() ;
+});

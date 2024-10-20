@@ -15252,6 +15252,11 @@ table td.activeIcon > i:not(.fa-spinner) {
   cursor: pointer;
 }
 
+/* Customize the layout and design of search results */
+ul.search-result-list {
+  padding-inline-start: 20px;
+}
+
 /* Font Awesome Icons as bullet list for search result */
 ul.custom-fa-bullet-list {
   list-style: none;
@@ -15263,16 +15268,16 @@ ul.search-result-list li {
 
 ul.search-result-list li.active:before {
   font-family: "Font Awesome 6 Free";
-  content: "\f111";
+  content: "\f058";
   margin: 0 5px 0 -15px;
-  color: #00a65a;
+  color: var(--cui-success);
 }
 
 ul.search-result-list li.inactive:before {
   font-family: "Font Awesome 6 Free";
-  content: "\f10c";
+  content: "\f28b";
   margin: 0 5px 0 -15px;
-  color: #d33724;
+  color: var(--cui-danger);
 }
 
 .dataTables_length .form-select,
@@ -15392,7 +15397,7 @@ div.card-header > div.card-title {
   --cui-sidebar-nav-link-bg: transparent;
   --cui-sidebar-nav-link-icon-color: rgba(44, 56, 74, 0.681);
   --cui-sidebar-nav-link-hover-color: rgba(44, 56, 74, 0.95);
-  --cui-sidebar-nav-link-hover-bg: theme-color("primary");
+  --cui-sidebar-nav-link-hover-bg: var(--cui-primary);
   --cui-sidebar-nav-link-hover-icon-color: rgba(44, 56, 74, 0.95);
   --cui-sidebar-nav-link-active-color: rgba(44, 56, 74, 0.95);
   --cui-sidebar-nav-link-active-bg: rgba(255, 255, 255, 0.05);
@@ -15416,6 +15421,12 @@ div.card-header > div.card-title {
   font-size: 1.5rem;
   font-weight: bold;
   color: var(--cui-sidebar-color);
+}
+
+#chart-placeholder {
+  background-color: var(--cui-secondary-bg);
+  color: var(--cui-secondary-color);
+  font-size: 18px;
 }
 
 .select2-container {
