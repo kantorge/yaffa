@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c4639d98d331fc8b723a41ac9f8250f2",
+    "content-hash": "7cd71bd67fff178d803a90337d9ec954",
     "packages": [
         {
             "name": "beyondcode/laravel-mailbox",
@@ -11164,6 +11164,84 @@
                 "source": "https://github.com/mockery/mockery"
             },
             "time": "2024-05-16T03:13:13+00:00"
+        },
+        {
+            "name": "msamgan/laravel-env-keys-checker",
+            "version": "v1.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/msamgan/laravel-env-keys-checker.git",
+                "reference": "2ba7fa8c5918048989303311de0354f910f283ed"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/msamgan/laravel-env-keys-checker/zipball/2ba7fa8c5918048989303311de0354f910f283ed",
+                "reference": "2ba7fa8c5918048989303311de0354f910f283ed",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0||^11.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9",
+                "laravel/pint": "^1.14",
+                "nunomaduro/collision": "^8.1.1||^7.10.0",
+                "orchestra/testbench": "^9.0.0||^8.22.0",
+                "pestphp/pest": "^2.34",
+                "pestphp/pest-plugin-arch": "^2.7",
+                "pestphp/pest-plugin-laravel": "^2.3",
+                "phpstan/extension-installer": "^1.3",
+                "phpstan/phpstan-deprecation-rules": "^1.1",
+                "phpstan/phpstan-phpunit": "^1.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Msamgan\\LaravelEnvKeysChecker\\LaravelEnvKeysCheckerServiceProvider"
+                    ],
+                    "aliases": {
+                        "LaravelEnvKeysChecker": "Msamgan\\LaravelEnvKeysChecker\\Facades\\LaravelEnvKeysChecker"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Msamgan\\LaravelEnvKeysChecker\\": "src/",
+                    "Msamgan\\LaravelEnvKeysChecker\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "msamgan",
+                    "email": "mohdsamgankhan@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "check if all the keys are available in all the .env files.",
+            "homepage": "https://github.com/msamgan/laravel-env-keys-checker",
+            "keywords": [
+                "laravel",
+                "laravel-env-keys-checker",
+                "msamgan"
+            ],
+            "support": {
+                "issues": "https://github.com/msamgan/laravel-env-keys-checker/issues",
+                "source": "https://github.com/msamgan/laravel-env-keys-checker/tree/v1.5.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/msamgan",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-10-18T22:10:19+00:00"
         },
         {
             "name": "myclabs/deep-copy",
