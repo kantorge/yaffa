@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.11.0](https://github.com/kantorge/yaffa/compare/v1.10.1...v1.11.0) (2024-11-04)
+
+
+### 🛠️ Chores
+
+* **deps:** bump the npm_and_yarn group across 1 directory with 3 updates ([a74b77b](https://github.com/kantorge/yaffa/commit/a74b77bf7d3fc7b9be1d935967e7db11312978c7))
+* development package added to handle .env files ([41982a5](https://github.com/kantorge/yaffa/commit/41982a54367422402714565951da3e8449983d10))
+* NPM update ([3ea7e8f](https://github.com/kantorge/yaffa/commit/3ea7e8f1ae387c23e78708ea20457f2993040f0a))
+* NPM update ([b399533](https://github.com/kantorge/yaffa/commit/b3995337669cc86a517b4aa0c06fb2ca423fc20f))
+
+
+### ✨ Features
+
+* extend the default assets for new registrations ([#231](https://github.com/kantorge/yaffa/issues/231)) ([641866b](https://github.com/kantorge/yaffa/commit/641866b9cc4d16ce9ede5b794ac3e98ace714e72))
+* new logo ([e938bed](https://github.com/kantorge/yaffa/commit/e938bedfc086082329698dc4042c6c7863b3af8b))
+
+
+### 🐛 Bug Fixes
+
+* add missing translations ([#232](https://github.com/kantorge/yaffa/issues/232)) ([3317fe9](https://github.com/kantorge/yaffa/commit/3317fe959d1d4326988874feec0185660e1c6237))
+* incorrect sorting in schedule table ([e76cb3a](https://github.com/kantorge/yaffa/commit/e76cb3aa8958f14a1c1e8688482e69cfde2240a6))
+* investment timeline behavior ([#235](https://github.com/kantorge/yaffa/issues/235)) ([d48fa59](https://github.com/kantorge/yaffa/commit/d48fa59cd0d1c6201d144cb40f540ec46e997ddf))
+* minor styling ([227a5dc](https://github.com/kantorge/yaffa/commit/227a5dccd1cb827cfcdd509638b43af9022a7617))
+* schedule replacement next date handling error ([16417af](https://github.com/kantorge/yaffa/commit/16417afb28b4504b01efe4ca27c59124c9106e6e))
+* transaction item comment for cloning ([#233](https://github.com/kantorge/yaffa/issues/233)) ([0b98017](https://github.com/kantorge/yaffa/commit/0b98017f9824453ce85c65821b1b7430b4b1f2c8))
+* typo ([a15b471](https://github.com/kantorge/yaffa/commit/a15b4719cfe20ee7df6144d80a43c77b622e4010))
+* unreliable Dusk test ([36f9bbe](https://github.com/kantorge/yaffa/commit/36f9bbe78c90a973ddbb81186d13adde1dca94dd))
+* upgrade multiple dependencies with Snyk ([#221](https://github.com/kantorge/yaffa/issues/221)) ([fcb28ac](https://github.com/kantorge/yaffa/commit/fcb28ac5184c44b144451d89a0b4e2c8b9bda3b8))
+
 ## [1.10.1](https://github.com/kantorge/yaffa/compare/v1.10.0...v1.10.1) (2024-10-06)
 
 
