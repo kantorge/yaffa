@@ -7,6 +7,7 @@ am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
 import { toFormattedCurrency } from "../helpers";
+import { investmentGroupTree } from "../components/dataTableHelper";
 
 window.chartData = [];
 let chart;
@@ -58,6 +59,7 @@ function initializeChart() {
 {openDateX} - {dateX}
 ${__('Last quantity')}: {formatted_quantity}
 ${__('Estimated end value')}: {formatted_value}`
+
     series1.dataFields.openDateX = "start";
     series1.dataFields.dateX = "end";
     series1.dataFields.categoryY = "name";
@@ -69,8 +71,15 @@ ${__('Estimated end value')}: {formatted_value}`
 }
 
 function filterData() {
-    const filterActive = document.querySelector('input[name="active"]:checked').value;
-    const filterOpen = document.querySelector('input[name="open"]:checked').value;
+    const filterActive = document.querySelector('input[name="table_filter_active"]:checked').value;
+    const filterOpen = document.querySelector('input[name="table_filter_open"]:checked').value;
+
+    // Get the free text search value
+    const searchValue = document.getElementById('table_filter_search_text').value.trim().toLowerCase();
+
+    // Handle the jsTree selection
+    const selectedNodeIds = $(selectorTreeContainer).jstree().get_checked().map(id => Number(id));
+
     let today = new Date();
     today.setHours(0,0,0,0);
 
@@ -94,11 +103,44 @@ function filterData() {
                         } else {
                             return end < today;
                         }
+                    })
+                    // Filter by investment group
+                    .filter(function(investment) {
+                        /**
+                         * @var {object} investment
+                         * @property {object} investment.investment_group
+                         * @property {number} investment.investment_group.id
+                         **/
+                        return selectedNodeIds.includes(investment.investment_group.id);
+                    })
+                    // Filter by free text search
+                    .filter(function(item) {
+                        if (searchValue === '') {
+                            return true;
+                        }
+                        return item.name.toLowerCase().includes(searchValue);
                     });
 }
 
 // Refresh chart data on input change
-$('#filters input[type="radio"]').on('change', filterData);
+document.querySelectorAll('#cardFilters input[type="radio"]').forEach(input => {
+    input.addEventListener('change', filterData);
+});
+document.getElementById('table_filter_search_text').addEventListener('keyup', filterData);
+
+// Search box clear button
+document.getElementById('table_filter_search_text_clear').addEventListener('click', function() {
+    document.getElementById('table_filter_search_text').value = '';
+    filterData();
+});
+
+// Initialize the "tree" for the investment group filter list
+const selectorTreeContainer = '#investment-group-tree-container';
+investmentGroupTree(
+    selectorTreeContainer,
+    window.investmentGroups,
+    filterData
+);
 
 // Fetch API and calculate Gantt dates
 fetch('/api/assets/investment/timeline')
@@ -121,4 +163,19 @@ fetch('/api/assets/investment/timeline')
 
         initializeChart();
     })
-    .catch(error => console.error(error));
+    .then(() => {
+        initializeChart();
+        document.getElementById('chart-placeholder').style.display = 'none';
+        document.getElementById('chart').style.display = 'block';
+    })
+    .catch(error => {
+        // Emit a custom event to global scope about the result
+        let notificationEvent = new CustomEvent('toast', {
+            detail: {
+                header: __('Error'),
+                body: error.message,
+                toastClass: 'bg-danger'
+            }
+        });
+        window.dispatchEvent(notificationEvent);
+    });

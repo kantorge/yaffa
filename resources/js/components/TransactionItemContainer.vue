@@ -40,6 +40,7 @@
                     :category_id="item.category_id ? Number(item.category_id) : null"
                     :category="item.category"
                     :tags="item.tags || []"
+                    :comment="item.comment"
                     :currency="currency"
                     :remainingAmount="remainingAmount"
                     :payee="payee"
@@ -76,6 +77,7 @@
 
 <script>
     import TransactionItem from './TransactionItem.vue'
+    import * as helpers from '../helpers';
 
     export default {
         components: {
@@ -149,7 +151,14 @@
 
             itemListExpand() {
                 $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-xs-none');
-            }
+            },
+
+            /**
+             * Import the translation helper function.
+             */
+            __: function (string, replace) {
+                return helpers.__(string, replace);
+            },
         }
     }
 </script>
