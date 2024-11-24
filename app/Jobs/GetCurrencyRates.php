@@ -32,6 +32,6 @@ class GetCurrencyRates implements ShouldQueue
     public function handle(): void
     {
         // Invoke missing currency rate retrieval method for the currency
-        $this->currency->retreiveMissingCurrencyRateToBase();
+        $this->currency->retrieveMissingCurrencyRateToBase();
     }
 }

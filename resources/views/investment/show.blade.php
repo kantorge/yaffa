@@ -14,9 +14,18 @@
             <div class="row">
                 <div class="col-md-5">
                     <div class="card mb-3">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between">
                             <div class="card-title">
                                 {{ __('Investment details') }}
+                            </div>
+                            <div>
+                                <a
+                                        href="{{ route('investment.edit', ['investment' => $investment->id]) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="{{ __('Edit investment') }}"
+                                >
+                                    <i class="fa fa-edit"></i>
+                                </a>
                             </div>
                         </div>
                         <div class="card-body">
@@ -26,8 +35,8 @@
                                 <dt class="col-4">{{ __('Symbol') }}</dt>
                                 <dd class="col-8">{{ $investment->symbol }}</dd>
                                 <dt class="col-4">{{ __('ISIN number') }}</dt>
-                                <dd class="col-8 @if(!$investment->isin)text-muted @endif">
-                                    {{ ($investment->isin ? $investment->isin : __('Not set')) }}
+                                <dd class="col-8 @if(!$investment->isin)text-muted text-italic @endif">
+                                    {{ $investment->isin ?? __('Not set') }}
                                 </dd>
                                 <dt class="col-4">{{ __('Active') }}</dt>
                                 <dd class="col-8">
@@ -45,17 +54,17 @@
                                     <dt class="col-4">{{ __('Comment') }}</dt>
                                     <dd class="col-8">{{ $investment->comment }}</dd>
                                 @endif
-                                @if($investment->investment_price_provider)
+                                <dt class="col-4">{{ __('Automatic update') }}</dt>
+                                <dd class="col-8">
+                                    @if($investment->auto_update)
+                                        <i class="fa fa-check-square text-success" title="{{ __('Yes') }}"></i>
+                                    @else
+                                        <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
+                                    @endif
+                                </dd>
+                                @if($investment->auto_update)
                                     <dt class="col-4">{{ __('Price provider') }}</dt>
                                     <dd class="col-8">{{ $investment->investment_price_provider_name }}</dd>
-                                    <dt class="col-4">{{ __('Automatic update') }}</dt>
-                                    <dd class="col-8">
-                                        @if($investment->auto_update)
-                                            <i class="fa fa-check-square text-success" title="{{ __('Yes') }}"></i>
-                                        @else
-                                            <i class="fa fa-square text-danger" title="{{ __('No') }}"></i>
-                                        @endif
-                                    </dd>
                                 @endif
                             </dl>
                         </div>
@@ -87,7 +96,7 @@
                                 {{ __('Results') }}
                             </div>
                             <div>
-                                <button class="btn btn-sm btn-primary" id="clear_dates">{{ __('Clear selection') }}</button>
+                                <button class="btn btn-sm btn-primary" id="clear_dates">{{ __('Reset dates') }}</button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -173,7 +182,7 @@
                     <div>
                         <span class="label label-danger hidden" id="priceChartNoData">{{ __('No data available') }}</span>
                         @if($investment->investment_price_provider)
-                            <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Load new price data') }}">
+                            <a href="{{ route('investment-price.retrieve', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Load new price data') }}">
                                 <span class="fa fa-cloud-download"></span>
                             </a>
                         @endif

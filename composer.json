@@ -25,6 +25,7 @@
         "laravel/ui": "^4.2",
         "nesbot/carbon": "^2.40",
         "openai-php/laravel": "^0.8.1",
+        "roach-php/laravel": "^3.1",
         "sentry/sentry-laravel": "^4.1",
         "simshaun/recurr": "^5.0",
         "spatie/laravel-model-flags": "^1.1",

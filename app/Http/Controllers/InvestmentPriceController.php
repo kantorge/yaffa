@@ -157,11 +157,11 @@ class InvestmentPriceController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveInvestmentPrice(Investment $investment): RedirectResponse
+    public function retrieveInvestmentPrice(Investment $investment): RedirectResponse
     {
         /**
          * @get('/investment-price/get/{investment}/{from?}')
-         * @name('investment-price.retreive')
+         * @name('investment-price.retrieve')
          * @middlewares('web', 'auth', 'verified')
          */
 

@@ -15,7 +15,7 @@
             <div class="card">
                 <div class="card-header text-end">
                     @if($investment->investment_price_provider)
-                        <a href="{{ route('investment-price.retreive', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Load new price data') }}">
+                        <a href="{{ route('investment-price.retrieve', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Load new price data') }}">
                             <span class="fa fa-cloud-download"></span>
                         </a>
                     @endif
