@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.0](https://github.com/kantorge/yaffa/compare/v1.11.0...v1.12.0) (2024-11-24)
+
+
+### ✨ Features
+
+* web scraping as investment price provider ([2c31ae5](https://github.com/kantorge/yaffa/commit/2c31ae5c638aff2b8a4c6721a05e272caf2bd564))
+
+
+### 🐛 Bug Fixes
+
+* incorrect investment unique constraints ([2cce066](https://github.com/kantorge/yaffa/commit/2cce06699c9edca2617c417877fc86d5493b1d4e))
+* typo in some function names ([f6aaeac](https://github.com/kantorge/yaffa/commit/f6aaeacdb7153d119f044613f41d8d9061f7bfdc))
+
 ## [1.11.0](https://github.com/kantorge/yaffa/compare/v1.10.1...v1.11.0) (2024-11-04)
 
 
