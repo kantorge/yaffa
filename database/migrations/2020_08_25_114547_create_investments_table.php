@@ -28,7 +28,7 @@ return new class () extends Migration {
             $table->foreignIdFor(Currency::class)->constrained();
             $table->timestamps();
 
-            // Make some identifieds unique for each user
+            // Make some identifiers unique for each user
             $table->unique(['name', 'user_id']);
             $table->unique(['symbol', 'user_id']);
             $table->unique(['isin', 'user_id']);
