@@ -160,7 +160,7 @@ class Currency extends Model
      *
      * @param Carbon|null $from
      */
-    public function retreiveCurrencyRateToBase(?Carbon $from = null): void
+    public function retrieveCurrencyRateToBase(?Carbon $from = null): void
     {
         $baseCurrency = $this->baseCurrency();
 
@@ -204,7 +204,7 @@ class Currency extends Model
     /**
      * Get all the missing currency rates for this currency.
      */
-    public function retreiveMissingCurrencyRateToBase(): void
+    public function retrieveMissingCurrencyRateToBase(): void
     {
         $baseCurrency = $this->baseCurrency();
 
@@ -218,7 +218,7 @@ class Currency extends Model
             ->latest('date')
             ->first();
 
-        $this->retreiveCurrencyRateToBase(
+        $this->retrieveCurrencyRateToBase(
             $rate?->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
         );
     }

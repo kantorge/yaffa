@@ -60,11 +60,11 @@ Route::resource('currency', CurrencyController::class)->except(['show']);
 Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currency.setDefault');
 
-Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase'])
-    ->name('currency-rate.retreiveMissing');
+Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retrieveMissingCurrencyRateToBase'])
+    ->name('currency-rate.retrieveMissing');
 
-Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retreiveCurrencyRateToBase'])
-    ->name('currency-rate.retreiveRate');
+Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retrieveCurrencyRateToBase'])
+    ->name('currency-rate.retrieveRate');
 
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
@@ -80,8 +80,8 @@ Route::resource('investment', InvestmentController::class);
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
 
-Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPrice'])
-    ->name('investment-price.retreive');
+Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retrieveInvestmentPrice'])
+    ->name('investment-price.retrieve');
 
 Route::resource('investment-price', InvestmentPriceController::class)
     ->except(['index', 'show']);
