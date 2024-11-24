@@ -71,7 +71,20 @@ class InvestmentRequest extends FormRequest
             ],
             'investment_price_provider' => [
                 'nullable',
+                'required_if_accepted:auto_update',
                 Rule::in($investmentPriceProviders),
+            ],
+            'scrape_url' => [
+                'exclude_unless:investment_price_provider,web_scraping',
+                Rule::RequiredIf(fn ()  => $this->investment_price_provider === 'web_scraping'),
+                'url',
+            ],
+            'scrape_selector' => [
+                'exclude_unless:investment_price_provider,web_scraping',
+                Rule::RequiredIf(fn ()  => $this->investment_price_provider === 'web_scraping'),
+                'string',
+                'min:1', // It's not likely to qualify as a selector, but let's go with the minimum
+                'max:' . self::DEFAULT_STRING_MAX_LENGTH,
             ],
         ];
     }
