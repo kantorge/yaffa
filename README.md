@@ -57,7 +57,7 @@ You can register a new account at https://sandbox.yaffa.cc/register
 
 ⚠️ **Important!** This is not a production environment or a free service. 
 Use it only to experiment with YAFFA's functionality and UI. 
-The database is regulary wiped without prior notice.
+The database is regularly wiped without prior notice.
 
 💡 **Tip:** use a fake or disposable email address to sign up. The email address does not need to be verified.
 
