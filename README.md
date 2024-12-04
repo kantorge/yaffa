@@ -63,8 +63,8 @@ The database is regulary wiped without prior notice.
 
 ## Getting started
 Read the full documentation at https://www.yaffa.cc/documentation/,
-including the [Getting Started](https://www.yaffa.cc/documentation-category/getting-started/) guide
-and the [Installation instructions](https://www.yaffa.cc/documentation-category/installation-instructions/).
+including the [Getting Started](https://www.yaffa.cc/documentation/resources/category/getting-started/) guide
+and the [Installation instructions](https://www.yaffa.cc/documentation/resources/category/installation/).
 
 ## Sponsors
 The project is supported by JetBrains under [Open Source Support Program](https://www.jetbrains.com/community/opensource/#support).
