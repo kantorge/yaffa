@@ -12181,6 +12181,9 @@ var Condition = function () {
         if (this.factResult !== undefined) {
           props.factResult = this.factResult;
         }
+        if (this.valueResult !== undefined) {
+          props.valueResult = this.valueResult;
+        }
         if (this.result !== undefined) {
           props.result = this.result;
         }
@@ -13860,6 +13863,7 @@ var Rule = function (_EventEmitter) {
           return condition.evaluate(almanac, _this3.engine.operators).then(function (evaluationResult) {
             var passes = evaluationResult.result;
             condition.factResult = evaluationResult.leftHandSideValue;
+            condition.valueResult = evaluationResult.rightHandSideValue;
             condition.result = passes;
             return passes;
           });

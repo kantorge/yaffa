@@ -7,6 +7,7 @@ use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
+use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\ReceivedMail;
 use App\Models\Tag;
@@ -26,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionApiController extends Controller
 {
+    use CurrencyTrait;
+
     private CategoryService $categoryService;
 
     public function __construct()
@@ -194,6 +197,7 @@ class TransactionApiController extends Controller
          * @get('/api/transactions')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+
         // A request without any search criteria will return an empty response to avoid loading all transactions
         if (!$request->hasAny([
             'date_from',
@@ -338,6 +342,41 @@ class TransactionApiController extends Controller
             ->get();
 
         $transactions = $standardTransactions->concat($investmentTransactions);
+
+        // We need to load the currency rates for the transactions
+        // TODO: should this be done even more generally?
+
+        // Get monthly average currency rate for all currencies against base currency
+        $baseCurrency = $this->getBaseCurrency();
+        $allRatesMap = $this->allCurrencyRatesByMonth();
+
+        // Loop through all transactions and add the currency rate to the base currency
+        // Also, calculate the amount in the base currency for the transaction and all its items, if applicable
+        $transactions->map(function ($transaction) use ($baseCurrency, $allRatesMap) {
+            $transaction->currencyRateToBase = $this->getLatestRateFromMap(
+                $transaction->currency_id,
+                $transaction->date,
+                $allRatesMap,
+                $baseCurrency->id
+            );
+
+            // Extend the optional amount_to and amount_from fields in the config
+            if ($transaction->config->amount_to) {
+                $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
+            }
+            if ($transaction->config->amount_from) {
+                $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+            }
+
+            // Extend the amount field in the items
+            if ($transaction->transactionItems) {
+                $transaction->transactionItems->map(function ($item) use ($transaction) {
+                    $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
+                });
+            }
+
+            return $transaction;
+        });
 
         return response()->json(
             [
