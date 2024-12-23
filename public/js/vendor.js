@@ -13712,6 +13712,7 @@ var Rule = function (_EventEmitter) {
       this.ruleEvent = {
         type: event.type
       };
+      this.event = this.ruleEvent;
       if (event.params) this.ruleEvent.params = event.params;
       return this;
     }

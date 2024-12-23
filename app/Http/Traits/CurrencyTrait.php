@@ -84,21 +84,38 @@ trait CurrencyTrait
         });
     }
 
+    /**
+     * Get the latest exchange rate for a given currency from a map of rates.
+     *
+     * This method retrieves the latest exchange rate for a specified currency
+     * from a pre-processed map of rates. The map contains average rates by month
+     * for various currencies. The method returns the first rate that is less than
+     * or equal to the given date.
+     *
+     * @param int $currencyId The ID of the currency for which to get the rate.
+     * @param Carbon $date The date for which to get the latest rate.
+     * @param array $allRatesMap A map of all rates, indexed by currency ID and date.
+     * @param int $baseCurrencyID The ID of the base currency, for which we look the rate for.
+     * @return float|null The latest rate for the given currency, or null if not found.
+     */
     public function getLatestRateFromMap(int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
     {
+        // If the currency is the base currency or not present in the rates map, return null
         if ($currencyId === $baseCurrencyID ||
             !array_key_exists($currencyId, $allRatesMap)) {
             return null;
         }
 
+        // Iterate over the rates for the given currency
         foreach ($allRatesMap[$currencyId] as $rateDate => $rate) {
             $rateDateCarbon = Carbon::parse($rateDate);
-            // We return the first rate from the map that is less than or equal to the given date
+            // Return the first rate that is less than or equal to the given date
             if ($rateDateCarbon->lte($date)) {
                 return $rate;
             }
         }
 
+        // If no rate is found, return null
         return null;
     }
 }
