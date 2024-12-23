@@ -47,4 +47,6 @@ class CurrencyRate extends Model
     {
         return $this->belongsTo(Currency::class, 'to_id');
     }
+
+
 }

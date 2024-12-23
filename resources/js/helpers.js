@@ -69,6 +69,7 @@ export function todayInUTC() {
  * @returns {Object}
  */
 export function processTransaction(transaction) {
+    // Convert date strings to Date objects
     if (transaction.date) {
         transaction.date = new Date(transaction.date);
     }
