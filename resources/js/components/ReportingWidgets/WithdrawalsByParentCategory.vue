@@ -1,5 +1,7 @@
 <template>
-    <div class="chartContainer" ref="chartContainer">
+    <div class="container">
+        <div class="loader" v-show="busy"></div>
+        <div class="chartContainer" ref="chartContainer" v-show="!busy"></div>
     </div>
 </template>
 
@@ -21,13 +23,18 @@ export default {
         },
         title: {
             type: String,
-            default: "Withdrawals by parent category",
+            default: "Withdrawals by category",
         },
+        busy: {
+            type: Boolean,
+            required: true
+        }
     },
     data() {
         return {
             filteredTransactions: [],
             chartData: {},
+            selectedParentId: undefined,
         }
     },
     watch: {
@@ -40,44 +47,118 @@ export default {
         }
     },
     methods: {
+        /**
+         * Update the chart data based on the current set of transactions.
+         *
+         * @param {Array} transactions
+         * @property {Number} transactions.transaction_type_id
+         * @returns {void}
+         */
         updateChartData(transactions) {
-            const transactionsCopy = JSON.parse(JSON.stringify(transactions));
-            const filteredTransactions = transactionsCopy.filter(transaction => transaction.transaction_type_id === 1);
+            const filteredTransactions = [];
+            transactions.forEach(transaction => {
+                if (transaction.transaction_type_id === 1) {
+                    filteredTransactions.push(transaction);
+                }
+            });
 
             if (!filteredTransactions.length) {
-                this.chartData = [];
                 this.filteredTransactions = [];
-                return;
+                // Add one dummy data point to the chart to display a message when there are no transactions
+                this.chartData = [{
+                    amount: 1,
+                    id: 0,
+                    parent_id: 0,
+                    parent_name: "No data",
+                    name: "No data",
+                    selected: false,
+                    disabled: true,
+                    color: am4core.color("#dadada"),
+                    tooltip: "No data"
+                }];
+            } else {
+                // Process the actual transactions
+                this.filteredTransactions = filteredTransactions;
+
+                const categorySummary = [];
+
+                filteredTransactions
+                    // Flatten the transaction items to a single array
+                    .flatMap(transaction => transaction.transaction_items)
+                    /**
+                     * Process each transaction item and group them by parent category,
+                     * where the parent category is determined based on the selectedParentId.
+                     *
+                     * @param {Object} item
+                     * @property {Object} item.category
+                     * @property {Number} item.amount_in_base
+                     */
+                    .forEach(item => {
+                        if (!item.category) {
+                            return;
+                        }
+
+                        // Create a map of parent categories with their color codes assigned from amCharts
+                        const colorCodesPerParent = {};
+                        this.getDistinctParentIds().forEach((id, index) => {
+                            if (this.chart) {
+                                colorCodesPerParent[id] = this.chart.colors.getIndex(index);
+                            } else {
+                                colorCodesPerParent[id] = am4core.color("#000000");
+                            }
+                        });
+
+                        let parentCategory;
+                        if (this.selectedParentId) {
+                            if (item.category.parent_id === this.selectedParentId) {
+                                parentCategory = item.category;
+                            } else {
+                                parentCategory = item.category.parent_id ? item.category.parent : item.category;
+                            }
+                        } else {
+                            parentCategory = item.category.parent_id ? item.category.parent : item.category;
+                        }
+
+                        let categoryIndex = categorySummary.findIndex(category => category.id === parentCategory.id);
+
+                        if (categoryIndex === -1) {
+                            categorySummary.push({
+                                amount: 0,
+                                id: parentCategory.id,
+                                parent_id: parentCategory.parent_id,
+                                parent_name: parentCategory.parent_id ? parentCategory.parent.name : parentCategory.name,
+                                name: parentCategory.parent_id === this.selectedParentId ? parentCategory.full_name : parentCategory.name,
+                                selected: parentCategory.parent_id === this.selectedParentId,
+                                color: colorCodesPerParent[parentCategory.id] || colorCodesPerParent[parentCategory.parent_id],
+                            });
+
+                            categoryIndex = categorySummary.length - 1;
+                        }
+
+                        categorySummary[categoryIndex].amount += item.amount_in_base;
+                    });
+                    // Sort the categories array by the true parent category name
+                    categorySummary.sort((a, b) => a.parent_name.localeCompare(b.parent_name));
+
+                // Transform parentCategories to an array of objects by converting amounts to formatted currency
+                this.chartData = categorySummary.map(category => {
+                    return {
+                        ...category,
+                        tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.locale, window.YAFFA.baseCurrency)}`,
+                    };
+                });
             }
-
-            this.filteredTransactions = filteredTransactions;
-
-            const parentCategories = filteredTransactions
-                .flatMap(transaction => transaction.transaction_items)
-                .reduce((acc, item) => {
-                    if (!item.category) {
-                        return acc;
-                    }
-
-                    const parentCategory = item.category.parent_id ? item.category.parent.name : item.category.name;
-                    if (!acc[parentCategory]) {
-                        acc[parentCategory] = 0;
-                    }
-                    acc[parentCategory] += item.amount_in_base;
-
-                    return acc;
-                }, {});
-
-            // Transform parentCategories to an array of objects by converting amounts to formatted currency
-            this.chartData = Object.entries(parentCategories).map(([category, amount]) => ({
-                category,
-                amount,
-                formatted_amount: toFormattedCurrency(amount, window.YAFFA.locale, window.YAFFA.baseCurrency)
-            }));
 
             if (this.chart) {
                 this.chart.data = this.chartData;
             }
+        },
+        getDistinctParentIds() {
+            return this.filteredTransactions
+                .flatMap(transaction => transaction.transaction_items)
+                .filter(item => item.category)
+                .map(item => item.category.parent_id)
+                .filter((value, index, self) => self.indexOf(value) === index);
         }
     },
     mounted() {
@@ -86,10 +167,21 @@ export default {
 
         let pieSeries = chart.series.push(new am4charts.PieSeries());
         pieSeries.dataFields.value = "amount";
-        pieSeries.dataFields.category = "category";
+        pieSeries.dataFields.category = "name";
+        pieSeries.slices.template.propertyFields.fill = "color";
+        pieSeries.slices.template.propertyFields.isActive = "selected";
+        pieSeries.labels.template.propertyFields.disabled = "disabled";
+        pieSeries.ticks.template.propertyFields.disabled = "disabled";
 
         // Set the tooltip to use currency format
-        pieSeries.slices.template.tooltipText = "{category}: {formatted_amount}";
+        pieSeries.slices.template.tooltipText = "{tooltip}";
+
+        // Set up listener for the slice click event
+        pieSeries.slices.template.events.on("hit", (event) => {
+            const data = event.target.dataItem.dataContext;
+            this.selectedParentId = data.id;
+            this.updateChartData(this.transactions);
+        });
 
         // Set the chart title
         let title = chart.titles.create();
@@ -108,8 +200,15 @@ export default {
 </script>
 
 <style scoped>
-.chartContainer {
-    width: 90%;
-    height: 300px;
+.container {
+    display: flex;
+    justify-content: center;
 }
+
+.chartContainer {
+    width: 100%;
+    height: 400px;
+}
+
+@import './PieChartLoader.css';
 </style>

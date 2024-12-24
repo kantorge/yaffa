@@ -6,7 +6,7 @@
             </div>
             <div>
                 <button
-                        class="btn btn-sm btn-ghost-danger"
+                        class="btn btn-sm btn-outline-danger"
                         id="clearDateSelection"
                         @click="clearSelection"
                         :title="__('Clear selection')"
@@ -15,7 +15,7 @@
                 </button>
             </div>
         </div>
-        <div class="card-body" ref="dateRangePicker">
+        <div class="card-body" ref="dateRangePicker" dusk="dateRangePicker">
             <div class="row">
                 <div class="col-6">
                     <label for="date_from" class="form-label">{{ __('Date from') }}</label>

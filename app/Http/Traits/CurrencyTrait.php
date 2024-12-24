@@ -92,16 +92,17 @@ trait CurrencyTrait
      * for various currencies. The method returns the first rate that is less than
      * or equal to the given date.
      *
-     * @param int $currencyId The ID of the currency for which to get the rate.
+     * @param int|null $currencyId The ID of the currency for which to get the rate.
      * @param Carbon $date The date for which to get the latest rate.
      * @param array $allRatesMap A map of all rates, indexed by currency ID and date.
      * @param int $baseCurrencyID The ID of the base currency, for which we look the rate for.
      * @return float|null The latest rate for the given currency, or null if not found.
      */
-    public function getLatestRateFromMap(int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
+    public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
     {
         // If the currency is the base currency or not present in the rates map, return null
-        if ($currencyId === $baseCurrencyID ||
+        if ($currencyId === null ||
+            $currencyId === $baseCurrencyID ||
             !array_key_exists($currencyId, $allRatesMap)) {
             return null;
         }

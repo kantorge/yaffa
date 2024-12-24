@@ -358,7 +358,7 @@ class TransactionApiController extends Controller
                 $transaction->date,
                 $allRatesMap,
                 $baseCurrency->id
-            );
+            ) ?? 1;
 
             // Extend the optional amount_to and amount_from fields in the config
             if ($transaction->config->amount_to) {

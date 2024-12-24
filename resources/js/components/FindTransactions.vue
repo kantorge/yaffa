@@ -114,15 +114,29 @@
                         <li class="nav-item">
                             <button
                                     class="nav-link"
-                                    id="nav-charts"
+                                    id="nav-timeline-charts"
                                     data-coreui-toggle="tab"
-                                    data-coreui-target="#tab-charts"
+                                    data-coreui-target="#tab-timeline-charts"
                                     type="button"
                                     role="tab"
-                                    aria-controls="tab-charts"
+                                    aria-controls="tab-timeline-charts"
                                     aria-selected="false"
                             >
-                                {{ __('Charts') }}
+                                {{ __('Timeline charts') }}
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button
+                                    class="nav-link"
+                                    id="nav-category-charts"
+                                    data-coreui-toggle="tab"
+                                    data-coreui-target="#tab-category-charts"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="tab-category-charts"
+                                    aria-selected="false"
+                            >
+                                {{ __('Category charts') }}
                             </button>
                         </li>
                     </ul>
@@ -139,6 +153,7 @@
                         >
                             <reporting-canvas-summary
                                 :transactions="transactions"
+                                :busy="busy"
                             ></reporting-canvas-summary>
                         </div>
                         <div
@@ -152,13 +167,26 @@
                         </div>
                         <div
                                 class="tab-pane fade"
-                                id="tab-charts"
+                                id="tab-timeline-charts"
                                 role="tabpanel"
-                                aria-labelledby="nav-charts"
+                                aria-labelledby="nav-timeline-charts"
                                 tabindex="3"
+                        >
+                            <reporting-canvas-timeline
+                                    :transactions="transactions"
+                                    :busy="busy"
+                            ></reporting-canvas-timeline>
+                        </div>
+                        <div
+                                class="tab-pane fade"
+                                id="tab-category-charts"
+                                role="tabpanel"
+                                aria-labelledby="nav-category-charts"
+                                tabindex="4"
                         >
                             <reporting-canvas-categories
                                     :transactions="transactions"
+                                    :busy="busy"
                             ></reporting-canvas-categories>
                         </div>
                     </div>
@@ -178,10 +206,10 @@ import FindTransactionSelectCard from "./FindTransactionSelectCard"
 import DateRangeSelector from "./DateRangeSelector.vue";
 import ReportingCanvasFindTransactionsCategoryDetails from "./ReportingWidgets/ReportingCanvas-FindTransactions-CategoryDetails.vue";
 import ReportingCanvasFindTransactionsSummary from "./ReportingWidgets/ReportingCanvas-FindTransactions-Summary.vue";
+import ReportingCanvasFindTransactionsTimeline from "./ReportingWidgets/ReportingCanvas-FindTransactions-Timeline.vue";
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 
 require ('datatables.net-bs5');
-require('datatables.net-responsive-bs5');
 
 export default {
     name: 'FindTransactions',
@@ -191,6 +219,7 @@ export default {
         'date-range-selector': DateRangeSelector,
         'reporting-canvas-categories': ReportingCanvasFindTransactionsCategoryDetails,
         'reporting-canvas-summary': ReportingCanvasFindTransactionsSummary,
+        'reporting-canvas-timeline': ReportingCanvasFindTransactionsTimeline,
     },
     data() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -322,6 +351,12 @@ export default {
             if (newReady) {
                 this.getTransactions();
             }
+        },
+        busy: function (newBusy) {
+            if (!this.dataTable) {
+                return;
+            }
+            this.dataTable.processing(newBusy);
         }
     },
 
@@ -329,9 +364,6 @@ export default {
         this.dataTable = $(this.$refs.dataTable).DataTable({
             data: this.transactions,
             processing: true,
-            language: {
-                processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
-            },
             columns: [
                 dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
                 dataTableHelpers.transactionColumnDefinition.type,
@@ -366,8 +398,7 @@ export default {
             ],
             order: [
                 [0, "asc"]
-            ],
-            responsive: true,
+            ]
         });
 
         // Delete transaction icon functionality

@@ -30,12 +30,12 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['date_from' => '2022-01-01', 'date_to' => '2022-01-31'])
-                ->waitFor('#dateRangePicker')
+                ->waitFor('@dateRangePicker')
                 ->assertInputValue('#date_from', '2022-01-01')
                 ->assertInputValue('#date_to', '2022-01-31');
 
             $browser->visitRoute('reports.transactions', [])
-                ->waitFor('#dateRangePicker')
+                ->waitFor('@dateRangePicker')
                 ->assertInputValue('#date_from', '')
                 ->assertInputValue('#date_to', '');
         });
@@ -46,7 +46,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function(Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
-                ->waitFor('#dateRangePicker')
+                ->waitFor('@dateRangePicker')
                 // Select option with value "thisMonth"
                 ->select('#dateRangePickerPresets', 'thisMonth')
                 ->assertInputValue('#date_from', date('Y-m-01'))
@@ -69,7 +69,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $this->browse(function(Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
-                ->waitFor('#dateRangePicker')
+                ->waitFor('@dateRangePicker')
                 // Set the date range using the presets
                 ->select('#dateRangePickerPresets', 'thisMonth')
                 ->assertInputValue('#date_from', date('Y-m-01'))
