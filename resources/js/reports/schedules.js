@@ -288,6 +288,7 @@ table.contextualActions({
 dataTableHelpers.initializeFilterToggle(table, 3, 'table_filter_schedule');
 dataTableHelpers.initializeFilterToggle(table, 4, 'table_filter_budget');
 dataTableHelpers.initializeFilterToggle(table, 5, 'table_filter_active');
+dataTableHelpers.initializeFilterToggle(table, 6, 'table_filter_transaction_type');
 
 // Set the active toggle to active by default
 document.getElementById('table_filter_active_yes').click();

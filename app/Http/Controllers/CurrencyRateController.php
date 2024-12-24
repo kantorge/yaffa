@@ -84,33 +84,33 @@ class CurrencyRateController extends Controller
         return redirect()->back();
     }
 
-    public function retreiveCurrencyRateToBase(Currency $currency, ?Carbon $from = null): RedirectResponse
+    public function retrieveCurrencyRateToBase(Currency $currency, ?Carbon $from = null): RedirectResponse
     {
         /**
          * @get('/currencyrates/get/{currency}/{from?}')
-         * @name('currency-rate.retreiveRate')
+         * @name('currency-rate.retrieveRate')
          * @middlewares('web')
          */
 
         // Authorize user access to requested currency
         $this->authorize('view', $currency);
 
-        $currency->retreiveCurrencyRateToBase($from);
+        $currency->retrieveCurrencyRateToBase($from);
 
         return redirect()->back();
     }
 
-    public function retreiveMissingCurrencyRateToBase(Currency $currency): RedirectResponse
+    public function retrieveMissingCurrencyRateToBase(Currency $currency): RedirectResponse
     {
         /**
          * @get('/currencyrates/missing/{currency}')
-         * @name('currency-rate.retreiveMissing')
+         * @name('currency-rate.retrieveMissing')
          * @middlewares('web')
          */
         // Authorize user access to requested currency
         $this->authorize('view', $currency);
 
-        $currency->retreiveMissingCurrencyRateToBase();
+        $currency->retrieveMissingCurrencyRateToBase();
 
         return redirect()->back();
     }

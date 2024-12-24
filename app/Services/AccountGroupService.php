@@ -23,7 +23,7 @@ class AccountGroupService
             $accountGroup->delete();
             $success = true;
         } catch (Exception $e) {
-            $error = __('Database error: ') . ' ' . $e->getMessage();
+            $error = __('Database error:') . ' ' . $e->getMessage();
         }
 
         return [

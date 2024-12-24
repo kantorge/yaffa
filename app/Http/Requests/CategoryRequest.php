@@ -21,7 +21,7 @@ class CategoryRequest extends FormRequest
 
                     // If it's a child category
                     return $query->where('parent_id', $this->parent_id);
-                }),
+                })->ignore($this->category),
             ],
             'active' => [
                 'boolean',
@@ -29,6 +29,10 @@ class CategoryRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'exists:categories,id',
+            ],
+            'default_aggregation' => [
+                'required',
+                Rule::in(['month', 'quarter', 'year']),
             ],
         ];
     }

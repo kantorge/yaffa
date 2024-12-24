@@ -89,14 +89,14 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a
                             class=""
-                            href="{{ route('currency-rate.retreiveMissing', ['currency' =>  $from->id ]) }}"
+                            href="{{ route('currency-rate.retrieveMissing', ['currency' =>  $from->id ]) }}"
                             title="{{ __('Load new currency rates') }}"
                     >
                         {{ __('Load new currency rates') }}
                     </a>
                     <a
                             class="btn btn-xs btn-success"
-                            href="{{ route('currency-rate.retreiveMissing', ['currency' =>  $from->id ]) }}"
+                            href="{{ route('currency-rate.retrieveMissing', ['currency' =>  $from->id ]) }}"
                             title="{{ __('Load new currency rates') }}"
                     >
                         <span class="fa fa-cloud-download"></span>

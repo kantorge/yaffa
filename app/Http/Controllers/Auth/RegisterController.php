@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisterController extends Controller
@@ -31,10 +32,11 @@ class RegisterController extends Controller
 
     use RegistersUsers;
 
-    // Define ptions for default assets. (Translation happens in Blade view.)
+    // Define options for default assets. (Translation happens in Blade view.)
     private array $defaultAssetOptions = [
         'default' => 'Default',
         'basic' => 'Basic',
+        'advanced' => 'Advanced',
         'none' => 'None',
     ];
 
@@ -117,8 +119,7 @@ class RegisterController extends Controller
             ],
             'password' => [
                 'required',
-                'string',
-                'min:8',
+                Password::defaults(),
                 'confirmed'
             ],
             'language' => [

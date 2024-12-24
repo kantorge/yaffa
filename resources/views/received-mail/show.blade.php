@@ -204,7 +204,7 @@
                                     aria-controls="email-tab-html"
                                     aria-selected="true"
                             >
-                                {{ __('HTML') }}
+                                {{ __('HTML view') }}
                             </button>
                         </li>
                         <li class="nav-item">
@@ -219,7 +219,7 @@
                                     aria-controls="email-tab-text"
                                     aria-selected="false"
                             >
-                                {{ __('Text') }}
+                                {{ __('Text view') }}
                             </button>
                         </li>
                     </ul>

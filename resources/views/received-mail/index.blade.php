@@ -48,7 +48,7 @@
                         {{ __('Filters') }}
                     </div>
                 </div>
-                <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                <ul class="list-group list-group-flush collapse show" id="cardFilters">
                     <x-tablefilter-sidebar-switch
                             label=" {{ __('Processed') }}"
                             property="processed"
@@ -67,7 +67,6 @@
                     <table
                             class="table table-striped table-bordered table-hover"
                             dusk="table-received-mails"
-                            role="grid"
                             id="table"
                     ></table>
                 </div>

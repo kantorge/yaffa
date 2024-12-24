@@ -6,6 +6,7 @@ use App\Http\Requests\UserRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class UserController extends Controller
 {
@@ -24,30 +25,11 @@ class UserController extends Controller
          * @name('user.settings')
          * @middlewares('web', 'auth', 'verified')
          */
-        return view(
-            'user.settings',
-            [
-                'languages' => config('app.available_languages'),
-                'locales' => config('app.available_locales'),
-            ]
-        );
-    }
 
-    public function update(UserRequest $request): RedirectResponse
-    {
-        /**
-         * @patch('/user/settings')
-         * @name('user.update')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $validated = $request->validated();
-
-        Auth::user()
-            ->fill($validated)
-            ->save();
-
-        self::addSimpleSuccessMessage(__('User settings updated'));
-
-        return redirect()->back(); // TODO: where to return the user?
+        JavaScript::put([
+            'languages' => config('app.available_languages'),
+            'locales' => config('app.available_locales'),
+        ]);
+        return view('user.settings');
     }
 }

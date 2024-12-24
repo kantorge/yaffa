@@ -147,8 +147,8 @@ class TransactionRequest extends FormRequest
                 //'transactionItems.*.tags.*' => 'nullable|exists:tags,id',
             ]);
 
-            //adjust detail related rules, based on transaction type
-            //accounts are only needed for basic setup (not budget only)
+            // Adjust detail related rules, based on transaction type
+            // Accounts are only needed for basic setup (not budget only)
             if ($this->get('transaction_type') === 'withdrawal') {
                 $rules = array_merge($rules, [
                     'config.account_from_id' => [
@@ -162,7 +162,7 @@ class TransactionRequest extends FormRequest
                     'config.amount_from' => 'required|numeric|gt:0',
                     'config.amount_to' => 'required|numeric|gt:0|same:config.amount_from',
 
-                    //technical field, but required for standard transaction
+                    // Technical field, but required for standard transaction
                     'remaining_payee_default_amount' => 'nullable|numeric|gte:0',
                     'remaining_payee_default_category_id' => 'nullable|exists:categories,id',
 

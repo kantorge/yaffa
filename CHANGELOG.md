@@ -1,5 +1,258 @@
 # Changelog
 
+## [1.12.1](https://github.com/kantorge/yaffa/compare/v1.12.0...v1.12.1) (2024-12-24)
+
+
+### 🛠️ Chores
+
+* npm update ([00f8918](https://github.com/kantorge/yaffa/commit/00f89187726e94851bff46ae1d495bfc4f6b43c4))
+
+
+### 📚 Documentation
+
+* update links in readme.md ([53ca993](https://github.com/kantorge/yaffa/commit/53ca993f42402836a279e97b5eeefd567477f756))
+
+
+### 🐛 Bug Fixes
+
+* improve MariaDB compatibility ([dfdedbd](https://github.com/kantorge/yaffa/commit/dfdedbdca75706fbd144c47567aafa5a9f283e90))
+* minor fixes and code cleanups ([8e4c81b](https://github.com/kantorge/yaffa/commit/8e4c81b6600caf109aa0914997bcf3c8454c93aa))
+* package.json & package-lock.json to reduce vulnerabilities ([350b2ce](https://github.com/kantorge/yaffa/commit/350b2ce6575538a85cebebb7fcc9b9fba1e7deb9))
+* package.json & package-lock.json to reduce vulnerabilities ([#243](https://github.com/kantorge/yaffa/issues/243)) ([bc94c14](https://github.com/kantorge/yaffa/commit/bc94c1498cd24ab897dc51ce071b47aa217d3ee5))
+* upgrade webpack from 5.95.0 to 5.96.1 ([#244](https://github.com/kantorge/yaffa/issues/244)) ([ce61ab4](https://github.com/kantorge/yaffa/commit/ce61ab43e94fb50d60f8a435b40ca8e149a53617))
+
+## [1.12.0](https://github.com/kantorge/yaffa/compare/v1.11.0...v1.12.0) (2024-11-24)
+
+
+### ✨ Features
+
+* web scraping as investment price provider ([2c31ae5](https://github.com/kantorge/yaffa/commit/2c31ae5c638aff2b8a4c6721a05e272caf2bd564))
+
+
+### 🐛 Bug Fixes
+
+* incorrect investment unique constraints ([2cce066](https://github.com/kantorge/yaffa/commit/2cce06699c9edca2617c417877fc86d5493b1d4e))
+* typo in some function names ([f6aaeac](https://github.com/kantorge/yaffa/commit/f6aaeacdb7153d119f044613f41d8d9061f7bfdc))
+
+## [1.11.0](https://github.com/kantorge/yaffa/compare/v1.10.1...v1.11.0) (2024-11-04)
+
+
+### 🛠️ Chores
+
+* **deps:** bump the npm_and_yarn group across 1 directory with 3 updates ([a74b77b](https://github.com/kantorge/yaffa/commit/a74b77bf7d3fc7b9be1d935967e7db11312978c7))
+* development package added to handle .env files ([41982a5](https://github.com/kantorge/yaffa/commit/41982a54367422402714565951da3e8449983d10))
+* NPM update ([3ea7e8f](https://github.com/kantorge/yaffa/commit/3ea7e8f1ae387c23e78708ea20457f2993040f0a))
+* NPM update ([b399533](https://github.com/kantorge/yaffa/commit/b3995337669cc86a517b4aa0c06fb2ca423fc20f))
+
+
+### ✨ Features
+
+* extend the default assets for new registrations ([#231](https://github.com/kantorge/yaffa/issues/231)) ([641866b](https://github.com/kantorge/yaffa/commit/641866b9cc4d16ce9ede5b794ac3e98ace714e72))
+* new logo ([e938bed](https://github.com/kantorge/yaffa/commit/e938bedfc086082329698dc4042c6c7863b3af8b))
+
+
+### 🐛 Bug Fixes
+
+* add missing translations ([#232](https://github.com/kantorge/yaffa/issues/232)) ([3317fe9](https://github.com/kantorge/yaffa/commit/3317fe959d1d4326988874feec0185660e1c6237))
+* incorrect sorting in schedule table ([e76cb3a](https://github.com/kantorge/yaffa/commit/e76cb3aa8958f14a1c1e8688482e69cfde2240a6))
+* investment timeline behavior ([#235](https://github.com/kantorge/yaffa/issues/235)) ([d48fa59](https://github.com/kantorge/yaffa/commit/d48fa59cd0d1c6201d144cb40f540ec46e997ddf))
+* minor styling ([227a5dc](https://github.com/kantorge/yaffa/commit/227a5dccd1cb827cfcdd509638b43af9022a7617))
+* schedule replacement next date handling error ([16417af](https://github.com/kantorge/yaffa/commit/16417afb28b4504b01efe4ca27c59124c9106e6e))
+* transaction item comment for cloning ([#233](https://github.com/kantorge/yaffa/issues/233)) ([0b98017](https://github.com/kantorge/yaffa/commit/0b98017f9824453ce85c65821b1b7430b4b1f2c8))
+* typo ([a15b471](https://github.com/kantorge/yaffa/commit/a15b4719cfe20ee7df6144d80a43c77b622e4010))
+* unreliable Dusk test ([36f9bbe](https://github.com/kantorge/yaffa/commit/36f9bbe78c90a973ddbb81186d13adde1dca94dd))
+* upgrade multiple dependencies with Snyk ([#221](https://github.com/kantorge/yaffa/issues/221)) ([fcb28ac](https://github.com/kantorge/yaffa/commit/fcb28ac5184c44b144451d89a0b4e2c8b9bda3b8))
+
+## [1.10.1](https://github.com/kantorge/yaffa/compare/v1.10.0...v1.10.1) (2024-10-06)
+
+
+### 🐛 Bug Fixes
+
+* better handling of decimal separators in math inputs ([04466ca](https://github.com/kantorge/yaffa/commit/04466ca1b58725a602904b46e4ec96f6c99bd01b))
+
+## [1.10.0](https://github.com/kantorge/yaffa/compare/v1.9.0...v1.10.0) (2024-10-06)
+
+
+### 🛠️ Chores
+
+* composer update ([fe69878](https://github.com/kantorge/yaffa/commit/fe698781e3758fcdb70c570fb8e53f6aae0102b0))
+* npm update ([89e3d1b](https://github.com/kantorge/yaffa/commit/89e3d1ba4dfcea8ac33eef50819876c49dc7fd95))
+
+
+### ✨ Features
+
+* default category aggregation for better budgeting view ([afaa163](https://github.com/kantorge/yaffa/commit/afaa1632a720948405c1edf1b9f30e9b4a860a72))
+
+
+### 🐛 Bug Fixes
+
+* add some missing translations for Hungarian, and related fixes ([#228](https://github.com/kantorge/yaffa/issues/228)) ([1382fb3](https://github.com/kantorge/yaffa/commit/1382fb301b531f47fe79b70d38bceb41a1eac114))
+* upgrade jstree from 3.3.16 to 3.3.17 ([1ee7151](https://github.com/kantorge/yaffa/commit/1ee7151d96e6bd18498ec4aab7d2633fef50bf6e))
+* upgrade vue from 3.4.38 to 3.5.0 ([219b7b2](https://github.com/kantorge/yaffa/commit/219b7b22446d6498a5fe05016b12624416d3eb68))
+* upgrade vue from 3.5.0 to 3.5.1 ([#223](https://github.com/kantorge/yaffa/issues/223)) ([66cf038](https://github.com/kantorge/yaffa/commit/66cf038d60f15e035f05d2e35ddbcfceab93ded0))
+* upgrade vue from 3.5.1 to 3.5.5 ([4854dbc](https://github.com/kantorge/yaffa/commit/4854dbc72fd35ec21fac511d97e751faba1e3158))
+
+## [1.9.0](https://github.com/kantorge/yaffa/compare/v1.8.3...v1.9.0) (2024-09-15)
+
+
+### 🛠️ Chores
+
+* **deps-dev:** bump elliptic ([370a9df](https://github.com/kantorge/yaffa/commit/370a9df4e4ad7fad51539da3fc0e123672f85c1e))
+* **deps-dev:** bump ws in the npm_and_yarn group across 1 directory ([4f2d652](https://github.com/kantorge/yaffa/commit/4f2d652c928464359163fe94888cbfbc8cb673d2))
+* **deps:** bump the npm_and_yarn group across 1 directory with 4 updates ([#219](https://github.com/kantorge/yaffa/issues/219)) ([915d66e](https://github.com/kantorge/yaffa/commit/915d66e6c4c61d88c0f91916151bb67bc8fa4316))
+* **main:** release kantorge/yaffa 1.7.2 ([4e23e98](https://github.com/kantorge/yaffa/commit/4e23e9883491cf1e1e93ee6ba165b50bf19a7a10))
+* **main:** release kantorge/yaffa 1.7.3 ([1c12457](https://github.com/kantorge/yaffa/commit/1c12457f899a4f88bd1c414adb9a97b2bb1b8930))
+* **main:** release kantorge/yaffa 1.7.4 ([46e4d8b](https://github.com/kantorge/yaffa/commit/46e4d8be284408c9ec67eb3e9b035c4a92899281))
+* **main:** release kantorge/yaffa 1.8.0 ([fff4639](https://github.com/kantorge/yaffa/commit/fff46399816be2fd74ec805eb576e3822ca325c5))
+* **main:** release kantorge/yaffa 1.8.1 ([916d1ef](https://github.com/kantorge/yaffa/commit/916d1ef72d2607d561dc82721d7745a464d95146))
+* **main:** release kantorge/yaffa 1.8.2 ([ab8e492](https://github.com/kantorge/yaffa/commit/ab8e492af68e99ad34cea0b7157e3783cec4cb4d))
+* **main:** release kantorge/yaffa 1.8.3 ([6348f73](https://github.com/kantorge/yaffa/commit/6348f73a932295018c91ec1b5aca0ea0570e1115))
+* npm update ([43fb9ad](https://github.com/kantorge/yaffa/commit/43fb9ada8ab3bd830bf5657ffdd14c5bab5c7e72))
+* npm update ([1d4d49e](https://github.com/kantorge/yaffa/commit/1d4d49e012bcd360a4d1fb753d15fc1c725203c4))
+* update Composer dependencies ([0b91ce2](https://github.com/kantorge/yaffa/commit/0b91ce272a2d4ddd720f30c40d27b46446cb3065))
+
+
+### ✨ Features
+
+* rework and extend the user settings page ([b62a682](https://github.com/kantorge/yaffa/commit/b62a68249dfba9002015ff54cf7a6ac57321ba60))
+
+
+### 🐛 Bug Fixes
+
+* add php-fpm restart to deployment script ([f172352](https://github.com/kantorge/yaffa/commit/f172352b0467d9033670c2648cf521c507af49b5))
+* Chrome port setting for Dusk test ([f09aaed](https://github.com/kantorge/yaffa/commit/f09aaedae46cc470b75c2238993e128ba67ab21c))
+* correctly apply filter for transaction search ([b8f3354](https://github.com/kantorge/yaffa/commit/b8f3354b5a31e8aa49b0fbffb84ccc99bf27d3f1))
+* deployment script dependencies ([8ce5fe3](https://github.com/kantorge/yaffa/commit/8ce5fe39d2408af5aaca0acd277075dc35b04b78))
+* Dusk test failing on specific dates ([a5df8ae](https://github.com/kantorge/yaffa/commit/a5df8ae8f61c50803ef98fe38b878d5f38be171b))
+* errors reported by SonarCloud ([e5b7a48](https://github.com/kantorge/yaffa/commit/e5b7a488ceaa8206be402659dce89e1b894d5222))
+* errors reported by SonarCloud ([58cee3d](https://github.com/kantorge/yaffa/commit/58cee3debb0be3dda6d932d046135501e1e50eb9))
+* Laravel Dusk version issue ([d94ff3e](https://github.com/kantorge/yaffa/commit/d94ff3e31c06fffcc3066dd55571629123939d97))
+* namespace of some test files ([de12e59](https://github.com/kantorge/yaffa/commit/de12e5960fd8df80959983cb20dadc78edf879b6))
+* package.json & package-lock.json to reduce vulnerabilities ([d56c4da](https://github.com/kantorge/yaffa/commit/d56c4da108b5b8cecad372ff3a1ecfd940b3b643))
+* package.json & package-lock.json to reduce vulnerabilities ([25b5e6b](https://github.com/kantorge/yaffa/commit/25b5e6b4db42d4d7f6283f6ee09db974461d60ea))
+* recently failing Dusk test ([c1fa7ce](https://github.com/kantorge/yaffa/commit/c1fa7cec0af86ed27990cda3d6be1dca4391807b))
+* recently failing Dusk test ([f3d060b](https://github.com/kantorge/yaffa/commit/f3d060b7363478f631f38b2717ed55e91b19f645))
+* recently failing Dusk test ([0a81510](https://github.com/kantorge/yaffa/commit/0a815101518cfd9d1de3277285a167666fbc7566))
+* recently failing Dusk test ([ca94e62](https://github.com/kantorge/yaffa/commit/ca94e625ac4f2d7ac06949c511e06f2b48c308c0))
+* release-please-config package name ([234515c](https://github.com/kantorge/yaffa/commit/234515c72a9926801e926771659a10021cc95382))
+* remove php-fpm reload from deployer ([65a3ccd](https://github.com/kantorge/yaffa/commit/65a3ccdb4c0857ee8c910be26372cdfcab698cad))
+* result calculation for monthly waterfall summary ([8b4992b](https://github.com/kantorge/yaffa/commit/8b4992bd403d3ce82c9b5ee974743069d4c3ae93))
+* upgrade @amcharts/amcharts4 from 4.10.38 to 4.10.39 ([371ad5f](https://github.com/kantorge/yaffa/commit/371ad5f2808cf9f3a82704425e49d0fcc208854a))
+* upgrade axios from 1.7.4 to 1.7.5 ([f4cf66a](https://github.com/kantorge/yaffa/commit/f4cf66a4f829f181262d32852977aab3136fe424))
+* upgrade datatables.net-bs5 from 2.0.3 to 2.0.4 ([c7ca86b](https://github.com/kantorge/yaffa/commit/c7ca86bb0dec6729d1abe36a3cac484a2fb8d617))
+* upgrade datatables.net-bs5 from 2.0.7 to 2.0.8 ([55d7ac7](https://github.com/kantorge/yaffa/commit/55d7ac7f3eb6a545511e8d873e3d51a0e4aa83cb))
+* upgrade datatables.net-bs5 from 2.1.3 to 2.1.4 ([#217](https://github.com/kantorge/yaffa/issues/217)) ([9fe08dd](https://github.com/kantorge/yaffa/commit/9fe08dd2542de3a8f073a612fd57b4af6106bef1))
+* upgrade datatables.net-select-bs5 from 2.0.2 to 2.0.3 ([e1221cb](https://github.com/kantorge/yaffa/commit/e1221cbabb145a6c7cb1b7f71fda27e4df763f68))
+* upgrade datatables.net-select-bs5 from 2.0.4 to 2.0.5 ([#215](https://github.com/kantorge/yaffa/issues/215)) ([5e0926c](https://github.com/kantorge/yaffa/commit/5e0926c9abe131d4207d8577e17663e2e6e29e78))
+* upgrade mathjs from 12.4.1 to 12.4.2 ([4ee06a4](https://github.com/kantorge/yaffa/commit/4ee06a415821303e79667c72f9c20bc841293c68))
+* upgrade mathjs from 12.4.2 to 12.4.3 ([ba15d84](https://github.com/kantorge/yaffa/commit/ba15d842eef8ef86b0d04a5c563dad6ecb3f5287))
+* upgrade vue from 3.4.27 to 3.4.29 ([f6e60d0](https://github.com/kantorge/yaffa/commit/f6e60d0b94e0af2eff4797fbdd8c18dd2eff7084))
+* upgrade vue from 3.4.29 to 3.4.30 ([1bb44cf](https://github.com/kantorge/yaffa/commit/1bb44cf39287cb1da66875cd5dcd72b1c8ab6831))
+* upgrade vue from 3.4.30 to 3.4.31 ([9bf400a](https://github.com/kantorge/yaffa/commit/9bf400a956f132143f3d3a7c383c90ffd96088f2))
+* upgrade vue from 3.4.35 to 3.4.36 ([150aa0c](https://github.com/kantorge/yaffa/commit/150aa0cbabee2d3f57196a49e567f6173f3191ba))
+* upgrade vue from 3.4.36 to 3.4.37 ([bdecacd](https://github.com/kantorge/yaffa/commit/bdecacd2639a5b4a2fe8699db56007bb72ee1855))
+* upgrade vue from 3.4.37 to 3.4.38 ([8b13e6b](https://github.com/kantorge/yaffa/commit/8b13e6b16b269e8219e71f792d8ea25628377ccb))
+* upgrade webpack from 5.91.0 to 5.92.0 ([96e6ed1](https://github.com/kantorge/yaffa/commit/96e6ed14a7a087d44a10b65a9b221ead148f4094))
+* upgrade webpack from 5.92.0 to 5.92.1 ([2b8b01d](https://github.com/kantorge/yaffa/commit/2b8b01dbb180ba62feab4cd464f7b6b8a8335f7d))
+* workaround for Dusk-Chrome version issue ([3207e4e](https://github.com/kantorge/yaffa/commit/3207e4e1ff378158f57c505fbaa8975564ab7c94))
+
+## [1.8.3](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.2...kantorge/yaffa-v1.8.3) (2024-08-05)
+
+
+### 🐛 Bug Fixes
+
+* remove php-fpm reload from deployer ([65a3ccd](https://github.com/kantorge/yaffa/commit/65a3ccdb4c0857ee8c910be26372cdfcab698cad))
+
+## [1.8.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.1...kantorge/yaffa-v1.8.2) (2024-08-05)
+
+
+### 🐛 Bug Fixes
+
+* deployment script dependencies ([8ce5fe3](https://github.com/kantorge/yaffa/commit/8ce5fe39d2408af5aaca0acd277075dc35b04b78))
+
+## [1.8.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.8.0...kantorge/yaffa-v1.8.1) (2024-08-05)
+
+
+### 🛠️ Chores
+
+* npm update ([43fb9ad](https://github.com/kantorge/yaffa/commit/43fb9ada8ab3bd830bf5657ffdd14c5bab5c7e72))
+
+
+### 🐛 Bug Fixes
+
+* add php-fpm restart to deployment script ([f172352](https://github.com/kantorge/yaffa/commit/f172352b0467d9033670c2648cf521c507af49b5))
+* upgrade vue from 3.4.30 to 3.4.31 ([9bf400a](https://github.com/kantorge/yaffa/commit/9bf400a956f132143f3d3a7c383c90ffd96088f2))
+
+## [1.8.0](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.4...kantorge/yaffa-v1.8.0) (2024-07-31)
+
+
+### 🛠️ Chores
+
+* **deps-dev:** bump ws in the npm_and_yarn group across 1 directory ([4f2d652](https://github.com/kantorge/yaffa/commit/4f2d652c928464359163fe94888cbfbc8cb673d2))
+
+
+### ✨ Features
+
+* rework and extend the user settings page ([b62a682](https://github.com/kantorge/yaffa/commit/b62a68249dfba9002015ff54cf7a6ac57321ba60))
+
+
+### 🐛 Bug Fixes
+
+* correctly apply filter for transaction search ([b8f3354](https://github.com/kantorge/yaffa/commit/b8f3354b5a31e8aa49b0fbffb84ccc99bf27d3f1))
+* Dusk test failing on specific dates ([a5df8ae](https://github.com/kantorge/yaffa/commit/a5df8ae8f61c50803ef98fe38b878d5f38be171b))
+* upgrade @amcharts/amcharts4 from 4.10.38 to 4.10.39 ([371ad5f](https://github.com/kantorge/yaffa/commit/371ad5f2808cf9f3a82704425e49d0fcc208854a))
+* upgrade datatables.net-bs5 from 2.0.7 to 2.0.8 ([55d7ac7](https://github.com/kantorge/yaffa/commit/55d7ac7f3eb6a545511e8d873e3d51a0e4aa83cb))
+* upgrade datatables.net-select-bs5 from 2.0.2 to 2.0.3 ([e1221cb](https://github.com/kantorge/yaffa/commit/e1221cbabb145a6c7cb1b7f71fda27e4df763f68))
+* upgrade mathjs from 12.4.2 to 12.4.3 ([ba15d84](https://github.com/kantorge/yaffa/commit/ba15d842eef8ef86b0d04a5c563dad6ecb3f5287))
+* upgrade vue from 3.4.27 to 3.4.29 ([f6e60d0](https://github.com/kantorge/yaffa/commit/f6e60d0b94e0af2eff4797fbdd8c18dd2eff7084))
+* upgrade vue from 3.4.29 to 3.4.30 ([1bb44cf](https://github.com/kantorge/yaffa/commit/1bb44cf39287cb1da66875cd5dcd72b1c8ab6831))
+* upgrade webpack from 5.91.0 to 5.92.0 ([96e6ed1](https://github.com/kantorge/yaffa/commit/96e6ed14a7a087d44a10b65a9b221ead148f4094))
+* upgrade webpack from 5.92.0 to 5.92.1 ([2b8b01d](https://github.com/kantorge/yaffa/commit/2b8b01dbb180ba62feab4cd464f7b6b8a8335f7d))
+
+## [1.7.4](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.3...kantorge/yaffa-v1.7.4) (2024-05-26)
+
+
+### 🛠️ Chores
+
+* npm update ([1d4d49e](https://github.com/kantorge/yaffa/commit/1d4d49e012bcd360a4d1fb753d15fc1c725203c4))
+
+
+### 🐛 Bug Fixes
+
+* result calculation for monthly waterfall summary ([8b4992b](https://github.com/kantorge/yaffa/commit/8b4992bd403d3ce82c9b5ee974743069d4c3ae93))
+* upgrade datatables.net-bs5 from 2.0.3 to 2.0.4 ([c7ca86b](https://github.com/kantorge/yaffa/commit/c7ca86bb0dec6729d1abe36a3cac484a2fb8d617))
+* upgrade mathjs from 12.4.1 to 12.4.2 ([4ee06a4](https://github.com/kantorge/yaffa/commit/4ee06a415821303e79667c72f9c20bc841293c68))
+
+## [1.7.3](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.2...kantorge/yaffa-v1.7.3) (2024-05-07)
+
+
+### 🛠️ Chores
+
+* update Composer dependencies ([0b91ce2](https://github.com/kantorge/yaffa/commit/0b91ce272a2d4ddd720f30c40d27b46446cb3065))
+
+
+### 🐛 Bug Fixes
+
+* namespace of some test files ([de12e59](https://github.com/kantorge/yaffa/commit/de12e5960fd8df80959983cb20dadc78edf879b6))
+
+## [1.7.2](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.1...kantorge/yaffa-v1.7.2) (2024-05-07)
+
+
+### 🐛 Bug Fixes
+
+* key path in private deploy script ([10574f8](https://github.com/kantorge/yaffa/commit/10574f824faa5041980e6776ad6e768a7e4b280f))
+* store items for automatically recorded transaction ([50ccbe1](https://github.com/kantorge/yaffa/commit/50ccbe1968c41978acfcda6dbf8271d6a2df058f))
+* upgrade datatables.net-select-bs5 from 2.0.0 to 2.0.1 ([c162d3c](https://github.com/kantorge/yaffa/commit/c162d3c89619f59c2059fde8b47b6e50443be200))
+* upgrade vue from 3.4.21 to 3.4.22 ([7c6790f](https://github.com/kantorge/yaffa/commit/7c6790ff316c328f3e16b22e02cfad5fa9f981ed))
+
+## [1.7.1](https://github.com/kantorge/yaffa/compare/kantorge/yaffa-v1.7.0...kantorge/yaffa-v1.7.1) (2024-04-25)
+
+
+### 🐛 Bug Fixes
+
+* key path in private deploy script ([05783cb](https://github.com/kantorge/yaffa/commit/05783cbea726eff721874319744c542017a1174b))
+* undefined variable in Investment API ([adf56b9](https://github.com/kantorge/yaffa/commit/adf56b9e1e7b290ce126273ae0d9aebcdff15152))
+
 ## 1.7.0 (2024-04-23)
 
 

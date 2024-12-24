@@ -60,11 +60,11 @@ Route::resource('currency', CurrencyController::class)->except(['show']);
 Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currency.setDefault');
 
-Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retreiveMissingCurrencyRateToBase'])
-    ->name('currency-rate.retreiveMissing');
+Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retrieveMissingCurrencyRateToBase'])
+    ->name('currency-rate.retrieveMissing');
 
-Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retreiveCurrencyRateToBase'])
-    ->name('currency-rate.retreiveRate');
+Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retrieveCurrencyRateToBase'])
+    ->name('currency-rate.retrieveRate');
 
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
@@ -75,14 +75,13 @@ Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy'
  * Investment related routes
  ********************/
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
-Route::get('/investment/timeline', [InvestmentController::class, 'timeline'])->name('investment.timeline');
 Route::resource('investment', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
 
-Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retreiveInvestmentPrice'])
-    ->name('investment-price.retreive');
+Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retrieveInvestmentPrice'])
+    ->name('investment-price.retrieve');
 
 Route::resource('investment-price', InvestmentPriceController::class)
     ->except(['index', 'show']);
@@ -119,6 +118,7 @@ Route::get('/reports/budgetchart', [ReportController::class, 'budgetChart'])->na
 Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name('report.schedules');
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
+Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
 
 /*******************
  * Miscellanous routes
@@ -136,7 +136,6 @@ Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
-Route::patch('/user/settings', [UserController::class, 'update'])->name('user.update');
 
 /*******************
  * Authentication and verification routes

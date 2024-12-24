@@ -35,6 +35,7 @@
 import ShowStandard from './ShowStandard.vue'
 import ShowInvestment from "./ShowInvestment.vue";
 import ActionButtonBar from "./ActionButtonBar.vue";
+import { __ as translator } from "../../helpers"
 
 export default {
     name: 'QuickViewTransactionModal',
@@ -77,12 +78,19 @@ export default {
         transactionUpdated: function (transaction) {
             this.transaction = Object.assign({}, transaction);
         },
+
+        /**
+         * Define the translation helper function locally.
+         */
+        __: function (string, replace) {
+            return translator(string, replace);
+        },
     },
     mounted() {
         let $vm = this;
 
         // Set up global event listener for displaying a transaction in the modal
-        window.addEventListener('showTransactionQuickviewModal', function (event) {
+        window.addEventListener('showTransactionQuickViewModal', function (event) {
             $vm.showTransaction(event.detail.transaction, event.detail.controls);
         });
 

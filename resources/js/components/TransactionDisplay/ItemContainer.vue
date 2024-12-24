@@ -27,7 +27,7 @@
                     :currency="currency"
                 ></transaction-item>
             </div>
-            <div v-if="transactionItems.length === 0">
+            <div v-if="transactionItems.length === 0" class="text-muted text-italic">
                 {{ __('No items added') }}
             </div>
         </div>

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
 class ReportController extends Controller
@@ -48,21 +50,8 @@ class ReportController extends Controller
          * @name('reports.budgetchart')
          * @middlewares('web', 'auth', 'verified')
          */
-        // Get requested aggregation period
-        $byYears = $request->get('byYears') ?? false;
 
-        JavaScript::put([
-            'presetCategories' => array_map('intval', $request->get('categories', [])),
-            'presetAccount' => ($request->get('accountEntity') ? intval($request->get('accountEntity')) : null),
-            'byYears' => $byYears,
-        ]);
-
-        return view(
-            'reports.budgetchart',
-            [
-                'byYears' => $byYears,
-            ]
-        );
+        return view('reports.budgetchart');
     }
 
     /**
@@ -114,5 +103,27 @@ class ReportController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         return view('reports.schedule');
+    }
+
+    /**
+     * Display view with investment timeline chart.
+     *
+     * @param Request $request
+     * @return View
+     */
+    public function investmentTimeline(Request $request): View
+    {
+        /**
+         * @get('/reports/investment-timeline')
+         * @name('reports.investment_timeline')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Pass data for JavaScript in the view
+        JavaScriptFacade::put([
+            'investmentGroups' => $request->user()->investmentGroups,
+        ]);
+
+        return view('reports.investment-timeline');
     }
 }

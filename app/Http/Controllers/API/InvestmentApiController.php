@@ -123,6 +123,8 @@ class InvestmentApiController extends Controller
          * @get('/api/assets/investment/timeline')
          * @middlewares('api', 'auth:sanctum')
          */
+        $investmentService = new InvestmentService();
+
         $investments = Auth::user()
             ->investments()
             ->with([
@@ -135,70 +137,8 @@ class InvestmentApiController extends Controller
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(function ($investment) {
-            $rawTransactions =
-            Transaction::with([
-                'config',
-                'transactionType',
-            ])
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investment) {
-                        $query->where('investment_id', $investment->id);
-                    }
-                )
-                ->orderBy('date')
-                ->get();
-
-            // Get all transactions related to selected investment
-            $rawTransactions = Transaction::with([
-                'config',
-                'transactionType',
-                'transactionSchedule'
-            ])
-                ->whereHasMorph(
-                    'config',
-                    [TransactionDetailInvestment::class],
-                    function (Builder $query) use ($investment) {
-                        $query->where('investment_id', $investment->id);
-                    }
-                )
-                ->orderBy('date')
-                ->get();
-
-            // Split the transactions into historical and scheduled, based on the schedule flag
-            [$scheduledTransactions, $transactions] = $rawTransactions->partition('schedule');
-
-            // Add all scheduled items to list of transactions
-            $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
-            $transactions = $transactions->concat($scheduleInstances);
-
-            // Calculate historical and scheduled quantity changes for chart
-            $runningTotal = 0;
-            $runningSchedule = 0;
-            $quantities = $transactions
-                ->sortBy('date')
-                ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
-                    // Quantity operator can be 1, -1 or null.
-                    // It's the expected behavior to set the quantity to 0 if the operator is null.
-                    $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
-
-                    $runningSchedule += $quantity;
-                    if (!$transaction->schedule) {
-                        $runningTotal += $quantity;
-                    }
-
-                    return [
-                        'date' => $transaction->date->format('Y-m-d'),
-                        'quantity' => $runningTotal,
-                        'schedule' => $runningSchedule,
-                    ];
-                });
-
-            $investment->quantities = $quantities;
-
-            return $investment;
+        $investments->map(function ($investment) use ($investmentService) {
+            return $investmentService->enrichInvestmentWithQuantityHistory($investment);
         })
             ->each(function ($investment) use (&$positions) {
                 $start = true;

@@ -1,6 +1,5 @@
-// TODO: better handle __() function, which is now assumed to be present in global scope
-
-import * as helpers from "../helpers";
+import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../helpers';
+const route = window.route;
 
 export function dataTablesActionButton(id, action) {
     const functions = {
@@ -82,7 +81,7 @@ export function dataTablesActionButton(id, action) {
 }
 
 export function genericDataTablesActionButton(id, action, route) {
-    var functions = {
+    const functions = {
         delete: function (id) {
             return '<button class="btn btn-xs btn-danger data-delete" data-id="' + id + '" type="submit" title="' + __('Delete') + '"><i class="fa fa-fw fa-trash"></i></button> ';
         },
@@ -168,7 +167,7 @@ export function toFormattedCurrency(type, input, locale, currency) {
         return input;
     }
 
-    return helpers.toFormattedCurrency(input, locale, currency);
+    return toFormattedCurrencyHelper(input, locale, currency);
 }
 
 export function initializeSkipInstanceButton(selector) {
@@ -286,14 +285,14 @@ export const transactionColumnDefinition = {
         defaultContent: '',
         /**
          * @param _data
-         * @param _type
+         * @param {string} type
          * @param {Object} row
          * @property {Object} row.transaction_type
          * @property {string} row.transaction_type.type
          * @property {number} row.transaction_type.quantity_multiplier
          * @property {number} row.transaction_type.amount_multiplier
          */
-        render: function (_data, _type, row) {
+        render: function (_data, type, row) {
             // Standard transaction
             if (row.transaction_type.type === 'standard') {
                 // Empty
@@ -321,7 +320,7 @@ export const transactionColumnDefinition = {
                 return row.transaction_type.name + " " + row.config.quantity.toLocaleString(window.YAFFA.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
-                }) + " @ " + helpers.toFormattedCurrency(row.config.price, window.YAFFA.locale, row.transaction_currency);
+                }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.locale, row.transaction_currency);
             }
         },
         orderable: false
@@ -352,7 +351,8 @@ export const transactionColumnDefinition = {
                         prefix = '+ ';
                     }
 
-                    return prefix + helpers.toFormattedCurrency(
+                    return prefix + toFormattedCurrency(
+                        type,
                         row.config.amount_to,
                         window.YAFFA.locale,
                         row.transaction_currency
@@ -364,7 +364,8 @@ export const transactionColumnDefinition = {
                     if (row.transaction_type.amount_multiplier === -1) {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
+                        return prefix + toFormattedCurrency(
+                            type,
                             amount,
                             window.YAFFA.locale,
                             row.transaction_currency
@@ -373,7 +374,8 @@ export const transactionColumnDefinition = {
                     if (row.transaction_type.amount_multiplier === 1) {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
-                        return prefix + helpers.toFormattedCurrency(
+                        return prefix + toFormattedCurrency(
+                            type,
                             amount,
                             window.YAFFA.locale,
                             row.transaction_currency
@@ -397,7 +399,8 @@ export const transactionColumnDefinition = {
         defaultContent: '',
         render: function (data, type) {
             if (type === 'display') {
-                return helpers.toFormattedCurrency(
+                return toFormattedCurrency(
+                    type,
                     data,
                     window.YAFFA.locale,
                     window.account.config.currency
@@ -444,14 +447,16 @@ export const transactionColumnDefinition = {
         orderable: false,
     },
 
-    // Icon for the main transaction type (standard or investment)
+    // Icon for the transaction type
     type: {
         title: __('Type'),
         defaultContent: '',
         render: function(_data, type, row) {
-            if (type === 'filter') {
-                // TODO: this should be translated
-                return row.transaction_type.type;
+            if (type === 'filter' || type === 'type') {
+                return __(row.transaction_type.type) + ' ' + __(row.transaction_type.name);
+            }
+            if (type === 'sort') {
+                return __(row.transaction_type.name);
             }
 
             return transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
@@ -544,7 +549,7 @@ export function initializeQuickViewButton(selector) {
                 }
 
                 // Emit global event for modal to display
-                let event = new CustomEvent('showTransactionQuickviewModal', {
+                let event = new CustomEvent('showTransactionQuickViewModal', {
                     detail: {
                         transaction: transaction,
                         controls: {
@@ -629,4 +634,64 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
         >
             <i class="fa fa-fw fa-trash"></i>
         </button> `;
+}
+
+// Import the jstree plugin
+import 'jstree/src/themes/default/style.css';
+import 'jstree';
+
+/**
+ * Initialize a jsTree plugin for investment groups
+ *
+ * @param {string} selector
+ * @param {array} data
+ * @param {function} changeHandler
+ *
+ * @returns {void}
+ */
+export function investmentGroupTree(selector, data, changeHandler) {
+    // The data is expected to be an array of objects with the raw properties from the database
+    // Convert them to the format expected by the jstree plugin
+    const treeData = (data || [])
+        .map(group => {
+            return {
+                id:  group.id,
+                parent: 0,
+                text: group.name,
+                state: {
+                    selected: false
+                }
+            };
+        })
+        .sort((a, b) => a.text.localeCompare(b.text));
+
+    // Artificially add a root node
+    treeData.push({
+        id: 0,
+        parent: '#',
+        text: __('Investment groups'),
+        state: {
+            selected: true,
+            opened: true
+        }
+    });
+
+    // Initialize the jstree plugin, including the checkbox plugin and the callback for change events
+    // Assume the jQuery plugin is available at global scope
+    $(selector)
+        .jstree({
+            core: {
+                data: treeData,
+                themes: {
+                    dots: false,
+                    icons: false
+                }
+            },
+            plugins: ['checkbox'],
+            checkbox: {
+                keep_selected_style: false
+            }
+        })
+        .on('select_node.jstree', changeHandler)
+        .on('deselect_node.jstree', changeHandler);
 }

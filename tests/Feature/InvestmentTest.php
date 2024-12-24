@@ -169,7 +169,7 @@ class InvestmentTest extends TestCase
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -191,7 +191,7 @@ class InvestmentTest extends TestCase
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -222,9 +222,7 @@ class InvestmentTest extends TestCase
         $user = User::factory()->create();
         $this->createPrerequisites($user);
         /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->create();
-
-        $attributes = Investment::factory()->for($user)->raw();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -234,7 +232,7 @@ class InvestmentTest extends TestCase
                     $investment->id
                 ),
                 [
-                    'name' => $attributes['name'],
+                    'name' => $investment['name'] . ' updated',
                     'active' => $investment->active,
                     'symbol' => $investment->symbol,
                     'investment_group_id' => $investment->investment_group_id,

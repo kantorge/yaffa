@@ -16,7 +16,7 @@ am4core.useTheme(am4themes_animated);
 
 window.calculateYears = function (from, to) {
     const diffMs = to - from;
-    const diffDate = new Date(diffMs); // miliseconds from epoch
+    const diffDate = new Date(diffMs); // milliseconds from epoch
     return Math.abs(diffDate.getUTCFullYear() - 1970);
 }
 
@@ -31,7 +31,7 @@ window.transactions = window.transactions.map(function(transaction) {
 });
 
 // Quantity chart data transformation
-window.quantities = window.quantities.map(function(quantity) {
+window.quantities = window.investment.quantities.map(function(quantity) {
     quantity.date = new Date(Date.parse(quantity.date));
     quantity.date.setHours(0, 0, 0, 0);
     return quantity;

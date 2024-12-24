@@ -36,6 +36,7 @@ class GetInvestmentPrices implements ShouldQueue
         $this->investment->getInvestmentPriceFromProvider();
 
         // Use the InvestmentService to recalculate the related accounts
+        // TODO: this should be done once for all accounts
         $investmentService = new InvestmentService();
         $investmentService->recalculateRelatedAccounts($this->investment);
     }

@@ -27,6 +27,7 @@ class CategoryFactory extends Factory
             'active' => $this->faker->boolean(80),
             'parent_id' => null,
             'user_id' => User::inRandomOrder()->first()->id,
+            'default_aggregation' => $this->faker->randomElement(['month', 'quarter', 'year']),
         ];
     }
 }

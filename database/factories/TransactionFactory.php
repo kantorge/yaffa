@@ -51,8 +51,8 @@ class TransactionFactory extends Factory
                     );
 
                 $transaction->config->update([
-                    'amount_from' => $transaction->transactionItems->sum('amount_primary'),
-                    'amount_to' => $transaction->transactionItems->sum('amount_primary'),
+                    'amount_from' => $transaction->transactionItems->sum('amount'),
+                    'amount_to' => $transaction->transactionItems->sum('amount'),
                 ]);
 
                 // Attach tags of the same user to some of the newly created transaction items
@@ -81,8 +81,8 @@ class TransactionFactory extends Factory
                     );
 
                 $transaction->config->update([
-                    'amount_from' => $transaction->transactionItems->sum('amount_primary'),
-                    'amount_to' => $transaction->transactionItems->sum('amount_primary'),
+                    'amount_from' => $transaction->transactionItems->sum('amount'),
+                    'amount_to' => $transaction->transactionItems->sum('amount'),
                 ]);
 
                 // With a 25% chance, attach tags of the same user to the newly created transaction item
@@ -239,6 +239,24 @@ class TransactionFactory extends Factory
                 'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
                 'config_type' => 'investment',
                 'config_id' => TransactionDetailInvestment::factory()->dividend($user)->create($configAttributes),
+            ];
+        });
+    }
+
+    /**
+     * Transaction type is BUY investment and has SCHEDULE
+     */
+    public function buy_schedule(User $user, array $configAttributes = []): Factory
+    {
+        return $this->state(function (array $attributes) use ($user, $configAttributes) {
+            return [
+                'date' => null,
+                'schedule' => 1,
+                'budget' => 0,
+                'reconciled' => 0,
+                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'config_type' => 'investment',
+                'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
             ];
         });
     }

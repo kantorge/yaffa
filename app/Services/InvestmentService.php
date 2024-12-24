@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
+use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
+use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 
 class InvestmentService
 {
+    use ScheduleTrait;
+
     public function delete(Investment $investment): array
     {
         $success = false;
@@ -46,5 +50,46 @@ class InvestmentService
                 'transactionType' => 'investment_value'
             ]);
         });
+    }
+
+    public function enrichInvestmentWithQuantityHistory(Investment $investment): Investment
+    {
+        $transactions = $investment->transactionsBasic()->get();
+        $scheduledTransactions = $investment->transactionsScheduled()
+            ->get()
+            ->load(['transactionSchedule'])
+            ->filter(function ($transaction) {
+                return $transaction->transactionSchedule->active;
+            });
+
+        // Add all scheduled items to list of transactions
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
+        $transactions = $transactions->concat($scheduleInstances);
+
+        // Calculate historical and scheduled quantity changes for chart
+        $runningTotal = 0;
+        $runningSchedule = 0;
+        $quantities = $transactions
+            ->sortBy('date')
+            ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
+                // Quantity operator can be 1, -1 or null.
+                // It's the expected behavior to set the quantity to 0 if the operator is null.
+                $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
+
+                $runningSchedule += $quantity;
+                if (!$transaction->schedule) {
+                    $runningTotal += $quantity;
+                }
+
+                return [
+                    'date' => $transaction->date->format('Y-m-d'),
+                    'quantity' => $runningTotal,
+                    'schedule' => $runningSchedule,
+                ];
+            });
+
+        $investment->quantities = array_values($quantities->toArray());
+
+        return $investment;
     }
 }

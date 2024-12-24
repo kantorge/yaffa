@@ -80,7 +80,7 @@ class PayeeApiController extends Controller
                         $accountId
                     );
                 })
-                ->groupBy("transaction_details_standard.account_{$payeeDirection}_id")
+                ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
                 ->get()

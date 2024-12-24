@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
+use App\Spiders\InvestmentPriceScraper;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
 use Eloquent;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use RoachPHP\Roach;
+use RoachPHP\Spider\Configuration\Overrides;
 
 /**
  * App\Models\Investment
@@ -32,6 +35,8 @@ use Illuminate\Support\Facades\DB;
  * @property string|null $investment_price_provider
  * @property int $investment_group_id
  * @property int $currency_id
+ * @property string|null $scrape_url
+ * @property string|null $scrape_selector
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Currency $currency
@@ -97,6 +102,8 @@ class Investment extends Model
         'investment_group_id',
         'currency_id',
         'investment_price_provider',
+        'scrape_url',
+        'scrape_selector',
     ];
 
     protected $casts = [
@@ -313,6 +320,15 @@ class Investment extends Model
     protected array $priceProviders = [
         'alpha_vantage' => [
             'name' => 'Alpha Vantage',
+            'refillAvailable' => true,
+            'description' => 'Alpha Vantage is a leading provider of free APIs for historical and real-time data on stocks, forex (FX), and digital/crypto currencies.',
+            'instructions' => 'To use Alpha Vantage, you need to get an API key. The key is free, but you need to register on their website.',
+        ],
+        'web_scraping' => [
+            'name' => 'Web Scraping',
+            'refillAvailable' => false,
+            'description' => 'Web scraping is a technique to extract data from websites. It is a common method to get data from websites that do not provide APIs.',
+            'instructions' => 'To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.',
         ],
     ];
 
@@ -327,7 +343,8 @@ class Investment extends Model
         }
 
         $provider = Arr::get($this->priceProviders, $this->investment_price_provider);
-        if ($provider) {
+
+        if ($provider !== null) {
             return $provider['name'];
         }
 
@@ -335,7 +352,7 @@ class Investment extends Model
     }
 
     /**
-     * Return all available price providers
+     * Return all available price providers with all their details.
      *
      * @return array
      */
@@ -348,9 +365,10 @@ class Investment extends Model
      * Common function to get price of investment from provider.
      * It invokes the provider's function and updates the price in the database.
      *
-     * @param Carbon|null $from Optionnally specify the date to retrieve data from
+     * @param Carbon|null $from Optionally specify the date to retrieve data from
      * @param bool $refill Future option to request reload of prices
      * @uses getInvestmentPriceFromAlphaVantage()
+     * @uses getInvestmentPriceFromWebScraping()
      */
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
     {
@@ -360,7 +378,8 @@ class Investment extends Model
 
     /**
      * TODO: this should have a contract to have standard parameters, and to force the silent save
-     * @param Carbon|null $from Optionnally specify the date to retrieve data from
+     * TODO: this is getting and saving the data, but it should be split into two functions
+     * @param Carbon|null $from Optionally specify the date to retrieve data from
      * @param bool $refill Future option to request reload of prices
      * @throws GuzzleException
      */
@@ -406,5 +425,45 @@ class Investment extends Model
             // It means, that it's the responsibility of the caller to trigger the observer or any related actions
             $investmentPrice->saveQuietly();
         }
+    }
+
+    /**
+     * TODO: this should have a contract to have standard parameters, and to force the silent save
+     * TODO: this is getting and saving the data, but it should be split into two functions
+     * @param Carbon|null $from Optionally specify the date to retrieve data from
+     * @param bool $refill Future option to request reload of prices
+     */
+    public function getInvestmentPriceFromWebScraping(Carbon|null $from = null, bool $refill = false): void
+    {
+        // This provider ignores the $from and $refill parameters, as it looks for the latest price,
+        // which is assumed to be the one applying to the previous day
+
+        $result = Roach::collectSpider(
+            InvestmentPriceScraper::class,
+            new Overrides(
+                startUrls: [$this->scrape_url],
+            ),
+            [
+                'selector' => $this->scrape_selector,
+            ]
+        );
+
+        // TODO: proper error handling
+        if (sizeof($result) === 0) {
+            return;
+        }
+
+        $investmentPrice = InvestmentPrice::firstOrNew(
+            [
+                'investment_id' => $this->id,
+                'date' => Carbon::yesterday()->format('Y-m-d'),
+            ]
+        );
+
+        $investmentPrice->price = $result[0]->get('price');
+
+        // We are intentionally not triggering the observer here, as there can be multiple similar operations
+        // It means, that it's the responsibility of the caller to trigger the observer or any related actions
+        $investmentPrice->saveQuietly();
     }
 }

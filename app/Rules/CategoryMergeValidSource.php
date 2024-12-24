@@ -47,7 +47,7 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
         // Hydrate source model from value
         $categorySource = Category::find($value);
 
-        // Hydrate target model from retreived data
+        // Hydrate target model from retrieved data
         $categoryTarget = Category::find($this->data['category_target']);
 
         // Check invalid combination, where source is a parent (it's parent is null) and target is a child (it's parent is not null)

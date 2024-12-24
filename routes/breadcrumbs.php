@@ -155,13 +155,6 @@ Breadcrumbs::for('investment-price.list', function (BreadcrumbTrail $trail, $inv
     $trail->push(__('Prices'), route('investment-price.list', $investment));
 });
 
-// Investment > Timeline
-Breadcrumbs::for('investment.timeline', function (BreadcrumbTrail $trail) {
-    $trail->parent('home');
-    $trail->push(__('Investments'), route('investment.index'));
-    $trail->push(__('Timeline'), route('investment.timeline'));
-});
-
 // Tag resource views (index, create, edit)
 Breadcrumbs::for('tag.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -216,8 +209,13 @@ Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
     $trail->push('Reports');
     $trail->push(__('Transactions'), route('reports.transactions'));
 });
+Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Investments'), route('investment.index'));
+    $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
+});
 
-// Miscellanous routes - received mails resource views
+// Miscellaneous routes - received mails resource views
 Breadcrumbs::for('received-mail.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
@@ -244,5 +242,5 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
 // User related routes
 Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('My Profile'), route('user.settings'));
+    $trail->push(__('My profile'), route('user.settings'));
 });

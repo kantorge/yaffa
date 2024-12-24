@@ -188,6 +188,30 @@
             </div>
 
             <div class="row mb-3">
+                <label for="auto_update" class="col-form-label col-sm-3">
+                    {{ __('Automatic update') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                            id="auto_update"
+                            class="form-check-input"
+                            name="auto_update"
+                            type="checkbox"
+                            value="1"
+                            @if (old())
+                                @if (old('auto_update') == '1')
+                                    checked="checked"
+                                @endif
+                            @elseif(isset($investment))
+                                @if ($investment->auto_update == '1')
+                                    checked="checked"
+                                @endif
+                            @endif
+                    >
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="investment_price_provider" class="col-form-label col-sm-3">
                     {{ __('Price provider') }}
                 </label>
@@ -222,30 +246,35 @@
             </div>
 
             <div class="row mb-3">
-                <label for="auto_update" class="col-form-label col-sm-3">
-                    {{ __('Automatic update') }}
+                <label for="investment_scrape_url" class="col-form-label col-sm-3">
+                    {{ __('URL to scrape for investment price') }}
                 </label>
                 <div class="col-sm-9">
                     <input
-                        id="auto_update"
-                        class="form-check-input"
-                        name="auto_update"
-                        type="checkbox"
-                        value="1"
-                        @if (old())
-                            @if (old('auto_update') == '1')
-                                checked="checked"
-                            @endif
-                        @elseif(isset($investment))
-                            @if ($investment->auto_update == '1')
-                                checked="checked"
-                            @endif
-                        @else
-                            checked="checked"
-                        @endif
+                        class="form-control"
+                        id="investment_scrape_url"
+                        name="scrape_url"
+                        type="text"
+                        value="{{old('scrape_url', $investment->scrape_url ?? '' )}}"
                     >
                 </div>
             </div>
+
+            <div class="row mb-3">
+                <label for="investment_scrape_selector" class="col-form-label col-sm-3">
+                    {{ __('CSS selector to identify investment price') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="investment_scrape_selector"
+                        name="scrape_selector"
+                        type="text"
+                        value="{{old('scrape_url', $investment->scrape_selector ?? '' )}}"
+                    >
+                </div>
+            </div>
+
         </div>
         <div class="card-footer">
             @csrf
