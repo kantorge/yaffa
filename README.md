@@ -57,14 +57,14 @@ You can register a new account at https://sandbox.yaffa.cc/register
 
 ⚠️ **Important!** This is not a production environment or a free service. 
 Use it only to experiment with YAFFA's functionality and UI. 
-The database is regulary wiped without prior notice.
+The database is regularly wiped without prior notice.
 
 💡 **Tip:** use a fake or disposable email address to sign up. The email address does not need to be verified.
 
 ## Getting started
 Read the full documentation at https://www.yaffa.cc/documentation/,
-including the [Getting Started](https://www.yaffa.cc/documentation-category/getting-started/) guide
-and the [Installation instructions](https://www.yaffa.cc/documentation-category/installation-instructions/).
+including the [Getting Started](https://www.yaffa.cc/documentation/resources/category/getting-started/) guide
+and the [Installation instructions](https://www.yaffa.cc/documentation/resources/category/installation/).
 
 ## Sponsors
 The project is supported by JetBrains under [Open Source Support Program](https://www.jetbrains.com/community/opensource/#support).

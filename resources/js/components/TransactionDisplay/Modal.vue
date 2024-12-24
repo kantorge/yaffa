@@ -35,6 +35,7 @@
 import ShowStandard from './ShowStandard.vue'
 import ShowInvestment from "./ShowInvestment.vue";
 import ActionButtonBar from "./ActionButtonBar.vue";
+import { __ as translator } from "../../helpers"
 
 export default {
     name: 'QuickViewTransactionModal',
@@ -76,6 +77,13 @@ export default {
         },
         transactionUpdated: function (transaction) {
             this.transaction = Object.assign({}, transaction);
+        },
+
+        /**
+         * Define the translation helper function locally.
+         */
+        __: function (string, replace) {
+            return translator(string, replace);
         },
     },
     mounted() {

@@ -81,7 +81,7 @@ class AccountApiController extends Controller
             ->where('account_entities.user_id', $parameters['user']->id)
             // Take only accounts
             ->where('account_entities.config_type', 'account')
-            ->groupBy("transaction_details_standard.account_{$type}_id")
+            ->groupBy("account_entities.id")
             ->orderByRaw('count(*) DESC')
             ->when($parameters['limit'] !== 0, function ($query) use ($parameters) {
                 $query->limit($parameters['limit']);
