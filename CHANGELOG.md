@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.12.1](https://github.com/kantorge/yaffa/compare/v1.12.0...v1.12.1) (2024-12-24)
+
+
+### 🛠️ Chores
+
+* npm update ([00f8918](https://github.com/kantorge/yaffa/commit/00f89187726e94851bff46ae1d495bfc4f6b43c4))
+
+
+### 📚 Documentation
+
+* update links in readme.md ([53ca993](https://github.com/kantorge/yaffa/commit/53ca993f42402836a279e97b5eeefd567477f756))
+
+
+### 🐛 Bug Fixes
+
+* improve MariaDB compatibility ([dfdedbd](https://github.com/kantorge/yaffa/commit/dfdedbdca75706fbd144c47567aafa5a9f283e90))
+* minor fixes and code cleanups ([8e4c81b](https://github.com/kantorge/yaffa/commit/8e4c81b6600caf109aa0914997bcf3c8454c93aa))
+* package.json & package-lock.json to reduce vulnerabilities ([350b2ce](https://github.com/kantorge/yaffa/commit/350b2ce6575538a85cebebb7fcc9b9fba1e7deb9))
+* package.json & package-lock.json to reduce vulnerabilities ([#243](https://github.com/kantorge/yaffa/issues/243)) ([bc94c14](https://github.com/kantorge/yaffa/commit/bc94c1498cd24ab897dc51ce071b47aa217d3ee5))
+* upgrade webpack from 5.95.0 to 5.96.1 ([#244](https://github.com/kantorge/yaffa/issues/244)) ([ce61ab4](https://github.com/kantorge/yaffa/commit/ce61ab43e94fb50d60f8a435b40ca8e149a53617))
+
 ## [1.12.0](https://github.com/kantorge/yaffa/compare/v1.11.0...v1.12.0) (2024-11-24)
 
 
