@@ -456,7 +456,7 @@ class AccountEntityController extends Controller
             self::addSimpleSuccessMessage(__('Payees merged'));
         } catch (Exception $e) {
             DB::rollback();
-            self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
+            self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
         return redirect()->route('account-entity.index', ['type' => 'payee']);

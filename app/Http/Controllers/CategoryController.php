@@ -167,9 +167,9 @@ class CategoryController extends Controller
             return redirect()->route('categories.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
-                self::addSimpleDangerMessage(__('Category is in use, cannot be deleted'));
+                self::addSimpleErrorMessage(__('Category is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
+                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -242,7 +242,7 @@ class CategoryController extends Controller
             self::addSimpleSuccessMessage(__('Categories merged'));
         } catch (Exception $e) {
             DB::rollback();
-            self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->getMessage());
+            self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
         return redirect()->route('categories.index');
