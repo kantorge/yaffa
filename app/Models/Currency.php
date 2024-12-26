@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
@@ -156,38 +157,89 @@ class Currency extends Model
     }
 
     /**
-     * Get the currency rates for this currency.
+     * Get and save the currency rates for this currency against the base currency.
      *
-     * @param Carbon|null $from
+     * @param Carbon|null $dateFrom
+     * @throws CurrencyRateConversionException
+     * @throws Exception
      */
-    public function retrieveCurrencyRateToBase(?Carbon $from = null): void
+    public function retrieveCurrencyRateToBase(?Carbon $dateFrom = null): void
     {
         $baseCurrency = $this->baseCurrency();
 
-        if ($baseCurrency === null || $baseCurrency->id === $this->id) {
-            return;
+        // This should never happen, as the base currency falls back to the first currency created by the user.
+        if ($baseCurrency === null) {
+            throw new CurrencyRateConversionException(
+                'Base currency not found',
+                $this,
+                null,
+                $dateFrom
+            );
+        }
+
+        if ($baseCurrency->id === $this->id) {
+            throw new CurrencyRateConversionException(
+                'Currency is the same as the base currency',
+                $this,
+                $baseCurrency,
+                $dateFrom
+            );
         }
 
         $date = Carbon::parse('yesterday');
-        if (!$from) {
-            $from = Carbon::parse('yesterday');
+        if (!$dateFrom) {
+            $dateFrom = Carbon::parse('yesterday');
         }
 
         $currencyApi = CurrencyExchangeRates::create();
 
+        // Verify that both currencies are supported by the API.
+        if (!$currencyApi->isCurrencySupported($this->iso_code) || !$currencyApi->isCurrencySupported($baseCurrency->iso_code)) {
+            throw new CurrencyRateConversionException(
+                'One or more of the currencies are not supported by the API',
+                $this,
+                $baseCurrency,
+                $dateFrom
+            );
+        }
+
         $apiData = $currencyApi->getTimeSeries(
-            $from,
+            $dateFrom,
             $date,
             $this->iso_code,
             [$baseCurrency->iso_code]
         );
 
-        // If rates is not an array with at least one element, return.
+        // If rates is not an array with at least one element, throw an exception.
         if (!is_array($apiData) || empty($apiData)) {
-            return;
+            throw new CurrencyRateConversionException(
+                'No data returned from the API',
+                $this,
+                $baseCurrency,
+                $dateFrom
+            );
         }
 
+        $validRates = [];
+
         foreach ($apiData as $date => $rate) {
+            $sanitizedRate = (float) $rate[$baseCurrency->iso_code];
+
+            // Check if the rate is within the valid range.
+            if ($sanitizedRate <= 0 || $sanitizedRate >= 9999999999.9999999999) {
+                throw new CurrencyRateConversionException(
+                    'Currency rate is out of the valid range',
+                    $this,
+                    $baseCurrency,
+                    $dateFrom
+                );
+            }
+
+            $validRates[$date] = $sanitizedRate;
+        }
+
+        // Save the rates to the database
+        foreach ($validRates as $date => $sanitizedRate) {
             CurrencyRate::updateOrCreate(
                 [
                     'from_id' => $this->id,
@@ -195,7 +247,7 @@ class Currency extends Model
                     'date' => $date,
                 ],
                 [
-                    'rate' => $rate[$baseCurrency->iso_code],
+                    'rate' => $sanitizedRate,
                 ]
             );
         }
@@ -203,13 +255,29 @@ class Currency extends Model
 
     /**
      * Get all the missing currency rates for this currency.
+     * @throws CurrencyRateConversionException
      */
     public function retrieveMissingCurrencyRateToBase(): void
     {
         $baseCurrency = $this->baseCurrency();
 
-        if ($baseCurrency === null || $baseCurrency->id === $this->id) {
-            return;
+        // This should never happen, as the base currency falls back to the first currency created by the user.
+        if ($baseCurrency === null) {
+            throw new CurrencyRateConversionException(
+                'Base currency not found',
+                $this,
+                null,
+                null
+            );
+        }
+
+        if ($baseCurrency->id === $this->id) {
+            throw new CurrencyRateConversionException(
+                'Currency is the same as the base currency',
+                $this,
+                $baseCurrency,
+                null
+            );
         }
 
         // Get the latest date for this currency, compared to the base currency.
