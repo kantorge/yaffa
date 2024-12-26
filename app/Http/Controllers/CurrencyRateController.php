@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -84,6 +86,9 @@ class CurrencyRateController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function retrieveCurrencyRateToBase(Currency $currency, ?Carbon $from = null): RedirectResponse
     {
         /**
@@ -95,11 +100,18 @@ class CurrencyRateController extends Controller
         // Authorize user access to requested currency
         $this->authorize('view', $currency);
 
-        $currency->retrieveCurrencyRateToBase($from);
+        try {
+            $currency->retrieveCurrencyRateToBase($from);
+        } catch (CurrencyRateConversionException|Exception $e) {
+            self::addSimpleErrorMessage($e->getMessage());
+        }
 
         return redirect()->back();
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     public function retrieveMissingCurrencyRateToBase(Currency $currency): RedirectResponse
     {
         /**
@@ -110,7 +122,11 @@ class CurrencyRateController extends Controller
         // Authorize user access to requested currency
         $this->authorize('view', $currency);
 
-        $currency->retrieveMissingCurrencyRateToBase();
+        try {
+            $currency->retrieveMissingCurrencyRateToBase();
+        } catch (CurrencyRateConversionException $e) {
+            self::addSimpleErrorMessage($e->getMessage());
+        }
 
         return redirect()->back();
     }

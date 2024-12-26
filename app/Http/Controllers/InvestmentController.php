@@ -184,7 +184,7 @@ class InvestmentController extends Controller
             return redirect()->route('investment.index');
         }
 
-        self::addSimpleDangerMessage($result['error']);
+        self::addSimpleErrorMessage($result['error']);
         return redirect()->back();
     }
 

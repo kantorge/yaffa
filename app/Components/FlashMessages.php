@@ -42,7 +42,7 @@ trait FlashMessages
         self::addMessage($message, 'warning');
     }
 
-    public static function addSimpleDangerMessage($message): void
+    public static function addSimpleErrorMessage($message): void
     {
         self::addMessage($message, 'danger');
     }

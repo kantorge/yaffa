@@ -30,7 +30,7 @@ class FormRequest extends IlluminationFormRequest
     {
         $validator->after(function (Validator $validator) {
             foreach ($validator->errors()->all() as $message) {
-                self::addSimpleDangerMessage($message);
+                self::addSimpleErrorMessage($message);
             }
         });
     }

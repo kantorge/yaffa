@@ -143,7 +143,7 @@ class CurrencyController extends Controller
          */
         // Base currency cannot be deleted
         if ($currency->base) {
-            self::addSimpleDangerMessage(__('Base currency cannot be deleted'));
+            self::addSimpleErrorMessage(__('Base currency cannot be deleted'));
 
             return redirect()->back();
         }
@@ -155,9 +155,9 @@ class CurrencyController extends Controller
             return redirect()->route('currency.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
-                self::addSimpleDangerMessage(__('Currency is in use, cannot be deleted'));
+                self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));
             } else {
-                self::addSimpleDangerMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
+                self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->errorInfo[2]);
             }
 
             return redirect()->back();
@@ -184,7 +184,7 @@ class CurrencyController extends Controller
             $cacheKey = "baseCurrency_forUser_{$currency->user_id}";
             Cache::forget($cacheKey);
 
-            // Get all non-base, updateable currencies of the user, and dispatch the currency rate retrieval job
+            // Get all non-base, updatable currencies of the user, and dispatch the currency rate retrieval job
             $currencies = $currency->user
                 ->currencies()
                 ->notBase()
@@ -194,7 +194,7 @@ class CurrencyController extends Controller
                 GetCurrencyRatesJob::dispatch($currency);
             });
         } else {
-            self::addSimpleDangerMessage(__('Failed to change base currency'));
+            self::addSimpleErrorMessage(__('Failed to change base currency'));
         }
 
         return redirect()->back();

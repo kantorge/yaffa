@@ -66,7 +66,7 @@ class ReceivedMailController extends Controller
             return redirect()->route('received-mail.index');
         }
 
-        self::addSimpleDangerMessage($result['error']);
+        self::addSimpleErrorMessage($result['error']);
         return redirect()->back();
     }
 }
