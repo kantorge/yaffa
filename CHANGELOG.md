@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/kantorge/yaffa/compare/v1.12.1...v1.12.2) (2024-12-26)
+
+
+### 🐛 Bug Fixes
+
+* currency rate data type ([#253](https://github.com/kantorge/yaffa/issues/253)) ([e7cec67](https://github.com/kantorge/yaffa/commit/e7cec67596b3d694392ef9dece2a46a4b7a1dd07))
+
 ## [1.12.1](https://github.com/kantorge/yaffa/compare/v1.12.0...v1.12.1) (2024-12-24)
 
 
