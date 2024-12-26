@@ -86,7 +86,7 @@ class CurrencyTest extends TestCase
         $user = User::factory()->create();
 
         /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()
+        Currency::factory()
             ->for($user)
             ->fromIsoCodes(['USD'])
             ->create([

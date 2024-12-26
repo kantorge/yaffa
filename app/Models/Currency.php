@@ -169,21 +169,11 @@ class Currency extends Model
 
         // This should never happen, as the base currency falls back to the first currency created by the user.
         if ($baseCurrency === null) {
-            throw new CurrencyRateConversionException(
-                'Base currency not found',
-                $this,
-                null,
-                $dateFrom
-            );
+            throw new CurrencyRateConversionException('Base currency not found');
         }
 
         if ($baseCurrency->id === $this->id) {
-            throw new CurrencyRateConversionException(
-                'Currency is the same as the base currency',
-                $this,
-                $baseCurrency,
-                $dateFrom
-            );
+            throw new CurrencyRateConversionException('Currency is the same as the base currency');
         }
 
         $date = Carbon::parse('yesterday');
@@ -195,12 +185,7 @@ class Currency extends Model
 
         // Verify that both currencies are supported by the API.
         if (!$currencyApi->isCurrencySupported($this->iso_code) || !$currencyApi->isCurrencySupported($baseCurrency->iso_code)) {
-            throw new CurrencyRateConversionException(
-                'One or more of the currencies are not supported by the API',
-                $this,
-                $baseCurrency,
-                $dateFrom
-            );
+            throw new CurrencyRateConversionException('One or more of the currencies are not supported by the API');
         }
 
         $apiData = $currencyApi->getTimeSeries(
@@ -212,12 +197,7 @@ class Currency extends Model
 
         // If rates is not an array with at least one element, throw an exception.
         if (!is_array($apiData) || empty($apiData)) {
-            throw new CurrencyRateConversionException(
-                'No data returned from the API',
-                $this,
-                $baseCurrency,
-                $dateFrom
-            );
+            throw new CurrencyRateConversionException('No data returned from the API');
         }
 
         $validRates = [];
@@ -227,12 +207,7 @@ class Currency extends Model
 
             // Check if the rate is within the valid range.
             if ($sanitizedRate <= 0 || $sanitizedRate >= 9999999999.9999999999) {
-                throw new CurrencyRateConversionException(
-                    'Currency rate is out of the valid range',
-                    $this,
-                    $baseCurrency,
-                    $dateFrom
-                );
+                throw new CurrencyRateConversionException('Currency rate is out of the valid range');
             }
 
             $validRates[$date] = $sanitizedRate;
@@ -263,21 +238,11 @@ class Currency extends Model
 
         // This should never happen, as the base currency falls back to the first currency created by the user.
         if ($baseCurrency === null) {
-            throw new CurrencyRateConversionException(
-                'Base currency not found',
-                $this,
-                null,
-                null
-            );
+            throw new CurrencyRateConversionException('Base currency not found');
         }
 
         if ($baseCurrency->id === $this->id) {
-            throw new CurrencyRateConversionException(
-                'Currency is the same as the base currency',
-                $this,
-                $baseCurrency,
-                null
-            );
+            throw new CurrencyRateConversionException('Currency is the same as the base currency');
         }
 
         // Get the latest date for this currency, compared to the base currency.
