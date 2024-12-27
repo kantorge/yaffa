@@ -270,7 +270,7 @@
                         id="investment_scrape_selector"
                         name="scrape_selector"
                         type="text"
-                        value="{{old('scrape_url', $investment->scrape_selector ?? '' )}}"
+                        value="{{old('scrape_selector', $investment->scrape_selector ?? '' )}}"
                     >
                 </div>
             </div>
