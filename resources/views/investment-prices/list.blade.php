@@ -19,10 +19,22 @@
                             <span class="fa fa-cloud-download"></span>
                         </a>
                     @endif
-                    <a href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}" class="btn btn-sm btn-success" title="{{ __('Add investment price manually') }}"><i class="fa fa-plus"></i></a>
+                    <a
+                            href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}"
+                            class="btn btn-sm btn-success"
+                            title="{{ __('Add investment price manually') }}"
+                            dusk="button-add-investment-price"
+                    >
+                        <i class="fa fa-plus"></i>
+                    </a>
                 </div>
                 <div class="card-body">
-                    <table class="table table-bordered table-hover" role="grid" id="table"></table>
+                    <table
+                            class="table table-bordered table-hover"
+                            role="grid"
+                            id="table"
+                            dusk="table-investment-prices"
+                    ></table>
                 </div>
             </div>
         </div>

@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Investment;
 use App\Models\InvestmentGroup;
+use App\Models\InvestmentPrice;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
@@ -142,15 +144,18 @@ Breadcrumbs::for('investment.show', function (BreadcrumbTrail $trail, $investmen
 });
 
 // Investment price resource views (create, edit)
-Breadcrumbs::for('investment-price.create', function (BreadcrumbTrail $trail, $investment) {
+Breadcrumbs::for('investment-price.create', function (BreadcrumbTrail $trail) {
+    // The investment ID is available in the investment query parameter. We need to load the investment to get the name
+    $investment = Investment::whereUserId(auth()->id())->findOrFail(request()->query('investment'));
+
     $trail->parent('investment.show', $investment);
-    $trail->push(__('Create Price'), route('investment-price.create', $investment));
+    $trail->push(__('Create Price'), route('investment-price.create'));
 });
-Breadcrumbs::for('investment-price.edit', function (BreadcrumbTrail $trail, $investmentPrice) {
+Breadcrumbs::for('investment-price.edit', function (BreadcrumbTrail $trail, InvestmentPrice $investmentPrice) {
     $trail->parent('investment.show', $investmentPrice->investment);
     $trail->push(__('Edit Price'), route('investment-price.edit', $investmentPrice));
 });
-Breadcrumbs::for('investment-price.list', function (BreadcrumbTrail $trail, $investment) {
+Breadcrumbs::for('investment-price.list', function (BreadcrumbTrail $trail, Investment $investment) {
     $trail->parent('investment.show', $investment);
     $trail->push(__('Prices'), route('investment-price.list', $investment));
 });
