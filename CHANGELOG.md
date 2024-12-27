@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.3](https://github.com/kantorge/yaffa/compare/v1.12.2...v1.12.3) (2024-12-27)
+
+
+### 🐛 Bug Fixes
+
+* breadcrumb for the investment price form ([5fc3880](https://github.com/kantorge/yaffa/commit/5fc3880b3ade3df393d27d1d96eb0a316c7e6866))
+
 ## [1.12.2](https://github.com/kantorge/yaffa/compare/v1.12.1...v1.12.2) (2024-12-26)
 
 
