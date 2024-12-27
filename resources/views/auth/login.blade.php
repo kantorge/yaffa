@@ -14,10 +14,19 @@
                                 {{ __('Login') }}
                             </h1>
                             <p class="text-medium-emphasis">
-                                You can create a new account for yourself by registering,
-                                or you can explore our demo data using credentials below.
-                                <br>
-                                <strong>Email:</strong> demo@yaffa.cc <strong>Password:</strong> demo
+                                {{ __('sandbox.login.info') }}
+                            </p>
+                            <p class="text-medium-emphasis">
+                                {{ __('sandbox.login.credentials') }}
+                                <button
+                                        class="btn btn-sm"
+                                        type="button"
+                                        title="{{ __('sandbox.login.fill') }}"
+                                        data-coreui-toggle="tooltip"
+                                        id="loginWithDemoCredentials"
+                                >
+                                    <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
                             </p>
                             <form
                                     method="POST"
@@ -43,6 +52,7 @@
                                                 ])
                                                 type="submit"
                                                 dusk="login-button"
+                                                id="login"
                                                 @if(config('recaptcha.api_site_key'))
                                                     data-sitekey="{{ config('recaptcha.api_site_key') }}"
                                                     data-callback="onSubmit"
@@ -71,7 +81,7 @@
                                     {{ __('YAFFA is an easy to use personal finance tracker.') }}
                                 </p>
                                 <a href="{{ route('register') }}" class="btn btn-lg btn-light mt-3">
-                                    {{ __('Register a new account') }}
+                                    {{ __('Register a free test account') }}
                                 </a>
                                 <a
                                         href="https://www.yaffa.cc/"
