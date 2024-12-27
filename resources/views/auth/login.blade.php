@@ -17,7 +17,7 @@
                                 {{ __('sandbox.login.info') }}
                             </p>
                             <p class="text-medium-emphasis">
-                                {{ __('sandbox.login.credentials') }}
+                                {!! __('sandbox.login.credentials') !!}
                                 <button
                                         class="btn btn-sm"
                                         type="button"
