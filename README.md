@@ -25,35 +25,29 @@ Read more about YAFFA at https://www.yaffa.cc
   * You can enable the automatic recording of recurring transactions.
 * Add your investments, to calculate gain and loss.
   * Automatically retrieve investment prices.
-  * This is based on alphavantage.co service. You need to register and get your free API key.
-
-**Please note!** While the application is suitable for production use, ongoing development may lead to interface improvements and optimizations. 
-No data loss is expected while using the application, but breaking changes can occur, e.g. in the database structure.
+  * This is based on the alphavantage.co service. You need to register and get your free API key.
 
 There are several features **planned** to be implemented:
 * Further charts, reports and dashboards.
 * Handling multiple users as a family in one app instance.
 * Better onboarding experience, or a tutorial.
-* QIF/CSV file imports
+* Flexible or universal QIF/CSV file imports
+* Process receipts from images
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
-If you are looking to have these, then Yaffa might not be the right choice for you.
+If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the right choice for you.
 * Downloading transaction data directly from banks.
-* Mobile app 
-  * Yaffa is optimized for desktop browsers, but the interface is more or less responsive to support mobile view.
+* Native mobile app 
+  * Yaffa is optimized for desktop browsers, but the interface is responsive to support mobile view.
 
-Read more about the features of YAFFA at https://www.yaffa.cc/features
+Read more about the [features of YAFFA](https://www.yaffa.cc/features-of-yaffa-personal-finance-application/)
 
 ## Try it out
 
 You can try out YAFFA without installing it. Take a look at the application at https://sandbox.yaffa.cc
 
-Do you want to walk around, kick the tires, and see the application in action? Use the following credentials to log in:
-* Username: `demo@yaffa.cc`
-* Password: `demo`
-
-Want a full test drive to explore the application as if it were your own instance?
-You can register a new account at https://sandbox.yaffa.cc/register
+* Do you want to walk around, kick the tires, and see the application in action? Use the demo account featuring realistic sample data.
+* Do you want a full test drive to explore the application as if it were your own instance? You can register a new account at https://sandbox.yaffa.cc/register
 
 ⚠️ **Important!** This is not a production environment or a free service. 
 Use it only to experiment with YAFFA's functionality and UI. 
