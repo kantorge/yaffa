@@ -13,9 +13,27 @@
                             <h1>
                                 {{ __('Login') }}
                             </h1>
-                            <p class="text-medium-emphasis">
-                                {{ __('Sign in to start your session') }}
-                            </p>
+                            @if (config('yaffa.sandbox_mode'))
+                                <p class="text-medium-emphasis">
+                                    {{ __('sandbox.login.info') }}
+                                </p>
+                                <p class="text-medium-emphasis">
+                                    {!! __('sandbox.login.credentials') !!}
+                                    <button
+                                            class="btn btn-sm"
+                                            type="button"
+                                            title="{{ __('sandbox.login.fill') }}"
+                                            data-coreui-toggle="tooltip"
+                                            id="loginWithDemoCredentials"
+                                    >
+                                        <i class="fa-solid fa-right-to-bracket"></i>
+                                    </button>
+                                </p>
+                            @else
+                                <p class="text-medium-emphasis">
+                                    {{ __('Sign in to start your session') }}
+                                </p>
+                            @endif
                             <form
                                     method="POST"
                                     action="{{ route('login') }}"
@@ -40,6 +58,7 @@
                                                 ])
                                                 type="submit"
                                                 dusk="login-button"
+                                                id="login"
                                                 @if(config('recaptcha.api_site_key'))
                                                     data-sitekey="{{ config('recaptcha.api_site_key') }}"
                                                     data-callback="onSubmit"
