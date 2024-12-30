@@ -28,6 +28,7 @@ class JavaScriptVariablesComposer
                 'translations' => $this->getTranslations(),
                 'start_date' => $user->start_date,
                 'end_date' => $user->end_date,
+                'sandbox_mode' => config('yaffa.sandbox_mode'),
             ]
         ]);
     }

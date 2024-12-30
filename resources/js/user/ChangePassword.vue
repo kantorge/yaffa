@@ -11,7 +11,7 @@
                     {{ __('Change Password') }}
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body" v-if="!sandbox_mode">
                 <div class="row mb-3">
                     <label for="current_password" class="col-form-label col-sm-3">
                         {{ __('Current Password') }}
@@ -64,7 +64,12 @@
                     </div>
                 </div>
             </div>
-            <div class="card-footer">
+            <div class="card-body" v-else>
+                <div class="alert alert-warning">
+                    {{ __('You are in sandbox mode. You cannot change your password.') }}
+                </div>
+            </div>
+            <div class="card-footer" v-if="!sandbox_mode">
                 <Button
                         class="btn btn-primary"
                         :form="form"
@@ -92,8 +97,9 @@
             form: new Form({
                 current_password: '',
                 password: '',
-                password_confirmation: '',
-            })
+                password_confirmation: ''
+            }),
+            sandbox_mode: window.YAFFA.sandbox_mode,
         }),
         methods: {
             onSubmit() {
