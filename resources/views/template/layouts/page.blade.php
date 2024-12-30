@@ -115,7 +115,7 @@
     </div>
     <footer class="footer">
         <div><a href="https://www.yaffa.cc/" target="_blank" rel="noopener">{{ config('app.name') }}</a> {{ config('yaffa.version') }}</div>
-        <div class="ms-auto"><a href="https://github.com/kantorge/yaffa" class="text-black"><i class="fa-brands fa-github fa-2x"></i></a></div>
+        <div class="ms-auto"><a href="https://github.com/kantorge/yaffa" class="text-black" target="_blank" rel="noopener"><i class="fa-brands fa-github fa-2x"></i></a></div>
     </footer>
 </div>
 @stop
