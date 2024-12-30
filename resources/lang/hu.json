@@ -177,6 +177,8 @@
     "sandbox.login.info": "Regisztrálj és készíts egy saját fiókot a teszteléshez. Használj eldobható email címet és bármilyen kitalált adatot. Ismerd meg a demo adatokat az alábbi belépési adatokkal.",
     "sandbox.login.credentials": "<strong>Email-cím:</strong> demo@yaffa.cc <strong>Jelszó:</strong> demo",
     "sandbox.login.fill": "Belépés a demo fiókba",
+    "sandbox.reset.info": "A törlésig nézz körül és próbálj ki bármilyen funkciót.",
+    "sandbox.reset.timer": "A teszt környezetben az adatok rendszeresen visszaállításra kerülnek. Idő a következő törlésig: :days nap, :hours óra.",
     "Save": "Mentés",
     "Saved successfully": "Sikeresen elmentve",
     "Schedule": "Ütemezés",

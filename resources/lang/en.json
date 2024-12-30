@@ -432,6 +432,8 @@
     "sandbox.login.info": "You can create a new account for testing by registering. Feel free to use a disposable email address or fake credential. You can also explore existing demo data using the credentials below.",
     "sandbox.login.credentials": "<strong>Email:</strong> demo@yaffa.cc <strong>Password:</strong> demo",
     "sandbox.login.fill": "Login with demo credentials",
+    "sandbox.reset.info": "Until that, feel free to look around and make any changes.",
+    "sandbox:reset:timer": "The data in this sandbox environment is regularly cleared. Time until next reset: :days days and :hours hours.",
     "Save": "Save",
     "Saved successfully": "Saved successfully",
     "Schedule": "Schedule",
