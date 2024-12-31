@@ -35,8 +35,11 @@ There are several features **planned** to be implemented:
 * Process receipts from images
 
 Several features are **not likely to be introduced**, which you might expect from such applications.
-If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the right choice for you.
-* Downloading transaction data directly from banks.
+If you are looking to have these in a budget app or expense tracker, then Yaffa might not be the best choice for you.
+* Downloading transaction data directly from banks
+  * The philosophy of expense tracking is to be conscious about your spending and financial habits, which requires the review and manual adjustment of transactions. 
+    Thus, automatic downloading of transactions from banks would save some time, but would not help to achieve the goal of expense tracking and budgeting.
+  * Also, YAFFA supports automatic creation of scheduled transactions and entry of simple recurring transactions, to speed up the process of recording transactions.
 * Native mobile app 
   * Yaffa is optimized for desktop browsers, but the interface is responsive to support mobile view.
 
