@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    {{-- Conditionally load the default cookie consent default settings
-         if GTM and CookieYes are both enabled --}}
+    {{-- Conditionally load the default cookie consent default settings if GTM and CookieYes are both enabled --}}
+    {{-- This is primarily used by the Sandbox mode --}}
     @if(config('yaffa.gtm_container_id') && config('yaffa.cookieyes_id'))
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -23,6 +23,7 @@
     </script>
     @endif
 
+    {{-- This is primarily used by the Sandbox mode --}}
     @if(config('yaffa.cookieyes_id'))
     <!-- Start cookieyes banner -->
     <script
@@ -33,6 +34,7 @@
     <!-- End cookieyes banner -->
     @endif
 
+    {{-- This is primarily used by the Sandbox mode --}}
     @if(config('yaffa.gtm_container_id'))
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -70,6 +72,7 @@
 </head>
 
 <body @yield('classes_body')>
+    {{-- This is primarily used by the Sandbox mode --}}
     @if(config('yaffa.gtm_container_id'))
     <!-- Google Tag Manager (noscript) -->
     <noscript>
@@ -90,14 +93,25 @@
     {{-- Footer Content --}}
     @yield('footer')
 
-@include('template.components.footer')
+    @include('template.components.footer')
 
-@routes
+    @routes
 
-<!-- REQUIRED JS SCRIPTS -->
-<script src="{{ mix('js/manifest.js') }}"></script>
-<script src="{{ mix('js/vendor.js') }}"></script>
-<script src="{{ mix('js/app.js') }}"></script>
+    {{-- This is primarily used by the Sandbox mode --}}
+    <!-- Load any dataLayer events -->
+    @if(config('yaffa.gtm_container_id'))
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        @forEach($dataLayerEvents as $event)
+        window.dataLayer.push(@json($event));
+        @endforEach
+    </script>
+    @endif
+
+    <!-- REQUIRED JS SCRIPTS -->
+    <script src="{{ mix('js/manifest.js') }}"></script>
+    <script src="{{ mix('js/vendor.js') }}"></script>
+    <script src="{{ mix('js/app.js') }}"></script>
 
 </body>
 </html>

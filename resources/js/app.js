@@ -133,8 +133,11 @@ function getTimeUntilNextReset() {
 
 function displayTimeUntilNextReset() {
     const alertContainer = document.getElementById('sandBoxResetAlert');
+    if (!alertContainer) {
+        return;
+    }
     const messageContainer = alertContainer.querySelector('span');
-    if (!alertContainer || !messageContainer) {
+    if (!messageContainer) {
         return;
     }
 

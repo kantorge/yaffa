@@ -8,6 +8,7 @@ use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Listeners\CreateDefaultAssetsForNewUser;
+use App\Listeners\DataLayerEventForLoginSuccess;
 use App\Listeners\ProcessIncomingEmail;
 use App\Listeners\ProcessTransactionCreated;
 use App\Listeners\ProcessTransactionDeleted;
@@ -37,6 +38,7 @@ class EventServiceProvider extends ServiceProvider
 
         Login::class => [
             SendLoginSuccessNotification::class,
+            DataLayerEventForLoginSuccess::class,
         ],
 
         Registered::class => [

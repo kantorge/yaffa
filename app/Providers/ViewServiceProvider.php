@@ -7,6 +7,7 @@ use App\Http\View\Composers\AccountListComposer;
 use App\Http\View\Composers\CategoryListComposer;
 use App\Http\View\Composers\CategoryParentListComposer;
 use App\Http\View\Composers\CurrencyListComposer;
+use App\Http\View\Composers\DataLayerEventComposer;
 use App\Http\View\Composers\InvestmentGroupListComposer;
 use App\Http\View\Composers\InvestmentPriceProviderListComposer;
 use App\Http\View\Composers\JavaScriptVariablesComposer;
@@ -24,6 +25,10 @@ class ViewServiceProvider extends ServiceProvider
         // General notification helper content; used in all layouts
         View::composer('template.layouts.page', NotificationMessageComposer::class);
         View::composer('template.layouts.auth', NotificationMessageComposer::class);
+
+        // DataLayer for Google Tag Manager
+        View::composer('template.layouts.page', DataLayerEventComposer::class);
+        View::composer('template.layouts.auth', DataLayerEventComposer::class);
 
         // Below composers are for logged in users only, based on view files
 
