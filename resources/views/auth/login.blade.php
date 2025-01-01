@@ -13,27 +13,12 @@
                             <h1>
                                 {{ __('Login') }}
                             </h1>
-                            @if (config('yaffa.sandbox_mode'))
-                                <p class="text-medium-emphasis">
-                                    {{ __('sandbox.login.info') }}
-                                </p>
-                                <p class="text-medium-emphasis">
-                                    {!! __('sandbox.login.credentials') !!}
-                                    <button
-                                            class="btn btn-sm"
-                                            type="button"
-                                            title="{{ __('sandbox.login.fill') }}"
-                                            data-coreui-toggle="tooltip"
-                                            id="loginWithDemoCredentials"
-                                    >
-                                        <i class="fa-solid fa-right-to-bracket"></i>
-                                    </button>
-                                </p>
-                            @else
-                                <p class="text-medium-emphasis">
-                                    {{ __('Sign in to start your session') }}
-                                </p>
-                            @endif
+                            <p class="text-medium-emphasis">
+                                {{ __('Sign in to start your session') }}
+                            </p>
+
+                            @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.login-helper')
+
                             <form
                                     method="POST"
                                     action="{{ route('login') }}"

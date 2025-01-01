@@ -21,7 +21,7 @@ class DataLayerEventForLoginSuccess
         $dataLayer = session()->get('dataLayer', []);
         $dataLayer[] = [
             'event' => 'loginSuccess',
-            'user' => hash('sha256', $event->user->email),
+            'is_generic_demo_user' => $event->user->email === 'demo@yaffa.cc',
         ];
         session()->flash('dataLayer', $dataLayer);
     }

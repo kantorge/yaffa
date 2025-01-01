@@ -52,13 +52,16 @@ class DataLayerTest extends DuskTestCase
 
     public function testDataLayerIsPresentIfGtmIdIsSet()
     {
-        // Make sure the GTM ID is set in the .env file
+        // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
         $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
+        $this->setConfig('yaffa.sandbox_mode', true);
 
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
+        // Create a new, verified user
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
 
-        $this->browse(function ($browser) {
+        $this->browse(function ($browser) use ($user) {
             // Open the login page
             $browser->visit(route('login'))
                 // Wait for the page to load
@@ -77,15 +80,80 @@ class DataLayerTest extends DuskTestCase
                 // Wait for the page to load
                 ->waitFor('footer');
 
-            // Make sure the dataLayer exists and the loginSuccess event is present
+            // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
             $output = $browser->script(' 
                 const events = window.dataLayer.filter(function(item) {
-                    return item.event === "loginSuccess";
+                    return item.event === "loginSuccess" && item.is_generic_demo_user === true;
                 });
                 
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
+
+            // Finally, log out by submitting the logout form
+            $browser->logout();
+
+            // Log in using the newly created user
+            $browser->visit(route('login'))
+                // Wait for the page to load
+                ->waitFor('#login')
+                ->type('email', $user->email)
+                ->type('password', 'password')
+                ->press('Login')
+                // Wait for the page to load
+                ->waitFor('footer');
+
+            // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
+            $output = $browser->script(' 
+                const events = window.dataLayer.filter(function(item) {
+                    return item.event === "loginSuccess" && item.is_generic_demo_user === false;
+                });
+                
+                return events.length;');
+
+            $this->assertEquals(1, $output[0]);
+        });
+    }
+
+    public function testResetAlertIsNotPresentIfSandboxIsDisabled()
+    {
+        // Make sure sandbox mode is disabled
+        $this->setConfig('yaffa.sandbox_mode', false);
+
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        $this->browse(function ($browser) use ($user) {
+            // Log in using the generic test user
+            $browser->loginAs($user)
+                ->visit(route('home'));
+
+            // Make sure the element is not present
+            $browser->assertMissing('#sandBoxResetAlert');
+
+            // Finally, log out by submitting the logout form
+            $browser->logout();
+        });
+    }
+
+    public function testResetAlertIsPresentIfSandboxIsEnabled()
+    {
+        // Make sure sandbox mode is enabled
+        $this->setConfig('yaffa.sandbox_mode', true);
+
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        $this->browse(function ($browser) use ($user) {
+            // Log in using the generic test user
+            $browser->loginAs($user)
+                ->visit(route('home'));
+
+            // Make sure the element is present
+            $browser->assertVisible('#sandBoxResetAlert');
+
+            // Finally, log out by submitting the logout form
+            $browser->logout();
         });
     }
 }

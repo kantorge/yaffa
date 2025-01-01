@@ -99,7 +99,7 @@
                 password: '',
                 password_confirmation: ''
             }),
-            sandbox_mode: window.YAFFA.sandbox_mode,
+            sandbox_mode: window.sandbox_mode,
         }),
         methods: {
             onSubmit() {

@@ -55,12 +55,7 @@
                 onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            @if (config('yaffa.sandbox_mode'))
-                <div class="alert d-none d-md-block mb-0 ms-5 p-2 ps-3 pe-3 hidden" role="alert" id="sandBoxResetAlert">
-                    <span></span>
-                    {{ __('sandbox.reset.info') }}
-                </div>
-            @endif
+            @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.reset-alert')
             <a class="header-brand d-md-none" href="{{ route('home') }} ">
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
                 <span>
