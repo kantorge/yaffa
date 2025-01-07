@@ -43,6 +43,15 @@ services:
       timeout: 10s
       retries: 3
 
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    container_name: mailhog
+    networks:
+      - app-network
+
   scheduler:
     build:
       context: .
