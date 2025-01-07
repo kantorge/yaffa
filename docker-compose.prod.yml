@@ -7,13 +7,19 @@ services:
       - "80:80"
     env_file:
       - .env
-    #volumes:
-      #- .:/var/www/html
+    volumes:
+      - ./logs:/var/www/html/storage/logs
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   db:
     image: 'mysql/mysql-server:8.0'
@@ -26,11 +32,16 @@ services:
         MYSQL_USER: '${DB_USERNAME}'
         MYSQL_PASSWORD: '${DB_PASSWORD}'
         MYSQL_ALLOW_EMPTY_PASSWORD: 1
-    #volumes:
-     # - db_data:/var/lib/mysql
+    volumes:
+      - ./db_data:/var/lib/mysql
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   scheduler:
     build:
@@ -39,16 +50,12 @@ services:
     command: php artisan schedule:work
     env_file:
       - .env
-    #volumes:
-     # - .:/var/www/html
     depends_on:
       - db
     restart: unless-stopped
+    networks:
+      - app-network
 
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  db_data:
-    driver: local

@@ -1,6 +1,8 @@
 /.idea/sonarlint
 /.vscode
 /.phpunit.cache
+/db_data
+/logs
 /node_modules
 /public/hot
 /public/storage
