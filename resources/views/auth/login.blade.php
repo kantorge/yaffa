@@ -16,6 +16,9 @@
                             <p class="text-medium-emphasis">
                                 {{ __('Sign in to start your session') }}
                             </p>
+
+                            @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.login-helper')
+
                             <form
                                     method="POST"
                                     action="{{ route('login') }}"
@@ -40,6 +43,7 @@
                                                 ])
                                                 type="submit"
                                                 dusk="login-button"
+                                                id="login"
                                                 @if(config('recaptcha.api_site_key'))
                                                     data-sitekey="{{ config('recaptcha.api_site_key') }}"
                                                     data-callback="onSubmit"

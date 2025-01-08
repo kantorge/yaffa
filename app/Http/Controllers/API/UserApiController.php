@@ -59,6 +59,13 @@ class UserApiController extends Controller
 
     public function changePassword(Request $request): JsonResponse
     {
+        // This endpoint is not allowed in sandbox mode
+        if (config('yaffa.sandbox_mode')) {
+            return response()->json([
+                'message' => __('This action is not allowed in sandbox mode.'),
+            ], 403);
+        }
+
         // This is a very specific endpoint without a dedicated FormRequest, so we need to use a local validator
         $this->validator($request->all())->validate();
 

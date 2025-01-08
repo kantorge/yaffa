@@ -115,6 +115,9 @@ class UserApiControllerTest extends TestCase
     /** @test */
     public function changing_password_successfully_returns_successful_response()
     {
+        // Make sure that the sandbox mode is disabled
+        config(['yaffa.sandbox_mode' => false]);
+
         /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -131,6 +134,9 @@ class UserApiControllerTest extends TestCase
     /** @test */
     public function changing_password_with_incorrect_current_password_returns_error()
     {
+        // Make sure that the sandbox mode is disabled
+        config(['yaffa.sandbox_mode' => false]);
+
         /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -147,6 +153,9 @@ class UserApiControllerTest extends TestCase
     /** @test */
     public function changing_password_without_password_confirmation_returns_error()
     {
+        // Make sure that the sandbox mode is disabled
+        config(['yaffa.sandbox_mode' => false]);
+
         /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -163,6 +172,9 @@ class UserApiControllerTest extends TestCase
     /** @test */
     public function changing_password_with_short_password_returns_error()
     {
+        // Make sure that the sandbox mode is disabled
+        config(['yaffa.sandbox_mode' => false]);
+
         /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -174,5 +186,27 @@ class UserApiControllerTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function password_change_in_sandbox_mode_is_not_allowed()
+    {
+        // Make sure that the sandbox mode is enabled
+        config(['yaffa.sandbox_mode' => true]);
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->json('PATCH', '/api/user/change_password', [
+            'current_password' => 'password',
+            'password' => 'newPassword',
+            'password_confirmation' => 'newPassword',
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('This action is not allowed in sandbox mode.'),
+        ]);
     }
 }
