@@ -14,7 +14,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - app-network
+      - yaffa-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
@@ -36,7 +36,7 @@ services:
       - ./db_data:/var/lib/mysql
     restart: unless-stopped
     networks:
-      - app-network
+      - yaffa-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
       interval: 30s
@@ -50,7 +50,7 @@ services:
       - "8025:8025" # Web UI
     container_name: mailhog
     networks:
-      - app-network
+      - yaffa-network
 
   scheduler:
     build:
@@ -63,8 +63,8 @@ services:
       - db
     restart: unless-stopped
     networks:
-      - app-network
+      - yaffa-network
 
 networks:
-  app-network:
+  yaffa-network:
     driver: bridge
