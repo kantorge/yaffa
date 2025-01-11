@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.13.0](https://github.com/kantorge/yaffa/compare/v1.12.3...v1.13.0) (2025-01-11)
+
+
+### 🛠️ Chores
+
+* NPM build ([012311d](https://github.com/kantorge/yaffa/commit/012311dc3bc6b7d84ea3450b9be57e336f183840))
+
+
+### 📚 Documentation
+
+* minor cleanup of the readme ([a3f5062](https://github.com/kantorge/yaffa/commit/a3f5062433a64cf4b26b3b01dd6a8cfcf43834d7))
+
+
+### ✨ Features
+
+* Docker assets ([#261](https://github.com/kantorge/yaffa/issues/261)) ([d3d95f2](https://github.com/kantorge/yaffa/commit/d3d95f2baa4c5d81eadf813d906d78c5ea31aa3f))
+* sandbox login helper ([5e4118f](https://github.com/kantorge/yaffa/commit/5e4118f7110959c460cff0320daa7f3d8c9c40b8))
+
+
+### 🐛 Bug Fixes
+
+* investment scrape form behavior ([707a1f4](https://github.com/kantorge/yaffa/commit/707a1f4c8686ccafed07a0e97f714139c4a2ce87))
+
 ## [1.12.3](https://github.com/kantorge/yaffa/compare/v1.12.2...v1.12.3) (2024-12-27)
 
 
