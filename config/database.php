@@ -48,7 +48,7 @@ return [
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'yaffa'),
+            'database' => env('DB_DATABASE', 'yaffa_db'),
             'username' => env('DB_USERNAME', 'yaffa_user'),
             'password' => env('DB_PASSWORD', 'yaffa_password'),
             'unix_socket' => env('DB_SOCKET', ''),
