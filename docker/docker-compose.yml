@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kantorge/yaffa:latest
     ports:
       - "80:80"
     env_file:
@@ -22,16 +20,15 @@ services:
       retries: 3
 
   db:
-    image: 'mysql/mysql-server:8.0'
+    image: mysql/mysql-server:8.0
     ports:
-        - '${FORWARD_DB_PORT:-3306}:3306'
+      - '${FORWARD_DB_PORT:-3306}:3306'
     environment:
-        MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-        MYSQL_ROOT_HOST: '%'
-        MYSQL_DATABASE: '${DB_DATABASE}'
-        MYSQL_USER: '${DB_USERNAME}'
-        MYSQL_PASSWORD: '${DB_PASSWORD}'
-        MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
     volumes:
       - ./db_data:/var/lib/mysql
     restart: unless-stopped
@@ -53,14 +50,13 @@ services:
       - yaffa-network
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kantorge/yaffa:latest
     command: php artisan schedule:work
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - yaffa-network
