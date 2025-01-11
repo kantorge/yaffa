@@ -30,4 +30,4 @@ jobs:
             kantorge/yaffa:latest
             kantorge/yaffa:${{ github.ref_name }}
           context: .
-          file: ./docker/Dockerfile: ./Dockerfile
+          file: ./docker/Dockerfile
