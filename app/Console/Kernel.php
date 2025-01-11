@@ -47,6 +47,12 @@ class Kernel extends ConsoleKernel
         // TODO: chain this command with the investment price retrieval command
         $schedule->command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00');
 
+        // Only in sandbox mode - reset the sandbox database at 2am UTC on Monday, Wednesday, and Friday
+        // This should be a balance between keeping the data fresh and allowing users to experiment with it
+        if (config('yaffa.sandbox_mode')) {
+            $schedule->command('app:database:reset')->weeklyOn([1, 3, 5], '02:00');
+        }
+
         // Redis cache cleanup
         $schedule->command('cache:prune-stale-tags')->hourly();
 

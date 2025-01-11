@@ -151,7 +151,7 @@ div.card-header > div.card-title {
 
 // Header color for non-production environments
 .header-local-mode {
-    background-color: #d33724;
+    background-color: var(--cui-danger);
 }
 
 // Adjust the font of the brand name in the header

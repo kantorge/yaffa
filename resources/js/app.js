@@ -98,3 +98,14 @@ $(function () {
         return confirm(__('Are you sure to abandon this form?'));
     });
 });
+
+/**
+ * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
+ */
+if (window.sandbox_mode) {
+    if (route().current() !== 'login') {
+        require('./sandbox-components/reset-timer');
+    } else {
+        require('./sandbox-components/login-helper');
+    }
+}

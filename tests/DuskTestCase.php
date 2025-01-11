@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use AleBatistella\DuskApiConf\Traits\UsesDuskApiConfig;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -11,6 +12,7 @@ use Laravel\Dusk\TestCase as BaseTestCase;
 abstract class DuskTestCase extends BaseTestCase
 {
     use CreatesApplication;
+    use UsesDuskApiConfig;
 
     // Define the user email, that is generally used for testing
     // This should match the primary user email in the database\seeders\DatabaseSeeder.php file

@@ -15366,7 +15366,7 @@ div.card-header > div.card-title {
 }
 
 .header-local-mode {
-  background-color: #d33724;
+  background-color: var(--cui-danger);
 }
 
 .sidebar-brand-full > a {
