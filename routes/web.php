@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Route;
  * Generic routes
  ********************/
 Route::view('/', 'pages.dashboard')->middleware(['auth', 'verified'])->name('home');
-Route::view('/terms', 'pages.terms')->name('terms');
+Route::view('/terms', 'pages.sandbox-terms')->name('terms');
 
 /*********************
  * Account and payee related routes

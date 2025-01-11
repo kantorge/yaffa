@@ -18,13 +18,13 @@ class AccountEntityRequest extends FormRequest
                 'required',
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
+                // The unique rule is scoped to the user and the config type of either the current entity or the request
                 Rule::unique('account_entities')->where(function ($query) {
                     return $query
                         ->where('user_id', $this->user()->id)
+                        ->where('config_type', $this->config_type)
                         ->when($this->account_entity, function ($query) {
-                            return $query
-                                ->where('config_type', $this->account_entity->config_type)
-                                ->where('id', '!=', $this->account_entity->id);
+                            return $query->where('id', '!=', $this->account_entity->id);
                         });
                 }),
             ],
