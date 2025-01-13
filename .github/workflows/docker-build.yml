@@ -2,6 +2,8 @@ name: Build and Push Docker images for new version
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -19,12 +21,18 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
-      - name: Set github.ref_name
+      - name: Set github.ref_name from workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
-        run: echo "github.ref_name=${{ github.event.inputs.ref_name }}" >> $GITHUB_ENV
+        run: echo "DOCKER_VERSION_TAG=${{ github.event.inputs.ref_name }}" >> $GITHUB_ENV
+
+      - name: Set github.ref_name from tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: echo "DOCKER_VERSION_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Print github.ref_name
-        run: echo "github.ref_name is ${{ github.ref_name }}"
+        run: |
+          echo "github.event_name is ${{ github.event_name }}"
+          echo "github.ref_name is ${{ env.DOCKER_VERSION_TAG }}"
 
       # Steps for building and pushing
       - name: Login to Docker Hub
@@ -46,6 +54,6 @@ jobs:
           push: true
           tags: |
             kantorge/yaffa:latest
-            kantorge/yaffa:${{ github.ref_name }}
+            kantorge/yaffa:${{ env.DOCKER_VERSION_TAG }}
           context: .
           file: ./docker/Dockerfile
