@@ -6,7 +6,7 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-const TABLESELECTOR = '#table';
+const TABLE_SELECTOR = '#table';
 class AccountListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
@@ -46,28 +46,28 @@ class AccountListTest extends DuskTestCase
             // Get the number of accounts in the table using JavaScript
             $this->assertEquals(
                 $user->accounts()->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only inactive accounts
             $browser->click('label[for=table_filter_active_no]');
             $this->assertEquals(
                 $user->accounts()->where('active', false)->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only active accounts
             $browser->click('label[for=table_filter_active_yes]');
             $this->assertEquals(
                 $user->accounts()->where('active', true)->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show all accounts
             $browser->click('label[for=table_filter_active_any]');
             $this->assertEquals(
                 $user->accounts()->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the search field
@@ -75,7 +75,7 @@ class AccountListTest extends DuskTestCase
             // The number of filtered accounts should be 1
             $this->assertEquals(
                 1,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Clear the search field
@@ -85,7 +85,7 @@ class AccountListTest extends DuskTestCase
             // The number of filtered tags should be 0
             $this->assertEquals(
                 0,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
         });
     }

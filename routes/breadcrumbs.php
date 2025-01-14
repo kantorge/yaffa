@@ -66,8 +66,8 @@ Breadcrumbs::for('account.history', function (BreadcrumbTrail $trail, $accountEn
 // Payee > merge form
 Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Payees'), route('payee.index'));
-    $trail->push(__('Merge'), route('payee.merge.form'));
+    $trail->push(__('Payees'), route('account-entity.index', ['type' => 'payee']));
+    $trail->push(__('Merge'), route('payees.merge.form'));
 });
 
 // Category resource (index, create, edit)
