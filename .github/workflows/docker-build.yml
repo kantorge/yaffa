@@ -2,8 +2,6 @@ name: Build and Push Docker images for new version
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -11,7 +9,7 @@ on:
       ref_name:
         description: 'Reference name to simulate github.ref_name'
         required: true
-        default: 'main'
+        default: 'test'
 
 jobs:
   docker:
@@ -57,3 +55,5 @@ jobs:
             kantorge/yaffa:${{ env.DOCKER_VERSION_TAG }}
           context: .
           file: ./docker/Dockerfile
+          build-args: |
+            BRANCH=main
