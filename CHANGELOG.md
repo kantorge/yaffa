@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.1](https://github.com/kantorge/yaffa/compare/v1.13.0...v1.13.1) (2025-01-14)
+
+
+### 🐛 Bug Fixes
+
+* broken breadcrumbs for the merge payees view ([43996f3](https://github.com/kantorge/yaffa/commit/43996f3b764d1d7c181a4d7642889b46c3831366))
+* Docker action ([#262](https://github.com/kantorge/yaffa/issues/262)) ([72d8bbe](https://github.com/kantorge/yaffa/commit/72d8bbe5586b500bf4bef02027757d2293b4914e))
+* Docker build action trigger ([8ddaaad](https://github.com/kantorge/yaffa/commit/8ddaaad259c17ed73d42394cb435a27b6fda71e4))
+* Docker workflow triggers ([d5f8016](https://github.com/kantorge/yaffa/commit/d5f80161da2115c31c8e02dcbdf4de086616c7af))
+* Docker-related clarification in the .env.example file ([6f63f2f](https://github.com/kantorge/yaffa/commit/6f63f2fd24e34fcf58a5f12fc3b02d154ba93795))
+* GitHub action settings for Docker build ([b1b5a97](https://github.com/kantorge/yaffa/commit/b1b5a97d02fb6e74f2543adeeab809f11ebd6733))
+
 ## [1.13.0](https://github.com/kantorge/yaffa/compare/v1.12.3...v1.13.0) (2025-01-11)
 
 
