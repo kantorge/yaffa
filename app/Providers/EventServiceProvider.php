@@ -8,6 +8,7 @@ use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
 use App\Listeners\CreateDefaultAssetsForNewUser;
+use App\Listeners\DataLayerEventForLoginFailed;
 use App\Listeners\DataLayerEventForLoginSuccess;
 use App\Listeners\ProcessIncomingEmail;
 use App\Listeners\ProcessTransactionCreated;
@@ -34,6 +35,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Failed::class => [
             SendLoginFailedNotification::class,
+            DataLayerEventForLoginFailed::class,
         ],
 
         Login::class => [

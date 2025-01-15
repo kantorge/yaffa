@@ -112,48 +112,56 @@ class DataLayerTest extends DuskTestCase
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
-        });
-    }
-
-    public function testResetAlertIsNotPresentIfSandboxIsDisabled()
-    {
-        // Make sure sandbox mode is disabled
-        $this->setConfig('yaffa.sandbox_mode', false);
-
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
-
-        $this->browse(function ($browser) use ($user) {
-            // Log in using the generic test user
-            $browser->loginAs($user)
-                ->visit(route('home'));
-
-            // Make sure the element is not present
-            $browser->assertMissing('#sandBoxResetAlert');
 
             // Finally, log out by submitting the logout form
             $browser->logout();
         });
     }
 
-    public function testResetAlertIsPresentIfSandboxIsEnabled()
+    public function testDataLayerIsPresentIfLoginFailed()
     {
-        // Make sure sandbox mode is enabled
+        // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+        $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
         $this->setConfig('yaffa.sandbox_mode', true);
 
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
+        $this->browse(function ($browser) {
+            // Open the login page
+            $browser->visit(route('login'))
+                // Wait for the page to load
+                ->waitFor('#login')
+                // Type in an invalid email address
+                ->type('email', 'thisisnotauser@example.com')
+                ->type('password', 'password')
+                ->press('Login')
+                // Wait for the page to reload
+                ->waitFor('#login');
 
-        $this->browse(function ($browser) use ($user) {
-            // Log in using the generic test user
-            $browser->loginAs($user)
-                ->visit(route('home'));
+            // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
+            $output = $browser->script(' 
+                const events = window.dataLayer.filter(function(item) {
+                    return item.event === "loginFailed" && item.is_generic_demo_user === false;
+                });
+                
+                return events.length;');
 
-            // Make sure the element is present
-            $browser->assertVisible('#sandBoxResetAlert');
+            $this->assertEquals(1, $output[0]);
 
-            // Finally, log out by submitting the logout form
-            $browser->logout();
+            // Type in the demo user email address
+            $browser->type('email', $this::USER_EMAIL)
+                ->type('password', 'incorrect_password')
+                ->press('Login')
+                // Wait for the page to reload
+                ->waitFor('#login');
+
+            // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
+            $output = $browser->script(' 
+                const events = window.dataLayer.filter(function(item) {
+                    return item.event === "loginFailed" && item.is_generic_demo_user === true;
+                });
+                
+                return events.length;');
+
+            $this->assertEquals(1, $output[0]);
         });
     }
 }
