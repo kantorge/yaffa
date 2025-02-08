@@ -41,6 +41,9 @@ class AccountEntityRequest extends FormRequest
                 'config.opening_balance' => [
                     'required',
                     'numeric',
+                    // Fit in signed DECIMAL(30,10) range
+                    'min:-999999999999999999999.9999999999',
+                    'max:999999999999999999999.9999999999',
                 ],
                 'config.account_group_id' => [
                     'required',
@@ -49,7 +52,8 @@ class AccountEntityRequest extends FormRequest
                 ],
                 'config.currency_id' => [
                     'required',
-                    Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', $this->user()->id)),
+                    Rule::exists('currencies', 'id')
+                        ->where(fn ($query) => $query->where('user_id', $this->user()->id)),
                 ],
             ]);
         }
