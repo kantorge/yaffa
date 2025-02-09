@@ -177,7 +177,7 @@ class AccountTest extends TestCase
 
         $attributes = $baseAttributes = AccountEntity::factory()->for($user)->raw();
         $attributes['config_type'] = 'account';
-        $attributes['config'] =  Account::factory()->withUser($user)->raw();
+        $attributes['config'] = Account::factory()->withUser($user)->raw();
 
         $response = $this
             ->actingAs($user)
@@ -270,5 +270,51 @@ class AccountTest extends TestCase
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
+    }
+
+    /** @test */
+    public function form_request_enforces_opening_balance_boundaries()
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $attributes = AccountEntity::factory()->for($user)->raw();
+        $attributes['config_type'] = 'account';
+        $attributes['config'] = Account::factory()->withUser($user)->raw();
+
+        // Opening balance is too high
+        $attributes['config']['opening_balance'] = 10 ** 21;
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store", ['type' => 'account']),
+                $attributes
+            );
+
+        $response->assertStatus(422);
+
+        // Opening balance is too low
+        $attributes['config']['opening_balance'] = -10 ** 21;
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store", ['type' => 'account']),
+                $attributes
+            );
+
+        $response->assertStatus(422);
+
+        // Opening balance is within the boundaries
+        $attributes['config']['opening_balance'] = 10 ** 10 + 0.0000000001;
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route("{$this->base_route}.store", ['type' => 'account']),
+                $attributes
+            );
+
+        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
+
+        $this->assertDatabaseHas('accounts', $attributes['config']);
     }
 }

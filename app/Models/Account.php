@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * App\Models\Account
  *
  * @property int $id
- * @property int $opening_balance
+ * @property float $opening_balance
  * @property int $account_group_id
  * @property int $currency_id
  * @property-read AccountGroup $accountGroup
@@ -83,6 +83,10 @@ class Account extends Model
         'opening_balance',
         'account_group_id',
         'currency_id',
+    ];
+
+    protected $casts = [
+        'opening_balance' => 'float',
     ];
 
     public function config(): MorphOne
