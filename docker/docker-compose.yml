@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs:/var/www/html/storage/logs
+      - yaffa_storage:/var/www/html/storage
     depends_on:
       db:
         condition: service_healthy
@@ -30,7 +30,7 @@ services:
       MYSQL_USER: '${DB_USERNAME}'
       MYSQL_PASSWORD: '${DB_PASSWORD}'
     volumes:
-      - ./db_data:/var/lib/mysql
+      - yaffa_db:/var/lib/mysql
     restart: unless-stopped
     networks:
       - yaffa-network
@@ -60,6 +60,10 @@ services:
     restart: unless-stopped
     networks:
       - yaffa-network
+
+volumes:
+  yaffa_db:
+  yaffa_storage:
 
 networks:
   yaffa-network:
