@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.2](https://github.com/kantorge/yaffa/compare/v1.13.1...v1.13.2) (2025-02-09)
+
+
+### 🐛 Bug Fixes
+
+* allow decimal opening balance with enforced boundaries ([786bd5c](https://github.com/kantorge/yaffa/commit/786bd5ccd993c41e8eae5ce3d1f3a961f7e9a3ba))
+* improve the Docker-related assets and instructions ([9b30c31](https://github.com/kantorge/yaffa/commit/9b30c31d73b64507802dcea9f480fd23942fee58))
+
 ## [1.13.1](https://github.com/kantorge/yaffa/compare/v1.13.0...v1.13.1) (2025-01-14)
 
 
