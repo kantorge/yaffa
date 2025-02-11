@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.3](https://github.com/kantorge/yaffa/compare/v1.13.2...v1.13.3) (2025-02-11)
+
+
+### 🐛 Bug Fixes
+
+* currency local in the transactions report ([8caa969](https://github.com/kantorge/yaffa/commit/8caa9695e9efbbf5ef2fb4c52733294091a7f4c7))
+
 ## [1.13.2](https://github.com/kantorge/yaffa/compare/v1.13.1...v1.13.2) (2025-02-09)
 
 
