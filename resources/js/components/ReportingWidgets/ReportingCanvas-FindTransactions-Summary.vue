@@ -38,9 +38,9 @@
                             <td v-if="summary.currency_id !== 0">{{ summary.currency_name }}</td>
                             <td>{{ summary.count }}</td>
                             <td>
-                                {{ toFormattedCurrency(summary.sum, this.language, summary.currency) }}
+                                {{ toFormattedCurrency(summary.sum, this.locale, summary.currency) }}
                                 <span v-if="summary.currency_id !== 0 && summary.currency_id !== this.baseCurrency.id">
-                                    ({{ toFormattedCurrency(summary.sum_base, this.language, this.baseCurrency) }})
+                                    ({{ toFormattedCurrency(summary.sum_base, this.locale, this.baseCurrency) }})
                                 </span>
                             </td>
                         </tr>
@@ -55,9 +55,9 @@
                             <td v-if="summary.currency_id !== 0">{{ summary.currency_name }}</td>
                             <td>{{ summary.count }}</td>
                             <td>
-                                {{ toFormattedCurrency(summary.sum, this.language, summary.currency) }}
+                                {{ toFormattedCurrency(summary.sum, this.locale, summary.currency) }}
                                 <span v-if="summary.currency_id !== 0 && summary.currency_id !== this.baseCurrency.id">
-                                    ({{ toFormattedCurrency(summary.sum_base, this.language, this.baseCurrency) }})
+                                    ({{ toFormattedCurrency(summary.sum_base, this.locale, this.baseCurrency) }})
                                 </span>
                             </td>
                         </tr>
@@ -100,7 +100,7 @@ export default {
     data() {
         return {
             baseCurrency: window.YAFFA.baseCurrency,
-            language: window.YAFFA.language
+            locale: window.YAFFA.locale
         }
     },
     computed: {
@@ -205,7 +205,7 @@ export default {
             if (!this.minDate || !this.minDate.toLocaleDateString) {
                 return null;
             }
-            return this.minDate.toLocaleDateString(window.YAFFA.language);
+            return this.minDate.toLocaleDateString(window.YAFFA.locale);
         },
         maxDate() {
             return this.transactions.length ? this.transactions.reduce((acc, transaction) => {
@@ -216,7 +216,7 @@ export default {
             if (!this.maxDate || !this.maxDate.toLocaleDateString) {
                 return null;
             }
-            return this.maxDate.toLocaleDateString(window.YAFFA.language);
+            return this.maxDate.toLocaleDateString(window.YAFFA.locale);
         },
     },
     methods: {
