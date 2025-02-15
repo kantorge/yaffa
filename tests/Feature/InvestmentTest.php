@@ -145,7 +145,7 @@ class InvestmentTest extends TestCase
                     'investment_group_id' => $investmentGroup->id,
                     'currency_id' => $currency->id,
                     'auto_update' => null,
-                    'investent_price_provider_id' => null,
+                    'investment_price_provider_id' => null,
                 ]
             );
         $response->assertStatus(422);
@@ -157,9 +157,15 @@ class InvestmentTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->createPrerequisites($user);
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
 
-        $this->assertCreateForUser($user);
+        $this->assertCreateForUser(
+            $user,
+            [
+                'investment_group_id' => $investmentGroup->id,
+                'currency_id' => $currency->id,
+            ]
+        );
     }
 
     /** @test */
@@ -207,7 +213,7 @@ class InvestmentTest extends TestCase
                     'investment_group_id' => $investment->investment_group_id,
                     'currency_id' => $investment->currency_id,
                     'auto_update' => $investment->auto_update,
-                    'investent_price_provider' => $investment->investment_price_provider,
+                    'investment_price_provider' => $investment->investment_price_provider,
                 ]
             );
 
@@ -220,9 +226,23 @@ class InvestmentTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->createPrerequisites($user);
+        [$currency, $investmentGroup] = $this->createPrerequisites($user);
+
         /** @var Investment $investment */
-        $investment = Investment::factory()->for($user)->withUser($user)->create();
+        $investment = Investment::factory()->for($user)->create([
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+        ]);
+
+        // Assert that the investment has valid foreign keys
+        $this->assertDatabaseHas('currencies', ['id' => $currency->id, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('investment_groups', ['id' => $investmentGroup->id, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('investments', [
+            'id' => $investment->id,
+            'currency_id' => $currency->id,
+            'investment_group_id' => $investmentGroup->id,
+            'user_id' => $user->id,
+        ]);
 
         $response = $this
             ->actingAs($user)
@@ -238,7 +258,7 @@ class InvestmentTest extends TestCase
                     'investment_group_id' => $investment->investment_group_id,
                     'currency_id' => $investment->currency_id,
                     'auto_update' => $investment->auto_update,
-                    'investent_price_provider' => $investment->investment_price_provider,
+                    'investment_price_provider' => $investment->investment_price_provider,
                 ]
             );
 
@@ -261,8 +281,8 @@ class InvestmentTest extends TestCase
     private function createPrerequisites(User $user = null): array
     {
         if ($user) {
-            $investmentGroup = $this->createForUser($user, InvestmentGroup::class);
-            $currency = $this->createForUser($user, Currency::class);
+            $investmentGroup = InvestmentGroup::factory()->for($user)->create();
+            $currency = Currency::factory()->for($user)->create();
         } else {
             $investmentGroup = $this->create(InvestmentGroup::class);
             $currency = $this->create(Currency::class);
