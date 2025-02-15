@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.4](https://github.com/kantorge/yaffa/compare/v1.13.3...v1.13.4) (2025-02-15)
+
+
+### 🐛 Bug Fixes
+
+* issues when deleting investment groups ([d9abbf1](https://github.com/kantorge/yaffa/commit/d9abbf140b7218e58beb3d01069e30b5a587dd67))
+* risky investment tests ([e1659e0](https://github.com/kantorge/yaffa/commit/e1659e02688349729a62867dd5a8aa9a126f238d))
+
 ## [1.13.3](https://github.com/kantorge/yaffa/compare/v1.13.2...v1.13.3) (2025-02-11)
 
 
