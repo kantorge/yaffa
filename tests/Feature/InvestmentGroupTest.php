@@ -188,13 +188,14 @@ class InvestmentGroupTest extends TestCase
         $this->assertDestroyWithUser($user);
     }
 
+    /** @test */
     public function user_cannot_delete_investment_group_with_attached_investment()
     {
         $user = User::factory()->create();
 
         $investmentGroup = $this->createForUser($user, $this->base_model);
-        $this->createForUser($user, Currency::class);
-        Investment::factory()->for($user)->create();
+        Currency::factory()->for($user)->create();
+        Investment::factory()->for($user)->for($investmentGroup)->create();
 
         $response = $this->actingAs($user)->deleteJson(route("{$this->base_route}.destroy", $investmentGroup->id));
         $response->assertSessionHas('notification_collection.0.type', 'danger');

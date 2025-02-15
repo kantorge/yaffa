@@ -53,6 +53,9 @@ class DataLayerTest extends DuskTestCase
     public function testDataLayerIsPresentIfGtmIdIsSet()
     {
         // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+
         $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
         $this->setConfig('yaffa.sandbox_mode', true);
 
@@ -116,11 +119,18 @@ class DataLayerTest extends DuskTestCase
             // Finally, log out by submitting the logout form
             $browser->logout();
         });
+
+        // Reset the original GTM ID and sandbox mode
+        $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
+        $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
     }
 
     public function testDataLayerIsPresentIfLoginFailed()
     {
         // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+
         $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
         $this->setConfig('yaffa.sandbox_mode', true);
 
@@ -163,5 +173,9 @@ class DataLayerTest extends DuskTestCase
 
             $this->assertEquals(1, $output[0]);
         });
+
+        // Reset the original GTM ID and sandbox mode
+        $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
+        $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
     }
 }

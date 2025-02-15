@@ -9,7 +9,7 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-const TABLESELECTOR = '#table';
+const TABLE_SELECTOR = '#table';
 
 class CategoryListTest extends DuskTestCase
 {
@@ -56,66 +56,66 @@ class CategoryListTest extends DuskTestCase
             // Get the number of categories in the table using JavaScript
             $this->assertEquals(
                 $user->categories()->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only inactive categories
             $browser->click('label[for=table_filter_active_no]');
             $this->assertEquals(
                 $user->categories()->where('active', false)->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only active categories
             $browser->click('label[for=table_filter_active_yes]');
             $this->assertEquals(
                 $user->categories()->where('active', true)->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show all categories
             $browser->click('label[for=table_filter_active_any]');
             $this->assertEquals(
                 $user->categories()->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only root categories
             $browser->click('label[for=table_filter_category_level_parent]');
             $this->assertEquals(
                 $user->categories()->whereNull('parent_id')->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show only sub categories
             $browser->click('label[for=table_filter_category_level_child]');
             $this->assertEquals(
                 $user->categories()->whereNotNull('parent_id')->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the button bar to show all categories
             $browser->click('label[for=table_filter_category_level_any]');
             $this->assertEquals(
                 $user->categories()->count(),
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Filter the table using the search field
             $browser->type('@input-table-filter-search', $categoryToSearch->name);
             $this->assertEquals(
                 1,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
 
             // Clear the search field
             $browser->clear('@input-table-filter-search');
             // Enter a dummy search string
             $browser->type('@input-table-filter-search', 'dummy');
-            // The number of filtered tags should be 0
+            // The number of filtered categories should be 0
             $this->assertEquals(
                 0,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, TABLE_SELECTOR)
             );
         });
     }
@@ -210,39 +210,39 @@ class CategoryListTest extends DuskTestCase
 
             // Validate the delete button is enabled for a standalone parent category
             $browser->assertPresent(
-                TABLESELECTOR . " button.deleteIcon[data-id='{$standaloneParentCategory->id}']"
+                TABLE_SELECTOR . " button.deleteIcon[data-id='{$standaloneParentCategory->id}']"
             );
 
             // Validate the delete button is disabled for a parent category with a child category
             $browser->assertMissing(
-                TABLESELECTOR . " button.deleteIcon[data-id='{$parentWithChildCategory->id}']"
+                TABLE_SELECTOR . " button.deleteIcon[data-id='{$parentWithChildCategory->id}']"
             );
             $browser->assertPresent(
-                TABLESELECTOR . " button[data-id='{$parentWithChildCategory->id}']:not(.deleteIcon)"
+                TABLE_SELECTOR . " button[data-id='{$parentWithChildCategory->id}']:not(.deleteIcon)"
             );
 
             // Validate the delete button is disabled for a category assigned to a payee as default category
             $browser->assertMissing(
-                TABLESELECTOR . " button.deleteIcon[data-id='{$payeeDefaultCategory->id}']"
+                TABLE_SELECTOR . " button.deleteIcon[data-id='{$payeeDefaultCategory->id}']"
             );
             $browser->assertPresent(
-                TABLESELECTOR . " button[data-id='{$payeeDefaultCategory->id}']:not(.deleteIcon)"
+                TABLE_SELECTOR . " button[data-id='{$payeeDefaultCategory->id}']:not(.deleteIcon)"
             );
 
             // Validate the delete button is disabled for a category which is the preferred category of a payee
             $browser->assertMissing(
-                TABLESELECTOR . " button.deleteIcon[data-id='{$payeePreferredCategory->id}']"
+                TABLE_SELECTOR . " button.deleteIcon[data-id='{$payeePreferredCategory->id}']"
             );
             $browser->assertPresent(
-                TABLESELECTOR . " button[data-id='{$payeePreferredCategory->id}']:not(.deleteIcon)"
+                TABLE_SELECTOR . " button[data-id='{$payeePreferredCategory->id}']:not(.deleteIcon)"
             );
 
             // Validate the delete button is disabled for a category which is the deferred category of a payee
             $browser->assertMissing(
-                TABLESELECTOR . " button.deleteIcon[data-id='{$payeeDeferredCategory->id}']"
+                TABLE_SELECTOR . " button.deleteIcon[data-id='{$payeeDeferredCategory->id}']"
             );
             $browser->assertPresent(
-                TABLESELECTOR . " button[data-id='{$payeeDeferredCategory->id}']:not(.deleteIcon)"
+                TABLE_SELECTOR . " button[data-id='{$payeeDeferredCategory->id}']:not(.deleteIcon)"
             );
         });
     }

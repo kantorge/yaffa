@@ -26,7 +26,7 @@ class InvestmentGroupApiController extends Controller
     public function destroy(InvestmentGroup $investmentGroup): JsonResponse
     {
         /**
-         * @delete('/api/assets/investmentgroup/{accountGroup}')
+         * @delete('/api/assets/investmentgroup/{investmentGroup}')
          * @name('api.investmentgroup.destroy')
          * @middlewares('api', 'auth:sanctum')
          */
@@ -36,7 +36,7 @@ class InvestmentGroupApiController extends Controller
         if ($result['success']) {
             return response()
                 ->json(
-                    ['accountGroup' => $investmentGroup],
+                    ['investmentGroup' => $investmentGroup],
                     Response::HTTP_OK
                 );
         }
@@ -44,7 +44,7 @@ class InvestmentGroupApiController extends Controller
         return response()
             ->json(
                 [
-                    'accountGroup' => $investmentGroup,
+                    'investmentGroup' => $investmentGroup,
                     'error' => $result['error'],
                 ],
                 Response::HTTP_UNPROCESSABLE_ENTITY
