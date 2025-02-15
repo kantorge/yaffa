@@ -64,7 +64,11 @@
         <div class="col-12 col-lg-9">
             <div class="card">
                 <div class="card-body no-datatable-search">
-                    <table class="table table-striped table-bordered table-hover" id="table"></table>
+                    <table
+                            class="table table-striped table-bordered table-hover"
+                            dusk="table-investment-groups"
+                            id="table"
+                    ></table>
                 </div>
             </div>
         </div>

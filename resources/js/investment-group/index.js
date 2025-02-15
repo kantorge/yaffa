@@ -23,7 +23,7 @@ const deleteButtonConditions = [
 ];
 
 /** @property {Array} investmentGroups */
-$(dataTableSelector).DataTable({
+let table = $(dataTableSelector).DataTable({
     data: window.investmentGroups,
     columns: [
         {
@@ -65,7 +65,7 @@ $(dataTableSelector).DataTable({
             let element = $(this);
             element.addClass('busy');
 
-            // Send request to change investment active state
+            // Send request to delete the investment group
             $.ajax({
                 type: 'DELETE',
                 url: window.route('api.investmentgroup.destroy', row.data().id),
@@ -77,7 +77,7 @@ $(dataTableSelector).DataTable({
                 success: function (data) {
                     // Update row in table data source
                     window.investmentGroups = window.investmentGroups
-                        .filter(accountGroup => investmentGroup.id !== data.investmentGroup.id);
+                        .filter(investmentGroup => investmentGroup.id !== data.investmentGroup.id);
 
                     row.remove().draw();
                     let notificationEvent = new CustomEvent('toast', {
@@ -116,7 +116,7 @@ window.onboardingTourSteps = [
     {
         element: '#table',
         popover: {
-            title: __('Account Groups'),
+            title: __('Investment Groups'),
             description: __('Investment groups serve as an organizational tool to streamline your investment overview.'),
         }
     },
