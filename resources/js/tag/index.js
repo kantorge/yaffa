@@ -44,7 +44,7 @@ window.table = $(dataTableSelector).DataTable({
                 return  `<a 
                                 class="btn btn-xs btn-success" 
                                 href="${route('reports.transactions', {tags: [data]})}"
-                                title="${__('Vies associated transactions')}"
+                                title="${__('View associated transactions')}"
                         >
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </a> ` +
