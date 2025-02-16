@@ -8,6 +8,6 @@
 
 @section('content')
     <div id="app">
-        <find-transactions></find-transactions>
+        <find-transactions dusk="component-find-transactions"></find-transactions>
     </div>
 @stop
