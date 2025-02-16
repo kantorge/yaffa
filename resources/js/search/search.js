@@ -41,7 +41,7 @@ document.querySelectorAll('#table-search-results-accounts td.transactionCount').
 document.querySelectorAll('#table-search-results-payees td.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the tag results, and get the number of associated transactions for each tag.
-document.querySelectorAll('#list-search-results-tag span.transactionCount').forEach(getTransactionCount);
+document.querySelectorAll('#list-search-results-tags span.transactionCount').forEach(getTransactionCount);
 
 // Loop the span placeholder for all the category results, and get the number of associated transactions for each category.
 document.querySelectorAll('#list-search-results-categories span.transactionCount').forEach(getTransactionCount);

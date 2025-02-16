@@ -55,7 +55,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Display form for searching transactions. Pass any preset filters from query string.
+     * Display form for searching transactions.
      *
      * @param  Request  $request
      * @return View
@@ -67,31 +67,6 @@ class ReportController extends Controller
          * @name('reports.transactions')
          * @middlewares('web', 'auth', 'verified')
          */
-        // Get preset filters from query string
-        $filters = [];
-        if ($request->has('accounts')) {
-            $filters['accounts'] = $request->get('accounts');
-        }
-        if ($request->has('payees')) {
-            $filters['payees'] = $request->get('payees');
-        }
-        if ($request->has('categories')) {
-            $filters['categories'] = $request->get('categories');
-        }
-        if ($request->has('tags')) {
-            $filters['tags'] = $request->get('tags');
-        }
-        if ($request->has('date_from')) {
-            $filters['date_from'] = $request->get('date_from');
-        }
-        if ($request->has('date_to')) {
-            $filters['date_to'] = $request->get('date_to');
-        }
-
-        JavaScript::put([
-            'filters' => $filters,
-        ]);
-
         return view('reports.transactions');
     }
 

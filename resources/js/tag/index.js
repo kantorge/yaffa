@@ -15,7 +15,13 @@ window.table = $(dataTableSelector).DataTable({
     columns: [
         {
             data: "name",
-            title: __("Name")
+            title: __("Name"),
+            render: function (data, type, row) {
+                if (type === 'display') {
+                    return `<a href="${route('reports.transactions', {tags: [row.id]})}" title="${__('View associated transactions')}">${data}</a>`;
+                }
+                return data;
+            }
         },
         {
             data: "active",
@@ -38,7 +44,7 @@ window.table = $(dataTableSelector).DataTable({
                 return  `<a 
                                 class="btn btn-xs btn-success" 
                                 href="${route('reports.transactions', {tags: [data]})}"
-                                title="${__('Show transactions')}"
+                                title="${__('View associated transactions')}"
                         >
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </a> ` +

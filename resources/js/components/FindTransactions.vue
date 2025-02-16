@@ -229,10 +229,10 @@ export default {
             dataTable: null,
             dateFrom: urlParams.get('date_from') || null,
             dateTo: urlParams.get('date_to') || null,
-            selectedAccounts: urlParams.getAll('accounts[]') || [],
-            selectedCategories: urlParams.getAll('categories[]') || [],
-            selectedPayees: urlParams.getAll('payees[]') || [],
-            selectedTags: urlParams.getAll('tags[]') || [],
+            selectedAccounts: this.getUrlParams('accounts'),
+            selectedCategories: this.getUrlParams('categories'),
+            selectedPayees: this.getUrlParams('payees'),
+            selectedTags: this.getUrlParams('tags'),
             presetsReady: {
                 category: false,
                 payee: false,
@@ -335,6 +335,28 @@ export default {
                 .finally(() => {
                     this.busy = false;
                 });
+        },
+
+        /**
+         * This helper function is intended to provide flexibility in getting URL parameters, in terms of various array formats.
+         * E.g. if paramName is 'tags', it should return anything that is in the URL like: 'tags[]' or 'tags[0]'
+         *
+         * @param paramName
+         * @returns {string[]} Array of URL parameters
+         */
+        getUrlParams(paramName) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const regex = new RegExp(`^${paramName}\\[(\\d)?\\]$`);
+
+            let params = [];
+
+            urlParams.forEach((value, key) => {
+                if (regex.test(key)) {
+                  params.push(value);
+                }
+            });
+
+            return params;
         },
 
         /**
