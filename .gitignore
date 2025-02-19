@@ -1,4 +1,5 @@
 /.idea/sonarlint
+/.idea
 /.vscode
 /.phpunit.cache
 /node_modules
