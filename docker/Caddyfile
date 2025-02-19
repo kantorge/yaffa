@@ -1,0 +1,10 @@
+# Adjust the subdomain and domain name accordingly
+your-subdomain.yourdomain.com {
+    reverse_proxy app:80
+}
+
+# Optional version for a custom port
+# Adjust the docker-compose.yml file accordingly
+# your-subdomain.yourdomain.com:your-port-number {
+#     reverse_proxy app:80
+# }

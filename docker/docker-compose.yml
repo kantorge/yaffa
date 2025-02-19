@@ -1,13 +1,40 @@
 services:
+  # Caddy is a web server that can automatically obtain and renew SSL certificates from Let's Encrypt (https://caddyserver.com/)
+  # It is used as a reverse proxy to handle HTTPS traffic and redirect HTTP to HTTPS
+  # If you need this functionality, then uncomment the following lines and adjust the Caddyfile accordingly
+  # (Create a Caddyfile in the same directory as this docker-compose.yml file, or download it from Yaffa's GitHub repository)
+  # You also need to adjust the port settings of the app container to listen to the port that Caddy is forwarding to. Also, enable the Caddy dependency in the app container.
+  # caddy:
+  #   image: caddy:latest
+  #   container_name: yaffa_caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"    # HTTP traffic
+  #     - "443:443"  # HTTPS traffic
+  #     # - "8400:8400"  # Custom port to access Yaffa. Adjust the Caddyfile accordingly
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile  # Caddyfile configuration
+  #     - caddy_data:/data                  # SSL certificates & ACME storage
+  #     - caddy_config:/config              # Caddy configurations
+  #   networks:
+  #     - yaffa-network
+
+  # This is the main Yaffa app container
   app:
     image: kantorge/yaffa:latest
+    container_name: yaffa_app
     ports:
-      - "80:80"
+      # Select one of the following options to expose Yaffa to the world
+      - "80:80" # Expose YAFFA on port 80 directly, if you don't use Caddy
+      #- "80" # Expose the app on port 80, Caddy will handle opening it to the world
     env_file:
       - .env
     volumes:
-      - yaffa_storage:/var/www/html/storage
+      - yaffa_storage:/var/www/html/storage  # Yaffa storage for logs and planned future upload features
     depends_on:
+      # Uncomment the following line if you use Caddy as a reverse proxy
+      # caddy:
+      #   condition: service_started
       db:
         condition: service_healthy
     restart: unless-stopped
@@ -19,6 +46,20 @@ services:
       timeout: 10s
       retries: 3
 
+  # This container runs the Laravel scheduler to handle scheduled tasks
+  scheduler:
+    image: kantorge/yaffa:latest
+    command: php artisan schedule:work
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - yaffa-network
+
+  # MySQL database container to store Yaffa data
   db:
     image: mysql/mysql-server:8.0
     ports:
@@ -40,28 +81,20 @@ services:
       timeout: 10s
       retries: 3
 
-  mailhog:
-    image: mailhog/mailhog
-    ports:
-      - "1025:1025" # SMTP server
-      - "8025:8025" # Web UI
-    container_name: mailhog
-    networks:
-      - yaffa-network
-
-  scheduler:
-    image: kantorge/yaffa:latest
-    command: php artisan schedule:work
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - yaffa-network
+  # MailHog is an email testing tool for developers (https://github.com/mailhog/MailHog)
+  # Uncomment the following lines to enable MailHog, which can be used to test email sending, if you need this feature, but you don't have other email sending services set up.
+  # mailhog:
+  #   image: mailhog/mailhog
+  #   ports:
+  #     - "1025:1025" # SMTP server
+  #     - "8025:8025" # Web UI
+  #   container_name: mailhog
+  #   networks:
+  #     - yaffa-network
 
 volumes:
+  caddy_data:
+  caddy_config:
   yaffa_db:
   yaffa_storage:
 
