@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7185af3068c82b7b36beed2007a0a808",
+    "content-hash": "12f80abc5ecedae4bc80a04b612e2a1e",
     "packages": [
         {
             "name": "beyondcode/laravel-mailbox",
@@ -13830,6 +13830,68 @@
                 "source": "https://github.com/kantorge/laravel-dusk-select2/tree/feature/search_selector_delay"
             },
             "time": "2023-04-29T12:02:10+00:00"
+        },
+        {
+            "name": "ryoluo/sail-ssl",
+            "version": "v1.3.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ryoluo/sail-ssl.git",
+                "reference": "afc8cbdbc27a41bbb32a835df02e38a9f937f2bc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ryoluo/sail-ssl/zipball/afc8cbdbc27a41bbb32a835df02e38a9f937f2bc",
+                "reference": "afc8cbdbc27a41bbb32a835df02e38a9f937f2bc",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0",
+                "php": "^7.3|^8.0|^8.1|^8.2|^8.3"
+            },
+            "require-dev": {
+                "laravel/sail": "^1.14",
+                "orchestra/testbench": "^6.0|^7.0|^8.0|^9.0",
+                "phpunit/phpunit": "^9.5|^10.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Ryoluo\\SailSsl\\SailSslServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Ryoluo\\SailSsl\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ryo Kobayashi",
+                    "email": "ryoluo@lotus-base.com"
+                }
+            ],
+            "description": "Laravel Sail plugin to enable SSL (HTTPS) connection with Nginx.",
+            "keywords": [
+                "docker",
+                "laravel",
+                "nginx",
+                "sail",
+                "ssl"
+            ],
+            "support": {
+                "issues": "https://github.com/ryoluo/sail-ssl/issues",
+                "source": "https://github.com/ryoluo/sail-ssl"
+            },
+            "time": "2024-03-15T18:32:51+00:00"
         },
         {
             "name": "sebastian/cli-parser",

@@ -18,8 +18,16 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
+# Set environment variables to force production mode
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    TELESCOPE_ENABLED=false
+
+# Ensure Telescope is not installed
+RUN rm -rf vendor/laravel/telescope
+
 # Install YAFFA dependencies with Composer in the working directory in production mode
-RUN composer install --no-dev --no-interaction --no-progress --no-suggest
+RUN composer install --no-dev --no-interaction --no-progress
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
@@ -35,4 +43,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 EXPOSE 80
 
 # Run migrations and clear caches at startup
-CMD php artisan migrate --force && php artisan config:cache && apache2-foreground
+CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && apache2-foreground"]
