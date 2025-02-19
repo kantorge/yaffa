@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.5](https://github.com/kantorge/yaffa/compare/v1.13.4...v1.13.5) (2025-02-19)
+
+
+### 🐛 Bug Fixes
+
+* broken tag-related reporting links ([#271](https://github.com/kantorge/yaffa/issues/271)) ([49fe073](https://github.com/kantorge/yaffa/commit/49fe0735d8334cd875744dd57ac3855b14cdef22))
+* docker installation improvements ([#273](https://github.com/kantorge/yaffa/issues/273)) ([00e6a8e](https://github.com/kantorge/yaffa/commit/00e6a8ee5181b2c73bf518c4a6ba2c44494b68f2))
+
 ## [1.13.4](https://github.com/kantorge/yaffa/compare/v1.13.3...v1.13.4) (2025-02-15)
 
 
