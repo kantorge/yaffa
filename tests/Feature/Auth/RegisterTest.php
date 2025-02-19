@@ -52,10 +52,17 @@ class RegisterTest extends TestCase
     /** @test */
     public function test_user_can_view_registration_form()
     {
+        // For this test, make sure that the new user registration is enabled, by setting the allowed user count to infinite.
+        $originalUserLimit = config('yaffa.registered_user_limit');
+        config(['yaffa.registered_user_limit' => 0]);
+
         $response = $this->get($this->registerGetRoute());
 
         $response->assertSuccessful();
         $response->assertViewIs('auth.register');
+
+        // Reset the user limit to its original value.
+        config(['yaffa.registered_user_limit' => $originalUserLimit]);
     }
 
     /** @test */
