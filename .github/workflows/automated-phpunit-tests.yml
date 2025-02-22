@@ -40,7 +40,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: secretroot
         ports:
           - 3306/tcp
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=10
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=10s --health-retries=10
 
     steps:
       - name: Setup PHP Action
@@ -88,7 +88,3 @@ jobs:
 
       - name: Upload coverage to Codacy
         run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
-
-      - name: Output DB Logs on Failure
-        if: failure()
-        run: docker logs ${{ job.services.db.id }}
