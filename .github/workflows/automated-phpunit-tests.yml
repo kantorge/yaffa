@@ -38,6 +38,7 @@ jobs:
           MYSQL_USER: default
           MYSQL_PASSWORD: password
           MYSQL_ROOT_PASSWORD: secretroot
+          MYSQL_INITDB_SKIP_TZINFO: ${{ matrix.db == 'mariadb' && '1' || '' }}
         ports:
           - 3306/tcp
         options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=10s --health-retries=10
