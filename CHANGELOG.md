@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.6](https://github.com/kantorge/yaffa/compare/v1.13.5...v1.13.6) (2025-02-24)
+
+
+### 🛠️ Chores
+
+* NPM updates ([#277](https://github.com/kantorge/yaffa/issues/277)) ([ea9d732](https://github.com/kantorge/yaffa/commit/ea9d732dae003c98f2d67f60973dee4a930f5bc5))
+
 ## [1.13.5](https://github.com/kantorge/yaffa/compare/v1.13.4...v1.13.5) (2025-02-19)
 
 
