@@ -41,7 +41,7 @@ class CalculateAccountMonthlySummaries extends Command
 
         // The accountEntity must be a valid account entity ID, or null
         if ($accountEntityId !== null) {
-            $this->handleSpecifiedAccountEntity($accountEntityId);
+            $this->handleSpecifiedAccountEntity((int) $accountEntityId);
             return;
         }
 
@@ -131,10 +131,10 @@ class CalculateAccountMonthlySummaries extends Command
     }
 
     /**
-     * @param string $accountEntityId
+     * @param int $accountEntityId
      * @throws Throwable
      */
-    public function handleSpecifiedAccountEntity(string $accountEntityId): void
+    public function handleSpecifiedAccountEntity(int $accountEntityId): void
     {
         $accountEntity = AccountEntity::find($accountEntityId);
 
