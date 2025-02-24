@@ -9,7 +9,6 @@ use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -276,12 +275,12 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             )
             ->get();
 
-        // If no scheduled transactions are found, we can return an empty collection
+        // If no scheduled transactions were found, we can return an empty collection
         if ($scheduledStandardTransactions->isEmpty() && $scheduledInvestmentTransactions->isEmpty()) {
             return new Collection();
         }
 
-        // Get all instances, added to a new transactions collection
+        // Get all instances of the transactions, added to a new transactions collection
         $scheduledStandardTransactionInstances = $this->getScheduleInstances(
             $scheduledStandardTransactions,
             'next'
@@ -297,14 +296,23 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         $scheduledInvestmentTransactionInstances = $scheduledInvestmentTransactionInstances
             ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m'));
 
+        // Collect the list of months from both types of transactions, and create a unique list, sorted
+        $monthsToLoop = collect(array_merge(
+            $scheduledStandardTransactionInstances->keys()->toArray(),
+            $scheduledInvestmentTransactionInstances->keys()->toArray()
+        ))
+            ->unique()
+            ->sort();
+
         $results = new Collection();
 
-        // Loop through the grouped transactions
-        foreach ($scheduledStandardTransactionInstances as $month => $standardTransactions) {
+        // Loop through the grouped standard transactions
+        foreach ($monthsToLoop as $month) {
+            // Get the investment transactions for the same month
             $investmentTransactions = $scheduledInvestmentTransactionInstances[$month] ?? collect();
 
             // Split the transactions into from and to transactions
-            [$transactionsFrom, $transactionsTo] = $standardTransactions->partition(
+            [$transactionsFrom, $transactionsTo] = $scheduledStandardTransactionInstances->partition(
                 fn ($transaction) =>
                     $transaction->config->account_from_id === $this->accountEntity->id
             );
