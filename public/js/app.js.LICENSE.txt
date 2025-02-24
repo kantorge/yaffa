@@ -11,10 +11,10 @@
   */
 
 /*!
- *  decimal.js v10.4.3
+ *  decimal.js v10.5.0
  *  An arbitrary-precision Decimal type for JavaScript.
  *  https://github.com/MikeMcl/decimal.js
- *  Copyright (c) 2022 Michael Mclaughlin <M8ch88l@gmail.com>
+ *  Copyright (c) 2025 Michael Mclaughlin <M8ch88l@gmail.com>
  *  MIT Licence
  */
 
@@ -31,7 +31,7 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 2.1.8
+/*! DataTables 2.2.2
  * © SpryMedia Ltd - datatables.net/license
  */
 
@@ -39,11 +39,11 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Responsive 3.0.3
+/*! Responsive 3.0.4
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 2.1.0
+/*! Select for DataTables 3.0.0
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
