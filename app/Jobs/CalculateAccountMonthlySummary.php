@@ -172,7 +172,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
     /**
      * Get the monthly summary data for standard transactions for the account (accountEntity) provided at class level.
-     * The function loops through all months between the first and last transaction,
+     * The function loops through all months between the first and last transaction associated with the account.
      * and also prepends the opening balance as the first available month.
      */
     private function getAccountBalanceFactData(): Collection
@@ -280,7 +280,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             return new Collection();
         }
 
-        // Get all instances of the transactions, added to a new transactions collection
+        // Get all instances of the transactions, added to new collections of transactions
         $scheduledStandardTransactionInstances = $this->getScheduleInstances(
             $scheduledStandardTransactions,
             'next'
@@ -312,8 +312,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             $investmentTransactions = $scheduledInvestmentTransactionInstances[$month] ?? collect();
 
             // Split the transactions into from and to transactions
-            [$transactionsFrom, $transactionsTo] = $scheduledStandardTransactionInstances->partition(
-                fn ($transaction) =>
+            [$transactionsFrom, $transactionsTo] = $scheduledStandardTransactionInstances[$month]->partition(
+                fn (Transaction $transaction) =>
                     $transaction->config->account_from_id === $this->accountEntity->id
             );
 

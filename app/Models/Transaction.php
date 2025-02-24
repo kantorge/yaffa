@@ -271,6 +271,15 @@ class Transaction extends Model
         return Currency::findOr($this->currency_id, fn () => $this->getBaseCurrency());
     }
 
+    /**
+     * Generates a collection of scheduled transaction instances based on the transaction schedule.
+     *
+     * @param Carbon|null $constraintStart The start date constraint for generating instances. Defaults to the next scheduled date.
+     * @param Carbon|null $maxLookAhead The maximum look-ahead date for generating instances. Defaults to the user's end date.
+     * @param int|null $virtualLimit The virtual limit for the number of instances to generate. Defaults to 500.
+     *
+     * @return Collection A collection of scheduled transaction instances.
+     */
     public function scheduleInstances(
         ?Carbon $constraintStart = null,
         ?Carbon $maxLookAhead = null,
@@ -299,6 +308,7 @@ class Transaction extends Model
         if ($this->transactionSchedule->count) {
             $rule->setCount($this->transactionSchedule->count);
         }
+
         if ($this->transactionSchedule->interval) {
             $rule->setInterval($this->transactionSchedule->interval);
         }
@@ -319,6 +329,7 @@ class Transaction extends Model
 
         $constraint = new BetweenConstraint($constraintStart, $endDate, true);
 
+        // Some features need to know which is the first instance
         $first = true;
 
         foreach ($transformer->transform($rule, $constraint) as $instance) {
