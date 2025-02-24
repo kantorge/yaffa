@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.7](https://github.com/kantorge/yaffa/compare/v1.13.6...v1.13.7) (2025-02-24)
+
+
+### 🐛 Bug Fixes
+
+* account balance calculation ([f201767](https://github.com/kantorge/yaffa/commit/f20176788eca91b0708eeba9434db45a3d88fcc6))
+
 ## [1.13.6](https://github.com/kantorge/yaffa/compare/v1.13.5...v1.13.6) (2025-02-24)
 
 
