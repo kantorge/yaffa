@@ -8,21 +8,22 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class ResetDatabase extends Command
+class ResetDemoDatabase extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:database:reset';
+    protected $signature = 'app:sandbox:reset-database '
+        . '{--skip-date-adjustment : Skip adjusting dates in the database}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Reset app database to an initial state to remove visitor modifications';
+    protected $description = 'Reset the demo (sandbox) database to an initial state to remove visitor modifications';
 
     /**
      * Execute the console command.
@@ -65,32 +66,34 @@ class ResetDatabase extends Command
         $this->info('Demo data loaded.');
 
         /**
-         * Now we need to adjust ALL dates in the database to be the current date.
+         * Unless explicitly disabled, we need to adjust ALL dates in the database to be the current date.
          * Created_at and updated_at fields are ignored, as it is not used at the moment by the app.
          * First, calculate the difference between the current date and the date hard coded here,
          * which represents the latest date in the demo data. We need the difference in months.
          * Then, add that difference to every date in the database.
          */
-        $this->info('Adjusting dates in the database...');
-        $date = '2008-12-31';
-        $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
-        $diffMonths = $diff->y * 12 + $diff->m + 1;
+        if (!$this->option('skip-date-adjustment')) {
+            $this->info('Adjusting dates in the database...');
+            $date = '2008-12-31';
+            $diff = date_diff(date_create($date), date_create(date('Y-m-d')));
+            $diffMonths = $diff->y * 12 + $diff->m + 1;
 
-        // Update all dates in the database
-        // transactions - date
-        $this->info('Adjusting dates - transactions...');
-        $affected = DB::table('transactions')
-            ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diffMonths} MONTH)")]);
-        $this->info("Transactions updated: {$affected}");
+            // Update all dates in the database
+            // transactions - date
+            $this->info('Adjusting dates - transactions...');
+            $affected = DB::table('transactions')
+                ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diffMonths} MONTH)")]);
+            $this->info("Transactions updated: {$affected}");
 
-        // transaction_schedules - start_date, next_date, end_date
-        $affected = DB::table('transaction_schedules')
-            ->update([
-                'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diffMonths} MONTH)"),
-                'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diffMonths} MONTH)"),
-                'end_date' => DB::raw("DATE_ADD(end_date, INTERVAL {$diffMonths} MONTH)"),
-            ]);
-        $this->info("Transaction schedules updated: {$affected}");
+            // transaction_schedules - start_date, next_date, end_date
+            $affected = DB::table('transaction_schedules')
+                ->update([
+                    'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diffMonths} MONTH)"),
+                    'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diffMonths} MONTH)"),
+                    'end_date' => DB::raw("DATE_ADD(end_date, INTERVAL {$diffMonths} MONTH)"),
+                ]);
+            $this->info("Transaction schedules updated: {$affected}");
+        }
 
         // Next, run automated data retrieval commands to populate the database with current data.
         $this->info('Retrieving investment data...');
