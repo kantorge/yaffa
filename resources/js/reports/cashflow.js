@@ -53,13 +53,23 @@ seriesMonhtly.dataFields.valueY = "account_balance";
 seriesMonhtly.yAxis = valueAxis;
 seriesMonhtly.dataFields.dateX = "month";
 seriesMonhtly.name = __('Monthly balance change');
+seriesMonhtly.columns.template.strokeOpacity = 0;
 seriesMonhtly.tooltipText = "{dateX}: [b]{valueY}[/]";
+seriesMonhtly.columns.template.fill = am4core.color('green');
+seriesMonhtly.columns.template.adapter.add("fill", function(fill, target) {
+    if (target.dataItem && (target.dataItem.valueY < 0)) {
+      return am4core.color("red");
+    }
+
+    return fill;
+});
 
 // Running total line for account balance fact
 let seriesTotal = chart.series.push(new am4charts.LineSeries());
 seriesTotal.dataFields.valueY = "account_balance_running_total";
 seriesTotal.dataFields.dateX = "month";
 seriesTotal.strokeWidth = 2;
+seriesTotal.stroke = am4core.color('black');
 seriesTotal.name = __('Running total');
 seriesTotal.tooltipText = "{dateX}: [b]{valueY}[/]";
 
@@ -68,6 +78,7 @@ let seriesInvestment = chart.series.push(new am4charts.LineSeries());
 seriesInvestment.dataFields.valueY = "investment_value";
 seriesInvestment.dataFields.dateX = "month";
 seriesInvestment.strokeWidth = 2;
+seriesInvestment.stroke = am4core.color('blue');
 seriesInvestment.name = __('Investment value');
 seriesInvestment.tooltipText = "{dateX}: [b]{valueY}[/]";
 
