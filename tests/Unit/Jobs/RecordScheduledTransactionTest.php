@@ -17,7 +17,7 @@ class RecordScheduledTransactionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_record_scheduled_standard_transaction()
+    public function test_record_scheduled_standard_transaction(): void
     {
         // Create a user and all necessary assets for a transaction
         /** @var User $user */
