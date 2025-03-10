@@ -9,6 +9,7 @@ use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\TransactionType;
 use App\Models\User;
+use App\Services\TransactionService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionFactory extends Factory
@@ -28,6 +29,8 @@ class TransactionFactory extends Factory
     public function configure()
     {
         return $this->afterCreating(function (Transaction $transaction) {
+            $this->transactionService = new TransactionService();
+
             // Get the tags of the user for later use
             $tags = $transaction->user->tags;
 
@@ -97,6 +100,11 @@ class TransactionFactory extends Factory
                     }
                 }
             }
+
+            // Finally, update the currency_id and the cashflow_value of the transaction
+            $transaction->currency_id = $this->transactionService->getTransactionCurrencyId($transaction);
+            $transaction->cashflow_value = $this->transactionService->getTransactionCashFlow($transaction);
+            $transaction->saveQuietly();
         });
     }
 
@@ -238,7 +246,9 @@ class TransactionFactory extends Factory
             return [
                 'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
                 'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()->dividend($user)->create($configAttributes),
+                'config_id' => TransactionDetailInvestment::factory()
+                    ->dividend($user)
+                    ->create($configAttributes),
             ];
         });
     }
@@ -257,6 +267,26 @@ class TransactionFactory extends Factory
                 'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
                 'config_type' => 'investment',
                 'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
+            ];
+        });
+    }
+
+    /**
+     * Transaction type is DIVIDEND and has SCHEDULE
+     */
+    public function dividend_schedule(User $user, array $configAttributes): Factory
+    {
+        return $this->state(function (array $attributes) use ($user, $configAttributes) {
+            return [
+                'date' => null,
+                'schedule' => 1,
+                'budget' => 0,
+                'reconciled' => 0,
+                'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
+                'config_type' => 'investment',
+                'config_id' => TransactionDetailInvestment::factory()
+                    ->dividend($user)
+                    ->create($configAttributes),
             ];
         });
     }

@@ -312,7 +312,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             $investmentTransactions = $scheduledInvestmentTransactionInstances[$month] ?? collect();
 
             // Split the transactions into from and to transactions
-            [$transactionsFrom, $transactionsTo] = $scheduledStandardTransactionInstances[$month]->partition(
+            [$transactionsFrom, $transactionsTo] = ($scheduledStandardTransactionInstances[$month] ?? collect())->partition(
                 fn (Transaction $transaction) =>
                     $transaction->config->account_from_id === $this->accountEntity->id
             );
