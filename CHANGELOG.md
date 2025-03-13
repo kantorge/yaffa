@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.13.8](https://github.com/kantorge/yaffa/compare/v1.13.7...v1.13.8) (2025-03-13)
+
+
+### 🛠️ Chores
+
+* **deps:** bump @babel/runtime ([3419ce1](https://github.com/kantorge/yaffa/commit/3419ce124c7093b4ee1a619df0316987f628e93a))
+
+
+### 🐛 Bug Fixes
+
+* investment price precision and validation ([94c590a](https://github.com/kantorge/yaffa/commit/94c590ad1bdad793c0d184245664d3832635979a))
+* monthly amount calculation error ([cb41442](https://github.com/kantorge/yaffa/commit/cb414425af626a6d3fb104d5485e8529c8d71ae8))
+* NPM update to reduce vulnerabilities ([59b89c2](https://github.com/kantorge/yaffa/commit/59b89c23f330402cbc7042bafa011fd30a638aef))
+* package.json & package-lock.json to reduce vulnerabilities ([06c8ce6](https://github.com/kantorge/yaffa/commit/06c8ce61bb6cb75ac2b0996eb612c1b7d2451a2b))
+* sandbox scheduled command for resetting database ([8b4b896](https://github.com/kantorge/yaffa/commit/8b4b896fc6a4d672c58ece798f0a2c28ff170aaa))
+
 ## [1.13.7](https://github.com/kantorge/yaffa/compare/v1.13.6...v1.13.7) (2025-02-24)
 
 
