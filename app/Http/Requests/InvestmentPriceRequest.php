@@ -27,6 +27,9 @@ class InvestmentPriceRequest extends FormRequest
             'price' => [
                 'required',
                 'numeric',
+                // Fit in signed DECIMAL(20,10) range
+                'min:0.0000000001',
+                'max:9999999999.9999999999',
             ],
             'investment_id' => [
                 'required',
