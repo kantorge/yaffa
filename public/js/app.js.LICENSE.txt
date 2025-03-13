@@ -27,6 +27,8 @@
 
 /*! #__NO_SIDE_EFFECTS__ */
 
+/*! Axios v1.8.2 Copyright (c) 2025 Matt Zabriskie and contributors */
+
 /*! Bootstrap 5 integration for DataTables' Responsive
  * © SpryMedia Ltd - datatables.net/license
  */
