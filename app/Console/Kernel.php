@@ -50,7 +50,7 @@ class Kernel extends ConsoleKernel
         // Only in sandbox mode - reset the sandbox database at 2am UTC on Monday, Wednesday, and Friday
         // This should be a balance between keeping the data fresh and allowing users to experiment with it
         if (config('yaffa.sandbox_mode')) {
-            $schedule->command('app:database:reset')->weeklyOn([1, 3, 5], '02:00');
+            $schedule->command('app:sandbox:reset-database')->weeklyOn([1, 3, 5], '02:00');
         }
 
         // Redis cache cleanup
