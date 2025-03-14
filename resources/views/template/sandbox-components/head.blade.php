@@ -28,15 +28,6 @@
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','{{config('yaffa.gtm_container_id')}}');</script>
     <!-- End Google Tag Manager -->
-
-    @if (isset($dataLayerEvents))
-        <!-- Load dataLayer events defined on server side -->
-        <script>
-            @forEach($dataLayerEvents as $event)
-            window.dataLayer.push(@json($event));
-            @endforEach
-        </script>
-    @endif
 @endif
 
 {{-- Conditionally load CookieYes, which is the CMP used by the sandbox --}}
