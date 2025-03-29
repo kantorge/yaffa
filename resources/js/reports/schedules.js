@@ -2,6 +2,8 @@ import 'datatables.net-bs5';
 import 'datatables.net-select-bs5';
 import 'datatables-contextual-actions';
 
+import Swal from 'sweetalert2'
+
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 import { __ } from '../helpers';
@@ -23,16 +25,18 @@ let table = $(tableSelector).DataTable({
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.locale),
         {
             data: "transaction_schedule.rule",
             title: __("Schedule settings"),
             render: function (data) {
                 // Return human readable format of RRule
                 // TODO: translation of rrule strings
-                return data.toText();
+                return `<div class="d-flex justify-content-start align-items-center">
+                    <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i><span>${data.toText()}</span>
+                </div>`;
             }
         },
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.start_date', __('Start date'), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
@@ -61,12 +65,15 @@ let table = $(tableSelector).DataTable({
             $('td', row).eq(8).addClass('text-muted text-italic');
         }
     },
-    initComplete: function (_settings, _json) {
-        $('[data-toggle="tooltip"]').tooltip();
+    drawCallback: function () {
+        const tooltipElements = $('[data-toggle="tooltip"]');
+        if (tooltipElements.length) {
+            tooltipElements.tooltip();
+        }
     },
     order: [
-        // Start date is the first column
-        [ 0, "asc" ]
+        // Start date, which is the second column
+        [ 1, "asc" ]
     ],
     select: {
         select: true,
@@ -88,7 +95,8 @@ table.contextualActions({
     contextMenu: {
         enabled: true,
         isMulti: false,
-        headerRenderer: false
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
     },
     buttonList: {
         enabled: false
@@ -229,56 +237,76 @@ table.contextualActions({
                 const id = row[0].id;
                 ajaxIsBusy = true;
 
-                // Emit a custom event to global scope to indicate that a transaction is being deleted
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        body: __('Deleting transaction #:transactionId', {transactionId: id}),
-                        toastClass: `bg-info toast-transaction-${id}`,
-                        delay: Infinity,
+                // Get confirmation from the user using SweetAlert
+                Swal.fire({
+                    animation: false,
+                    text: __('Are you sure to want to delete this item?'),
+                    icon: "warning",
+                    showCancelButton: true,
+                    cancelButtonText: __('Cancel'),
+                    confirmButtonText: __('Confirm'),
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary ms-3'
                     }
-                });
-                window.dispatchEvent(notificationEvent);
-
-                window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
-                    .then(function () {
-                        // Find and remove original row in schedule table
-                        let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
-                            return data.id === id;
-                        });
-
-                        row.remove().draw();
-
-                        // Emit a custom event to global scope about the result
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Success'),
-                                body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
-                                toastClass: "bg-success",
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
-                    })
-                    .catch(function (error) {
-                        // Emit a custom event to global scope about the result
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Error'),
-                                body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
-                                toastClass: "bg-danger"
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
-                    })
-                    .finally(function () {
+                }).then((result) => {
+                    if (!result.isConfirmed) {
                         ajaxIsBusy = false;
+                        return;
+                    }
 
-                        // Close the toast with a small delay
-                        setTimeout(function () {
-                            let toastElement = document.querySelector(`.toast-transaction-${id}`);
-                            let toastInstance = new window.bootstrap.Toast(toastElement);
-                            toastInstance.hide();
-                        }, 250);
+                    // Emit a custom event to global scope to indicate that a transaction is being deleted
+                    let notificationEvent = new CustomEvent('toast', {
+                        detail: {
+                            body: __('Deleting transaction #:transactionId', {transactionId: id}),
+                            toastClass: `bg-info toast-transaction-${id}`,
+                            delay: Infinity,
+                        }
                     });
+                    window.dispatchEvent(notificationEvent);
+
+                    window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
+                        .then(function () {
+                            // Find and remove original row in schedule table
+                            let row = $(tableSelector).dataTable().api().row(function (_idx, data) {
+                                return data.id === id;
+                            });
+
+                            row.remove().draw();
+
+                            // Emit a custom event to global scope about the result
+                            let notificationEvent = new CustomEvent('toast', {
+                                detail: {
+                                    header: __('Success'),
+                                    body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
+                                    toastClass: "bg-success",
+                                }
+                            });
+                            window.dispatchEvent(notificationEvent);
+                        })
+                        .catch(function (error) {
+                            // Emit a custom event to global scope about the result
+                            let notificationEvent = new CustomEvent('toast', {
+                                detail: {
+                                    header: __('Error'),
+                                    body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
+                                    toastClass: "bg-danger"
+                                }
+                            });
+                            window.dispatchEvent(notificationEvent);
+                        })
+                        .finally(function () {
+                            ajaxIsBusy = false;
+
+                            // Close the toast with a small delay
+                            setTimeout(function () {
+                                let toastElement = document.querySelector(`.toast-transaction-${id}`);
+                                let toastInstance = new window.bootstrap.Toast(toastElement);
+                                toastInstance.hide();
+                            }, 250);
+                        });
+                });
             }
         }
     ]

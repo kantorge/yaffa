@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
+    <div class="sidebar-brand sidebar-brand-form d-md-flex">
         <form action="{{ route('search') }}" method="get">
             <div class="input-group">
                 <input type="text" name="q" class="form-control" placeholder="{{ __('Search...') }}" autocomplete="off">
@@ -28,7 +28,7 @@
             </div>
         </form>
     </div>
-    <div class="sidebar-brand sidebar-brand-form d-none d-md-flex">
+    <div class="sidebar-brand sidebar-brand-form d-md-flex">
         @if(isset($accountsForNavbar) && count($accountsForNavbar) > 0)
         <form action="#" method="get">
             <select name="jump_to_account" id="jump_to_account" class="form-select">
@@ -58,9 +58,6 @@
             @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.reset-alert')
             <a class="header-brand d-md-none" href="{{ route('home') }} ">
                 <img src="{{ asset('images/logo-small.png')}}" alt="YAFFA Logo">
-                <span>
-                    YAFFA
-                </span>
             </a>
             <ul class="header-nav ms-auto"></ul>
             <ul class="header-nav ms-3 me-4">
