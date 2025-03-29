@@ -12,6 +12,7 @@ use App\Models\InvestmentGroup;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,8 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
     public function test_only_standard_transactions_account_balance_forecast(): void
     {
+        Carbon::useMonthsOverflow(false);
+
         // Create a user and all necessary assets for a transaction
         /** @var User $user */
         $user = User::factory()->create([
@@ -52,8 +55,8 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         // By default, a transaction schedule will be created
         // We need to adjust its properties to better suite our test
         $transaction->transactionSchedule->update([
-            'start_date' => now()->subMonths(2)->startOfMonth(),
-            'next_date' => now()->subMonths(2)->startOfMonth(),
+            'start_date' => now()->startOfMonth()->subMonths(2),
+            'next_date' => now()->startOfMonth()->subMonths(2),
             'end_date' => now()->addMonths(9)->endOfMonth(),
             'count' => null,
             'interval' => 1,
@@ -109,10 +112,14 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
             $this->assertEquals($summaryRecord->amount, -200);
         });
+
+        Carbon::resetMonthsOverflow();
     }
 
     public function test_combination_of_standard_and_investment_transactions_account_balance_forecast(): void
     {
+        Carbon::useMonthsOverflow(false);
+
         // Create a user and all necessary assets for a transaction
         /** @var User $user */
         $user = User::factory()->create([
@@ -153,9 +160,9 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         // By default, a transaction schedule will be created
         // We need to adjust its properties to better suite our test
         $transaction->transactionSchedule->update([
-            'start_date' => now()->subMonths(2)->startOfMonth(),
-            'next_date' => now()->subMonths(2)->startOfMonth(),
-            'end_date' => now()->addMonths(9)->endOfMonth(),
+            'start_date' => now()->startOfMonth()->subMonths(2),
+            'next_date' => now()->startOfMonth()->subMonths(2),
+            'end_date' => now()->endOfMonth()->addMonths(9),
             'count' => null,
             'interval' => 1,
             'frequency' => 'MONTHLY',
@@ -180,7 +187,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
         $investmentTransaction->transactionSchedule->update([
             'start_date' => now()->startOfMonth(),
             'next_date' => now()->startOfMonth(),
-            'end_date' => now()->addMonths(11)->endOfMonth(),
+            'end_date' => now()->endOfMonth()->addMonths(11),
             'count' => null,
             'interval' => 1,
             'frequency' => 'MONTHLY',
@@ -210,5 +217,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
             $this->assertEquals($summaryRecord->amount, $expectedBalance[$index]);
         });
+
+        Carbon::resetMonthsOverflow();
     }
 }
