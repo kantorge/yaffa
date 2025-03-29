@@ -23,7 +23,6 @@
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.3",
         "laravel/ui": "^4.2",
-        "nesbot/carbon": "^2.40",
         "openai-php/laravel": "^0.8.1",
         "roach-php/laravel": "^3.1",
         "sentry/sentry-laravel": "^4.1",
