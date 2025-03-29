@@ -290,11 +290,11 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'next'
         );
 
-        // Convert the transaction dates to 'Y-m' format and group by the formatted date
+        // Convert the transaction dates to 'Y-m-01' format and group by the formatted date
         $scheduledStandardTransactionInstances = $scheduledStandardTransactionInstances
-            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m'));
+            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m-01'));
         $scheduledInvestmentTransactionInstances = $scheduledInvestmentTransactionInstances
-            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m'));
+            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m-01'));
 
         // Collect the list of months from both types of transactions, and create a unique list, sorted
         $monthsToLoop = collect(array_merge(
@@ -329,7 +329,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             }
 
             $results->push([
-                'date' => Carbon::createFromFormat('Y-m', $month)->startOfMonth(),
+                'date' => Carbon::createFromFormat('Y-m-d', $month),
                 'user_id' => $this->accountEntity->user_id,
                 'account_entity_id' => $this->accountEntity->id,
                 'transaction_type' => 'account_balance',
@@ -337,7 +337,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 'amount' => $amount,
             ]);
         }
-
         return $results;
     }
 
@@ -593,9 +592,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             Carbon::now()->startOfMonth()
         );
 
-        // Convert the transaction dates to 'Y-m' format and group by the formatted date
+        // Convert the transaction dates to 'Y-m-01' format and group by the formatted date
         $budgetTransactionInstances = $budgetTransactionInstances
-            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m'));
+            ->groupBy(fn ($transaction) => Carbon::parse($transaction->date)->format('Y-m-01'));
 
         $results = new Collection();
 
@@ -609,7 +608,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             }
 
             $results->push([
-                'date' => Carbon::createFromFormat('Y-m', $month)->startOfMonth(),
+                'date' => Carbon::createFromFormat('Y-m-d', $month),
                 'user_id' => $this->user->id,
                 'account_entity_id' => $this->accountEntity?->id,
                 'transaction_type' => 'account_balance',

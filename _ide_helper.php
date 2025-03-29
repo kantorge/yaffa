@@ -5,7 +5,7 @@
 
 /**
  * A helper file for Laravel, to provide autocomplete information to your IDE
- * Generated for Laravel 10.48.25.
+ * Generated for Laravel 10.48.29.
  *
  * This file should not be included in your code, only analyzed by your IDE!
  *
@@ -10459,7 +10459,7 @@ namespace Illuminate\Support\Facades {
          * 
          *
          * @internal 
-         * @param \Symfony\Component\HttpFoundation\callable():  SessionInterface $factory
+         * @param callable():  SessionInterface $factory
          * @static 
          */        public static function setSessionFactory($factory)
         {            //Method inherited from \Symfony\Component\HttpFoundation\Request         
@@ -16764,7 +16764,7 @@ namespace Barryvdh\Debugbar\Facades {
                     /**
          * Returns an array of all data collectors
          *
-         * @return \DebugBar\array[DataCollectorInterface] 
+         * @return array[DataCollectorInterface] 
          * @static 
          */        public static function getCollectors()
         {            //Method inherited from \DebugBar\DebugBar         

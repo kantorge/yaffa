@@ -246,7 +246,7 @@ class AccountMonthlySummaryTest extends TestCase
         );
 
         // Create a transaction with a different date
-        $dateNextMonth = now()->addMonth();
+        $dateNextMonth = now()->addMonthNoOverflow();
         Transaction::factory()
             ->for($user)
             ->for(
@@ -361,7 +361,7 @@ class AccountMonthlySummaryTest extends TestCase
         );
 
         // Create an irrelevant transaction, in next month
-        $dateNextMonth = now()->addMonth();
+        $dateNextMonth = now()->addMonthNoOverflow();
         Transaction::factory()
             ->for($user)
             ->for(
