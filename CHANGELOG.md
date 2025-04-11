@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.13.9](https://github.com/kantorge/yaffa/compare/v1.13.8...v1.13.9) (2025-03-29)
+
+
+### 🐛 Bug Fixes
+
+* incorrect casting of boolean config values ([c901248](https://github.com/kantorge/yaffa/commit/c901248d825309f31b3ccd57ccbaaa65e104a2c1))
+* monthly summary calculation ([f6e7cbd](https://github.com/kantorge/yaffa/commit/f6e7cbd42125adf74ac77279c916eb05478a9abf))
+* package.json & package-lock.json to reduce vulnerabilities ([ec539d7](https://github.com/kantorge/yaffa/commit/ec539d7c54b88c0ae9d0ed30ad8a9687b20abe91))
+* risky Dusk test ([8c1dcad](https://github.com/kantorge/yaffa/commit/8c1dcad0f71529bd78e6e8582d8a6904ae405a81))
+
 ## [1.13.8](https://github.com/kantorge/yaffa/compare/v1.13.7...v1.13.8) (2025-03-13)
 
 
