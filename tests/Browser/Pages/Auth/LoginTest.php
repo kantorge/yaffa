@@ -30,7 +30,8 @@ class LoginTest extends DuskTestCase
                 ->type('email', $user->email)
                 ->type('password', 'password')
                 ->press('@login-button')
-                ->waitForLocation('/', 10);
+                ->waitForLocation('/', 10)
+                ->assertPathIs('/');
         });
     }
 }

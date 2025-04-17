@@ -72,6 +72,7 @@ class ProfileTest extends DuskTestCase
                 ->type('email', $user->email)
                 ->type('password', 'password123')
                 ->press('@login-button')
+                ->waitForRoute('home', [],10)
                 ->assertRouteIs('home');
         });
 
