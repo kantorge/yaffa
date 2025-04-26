@@ -131,6 +131,9 @@ jobs:
           sudo chmod +x /usr/local/bin/chromedriver
           echo "CHROMEWEBDRIVER=/usr/local/bin" >> $GITHUB_ENV
 
+      - name: Install Chrome for Dusk
+        run: php artisan dusk:chrome-driver 134
+
       - name: Start ChromeDriver
         run: chromedriver --port=9515 &
 
