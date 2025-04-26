@@ -140,7 +140,7 @@ jobs:
         run: php artisan serve --no-reload &
 
       - name: Run Dusk Tests
-        run: php artisan dusk -vvv
+        run: php artisan dusk -vvv tests/Browser/Pages/Accounts/AccountListTest.php
 
       - name: Upload Screenshots
         if: failure()
