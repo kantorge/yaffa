@@ -117,8 +117,23 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Install specific Chrome version
+        run: |
+          sudo apt-get remove google-chrome-stable
+          wget https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_134.0.6998.165-1_amd64.deb
+          sudo apt install ./google-chrome-stable_134.0.6998.165-1_amd64.deb
+
+      - name: Install specific ChromeDriver version
+        run: |
+          sudo rm -rf /usr/local/share/chromedriver-linux64
+          wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6998.165/linux64/chromedriver-linux64.zip
+          unzip chromedriver-linux64.zip
+          sudo mv chromedriver-linux64 /usr/local/share/chromedriver-linux64
+          sudo chmod +x /usr/local/share/chromedriver-linux64/chromedriver
+          export CHROMEWEBDRIVER=/usr/local/share/chromedriver-linux64
+
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver --detect
+        run: php artisan dusk:chrome-driver 134
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
@@ -140,7 +155,7 @@ jobs:
         run: php artisan serve --no-reload &
 
       - name: Run Dusk Tests
-        run: php artisan dusk -vvv tests/Browser/Pages/Accounts/AccountListTest.php
+        run: php artisan dusk
 
       - name: Upload Screenshots
         if: failure()
