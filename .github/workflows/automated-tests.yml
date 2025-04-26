@@ -95,13 +95,13 @@ jobs:
       DB_PASSWORD: root
       MAIL_MAILER: log
     steps:
+      - uses: actions/checkout@v4
+
       - name: Setup PHP Action
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: mbstring, dom, fileinfo, mysql
-
-      - uses: actions/checkout@v4
 
       - name: Prepare The Environment
         run: cp .env.dusk.ci .env
@@ -117,23 +117,22 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
-      - name: Install specific Chrome version
+      - name: Install Chrome 134
         run: |
-          sudo apt-get remove google-chrome-stable
+          sudo apt-get remove -y google-chrome-stable
           wget https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_134.0.6998.165-1_amd64.deb
           sudo apt install ./google-chrome-stable_134.0.6998.165-1_amd64.deb
 
-      - name: Install specific ChromeDriver version
+      - name: Install ChromeDriver 134
         run: |
-          sudo rm -rf /usr/local/share/chromedriver-linux64
           wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/134.0.6998.165/linux64/chromedriver-linux64.zip
           unzip chromedriver-linux64.zip
-          sudo mv chromedriver-linux64 /usr/local/share/chromedriver-linux64
-          sudo chmod +x /usr/local/share/chromedriver-linux64/chromedriver
-          export CHROMEWEBDRIVER=/usr/local/share/chromedriver-linux64
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+          echo "CHROMEWEBDRIVER=/usr/local/bin" >> $GITHUB_ENV
 
-      - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver 134
+      - name: Start ChromeDriver
+        run: chromedriver --port=9515 &
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
@@ -152,10 +151,16 @@ jobs:
         run: npm run dev
 
       - name: Run Laravel Server
-        run: php artisan serve --no-reload &
+        run: |
+          php artisan serve --no-reload --host=127.0.0.1 --port=8000 &
+          sleep 5
 
       - name: Run Dusk Tests
         run: php artisan dusk
+        env:
+          APP_URL: http://127.0.0.1:8000
+          CHROMEWEBDRIVER: /usr/local/bin
+          DUSK_DRIVER_URL: http://localhost:9515
 
       - name: Upload Screenshots
         if: failure()
