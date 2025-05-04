@@ -4,8 +4,9 @@ namespace Database\Seeders\Random;
 
 use App\Models\CurrencyRate;
 use App\Models\User;
-use Carbon\CarbonPeriod;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CurrencyRateSeeder extends Seeder
 {
@@ -19,16 +20,33 @@ class CurrencyRateSeeder extends Seeder
         $baseCurrency = $currencies->where('base', 1)->first();
 
         $currencies->except($baseCurrency->id)->each(function ($currency) use ($baseCurrency) {
+            $start = Carbon::now()->subYear();
+            $end = Carbon::yesterday();
             $newValue = rand(1, 300);
-            $period = CarbonPeriod::create('-1 year', '1 day', 'yesterday');
-            foreach ($period as $date) {
+
+            // Insert in chunks to avoid memory overuse
+            $chunkSize = 100;
+            $buffer = [];
+
+            while ($start->lte($end)) {
                 $newValue = $newValue * (rand(900, 1100) / 1000);
-                CurrencyRate::create([
-                    'date' => $date,
+                $buffer[] = [
+                    'date' => $start->copy(),
                     'rate' => $newValue,
                     'from_id' => $currency->id,
                     'to_id' => $baseCurrency->id,
-                ]);
+                ];
+
+                if (count($buffer) >= $chunkSize) {
+                    CurrencyRate::insert($buffer);
+                    $buffer = [];
+                }
+
+                $start->addDay();
+            }
+
+            if (!empty($buffer)) {
+                CurrencyRate::insert($buffer);
             }
         });
     }
