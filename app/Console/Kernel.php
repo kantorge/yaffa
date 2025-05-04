@@ -30,34 +30,39 @@ class Kernel extends ConsoleKernel
             $schedule->command('telescope:prune')->daily();
         }
 
-        // Recalculate the active flags for transaction schedules and budgets every day
-        $schedule->command(CalculateTransactionScheduleActiveFlags::class)->dailyAt('00:00');
+        // Potentially, the app can be separated into a main container and a worker container
+        // We can control, if the scheduled commands need to be run in a given container
+        if (env('RUNS_SCHEDULER', false)) {
 
-        // Run the command to record scheduled transactions
-        // This can also modify the active flag of the schedule, handled by the TransactionSchedule model
-        $schedule->command(RecordScheduledTransactions::class)->dailyAt('00:05');
+            // Recalculate the active flags for transaction schedules and budgets every day
+            $schedule->command(CalculateTransactionScheduleActiveFlags::class)->dailyAt('00:00');
 
-        // Run the currency rate retrieval command
-        $schedule->command(GetCurrencyRates::class)->dailyAt('04:00');
+            // Run the command to record scheduled transactions
+            // This can also modify the active flag of the schedule, handled by the TransactionSchedule model
+            $schedule->command(RecordScheduledTransactions::class)->dailyAt('00:05');
 
-        // Run the investment price retrieval command
-        $schedule->command(GetInvestmentPrices::class)->dailyAt('04:15');
+            // Run the currency rate retrieval command
+            $schedule->command(GetCurrencyRates::class)->dailyAt('04:00');
 
-        // Recalculate account monthly summaries daily
-        // TODO: chain this command with the investment price retrieval command
-        $schedule->command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00');
+            // Run the investment price retrieval command
+            $schedule->command(GetInvestmentPrices::class)->dailyAt('04:15');
 
-        // Only in sandbox mode - reset the sandbox database at 2am UTC on Monday, Wednesday, and Friday
-        // This should be a balance between keeping the data fresh and allowing users to experiment with it
-        if (config('yaffa.sandbox_mode')) {
-            $schedule->command('app:sandbox:reset-database')->weeklyOn([1, 3, 5], '02:00');
+            // Recalculate account monthly summaries daily
+            // TODO: chain this command with the investment price retrieval command
+            $schedule->command(CalculateAccountMonthlySummaries::class)->dailyAt('05:00');
+
+            // Only in sandbox mode - reset the sandbox database at 2am UTC on Monday, Wednesday, and Friday
+            // This should be a balance between keeping the data fresh and allowing users to experiment with it
+            if (config('yaffa.sandbox_mode')) {
+                $schedule->command('app:sandbox:reset-database')->weeklyOn([1, 3, 5], '02:00');
+            }
+
+            // Redis cache cleanup
+            $schedule->command('cache:prune-stale-tags')->hourly();
+
+            // Batch job cleanup
+            $schedule->command('queue:prune-batches')->daily();
         }
-
-        // Redis cache cleanup
-        $schedule->command('cache:prune-stale-tags')->hourly();
-
-        // Batch job cleanup
-        $schedule->command('queue:prune-batches')->daily();
     }
 
     /**
