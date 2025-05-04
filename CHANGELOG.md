@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.13.10](https://github.com/kantorge/yaffa/compare/v1.13.9...v1.13.10) (2025-05-04)
+
+
+### 🛠️ Chores
+
+* update Symfony HTTP client ([cad11e2](https://github.com/kantorge/yaffa/commit/cad11e2f764cf9c39cba94c9cd15200fbe275f47))
+* upgrade axios ([99eaee6](https://github.com/kantorge/yaffa/commit/99eaee6aa6f617102beab03d8186f6dd3acd363a))
+
+
+### 🐛 Bug Fixes
+
+* add Redis and other components to Docker-based installation ([955355f](https://github.com/kantorge/yaffa/commit/955355fbb9048f206e3064fafba1eee365bae946))
+* further attempt to handle risky Dusk test ([5683895](https://github.com/kantorge/yaffa/commit/5683895911371b3007c62fb861c074dc35bf0078))
+* upgrade bootstrap from 5.3.3 to 5.3.5 ([e09d25b](https://github.com/kantorge/yaffa/commit/e09d25bde6a388b8e111b36c4bffa189c9ec57fd))
+* upgrade webpack from 5.98.0 to 5.99.5 ([fd53542](https://github.com/kantorge/yaffa/commit/fd535429714a29e0c68f5f837c1e7a8f7af2a250))
+
+
+### 🔨 Code Refactoring
+
+* move data formatting from Blade to Vue ([1926827](https://github.com/kantorge/yaffa/commit/1926827b1a5199a025f24d057d0199914d1065fe))
+
+
+### 🧪 Tests
+
+* optimize some Laravel Dusk tests and their workflow files ([c42b39e](https://github.com/kantorge/yaffa/commit/c42b39e7d8e1acf4793a0302aee7f571a3929643))
+* temporarily suspend risky Dusk tests ([bf4d80e](https://github.com/kantorge/yaffa/commit/bf4d80e8dfb3d6c9ac89c8299f2072927404adc8))
+
 ## [1.13.9](https://github.com/kantorge/yaffa/compare/v1.13.8...v1.13.9) (2025-03-29)
 
 
