@@ -8,6 +8,7 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
+use Tests\Browser\DuskMacros;
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -28,6 +29,12 @@ abstract class DuskTestCase extends BaseTestCase
         if (! static::runningInSail()) {
             static::startChromeDriver(['--port=9515']);
         }
+    }
+
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        DuskMacros::register();
     }
 
     /**
