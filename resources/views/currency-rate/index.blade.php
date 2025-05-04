@@ -11,67 +11,12 @@
 @section('content')
 <div class="row">
     <div class="col-12 col-lg-3">
-        <div class="card mb-3">
-            <div class="card-header">
-                <div
-                        class="card-title collapse-control"
-                        data-coreui-toggle="collapse"
-                        data-coreui-target="#cardOverview"
-                >
-                    <i class="fa fa-angle-down"></i>
-                    {{ __('Overview') }}
-                </div>
-            </div>
-            <div class="collapse card-body show" aria-expanded="true" id="cardOverview">
-                <dl class="row mb-0">
-                    <dt class="col-6">{{ __('From') }}</dt>
-                    <dd class="col-6">{{ $from->name }}</dd>
-                    <dt class="col-6">{{ __('To') }}</dt>
-                    <dd class="col-6">{{ $to->name }}</dd>
-                    <dt class="col-6">{{ __('Number of records') }}</dt>
-                    <dd class="col-6">{{ $currencyRates->count() }}</dd>
-                    <dt class="col-6">{{ __('First avaiable data') }}</dt>
-                    @if ($currencyRates->count() > 0)
-                        <dd class="col-6">
-                            {{ $currencyRates->first('date')?->date->locale(auth()->user()->locale)->isoFormat('LL') }}
-                        </dd>
-                    @else
-                        <dd class="col-6 text-italic text-muted">
-                            {{ __('No data') }}
-                        </dd>
-                    @endif
-                    <dt class="col-6">{{ __('Last available data') }}</dt>
-                    @if ($currencyRates->count() > 0)
-                        <dd class="col-6">
-                            {{ $currencyRates->last('date')?->date->locale(auth()->user()->locale)->isoFormat('LL') }}
-                        </dd>
-                    @else
-                        <dd class="col-6 text-italic text-muted">
-                            {{ __('No data') }}
-                        </dd>
-                    @endif
-                    <dt class="col-6">{{ __('Last known rate') }}</dt>
-                    @if ($currencyRates->count() > 0)
-                        <dd class="col-6">
-                            {{ \Illuminate\Support\Number::currency(
-                                    1,
-                                    $from->iso_code,
-                                    auth()->user()->locale
-                               ) }}
-                            =
-                            {{ \Illuminate\Support\Number::currency(
-                                    $currencyRates->last('date')?->rate ?? 0,
-                                    $to->iso_code,
-                                    auth()->user()->locale
-                               ) }}
-                        </dd>
-                    @else
-                        <dd class="col-6 text-italic text-muted">
-                            {{ __('No data') }}
-                        </dd>
-                    @endif
-                </dl>
-            </div>
+        <div id="app">
+            <card-overview
+                :from="{{ json_encode($from) }}"
+                :to="{{ json_encode($to) }}"
+                :currency-rates="{{ json_encode($currencyRates) }}"
+            ></card-overview>
         </div>
 
         <div class="card mb-3">

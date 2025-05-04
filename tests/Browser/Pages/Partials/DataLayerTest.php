@@ -62,13 +62,15 @@ class DataLayerTest extends DuskTestCase
         // Create a new, verified user
         $user = User::factory()->create([
             'email_verified_at' => now(),
+            'language' => 'en',
         ]);
 
         $this->browse(function ($browser) use ($user) {
             // Open the login page
             $browser->visit(route('login'))
                 // Wait for the page to load
-                ->waitFor('#login');
+                ->waitForLocation('/login', 10)
+                ->waitFor('#login', 10);
 
             // Make sure the dataLayer is not empty
             $output = $browser->script('return window.dataLayer;');
@@ -79,16 +81,17 @@ class DataLayerTest extends DuskTestCase
             $browser
                 ->type('email', $this::USER_EMAIL)
                 ->type('password', 'demo')
-                ->press('Login')
+                ->press('@login-button')
                 // Wait for the page to load
-                ->waitFor('footer');
+                ->waitForLocation('/', 10)
+                ->waitFor('footer', 10);
 
             // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
-            $output = $browser->script(' 
+            $output = $browser->script('
                 const events = window.dataLayer.filter(function(item) {
                     return item.event === "loginSuccess" && item.is_generic_demo_user === true;
                 });
-                
+
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
@@ -102,16 +105,17 @@ class DataLayerTest extends DuskTestCase
                 ->waitFor('#login')
                 ->type('email', $user->email)
                 ->type('password', 'password')
-                ->press('Login')
+                ->press('@login-button')
                 // Wait for the page to load
-                ->waitFor('footer');
+                ->waitForLocation('/', 10)
+                ->waitFor('footer', 10);
 
             // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
-            $output = $browser->script(' 
+            $output = $browser->script('
                 const events = window.dataLayer.filter(function(item) {
                     return item.event === "loginSuccess" && item.is_generic_demo_user === false;
                 });
-                
+
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
@@ -138,20 +142,22 @@ class DataLayerTest extends DuskTestCase
             // Open the login page
             $browser->visit(route('login'))
                 // Wait for the page to load
-                ->waitFor('#login')
+                ->waitForLocation('/login', 10)
+                ->waitFor('#login', 10)
                 // Type in an invalid email address
                 ->type('email', 'thisisnotauser@example.com')
                 ->type('password', 'password')
-                ->press('Login')
+                ->press('@login-button')
                 // Wait for the page to reload
-                ->waitFor('#login');
+                ->waitForLocation('/login', 10)
+                ->waitFor('#login', 10);
 
             // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
-            $output = $browser->script(' 
+            $output = $browser->script('
                 const events = window.dataLayer.filter(function(item) {
                     return item.event === "loginFailed" && item.is_generic_demo_user === false;
                 });
-                
+
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
@@ -159,16 +165,17 @@ class DataLayerTest extends DuskTestCase
             // Type in the demo user email address
             $browser->type('email', $this::USER_EMAIL)
                 ->type('password', 'incorrect_password')
-                ->press('Login')
+                ->press('@login-button')
                 // Wait for the page to reload
-                ->waitFor('#login');
+                ->waitForLocation('/login', 10)
+                ->waitFor('#login', 10);
 
             // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
-            $output = $browser->script(' 
+            $output = $browser->script('
                 const events = window.dataLayer.filter(function(item) {
                     return item.event === "loginFailed" && item.is_generic_demo_user === true;
                 });
-                
+
                 return events.length;');
 
             $this->assertEquals(1, $output[0]);
