@@ -73,3 +73,15 @@ dataTableHelpers.initializeDeleteButtonListener(dataTableSelector, 'currency-rat
 $('#table_filter_search_text').keyup(function(){
     table.search($(this).val()).draw() ;
 })
+
+// Initialize the Vue component for the Overview Card
+import { createApp } from 'vue';
+const app = createApp({});
+
+// Add global translator function
+app.config.globalProperties.__ = window.__;
+
+import CardOverview from './../components/InvestmentPriceOverviewCard.vue';
+app.component('CardOverview', CardOverview);
+
+app.mount('#app')

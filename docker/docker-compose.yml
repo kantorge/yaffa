@@ -29,6 +29,8 @@ services:
       #- "80" # Expose the app on port 80, Caddy will handle opening it to the world
     env_file:
       - .env
+    environment:
+      RUNS_SCHEDULER: FALSE
     volumes:
       - yaffa_storage:/var/www/html/storage  # Yaffa storage for logs and planned future upload features
     depends_on:
@@ -37,6 +39,8 @@ services:
       #   condition: service_started
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
     networks:
       - yaffa-network
@@ -49,12 +53,25 @@ services:
   # This container runs the Laravel scheduler to handle scheduled tasks
   scheduler:
     image: kantorge/yaffa:latest
-    command: php artisan schedule:work
+    container_name: yaffa_scheduler
+    command: ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
     env_file:
       - .env
+    environment:
+      RUNS_SCHEDULER: TRUE
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - yaffa-network
+
+  # This container runs the Laravel queue worker to handle background jobs
+  redis:
+    image: redis:alpine
+    container_name: yaffa_redis
     restart: unless-stopped
     networks:
       - yaffa-network

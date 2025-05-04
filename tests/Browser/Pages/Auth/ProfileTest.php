@@ -13,12 +13,12 @@ class ProfileTest extends DuskTestCase
 
     public function test_password_change_client_side_validations()
     {
-         // Make sure the GTM ID is Not set in the .env file, and sandbox mode is disabled
-         $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
-         $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+        // Make sure the GTM ID is Not set in the .env file, and sandbox mode is disabled
+        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
 
-         $this->setConfig('yaffa.gtm_container_id', '');
-         $this->setConfig('yaffa.sandbox_mode', false);
+        $this->setConfig('yaffa.gtm_container_id', '');
+        $this->setConfig('yaffa.sandbox_mode', false);
 
         /** @var User $user */
         $user = User::factory()->create([
@@ -69,9 +69,11 @@ class ProfileTest extends DuskTestCase
                 ->logout()
                 ->visitRoute('home')
                 // Page should redirect to login
+                ->waitForRoute('login', [], 10)
                 ->type('email', $user->email)
                 ->type('password', 'password123')
                 ->press('@login-button')
+                ->waitForRoute('home', [], 10)
                 ->assertRouteIs('home');
         });
 

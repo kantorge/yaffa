@@ -27,6 +27,16 @@
     <link rel="stylesheet" href="{{ mix('css/app.css') }}">
 
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}" />
+
+    {{-- Disable animations during testing --}}
+    @if (app()->environment('testing'))
+        <style>
+        * {
+            transition: none !important;
+            animation: none !important;
+        }
+        </style>
+    @endif
 </head>
 
 <body @yield('classes_body')>

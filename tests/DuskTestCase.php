@@ -8,6 +8,7 @@ use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
+use Tests\Browser\DuskMacros;
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -30,6 +31,12 @@ abstract class DuskTestCase extends BaseTestCase
         }
     }
 
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        DuskMacros::register();
+    }
+
     /**
      * Create the RemoteWebDriver instance.
      *
@@ -42,12 +49,22 @@ abstract class DuskTestCase extends BaseTestCase
         ])->unless($this->hasHeadlessDisabled(), function ($items) {
             return $items->merge([
                 '--disable-gpu',
-                '--headless',
+                '--headless=new',
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+                '--ignore-certificate-errors',
+                '--allow-insecure-localhost',
+                '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-sync',
+                '--disable-translate',
+                '--disable-search-engine-choice-screen',
+                '--disable-smooth-scrolling',
             ]);
         })->all());
 
         return RemoteWebDriver::create(
-            $_ENV['DUSK_DRIVER_URL'] ?? 'http://localhost:9515',
+            $_ENV['DUSK_DRIVER_URL'] ?? env('DUSK_DRIVER_URL') ?? 'http://localhost:9515',
             DesiredCapabilities::chrome()->setCapability(
                 ChromeOptions::CAPABILITY,
                 $options
