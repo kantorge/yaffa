@@ -17,7 +17,7 @@
             <div class="col-12 col-sm-2 form-group">
                 <span class="form-label">
                     {{ __('Amount') }}
-                    <span v-if="currency">({{currency}})</span>
+                    <span v-if="currencySymbol">({{currencySymbol}})</span>
                 </span>
                 <div class="input-group">
                     <MathInput
@@ -94,7 +94,7 @@
             amount: [Number, String],
             category_id: Number,
             category: Object,
-            currency: String,
+            currencySymbol: String,
             comment: String,
             tags: Array,
             remainingAmount: Number,
