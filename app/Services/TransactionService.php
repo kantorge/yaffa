@@ -134,7 +134,7 @@ class TransactionService
 
     /**
      * This function can be used to initiate the recalculation of the monthly summaries,
-     * based on the creation or change of on specific transaction.
+     * based on the creation or any change of a transaction.
      * The function will trigger the relevant job or jobs to recalculate the summaries.
      *
      * @param Transaction $transaction
@@ -164,6 +164,7 @@ class TransactionService
 
         /** @var AccountEntity $accountFrom */
         $accountFrom = $transaction->config->accountFrom;
+
         /** @var AccountEntity $accountTo */
         $accountTo = $transaction->config->accountTo;
 
@@ -179,7 +180,7 @@ class TransactionService
                     $transaction->date->clone()->endOfMonth()
                 );
 
-                // As this is a relatively quick job, we can use dispatch_sync
+                // As this is a relatively quick job, affecting only one month and no schedules, we can use dispatch_sync
                 dispatch_sync($job);
             }
 
@@ -192,7 +193,7 @@ class TransactionService
                     $transaction->date->clone()->endOfMonth()
                 );
 
-                // As this is a relatively quick job, we can use dispatch_sync
+                // As this is a relatively quick job, affecting only one month and no schedules, we can use dispatch_sync
                 dispatch_sync($job);
             }
 
@@ -208,6 +209,8 @@ class TransactionService
                     'account_balance-forecast',
                     $accountFrom
                 );
+
+                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
                 dispatch($job);
             }
 
@@ -217,6 +220,8 @@ class TransactionService
                     'account_balance-forecast',
                     $accountTo
                 );
+
+                // We don't know how long the schedule will be, so we need to dispatch the job to the queue
                 dispatch($job);
             }
 
@@ -232,6 +237,8 @@ class TransactionService
                 'account_balance-budget',
                 $accountFrom
             );
+
+            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
             dispatch($job);
         } elseif ($accountTo?->isAccount()) {
             $job = new CalculateAccountMonthlySummary(
@@ -239,6 +246,8 @@ class TransactionService
                 'account_balance-budget',
                 $accountTo
             );
+
+            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
             dispatch($job);
         } else {
             // No account to assign the budget to
@@ -246,6 +255,8 @@ class TransactionService
                 $transaction->user,
                 'account_balance-budget'
             );
+
+            // We don't know how long the schedule will be, so we need to dispatch the job to the queue
             dispatch($job);
         }
     }
