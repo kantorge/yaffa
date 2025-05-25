@@ -6,10 +6,7 @@ use App\Http\Requests\InvestmentRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -93,7 +90,6 @@ class InvestmentController extends Controller
     public function update(InvestmentRequest $request, Investment $investment): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
          * @uri('/investment/{investment}')
          * @name('investment.update')
          * @middlewares('web', 'auth', 'verified', 'can:update,investment')
@@ -195,6 +191,7 @@ class InvestmentController extends Controller
          * @name('investment.show')
          * @middlewares('web', 'auth', 'verified', 'can:view,investment')
          */
+
         // Get all stored price points
         $prices = InvestmentPrice::where('investment_id', $investment->id)
             ->orderBy('date')
@@ -206,6 +203,10 @@ class InvestmentController extends Controller
             'currency',
         ]);
 
+        // Add current quantity and price as dynamic properties for use in the view or JS
+        $investment->current_quantity = $investment->getCurrentQuantity();
+        $investment->latest_price = $investment->getLatestPrice();
+
         $investmentService = new InvestmentService();
         $investment = $investmentService->enrichInvestmentWithQuantityHistory($investment);
 
@@ -216,14 +217,10 @@ class InvestmentController extends Controller
             ])
             ->get();
 
-        JavaScriptFacade::put([
-            'investment' => $investment,
-            'transactions' => array_values($transactions->toArray()),
-            'prices' => $prices
-        ]);
-
         return view('investment.show', [
             'investment' => $investment,
+            'transactions' => $transactions,
+            'prices' => $prices,
         ]);
     }
 }
