@@ -232,7 +232,13 @@ class AccountEntityController extends Controller
 
             $accountEntity->push();
 
-            self::addSimpleSuccessMessage(__('Account added'));
+            self::addMessage(
+                __('Account added'),
+                'success',
+                null,
+                null,
+                true
+            );
 
             return redirect()->route('account-entity.index', ['type' => 'account']);
         }

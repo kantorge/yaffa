@@ -1,28 +1,19 @@
+import 'datatables.net-bs5';
+import 'datatables.net-select-bs5';
+import 'datatables-contextual-actions';
+
+import Swal from 'sweetalert2'
+
 import * as helpers from "../helpers";
-
-require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
-
 import { toFormattedCurrency } from '../helpers';
 
 import {
     booleanToTableIcon,
-    renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
-const dataTableSelector = '#table';
 
-/**
- * Define the conditions for the delete button, as required by the DataTables helper.
- */
-const deleteButtonConditions = [
-    {
-        property: 'transactions_count',
-        value: 0,
-        negate: false,
-        errorMessage: __('It is already used in transactions.'),
-    },
-];
+const dataTableSelector = '#table';
+let ajaxIsBusy = false;
 
 window.table = $(dataTableSelector).DataTable({
     data: window.accounts,
@@ -33,7 +24,10 @@ window.table = $(dataTableSelector).DataTable({
             render: function (data, type, row) {
                 // Return name with link for display
                 if (type === 'display') {
-                    return '<a href="' + window.route('account-entity.show', {account_entity: row.id}) + '" title="' + __('Show details') + '">' + data + '</a>';
+                    return `<div class="d-flex justify-content-start align-items-center">
+                        <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
+                        <a href="${window.route('account-entity.show', {account_entity: row.id})}" title="${__('Show details')}">${data}</a>
+                    </div>`;
                 }
 
                 // Raw value is returned otherwise
@@ -68,9 +62,14 @@ window.table = $(dataTableSelector).DataTable({
         {
             data: "transactions_count",
             title: __("Transactions"),
-            render: function (data, type) {
+            render: function (data, type, row) {
                 if (type === 'display') {
-                    return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 0, useGrouping: true});
+                    if (data > 0) {
+                        return `<a href="${window.route('reports.transactions', {accounts: [row.id]})}"
+                        title="${__('Show transactions')}"
+                        >${data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 0, useGrouping: true})}</a>`;
+                    }
+                    return data;
                 }
                 return data;
             },
@@ -89,18 +88,6 @@ window.table = $(dataTableSelector).DataTable({
                 }
                 return data;
             }
-        },
-        {
-            data: "id",
-            title: __("Actions"),
-            render: function (data, _type, row) {
-                return  '<a href="' + window.route('account-entity.show', {account_entity: data}) + '" class="btn btn-xs btn-success" title="' + __('Show details') + '"><i class="fa fa-magnifying-glass"></i></a> ' +
-                        '<a href="' + window.route('account-entity.edit', {type: 'account', account_entity: data}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-edit"></i></a> ' +
-                    renderDeleteAssetButton(row, deleteButtonConditions, __("This account cannot be deleted."));
-            },
-            className: "dt-nowrap",
-            orderable: false,
-            searchable: false,
         }
     ],
     createdRow: function(row, data) {
@@ -161,56 +148,125 @@ window.table = $(dataTableSelector).DataTable({
                 }
             });
         });
-
-        // Listener for delete button
-        $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
-            let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
-            $(this).addClass('busy');
-            $(this).children('i').removeClass().addClass('fa fa-fw fa-spinner fa-spin');
-
-            // Send request to delete account
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.accountentity.destroy', +row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.accounts = window.accounts.filter(account => account.id !== data.accountEntity.id);
-
-                    row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Account deleted'),
-                            toastClass: "bg-success",
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
-                },
-                error: function (_data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete account'),
-                            toastClass: "bg-danger",
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
-                }
-            });
-        });
     }
+});
+
+// Initialize the contextual actions plugin
+table.contextualActions({
+    contextMenuClasses: ['text-primary'],
+    deselectAfterAction: true,
+    contextMenu: {
+        enabled: true,
+        isMulti: false,
+        headerRenderer: false,
+        triggerButtonSelector: '.hover-icon',
+    },
+    buttonList: {
+        enabled: false
+    },
+    items: [
+        {
+            type: 'option',
+            title: __('Show details'),
+            iconClass: 'fa fa-magnifying-glass',
+            action: function (row) {
+                window
+                    .location
+                    .href = window.route('account-entity.show', {account_entity: row[0].id});
+            }
+        },
+        {
+            type: 'option',
+            title: __('Edit'),
+            iconClass: 'fa fa-edit',
+            action: function (row) {
+                window
+                    .location
+                    .href = window.route('account-entity.edit', {type: 'account', account_entity: row[0].id});
+            }
+        },
+        {
+            type: 'option',
+            title: __('Show transactions'),
+            iconClass: 'fa fa-list',
+            action: function (row) {
+                window
+                    .location
+                    .href = window.route('reports.transactions', {accounts: [row[0].id]});
+            }
+        },
+        {
+            type: 'divider'
+        },
+        {
+            type: 'option',
+            title: helpers.__('Delete'),
+            iconClass: 'fa fa-trash',
+            contextMenuClasses: ['text-danger'],
+            isDisabled: function (row) {
+                // Check if the account can be deleted
+                return row.transactions_count > 0;
+            },
+            action: function (row) {
+                const account = row[0];
+                ajaxIsBusy = true;
+
+                // Get confirmation from the user using SweetAlert
+                Swal.fire({
+                    animation: false,
+                    text: __('Are you sure to want to delete this item?'),
+                    icon: "warning",
+                    showCancelButton: true,
+                    cancelButtonText: __('Cancel'),
+                    confirmButtonText: __('Confirm'),
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary ms-3'
+                    }
+                }).then((result) => {
+                    if (!result.isConfirmed) {
+                        ajaxIsBusy = false;
+                        return;
+                    }
+
+                    // Send request to delete account
+                    axios.delete(window.route('api.accountentity.destroy', account.id))
+                    .then((response) => {
+                        // Update row in table data source
+                        window.accounts = window.accounts.filter(account => account.id !== response.data.accountEntity.id);
+
+                        table
+                            .row(account)
+                            .remove()
+                            .draw();
+
+                        let notificationEvent = new CustomEvent('toast', {
+                            detail: {
+                                header: __('Success'),
+                                body: __('Account deleted'),
+                                toastClass: "bg-success",
+                            }
+                        });
+                        window.dispatchEvent(notificationEvent);
+                    })
+                    .catch((error) => {
+                        let notificationEvent = new CustomEvent('toast', {
+                            detail: {
+                                header: __('Error'),
+                                body: __('Error while trying to delete account'),
+                                toastClass: "bg-danger",
+                            }
+                        });
+                        window.dispatchEvent(notificationEvent);
+                    })
+                    .finally(() => {
+                        ajaxIsBusy = false;
+                    });
+                });
+            }
+        }
+    ]
 });
 
 // Listeners for filters

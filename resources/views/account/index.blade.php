@@ -12,7 +12,8 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <div
-                            class="card-title collapse-control"
+                            class="card-title collapse-control
+                                @handheld collapsed @endhandheld"
                             data-coreui-toggle="collapse"
                             data-coreui-target="#cardActions"
                     >
@@ -21,8 +22,9 @@
                     </div>
                 </div>
                 <ul
-                        class="list-group list-group-flush collapse show"
-                        aria-expanded="true"
+                        class="list-group list-group-flush collapse
+                            @desktop show @enddesktop"
+                        aria-expanded="@desktop true @elsedesktop false @enddesktop"
                         id="cardActions"
                 >
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -41,7 +43,8 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <div
-                            class="card-title collapse-control"
+                            class="card-title collapse-control
+                                @handheld collapsed @endhandheld"
                             data-coreui-toggle="collapse"
                             data-coreui-target="#cardFilters"
                     >
@@ -49,7 +52,11 @@
                         {{ __('Filters') }}
                     </div>
                 </div>
-                <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                <ul
+                        class="list-group list-group-flush collapse
+                            @desktop show @enddesktop"
+                        aria-expanded="@desktop true @elsedesktop false @enddesktop"
+                        id="cardFilters">
                     <x-tablefilter-sidebar-switch
                             label=" {{ __('Active') }}"
                             property="active"
@@ -62,7 +69,7 @@
             <div class="card mb-3">
                 <div class="card-body no-datatable-search">
                     <table
-                            class="table table-striped table-bordered table-hover"
+                            class="table table-bordered table-hover"
                             dusk="table-accounts"
                             id="table"
                     ></table>
