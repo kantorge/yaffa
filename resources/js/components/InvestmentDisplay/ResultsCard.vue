@@ -16,13 +16,23 @@
           {{ __('Date from') }}
         </label>
         <div class="col-6 col-sm-4">
-          <input type="date" class="form-control" v-model="dateFromString" />
+          <input
+            type="date"
+            class="form-control"
+            v-model="dateFromString"
+            :max="dateToString"
+          />
         </div>
         <label for="date_to" class="col-6 col-sm-2 col-form-label">
           {{ __('Date to') }}
         </label>
         <div class="col-6 col-sm-4">
-          <input type="date" class="form-control" v-model="dateToString" />
+          <input
+            type="date"
+            class="form-control"
+            v-model="dateToString"
+            :min="dateFromString"
+          />
         </div>
       </div>
       <div class="row mb-0">
@@ -104,7 +114,7 @@
 </template>
 
 <script>
-  import { toFormattedCurrency } from '../../helpers';
+  import { toFormattedCurrency, showToast, __ } from '../../helpers';
 
   export default {
     name: 'ResultsCard',
@@ -137,6 +147,46 @@
       dateTo(val) {
         if (val) this.internalDateTo = val;
       },
+      internalDateFrom(val) {
+        if (
+          val &&
+          this.internalDateTo &&
+          val instanceof Date &&
+          this.internalDateTo instanceof Date &&
+          !isNaN(val) &&
+          !isNaN(this.internalDateTo) &&
+          val > this.internalDateTo
+        ) {
+          this.showToast(
+            __('Warning'),
+            this.__('The start date cannot be after the end date.'),
+            'bg-warning'
+          );
+          // Only auto-correct if internalDateTo is valid
+          this.internalDateFrom = new Date(this.internalDateTo);
+          this.$emit('update:date-from', this.internalDateTo);
+        }
+      },
+      internalDateTo(val) {
+        if (
+          val &&
+          this.internalDateFrom &&
+          val instanceof Date &&
+          this.internalDateFrom instanceof Date &&
+          !isNaN(val) &&
+          !isNaN(this.internalDateFrom) &&
+          val < this.internalDateFrom
+        ) {
+          this.showToast(
+            __('Warning'),
+            this.__('The end date cannot be before the start date.'),
+            'bg-warning'
+          );
+          // Only auto-correct if internalDateFrom is valid
+          this.internalDateTo = new Date(this.internalDateFrom);
+          this.$emit('update:date-to', this.internalDateFrom);
+        }
+      },
     },
     computed: {
       dateFromString: {
@@ -148,6 +198,22 @@
         set(val) {
           if (!val) return;
           const d = new Date(val);
+          // If the new date is after internalDateTo, revert to previous valid value and show warning
+          if (this.internalDateTo && d > this.internalDateTo) {
+            this.showToast(
+              this.__('Warning'),
+              this.__('The start date cannot be after the end date.'),
+              'bg-warning'
+            );
+            // Force the input value to revert to the last valid value
+            this.$nextTick(() => {
+              // Find the input and set its value back to the valid one
+              const input = this.$el.querySelector('input[type="date"]');
+              if (input)
+                input.value = this.internalDateFrom.toISOString().slice(0, 10);
+            });
+            return;
+          }
           this.internalDateFrom = d;
           this.$emit('update:date-from', d);
         },
@@ -161,6 +227,22 @@
         set(val) {
           if (!val) return;
           const d = new Date(val);
+          if (this.internalDateFrom && d < this.internalDateFrom) {
+            this.showToast(
+              this.__('Warning'),
+              this.__('The end date cannot be before the start date.'),
+              'bg-warning'
+            );
+            this.$nextTick(() => {
+              // Find the second input and set its value back to the valid one
+              const inputs = this.$el.querySelectorAll('input[type="date"]');
+              if (inputs && inputs[1])
+                inputs[1].value = this.internalDateTo
+                  .toISOString()
+                  .slice(0, 10);
+            });
+            return;
+          }
           this.internalDateTo = d;
           this.$emit('update:date-to', d);
         },
@@ -246,6 +328,7 @@
     },
     methods: {
       toFormattedCurrency,
+      showToast,
       formatQuantity(value) {
         if (value === 0) return '0';
         return value.toLocaleString(this.locale, {

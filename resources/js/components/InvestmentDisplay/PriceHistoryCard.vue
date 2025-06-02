@@ -11,7 +11,7 @@
         <template v-if="investment.investment_price_provider">
           <a
             :href="priceProviderUrl"
-            class="btn btn-sm btn-success"
+            class="btn btn-sm btn-success me-2"
             :title="__('Load new price data')"
           >
             <span class="fa fa-cloud-download"></span>
