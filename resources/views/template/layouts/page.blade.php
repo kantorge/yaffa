@@ -30,14 +30,14 @@
     </div>
     <div class="sidebar-brand sidebar-brand-form d-md-flex">
         @if(isset($accountsForNavbar) && count($accountsForNavbar) > 0)
-        <form action="#" method="get">
-            <select name="jump_to_account" id="jump_to_account" class="form-select">
-                <option value="">{{ __('Select account to open') }}</option>
-                @foreach($accountsForNavbar as $id => $name)
-                    <option value="{{ $id }}">{{ $name }}</option>
-                @endforeach
-            </select>
-        </form>
+            <form action="#" method="get">
+                <select name="jump_to_account" id="jump_to_account" class="form-select">
+                    <option value="">{{ __('Select account to open') }}</option>
+                    @foreach($accountsForNavbar as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </form>
         @endif
     </div>
 
@@ -62,7 +62,8 @@
             <ul class="header-nav ms-auto"></ul>
             <ul class="header-nav ms-3 me-4">
                 <li class="nav-item dropdown">
-                    <a class="nav-link py-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link py-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true"
+                        aria-expanded="false">
                         <i class="fa-solid fa-user me-1"></i>
                         {{ Auth::user()->name }}
                     </a>
@@ -74,20 +75,16 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); this.closest('form').submit();">
-                               <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>
+                                onclick="event.preventDefault(); this.closest('form').submit();">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>
                                 {{ __('Logout') }}
                             </a>
                         </form>
                     </div>
                 </li>
             </ul>
-            <button
-                    class="header-toggler px-md-0 me-md-3"
-                    dusk="quick-action-bar-toggler"
-                    type="button"
-                    onclick="coreui.Sidebar.getInstance(document.querySelector('#quick-action-bar')).show()"
-            >
+            <button class="header-toggler px-md-0 me-md-3" dusk="quick-action-bar-toggler" type="button"
+                onclick="coreui.Sidebar.getInstance(document.querySelector('#quick-action-bar')).show()">
                 <i class="fa fa-fw fa-bolt"></i>
             </button>
         </div>
@@ -106,8 +103,15 @@
         </div>
     </div>
     <footer class="footer">
-        <div><a href="https://www.yaffa.cc/" target="_blank" rel="noopener">{{ config('app.name') }}</a> {{ config('yaffa.version') }}</div>
-        <div class="ms-auto"><a href="https://github.com/kantorge/yaffa" class="text-black" target="_blank" rel="noopener"><i class="fa-brands fa-github fa-2x"></i></a></div>
+        <div>
+            <a href="https://yaffa.cc/" target="_blank" rel="noopener">{{ config('app.name') }}</a>
+            {{ config('yaffa.version') }}
+        </div>
+        <div class="ms-auto">
+            <a href="https://github.com/kantorge/yaffa" class="text-black" target="_blank" rel="noopener">
+                <i class="fa-brands fa-github fa-2x"></i>
+            </a>
+        </div>
     </footer>
 </div>
 @stop

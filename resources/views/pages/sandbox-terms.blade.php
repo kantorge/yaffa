@@ -1,6 +1,6 @@
 @extends('template.layouts.auth')
 
-@section('title_postfix',  __('Terms of service'))
+@section('title_postfix', __('Terms of service'))
 
 @section('content_header', __('Terms of service'))
 
@@ -18,17 +18,19 @@
                         </p>
 
                         <p>
-                            <a href="https://www.yaffa.cc" target="_blank">Read more</a> about YAFFA personal finance web application in general,
-                            or <a href="https://www.yaffa.cc/documentation/" target="_blank">read the documentation</a> to learn how to get your own instance of it.
+                            <a href="https://yaffa.cc" target="_blank">Read more</a> about YAFFA personal finance web
+                            application in general,
+                            or <a href="https://yaffa.cc/documentation/" target="_blank">read the documentation</a> to
+                            learn how to get your own instance of it.
                         </p>
 
                         <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-                        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-                        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-                        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-                        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-                        SOFTWARE.</p>
+                            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+                            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+                            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                            SOFTWARE.</p>
                     </div>
                 </div>
             </div>
