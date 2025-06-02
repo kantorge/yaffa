@@ -1,5 +1,8 @@
-// General function for the sandbox countdown alert
+// Functions used by the sandbox countdown alert
+
 function getNextResetDate() {
+    // Possible improvement: get the schedule from configuration, which is set by the server
+
     const now = new Date();
     const day = now.getUTCDay();
     const hour = now.getUTCHours();
@@ -30,7 +33,18 @@ function getTimeUntilNextReset() {
     return { days, hours };
 }
 
-function displayTimeUntilNextReset() {
+function getTimeoutMessage(days, hours) {
+    const daysLabel = days === 1 ? __('day') : __('days');
+    const hoursLabel = hours === 1 ? __('hour') : __('hours');
+
+    return __(
+        'The data in this sandbox environment is regularly cleared. Time until next reset: :days :daysLabel and :hours :hoursLabel',
+        { days, daysLabel, hours, hoursLabel }
+    );
+}
+
+// Display the countdown alert using a self-invoking function
+(function displayTimeUntilNextReset() {
     const alertContainer = document.getElementById('sandBoxResetAlert');
     if (!alertContainer) {
         return;
@@ -42,7 +56,7 @@ function displayTimeUntilNextReset() {
 
     const { days, hours } = getTimeUntilNextReset();
 
-    messageContainer.innerText = __(`The data in this sandbox environment is regularly cleared. Time until next reset: :days days and :hours hours`, { days, hours });
+    messageContainer.innerText = getTimeoutMessage(days, hours);
 
     // Set the class based on the remaining time
     if (days === 0 && hours <= 1) {
@@ -54,6 +68,4 @@ function displayTimeUntilNextReset() {
     }
 
     alertContainer.classList.remove('hidden');
-}
-
-displayTimeUntilNextReset();
+})();

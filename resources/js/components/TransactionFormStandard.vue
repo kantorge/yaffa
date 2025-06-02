@@ -317,7 +317,9 @@
                                     <label for="transaction_amount_to" class="form-label">
                                         {{ __('Amount to') }}
                                         <span v-if="to.account_currency"
-                                              dusk="label-amountTo-currency">({{ to.account_currency }})</span>
+                                              dusk="label-amountTo-currency">
+                                              ({{ getCurrencySymbol(locale, to.account_currency.iso_code) }})
+                                        </span>
                                     </label>
                                     <MathInput
                                             class="form-control"
@@ -331,30 +333,62 @@
                                     {{ __('Total amount') }}
                                 </dt>
                                 <dd class="col-4">
-                                    {{ form.config.amount_from || 0 }}
-                                    <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
+                                    <span v-if="ammountFromCurrencyLabel">
+                                        {{ toFormattedCurrency(
+                                            form.config.amount_from || 0,
+                                            this.locale,
+                                            this.from.account_currency
+                                        ) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ form.config.amount_from || 0 }}
+                                    </span>
                                 </dd>
                                 <dt class="col-8">
                                     {{ __('Total allocated') }}
                                 </dt>
                                 <dd class="col-4">
-                                    {{ allocatedAmount }}
-                                    <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
+                                    <span v-if="ammountFromCurrencyLabel">
+                                        {{ toFormattedCurrency(
+                                            allocatedAmount,
+                                            this.locale,
+                                            this.from.account_currency
+                                        ) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ allocatedAmount }}
+                                    </span>
                                 </dd>
                                 <dt class="col-8" v-show="payeeCategory.id">
                                     {{ __('Remaining amount to') }}
                                     <span class="notbold"><br>{{ payeeCategory.text }}</span>
                                 </dt>
                                 <dd class="col-4" v-show="payeeCategory.id">
-                                    {{ remainingAmountToPayeeDefault }}
-                                    <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
+                                    <span v-if="ammountFromCurrencyLabel">
+                                        {{ toFormattedCurrency(
+                                            remainingAmountToPayeeDefault,
+                                            this.locale,
+                                            this.from.account_currency
+                                        ) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ remainingAmountToPayeeDefault }}
+                                    </span>
                                 </dd>
                                 <dt class="col-8" v-show="!payeeCategory.id">
                                     {{ __('Not allocated') }}:
                                 </dt>
                                 <dd class="col-4" v-show="!payeeCategory.id">
-                                    {{ remainingAmountNotAllocated }}
-                                    <span v-if="ammountFromCurrencyLabel">{{ ammountFromCurrencyLabel }}</span>
+                                    <span v-if="ammountFromCurrencyLabel">
+                                        {{ toFormattedCurrency(
+                                            remainingAmountNotAllocated,
+                                            this.locale,
+                                            this.from.account_currency
+                                        ) }}
+                                    </span>
+                                    <span v-else>
+                                        {{ remainingAmountNotAllocated }}
+                                    </span>
                                 </dd>
                             </dl>
                         </div>
@@ -364,7 +398,7 @@
                     <transaction-item-container
                             @addTransactionItem="addTransactionItem"
                             :transactionItems="form.items"
-                            :currency="from.account_currency"
+                            :currencySymbol="ammountFromCurrencyLabel"
                             :payee="payeeId"
                             :remainingAmount="remainingAmountNotAllocated || remainingAmountToPayeeDefault || 0"
                             :enabled="!transactionTypeIsTransfer"
@@ -443,7 +477,7 @@
 </template>
 
 <script>
-import {todayInUTC, getCurrencySymbol, processTransaction} from "../helpers";
+import {todayInUTC, getCurrencySymbol, processTransaction, toFormattedCurrency} from "../helpers";
 
 require('select2');
 $.fn.select2.amd.define(
@@ -585,6 +619,9 @@ export default {
             },
         ];
 
+        // Some other settings
+        data.locale = window.YAFFA.locale;
+
         return data;
     },
 
@@ -608,14 +645,28 @@ export default {
             return (this.exchangeRatePresent ? __('Amount from') : __('Amount'))
         },
 
-        // Amount from currency is dependent on many other data
+        /**
+         * Computes the currency label based on the transaction type and account currency.
+         *
+         * - For 'withdrawal' and 'transfer' transaction types, it returns the currency symbol
+         *   of the source account (`from.account_currency`).
+         * - For 'deposit' transaction type, it returns the currency symbol of the destination
+         *   account (`to.account_currency`).
+         * - If no matching conditions are met or the account currency is unavailable, it returns an empty string.
+         *
+         * @returns {string} The currency symbol for the relevant account or an empty string.
+         */
         ammountFromCurrencyLabel() {
             if (['withdrawal', 'transfer'].includes(this.form.transaction_type)) {
-                return this.from.account_currency;
+                if (this.from.account_currency) {
+                    return getCurrencySymbol(this.locale, this.from.account_currency.iso_code);
+                }
             }
 
             if (this.form.transaction_type === 'deposit') {
-                return this.to.account_currency;
+                if (this.to.account_currency) {
+                    return getCurrencySymbol(this.locale, this.to.account_currency.iso_code);
+                }
             }
 
             return '';
@@ -631,10 +682,6 @@ export default {
         // Provide the base currency from the global scope for the template
         baseCurrency() {
             return window.YAFFA.baseCurrency;
-        },
-        // Provide the locale from the global scope for the template
-        locale() {
-            return window.YAFFA.locale;
         },
 
         remainingAmountToPayeeDefault() {
@@ -680,7 +727,9 @@ export default {
 
         // Indicates if transaction type is transfer, and currencies of accounts are different
         exchangeRatePresent() {
-            return this.from.account_currency && this.to.account_currency && this.from.account_currency !== this.to.account_currency;
+            return this.from.account_currency
+                && this.to.account_currency
+                && this.from.account_currency !== this.to.account_currency;
         },
 
         exchangeRate() {
@@ -742,7 +791,7 @@ export default {
                         }
                     })
                         .done(data => {
-                            $vm.from.account_currency = getCurrencySymbol(window.YAFFA.locale, data.config.currency.iso_code);
+                            $vm.from.account_currency = data.config.currency;
                         });
                 } else {
                     $.ajax({
@@ -784,7 +833,7 @@ export default {
                         }
                     })
                         .done(data => {
-                            $vm.to.account_currency = getCurrencySymbol(window.YAFFA.locale, data.config.currency.iso_code);
+                            $vm.to.account_currency = data.config.currency;
                         });
                 } else if ($vm.getAccountType('to') === 'payee') {
                     $.ajax({
@@ -828,6 +877,7 @@ export default {
         },
 
         getCurrencySymbol,
+        toFormattedCurrency,
         initializeTransaction() {
             if (this.transaction && Object.keys(this.transaction).length > 0) {
                 // Populate form data with already known values
@@ -1125,7 +1175,7 @@ export default {
 
             // Adjust the "amount to" value. It needs to match the "amount from" value, if the currencies are the same,
             // or if only one of the values is set
-            if (this.from.account_currency === this.to.account_currency || !this.from.account_currency || !this.to.account_currency) {
+            if (!this.from.account_currency || !this.to.account_currency || this.from.account_currency.iso_code === this.to.account_currency.iso_code) {
                 this.form.config.amount_to = this.form.config.amount_from;
             }
 

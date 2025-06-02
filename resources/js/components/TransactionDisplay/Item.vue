@@ -86,7 +86,14 @@
             },
             toFormattedCurrency(input, locale, currencySettings) {
                 return helpers.toFormattedCurrency(input, locale, currencySettings);
-            }
+            },
+
+            /**
+             * Import the translation helper function.
+             */
+             __: function (string, replace) {
+                return helpers.__(string, replace);
+            },
         },
     }
 </script>
