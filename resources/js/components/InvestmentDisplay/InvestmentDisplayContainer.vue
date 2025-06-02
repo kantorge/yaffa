@@ -23,6 +23,7 @@
         :transactions="processedTransactions"
         :investment="investment"
         @set-date-range="onSetDateRange"
+        @delete-transaction="onDeleteTransaction"
       />
     </div>
     <div class="col-md-4">
@@ -116,6 +117,12 @@
         } else if (type === 'to') {
           this.dateTo = new Date(date);
         }
+      },
+      onDeleteTransaction(id) {
+        // Remove the transaction from processedTransactions
+        this.processedTransactions = this.processedTransactions.filter(
+          (tx) => String(tx.id) !== String(id)
+        );
       },
     },
   };

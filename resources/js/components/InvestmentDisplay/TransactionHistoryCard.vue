@@ -30,13 +30,14 @@
   import DataTable from 'datatables.net-vue3';
   import DataTablesCore from 'datatables.net';
   import DataTablesBootstrap5 from 'datatables.net-bs5';
+  import Swal from 'sweetalert2';
 
   DataTable.use(DataTablesCore);
   DataTable.use(DataTablesBootstrap5);
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '../../components/dataTableHelper';
-  import { toIsoDateString } from '../../helpers';
+  import { __, toIsoDateString } from '../../helpers';
 
   export default {
     name: 'TransactionHistoryCard',
@@ -53,6 +54,91 @@
       },
     },
     emits: ['set-date-range', 'delete-transaction'],
+    methods: {
+      toIsoDateString,
+      __,
+      confirmDeleteTransaction(id) {
+        Swal.fire({
+          animation: false,
+          text: this.__('Are you sure to want to delete this item?'),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: this.__('Cancel'),
+          confirmButtonText: this.__('Confirm'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return;
+          }
+
+          // Show deleting toast
+          let notificationEvent = new CustomEvent('toast', {
+            detail: {
+              body: this.__('Deleting transaction #:transactionId', {
+                transactionId: id,
+              }),
+              toastClass: `bg-info toast-transaction-${id}`,
+              delay: Infinity,
+            },
+          });
+          window.dispatchEvent(notificationEvent);
+
+          window.axios
+            .delete(
+              window.route('api.transactions.destroy', { transaction: id })
+            )
+            .then(() => {
+              // Success toast
+              let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                  header: this.__('Success'),
+                  body: this.__('Transaction deleted (#:transactionId)', {
+                    transactionId: id,
+                  }),
+                  toastClass: 'bg-success',
+                },
+              });
+              window.dispatchEvent(notificationEvent);
+              // Remove from UI
+              this.$emit('delete-transaction', id);
+            })
+            .catch((error) => {
+              // Error toast
+              let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                  header: this.__('Error'),
+                  body: this.__(
+                    'Error deleting transaction (#:transactionId): :error',
+                    { transactionId: id, error: error }
+                  ),
+                  toastClass: 'bg-danger',
+                },
+              });
+              window.dispatchEvent(notificationEvent);
+            })
+            .finally(() => {
+              // Close the toast with a small delay
+              setTimeout(() => {
+                let toastElement = document.querySelector(
+                  `.toast-transaction-${id}`
+                );
+                if (
+                  toastElement &&
+                  window.bootstrap &&
+                  window.bootstrap.Toast
+                ) {
+                  let toastInstance = new window.bootstrap.Toast(toastElement);
+                  toastInstance.hide();
+                }
+              }, 250);
+            });
+        });
+      },
+    },
     computed: {
       newTransactionUrl() {
         if (!window.route) {
@@ -81,11 +167,8 @@
             row.querySelectorAll('.data-delete').forEach((btn) => {
               btn.onclick = (event) => {
                 const id = btn.getAttribute('data-id');
-                if (
-                  id &&
-                  confirm(this.__('Are you sure to want to delete this item?'))
-                ) {
-                  this.$emit('delete-transaction', id);
+                if (id) {
+                  this.confirmDeleteTransaction(id);
                 }
                 event.stopPropagation();
               };
@@ -215,12 +298,6 @@
             searchable: false,
           },
         ];
-      },
-    },
-    methods: {
-      toIsoDateString,
-      __(str) {
-        return (window.__ && window.__(str)) || str;
       },
     },
   };
