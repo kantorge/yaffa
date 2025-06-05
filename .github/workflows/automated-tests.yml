@@ -85,7 +85,9 @@ jobs:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
 
       - name: Upload coverage to Codacy
-        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t ${{secrets.CODACY_PROJECT_TOKEN}}
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t "$CODACY_PROJECT_TOKEN"
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   dusk-php:
     runs-on: ubuntu-latest
