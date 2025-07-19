@@ -1,5 +1,5 @@
 /*!
-  * Bootstrap v5.3.5 (https://getbootstrap.com/)
+  * Bootstrap v5.3.7 (https://getbootstrap.com/)
   * Copyright 2011-2025 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
   */
@@ -27,13 +27,13 @@
 
 /*! #__NO_SIDE_EFFECTS__ */
 
-/*! Axios v1.9.0 Copyright (c) 2025 Matt Zabriskie and contributors */
+/*! Axios v1.10.0 Copyright (c) 2025 Matt Zabriskie and contributors */
 
 /*! Bootstrap 5 integration for DataTables' Responsive
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! DataTables 2.2.2
+/*! DataTables 2.3.2
  * © SpryMedia Ltd - datatables.net/license
  */
 
@@ -45,26 +45,26 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 3.0.0
+/*! Select for DataTables 3.0.1
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
-* @vue/runtime-core v3.5.13
+* @vue/runtime-core v3.5.16
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
 
 /**
-* @vue/runtime-dom v3.5.13
+* @vue/runtime-dom v3.5.16
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
 
 /**
-* @vue/shared v3.5.13
+* @vue/shared v3.5.16
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/

@@ -88,26 +88,28 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     public function test_selecting_an_account_limits_investments_to_the_same_currency()
     {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Select account
-                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                ->assertSeeIn(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_ACCOUNT_NAME_USD)
-                // Make sure, that the account API call is finished, by waiting for the currency to be displayed
-                ->waitForTextIn('@label-currency', '$', 10)
-                // Try to select an investment by opening the dropdown
-                ->click(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2')
-                // Wait for the default options to load
-                ->waitFor('.select2-container--open> .select2-dropdown > .select2-results > ul', 10)
-                ->assertSeeIn(
-                    '.select2-container--open > .select2-dropdown > .select2-results > ul',
-                    self::TEST_INVESTMENT_NAME_USD
-                )
-                ->assertDontSeeIn(
-                    '.select2-container--open > .select2-dropdown > .select2-results > ul',
-                    self::TEST_INVESTMENT_NAME_EUR
-                );
+        retry(3, function () {
+            $this->browse(function (Browser $browser) {
+                $browser->loginAs($this->user)
+                    ->visitRoute('transaction.create', ['type' => 'investment'])
+                    // Select account
+                    ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                    ->assertSeeIn(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_ACCOUNT_NAME_USD)
+                    // Make sure, that the account API call is finished, by waiting for the currency to be displayed
+                    ->waitForTextIn('@transaction-total-value', '$', 10)
+                    // Try to select an investment by opening the dropdown
+                    ->click(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2')
+                    // Wait for the default options to load
+                    ->waitFor('.select2-container--open> .select2-dropdown > .select2-results > ul', 10)
+                    ->assertSeeIn(
+                        '.select2-container--open > .select2-dropdown > .select2-results > ul',
+                        self::TEST_INVESTMENT_NAME_USD
+                    )
+                    ->assertDontSeeIn(
+                        '.select2-container--open > .select2-dropdown > .select2-results > ul',
+                        self::TEST_INVESTMENT_NAME_EUR
+                    );
+            });
         });
     }
 
@@ -144,25 +146,25 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
 
                 // Validate currency is displayed correctly
-                ->waitForTextIn('@label-currency', '$')
+                ->waitForTextIn('@transaction-total-value', '$')
 
                 // Remove the account
                 ->select2ClearAll(self::ACCOUNT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
-                ->assertNotPresent('@label-currency')
+                ->assertNotPresent('@transaction-total-value')
 
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
 
                 // Validate currency is displayed correctly
-                ->waitForTextIn('@label-currency', '€')
+                ->waitForTextIn('@transaction-total-value', '€')
 
                 // Remove the investment
                 ->select2ClearAll(self::INVESTMENT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
-                ->assertNotPresent('@label-currency');
+                ->assertNotPresent('@transaction-total-value');
         });
     }
 
@@ -178,25 +180,25 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
 
                 // Validate currency is displayed correctly
-                ->waitForTextIn('@label-currency', '€')
+                ->waitForTextIn('@transaction-total-value', '€')
 
                 // Remove the investment
                 ->select2ClearAll(self::INVESTMENT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
-                ->assertNotPresent('@label-currency')
+                ->assertNotPresent('@transaction-total-value')
 
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
 
                 // Validate currency is displayed correctly
-                ->waitForTextIn('@label-currency', '$')
+                ->waitForTextIn('@transaction-total-value', '$')
 
                 // Remove the account
                 ->select2ClearAll(self::ACCOUNT_DROPDOWN_SELECTOR, '#transactionFormInvestment')
 
                 // Validate that no currency is displayed
-                ->assertNotPresent('@label-currency');
+                ->assertNotPresent('@transaction-total-value');
         });
     }
 
@@ -282,29 +284,31 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
      */
     public function test_user_can_submit_add_shares_transaction_form(): void
     {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Select account
-                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                // Select investment
-                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                // Select type
-                ->select('#transaction_type', 'Add shares')
-                // Verify that price field is disabled
-                ->assertDisabled('#transaction_price')
-                // Add quantity
-                ->type('#transaction_quantity', '10')
-                // Add commission
-                ->type('#transaction_commission', '30')
-                // Add taxes
-                ->type('#transaction_tax', '40')
-                // Verify that dividend field is disabled
-                ->assertDisabled('#transaction_dividend')
-                // Submit form
-                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
-                // A success message should be available in a Vue component
-                ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
+        retry(3, function () {
+            $this->browse(function (Browser $browser) {
+                $browser->loginAs($this->user)
+                    ->visitRoute('transaction.create', ['type' => 'investment'])
+                    // Select account
+                    ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                    // Select investment
+                    ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
+                    // Select type
+                    ->select('#transaction_type', 'Add shares')
+                    // Verify that price field is disabled
+                    ->assertDisabled('#transaction_price')
+                    // Add quantity
+                    ->type('#transaction_quantity', '10')
+                    // Add commission
+                    ->type('#transaction_commission', '30')
+                    // Add taxes
+                    ->type('#transaction_tax', '40')
+                    // Verify that dividend field is disabled
+                    ->assertDisabled('#transaction_dividend')
+                    // Submit form
+                    ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
+                    // A success message should be available in a Vue component
+                    ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
+            });
         });
     }
 

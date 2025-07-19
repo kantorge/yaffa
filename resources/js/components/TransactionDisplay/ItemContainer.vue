@@ -45,6 +45,7 @@
 
 <script>
     import TransactionItem from './Item.vue'
+    import { __ } from '../../helpers.js'
 
     export default {
         components: {
@@ -79,7 +80,14 @@
 
             itemListExpand() {
                 $(".transaction_item_row").find(".transaction_detail_container").removeClass('d-none');
-            }
+            },
+
+            /**
+             * Import the translation helper function.
+             */
+             __: function (string, replace) {
+                return __(string, replace);
+            },
         }
     }
 </script>

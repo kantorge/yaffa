@@ -41,7 +41,7 @@
                     :category="item.category"
                     :tags="item.tags || []"
                     :comment="item.comment"
-                    :currency="currency"
+                    :currencySymbol="currencySymbol"
                     :remainingAmount="remainingAmount"
                     :payee="payee"
                 ></transaction-item>
@@ -85,7 +85,7 @@
         },
         props: {
             transactionItems: Array,
-            currency: String,
+            currencySymbol: String,
             remainingAmount: Number,
             payee: [Number, String],
             enabled: {

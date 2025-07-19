@@ -139,7 +139,7 @@ export function processScheduledTransaction(transaction) {
  * @property {string} replace.value The value to replace the key with.
  * @returns {string}
  */
-export function __(key, replace = {}){
+export function __(key, replace = {}) {
     let translation = window.YAFFA.translations[key] || key;
 
     // If the replace object is empty, return the translation as is

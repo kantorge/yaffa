@@ -17492,6 +17492,372 @@ namespace Laracasts\Utilities\JavaScript {
             }
     }
 
+namespace Riverskies\Laravel\MobileDetect\Facades {
+            /**
+     * 
+     *
+     */        class MobileDetect {
+                    /**
+         * Get the current script version.
+         * 
+         * This is useful for the demo.php file,
+         * so people can check on what version they are testing
+         * for mobile devices.
+         *
+         * @return string The version number in semantic version format.
+         * @static 
+         */        public static function getScriptVersion()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getScriptVersion();
+        }
+                    /**
+         * Set the HTTP Headers. Must be PHP-flavored. This method will reset existing headers.
+         *
+         * @param array $httpHeaders The headers to set. If null, then using PHP's _SERVER to extract
+         *                           the headers. The default null is left for backwards compatibility.
+         * @static 
+         */        public static function setHttpHeaders($httpHeaders = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->setHttpHeaders($httpHeaders);
+        }
+                    /**
+         * Retrieves the HTTP headers.
+         *
+         * @return array 
+         * @static 
+         */        public static function getHttpHeaders()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getHttpHeaders();
+        }
+                    /**
+         * Retrieves a particular header. If it doesn't exist, no exception/error is caused.
+         * 
+         * Simply null is returned.
+         *
+         * @param string $header The name of the header to retrieve. Can be HTTP compliant such as
+         *                       "User-Agent" or "X-Device-User-Agent" or can be php-esque with the
+         *                       all-caps, HTTP_ prefixed, underscore separated awesomeness.
+         * @return string|null The value of the header.
+         * @static 
+         */        public static function getHttpHeader($header)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getHttpHeader($header);
+        }
+                    /**
+         * 
+         *
+         * @static 
+         */        public static function getMobileHeaders()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getMobileHeaders();
+        }
+                    /**
+         * Get all possible HTTP headers that
+         * can contain the User-Agent string.
+         *
+         * @return array List of HTTP headers.
+         * @static 
+         */        public static function getUaHttpHeaders()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getUaHttpHeaders();
+        }
+                    /**
+         * Set CloudFront headers
+         * http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/header-caching.html#header-caching-web-device
+         *
+         * @param array $cfHeaders List of HTTP headers
+         * @return boolean If there were CloudFront headers to be set
+         * @static 
+         */        public static function setCfHeaders($cfHeaders = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->setCfHeaders($cfHeaders);
+        }
+                    /**
+         * Retrieves the cloudfront headers.
+         *
+         * @return array 
+         * @static 
+         */        public static function getCfHeaders()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getCfHeaders();
+        }
+                    /**
+         * Set the User-Agent to be used.
+         *
+         * @param string $userAgent The user agent string to set.
+         * @return string|null 
+         * @static 
+         */        public static function setUserAgent($userAgent = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->setUserAgent($userAgent);
+        }
+                    /**
+         * Retrieve the User-Agent.
+         *
+         * @return string|null The user agent if it's set.
+         * @static 
+         */        public static function getUserAgent()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getUserAgent();
+        }
+                    /**
+         * Set the detection type. Must be one of self::DETECTION_TYPE_MOBILE or
+         * self::DETECTION_TYPE_EXTENDED. Otherwise, nothing is set.
+         *
+         * @deprecated since version 2.6.9
+         * @param string $type The type. Must be a self::DETECTION_TYPE_* constant. The default
+         *                     parameter is null which will default to self::DETECTION_TYPE_MOBILE.
+         * @static 
+         */        public static function setDetectionType($type = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->setDetectionType($type);
+        }
+                    /**
+         * 
+         *
+         * @static 
+         */        public static function getMatchingRegex()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getMatchingRegex();
+        }
+                    /**
+         * 
+         *
+         * @static 
+         */        public static function getMatchesArray()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getMatchesArray();
+        }
+                    /**
+         * Retrieve the list of known phone devices.
+         *
+         * @return array List of phone devices.
+         * @static 
+         */        public static function getPhoneDevices()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getPhoneDevices();
+        }
+                    /**
+         * Retrieve the list of known tablet devices.
+         *
+         * @return array List of tablet devices.
+         * @static 
+         */        public static function getTabletDevices()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getTabletDevices();
+        }
+                    /**
+         * Alias for getBrowsers() method.
+         *
+         * @return array List of user agents.
+         * @static 
+         */        public static function getUserAgents()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getUserAgents();
+        }
+                    /**
+         * Retrieve the list of known browsers. Specifically, the user agents.
+         *
+         * @return array List of browsers / user agents.
+         * @static 
+         */        public static function getBrowsers()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getBrowsers();
+        }
+                    /**
+         * Retrieve the list of known utilities.
+         *
+         * @return array List of utilities.
+         * @static 
+         */        public static function getUtilities()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getUtilities();
+        }
+                    /**
+         * Method gets the mobile detection rules. This method is used for the magic methods $detect->is*().
+         *
+         * @deprecated since version 2.6.9
+         * @return array All the rules (but not extended).
+         * @static 
+         */        public static function getMobileDetectionRules()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getMobileDetectionRules();
+        }
+                    /**
+         * Method gets the mobile detection rules + utilities.
+         * 
+         * The reason this is separate is because utilities rules
+         * don't necessary imply mobile. This method is used inside
+         * the new $detect->is('stuff') method.
+         *
+         * @deprecated since version 2.6.9
+         * @return array All the rules + extended.
+         * @static 
+         */        public static function getMobileDetectionRulesExtended()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getMobileDetectionRulesExtended();
+        }
+                    /**
+         * Retrieve the current set of rules.
+         *
+         * @deprecated since version 2.6.9
+         * @return array 
+         * @static 
+         */        public static function getRules()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->getRules();
+        }
+                    /**
+         * Retrieve the list of mobile operating systems.
+         *
+         * @return array The list of mobile operating systems.
+         * @static 
+         */        public static function getOperatingSystems()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getOperatingSystems();
+        }
+                    /**
+         * Check the HTTP headers for signs of mobile.
+         * 
+         * This is the fastest mobile check possible; it's used
+         * inside isMobile() method.
+         *
+         * @return bool 
+         * @static 
+         */        public static function checkHttpHeadersForMobile()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->checkHttpHeadersForMobile();
+        }
+                    /**
+         * Check if the device is mobile.
+         * 
+         * Returns true if any type of mobile device detected, including special ones
+         *
+         * @param null $userAgent deprecated
+         * @param null $httpHeaders deprecated
+         * @return bool 
+         * @static 
+         */        public static function isMobile($userAgent = null, $httpHeaders = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->isMobile($userAgent, $httpHeaders);
+        }
+                    /**
+         * Check if the device is a tablet.
+         * 
+         * Return true if any type of tablet device is detected.
+         *
+         * @param string $userAgent deprecated
+         * @param array $httpHeaders deprecated
+         * @return bool 
+         * @static 
+         */        public static function isTablet($userAgent = null, $httpHeaders = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->isTablet($userAgent, $httpHeaders);
+        }
+                    /**
+         * This method checks for a certain property in the
+         * userAgent.
+         *
+         * @todo : The httpHeaders part is not yet used.
+         * @param string $key
+         * @param string $userAgent deprecated
+         * @param string $httpHeaders deprecated
+         * @return bool|int|null 
+         * @static 
+         */        public static function is($key, $userAgent = null, $httpHeaders = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->is($key, $userAgent, $httpHeaders);
+        }
+                    /**
+         * Some detection rules are relative (not standard),
+         * because of the diversity of devices, vendors and
+         * their conventions in representing the User-Agent or
+         * the HTTP headers.
+         * 
+         * This method will be used to check custom regexes against
+         * the User-Agent string.
+         *
+         * @param $regex
+         * @param string $userAgent
+         * @return bool 
+         * @todo : search in the HTTP headers too.
+         * @static 
+         */        public static function match($regex, $userAgent = null)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->match($regex, $userAgent);
+        }
+                    /**
+         * Get the properties array.
+         *
+         * @return array 
+         * @static 
+         */        public static function getProperties()
+        {            //Method inherited from \Mobile_Detect         
+                        return \Detection\MobileDetect::getProperties();
+        }
+                    /**
+         * Prepare the version number.
+         *
+         * @todo Remove the error supression from str_replace() call.
+         * @param string $ver The string version, like "2.6.21.2152";
+         * @return float 
+         * @static 
+         */        public static function prepareVersionNo($ver)
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->prepareVersionNo($ver);
+        }
+                    /**
+         * Check the version of the given property in the User-Agent.
+         * 
+         * Will return a float number. (eg. 2_0 will return 2.0, 4.3.1 will return 4.31)
+         *
+         * @param string $propertyName The name of the property. See self::getProperties() array
+         *                             keys for all possible properties.
+         * @param string $type Either self::VERSION_TYPE_STRING to get a string value or
+         *                             self::VERSION_TYPE_FLOAT indicating a float value. This parameter
+         *                             is optional and defaults to self::VERSION_TYPE_STRING. Passing an
+         *                             invalid parameter will default to the this type as well.
+         * @return string|float|false The version of the property we are trying to extract.
+         * @static 
+         */        public static function version($propertyName, $type = 'text')
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->version($propertyName, $type);
+        }
+                    /**
+         * Retrieve the mobile grading, using self::MOBILE_GRADE_* constants.
+         *
+         * @deprecated This is no longer being maintained, it was an experiment at the time.
+         * @return string One of the self::MOBILE_GRADE_* constants.
+         * @static 
+         */        public static function mobileGrade()
+        {            //Method inherited from \Mobile_Detect         
+                        /** @var \Detection\MobileDetect $instance */
+                        return $instance->mobileGrade();
+        }
+            }
+    }
+
 namespace Sentry\Laravel {
             /**
      * 
@@ -21790,6 +22156,7 @@ namespace  {
             class Breadcrumbs extends \Diglactic\Breadcrumbs\Breadcrumbs {}
             class CurrencyExchangeRates extends \Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates {}
             class JavaScript extends \Laracasts\Utilities\JavaScript\JavaScriptFacade {}
+            class MobileDetect extends \Riverskies\Laravel\MobileDetect\Facades\MobileDetect {}
             class Sentry extends \Sentry\Laravel\Facade {}
             class Flare extends \Spatie\LaravelIgnition\Facades\Flare {}
     }

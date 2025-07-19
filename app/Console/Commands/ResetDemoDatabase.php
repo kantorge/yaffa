@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Artisan;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -47,16 +48,25 @@ class ResetDemoDatabase extends Command
         // Create the demo user without using factory, which is not autoloaded in production
         // The generated user ID is expected to be 1
         $this->info('Creating demo user...');
-        $user = User::create([
+        User::create([
+            'id' => 1,
             'name' => 'Demo User',
             'email' => 'demo@yaffa.cc',
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
-        ]);
+        ])->markEmailAsVerified();
 
-        // Make sure to verify the demo user
-        $user->markEmailAsVerified();
+        // There are assets in the database for a test user with ID 2
+        User::create([
+            'id' => 2,
+            'name' => 'Test User',
+            'email' => 'test@yaffa.cc',
+            'password' => Hash::make('test'),
+            'language' => 'en',
+            'locale' => 'en-US',
+            'email_verified_at' => Carbon::now(),
+        ])->markEmailAsVerified();
 
         // Now we need to load the demo.sql file into the database.
         // We assume the database to be empty in terms of users and user related data, except the demo user (1).
@@ -82,11 +92,13 @@ class ResetDemoDatabase extends Command
             // transactions - date
             $this->info('Adjusting dates - transactions...');
             $affected = DB::table('transactions')
+                ->where('user_id', 1)
                 ->update(['date' => DB::raw("DATE_ADD(date, INTERVAL {$diffMonths} MONTH)")]);
             $this->info("Transactions updated: {$affected}");
 
             // transaction_schedules - start_date, next_date, end_date
             $affected = DB::table('transaction_schedules')
+                // The schedules of the test user are also updated
                 ->update([
                     'start_date' => DB::raw("DATE_ADD(start_date, INTERVAL {$diffMonths} MONTH)"),
                     'next_date' => DB::raw("DATE_ADD(next_date, INTERVAL {$diffMonths} MONTH)"),

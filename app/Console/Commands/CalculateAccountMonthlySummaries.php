@@ -136,6 +136,7 @@ class CalculateAccountMonthlySummaries extends Command
      */
     public function handleSpecifiedAccountEntity(int $accountEntityId): void
     {
+        /** @var AccountEntity $accountEntity */
         $accountEntity = AccountEntity::find($accountEntityId);
 
         if ($accountEntity === null) {
@@ -149,6 +150,7 @@ class CalculateAccountMonthlySummaries extends Command
             return;
         }
 
+        /** @var User $user */
         $user = $accountEntity->user;
 
         // Transaction type and data type are only needed if accountEntity is set
