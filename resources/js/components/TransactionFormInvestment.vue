@@ -184,6 +184,7 @@
                       class="form-select"
                       id="account"
                       v-model="form.config.account_id"
+                      style="width: 100% !important"
                     ></select>
                   </div>
                 </div>
@@ -196,6 +197,7 @@
                       class="form-control"
                       id="investment"
                       v-model="form.config.investment_id"
+                      style="width: 100% !important"
                     ></select>
                   </div>
                 </div>
@@ -651,7 +653,13 @@
           selectOnClose: false,
           placeholder: __('Select account'),
           allowClear: true,
+          width: 'resolve',
           theme: 'bootstrap-5',
+          // Component should not be aware where it is used, but we need to hint Select2
+          dropdownParent: $(
+            document.getElementById('modal-transaction-form-investment') ||
+              document.querySelector('body')
+          ),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {
@@ -702,7 +710,13 @@
           selectOnClose: false,
           placeholder: __('Select investment'),
           allowClear: true,
+          width: 'resolve',
           theme: 'bootstrap-5',
+          // Component should not be aware where it is used, but we need to hint Select2
+          dropdownParent: $(
+            document.getElementById('modal-transaction-form-investment') ||
+              document.querySelector('body')
+          ),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {
