@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.14.0](https://github.com/kantorge/yaffa/compare/v1.13.10...v1.14.0) (2025-07-19)
+
+
+### 🛠️ Chores
+
+* added some test investment data ([b63927d](https://github.com/kantorge/yaffa/commit/b63927d6ee6b0a84d3f6e67a0e20945e6f3fba59))
+* **deps:** bump league/commonmark ([c169bf9](https://github.com/kantorge/yaffa/commit/c169bf901a4d0ac3007be4b4b213fe4e1d96d675))
+* **deps:** bump sweetalert2 ([2784e30](https://github.com/kantorge/yaffa/commit/2784e3095979f75d699e0e9bd6fabfe8f7c23444))
+* **deps:** bump the npm_and_yarn group across 1 directory with 2 updates ([#312](https://github.com/kantorge/yaffa/issues/312)) ([5ac6d03](https://github.com/kantorge/yaffa/commit/5ac6d0369619f337137675fe56d1a4dd2dff102b))
+* linter settings ([78879bb](https://github.com/kantorge/yaffa/commit/78879bb3cc89e2c5e13864a1792c55766afdad02))
+* package updates and fixes ([e1b2a51](https://github.com/kantorge/yaffa/commit/e1b2a5190f98ef55d52538e4fcb27fcba54add7b))
+
+
+### ✨ Features
+
+* investment display UI improvement ([79d405d](https://github.com/kantorge/yaffa/commit/79d405d42df476657cc9015c276b4f99da519281))
+
+
+### 🐛 Bug Fixes
+
+* Codacy token usage in automated-tests.yml ([e519aad](https://github.com/kantorge/yaffa/commit/e519aad3d2a0e091cb120c9beafd7a54fab73766))
+* currency label handling in the transaction forms ([38b5941](https://github.com/kantorge/yaffa/commit/38b5941ea493ab2680af0a3a8f55670081203a8b))
+* date constraints on the investment display ([193fe1e](https://github.com/kantorge/yaffa/commit/193fe1eb6efeb3a4fc3f0a3bdcf88cbce2bbe440))
+* investment transaction form usability ([be62600](https://github.com/kantorge/yaffa/commit/be626003a9fbcac17c969d0b16791a0b761b46aa))
+* minor updates and fixes ([52a4a56](https://github.com/kantorge/yaffa/commit/52a4a56ddca5a33de87279fb0b646a4b91d672d5))
+* sandbox reset timer message wording ([efcbe5c](https://github.com/kantorge/yaffa/commit/efcbe5c6d134bb1092334fc758035ca13614ff47))
+* site domain update ([67946cf](https://github.com/kantorge/yaffa/commit/67946cf11075bdc5c757b0e0b8a08845283f634e))
+* translation error on investment transaction details ([b57776f](https://github.com/kantorge/yaffa/commit/b57776f7dd63a4137a995b6330929426f19dcea0))
+* update vulnerabilities ([1c4c107](https://github.com/kantorge/yaffa/commit/1c4c107b7cf6d83233463eacc26643cd1bb51e5f))
+* upgrade axios from 1.9.0 to 1.10.0 ([#313](https://github.com/kantorge/yaffa/issues/313)) ([bf76f61](https://github.com/kantorge/yaffa/commit/bf76f6150c316355397039aa11ca189590c9d170))
+* upgrade bootstrap from 5.3.5 to 5.3.6 ([82a9366](https://github.com/kantorge/yaffa/commit/82a9366f8981a58b71da09ecad4d4b75a2741960))
+* upgrade bootstrap from 5.3.6 to 5.3.7 ([#314](https://github.com/kantorge/yaffa/issues/314)) ([155d887](https://github.com/kantorge/yaffa/commit/155d8870f4249c87b937c13832025c83922af53a))
+* upgrade datatables.net-bs5 from 2.3.1 to 2.3.2 ([#315](https://github.com/kantorge/yaffa/issues/315)) ([157dff6](https://github.com/kantorge/yaffa/commit/157dff6dd2d30a4d4ce70bab2f67e476443e7c5d))
+* upgrade datatables.net-select-bs5 from 3.0.0 to 3.0.1 ([0312de9](https://github.com/kantorge/yaffa/commit/0312de9be59f6a3d0c282cee453b22fb4a7b9cca))
+* upgrade driver.js from 1.3.5 to 1.3.6 ([822d196](https://github.com/kantorge/yaffa/commit/822d196cb1228b4db5ab372f6818a8d53d2178aa))
+* upgrade vue from 3.5.13 to 3.5.14 ([04ef963](https://github.com/kantorge/yaffa/commit/04ef963c80170eba204d3e2b15c16eb476c8af40))
+* upgrade vue from 3.5.14 to 3.5.16 ([bdd710f](https://github.com/kantorge/yaffa/commit/bdd710f464a8add7da4a79a32f2a8e60109cde43))
+* upgrade webpack from 5.99.5 to 5.99.6 ([de80608](https://github.com/kantorge/yaffa/commit/de806089cbc86e26eaa53811bf717797a64a8100))
+* upgrade webpack from 5.99.6 to 5.99.7 ([6f97052](https://github.com/kantorge/yaffa/commit/6f9705271c93b7960d59e9f9ba793394861c3d4a))
+* upgrade webpack from 5.99.7 to 5.99.9 ([267675c](https://github.com/kantorge/yaffa/commit/267675c58304c2afbb430f52f3188990a5b199f9))
+
 ## [1.13.10](https://github.com/kantorge/yaffa/compare/v1.13.9...v1.13.10) (2025-05-04)
 
 
