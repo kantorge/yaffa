@@ -9,14 +9,18 @@
         "watch-poll": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --watch-options-poll=1000 --progress --config=node_modules/laravel-mix/setup/webpack.config.js",
         "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
         "prod": "npm run production",
-        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js"
+        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "test": "jest"
     },
     "devDependencies": {
+        "@babel/preset-env": "^7.27.2",
         "@vue/compiler-sfc": "^3.2.45",
         "autoprefixer": "^10.4.13",
+        "babel-jest": "^30.0.2",
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.3",
         "file-loader": "^6.2.0",
+        "jest": "^30.0.2",
         "laravel-mix": "^6.0.49",
         "mini-css-extract-plugin": "^2.7.2",
         "postcss": "^8.4.31",

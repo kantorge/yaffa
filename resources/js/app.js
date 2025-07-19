@@ -23,7 +23,7 @@ routeMap.set('reports.budgetchart', 'reports/budgetchart');
 routeMap.set('reports.transactions', 'reports/transactions');
 routeMap.set('reports.investment_timeline', 'reports/investment-timeline');
 routeMap.set('search', 'search/search');
-routeMap.set('import.csv', 'import/csv');
+routeMap.set('import.qif', 'import/qif');
 routeMap.set('register', 'auth/register');
 routeMap.set('login', 'auth/login');
 routeMap.set('tag.index', 'tag/index');

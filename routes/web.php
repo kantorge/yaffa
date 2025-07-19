@@ -131,8 +131,8 @@ Route::resource('received-mail', ReceivedMailController::class)
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');
 
-// Route for the CSV import functionality
-Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
+// Route for the QIF import functionality
+Route::get('/import/qif', [ImportController::class, 'importQif'])->middleware(['auth', 'verified'])->name('import.qif');
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');

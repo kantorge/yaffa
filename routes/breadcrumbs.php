@@ -237,11 +237,11 @@ Breadcrumbs::for('search', function (BreadcrumbTrail $trail) {
     $trail->push(__('Search'));
 });
 
-// Import CSV
-Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
+// Import QIF
+Breadcrumbs::for('import.qif', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
-    $trail->push(__('Import transactions'), route('import.csv'));
+    $trail->push(__('Import transactions'), route('import.qif'));
 });
 
 // User related routes
