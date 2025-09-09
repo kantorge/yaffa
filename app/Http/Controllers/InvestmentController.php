@@ -6,6 +6,7 @@ use App\Http\Requests\InvestmentRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
+use App\Services\BondService;
 use App\Services\InvestmentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,7 @@ class InvestmentController extends Controller
     use ScheduleTrait;
 
     protected InvestmentService $investmentService;
+    protected BondService $bondService;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ class InvestmentController extends Controller
         $this->authorizeResource(Investment::class);
 
         $this->investmentService = new InvestmentService();
+        $this->bondService = new BondService();
     }
 
     /**
@@ -99,6 +102,11 @@ class InvestmentController extends Controller
         $investment->fill($validated);
         $investment->save();
 
+        // If this is a fractional bond, schedule dividend payments and maturity
+        if ($investment->isFractionalBond()) {
+            $this->bondService->scheduleOrUpdateDividendPayments($investment);
+        }
+
         self::addSimpleSuccessMessage(__('Investment updated'));
 
         return redirect()->route('investment.index');
@@ -153,6 +161,11 @@ class InvestmentController extends Controller
         $investment = Investment::make($request->validated());
         $investment->user()->associate(Auth::user());
         $investment->save();
+
+        // If this is a fractional bond, schedule dividend payments and maturity
+        if ($investment->isFractionalBond()) {
+            $this->bondService->scheduleOrUpdateDividendPayments($investment);
+        }
 
         self::addSimpleSuccessMessage(__('Investment added'));
 

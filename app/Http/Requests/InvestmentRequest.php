@@ -69,6 +69,28 @@ class InvestmentRequest extends FormRequest
                 'required',
                 Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
+            'instrument_type' => [
+                'required',
+                Rule::in(array_keys(\App\Models\Investment::getInstrumentTypes())),
+            ],
+            'interest_schedule' => [
+                'nullable',
+                'required_if:instrument_type,fractional_bond',
+                Rule::in(array_keys(\App\Models\Investment::getInterestSchedules())),
+            ],
+            'maturity_date' => [
+                'nullable',
+                'required_if:instrument_type,fractional_bond',
+                'date',
+                'after:today',
+            ],
+            'apr' => [
+                'nullable',
+                'required_if:instrument_type,fractional_bond',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
             'investment_price_provider' => [
                 'nullable',
                 'required_if_accepted:auto_update',

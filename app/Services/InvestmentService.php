@@ -92,4 +92,15 @@ class InvestmentService
 
         return $investment;
     }
+
+    /**
+     * Update bond schedules when investment quantity changes
+     */
+    public function updateBondSchedulesAfterQuantityChange(Investment $investment): void
+    {
+        if ($investment->isFractionalBond()) {
+            $bondService = new BondService();
+            $bondService->scheduleOrUpdateDividendPayments($investment);
+        }
+    }
 }

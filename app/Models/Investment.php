@@ -101,6 +101,10 @@ class Investment extends Model
         'auto_update',
         'investment_group_id',
         'currency_id',
+        'instrument_type',
+        'interest_schedule',
+        'maturity_date',
+        'apr',
         'investment_price_provider',
         'scrape_url',
         'scrape_selector',
@@ -109,6 +113,8 @@ class Investment extends Model
     protected $casts = [
         'active' => 'boolean',
         'auto_update' => 'boolean',
+        'maturity_date' => 'date',
+        'apr' => 'decimal:4',
     ];
 
     protected $appends = [
@@ -465,5 +471,37 @@ class Investment extends Model
         // We are intentionally not triggering the observer here, as there can be multiple similar operations
         // It means, that it's the responsibility of the caller to trigger the observer or any related actions
         $investmentPrice->saveQuietly();
+    }
+
+    /**
+     * Check if this investment is a fractional bond
+     */
+    public function isFractionalBond(): bool
+    {
+        return $this->instrument_type === 'fractional_bond';
+    }
+
+    /**
+     * Get available instrument types
+     */
+    public static function getInstrumentTypes(): array
+    {
+        return [
+            'stock' => 'Stock',
+            'fractional_bond' => 'Fractional Bond',
+        ];
+    }
+
+    /**
+     * Get available interest schedules for bonds
+     */
+    public static function getInterestSchedules(): array
+    {
+        return [
+            'monthly' => 'Monthly',
+            'quarterly' => 'Quarterly', 
+            'half_yearly' => 'Half-Yearly',
+            'yearly' => 'Yearly',
+        ];
     }
 }

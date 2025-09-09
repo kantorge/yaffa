@@ -8,6 +8,8 @@ use App\Http\View\Composers\CategoryListComposer;
 use App\Http\View\Composers\CategoryParentListComposer;
 use App\Http\View\Composers\CurrencyListComposer;
 use App\Http\View\Composers\DataLayerEventComposer;
+use App\Http\View\Composers\InstrumentTypeListComposer;
+use App\Http\View\Composers\InterestScheduleListComposer;
 use App\Http\View\Composers\InvestmentGroupListComposer;
 use App\Http\View\Composers\InvestmentPriceProviderListComposer;
 use App\Http\View\Composers\JavaScriptConfigVariablesComposer;
@@ -55,6 +57,10 @@ class ViewServiceProvider extends ServiceProvider
 
         // Investment form - all price providers
         View::composer('investment.form', InvestmentPriceProviderListComposer::class);
+
+        // Investment form - instrument types and interest schedules
+        View::composer('investment.form', InstrumentTypeListComposer::class);
+        View::composer('investment.form', InterestScheduleListComposer::class);
 
         // Category parent list for category forms
         View::composer('categories.form', CategoryParentListComposer::class);

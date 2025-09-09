@@ -188,6 +188,114 @@
             </div>
 
             <div class="row mb-3">
+                <label for="instrument_type" class="col-form-label col-sm-3">
+                    {{ __('Instrument Type') }}
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-select"
+                        id="instrument_type"
+                        name="instrument_type"
+                    >
+                        @forelse($allInstrumentTypes as $id => $name)
+                            <option
+                                value="{{ $id }}"
+                                @if (old())
+                                    @if (old('instrument_type') == $id)
+                                        selected="selected"
+                                    @endif
+                                @elseif(isset($investment))
+                                    @if ($investment['instrument_type'] == $id)
+                                        selected="selected"
+                                    @endif
+                                @else
+                                    @if ($id == 'stock')
+                                        selected="selected"
+                                    @endif
+                                @endif
+                            >
+                                {{ $name }}
+                            </option>
+                        @empty
+
+                        @endforelse
+
+                    </select>
+                </div>
+            </div>
+
+            <div id="bond-fields" class="bond-fields" style="display: none;">
+                <div class="row mb-3">
+                    <label for="interest_schedule" class="col-form-label col-sm-3">
+                        {{ __('Interest Schedule') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <select
+                            class="form-select"
+                            id="interest_schedule"
+                            name="interest_schedule"
+                        >
+                            <option value=''>{{ __(' < Select Schedule > ') }}</option>
+                            @forelse($allInterestSchedules as $id => $name)
+                                <option
+                                    value="{{ $id }}"
+                                    @if (old())
+                                        @if (old('interest_schedule') == $id)
+                                            selected="selected"
+                                        @endif
+                                    @elseif(isset($investment))
+                                        @if ($investment['interest_schedule'] == $id)
+                                            selected="selected"
+                                        @endif
+                                    @endif
+                                >
+                                    {{ $name }}
+                                </option>
+                            @empty
+
+                            @endforelse
+
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="maturity_date" class="col-form-label col-sm-3">
+                        {{ __('Maturity Date') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <input
+                            class="form-control"
+                            id="maturity_date"
+                            name="maturity_date"
+                            type="date"
+                            value="{{old('maturity_date', isset($investment) && $investment->maturity_date ? $investment->maturity_date->format('Y-m-d') : '' )}}"
+                        >
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="apr" class="col-form-label col-sm-3">
+                        {{ __('APR (%)') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <input
+                            class="form-control"
+                            id="apr"
+                            name="apr"
+                            type="number"
+                            step="0.0001"
+                            min="0"
+                            max="100"
+                            placeholder="e.g. 5.25"
+                            value="{{old('apr', $investment->apr ?? '' )}}"
+                        >
+                        <div class="form-text">{{ __('Annual Percentage Rate for dividend calculations') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="auto_update" class="col-form-label col-sm-3">
                     {{ __('Automatic update') }}
                 </label>
@@ -284,4 +392,29 @@
         </div>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const instrumentTypeSelect = document.getElementById('instrument_type');
+    const bondFields = document.getElementById('bond-fields');
+    
+    function toggleBondFields() {
+        const isBond = instrumentTypeSelect.value === 'fractional_bond';
+        bondFields.style.display = isBond ? 'block' : 'none';
+        
+        // Clear values when switching away from bond
+        if (!isBond) {
+            document.getElementById('interest_schedule').value = '';
+            document.getElementById('maturity_date').value = '';
+            document.getElementById('apr').value = '';
+        }
+    }
+    
+    // Initial check
+    toggleBondFields();
+    
+    // Listen for changes
+    instrumentTypeSelect.addEventListener('change', toggleBondFields);
+});
+</script>
 @stop

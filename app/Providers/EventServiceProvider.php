@@ -18,8 +18,10 @@ use App\Listeners\SendLoginFailedNotification;
 use App\Listeners\SendLoginSuccessNotification;
 use App\Models\CurrencyRate;
 use App\Models\InvestmentPrice;
+use App\Models\Transaction;
 use App\Observers\CurrencyRateObserver;
 use App\Observers\InvestmentPriceObserver;
+use App\Observers\TransactionObserver;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -73,5 +75,6 @@ class EventServiceProvider extends ServiceProvider
     protected $observers = [
         CurrencyRate::class => [CurrencyRateObserver::class],
         InvestmentPrice::class => [InvestmentPriceObserver::class],
+        Transaction::class => [TransactionObserver::class],
     ];
 }
