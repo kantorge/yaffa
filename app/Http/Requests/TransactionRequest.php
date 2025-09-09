@@ -242,7 +242,7 @@ class TransactionRequest extends FormRequest
         // Dividend OR Interest yield
         if ($transactionTypeId === 8 || $transactionTypeId === 11) {
             return [
-                'config.dividend' => 'required|numeric|gt:0',
+                'config.dividend' => 'required|numeric',
             ];
         }
 
