@@ -84,7 +84,7 @@ class TransactionRequest extends FormRequest
                 ],
                 'schedule_config.frequency' => [
                     'required',
-                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF-YEARLY', 'YEARLY']),
                 ],
                 'schedule_config.interval' => 'nullable|integer|gte:1',
                 'schedule_config.count' => [
@@ -118,7 +118,7 @@ class TransactionRequest extends FormRequest
                 ],
                 'original_schedule_config.frequency' => [
                     'required',
-                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+                    Rule::in(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'HALF-YEARLY', 'YEARLY']),
                 ],
                 'original_schedule_config.interval' => 'nullable|integer|gte:1',
                 'original_schedule_config.count' => 'nullable|integer|gte:1',

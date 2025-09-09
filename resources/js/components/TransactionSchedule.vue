@@ -35,6 +35,8 @@
                         <option value="DAILY">{{ __('Daily') }}</option>
                         <option value="WEEKLY">{{ __('Weekly') }}</option>
                         <option value="MONTHLY">{{ __('Monthly') }}</option>
+                        <option value="QUARTERLY">{{ __('Quarterly') }}</option>
+                        <option value="HALF-YEARLY">{{ __('Half-Yearly') }}</option>
                         <option value="YEARLY">{{ __('Yearly') }}</option>
                     </select>
                 </div>

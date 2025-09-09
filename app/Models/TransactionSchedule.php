@@ -178,9 +178,21 @@ class TransactionSchedule extends Model
      */
     private function getRecurrence(Carbon|null $afterDate = null): RecurrenceCollection
     {
+        // Handle custom frequencies by mapping them to standard frequencies with intervals
+        $frequency = $this->frequency;
+        $interval = $this->interval ?: 1;
+        
+        if ($this->frequency === 'QUARTERLY') {
+            $frequency = 'MONTHLY';
+            $interval = $interval * 3; // Every 3 months
+        } elseif ($this->frequency === 'HALF-YEARLY') {
+            $frequency = 'MONTHLY';
+            $interval = $interval * 6; // Every 6 months
+        }
+
         $rule = (new Rule())
             ->setStartDate(new DateTime($this->start_date))
-            ->setFreq($this->frequency);
+            ->setFreq($frequency);
 
         if ($this->end_date) {
             $rule->setUntil(new DateTime($this->end_date));
@@ -190,8 +202,8 @@ class TransactionSchedule extends Model
             $rule->setCount($this->count);
         }
 
-        if ($this->interval) {
-            $rule->setInterval($this->interval);
+        if ($interval) {
+            $rule->setInterval($interval);
         }
 
         $transformer = new ArrayTransformer();

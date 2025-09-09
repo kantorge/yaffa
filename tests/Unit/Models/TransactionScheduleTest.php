@@ -150,4 +150,42 @@ class TransactionScheduleTest extends TestCase
 
         $this->assertFalse($schedule->isActive());
     }
+
+    public function testQuarterlyFrequencyWorks()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'start_date' => Carbon::now()->subMonths(6),
+            'next_date' => Carbon::now()->addMonths(3),
+            'end_date' => null,
+            'frequency' => 'QUARTERLY',
+            'count' => null,
+            'interval' => 1,
+        ]);
+
+        $this->assertTrue($schedule->isActive());
+        
+        // Test that getNextInstance works
+        $nextInstance = $schedule->getNextInstance();
+        $this->assertNotNull($nextInstance);
+    }
+
+    public function testHalfYearlyFrequencyWorks()
+    {
+        /** @var TransactionSchedule $schedule */
+        $schedule = TransactionSchedule::factory()->make([
+            'start_date' => Carbon::now()->subMonths(12),
+            'next_date' => Carbon::now()->addMonths(6),
+            'end_date' => null,
+            'frequency' => 'HALF-YEARLY',
+            'count' => null,
+            'interval' => 1,
+        ]);
+
+        $this->assertTrue($schedule->isActive());
+        
+        // Test that getNextInstance works
+        $nextInstance = $schedule->getNextInstance();
+        $this->assertNotNull($nextInstance);
+    }
 }
