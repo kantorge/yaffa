@@ -224,7 +224,13 @@
                 </div>
             </div>
 
-            <div id="bond-fields" class="bond-fields" style="display: none;">
+            <div id="bond-fields" class="bond-fields" 
+                @if(old('instrument_type') == 'fractional_bond' || (isset($investment) && $investment->instrument_type == 'fractional_bond'))
+                    style="display: block;"
+                @else
+                    style="display: none;"
+                @endif
+            >
                 <div class="row mb-3">
                     <label for="interest_schedule" class="col-form-label col-sm-3">
                         {{ __('Interest Schedule') }}
@@ -402,13 +408,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const isBond = instrumentTypeSelect.value === 'fractional_bond';
         bondFields.style.display = isBond ? 'block' : 'none';
         
-        // Clear values when switching away from bond
-        if (!isBond) {
+        // Clear values when switching away from bond (but not on initial load)
+        if (!isBond && !isInitialLoad) {
             document.getElementById('interest_schedule').value = '';
             document.getElementById('maturity_date').value = '';
             document.getElementById('apr').value = '';
         }
+        isInitialLoad = false;
     }
+    
+    // Track if this is the initial page load
+    let isInitialLoad = true;
     
     // Initial check
     toggleBondFields();
