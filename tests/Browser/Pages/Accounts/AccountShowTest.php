@@ -353,7 +353,7 @@ class AccountShowTest extends DuskTestCase
                 // Load the account show page for the Wallet account with a preset parameter that takes precedence over both the account and user settings
                 ->visitRoute('account-entity.show', [
                     'account_entity' => $account->id,
-                    'preset' => 'previous7Days',
+                    'date_preset' => 'previous7Days',
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')

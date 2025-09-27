@@ -6,6 +6,8 @@ import * as helpers from '../helpers';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
 
+import presetCalculators from '../presetDates';
+
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
 
@@ -364,8 +366,8 @@ let getAccountBalance = function () {
                 elementOpeningBalance.innerHTML =
                     elementCurrentCash.innerHTML =
                         elementCurrentBalance.innerHTML =
-                            `<i 
-                                 class="text-warning fa-solid fa-triangle-exclamation" 
+                            `<i
+                                 class="text-warning fa-solid fa-triangle-exclamation"
                                  title="${response.data.message}"
                          ></i>`;
 
@@ -412,8 +414,8 @@ let getAccountBalance = function () {
             elementOpeningBalance.innerHTML =
                 elementCurrentCash.innerHTML =
                     elementCurrentBalance.innerHTML =
-                        `<i 
-                                 class="text-danger fa-solid fa-triangle-exclamation" 
+                        `<i
+                                 class="text-danger fa-solid fa-triangle-exclamation"
                                  title="${__('Error while retrieving data')}"
                          ></i>`;
 
@@ -498,70 +500,16 @@ document.getElementById('dateRangePickerPresets').addEventListener('change', fun
     const date = new Date();
     let start;
     let end;
-    let quarter;
 
-    switch (preset) {
-        case 'thisMonth':
-            start = new Date(date.getFullYear(), date.getMonth(), 1);
-            end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-            break;
-        case 'thisQuarter':
-            quarter = Math.floor((date.getMonth() + 3) / 3);
-            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
-            end = new Date(date.getFullYear(), quarter * 3, 0);
-            break;
-        case 'thisYear':
-            start = new Date(date.getFullYear(), 0, 1);
-            end = new Date(date.getFullYear(), 12, 0);
-            break;
-        case 'thisMonthToDate':
-            start = new Date(date.getFullYear(), date.getMonth(), 1);
-            end = date;
-            break;
-        case 'thisQuarterToDate':
-            quarter = Math.floor((date.getMonth() + 3) / 3);
-            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
-            end = date;
-            break;
-        case 'thisYearToDate':
-            start = new Date(date.getFullYear(), 0, 1);
-            end = date;
-            break;
-        case  'previousDay':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
-            end = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
-            break;
-        case 'previous7Days':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 7);
-            end = date;
-            break;
-        case 'previous30Days':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 30);
-            end = date;
-            break;
-        case 'previous90Days':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 90);
-            end = date;
-            break;
-        case 'previous180Days':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 180);
-            end = date;
-            break;
-        case 'previous365Days':
-            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 365);
-            end = date;
-            break;
-        case 'previousMonth':
-            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            end = new Date(date.getFullYear(), date.getMonth(), 0);
-            break;
-        case 'previousMonthToDate':
-            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            end = date;
-            break;
-        default:
-            start = {clear: true};
-            end = {clear: true};
+    // Get the start and end dates based on the selected preset and the external calculator functions
+    const calculator = presetCalculators[preset];
+    if (calculator) {
+        const dates = calculator(date);
+        start = dates.start;
+        end = dates.end;
+    } else {
+        start = {clear: true};
+        end = {clear: true};
     }
 
     dateRangePicker.setDates(
@@ -629,7 +577,7 @@ if (filters.date_from || filters.date_to) {
     }
 } else if (filters.date_preset) {
     // If date preset is set, apply it
-    document.getElementById('dateRangePickerPresets').value = filters.date_preset;    
+    document.getElementById('dateRangePickerPresets').value = filters.date_preset;
     const event = new Event('change');
     document.getElementById('dateRangePickerPresets').dispatchEvent(event);
 

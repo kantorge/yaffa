@@ -167,7 +167,7 @@
                     </div>
                 </div>
                 <div class="row mb-3">
-                    <label for="end_date" class="col-form-label col-sm-3">
+                    <label for="account_details_date_range" class="col-form-label col-sm-3">
                         {{ __('Default date range for account details') }}
                     </label>
                     <div class="col-sm-9">
@@ -196,7 +196,7 @@
                                 ></i>
                             </span>
                         </div>
-                        <HasError field="language" :form="form" />
+                        <HasError field="account_details_date_range" :form="form" />
                     </div>
 
                 </div>
@@ -247,7 +247,7 @@
                 end_date: window.YAFFA.end_date,
                 start_date: window.YAFFA.start_date,
                 account_details_date_range: window.YAFFA.account_details_date_range || 'none',
-            }),                   
+            }),
         }),
         mounted() {
             // Finally, initialize tooltips

@@ -37,15 +37,12 @@ class UserRequest extends FormRequest
                 'required',
                 'string',
                 Rule::in(
-                    array_merge(
-                        ['none'],
-                        ...array_map(fn($group) =>
-                            array_column(
-                                $group['options'], 'value'),
-                                config('yaffa.account_date_presets'
-                            )
-                        )    
-                    )
+                    collect(config('yaffa.account_date_presets'))
+                    ->pluck('options')
+                    ->flatten(1)
+                    ->pluck('value')
+                    ->prepend('none')
+                    ->all()
                 )
             ],
         ];
