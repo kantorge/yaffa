@@ -74,6 +74,7 @@ const processTransaction = function (transaction) {
 };
 
 let initialLoad = true;
+let isPresetChange = false;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
     ajax: function (_data, callback, _settings) {
@@ -490,6 +491,126 @@ $("#clear_dates").on('click', function () {
     );
 })
 
+// Listener for the date range presets
+document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
+    isPresetChange = true;
+    const preset = this.options[this.selectedIndex].value;
+    const date = new Date();
+    let start;
+    let end;
+    let quarter;
+
+    switch (preset) {
+        case 'thisMonth':
+            start = new Date(date.getFullYear(), date.getMonth(), 1);
+            end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            break;
+        case 'thisQuarter':
+            quarter = Math.floor((date.getMonth() + 3) / 3);
+            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
+            end = new Date(date.getFullYear(), quarter * 3, 0);
+            break;
+        case 'thisYear':
+            start = new Date(date.getFullYear(), 0, 1);
+            end = new Date(date.getFullYear(), 12, 0);
+            break;
+        case 'thisMonthToDate':
+            start = new Date(date.getFullYear(), date.getMonth(), 1);
+            end = date;
+            break;
+        case 'thisQuarterToDate':
+            quarter = Math.floor((date.getMonth() + 3) / 3);
+            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
+            end = date;
+            break;
+        case 'thisYearToDate':
+            start = new Date(date.getFullYear(), 0, 1);
+            end = date;
+            break;
+        case  'previousDay':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+            end = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+            break;
+        case 'previous7Days':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 7);
+            end = date;
+            break;
+        case 'previous30Days':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 30);
+            end = date;
+            break;
+        case 'previous90Days':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 90);
+            end = date;
+            break;
+        case 'previous180Days':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 180);
+            end = date;
+            break;
+        case 'previous365Days':
+            start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 365);
+            end = date;
+            break;
+        case 'previousMonth':
+            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+            end = new Date(date.getFullYear(), date.getMonth(), 0);
+            break;
+        case 'previousMonthToDate':
+            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+            end = date;
+            break;
+        default:
+            start = {clear: true};
+            end = {clear: true};
+    }
+
+    dateRangePicker.setDates(
+        start,
+        end
+    );
+
+    isPresetChange = false;
+});
+
+let rebuildUrl = function () {
+    let params = [];
+
+    if (isPresetChange) {
+        const preset = document.getElementById('dateRangePickerPresets').value;
+        if (preset && preset !== 'placeholder') {
+            params.push('date_preset=' + preset);
+        }
+    } else {
+
+        const dates = dateRangePicker.getDates('yyyy-mm-dd');
+        // Date from
+        if (dates[0]) {
+            params.push('date_from=' + dates[0]);
+        }
+
+        // Date to
+        if (dates[1]) {
+            params.push('date_to=' + dates[1]);
+        }
+    }
+
+    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
+}
+
+// Attach event listener to date pickers
+document.getElementById('date_from').addEventListener('changeDate', function() {
+    if (!isPresetChange) {
+        document.getElementById('dateRangePickerPresets').value = 'placeholder';
+    }
+    rebuildUrl();
+});
+document.getElementById('date_to').addEventListener('changeDate', function() {
+    if (!isPresetChange) {
+        document.getElementById('dateRangePickerPresets').value = 'placeholder';
+    }
+    rebuildUrl();
+});
+
 // Set initial dates
 if (filters.date_from || filters.date_to) {
     const start = (filters.date_from ? filters.date_from : {clear: true});
@@ -502,6 +623,17 @@ if (filters.date_from || filters.date_to) {
 
     presetFilters.date_from = true;
     presetFilters.date_to = true;
+    // If all preset filters are ready, reload table data
+    if (presetFilters.ready()) {
+        reloadTable();
+    }
+} else if (filters.date_preset) {
+    // If date preset is set, apply it
+    document.getElementById('dateRangePickerPresets').value = filters.date_preset;    
+    const event = new Event('change');
+    document.getElementById('dateRangePickerPresets').dispatchEvent(event);
+
+    presetFilters.date_preset = true;
     // If all preset filters are ready, reload table data
     if (presetFilters.ready()) {
         reloadTable();
@@ -618,82 +750,6 @@ window.addEventListener('transaction-created', function (event) {
 
     // TODO: is there a more efficient way to do this instead of reloading the entire table?
 });
-
-// Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
-    const preset = this.options[this.selectedIndex].value;
-    const date = new Date();
-    let start;
-    let end;
-    let quarter;
-
-    switch (preset) {
-        case 'thisMonth':
-            start = new Date(date.getFullYear(), date.getMonth(), 1);
-            end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-            break;
-        case 'thisQuarter':
-            quarter = Math.floor((date.getMonth() + 3) / 3);
-            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
-            end = new Date(date.getFullYear(), quarter * 3, 0);
-            break;
-        case 'thisYear':
-            start = new Date(date.getFullYear(), 0, 1);
-            end = new Date(date.getFullYear(), 12, 0);
-            break;
-        case 'thisMonthToDate':
-            start = new Date(date.getFullYear(), date.getMonth(), 1);
-            end = date;
-            break;
-        case 'thisQuarterToDate':
-            quarter = Math.floor((date.getMonth() + 3) / 3);
-            start = new Date(date.getFullYear(), (quarter - 1) * 3, 1);
-            end = date;
-            break;
-        case 'thisYearToDate':
-            start = new Date(date.getFullYear(), 0, 1);
-            end = date;
-            break;
-        case 'previousMonth':
-            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            end = new Date(date.getFullYear(), date.getMonth(), 0);
-            break;
-        case 'previousMonthToDate':
-            start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            end = date;
-            break;
-        default:
-            start = {clear: true};
-            end = {clear: true};
-    }
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-});
-
-// Attach event listener to filters
-let rebuildUrl = function () {
-    let params = [];
-
-    const dates = dateRangePicker.getDates('yyyy-mm-dd');
-    // Date from
-    if (dates[0]) {
-        params.push('date_from=' + dates[0]);
-    }
-
-    // Date to
-    if (dates[1]) {
-        params.push('date_to=' + dates[1]);
-    }
-
-    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
-}
-
-document.getElementById('date_from').addEventListener('changeDate', rebuildUrl);
-document.getElementById('date_to').addEventListener('changeDate', rebuildUrl);
 
 // Add event listener for the cache update button
 document.getElementById('recalculateMonthlyCachedData').addEventListener('click', function () {

@@ -32,7 +32,22 @@ class UserRequest extends FormRequest
                 'required',
                 'date',
                 'after:start_date',
-            ]
+            ],
+            'account_details_date_range' => [
+                'required',
+                'string',
+                Rule::in(
+                    array_merge(
+                        ['none'],
+                        ...array_map(fn($group) =>
+                            array_column(
+                                $group['options'], 'value'),
+                                config('yaffa.account_date_presets'
+                            )
+                        )    
+                    )
+                )
+            ],
         ];
     }
 }

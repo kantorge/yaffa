@@ -166,6 +166,40 @@
                         <HasError field="end_date" :form="form" />
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label for="end_date" class="col-form-label col-sm-3">
+                        {{ __('Default date range for account details') }}
+                    </label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <select
+                                    class="form-select"
+                                    id="account_details_date_range"
+                                    name="account_details_date_range"
+                                    v-model="form.account_details_date_range"
+                            >
+                                <option value="none">{{ __("Don't load data by default") }}</option>
+                                <optgroup v-for="(group) in datePresets" :label="group.label">
+                                    <option v-for="option in group.options" :value="option.value">
+                                        {{ option.label }}
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <span
+                                    class="input-group-text btn btn-info"
+                                    data-coreui-toggle="tooltip"
+                                    data-coreui-placement="top"
+                                    :title="__('The default date range to load transactions from when opening account details. This can be changed on the fly in the account details view.')"
+                            >
+                                <i
+                                        class="fa fa-info-circle"
+                                ></i>
+                            </span>
+                        </div>
+                        <HasError field="language" :form="form" />
+                    </div>
+
+                </div>
             </div>
             <div class="card-footer">
                 <Button
@@ -189,6 +223,10 @@
             type: Object,
             default: window.locales
         },
+        datePresets: {
+            type: Object,
+            default: window.datePresets
+        }
     });
 </script>
 <script>
@@ -208,7 +246,8 @@
                 locale: window.YAFFA.locale,
                 end_date: window.YAFFA.end_date,
                 start_date: window.YAFFA.start_date,
-            })
+                account_details_date_range: window.YAFFA.account_details_date_range || 'none',
+            }),                   
         }),
         mounted() {
             // Finally, initialize tooltips
@@ -233,6 +272,7 @@
                             window.YAFFA.locale = response.data.data.locale;
                             window.YAFFA.start_date = response.data.data.start_date;
                             window.YAFFA.end_date = response.data.data.end_date;
+                            window.YAFFA.account_details_date_range = response.data.data.account_details_date_range;
 
                             // Emit a custom event to global scope about the result
                             _vue.showToast(

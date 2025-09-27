@@ -29,6 +29,7 @@ class UserController extends Controller
         JavaScript::put([
             'languages' => config('app.available_languages'),
             'locales' => config('app.available_locales'),
+            'datePresets' => config('yaffa.account_date_presets'),
         ]);
         return view('user.settings');
     }
