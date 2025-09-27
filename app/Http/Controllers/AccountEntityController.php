@@ -54,6 +54,17 @@ class AccountEntityController extends Controller
                 $filters['date_to'] = $request->get('date_to');
             }
 
+            // If neither date_from nor date_to is set, check for date_preset or use default
+            if (!$request->has('date_from') && !$request->has('date_to')) {
+                if ($request->has('date_preset')) {
+                    $filters['date_preset'] = $request->get('date_preset');
+                } else {
+                    $filters['date_preset'] = $accountEntity->config->default_date_range
+                    ?? Auth::user()->account_details_date_range
+                    ?? 'none';
+                }
+            }
+
             JavaScriptFacade::put([
                 'account' => $accountEntity,
                 'filters' => $filters,
@@ -298,10 +309,10 @@ class AccountEntityController extends Controller
     {
         $accountEntity->load(['config', 'config.accountGroup', 'config.currency']);
 
-        // Get all account groups
+        // Get all account groups of the user
         $allAccountGroups = Auth::user()->accountGroups()->pluck('name', 'id')->all();
 
-        // Get all currencies
+        // Get all currencies of the user
         $allCurrencies = Auth::user()->currencies()->pluck('name', 'id')->all();
 
         return view(
@@ -348,7 +359,7 @@ class AccountEntityController extends Controller
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
-         * @methods('PUT', PATCH')
+         * @method('PUT', PATCH')
          * @uri('/account-entity/{account_entity}')
          * @name('account-entity.update')
          * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
