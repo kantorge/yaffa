@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.15.0](https://github.com/kantorge/yaffa/compare/v1.14.0...v1.15.0) (2025-10-01)
+
+
+### 🛠️ Chores
+
+* npm update ([0a2ac09](https://github.com/kantorge/yaffa/commit/0a2ac091815fc1a360c7d2050d73a123581debb4))
+* release 1.15.0 ([30fae20](https://github.com/kantorge/yaffa/commit/30fae208dfaa34ceae18c0c3eeef1572949b0326))
+
+
+### ✨ Features
+
+* added option to load transactions by default in account view ([#333](https://github.com/kantorge/yaffa/issues/333)) ([3c0b8c0](https://github.com/kantorge/yaffa/commit/3c0b8c0f1dfd5aa555ec6c24d1f30ce7f607dd41))
+
+
+### 🐛 Bug Fixes
+
+* package.json & package-lock.json to reduce vulnerabilities ([#324](https://github.com/kantorge/yaffa/issues/324)) ([411bdb2](https://github.com/kantorge/yaffa/commit/411bdb2dc0f720f59534f580175a915fc70ced68))
+* package.json & package-lock.json to reduce vulnerabilities ([#325](https://github.com/kantorge/yaffa/issues/325)) ([9547680](https://github.com/kantorge/yaffa/commit/95476807fe42f89cfc0e4cb90493dfac8ff0e69c))
+* upgrade axios from 1.10.0 to 1.11.0 ([#321](https://github.com/kantorge/yaffa/issues/321)) ([ee30180](https://github.com/kantorge/yaffa/commit/ee301800dae6fb57a7cee9bc1bd8b9e27a35d7c0))
+* upgrade bootstrap from 5.3.7 to 5.3.8 ([#329](https://github.com/kantorge/yaffa/issues/329)) ([01b73d0](https://github.com/kantorge/yaffa/commit/01b73d0563be7ee0195685b69b061381c3da6923))
+* upgrade datatables.net-bs5 from 2.3.2 to 2.3.3 ([#330](https://github.com/kantorge/yaffa/issues/330)) ([4dc787c](https://github.com/kantorge/yaffa/commit/4dc787ce1a9f7dd3958b94e54097e04a2952b3f9))
+* upgrade datatables.net-responsive-bs5 from 3.0.4 to 3.0.5 ([#320](https://github.com/kantorge/yaffa/issues/320)) ([f068b19](https://github.com/kantorge/yaffa/commit/f068b19ac0492b15dacd914edbc92fb3ac72f7f1))
+* upgrade vue from 3.5.16 to 3.5.17 ([#319](https://github.com/kantorge/yaffa/issues/319)) ([3d4b44a](https://github.com/kantorge/yaffa/commit/3d4b44a858b6e5b8fdbdd754ff6bb4150f7768b4))
+* upgrade vue from 3.5.17 to 3.5.20 ([#328](https://github.com/kantorge/yaffa/issues/328)) ([0d09dff](https://github.com/kantorge/yaffa/commit/0d09dff52c8688582ad84a189ba0d8714e066a1c))
+* upgrade webpack from 5.100.1 to 5.101.3 ([#327](https://github.com/kantorge/yaffa/issues/327)) ([11e4491](https://github.com/kantorge/yaffa/commit/11e44917c1fece22e55b1e2a7e96c7251c65d083))
+* upgrade webpack from 5.99.9 to 5.100.1 ([ad83b7f](https://github.com/kantorge/yaffa/commit/ad83b7ff91ecad0f9cfe1897e01ac0f04327232d))
+
 ## [1.14.0](https://github.com/kantorge/yaffa/compare/v1.13.10...v1.14.0) (2025-07-19)
 
 
