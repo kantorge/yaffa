@@ -25,6 +25,7 @@ class JavaScriptUserVariablesComposer
                 'translations' => $this->getTranslations(),
                 'start_date' => $user->start_date,
                 'end_date' => $user->end_date,
+                'account_details_date_range' => $user->account_details_date_range,
             ]
         ]);
     }

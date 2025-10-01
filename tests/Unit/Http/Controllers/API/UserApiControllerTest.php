@@ -19,6 +19,7 @@ class UserApiControllerTest extends TestCase
             'locale' => 'en-US',
             'start_date' => '2020-01-01',
             'end_date' => '2020-12-31',
+            'account_details_date_range' => 'none',
         ]);
         $this->actingAs($user);
 
@@ -27,6 +28,7 @@ class UserApiControllerTest extends TestCase
             'locale' => 'hu-HU',
             'start_date' => '2021-01-01',
             'end_date' => '2021-12-31',
+            'account_details_date_range' => 'yesterday',
         ]);
 
         $response->assertStatus(200)
@@ -37,6 +39,7 @@ class UserApiControllerTest extends TestCase
                     'locale' => 'hu-HU',
                     'start_date' => '2021-01-01T00:00:00.000000Z',
                     'end_date' => '2021-12-31T00:00:00.000000Z',
+                    'account_details_date_range' => 'yesterday',
                 ],
             ]);
 
@@ -46,6 +49,7 @@ class UserApiControllerTest extends TestCase
             'locale' => 'hu-HU',
             'start_date' => '2021-01-01',
             'end_date' => '2021-12-31',
+            'account_details_date_range' => 'yesterday',
         ]);
     }
 
@@ -62,6 +66,7 @@ class UserApiControllerTest extends TestCase
             'locale' => $user->locale,
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->start_date->addYear()->format('Y-m-d'),
+            'account_details_date_range' => $user->account_details_date_range,
         ]);
 
         $response->assertStatus(200)
@@ -83,6 +88,7 @@ class UserApiControllerTest extends TestCase
             'locale' => $user->locale,
             'start_date' => $user->start_date->format('Y-m-d'),
             'end_date' => $user->end_date->format('Y-m-d'),
+            'account_details_date_range' => $user->account_details_date_range,
         ]);
 
         $response->assertStatus(200)
@@ -104,6 +110,7 @@ class UserApiControllerTest extends TestCase
             'locale' => 'en-US', // same as current
             'start_date' => $user->start_date->format('Y-m-d'), // same as current
             'end_date' => $user->end_date->format('Y-m-d'), // same as current
+            'account_details_date_range' => $user->account_details_date_range, // same as current
         ]);
 
         $response->assertStatus(200)

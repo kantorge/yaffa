@@ -149,14 +149,13 @@
                         <div class="col-12">
                             <select id="dateRangePickerPresets" class="form-select">
                                 <option value="placeholder">{{ __('Select preset') }}</option>
-                                <option value="thisMonth">{{ __('This month') }}</option>
-                                <option value="thisQuarter">{{ __('This quarter') }}</option>
-                                <option value="thisYear">{{ __('This year') }}</option>
-                                <option value="thisMonthToDate">{{ __('This month to date') }}</option>
-                                <option value="thisQuarterToDate">{{ __('This quarter to date') }}</option>
-                                <option value="thisYearToDate">{{ __('This year to date') }}</option>
-                                <option value="previousMonth">{{ __('Previous month') }}</option>
-                                <option value="previousMonthToDate">{{ __('Previous month to date') }}</option>
+                                @foreach(config('yaffa.account_date_presets') as $group)
+                                    <optgroup label="{{ __($group['label']) }}">
+                                        @foreach($group['options'] as $option)
+                                            <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
                             </select>
                         </div>
                     </div>

@@ -55,6 +55,18 @@ class AccountEntityRequest extends FormRequest
                     Rule::exists('currencies', 'id')
                         ->where(fn ($query) => $query->where('user_id', $this->user()->id)),
                 ],
+                'config.default_date_range' => [
+                    'nullable',
+                    'string',
+                    Rule::in(
+                        collect(config('yaffa.account_date_presets'))
+                        ->pluck('options')
+                        ->flatten(1)
+                        ->pluck('value')
+                        ->prepend('none')
+                        ->all()
+                    )
+                ],
             ]);
         }
 
