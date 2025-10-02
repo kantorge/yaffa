@@ -160,6 +160,7 @@
                 <transaction-item-container
                         :transactionItems="transaction.transaction_items"
                         :currency="ammountFromCurrency"
+                        :enabled="!transactionTypeIsTransfer"
                 ></transaction-item-container>
             </div>
         </div>
@@ -250,6 +251,9 @@ export default {
 
             return 0;
         },
+        transactionTypeIsTransfer() {
+            return this.transaction.transaction_type.name === 'transfer';
+        }
     },
     methods: {
         formattedDate(date) {
