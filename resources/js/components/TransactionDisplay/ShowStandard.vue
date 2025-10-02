@@ -252,7 +252,7 @@ export default {
             return 0;
         },
         transactionTypeIsTransfer() {
-            return this.transaction.transaction_type.name === 'transfer';
+            return this.transaction?.transaction_type?.name === 'transfer';
         }
     },
     methods: {

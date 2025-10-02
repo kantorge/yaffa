@@ -30,7 +30,7 @@
             <div v-if="!enabled">
                 {{ __('Transaction items are disabled for this transaction type') }}
             </div>
-            <div v-if="enabled && transactionItems.length === 0" class="text-muted text-italic">
+            <div v-else-if="transactionItems.length === 0" class="text-muted text-italic">
                 {{ __('No items added') }}
             </div>
         </div>
