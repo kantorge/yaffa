@@ -423,4 +423,37 @@ class AccountShowTest extends DuskTestCase
                 ->assertSeeIn('#dateRangePickerPresets', 'Previous 30 days');
         });
     }
+
+    public function test_default_date_range_is_used_if_no_settings_exists(): void {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has no date setting
+        $user->account_details_date_range = 'none';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+
+        // Make sure the account has no date range setting
+        $account->config->default_date_range = null;
+        $account->config->save();
+
+        // Run the test, opening the account page without date parameters, and verifying the transaction is shown as per the default preset setting
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account without any date range parameters
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                // Additionally, verify that the date range selector shows the default preset option, as we used no explicit date parameters and neither the user nor the account have a setting
+                ->assertSeeIn('#dateRangePickerPresets', 'Select preset')
+                // Verify that the table loads no data
+                ->assertSeeIn('#historyTable_info', 'Showing 0 to 0 of 0 entries');
+        });
+    }
 }
