@@ -148,7 +148,7 @@
                     <div class="row mt-2">
                         <div class="col-12">
                             <select id="dateRangePickerPresets" class="form-select">
-                                <option value="placeholder">{{ __('Select preset') }}</option>
+                                <option value="none">{{ __('Select preset') }}</option>
                                 @foreach(config('yaffa.account_date_presets') as $group)
                                     <optgroup label="{{ __($group['label']) }}">
                                         @foreach($group['options'] as $option)

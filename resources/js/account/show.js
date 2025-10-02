@@ -23,9 +23,13 @@ let presetFilters = {
     }
 };
 
-// Loop filter object keys and populate presetFilters array.
+// Loop filter object keys and populate presetFilters array
 for (let key in window.filters) {
-    presetFilters[key] = false;
+    // For the date range preset, treat 'none' as not preset
+    if (key === 'date_preset' && window.filters[key] !== 'none') {
+        presetFilters[key] = false;
+        continue;
+    }
 }
 
 // Disable table refresh, if any filters are preset
@@ -525,7 +529,7 @@ let rebuildUrl = function () {
 
     if (isPresetChange) {
         const preset = document.getElementById('dateRangePickerPresets').value;
-        if (preset && preset !== 'placeholder') {
+        if (preset && preset !== 'none') {
             params.push('date_preset=' + preset);
         }
     } else {
@@ -548,13 +552,13 @@ let rebuildUrl = function () {
 // Attach event listener to date pickers
 document.getElementById('date_from').addEventListener('changeDate', function() {
     if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'placeholder';
+        document.getElementById('dateRangePickerPresets').value = 'none';
     }
     rebuildUrl();
 });
 document.getElementById('date_to').addEventListener('changeDate', function() {
     if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'placeholder';
+        document.getElementById('dateRangePickerPresets').value = 'none';
     }
     rebuildUrl();
 });
@@ -571,11 +575,12 @@ if (filters.date_from || filters.date_to) {
 
     presetFilters.date_from = true;
     presetFilters.date_to = true;
+
     // If all preset filters are ready, reload table data
     if (presetFilters.ready()) {
         reloadTable();
     }
-} else if (filters.date_preset) {
+} else if (filters.date_preset && filters.date_preset !== 'none') {
     // If date preset is set, apply it
     document.getElementById('dateRangePickerPresets').value = filters.date_preset;
     const event = new Event('change');
@@ -586,6 +591,9 @@ if (filters.date_from || filters.date_to) {
     if (presetFilters.ready()) {
         reloadTable();
     }
+} else if (filters.date_preset && filters.date_preset === 'none') {
+    presetFilters.date_preset = true;
+    // At the moment we don't expect any other filters, and the table does not need to be reloaded
 }
 
 // Set up event listener for new standard transaction button
