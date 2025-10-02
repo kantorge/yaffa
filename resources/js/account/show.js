@@ -26,10 +26,10 @@ let presetFilters = {
 // Loop filter object keys and populate presetFilters array
 for (let key in window.filters) {
     // For the date range preset, treat 'none' as not preset
-    if (key === 'date_preset' && window.filters[key] !== 'none') {
-        presetFilters[key] = false;
+    if (key === 'date_preset' && window.filters[key] === 'none') {
         continue;
     }
+    presetFilters[key] = false;
 }
 
 // Disable table refresh, if any filters are preset
