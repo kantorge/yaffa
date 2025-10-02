@@ -227,6 +227,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_to', 'Investment account USD', 10)
                 // Add amount
                 ->type('#transaction_amount_from', '100')
+                // Validate that the amount to field is not visible
+                ->assertMissing('#transaction_amount_to')
                 // Submit form
                 ->clickAndWaitForReload('#transactionFormStandard-Save')
                 // A success message should be available in a Vue component
