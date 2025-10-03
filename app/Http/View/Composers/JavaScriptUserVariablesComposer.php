@@ -32,12 +32,45 @@ class JavaScriptUserVariablesComposer
 
     private function getTranslations()
     {
-        $translationFile = resource_path('lang/' . app()->getLocale() . '.json');
+        $locale = app()->getLocale();
+        $fallback = config('app.fallback_locale');
 
-        if (! is_readable($translationFile)) {
-            $translationFile = resource_path('lang/' . config('app.fallback_locale') . '.json');
+        $candidates = [];
+
+        // Prefer the new root lang/ directory (Laravel 11). Use lang_path() if available.
+        if (function_exists('lang_path')) {
+            $candidates[] = lang_path($locale . '.json');
+            $candidates[] = lang_path($fallback . '.json');
+        } else {
+            // Fallback to base_path('lang') for installations without lang_path helper
+            $candidates[] = base_path('lang/' . $locale . '.json');
+            $candidates[] = base_path('lang/' . $fallback . '.json');
         }
 
-        return json_decode(file_get_contents($translationFile), true);
+        // Keep the old resources/lang/ path as a last-resort fallback for older apps
+        $candidates[] = resource_path('lang/' . $locale . '.json');
+        $candidates[] = resource_path('lang/' . $fallback . '.json');
+
+        $translationFile = null;
+        foreach ($candidates as $candidate) {
+            if ($candidate && is_readable($candidate)) {
+                $translationFile = $candidate;
+                break;
+            }
+        }
+
+        if (!$translationFile) {
+            // No translations file found — return empty array so frontend code can handle it.
+            return [];
+        }
+
+        $contents = file_get_contents($translationFile);
+        $decoded = json_decode($contents, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            return [];
+        }
+
+        return $decoded;
     }
 }
