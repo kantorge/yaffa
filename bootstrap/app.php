@@ -14,7 +14,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->redirectUsersTo(RouteServiceProvider::HOME);
+
+        $middleware->append(\App\Http\Middleware\CheckForMaintenanceMode::class);
+
+        $middleware->web([
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
+        $middleware->statefulApi();
+        $middleware->api(\App\Http\Middleware\SetLocale::class);
+
+        $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
