@@ -13,13 +13,6 @@ use Illuminate\Database\Eloquent\Model;
 class AccountEntityFactory extends Factory
 {
     /**
-     * The name of the factory's corresponding model.
-     *
-     * @var class-string<Model|TModel>
-     */
-    protected $model = AccountEntity::class;
-
-    /**
      * Define the model's default state.
      *
      * @return array
