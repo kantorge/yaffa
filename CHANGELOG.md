@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.15.1](https://github.com/kantorge/yaffa/compare/v1.15.0...v1.15.1) (2025-10-03)
+
+
+### 🐛 Bug Fixes
+
+* account default date range behavior ([#335](https://github.com/kantorge/yaffa/issues/335)) ([e037873](https://github.com/kantorge/yaffa/commit/e037873814ac47762455a7a47bea7a6a0cef0230))
+* amount field behavior for transfer transactions ([48b7bc2](https://github.com/kantorge/yaffa/commit/48b7bc20f9f0f303915899a3bc58cf54deb31e0a))
+* improvements based on Gemini code review ([5952882](https://github.com/kantorge/yaffa/commit/59528829af54a8ca2d4459c7e2534cd012c28767))
+* transaction item message for transfer transactions ([b429bfd](https://github.com/kantorge/yaffa/commit/b429bfdf87ce13c4f6b15b908f6455e92df96fcc))
+
 ## [1.15.0](https://github.com/kantorge/yaffa/compare/v1.14.0...v1.15.0) (2025-10-01)
 
 
