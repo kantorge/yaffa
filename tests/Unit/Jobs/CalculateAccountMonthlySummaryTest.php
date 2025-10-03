@@ -74,13 +74,13 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'transaction_type' => 'account_balance',
             'data_type' => 'forecast',
         ])
-        ->get();
+            ->get();
 
         // As the start date is used as the first date, we should have 12 records
         $this->assertCount(12, $summaryRecords);
 
         // Loop through the summary records and check that the date and the amount is correct
-        $summaryRecords->each(function ($summaryRecord, $index) use ($user, $account) {
+        $summaryRecords->each(function ($summaryRecord, $index) {
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
             $this->assertEquals($summaryRecord->amount, -100);
         });
@@ -102,13 +102,13 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'transaction_type' => 'account_balance',
             'data_type' => 'forecast',
         ])
-        ->get();
+            ->get();
 
         // The earlier records should be removed, so we should have 12 records
         $this->assertCount(12, $summaryRecords);
 
         // Loop through the summary records and check that the date and the amount is correct
-        $summaryRecords->each(function ($summaryRecord, $index) use ($user, $account) {
+        $summaryRecords->each(function ($summaryRecord, $index) {
             $this->assertEquals($summaryRecord->date, now()->subMonths(2)->startOfMonth()->addMonths($index));
             $this->assertEquals($summaryRecord->amount, -200);
         });
@@ -204,10 +204,10 @@ class CalculateAccountMonthlySummaryTest extends TestCase
             'transaction_type' => 'account_balance',
             'data_type' => 'forecast',
         ])
-        ->get();
+            ->get();
 
         // When observing the number of records, we need to take into account the partial overlap
-        $this->assertCount( 14, $summaryRecords);
+        $this->assertCount(14, $summaryRecords);
 
         // Define the expected values for the standard transaction
         $expectedBalance = [-100, -100, -50, -50, -50, -50, -50, -50, -50, -50, -50, -50, 50, 50];

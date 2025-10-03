@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kantorge\CurrencyExchangeRates\ApiClients\ExchangeRateApiClientInterface;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 use Tests\TestCase;
+use Mockery;
 
 class CurrencyTest extends TestCase
 {
@@ -26,20 +27,20 @@ class CurrencyTest extends TestCase
             ->for($user)
             ->fromIsoCodes(['USD'])
             ->create([
-            'base' => true
-        ]);
+                'base' => true
+            ]);
 
         /** @var Currency $currency */
         $currency = Currency::factory()
             ->for($user)
             ->fromIsoCodes(['EUR'])
             ->create([
-            'base' => false
-        ]);
+                'base' => false
+            ]);
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -102,7 +103,7 @@ class CurrencyTest extends TestCase
                 'name' => 'Unknown currency'
             ]);
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -137,7 +138,7 @@ class CurrencyTest extends TestCase
                 'base' => false
             ]);
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -179,7 +180,7 @@ class CurrencyTest extends TestCase
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -223,7 +224,7 @@ class CurrencyTest extends TestCase
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')

@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use Laravel\Dusk\Browser;
+use Exception;
 
 class DuskMacros
 {
@@ -13,8 +14,8 @@ class DuskMacros
             do {
                 $script = "
                     return window.dataLayer.filter(function(item) {
-                        return item.event === '$event'" .
-                        collect($conditions)->map(fn($v, $k) => " && item['$k'] === " . json_encode($v))->implode('') . ";
+                        return item.event === '{$event}'" .
+                        collect($conditions)->map(fn ($v, $k) => " && item['{$k}'] === " . json_encode($v))->implode('') . ";
                     });
                 ";
 
@@ -28,7 +29,7 @@ class DuskMacros
                 usleep(250000); // wait 250ms
             } while ((microtime(true) - $start) < $seconds);
 
-            throw new \Exception("Timed out waiting for dataLayer event '$event'");
+            throw new Exception("Timed out waiting for dataLayer event '{$event}'");
         });
     }
 }

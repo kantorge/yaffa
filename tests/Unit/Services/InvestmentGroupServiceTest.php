@@ -7,7 +7,6 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use App\Services\InvestmentGroupService;
-use Exception;
 use Tests\TestCase;
 
 class InvestmentGroupServiceTest extends TestCase

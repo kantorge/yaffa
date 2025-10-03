@@ -330,13 +330,11 @@ class AccountEntityController extends Controller
         $accountEntity->load(['config', 'categoryPreference']);
 
         // Simplify the category preference structure and pass it as JavaScript variable
-        $categoryPreference = $accountEntity->categoryPreference->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'full_name' => $item->full_name,
-                'preferred' => $item->pivot->preferred,
-            ];
-        });
+        $categoryPreference = $accountEntity->categoryPreference->map(fn ($item) => [
+            'id' => $item->id,
+            'full_name' => $item->full_name,
+            'preferred' => $item->pivot->preferred,
+        ]);
         JavaScriptFacade::put([
             'categoryPreferences' => $categoryPreference->toArray(),
         ]);

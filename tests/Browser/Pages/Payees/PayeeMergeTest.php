@@ -2,8 +2,6 @@
 
 namespace Tests\Browser\Pages\Payees;
 
-
-
 use App\Models\User;
 use Tests\DuskTestCase;
 

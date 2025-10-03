@@ -43,7 +43,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
 
     public function test_date_selector_preset_selections_are_respected()
     {
-        $this->browse(function(Browser $browser) {
+        $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
                 ->waitFor('@dateRangePicker')
@@ -66,7 +66,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
 
     public function test_date_selector_clear_button_behavior()
     {
-        $this->browse(function(Browser $browser) {
+        $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions')
                 ->waitFor('@dateRangePicker')
@@ -88,7 +88,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $tag1 = $this->user->tags->first();
         $tag2 = $this->user->tags->skip(1)->first();
 
-        $this->browse(function (Browser $browser) use ($tag1, $tag2) {
+        $this->browse(function (Browser $browser) {
             // Test with no tags
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
@@ -96,7 +96,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->assertVue('selectedTags', [], '@component-find-transactions');
         });
 
-        $this->browse(function (Browser $browser) use ($tag1, $tag2) {
+        $this->browse(function (Browser $browser) use ($tag1) {
             // Test with one tag
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['tags' => [$tag1->id]])
@@ -119,7 +119,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $category1 = $this->user->categories->whereNotNull('parent_id')->first();
         $category2 = $this->user->categories->whereNotNull('parent_id')->skip(1)->first();
 
-        $this->browse(function (Browser $browser) use ($category1, $category2) {
+        $this->browse(function (Browser $browser) {
             // Test with no categories
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
@@ -127,7 +127,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->assertVue('selectedCategories', [], '@component-find-transactions');
         });
 
-        $this->browse(function (Browser $browser) use ($category1, $category2) {
+        $this->browse(function (Browser $browser) use ($category1) {
             // Test with one category
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['categories' => [$category1->id]])
@@ -150,7 +150,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $account1 = $this->user->accounts->first();
         $account2 = $this->user->accounts->skip(1)->first();
 
-        $this->browse(function (Browser $browser) use ($account1, $account2) {
+        $this->browse(function (Browser $browser) {
             // Test with no accounts
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
@@ -158,7 +158,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->assertVue('selectedAccounts', [], '@component-find-transactions');
         });
 
-        $this->browse(function (Browser $browser) use ($account1, $account2) {
+        $this->browse(function (Browser $browser) use ($account1) {
             // Test with one account
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['accounts' => [$account1->id]])
@@ -181,7 +181,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         $payee1 = $this->user->payees->first();
         $payee2 = $this->user->payees->skip(1)->first();
 
-        $this->browse(function (Browser $browser) use ($payee1, $payee2) {
+        $this->browse(function (Browser $browser) {
             // Test with no payees
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
@@ -189,7 +189,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->assertVue('selectedPayees', [], '@component-find-transactions');
         });
 
-        $this->browse(function (Browser $browser) use ($payee1, $payee2) {
+        $this->browse(function (Browser $browser) use ($payee1) {
             // Test with one payee
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['payees' => [$payee1->id]])

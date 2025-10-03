@@ -7,7 +7,6 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionType;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
@@ -270,7 +269,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_date_parameters_take_precedence_over_preset_settings() {
+    public function test_date_parameters_take_precedence_over_preset_settings()
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -330,7 +330,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_preset_parameter_takes_precedence_over_account_and_user_setting() {
+    public function test_preset_parameter_takes_precedence_over_account_and_user_setting()
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -362,7 +363,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_date_preset_setting_takes_precedence_over_user_setting() {
+    public function test_account_date_preset_setting_takes_precedence_over_user_setting()
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -393,7 +395,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_user_date_setting_is_used_if_no_other_date_setting_exists() {
+    public function test_user_date_setting_is_used_if_no_other_date_setting_exists()
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -424,7 +427,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_default_date_range_is_used_if_no_settings_exists(): void {
+    public function test_default_date_range_is_used_if_no_settings_exists(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 

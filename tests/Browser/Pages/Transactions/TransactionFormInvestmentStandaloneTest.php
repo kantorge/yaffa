@@ -39,28 +39,26 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return retry(3, function () use ($browser) {
-            return $browser
-                ->visitRoute('transaction.create', ['type' => 'investment'])
+        return retry(3, fn () => $browser
+            ->visitRoute('transaction.create', ['type' => 'investment'])
                 // Wait for the form and key elements to be present
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
-                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+            ->waitFor(self::MAIN_FORM_SELECTOR)
+            ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+            ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
                 // Select type
-                ->select('#transaction_type', 'Buy')
+            ->select('#transaction_type', 'Buy')
                 // Add quantity
-                ->type('#transaction_quantity', '10')
+            ->type('#transaction_quantity', '10')
                 // Add price
-                ->type('#transaction_price', '20')
+            ->type('#transaction_price', '20')
                 // Add commission
-                ->type('#transaction_commission', '30')
+            ->type('#transaction_commission', '30')
                 // Add taxes
-                ->type('#transaction_tax', '40')
+            ->type('#transaction_tax', '40')
                 // Select account
-                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+            ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
-                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10);
-        });
+            ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10));
     }
 
     public function test_user_can_load_the_investment_transaction_form()

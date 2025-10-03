@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read mixed $first_transaction_date
  * @property-read mixed $latest_transaction_date
  * @property-read mixed $transaction_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsTo
+ * @property-read \Illuminate\Database\Eloquent\Collection|Transaction[] $transactionsTo
  * @property-read int|null $transactions_to_count
  * @property-read User $user
  * @method static Builder|AccountEntity accounts()
@@ -38,17 +38,17 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @method static Builder|Payee whereId($value)
  * @method static Builder|Payee whereImportAlias($value)
  * @method static Builder|Payee whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $categoryPreference
+ * @property-read \Illuminate\Database\Eloquent\Collection|Category[] $categoryPreference
  * @property-read int|null $category_preference_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $deferredCategories
+ * @property-read \Illuminate\Database\Eloquent\Collection|Category[] $deferredCategories
  * @property-read int|null $deferred_categories_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $preferredCategories
+ * @property-read \Illuminate\Database\Eloquent\Collection|Category[] $preferredCategories
  * @property-read int|null $preferred_categories_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardFrom
+ * @property-read \Illuminate\Database\Eloquent\Collection|TransactionDetailStandard[] $transactionDetailStandardFrom
  * @property-read int|null $transaction_detail_standard_from_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TransactionDetailStandard[] $transactionDetailStandardTo
+ * @property-read \Illuminate\Database\Eloquent\Collection|TransactionDetailStandard[] $transactionDetailStandardTo
  * @property-read int|null $transaction_detail_standard_to_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transaction[] $transactionsFrom
+ * @property-read \Illuminate\Database\Eloquent\Collection|Transaction[] $transactionsFrom
  * @property-read int|null $transactions_from_count
  * @mixin \Eloquent
  */

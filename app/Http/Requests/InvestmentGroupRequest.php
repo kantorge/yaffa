@@ -23,11 +23,9 @@ class InvestmentGroupRequest extends FormRequest
                 'required',
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-                Rule::unique('investment_groups')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->when($this->investmentGroup, fn ($query) => $query->where('id', '!=', $this->investmentGroup->id));
-                }),
+                Rule::unique('investment_groups')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->when($this->investmentGroup, fn ($query) => $query->where('id', '!=', $this->investmentGroup->id))),
             ],
         ];
     }

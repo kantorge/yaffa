@@ -21,7 +21,7 @@ class DefaultAssetNameTranslationsExistTest extends TestCase
         $reflection = new ReflectionClass($listener);
         $properties = array_filter(
             $reflection->getProperties(ReflectionProperty::IS_PRIVATE),
-            fn($property) => str_starts_with($property->getName(), 'config') && is_array($property->getValue($listener))
+            fn ($property) => str_starts_with($property->getName(), 'config') && is_array($property->getValue($listener))
         );
 
         foreach ($properties as $property) {

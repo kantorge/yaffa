@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages\InvestmentGroups;
 
-use App\Models\Currency;
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;

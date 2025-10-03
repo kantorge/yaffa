@@ -69,13 +69,11 @@ class AccountApiController extends Controller
                 $query->where('account_entities.active', true);
             })
             // Optionally limit the search for specific transaction types
-            ->when($request->has('transaction_type'), function ($query) use ($request) {
-                return $query->where(
-                    'transaction_type_id',
-                    '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
-                );
-            })
+            ->when($request->has('transaction_type'), fn ($query) => $query->where(
+                'transaction_type_id',
+                '=',
+                config('transaction_types')[$request->get('transaction_type')]['id']
+            ))
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
             ->where('account_entities.user_id', $parameters['user']->id)
@@ -195,19 +193,17 @@ class AccountApiController extends Controller
                 ->where('account_entities.active', true)
                 ->where('transactions.user_id', $user->id)
                 ->where('account_entities.user_id', $user->id)
-                ->when($request->get('currency_id'), function ($query) use ($request) {
-                    return $query
-                        ->join(
-                            'accounts',
-                            'accounts.id',
-                            '=',
-                            'account_entities.config_id'
-                        )->where(
-                            'accounts.currency_id',
-                            '=',
-                            $request->get('currency_id')
-                        );
-                })
+                ->when($request->get('currency_id'), fn ($query) => $query
+                    ->join(
+                        'accounts',
+                        'accounts.id',
+                        '=',
+                        'account_entities.config_id'
+                    )->where(
+                        'accounts.currency_id',
+                        '=',
+                        $request->get('currency_id')
+                    ))
                 ->where(
                     'transaction_type_id',
                     '=',
