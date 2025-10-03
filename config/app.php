@@ -15,29 +15,6 @@ return [
         'hu-HU' => 'Hungarian',
     ],
 
-    'providers' => ServiceProvider::defaultProviders()->merge([
-        /*
-         * Laravel Framework Service Providers...
-         */
-        //Illuminate\Pagination\PaginationServiceProvider::class,
-
-        /*
-         * Package Service Providers...
-         */
-
-        /*
-         * Application Service Providers...
-         */
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
-        App\Providers\FakerServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
-        //App\Providers\TelescopeServiceProvider::class,
-        App\Providers\ViewServiceProvider::class,
-        App\Providers\TransactionTypeServiceProvider::class,
-    ])->toArray(),
 
     'aliases' => Facade::defaultAliases()->merge([
         'Redis' => Illuminate\Support\Facades\Redis::class,
