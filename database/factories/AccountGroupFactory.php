@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\AccountGroup;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

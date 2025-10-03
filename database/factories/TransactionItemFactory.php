@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Category;
-use App\Models\TransactionItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

@@ -6,7 +6,6 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Investment;
-use App\Models\TransactionDetailInvestment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

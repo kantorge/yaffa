@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\TransactionSchedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionScheduleFactory extends Factory
