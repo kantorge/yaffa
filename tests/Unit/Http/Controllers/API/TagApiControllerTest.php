@@ -20,10 +20,7 @@ class TagApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @test
-     */
-    public function it_updates_the_active_status_of_a_tag(): void
+    public function test_it_updates_the_active_status_of_a_tag(): void
     {
         // Create a user and a tag
         /** @var User $user */
@@ -47,10 +44,7 @@ class TagApiControllerTest extends TestCase
         $this->assertTrue($tag->fresh()->active);
     }
 
-    /**
-     * @test
-     */
-    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_tag(): void
+    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_tag(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -94,9 +88,6 @@ class TagApiControllerTest extends TestCase
         $this->assertFalse($tag->fresh()->active);
     }
 
-    /**
-     * @test
-     */
     public function test_it_deletes_a_category_even_if_it_is_used_in_a_transaction(): void
     {
         // Create a user and a category

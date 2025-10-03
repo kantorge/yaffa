@@ -10,8 +10,7 @@ class UserApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function updates_user_settings_and_returns_updated_data(): void
+    public function test_updates_user_settings_and_returns_updated_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -53,8 +52,7 @@ class UserApiControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function warns_about_recalculating_monthly_summaries_when_end_date_changes(): void
+    public function test_warns_about_recalculating_monthly_summaries_when_end_date_changes(): void
     {
         /** @var User $user */
         $user = User::factory()->create(['end_date' => '2020-12-31']);
@@ -75,8 +73,7 @@ class UserApiControllerTest extends TestCase
             ]);
     }
 
-    /** @test */
-    public function warns_about_refreshing_page_when_language_changes(): void
+    public function test_warns_about_refreshing_page_when_language_changes(): void
     {
         /** @var User $user */
         $user = User::factory()->create(['language' => 'en']);
@@ -97,8 +94,7 @@ class UserApiControllerTest extends TestCase
             ]);
     }
 
-    /** @test */
-    public function does_not_warn_when_no_significant_changes_are_made(): void
+    public function test_does_not_warn_when_no_significant_changes_are_made(): void
     {
         /** @var User $user */
         $user = User::factory()->create(['language' => 'en', 'locale' => 'en-US']);
@@ -119,8 +115,7 @@ class UserApiControllerTest extends TestCase
             ]);
     }
 
-    /** @test */
-    public function changing_password_successfully_returns_successful_response(): void
+    public function test_changing_password_successfully_returns_successful_response(): void
     {
         // Make sure that the sandbox mode is disabled
         config(['yaffa.sandbox_mode' => false]);
@@ -138,8 +133,7 @@ class UserApiControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
-    public function changing_password_with_incorrect_current_password_returns_error(): void
+    public function test_changing_password_with_incorrect_current_password_returns_error(): void
     {
         // Make sure that the sandbox mode is disabled
         config(['yaffa.sandbox_mode' => false]);
@@ -157,8 +151,7 @@ class UserApiControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function changing_password_without_password_confirmation_returns_error(): void
+    public function test_changing_password_without_password_confirmation_returns_error(): void
     {
         // Make sure that the sandbox mode is disabled
         config(['yaffa.sandbox_mode' => false]);
@@ -176,8 +169,7 @@ class UserApiControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function changing_password_with_short_password_returns_error(): void
+    public function test_changing_password_with_short_password_returns_error(): void
     {
         // Make sure that the sandbox mode is disabled
         config(['yaffa.sandbox_mode' => false]);
@@ -195,8 +187,7 @@ class UserApiControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function password_change_in_sandbox_mode_is_not_allowed(): void
+    public function test_password_change_in_sandbox_mode_is_not_allowed(): void
     {
         // Make sure that the sandbox mode is enabled
         config(['yaffa.sandbox_mode' => true]);

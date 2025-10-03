@@ -20,7 +20,6 @@ class LogoutTest extends TestCase
         return '/';
     }
 
-    /** @test */
     public function test_user_can_logout(): void
     {
         /** @var User $user */
@@ -33,7 +32,6 @@ class LogoutTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_logout_when_not_authenticated(): void
     {
         $response = $this->post($this->logoutRoute());

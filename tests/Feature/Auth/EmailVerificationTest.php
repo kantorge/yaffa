@@ -62,7 +62,6 @@ class EmailVerificationTest extends TestCase
         return route('login');
     }
 
-    /** @test */
     public function test_guest_cannot_see_the_verification_notice(): void
     {
         $response = $this->get($this->verificationNoticeRoute());
@@ -70,7 +69,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->loginRoute());
     }
 
-    /** @test */
     public function test_user_sees_the_verification_notice_when_not_verified(): void
     {
         /** @var User $user */
@@ -84,7 +82,6 @@ class EmailVerificationTest extends TestCase
         $response->assertViewIs('auth.verify');
     }
 
-    /** @test */
     public function test_verified_user_is_redirected_home_when_visiting_verification_notice_route(): void
     {
         /** @var User $user */
@@ -97,7 +94,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->successfulVerificationRoute());
     }
 
-    /** @test */
     public function test_guest_cannot_see_the_verification_verify_route(): void
     {
         /** @var User $user */
@@ -110,7 +106,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->loginRoute());
     }
 
-    /** @test */
     public function test_user_cannot_verify_others(): void
     {
         /** @var User $user */
@@ -129,7 +124,6 @@ class EmailVerificationTest extends TestCase
         $this->assertFalse($user2->fresh()->hasVerifiedEmail());
     }
 
-    /** @test */
     public function test_user_is_redirected_to_correct_route_when_already_verified(): void
     {
         /** @var User $user */
@@ -142,7 +136,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->successfulVerificationRoute());
     }
 
-    /** @test */
     public function test_forbidden_is_returned_when_signature_is_invalid_in_verification_verify_route(): void
     {
         /** @var User $user */
@@ -155,7 +148,6 @@ class EmailVerificationTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
     public function test_user_can_verify_themselves(): void
     {
         /** @var User $user */
@@ -169,7 +161,6 @@ class EmailVerificationTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    /** @test */
     public function test_guest_cannot_resend_verification_email(): void
     {
         $response = $this->post($this->verificationResendRoute());
@@ -177,7 +168,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->loginRoute());
     }
 
-    /** @test */
     public function test_user_is_redirected_to_correct_route_if_already_verified(): void
     {
         /** @var User $user */
@@ -190,7 +180,6 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect($this->successfulVerificationRoute());
     }
 
-    /** @test */
     public function test_user_can_resend_verification_email(): void
     {
         Notification::fake();

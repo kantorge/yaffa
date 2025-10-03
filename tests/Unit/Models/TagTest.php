@@ -11,7 +11,6 @@ class TagTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
     public function test_tag_active_scope_returns_only_active_items(): void
     {
         // Create a user

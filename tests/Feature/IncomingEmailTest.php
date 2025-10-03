@@ -24,8 +24,7 @@ class IncomingEmailTest extends TestCase
         config(['mail.driver' => 'log']);
     }
 
-    /** @test */
-    public function email_sent_by_an_existing_user_to_mailbox_is_stored_in_database(): void
+    public function test_email_sent_by_an_existing_user_to_mailbox_is_stored_in_database(): void
     {
         // The related job is not executed in the test environment
         Queue::fake();
@@ -43,8 +42,7 @@ class IncomingEmailTest extends TestCase
         $this->assertCount(1, ReceivedMail::all());
     }
 
-    /** @test */
-    public function email_sent_by_a_non_existing_user_is_ignored(): void
+    public function test_email_sent_by_a_non_existing_user_is_ignored(): void
     {
         $email = new TestMail(
             'nonexisting@email.address',
@@ -57,8 +55,7 @@ class IncomingEmailTest extends TestCase
         $this->assertCount(0, ReceivedMail::all());
     }
 
-    /** @test */
-    public function email_sent_to_other_email_address_is_ignored(): void
+    public function test_email_sent_to_other_email_address_is_ignored(): void
     {
         $user = User::factory()->create();
 
@@ -73,8 +70,7 @@ class IncomingEmailTest extends TestCase
         $this->assertCount(0, ReceivedMail::all());
     }
 
-    /** @test */
-    public function received_email_generates_event(): void
+    public function test_received_email_generates_event(): void
     {
         Event::fake(IncomingEmailReceived::class);
 
@@ -90,7 +86,7 @@ class IncomingEmailTest extends TestCase
 
         Event::assertDispatched(
             IncomingEmailReceived::class,
-            fn (IncomingEmailReceived $event) => $event->mail->user_id === $user->id
+            fn(IncomingEmailReceived $event) => $event->mail->user_id === $user->id
         );
 
         Event::assertListening(
@@ -99,8 +95,7 @@ class IncomingEmailTest extends TestCase
         );
     }
 
-    /** @test */
-    public function email_without_subject_is_stored_with_default_subject(): void
+    public function test_email_without_subject_is_stored_with_default_subject(): void
     {
         // The related job is not executed in the test environment
         Queue::fake();

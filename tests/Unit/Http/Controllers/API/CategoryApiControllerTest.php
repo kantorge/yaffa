@@ -19,10 +19,7 @@ class CategoryApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @test
-     */
-    public function it_updates_the_active_status_of_a_category(): void
+    public function test_it_updates_the_active_status_of_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -46,10 +43,7 @@ class CategoryApiControllerTest extends TestCase
         $this->assertTrue($category->fresh()->active);
     }
 
-    /**
-     * @test
-     */
-    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_category(): void
+    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -93,10 +87,7 @@ class CategoryApiControllerTest extends TestCase
         $this->assertFalse($category->fresh()->active);
     }
 
-    /**
-     * @test
-     */
-    public function it_deletes_a_category(): void
+    public function test_it_deletes_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -123,9 +114,6 @@ class CategoryApiControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * @test
-     */
     public function test_it_does_not_delete_a_category_with_children(): void
     {
         // Create a user and a category
@@ -156,9 +144,6 @@ class CategoryApiControllerTest extends TestCase
         ]);
     }
 
-    /**
-     * @test
-     */
     public function test_it_does_not_delete_a_category_if_it_is_used_in_a_transaction(): void
     {
         // Create a user and a category

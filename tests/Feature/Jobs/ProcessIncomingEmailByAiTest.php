@@ -22,8 +22,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function processing_fails_if_main_response_is_not_valid_json(): void
+    public function test_processing_fails_if_main_response_is_not_valid_json(): void
     {
         // Generate a user and a fake incoming email
         $user = User::factory()->create();
@@ -48,7 +47,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         ProcessIncomingEmailByAi::dispatch($mail);
 
         // Assert that the job fails and error message was sent to the user
-        Mail::assertSent(fn (TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn(TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
 
         // Assert that the mail is marked as processed
         $this->assertTrue($mail->fresh()->processed);
@@ -57,8 +56,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $this->assertNull($mail->fresh()->transaction);
     }
 
-    /** @test */
-    public function processing_fails_if_transaction_type_is_not_recognized(): void
+    public function test_processing_fails_if_transaction_type_is_not_recognized(): void
     {
         // Generate a user and a fake incoming email
         $user = User::factory()->create();
@@ -83,7 +81,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         ProcessIncomingEmailByAi::dispatch($mail);
 
         // Assert that the job fails and error message was sent to the user
-        Mail::assertSent(fn (TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn(TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
 
         // Assert that the mail is marked as processed
         $this->assertTrue($mail->fresh()->processed);
@@ -92,8 +90,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $this->assertNull($mail->fresh()->transaction);
     }
 
-    /** @test */
-    public function transaction_data_array_is_created_if_processing_is_successful(): void
+    public function test_transaction_data_array_is_created_if_processing_is_successful(): void
     {
         // Generate a user and a fake incoming email
         /** @var User $user */
@@ -128,7 +125,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
                             "account": "' . $account->name . '",
                             "payee": "' . $payee->name . '",
                             "date": "' . $date->format('Y-m-d') . '",
-                            "amount": "' . $amount . '"                           
+                            "amount": "' . $amount . '"
                         }',
                     ],
                 ],
@@ -140,7 +137,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
             CreateResponse::fake([
                 'choices' => [
                     [
-                        'text' => (string)$account->id,
+                        'text' => (string) $account->id,
                     ],
                 ],
             ]),
@@ -150,7 +147,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
             CreateResponse::fake([
                 'choices' => [
                     [
-                        'text' => (string)$payee->id,
+                        'text' => (string) $payee->id,
                     ],
                 ],
             ]),
@@ -163,7 +160,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $job->handle();
 
         // Assert that reply email is sent to the user
-        Mail::assertSent(fn (TransactionCreatedFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn(TransactionCreatedFromEmail $mail) => $mail->hasTo($user->email));
 
         $mail->fresh();
 

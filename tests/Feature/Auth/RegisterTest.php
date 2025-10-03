@@ -49,7 +49,6 @@ class RegisterTest extends TestCase
         return route('home');
     }
 
-    /** @test */
     public function test_user_can_view_registration_form(): void
     {
         // For this test, make sure that the new user registration is enabled, by setting the allowed user count to infinite.
@@ -65,7 +64,6 @@ class RegisterTest extends TestCase
         config(['yaffa.registered_user_limit' => $originalUserLimit]);
     }
 
-    /** @test */
     public function test_user_cannot_view_registration_form_when_authenticated(): void
     {
         /** @var User $user */
@@ -76,7 +74,6 @@ class RegisterTest extends TestCase
         $response->assertRedirect($this->guestMiddlewareRoute());
     }
 
-    /** @test */
     public function test_user_can_register(): void
     {
         Event::fake();
@@ -113,10 +110,9 @@ class RegisterTest extends TestCase
         $this->assertTrue(Hash::check($password, $user->password));
 
         // Registration generates event
-        Event::assertDispatched(Registered::class, fn ($e) => $e->user->id === $user->id);
+        Event::assertDispatched(Registered::class, fn($e) => $e->user->id === $user->id);
     }
 
-    /** @test */
     public function test_user_is_automatically_verified_if_feature_is_enabled(): void
     {
         // Ensure that the yaffa.email_verification_required config value is set to false for this test.
@@ -149,7 +145,6 @@ class RegisterTest extends TestCase
         $this->assertNotNull($user->email_verified_at);
     }
 
-    /** @test */
     public function test_user_cannot_register_without_name(): void
     {
         /** @var User $userData */
@@ -180,7 +175,6 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_register_without_email(): void
     {
         /** @var User $userData */
@@ -211,7 +205,6 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_register_with_invalid_email(): void
     {
         /** @var User $userData */
@@ -242,7 +235,6 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_register_without_password(): void
     {
         /** @var User $userData */
@@ -273,7 +265,6 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_register_without_password_confirmation(): void
     {
         /** @var User $userData */
@@ -305,7 +296,6 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_register_with_passwords_not_matching(): void
     {
         /** @var User $userData */

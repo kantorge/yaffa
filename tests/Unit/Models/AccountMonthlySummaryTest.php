@@ -84,7 +84,6 @@ class AccountMonthlySummaryTest extends TestCase
         return $user;
     }
 
-    /** @test */
     public function test_standard_fact_is_calculated_correctly(): void
     {
         $user = $this->createBasicAssetsAndReturnUser();
@@ -271,7 +270,6 @@ class AccountMonthlySummaryTest extends TestCase
         );
     }
 
-    /** @test */
     public function test_investment_value_is_calculated_correctly(): void
     {
         $user = $this->createBasicAssetsAndReturnUser();

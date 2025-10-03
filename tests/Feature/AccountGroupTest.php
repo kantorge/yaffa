@@ -22,8 +22,7 @@ class AccountGroupTest extends TestCase
         $this->setBaseModel(AccountGroup::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource(): void
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -38,8 +37,7 @@ class AccountGroupTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function unverified_user_cannot_access_resource(): void
+    public function test_unverified_user_cannot_access_resource(): void
     {
         $user_unverified = User::factory()->create([
             'email_verified_at' => null,
@@ -57,8 +55,7 @@ class AccountGroupTest extends TestCase
         $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertRedirect(route('verification.notice'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource(): void
+    public function test_user_cannot_access_other_users_resource(): void
     {
         $user1 = User::factory()->create();
         $accountGroup = $this->createForUser($user1, $this->base_model);
@@ -70,8 +67,7 @@ class AccountGroupTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $accountGroup))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_account_groups(): void
+    public function test_user_can_view_list_of_account_groups(): void
     {
         $user = User::factory()->create();
 
@@ -83,8 +79,7 @@ class AccountGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_can_access_create_form(): void
+    public function test_user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -96,8 +91,7 @@ class AccountGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_create_an_account_group_with_missing_data(): void
+    public function test_user_cannot_create_an_account_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -113,16 +107,14 @@ class AccountGroupTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_an_account_group(): void
+    public function test_user_can_create_an_account_group(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_account_group(): void
+    public function test_user_can_edit_an_existing_account_group(): void
     {
         $user = User::factory()->create();
 
@@ -134,8 +126,7 @@ class AccountGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_an_account_group_with_missing_data(): void
+    public function test_user_cannot_update_an_account_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -155,8 +146,7 @@ class AccountGroupTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_an_account_group_with_proper_data(): void
+    public function test_user_can_update_an_account_group_with_proper_data(): void
     {
         $user = User::factory()->create();
 
@@ -176,19 +166,17 @@ class AccountGroupTest extends TestCase
         $response->assertRedirect($this->base_route);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn ($notification) => $notification['type'] === 'success');
+            ->contains(fn($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_account_group(): void
+    public function test_user_can_delete_an_existing_account_group(): void
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
 
-    /** @test */
-    public function user_cannot_delete_account_group_with_attached_account(): void
+    public function test_user_cannot_delete_account_group_with_attached_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

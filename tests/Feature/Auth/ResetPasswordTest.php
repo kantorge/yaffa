@@ -50,7 +50,6 @@ class ResetPasswordTest extends TestCase
         config(['recaptcha.api_secret_key' => null]);
     }
 
-    /** @test */
     public function test_user_can_view_password_reset_form(): void
     {
         $user = User::factory()->create();
@@ -62,7 +61,6 @@ class ResetPasswordTest extends TestCase
         $response->assertViewHas('token', $token);
     }
 
-    /** @test */
     public function test_user_can_view_password_reset_form_when_authenticated(): void
     {
         $user = User::factory()->create();
@@ -74,7 +72,6 @@ class ResetPasswordTest extends TestCase
         $response->assertViewHas('token', $token);
     }
 
-    /** @test */
     public function test_user_can_reset_password_with_valid_token(): void
     {
         Event::fake();
@@ -92,10 +89,9 @@ class ResetPasswordTest extends TestCase
         $this->assertEquals($user->email, $user->fresh()->email);
         $this->assertTrue(Hash::check($password, $user->fresh()->password));
         $this->assertAuthenticatedAs($user);
-        Event::assertDispatched(PasswordReset::class, fn ($e) => $e->user->id === $user->id);
+        Event::assertDispatched(PasswordReset::class, fn($e) => $e->user->id === $user->id);
     }
 
-    /** @test */
     public function test_user_cannot_reset_password_with_invalid_token(): void
     {
         $oldPassword = 'old-password';
@@ -120,7 +116,6 @@ class ResetPasswordTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_reset_password_without_providing_new_password(): void
     {
         $oldPassword = 'old-password';
@@ -147,7 +142,6 @@ class ResetPasswordTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
     public function test_user_cannot_reset_password_without_providing_email(): void
     {
         $oldPassword = 'old-password';

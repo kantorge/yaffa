@@ -20,8 +20,7 @@ class CategoryTest extends TestCase
         $this->setBaseModel(Category::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource(): void
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -37,8 +36,7 @@ class CategoryTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource(): void
+    public function test_user_cannot_access_other_users_resource(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -53,8 +51,7 @@ class CategoryTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_categories(): void
+    public function test_user_can_view_list_of_categories(): void
     {
         $user = User::factory()->create();
         Category::factory()->for($user)->count(5)->create();
@@ -65,8 +62,7 @@ class CategoryTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_cannot_create_a_category_with_missing_data(): void
+    public function test_user_cannot_create_a_category_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -84,8 +80,7 @@ class CategoryTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_access_create_form(): void
+    public function test_user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -97,16 +92,14 @@ class CategoryTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_can_create_a_category(): void
+    public function test_user_can_create_a_category(): void
     {
         $user = User::factory()->create();
 
         $this->assertCreateForUser($user);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_category(): void
+    public function test_user_can_edit_an_existing_category(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -124,8 +117,7 @@ class CategoryTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_a_category_with_missing_data(): void
+    public function test_user_cannot_update_a_category_with_missing_data(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -148,8 +140,7 @@ class CategoryTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_a_category_with_proper_data(): void
+    public function test_user_can_update_a_category_with_proper_data(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -174,12 +165,11 @@ class CategoryTest extends TestCase
         $response->assertRedirect(route("{$this->base_route}.index"));
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn ($notification) => $notification['type'] === 'success');
+            ->contains(fn($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_category(): void
+    public function test_user_can_delete_an_existing_category(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -189,7 +179,6 @@ class CategoryTest extends TestCase
     /**
      * Various tests to validate the CategoryRequest
      */
-    /** @test */
     public function test_the_name_must_unique_among_parent_categories(): void
     {
         /** @var User $user */
@@ -227,7 +216,6 @@ class CategoryTest extends TestCase
         $this->assertDatabaseHas('categories', ['name' => $category->name . '2']);
     }
 
-    /** @test */
     public function test_the_name_must_be_unique_within_the_same_parent(): void
     {
         /** @var User $user */

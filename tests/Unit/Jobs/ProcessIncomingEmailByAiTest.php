@@ -12,14 +12,11 @@ class ProcessIncomingEmailByAiTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @test
-     */
     public function test_cleanup_helper_removes_image_blocks(): void
     {
         // Create a string with image blocks
         $inputText = "
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.            
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             [image: Image Block 1]
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             [image: Image Block 2]
@@ -43,14 +40,11 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $this->assertStringContainsString('[Not an image block]', $outputText);
     }
 
-    /**
-     * @test
-     */
     public function test_cleanup_helper_removes_link_tags(): void
     {
         // Create a string with link tags
         $inputText = "
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.            
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             <https://some.link/?some=parameter>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             <https://some.other.link/?some=otherparam>

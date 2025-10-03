@@ -11,8 +11,7 @@ use Tests\TestCase;
 
 class InvestmentGroupApiControllerTest extends TestCase
 {
-    /** @test */
-    public function destroysInvestmentGroupSuccessfully(): void
+    public function test_destroysInvestmentGroupSuccessfully(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();
@@ -24,8 +23,7 @@ class InvestmentGroupApiControllerTest extends TestCase
         $this->assertDatabaseMissing('investment_groups', ['id' => $investmentGroup->id]);
     }
 
-    /** @test */
-    public function doesNotDestroyInvestmentGroupWithoutAuthorization(): void
+    public function test_doesNotDestroyInvestmentGroupWithoutAuthorization(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->create();
@@ -37,8 +35,7 @@ class InvestmentGroupApiControllerTest extends TestCase
         $this->assertDatabaseHas('investment_groups', ['id' => $investmentGroup->id]);
     }
 
-    /** @test */
-    public function doesNotDestroyInvestmentGroupInUse(): void
+    public function test_doesNotDestroyInvestmentGroupInUse(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();

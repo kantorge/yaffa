@@ -18,10 +18,7 @@ class AccountEntityApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @test
-     */
-    public function it_updates_the_active_status_of_an_account_entity(): void
+    public function test_it_updates_the_active_status_of_an_account_entity(): void
     {
         // Create a user and an account entity, which also needs a currency and an account group
         /** @var User $user */
@@ -47,10 +44,7 @@ class AccountEntityApiControllerTest extends TestCase
         $this->assertEquals(1, $accountEntity->fresh()->active);
     }
 
-    /**
-     * @test
-     */
-    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity(): void
+    public function test_it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity(): void
     {
         // Create a user and an account entity, which also needs a currency and an account group
         /** @var User $user */
@@ -100,8 +94,7 @@ class AccountEntityApiControllerTest extends TestCase
         $this->assertEquals($accountEntity->fresh()->active, $accountEntity->active);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_payee(): void
+    public function test_user_can_delete_an_existing_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
