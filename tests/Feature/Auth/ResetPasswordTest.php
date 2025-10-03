@@ -42,7 +42,7 @@ class ResetPasswordTest extends TestCase
     /**
      * For all these tests, make sure that recaptcha is disabled.
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 

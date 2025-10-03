@@ -12,7 +12,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
 
     protected User $user;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 

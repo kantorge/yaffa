@@ -32,7 +32,7 @@ class AccountTest extends TestCase
         return $account;
     }
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 

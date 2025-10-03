@@ -16,7 +16,7 @@ class TagListTest extends DuskTestCase
         return $browser->script("return $('{$tableSelector}').DataTable().rows({search:'applied'}).count()")[0];
     }
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
