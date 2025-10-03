@@ -4,9 +4,13 @@ namespace App\Providers;
 
 use App\Components\MailHandler;
 use App\Models\Account;
+use App\Models\CurrencyRate;
+use App\Models\InvestmentPrice;
 use App\Models\Payee;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Observers\CurrencyRateObserver;
+use App\Observers\InvestmentPriceObserver;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -16,6 +20,15 @@ use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * The path to your application's "home" route.
+     *
+     * Typically, users are redirected here after authentication.
+     *
+     * @var string
+     */
+    public const HOME = '/home';
+
     /**
      * Register any application services.
      */
@@ -70,5 +83,14 @@ class AppServiceProvider extends ServiceProvider
         if (config('yaffa.incoming_receipts_email')) {
             Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
         }
+
+        $this->bootEvent();
+    }
+
+    public function bootEvent(): void
+    {
+        CurrencyRate::observe(CurrencyRateObserver::class);
+        InvestmentPrice::observe(InvestmentPriceObserver::class);
+
     }
 }
