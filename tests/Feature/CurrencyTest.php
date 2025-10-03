@@ -21,7 +21,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -38,7 +38,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         /** @var User $user1 */
         $user1 = User::factory()->create();
@@ -52,7 +52,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_currencies()
+    public function user_can_view_list_of_currencies(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -65,7 +65,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -79,7 +79,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_a_currency_with_missing_data()
+    public function user_cannot_create_a_currency_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -97,7 +97,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_a_currency()
+    public function user_can_create_a_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -107,7 +107,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_currency()
+    public function user_can_edit_an_existing_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -121,7 +121,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_a_currency_with_missing_data()
+    public function user_cannot_update_a_currency_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -143,7 +143,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_a_currency_with_proper_data()
+    public function user_can_update_a_currency_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -171,7 +171,7 @@ class CurrencyTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_currency()
+    public function user_can_delete_an_existing_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

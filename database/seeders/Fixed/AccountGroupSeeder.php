@@ -12,7 +12,7 @@ class AccountGroupSeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         AccountGroup::factory()
             ->count(4)

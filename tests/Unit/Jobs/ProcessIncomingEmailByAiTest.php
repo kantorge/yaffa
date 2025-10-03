@@ -15,7 +15,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
     /**
      * @test
      */
-    public function test_cleanup_helper_removes_image_blocks()
+    public function test_cleanup_helper_removes_image_blocks(): void
     {
         // Create a string with image blocks
         $inputText = "
@@ -46,7 +46,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
     /**
      * @test
      */
-    public function test_cleanup_helper_removes_link_tags()
+    public function test_cleanup_helper_removes_link_tags(): void
     {
         // Create a string with link tags
         $inputText = "

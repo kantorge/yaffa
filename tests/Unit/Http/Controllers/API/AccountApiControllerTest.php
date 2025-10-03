@@ -19,7 +19,7 @@ class AccountApiControllerTest extends TestCase
     private const BASE_ACCOUNT_NAME = 'Same account name';
 
     /** @test */
-    public function test_account_list_with_query_applies_all_provided_filters()
+    public function test_account_list_with_query_applies_all_provided_filters(): void
     {
         // Primary user with test data covering various use cases
         /** @var User $user */

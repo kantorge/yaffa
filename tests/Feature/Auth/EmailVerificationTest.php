@@ -63,7 +63,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_guest_cannot_see_the_verification_notice()
+    public function test_guest_cannot_see_the_verification_notice(): void
     {
         $response = $this->get($this->verificationNoticeRoute());
 
@@ -71,7 +71,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_sees_the_verification_notice_when_not_verified()
+    public function test_user_sees_the_verification_notice_when_not_verified(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -85,7 +85,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_verified_user_is_redirected_home_when_visiting_verification_notice_route()
+    public function test_verified_user_is_redirected_home_when_visiting_verification_notice_route(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -98,7 +98,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_guest_cannot_see_the_verification_verify_route()
+    public function test_guest_cannot_see_the_verification_verify_route(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -111,7 +111,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_verify_others()
+    public function test_user_cannot_verify_others(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -130,7 +130,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_is_redirected_to_correct_route_when_already_verified()
+    public function test_user_is_redirected_to_correct_route_when_already_verified(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -143,7 +143,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_forbidden_is_returned_when_signature_is_invalid_in_verification_verify_route()
+    public function test_forbidden_is_returned_when_signature_is_invalid_in_verification_verify_route(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -156,7 +156,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_verify_themselves()
+    public function test_user_can_verify_themselves(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -170,7 +170,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_guest_cannot_resend_verification_email()
+    public function test_guest_cannot_resend_verification_email(): void
     {
         $response = $this->post($this->verificationResendRoute());
 
@@ -178,7 +178,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_is_redirected_to_correct_route_if_already_verified()
+    public function test_user_is_redirected_to_correct_route_if_already_verified(): void
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -191,7 +191,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_resend_verification_email()
+    public function test_user_can_resend_verification_email(): void
     {
         Notification::fake();
 

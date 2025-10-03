@@ -9,7 +9,7 @@ use App\Listeners\CreateDefaultAssetsForNewUser;
 
 class DefaultAssetNameTranslationsExistTest extends TestCase
 {
-    public function testAllStringsAreAvailableInDefaultAssets()
+    public function testAllStringsAreAvailableInDefaultAssets(): void
     {
         // Load the default assets array
         $defaultAssets = include base_path('lang/en/default_assets.php');

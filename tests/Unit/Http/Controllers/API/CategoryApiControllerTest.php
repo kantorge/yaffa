@@ -22,7 +22,7 @@ class CategoryApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function it_updates_the_active_status_of_a_category()
+    public function it_updates_the_active_status_of_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -49,7 +49,7 @@ class CategoryApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_category()
+    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -96,7 +96,7 @@ class CategoryApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function it_deletes_a_category()
+    public function it_deletes_a_category(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -126,7 +126,7 @@ class CategoryApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function test_it_does_not_delete_a_category_with_children()
+    public function test_it_does_not_delete_a_category_with_children(): void
     {
         // Create a user and a category
         /** @var User $user */
@@ -159,7 +159,7 @@ class CategoryApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function test_it_does_not_delete_a_category_if_it_is_used_in_a_transaction()
+    public function test_it_does_not_delete_a_category_if_it_is_used_in_a_transaction(): void
     {
         // Create a user and a category
         /** @var User $user */

@@ -23,7 +23,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -39,7 +39,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function unverified_user_cannot_access_resource()
+    public function unverified_user_cannot_access_resource(): void
     {
         $user_unverified = User::factory()->create([
             'email_verified_at' => null,
@@ -58,7 +58,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         $user1 = User::factory()->create();
         $accountGroup = $this->createForUser($user1, $this->base_model);
@@ -71,7 +71,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_account_groups()
+    public function user_can_view_list_of_account_groups(): void
     {
         $user = User::factory()->create();
 
@@ -84,7 +84,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -97,7 +97,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_an_account_group_with_missing_data()
+    public function user_cannot_create_an_account_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -114,7 +114,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_an_account_group()
+    public function user_can_create_an_account_group(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -122,7 +122,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_account_group()
+    public function user_can_edit_an_existing_account_group(): void
     {
         $user = User::factory()->create();
 
@@ -135,7 +135,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_an_account_group_with_missing_data()
+    public function user_cannot_update_an_account_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -156,7 +156,7 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_an_account_group_with_proper_data()
+    public function user_can_update_an_account_group_with_proper_data(): void
     {
         $user = User::factory()->create();
 
@@ -181,14 +181,14 @@ class AccountGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_account_group()
+    public function user_can_delete_an_existing_account_group(): void
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
 
     /** @test */
-    public function user_cannot_delete_account_group_with_attached_account()
+    public function user_cannot_delete_account_group_with_attached_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

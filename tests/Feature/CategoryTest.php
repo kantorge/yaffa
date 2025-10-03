@@ -21,7 +21,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -38,7 +38,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -54,7 +54,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_categories()
+    public function user_can_view_list_of_categories(): void
     {
         $user = User::factory()->create();
         Category::factory()->for($user)->count(5)->create();
@@ -66,7 +66,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_a_category_with_missing_data()
+    public function user_cannot_create_a_category_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -85,7 +85,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -98,7 +98,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_a_category()
+    public function user_can_create_a_category(): void
     {
         $user = User::factory()->create();
 
@@ -106,7 +106,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_category()
+    public function user_can_edit_an_existing_category(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -125,7 +125,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_a_category_with_missing_data()
+    public function user_cannot_update_a_category_with_missing_data(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -149,7 +149,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_a_category_with_proper_data()
+    public function user_can_update_a_category_with_proper_data(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->for($user)->create();
@@ -179,7 +179,7 @@ class CategoryTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_category()
+    public function user_can_delete_an_existing_category(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -190,7 +190,7 @@ class CategoryTest extends TestCase
      * Various tests to validate the CategoryRequest
      */
     /** @test */
-    public function test_the_name_must_unique_among_parent_categories()
+    public function test_the_name_must_unique_among_parent_categories(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

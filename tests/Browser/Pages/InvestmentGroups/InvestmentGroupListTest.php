@@ -26,7 +26,7 @@ class InvestmentGroupListTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_investment_group_list_and_use_filters()
+    public function test_user_can_load_the_investment_group_list_and_use_filters(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL)
@@ -77,7 +77,7 @@ class InvestmentGroupListTest extends DuskTestCase
         });
     }
 
-    public function test_delete_button_behaviour()
+    public function test_delete_button_behaviour(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

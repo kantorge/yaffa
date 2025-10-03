@@ -6,7 +6,7 @@ use App\Rules\CategoryMergeValidSource;
 
 class CategoryMergeRequest extends FormRequest
 {
-    public function rules()
+    public function rules(): array
     {
         return [
             'category_target' => [

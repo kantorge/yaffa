@@ -26,7 +26,7 @@ class AccountShowTest extends DuskTestCase
         }
     }
 
-    public function test_account_history_uses_correct_currency_for_standard_transactions()
+    public function test_account_history_uses_correct_currency_for_standard_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -141,7 +141,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions()
+    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -269,7 +269,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_date_parameters_take_precedence_over_preset_settings()
+    public function test_date_parameters_take_precedence_over_preset_settings(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -330,7 +330,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_preset_parameter_takes_precedence_over_account_and_user_setting()
+    public function test_preset_parameter_takes_precedence_over_account_and_user_setting(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -363,7 +363,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_date_preset_setting_takes_precedence_over_user_setting()
+    public function test_account_date_preset_setting_takes_precedence_over_user_setting(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -395,7 +395,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_user_date_setting_is_used_if_no_other_date_setting_exists()
+    public function test_user_date_setting_is_used_if_no_other_date_setting_exists(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

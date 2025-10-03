@@ -23,7 +23,7 @@ class AccountListTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_account_list_and_use_filters()
+    public function test_user_can_load_the_account_list_and_use_filters(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL)

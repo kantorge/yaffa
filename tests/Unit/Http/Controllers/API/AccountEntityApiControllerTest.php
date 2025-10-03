@@ -21,7 +21,7 @@ class AccountEntityApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function it_updates_the_active_status_of_an_account_entity()
+    public function it_updates_the_active_status_of_an_account_entity(): void
     {
         // Create a user and an account entity, which also needs a currency and an account group
         /** @var User $user */
@@ -50,7 +50,7 @@ class AccountEntityApiControllerTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity()
+    public function it_throws_an_authorization_exception_if_user_is_not_authorized_to_update_an_account_entity(): void
     {
         // Create a user and an account entity, which also needs a currency and an account group
         /** @var User $user */
@@ -101,7 +101,7 @@ class AccountEntityApiControllerTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_payee()
+    public function user_can_delete_an_existing_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -132,7 +132,7 @@ class AccountEntityApiControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_delete_an_existing_account()
+    public function test_user_can_delete_an_existing_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -164,7 +164,7 @@ class AccountEntityApiControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_cannot_delete_an_already_used_payee_or_account()
+    public function test_user_cannot_delete_an_already_used_payee_or_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create([

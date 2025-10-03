@@ -28,7 +28,7 @@ class QuickActionBarTest extends DuskTestCase
     /**
      * @throws Throwable
      */
-    public function test_quick_action_bar_is_initially_hidden()
+    public function test_quick_action_bar_is_initially_hidden(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -43,7 +43,7 @@ class QuickActionBarTest extends DuskTestCase
     /**
      * @throws Throwable
      */
-    public function test_quick_action_bar_can_be_opened_and_closed()
+    public function test_quick_action_bar_can_be_opened_and_closed(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

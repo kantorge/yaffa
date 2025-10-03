@@ -21,7 +21,7 @@ class InvestmentGroupPolicy
      * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
         return true;
     }
@@ -33,7 +33,7 @@ class InvestmentGroupPolicy
      * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, InvestmentGroup $investmentGroup)
+    public function view(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -44,7 +44,7 @@ class InvestmentGroupPolicy
      * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
         return true;
     }
@@ -56,7 +56,7 @@ class InvestmentGroupPolicy
      * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, InvestmentGroup $investmentGroup)
+    public function update(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -68,7 +68,7 @@ class InvestmentGroupPolicy
      * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, InvestmentGroup $investmentGroup)
+    public function delete(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -80,7 +80,7 @@ class InvestmentGroupPolicy
      * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user, InvestmentGroup $investmentGroup)
+    public function restore(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -92,7 +92,7 @@ class InvestmentGroupPolicy
      * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, InvestmentGroup $investmentGroup)
+    public function forceDelete(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }

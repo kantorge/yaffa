@@ -23,7 +23,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function processing_fails_if_main_response_is_not_valid_json()
+    public function processing_fails_if_main_response_is_not_valid_json(): void
     {
         // Generate a user and a fake incoming email
         $user = User::factory()->create();
@@ -58,7 +58,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
     }
 
     /** @test */
-    public function processing_fails_if_transaction_type_is_not_recognized()
+    public function processing_fails_if_transaction_type_is_not_recognized(): void
     {
         // Generate a user and a fake incoming email
         $user = User::factory()->create();
@@ -93,7 +93,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
     }
 
     /** @test */
-    public function transaction_data_array_is_created_if_processing_is_successful()
+    public function transaction_data_array_is_created_if_processing_is_successful(): void
     {
         // Generate a user and a fake incoming email
         /** @var User $user */

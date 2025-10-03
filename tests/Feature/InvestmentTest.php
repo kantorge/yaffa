@@ -23,7 +23,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -41,7 +41,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -61,7 +61,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_investments()
+    public function user_can_view_list_of_investments(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -75,7 +75,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -93,7 +93,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function investment_form_requires_investment_group_and_currency()
+    public function investment_form_requires_investment_group_and_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -127,7 +127,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_an_investment_with_missing_data()
+    public function user_cannot_create_an_investment_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -153,7 +153,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_an_investment()
+    public function user_can_create_an_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -169,7 +169,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_investment()
+    public function user_can_edit_an_existing_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -191,7 +191,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_an_investment_with_missing_data()
+    public function user_cannot_update_an_investment_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -222,7 +222,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_an_investment_with_proper_data()
+    public function user_can_update_an_investment_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -270,7 +270,7 @@ class InvestmentTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_investment()
+    public function user_can_delete_an_existing_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

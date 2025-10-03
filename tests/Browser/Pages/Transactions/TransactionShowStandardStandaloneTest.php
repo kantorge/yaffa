@@ -23,7 +23,7 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_standard_transaction_details()
+    public function test_user_can_load_the_standard_transaction_details(): void
     {
         $user = User::firstWhere('email', $this::USER_EMAIL);
 

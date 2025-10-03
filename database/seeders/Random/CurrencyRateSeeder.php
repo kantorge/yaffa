@@ -12,7 +12,7 @@ class CurrencyRateSeeder extends Seeder
     /**
      * Run the database seeds by creating random values with factory
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         $currencies = $user->currencies()->get();
 

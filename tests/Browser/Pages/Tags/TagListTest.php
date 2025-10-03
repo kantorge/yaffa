@@ -28,7 +28,7 @@ class TagListTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_tag_list_and_use_filters()
+    public function test_user_can_load_the_tag_list_and_use_filters(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL)
@@ -92,7 +92,7 @@ class TagListTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_reach_the_new_tag_form_via_the_tag_list()
+    public function test_user_can_reach_the_new_tag_form_via_the_tag_list(): void
     {
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -111,7 +111,7 @@ class TagListTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_reach_the_edit_tag_form_via_the_tag_list()
+    public function test_user_can_reach_the_edit_tag_form_via_the_tag_list(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -141,7 +141,7 @@ class TagListTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_reach_the_delete_tag_form_via_the_tag_list()
+    public function test_user_can_reach_the_delete_tag_form_via_the_tag_list(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

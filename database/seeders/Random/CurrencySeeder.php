@@ -13,7 +13,7 @@ class CurrencySeeder extends Seeder
     /**
      * Run the database seeds by creating random values with factory
      */
-    public function run(?User $user, $count = 3)
+    public function run(?User $user, $count = 3): void
     {
         if ($user) {
             $users = new Collection([$user]);

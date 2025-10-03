@@ -51,7 +51,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_view_password_reset_form()
+    public function test_user_can_view_password_reset_form(): void
     {
         $user = User::factory()->create();
 
@@ -63,7 +63,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_view_password_reset_form_when_authenticated()
+    public function test_user_can_view_password_reset_form_when_authenticated(): void
     {
         $user = User::factory()->create();
 
@@ -75,7 +75,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_reset_password_with_valid_token()
+    public function test_user_can_reset_password_with_valid_token(): void
     {
         Event::fake();
         $user = User::factory()->create();
@@ -96,7 +96,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_reset_password_with_invalid_token()
+    public function test_user_cannot_reset_password_with_invalid_token(): void
     {
         $oldPassword = 'old-password';
         $newPassword = 'new-awesome-password';
@@ -121,7 +121,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_reset_password_without_providing_new_password()
+    public function test_user_cannot_reset_password_without_providing_new_password(): void
     {
         $oldPassword = 'old-password';
 
@@ -148,7 +148,7 @@ class ResetPasswordTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_reset_password_without_providing_email()
+    public function test_user_cannot_reset_password_without_providing_email(): void
     {
         $oldPassword = 'old-password';
         $newPassword = 'new-awesome-password';

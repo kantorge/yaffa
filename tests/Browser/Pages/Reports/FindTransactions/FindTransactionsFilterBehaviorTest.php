@@ -25,7 +25,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
 
         $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
-    public function test_date_selector_defaults_are_loaded_from_the_url()
+    public function test_date_selector_defaults_are_loaded_from_the_url(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -41,7 +41,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         });
     }
 
-    public function test_date_selector_preset_selections_are_respected()
+    public function test_date_selector_preset_selections_are_respected(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -64,7 +64,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
         });
     }
 
-    public function test_date_selector_clear_button_behavior()
+    public function test_date_selector_clear_button_behavior(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)

@@ -11,7 +11,7 @@ class ProfileTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    public function test_password_change_client_side_validations()
+    public function test_password_change_client_side_validations(): void
     {
         // Make sure the GTM ID is Not set in the .env file, and sandbox mode is disabled
         $originalGtmId = $this->getConfig('yaffa.gtm_container_id');

@@ -12,7 +12,7 @@ use Tests\TestCase;
 class InvestmentGroupApiControllerTest extends TestCase
 {
     /** @test */
-    public function destroysInvestmentGroupSuccessfully()
+    public function destroysInvestmentGroupSuccessfully(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();
@@ -25,7 +25,7 @@ class InvestmentGroupApiControllerTest extends TestCase
     }
 
     /** @test */
-    public function doesNotDestroyInvestmentGroupWithoutAuthorization()
+    public function doesNotDestroyInvestmentGroupWithoutAuthorization(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->create();
@@ -38,7 +38,7 @@ class InvestmentGroupApiControllerTest extends TestCase
     }
 
     /** @test */
-    public function doesNotDestroyInvestmentGroupInUse()
+    public function doesNotDestroyInvestmentGroupInUse(): void
     {
         $user = User::factory()->create();
         $investmentGroup = InvestmentGroup::factory()->for($user)->create();

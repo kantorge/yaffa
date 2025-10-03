@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -137,7 +139,7 @@ class Category extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
-    public function transaction()
+    public function transaction(): HasManyThrough
     {
         return $this->hasManyThrough(
             Transaction::class,
@@ -149,7 +151,7 @@ class Category extends Model
         );
     }
 
-    public function payeesNotPreferring()
+    public function payeesNotPreferring(): BelongsToMany
     {
         return $this->belongsToMany(
             AccountEntity::class,
@@ -157,7 +159,7 @@ class Category extends Model
         )->where('preferred', false);
     }
 
-    public function payeesPreferring()
+    public function payeesPreferring(): BelongsToMany
     {
         return $this->belongsToMany(
             AccountEntity::class,
@@ -165,7 +167,7 @@ class Category extends Model
         )->where('preferred', true);
     }
 
-    public function payeesDefaulting()
+    public function payeesDefaulting(): HasManyThrough
     {
         return $this->hasManyThrough(
             AccountEntity::class,

@@ -23,7 +23,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index", ['type' => 'payee']))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirect(route('login'));
@@ -42,7 +42,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         /** @var User $user1 */
         $user1 = User::factory()->create();
@@ -59,7 +59,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_payees()
+    public function user_can_view_list_of_payees(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -77,7 +77,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -90,7 +90,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_a_payee_with_missing_data()
+    public function user_cannot_create_a_payee_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -115,7 +115,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_a_payee()
+    public function user_can_create_a_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -139,7 +139,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_payee()
+    public function user_can_edit_an_existing_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -161,7 +161,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_a_payee_with_missing_data()
+    public function user_cannot_update_a_payee_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -187,7 +187,7 @@ class PayeeTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_a_payee_with_proper_data()
+    public function user_can_update_a_payee_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

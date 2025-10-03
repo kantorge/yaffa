@@ -61,7 +61,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10));
     }
 
-    public function test_user_can_load_the_investment_transaction_form()
+    public function test_user_can_load_the_investment_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -70,7 +70,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_cannot_submit_investment_transaction_form_with_errors()
+    public function test_user_cannot_submit_investment_transaction_form_with_errors(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -84,7 +84,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_selecting_an_account_limits_investments_to_the_same_currency()
+    public function test_selecting_an_account_limits_investments_to_the_same_currency(): void
     {
         retry(3, function () {
             $this->browse(function (Browser $browser) {
@@ -111,7 +111,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_selecting_an_investment_limits_accounts_to_the_same_currency()
+    public function test_selecting_an_investment_limits_accounts_to_the_same_currency(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -132,7 +132,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_currency_displayed_correctly_for_various_settings_1()
+    public function test_currency_displayed_correctly_for_various_settings_1(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -166,7 +166,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_currency_displayed_correctly_for_various_settings_2()
+    public function test_currency_displayed_correctly_for_various_settings_2(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -200,7 +200,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_buy_transaction_form()
+    public function test_user_can_submit_buy_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -216,7 +216,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_sell_transaction_form()
+    public function test_user_can_submit_sell_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -244,7 +244,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_dividend_transaction_form()
+    public function test_user_can_submit_dividend_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -310,12 +310,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_transaction_with_schedule()
+    public function test_user_can_submit_transaction_with_schedule(): void
     {
         $this->markTestIncomplete('Not implemented yet.');
     }
 
-    public function test_callback_add_an_other_transaction()
+    public function test_callback_add_an_other_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -327,7 +327,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_clone_transaction()
+    public function test_callback_clone_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -350,7 +350,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_show_transaction()
+    public function test_callback_show_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -373,7 +373,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_selected_account()
+    public function test_callback_return_to_selected_account(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -394,12 +394,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_selected_investment()
+    public function test_callback_return_to_selected_investment(): void
     {
         $this->markTestIncomplete('This function is not implemented yet');
     }
 
-    public function test_callback_return_to_dashboard()
+    public function test_callback_return_to_dashboard(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -412,7 +412,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_previous_page()
+    public function test_callback_return_to_previous_page(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -424,7 +424,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_change_the_date_on_the_investment_form()
+    public function test_user_can_change_the_date_on_the_investment_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);

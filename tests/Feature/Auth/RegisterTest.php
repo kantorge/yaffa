@@ -50,7 +50,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_view_registration_form()
+    public function test_user_can_view_registration_form(): void
     {
         // For this test, make sure that the new user registration is enabled, by setting the allowed user count to infinite.
         $originalUserLimit = config('yaffa.registered_user_limit');
@@ -66,7 +66,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_view_registration_form_when_authenticated()
+    public function test_user_cannot_view_registration_form_when_authenticated(): void
     {
         /** @var User $user */
         $user = User::factory()->make();
@@ -77,7 +77,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_register()
+    public function test_user_can_register(): void
     {
         Event::fake();
 
@@ -117,7 +117,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_is_automatically_verified_if_feature_is_enabled()
+    public function test_user_is_automatically_verified_if_feature_is_enabled(): void
     {
         // Ensure that the yaffa.email_verification_required config value is set to false for this test.
         config(['yaffa.email_verification_required' => false]);
@@ -150,7 +150,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_without_name()
+    public function test_user_cannot_register_without_name(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -181,7 +181,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_without_email()
+    public function test_user_cannot_register_without_email(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -212,7 +212,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_with_invalid_email()
+    public function test_user_cannot_register_with_invalid_email(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -243,7 +243,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_without_password()
+    public function test_user_cannot_register_without_password(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -274,7 +274,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_without_password_confirmation()
+    public function test_user_cannot_register_without_password_confirmation(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -306,7 +306,7 @@ class RegisterTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_register_with_passwords_not_matching()
+    public function test_user_cannot_register_with_passwords_not_matching(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();
@@ -337,7 +337,7 @@ class RegisterTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_user_cannot_register_without_accepting_terms()
+    public function test_user_cannot_register_without_accepting_terms(): void
     {
         /** @var User $userData */
         $userData = User::factory()->make();

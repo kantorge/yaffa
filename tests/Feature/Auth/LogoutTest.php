@@ -21,7 +21,7 @@ class LogoutTest extends TestCase
     }
 
     /** @test */
-    public function test_user_can_logout()
+    public function test_user_can_logout(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -34,7 +34,7 @@ class LogoutTest extends TestCase
     }
 
     /** @test */
-    public function test_user_cannot_logout_when_not_authenticated()
+    public function test_user_cannot_logout_when_not_authenticated(): void
     {
         $response = $this->post($this->logoutRoute());
 

@@ -20,7 +20,7 @@ class AccountGroupPolicy
      *
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny()
+    public function viewAny(): bool
     {
         return true;
     }
@@ -32,7 +32,7 @@ class AccountGroupPolicy
      * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, AccountGroup $accountGroup)
+    public function view(User $user, AccountGroup $accountGroup): bool
     {
         return $this->isOwnItem($user, $accountGroup);
     }
@@ -42,7 +42,7 @@ class AccountGroupPolicy
      *
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function create()
+    public function create(): bool
     {
         return true;
     }
@@ -54,7 +54,7 @@ class AccountGroupPolicy
      * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, AccountGroup $accountGroup)
+    public function update(User $user, AccountGroup $accountGroup): bool
     {
         return $this->isOwnItem($user, $accountGroup);
     }
@@ -66,7 +66,7 @@ class AccountGroupPolicy
      * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, AccountGroup $accountGroup)
+    public function delete(User $user, AccountGroup $accountGroup): bool
     {
         return $this->isOwnItem($user, $accountGroup);
     }
@@ -78,7 +78,7 @@ class AccountGroupPolicy
      * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user, AccountGroup $accountGroup)
+    public function restore(User $user, AccountGroup $accountGroup): bool
     {
         return $this->isOwnItem($user, $accountGroup);
     }
@@ -90,7 +90,7 @@ class AccountGroupPolicy
      * @param  AccountGroup  $accountGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, AccountGroup $accountGroup)
+    public function forceDelete(User $user, AccountGroup $accountGroup): bool
     {
         return $this->isOwnItem($user, $accountGroup);
     }

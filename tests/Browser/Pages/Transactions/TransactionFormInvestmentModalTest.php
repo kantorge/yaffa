@@ -26,7 +26,7 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
         $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
 
-    public function test_user_can_load_the_investment_transaction_form_in_a_modal()
+    public function test_user_can_load_the_investment_transaction_form_in_a_modal(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)

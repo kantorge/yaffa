@@ -53,7 +53,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100');
     }
 
-    public function test_user_can_load_the_standard_transaction_form()
+    public function test_user_can_load_the_standard_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -88,7 +88,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_cannot_submit_standard_transaction_form_with_errors()
+    public function test_user_cannot_submit_standard_transaction_form_with_errors(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -102,7 +102,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_currency_displayed_correctly_for_various_settings()
+    public function test_currency_displayed_correctly_for_various_settings(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -170,7 +170,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_withdrawal_transaction_form()
+    public function test_user_can_submit_withdrawal_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -182,7 +182,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_deposit_transaction_form()
+    public function test_user_can_submit_deposit_transaction_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -211,7 +211,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_transfer_transaction_form_with_same_currencies()
+    public function test_user_can_submit_transfer_transaction_form_with_same_currencies(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -236,7 +236,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_transaction_form_with_different_currencies()
+    public function test_user_can_submit_transaction_form_with_different_currencies(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -268,7 +268,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_automatic_recording_is_enabled_only_for_scheduled_transactions()
+    public function test_automatic_recording_is_enabled_only_for_scheduled_transactions(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -295,12 +295,12 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_submit_transaction_form_with_schedule()
+    public function test_user_can_submit_transaction_form_with_schedule(): void
     {
         $this->markTestIncomplete('This test has not been implemented yet.');
     }
 
-    public function test_callback_add_an_other_transaction()
+    public function test_callback_add_an_other_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -312,7 +312,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_clone_this_transaction()
+    public function test_callback_clone_this_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -334,7 +334,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_show_transaction()
+    public function test_callback_show_transaction(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -356,7 +356,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_selected_account()
+    public function test_callback_return_to_selected_account(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -378,7 +378,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_target_account_for_transfer()
+    public function test_callback_return_to_target_account_for_transfer(): void
     {
         // Select account from, with USD currency
         $account = AccountEntity::firstWhere('name', 'Cash account USD');
@@ -409,7 +409,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_dashboard()
+    public function test_callback_return_to_dashboard(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -420,7 +420,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_callback_return_to_previous_page()
+    public function test_callback_return_to_previous_page(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -432,14 +432,14 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_add_multiple_transaction_items()
+    public function test_user_can_add_multiple_transaction_items(): void
     {
         $this->markTestIncomplete('This test has not been implemented yet.');
 
         // Check that item total must match the transaction total
     }
 
-    public function test_user_can_add_and_use_a_new_payee()
+    public function test_user_can_add_and_use_a_new_payee(): void
     {
         // Create a new category, and ensure that it is a child category and active
         $category = Category::factory()->create([
@@ -505,7 +505,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_reactivate_a_payee_through_the_new_payee_modal()
+    public function test_user_can_reactivate_a_payee_through_the_new_payee_modal(): void
     {
         // Create an inactive payee
         $payee = AccountEntity::factory()
@@ -547,7 +547,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         $this->assertTrue($payee->fresh()->active);
     }
 
-    public function test_add_new_payee_button_visibility_adopts_to_transaction_type()
+    public function test_add_new_payee_button_visibility_adopts_to_transaction_type(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -571,7 +571,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_transfer_transaction_type_does_not_allow_to_add_transaction_items()
+    public function test_transfer_transaction_type_does_not_allow_to_add_transaction_items(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -598,7 +598,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_editing_a_transfer_with_different_currencies_loads_the_form_correctly()
+    public function test_editing_a_transfer_with_different_currencies_loads_the_form_correctly(): void
     {
         // Create a new transaction, which should be a transfer, using different currencies
         $transaction = Transaction::factory()
@@ -635,7 +635,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee()
+    public function test_user_can_create_a_withdrawal_budget_without_providing_account_or_payee(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -694,7 +694,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_change_the_date_on_the_standard_form()
+    public function test_user_can_change_the_date_on_the_standard_form(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user);
@@ -725,7 +725,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_cloned_transaction_loads_all_details_of_the_source_transaction()
+    public function test_cloned_transaction_loads_all_details_of_the_source_transaction(): void
     {
         // Create a new withdrawal transaction with transaction items and all details
         // We will use make and save instead of create, to avoid the afterCreating callback, which would add random items
@@ -792,7 +792,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         });
     }
 
-    public function test_replace_scheduled_item_resets_next_date_of_the_original_transaction_by_default()
+    public function test_replace_scheduled_item_resets_next_date_of_the_original_transaction_by_default(): void
     {
         // Create a new scheduled transaction
         // The transaction factory also creates a schedule, which we don't need to do separately

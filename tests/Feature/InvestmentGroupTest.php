@@ -23,7 +23,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -39,7 +39,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function unverified_user_cannot_access_resource()
+    public function unverified_user_cannot_access_resource(): void
     {
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
         $user_unverified = User::factory()->create([
@@ -60,7 +60,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         $user1 = User::factory()->create();
         $investmentGroup = $this->createForUser($user1, $this->base_model);
@@ -73,7 +73,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_investment_groups()
+    public function user_can_view_list_of_investment_groups(): void
     {
         $user = User::factory()->create();
 
@@ -86,7 +86,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -99,7 +99,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_an_investment_group_with_missing_data()
+    public function user_cannot_create_an_investment_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -116,14 +116,14 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_an_investment_group()
+    public function user_can_create_an_investment_group(): void
     {
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
 
     /** @test */
-    public function user_can_edit_an_existing_investment_group()
+    public function user_can_edit_an_existing_investment_group(): void
     {
         $user = User::factory()->create();
 
@@ -136,7 +136,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_an_investment_group_with_missing_data()
+    public function user_cannot_update_an_investment_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -157,7 +157,7 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_an_investment_group_with_proper_data()
+    public function user_can_update_an_investment_group_with_proper_data(): void
     {
         $user = User::factory()->create();
 
@@ -182,14 +182,14 @@ class InvestmentGroupTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_an_existing_investment_group()
+    public function user_can_delete_an_existing_investment_group(): void
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
 
     /** @test */
-    public function user_cannot_delete_investment_group_with_attached_investment()
+    public function user_cannot_delete_investment_group_with_attached_investment(): void
     {
         $user = User::factory()->create();
 

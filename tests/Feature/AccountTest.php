@@ -41,7 +41,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_new_account_without_an_account_group()
+    public function user_cannot_create_new_account_without_an_account_group(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -55,7 +55,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_new_account_without_a_currency()
+    public function user_cannot_create_new_account_without_a_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -69,7 +69,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_resource()
+    public function guest_cannot_access_resource(): void
     {
         // Unauthenticated user cannot access any actions of the resource
         $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirect(route('login'));
@@ -86,7 +86,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function user_cannot_access_other_users_resource(): void
     {
         $account = $this->createAccountAndUser();
 
@@ -106,7 +106,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_list_of_accounts()
+    public function user_can_view_list_of_accounts(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -126,7 +126,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_form()
+    public function user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -143,7 +143,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_create_an_account_with_missing_data()
+    public function user_cannot_create_an_account_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -170,7 +170,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_an_account()
+    public function user_can_create_an_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -194,7 +194,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_can_edit_an_existing_account()
+    public function user_can_edit_an_existing_account(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -213,7 +213,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_update_an_account_with_missing_data()
+    public function user_cannot_update_an_account_with_missing_data(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -236,7 +236,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_an_account_with_proper_data()
+    public function user_can_update_an_account_with_proper_data(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -273,7 +273,7 @@ class AccountTest extends TestCase
     }
 
     /** @test */
-    public function form_request_enforces_opening_balance_boundaries()
+    public function form_request_enforces_opening_balance_boundaries(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
