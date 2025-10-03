@@ -68,13 +68,16 @@ class Category extends Model
         'default_aggregation',
     ];
 
-    protected $casts = [
-        'active' => 'boolean',
-    ];
-
     protected $appends = [
         'full_name',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
 
     public function parent(): BelongsTo
     {

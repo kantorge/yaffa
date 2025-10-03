@@ -80,9 +80,12 @@ class AccountEntity extends Model
 
     protected $hidden = ['config_id'];
 
-    protected $casts = [
-        'active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
 
     public function config(): MorphTo
     {

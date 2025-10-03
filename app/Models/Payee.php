@@ -85,13 +85,16 @@ class Payee extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      *
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'category_suggestion_dismissed' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'category_suggestion_dismissed' => 'datetime',
+        ];
+    }
 
     public function config(): MorphOne
     {
