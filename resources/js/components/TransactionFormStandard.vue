@@ -729,7 +729,7 @@ export default {
         exchangeRatePresent() {
             return this.from.account_currency
                 && this.to.account_currency
-                && this.from.account_currency !== this.to.account_currency;
+                && this.from.account_currency.id !== this.to.account_currency.id;
         },
 
         exchangeRate() {
