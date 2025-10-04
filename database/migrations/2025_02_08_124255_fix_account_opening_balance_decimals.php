@@ -12,7 +12,7 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('accounts', function (Blueprint $table) {
-            $table->decimal('opening_balance', 30, 10)->change();
+            $table->decimal('opening_balance', 30, 10)->default(0)->change();
         });
     }
 
@@ -23,7 +23,7 @@ return new class () extends Migration {
     public function down(): void
     {
         Schema::table('accounts', function (Blueprint $table) {
-            $table->bigInteger('opening_balance')->default(0)->change();
+            $table->bigInteger('opening_balance')->default(0)->default(0)->change();
         });
     }
 };
