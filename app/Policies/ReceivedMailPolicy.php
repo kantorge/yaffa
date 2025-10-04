@@ -22,7 +22,7 @@ class ReceivedMailPolicy
      * @param User $user
      * @return Response|bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
         return true;
     }
@@ -34,7 +34,7 @@ class ReceivedMailPolicy
      * @param  ReceivedMail $receivedMail
      * @return Response|bool
      */
-    public function view(User $user, ReceivedMail $receivedMail)
+    public function view(User $user, ReceivedMail $receivedMail): bool
     {
         return $this->isOwnItem($user, $receivedMail);
     }
@@ -45,7 +45,7 @@ class ReceivedMailPolicy
      * @param User $user
      * @return Response|bool
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
         return true;
     }
@@ -57,7 +57,7 @@ class ReceivedMailPolicy
      * @param  ReceivedMail $receivedMail
      * @return Response|bool
      */
-    public function update(User $user, ReceivedMail $receivedMail)
+    public function update(User $user, ReceivedMail $receivedMail): bool
     {
         return $this->isOwnItem($user, $receivedMail);
     }
@@ -69,7 +69,7 @@ class ReceivedMailPolicy
      * @param  ReceivedMail $receivedMail
      * @return Response|bool
      */
-    public function delete(User $user, ReceivedMail $receivedMail)
+    public function delete(User $user, ReceivedMail $receivedMail): bool
     {
         return $this->isOwnItem($user, $receivedMail);
     }
@@ -81,7 +81,7 @@ class ReceivedMailPolicy
      * @param  ReceivedMail $receivedMail
      * @return Response|bool
      */
-    public function restore(User $user, ReceivedMail $receivedMail)
+    public function restore(User $user, ReceivedMail $receivedMail): bool
     {
         return $this->isOwnItem($user, $receivedMail);
     }
@@ -93,7 +93,7 @@ class ReceivedMailPolicy
      * @param  ReceivedMail $receivedMail
      * @return Response|bool
      */
-    public function forceDelete(User $user, ReceivedMail $receivedMail)
+    public function forceDelete(User $user, ReceivedMail $receivedMail): bool
     {
         return $this->isOwnItem($user, $receivedMail);
     }

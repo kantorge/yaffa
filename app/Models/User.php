@@ -115,20 +115,23 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-    ];
-
     protected $withCount = [
         'unhandledReceivedMail',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
+        ];
+    }
 
     public function accountGroups(): HasMany
     {

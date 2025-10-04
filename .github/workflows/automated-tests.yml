@@ -92,7 +92,7 @@ jobs:
   dusk-php:
     runs-on: ubuntu-latest
     env:
-      APP_URL: "http://127.0.0.1:8000"
+      APP_URL: 'http://127.0.0.1:8000'
       DB_USERNAME: root
       DB_PASSWORD: root
       MAIL_MAILER: log
@@ -123,7 +123,7 @@ jobs:
         run: php artisan dusk:chrome-driver --detect
 
       - name: Start Chrome Driver
-        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 >/dev/null 2>&1 &
 
       - name: Cache NPM Dependencies
         uses: actions/cache@v4

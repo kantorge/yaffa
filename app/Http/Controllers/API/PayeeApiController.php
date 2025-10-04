@@ -73,13 +73,11 @@ class PayeeApiController extends Controller
                     '=',
                     config('transaction_types')[$request->get('transaction_type')]['id']
                 )
-                ->when($accountId, function ($query) use ($accountDirection, $accountId) {
-                    return $query->where(
-                        "transaction_details_standard.account_{$accountDirection}_id",
-                        '=',
-                        $accountId
-                    );
-                })
+                ->when($accountId, fn ($query) => $query->where(
+                    "transaction_details_standard.account_{$accountDirection}_id",
+                    '=',
+                    $accountId
+                ))
                 ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
@@ -204,14 +202,12 @@ class PayeeApiController extends Controller
         // Calculate total by payees
         $payees = $data
             ->groupBy('payee_id')
-            ->map(function ($payee) {
-                return [
-                    'payee_id' => $payee->first()->payee_id,
-                    'sum' => $payee->sum('transactions'),
-                    'max' => $payee->max('transactions'),
-                    'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
-                ];
-            })
+            ->map(fn ($payee) => [
+                'payee_id' => $payee->first()->payee_id,
+                'sum' => $payee->sum('transactions'),
+                'max' => $payee->max('transactions'),
+                'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
+            ])
             // Minimum required transactions to calculate with payee
             // TODO: make this dynamic, e.g based on average or mean
             ->filter(fn ($value) => $value['sum'] > 5)

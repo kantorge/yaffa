@@ -9,7 +9,7 @@ class DataLayerTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,7 +21,7 @@ class DataLayerTest extends DuskTestCase
         }
     }
 
-    public function testDataLayerIsNotPresentIfGtmIdIsNotSet()
+    public function testDataLayerIsNotPresentIfGtmIdIsNotSet(): void
     {
         // Make sure, that the GTM ID is not set in the .env file
         $this->setConfig('yaffa.gtm_container_id', null);
@@ -50,7 +50,7 @@ class DataLayerTest extends DuskTestCase
         });
     }
 
-    public function testDataLayerIsPresentIfGtmIdIsSetForDemoUser()
+    public function testDataLayerIsPresentIfGtmIdIsSetForDemoUser(): void
     {
         // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
         $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
@@ -100,7 +100,7 @@ class DataLayerTest extends DuskTestCase
         $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
     }
 
-    public function testDataLayerIsPresentIfGtmIdIsSetForNonDemoUser()
+    public function testDataLayerIsPresentIfGtmIdIsSetForNonDemoUser(): void
     {
         $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
 
@@ -158,7 +158,7 @@ class DataLayerTest extends DuskTestCase
         $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
     }
 
-    public function testDataLayerIsPresentIfLoginFailed()
+    public function testDataLayerIsPresentIfLoginFailed(): void
     {
         $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
 

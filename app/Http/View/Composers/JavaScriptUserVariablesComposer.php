@@ -32,12 +32,33 @@ class JavaScriptUserVariablesComposer
 
     private function getTranslations()
     {
-        $translationFile = resource_path('lang/' . app()->getLocale() . '.json');
+        $locale = app()->getLocale();
+        $fallback = config('app.fallback_locale');
 
-        if (! is_readable($translationFile)) {
-            $translationFile = resource_path('lang/' . config('app.fallback_locale') . '.json');
+        $candidates = [];
+        $candidates[] = lang_path($locale . '.json');
+        $candidates[] = lang_path($fallback . '.json');
+
+        $translationFile = null;
+        foreach ($candidates as $candidate) {
+            if ($candidate && is_readable($candidate)) {
+                $translationFile = $candidate;
+                break;
+            }
         }
 
-        return json_decode(file_get_contents($translationFile), true);
+        if (!$translationFile) {
+            // No translations file found — return empty array so frontend code can handle it.
+            return [];
+        }
+
+        $contents = file_get_contents($translationFile);
+        $decoded = json_decode($contents, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            return [];
+        }
+
+        return $decoded;
     }
 }

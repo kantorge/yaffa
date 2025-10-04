@@ -83,13 +83,16 @@ class TransactionSchedule extends Model
 
     protected $hidden = ['transaction_id'];
 
-    protected $casts = [
-        'next_date' => 'date',
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'automatic_recording' => 'boolean',
-        'active' => 'boolean'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'next_date' => 'date',
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'automatic_recording' => 'boolean',
+            'active' => 'boolean'
+        ];
+    }
 
     public function transaction(): BelongsTo
     {

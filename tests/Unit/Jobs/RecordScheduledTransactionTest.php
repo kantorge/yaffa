@@ -67,7 +67,7 @@ class RecordScheduledTransactionTest extends TestCase
         $this->assertEquals($start->addDay(), $transaction->transactionSchedule->next_date);
     }
 
-    public function test_record_scheduled_investment_transaction()
+    public function test_record_scheduled_investment_transaction(): void
     {
         // Create a user and all necessary assets for a transaction
         /** @var User $user */

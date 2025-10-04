@@ -36,10 +36,13 @@ class AccountMonthlySummary extends Model
         'amount',
     ];
 
-    protected $casts = [
-        'date' => 'date',
-        'amount' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'amount' => 'float',
+        ];
+    }
 
     public function user(): BelongsTo
     {

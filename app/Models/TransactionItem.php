@@ -66,13 +66,16 @@ class TransactionItem extends Model
         'comment',
     ];
 
-    protected $casts = [
-        'amount' => 'float',
-    ];
-
     protected $cloneable_relations = [
         'tags',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'float',
+        ];
+    }
 
     public function transaction(): BelongsTo
     {

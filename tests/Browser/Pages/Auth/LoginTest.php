@@ -11,7 +11,7 @@ class LoginTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    public function test_login_page_loads()
+    public function test_login_page_loads(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
@@ -19,7 +19,7 @@ class LoginTest extends DuskTestCase
         });
     }
 
-    public function test_user_login_redirects_to_main_page()
+    public function test_user_login_redirects_to_main_page(): void
     {
         $user = User::factory()->create([
             'language' => 'en'

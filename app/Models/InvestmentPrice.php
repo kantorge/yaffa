@@ -47,14 +47,17 @@ class InvestmentPrice extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        'date' => 'datetime:Y-m-d',
-        'price' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'datetime:Y-m-d',
+            'price' => 'float',
+        ];
+    }
 
     public function investment(): BelongsTo
     {

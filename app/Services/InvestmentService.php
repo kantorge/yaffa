@@ -58,9 +58,7 @@ class InvestmentService
         $scheduledTransactions = $investment->transactionsScheduled()
             ->get()
             ->load(['transactionSchedule'])
-            ->filter(function ($transaction) {
-                return $transaction->transactionSchedule->active;
-            });
+            ->filter(fn ($transaction) => $transaction->transactionSchedule->active);
 
         // Add all scheduled items to list of transactions
         $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');

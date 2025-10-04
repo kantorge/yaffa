@@ -87,9 +87,12 @@ class Account extends Model
         'default_date_range',
     ];
 
-    protected $casts = [
-        'opening_balance' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'opening_balance' => 'float',
+        ];
+    }
 
     public function config(): MorphOne
     {

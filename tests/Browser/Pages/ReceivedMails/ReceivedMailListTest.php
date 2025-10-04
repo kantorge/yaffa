@@ -15,7 +15,7 @@ class ReceivedMailListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,7 +27,7 @@ class ReceivedMailListTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_received_mail_list_and_use_filters()
+    public function test_user_can_load_the_received_mail_list_and_use_filters(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL)
@@ -139,7 +139,7 @@ class ReceivedMailListTest extends DuskTestCase
         });
     }
 
-    public function test_user_can_interact_with_mail_action_buttons()
+    public function test_user_can_interact_with_mail_action_buttons(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

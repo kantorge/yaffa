@@ -72,13 +72,16 @@ class TransactionDetailInvestment extends Model
         'dividend',
     ];
 
-    protected $casts = [
-        'price' => 'float',
-        'quantity' => 'float',
-        'commission' => 'float',
-        'tax' => 'float',
-        'dividend' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'price' => 'float',
+            'quantity' => 'float',
+            'commission' => 'float',
+            'tax' => 'float',
+            'dividend' => 'float',
+        ];
+    }
 
     public function transaction(): MorphOne
     {

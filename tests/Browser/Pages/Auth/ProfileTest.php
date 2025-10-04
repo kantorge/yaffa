@@ -11,7 +11,7 @@ class ProfileTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    public function test_password_change_client_side_validations()
+    public function test_password_change_client_side_validations(): void
     {
         // Make sure the GTM ID is Not set in the .env file, and sandbox mode is disabled
         $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
@@ -39,7 +39,7 @@ class ProfileTest extends DuskTestCase
                 ->type('password_confirmation', 'doesnotmatch')
                 // Submit the form and wait for the validation errors, including the toast message
                 ->press('@button-change-password')
-                ->waitForTextIn('div.toast-container div.toast.bg-danger.show', 'Validation failed. Please check the form for errors.' )
+                ->waitForTextIn('div.toast-container div.toast.bg-danger.show', 'Validation failed. Please check the form for errors.')
                 ->waitForTextIn('#current_password + div.invalid-feedback', 'The password is incorrect.')
                 ->waitForTextIn('#password + div.invalid-feedback', 'The password must be at least 8 characters.')
                 // Set the correct password, a valid new password with a non-matching confirmation
@@ -49,7 +49,7 @@ class ProfileTest extends DuskTestCase
                 ->type('password_confirmation', 'password1234')
                 // Submit the form and wait for the validation errors, including the toast message
                 ->press('@button-change-password')
-                ->waitForTextIn('div.toast-container div.toast.bg-danger.show', 'Validation failed. Please check the form for errors.' )
+                ->waitForTextIn('div.toast-container div.toast.bg-danger.show', 'Validation failed. Please check the form for errors.')
                 ->waitForTextIn('#password + div.invalid-feedback', 'The password confirmation does not match.')
                 // Set the correct password, a valid new password with a matching confirmation
                 ->waitUntilMissing('div.toast-container div.toast.bg-danger.show')

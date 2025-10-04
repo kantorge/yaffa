@@ -106,11 +106,6 @@ class Investment extends Model
         'scrape_selector',
     ];
 
-    protected $casts = [
-        'active' => 'boolean',
-        'auto_update' => 'boolean',
-    ];
-
     protected $appends = [
         'investment_price_provider_name',
     ];
@@ -331,6 +326,14 @@ class Investment extends Model
             'instructions' => 'To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.',
         ],
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+            'auto_update' => 'boolean',
+        ];
+    }
 
     /**
      * @return string|null
