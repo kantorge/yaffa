@@ -8,6 +8,7 @@ use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Notification;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
@@ -113,6 +114,55 @@ class RegisterTest extends TestCase
         Event::assertDispatched(Registered::class, fn($e) => $e->user->id === $user->id);
     }
 
+    public function test_user_registration_fails_when_user_limit_is_reached(): void
+    {
+        // Set the allowed user count to 1.
+        config(['yaffa.registered_user_limit' => 1]);
+
+        // Create a user to reach the limit.
+        User::factory()->create([
+            'email' => 'test1@yaffa.cc'
+        ]);
+        $this->assertDatabaseCount('users', 1);
+
+        /** @var User $userData */
+        $userData = User::factory()->make([
+            'email' => 'test2@yaffa.cc'
+        ]);
+        $password = 'notasecret';
+
+        $response = $this
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
+
+        $this->assertDatabaseCount('users', 1);
+
+        $users = User::where('email', $userData->email)->get();
+        $this->assertCount(0, $users);
+
+        // The user should be redirected to the login page with an error message.
+        $response->assertRedirect(route('login'));
+
+        // The notification_collection session key should contain a message about the user limit being reached.
+        $this->assertTrue(session()->has('notification_collection'));
+        $notifications = session('notification_collection');
+        $this->assertNotEmpty($notifications);
+        // The title of the first notification should read "User limit reached"
+        $this->assertEquals("User limit reached", $notifications[0]['title']);
+
+        $this->assertGuest();
+    }
+
     public function test_user_is_automatically_verified_if_feature_is_enabled(): void
     {
         // Ensure that the yaffa.email_verification_required config value is set to false for this test.
@@ -143,6 +193,42 @@ class RegisterTest extends TestCase
         $this->assertAuthenticatedAs($user);
         // By default, a user is verified
         $this->assertNotNull($user->email_verified_at);
+    }
+
+    public function test_user_receives_verification_email_if_feature_is_enabled(): void
+    {
+        //Event::fake();
+        Notification::fake();
+
+        /** @var User $userData */
+        $userData = User::factory()->make();
+        $password = 'notasecret';
+        $this
+            ->from($this->registerGetRoute())
+            ->post($this->registerPostRoute(), [
+                'name' => $userData->name,
+                'email' => $userData->email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'language' => $userData->language,
+                'locale' => $userData->locale,
+                'tos' => 'yes',
+                'default_data' => 'default',
+                'base_currency' => CurrencyData::getRandomIsoCode(),
+            ]);
+
+        // Verify that the Registered event was dispatched and that it contains a user with the correct email address.
+        //Event::assertDispatched(Registered::class, fn($e) => $e->user->email === $userData->email);
+
+        // Verify that the user is created and not verified.
+        $users = User::where('email', $userData->email)->get();
+        $this->assertCount(1, $users);
+        $user = $users->first();
+        $this->assertNull($user->email_verified_at);
+
+        // Verify that a notification was sent to the user.
+        Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
+
     }
 
     public function test_user_cannot_register_without_name(): void

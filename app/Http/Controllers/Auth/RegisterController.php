@@ -143,8 +143,10 @@ class RegisterController extends Controller
             ]
         ];
 
-        if (config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')) {
+        if (
+            config('recaptcha.api_site_key')
+            && config('recaptcha.api_secret_key')
+        ) {
             $rules[recaptchaFieldName()] = recaptchaRuleName();
         }
 
@@ -177,6 +179,26 @@ class RegisterController extends Controller
      */
     public function register(Request $request): JsonResponse|RedirectResponse
     {
+        // Enforce optional user limit.
+        if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
+            if ($request->wantsJson()) {
+                return new JsonResponse(
+                    [
+                        'message' => __('You cannot register new users.'),
+                        'title' => __('User limit reached'),
+                    ],
+                    429
+                );
+            }
+            self::addMessage(
+                __('You cannot register new users.'),
+                'danger',
+                __('User limit reached'),
+                'exclamation-triangle'
+            );
+            return redirect()->route('login');
+        }
+
         $this->validator($request->all())->validate();
 
         $user = $this->create($request->all());
