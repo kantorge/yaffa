@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountMonthlySummary;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -48,6 +47,16 @@ class AccountApiController extends Controller
         }
 
         $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
+        $transactionType = $request->get('transaction_type', null);
+        if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+            // If transaction type is provided but not valid, return a bad request response
+            return response()->json(
+                [
+                    'message' => 'The transaction_type parameter is required and must be valid.',
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
         $accountIds = DB::table('transactions')
             ->join(
@@ -69,10 +78,10 @@ class AccountApiController extends Controller
                 $query->where('account_entities.active', true);
             })
             // Optionally limit the search for specific transaction types
-            ->when($request->has('transaction_type'), fn ($query) => $query->where(
+            ->when($transactionType !== null, fn($query) => $query->where(
                 'transaction_type_id',
                 '=',
-                config('transaction_types')[$request->get('transaction_type')]['id']
+                config('transaction_types')[$transactionType]['id']
             ))
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
@@ -140,8 +149,8 @@ class AccountApiController extends Controller
                     'config',
                     [Account::class],
                     function (Builder $query) use ($parameters) {
-                        $query->where('currency_id', $parameters['currency_id']);
-                    }
+                    $query->where('currency_id', $parameters['currency_id']);
+                }
                 );
             })
             ->get();
@@ -165,8 +174,8 @@ class AccountApiController extends Controller
                         'config',
                         [Account::class],
                         function (Builder $query) use ($request) {
-                            $query->where('currency_id', $request->get('currency_id'));
-                        }
+                        $query->where('currency_id', $request->get('currency_id'));
+                    }
                     );
                 })
                 ->select(['id', 'name AS text'])
@@ -193,7 +202,7 @@ class AccountApiController extends Controller
                 ->where('account_entities.active', true)
                 ->where('transactions.user_id', $user->id)
                 ->where('account_entities.user_id', $user->id)
-                ->when($request->get('currency_id'), fn ($query) => $query
+                ->when($request->get('currency_id'), fn($query) => $query
                     ->join(
                         'accounts',
                         'accounts.id',
@@ -295,7 +304,7 @@ class AccountApiController extends Controller
         // Load all accounts or the selected one
         $accounts = $user
             ->accounts()
-            ->when($accountEntity, fn ($query) => $query->where('id', $accountEntity->id))
+            ->when($accountEntity, fn($query) => $query->where('id', $accountEntity->id))
             ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get()
             ->makeHidden([
@@ -314,11 +323,11 @@ class AccountApiController extends Controller
             ->where('data_type', 'fact')
             ->when(
                 $accountEntity !== null,
-                fn ($query) => $query->where('account_entity_id', $accountEntity->id)
+                fn($query) => $query->where('account_entity_id', $accountEntity->id)
             )
             ->when(
                 $accountEntity === null,
-                fn ($query) => $query->whereIn('account_entity_id', $user->accounts()->get()->pluck('id'))
+                fn($query) => $query->whereIn('account_entity_id', $user->accounts()->get()->pluck('id'))
             )
             ->groupBy('account_entity_id')
             ->get();
@@ -332,7 +341,7 @@ class AccountApiController extends Controller
             ->where('user_id', $user->id)
             ->when(
                 $accountEntity !== null,
-                fn ($query) => $query->where('account_entity_id', $accountEntity->id),
+                fn($query) => $query->where('account_entity_id', $accountEntity->id),
             )
             ->groupBy('account_entity_id');
 
@@ -344,7 +353,7 @@ class AccountApiController extends Controller
             ->where('account_monthly_summaries.user_id', $user->id)
             ->when(
                 $accountEntity !== null,
-                fn ($query) => $query->where('account_monthly_summaries.account_entity_id', $accountEntity->id)
+                fn($query) => $query->where('account_monthly_summaries.account_entity_id', $accountEntity->id)
             )
             ->joinSub($latestDates, 'latest_dates', function ($join) {
                 $join->on('account_monthly_summaries.account_entity_id', '=', 'latest_dates.account_entity_id')

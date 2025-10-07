@@ -115,4 +115,18 @@ class AccountApiControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(20);
     }
+
+    public function test_transaction_type_must_be_valid_if_provided(): void
+    {
+        // New user, no data needed
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=invalid_type');
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
+
+        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=withdrawal');
+        $response->assertStatus(Response::HTTP_OK);
+    }
 }
