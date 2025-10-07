@@ -627,8 +627,9 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open the transaction edit form
                 ->visitRoute('transaction.open', ['action' => 'edit', 'transaction' => $transaction->id])
-                // Wait for the form to load
+                // Wait for the form to load, including the amount to field, which might be slightly delayed due to Vue reactivity
                 ->waitFor('#transactionFormStandard')
+                ->waitFor('#transaction_amount_to', 10)
 
                 // Assert that the form is loaded correctly, especially the amount and currency fields
                 ->assertSelected('#account_from', $transaction->config->accountFrom->id)
