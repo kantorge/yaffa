@@ -2,12 +2,11 @@
 
 namespace Tests\Unit\Http\Controllers\API;
 
-use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\TransactionType;
 use App\Models\User;
-use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -17,6 +16,14 @@ class PayeeApiControllerTest extends TestCase
     use RefreshDatabase;
 
     private const BASE_PAYEE_NAME = 'Same payee name';
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        // Load the transaction types into the config, used by some of the tests
+        config()->set('transaction_types', TransactionType::all()->keyBy('name')->toArray());
+    }
 
     public function test_payee_list_with_query_applies_all_provided_filters(): void
     {

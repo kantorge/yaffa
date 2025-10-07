@@ -18,14 +18,6 @@ class TransactionTypeServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get the transaction types in the necessary format.
-     */
-    private function getTransactionTypes(): array
-    {
-        return TransactionType::all()->keyBy('name')->toArray();
-    }
-
-    /**
      * Bootstrap services.
      */
     public function boot(): void
@@ -35,15 +27,12 @@ class TransactionTypeServiceProvider extends ServiceProvider
                 $transactionTypeData = Cache::remember(
                     'transaction_types',
                     60 * 60 * 24 * 30,
-                    fn() => $this->getTransactionTypes()
+                    fn() => TransactionType::all()->keyBy('name')->toArray()
                 );
             } catch (Exception $e) {
                 $transactionTypeData = [];
             }
             config()->set('transaction_types', $transactionTypeData ?? []);
-        } else {
-            // When running in console, do not use caching, but the value is still needed
-            config()->set('transaction_types', $this->getTransactionTypes());
         }
     }
 }
