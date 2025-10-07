@@ -395,6 +395,11 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Add minimum necessary fields
                 ->select2ExactSearch('#account_to', $account->name, 60)
                 ->select2ExactSearch('#account_from', 'Investment account EUR', 60)
+
+                // Wait for the UI to update, and the secondary amount to be visible
+                ->waitFor('#transaction_amount_to', 10)
+
+                // Add amounts
                 ->type('#transaction_amount_from', '100')
                 ->type('#transaction_amount_to', '100')
 
@@ -685,11 +690,11 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
             // Wait for the show transaction page to load
             $browser->waitFor('#transactionShowStandard')
-            // Assert that the transaction is a budget
+                // Assert that the transaction is a budget
                 ->assertPresent('@label-budget > i.fa-check')
-            // Assert that the account is 'Not set'
+                // Assert that the account is 'Not set'
                 ->assertSeeIn('@label-account-from-name', 'Not set')
-            // Assert that the payee is 'Not set'
+                // Assert that the payee is 'Not set'
                 ->assertSeeIn('@label-account-to-name', 'Not set');
         });
     }
