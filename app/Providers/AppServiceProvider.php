@@ -84,6 +84,12 @@ class AppServiceProvider extends ServiceProvider
             Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
         }
 
+        // Manually override the default verification listener to use our own event which has a context parameter
+        $this->app->bind(
+            \Illuminate\Auth\Listeners\SendEmailVerificationNotification::class,
+            \App\Listeners\SendEmailVerificationNotification::class
+        );
+
         $this->bootEvent();
     }
 

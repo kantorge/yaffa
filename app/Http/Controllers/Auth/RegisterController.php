@@ -218,6 +218,7 @@ class RegisterController extends Controller
             )
         );
 
+        // Log the user in after registering.
         $this->guard()->login($user);
 
         $response = $this->registered($request, $user);

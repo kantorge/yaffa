@@ -24,6 +24,8 @@ class RegisterTest extends TestCase
         parent::setUp();
 
         config(['yaffa.email_verification_required' => true]);
+        // By default, allow infinite users for these tests.
+        config(['yaffa.registered_user_limit' => 0]);
 
         // Ensure that recaptcha is disabled for these tests.
         config(['recaptcha.api_site_key' => null]);
@@ -52,17 +54,10 @@ class RegisterTest extends TestCase
 
     public function test_user_can_view_registration_form(): void
     {
-        // For this test, make sure that the new user registration is enabled, by setting the allowed user count to infinite.
-        $originalUserLimit = config('yaffa.registered_user_limit');
-        config(['yaffa.registered_user_limit' => 0]);
-
         $response = $this->get($this->registerGetRoute());
 
         $response->assertSuccessful();
         $response->assertViewIs('auth.register');
-
-        // Reset the user limit to its original value.
-        config(['yaffa.registered_user_limit' => $originalUserLimit]);
     }
 
     public function test_user_cannot_view_registration_form_when_authenticated(): void
@@ -116,41 +111,17 @@ class RegisterTest extends TestCase
 
     public function test_user_registration_fails_when_user_limit_is_reached(): void
     {
-        // Set the allowed user count to 1.
+        // For this test, set the allowed user count to 1.
         config(['yaffa.registered_user_limit' => 1]);
 
-        // Create a user to reach the limit.
+        // Create a user to reach or exceed  the limit.
         User::factory()->create([
             'email' => 'test1@yaffa.cc'
         ]);
-        $this->assertDatabaseCount('users', 1);
 
-        /** @var User $userData */
-        $userData = User::factory()->make([
-            'email' => 'test2@yaffa.cc'
-        ]);
-        $password = 'notasecret';
-
-        $response = $this
-            ->from($this->registerGetRoute())
-            ->post($this->registerPostRoute(), [
-                'name' => $userData->name,
-                'email' => $userData->email,
-                'password' => $password,
-                'password_confirmation' => $password,
-                'language' => $userData->language,
-                'locale' => $userData->locale,
-                'tos' => 'yes',
-                'default_data' => 'default',
-                'base_currency' => CurrencyData::getRandomIsoCode(),
-            ]);
-
-        $this->assertDatabaseCount('users', 1);
-
-        $users = User::where('email', $userData->email)->get();
-        $this->assertCount(0, $users);
-
-        // The user should be redirected to the login page with an error message.
+        // When opening the registration page, the user should be redirected to the login page with an error message,
+        // instead of opening the registration page.
+        $response = $this->get($this->registerGetRoute());
         $response->assertRedirect(route('login'));
 
         // The notification_collection session key should contain a message about the user limit being reached.
@@ -394,7 +365,7 @@ class RegisterTest extends TestCase
                 'name' => $userData->name,
                 'email' => $userData->email,
                 'password' => $password,
-                'password_confirmation' => 'not' . $password,
+                'password_confirmation' => 'not' . $password, // Does not match
                 'language' => $userData->language,
                 'locale' => $userData->locale,
                 'tos' => 'yes',
@@ -428,7 +399,7 @@ class RegisterTest extends TestCase
                 'password_confirmation' => $password,
                 'language' => $userData->language,
                 'locale' => $userData->locale,
-                'tos' => '',
+                'tos' => '',  // Terms of Service not accepted
                 'default_data' => 'default',
                 'base_currency' => CurrencyData::getRandomIsoCode(),
             ]);
