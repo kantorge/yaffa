@@ -143,7 +143,7 @@ class RegisterTest extends TestCase
         $userData = User::factory()->make();
         $password = 'notasecret';
 
-        $this
+        $response = $this
             ->from($this->registerGetRoute())
             ->post($this->registerPostRoute(), [
                 'name' => $userData->name,
@@ -158,22 +158,24 @@ class RegisterTest extends TestCase
             ]);
 
         // Get newly created user by email address
-        $users = User::where('email', $userData->email)->get();
-        $user = $users->first();
-
+        $user = User::firstWhere('email', $userData->email);
         $this->assertAuthenticatedAs($user);
+
         // By default, a user is verified
         $this->assertNotNull($user->email_verified_at);
+
+        // The user is redirected to the home page after registering, but instead, the verification page should be shown.
+        $response->assertRedirect(route('home'));
     }
 
     public function test_user_receives_verification_email_if_feature_is_enabled(): void
     {
-        //Event::fake();
         Notification::fake();
 
         /** @var User $userData */
         $userData = User::factory()->make();
         $password = 'notasecret';
+        $currency = CurrencyData::getRandomIsoCode();
         $this
             ->from($this->registerGetRoute())
             ->post($this->registerPostRoute(), [
@@ -185,11 +187,8 @@ class RegisterTest extends TestCase
                 'locale' => $userData->locale,
                 'tos' => 'yes',
                 'default_data' => 'default',
-                'base_currency' => CurrencyData::getRandomIsoCode(),
+                'base_currency' => $currency,
             ]);
-
-        // Verify that the Registered event was dispatched and that it contains a user with the correct email address.
-        //Event::assertDispatched(Registered::class, fn($e) => $e->user->email === $userData->email);
 
         // Verify that the user is created and not verified.
         $users = User::where('email', $userData->email)->get();
@@ -199,7 +198,6 @@ class RegisterTest extends TestCase
 
         // Verify that a notification was sent to the user.
         Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
-
     }
 
     public function test_user_cannot_register_without_name(): void

@@ -327,7 +327,7 @@ class AccountApiController extends Controller
             )
             ->when(
                 $accountEntity === null,
-                fn($query) => $query->whereIn('account_entity_id', $user->accounts()->get()->pluck('id'))
+                fn($query) => $query->whereIn('account_entity_id', $user->accounts()->pluck('id'))
             )
             ->groupBy('account_entity_id')
             ->get();
