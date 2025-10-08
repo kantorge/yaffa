@@ -12,7 +12,7 @@ class CategorySeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user, int $count = 5)
+    public function run(User $user, int $count = 5): void
     {
         if ($user) {
             $users = new Collection([$user]);

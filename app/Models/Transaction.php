@@ -95,19 +95,6 @@ class Transaction extends Model
         'config_id',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'date' => 'date',
-        'reconciled' => 'boolean',
-        'schedule' => 'boolean',
-        'budget' => 'boolean',
-        'cashflow_value' => 'float',
-    ];
-
     protected $appends = [
         'transaction_currency',
     ];
@@ -116,6 +103,22 @@ class Transaction extends Model
         'config',
         'transactionItems',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'reconciled' => 'boolean',
+            'schedule' => 'boolean',
+            'budget' => 'boolean',
+            'cashflow_value' => 'float',
+        ];
+    }
 
     public function config(): MorphTo
     {

@@ -12,7 +12,7 @@ class CurrencyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,8 +20,7 @@ class CurrencyTest extends TestCase
         $this->setBaseModel(Currency::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -37,8 +36,7 @@ class CurrencyTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $currency))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         /** @var User $user1 */
         $user1 = User::factory()->create();
@@ -51,8 +49,7 @@ class CurrencyTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $currency))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_currencies()
+    public function test_user_can_view_list_of_currencies(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -64,8 +61,7 @@ class CurrencyTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -78,8 +74,7 @@ class CurrencyTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_create_a_currency_with_missing_data()
+    public function test_user_cannot_create_a_currency_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -96,8 +91,7 @@ class CurrencyTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_a_currency()
+    public function test_user_can_create_a_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -106,8 +100,7 @@ class CurrencyTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_currency()
+    public function test_user_can_edit_an_existing_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -120,8 +113,7 @@ class CurrencyTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_a_currency_with_missing_data()
+    public function test_user_cannot_update_a_currency_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -142,8 +134,7 @@ class CurrencyTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_a_currency_with_proper_data()
+    public function test_user_can_update_a_currency_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -166,12 +157,11 @@ class CurrencyTest extends TestCase
         $response->assertRedirect($this->base_route);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn ($notification) => $notification['type'] === 'success');
+            ->contains(fn($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_currency()
+    public function test_user_can_delete_an_existing_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

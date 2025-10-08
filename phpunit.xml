@@ -6,12 +6,6 @@
         colors="true"
 >
   <testsuites>
-    <testsuite name="Unit">
-      <directory suffix="Test.php">./tests/Unit</directory>
-    </testsuite>
-    <testsuite name="Feature">
-      <directory suffix="Test.php">./tests/Feature</directory>
-    </testsuite>
     <testsuite name="AllNonDusk">
       <directory suffix="Test.php">./tests/Unit</directory>
       <directory suffix="Test.php">./tests/Feature</directory>
@@ -19,8 +13,8 @@
   </testsuites>
   <php>
     <env name="APP_ENV" value="testing"/>
-    <env name="BCRYPT_ROUNDS" value="4"/>
-    <env name="CACHE_DRIVER" value="array"/>
+    <env name="BCRYPT_ROUNDS" value="12"/>
+    <env name="CACHE_STORE" value="array"/>
     <env name="MAIL_MAILER" value="array"/>
     <env name="QUEUE_CONNECTION" value="sync"/>
     <env name="SESSION_DRIVER" value="array"/>

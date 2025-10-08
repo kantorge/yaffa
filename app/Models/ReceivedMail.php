@@ -36,11 +36,14 @@ class ReceivedMail extends Model
         'transaction_id',
     ];
 
-    protected $casts = [
-        'processed' => 'boolean',
-        'handled' => 'boolean',
-        'transaction_data' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'processed' => 'boolean',
+            'handled' => 'boolean',
+            'transaction_data' => 'array',
+        ];
+    }
 
     public function scopeUnprocessed($query)
     {

@@ -6,12 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -137,9 +134,7 @@ class InvestmentApiController extends Controller
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(function ($investment) use ($investmentService) {
-            return $investmentService->enrichInvestmentWithQuantityHistory($investment);
-        })
+        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
             ->each(function ($investment) use (&$positions) {
                 $start = true;
                 $period = [];

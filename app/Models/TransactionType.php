@@ -32,8 +32,11 @@ class TransactionType extends Model
         'quantity_multiplier',
     ];
 
-    protected $casts = [
-        'amount_multiplier' => 'integer',
-        'quantity_multiplier' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'amount_multiplier' => 'integer',
+            'quantity_multiplier' => 'integer',
+        ];
+    }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Providers\AppServiceProvider;
 use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -94,7 +94,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected string $redirectTo = RouteServiceProvider::HOME;
+    protected string $redirectTo = AppServiceProvider::HOME;
 
     /**
      * Get a validator for an incoming registration request.
@@ -143,8 +143,10 @@ class RegisterController extends Controller
             ]
         ];
 
-        if (config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')) {
+        if (
+            config('recaptcha.api_site_key')
+            && config('recaptcha.api_secret_key')
+        ) {
             $rules[recaptchaFieldName()] = recaptchaRuleName();
         }
 
@@ -177,6 +179,26 @@ class RegisterController extends Controller
      */
     public function register(Request $request): JsonResponse|RedirectResponse
     {
+        // Enforce optional user limit.
+        if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
+            if ($request->wantsJson()) {
+                return new JsonResponse(
+                    [
+                        'message' => __('You cannot register new users.'),
+                        'title' => __('User limit reached'),
+                    ],
+                    429
+                );
+            }
+            self::addMessage(
+                __('You cannot register new users.'),
+                'danger',
+                __('User limit reached'),
+                'exclamation-triangle'
+            );
+            return redirect()->route('login');
+        }
+
         $this->validator($request->all())->validate();
 
         $user = $this->create($request->all());
@@ -196,6 +218,7 @@ class RegisterController extends Controller
             )
         );
 
+        // Log the user in after registering.
         $this->guard()->login($user);
 
         $response = $this->registered($request, $user);
