@@ -5,13 +5,7 @@ use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
 use App\Console\Commands\GetCurrencyRates;
 use App\Console\Commands\GetInvestmentPrices;
 use App\Console\Commands\RecordScheduledTransactions;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
 
 
 if ($this->app->environment('local')) {
@@ -20,7 +14,7 @@ if ($this->app->environment('local')) {
 
 // Potentially, the app can be separated into a main container and a worker container
 // We can control, if the scheduled commands need to be run in a given container
-if (env('RUNS_SCHEDULER', false)) {
+if (config('yaffa.runs_scheduler')) {
 
     // Recalculate the active flags for transaction schedules and budgets every day
     Schedule::command(CalculateTransactionScheduleActiveFlags::class)->dailyAt('00:00');
