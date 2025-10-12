@@ -13,6 +13,7 @@ namespace PHPSTORM_META {
     */
     override(new \Illuminate\Contracts\Container\Container, map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -106,6 +107,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Container\Container::makeWith(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -199,6 +201,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::get(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -292,6 +295,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::make(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -385,6 +389,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Illuminate\Contracts\Container\Container::makeWith(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -478,6 +483,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::get(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -571,6 +577,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::make(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -664,6 +671,7 @@ namespace PHPSTORM_META {
         ]));
     override(\App::makeWith(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -757,6 +765,7 @@ namespace PHPSTORM_META {
         ]));
     override(\app(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -850,6 +859,7 @@ namespace PHPSTORM_META {
         ]));
     override(\resolve(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -943,6 +953,7 @@ namespace PHPSTORM_META {
         ]));
     override(\Psr\Container\ContainerInterface::get(0), map([
         '' => '@',
+            'Illuminate\Auth\Listeners\SendEmailVerificationNotification' => \App\Listeners\SendEmailVerificationNotification::class,
             'Illuminate\Bus\BatchRepository' => \Illuminate\Bus\DatabaseBatchRepository::class,
             'Illuminate\Contracts\Auth\Access\Gate' => \Illuminate\Auth\Access\Gate::class,
             'Illuminate\Contracts\Broadcasting\Broadcaster' => \Illuminate\Broadcasting\Broadcasters\LogBroadcaster::class,
@@ -1686,8 +1697,9 @@ namespace PHPSTORM_META {
             'yaffa.registered_user_limit' => 'integer',
             'yaffa.incoming_receipts_email' => 'string',
             'yaffa.email_verification_required' => 'boolean',
-            'yaffa.sandbox_mode' => 'boolean',
-            'yaffa.gtm_container_id' => 'string',
+            'yaffa.runs_scheduler' => 'boolean',
+            'yaffa.sandbox_mode' => 'NULL',
+            'yaffa.gtm_container_id' => 'NULL',
             'yaffa.cookieyes_id' => 'string',
             'yaffa.account_date_presets.0.label' => 'string',
             'yaffa.account_date_presets.0.options.0.value' => 'string',
@@ -2400,8 +2412,9 @@ namespace PHPSTORM_META {
             'yaffa.registered_user_limit' => 'integer',
             'yaffa.incoming_receipts_email' => 'string',
             'yaffa.email_verification_required' => 'boolean',
-            'yaffa.sandbox_mode' => 'boolean',
-            'yaffa.gtm_container_id' => 'string',
+            'yaffa.runs_scheduler' => 'boolean',
+            'yaffa.sandbox_mode' => 'NULL',
+            'yaffa.gtm_container_id' => 'NULL',
             'yaffa.cookieyes_id' => 'string',
             'yaffa.account_date_presets.0.label' => 'string',
             'yaffa.account_date_presets.0.options.0.value' => 'string',
@@ -3114,8 +3127,9 @@ namespace PHPSTORM_META {
             'yaffa.registered_user_limit' => 'integer',
             'yaffa.incoming_receipts_email' => 'string',
             'yaffa.email_verification_required' => 'boolean',
-            'yaffa.sandbox_mode' => 'boolean',
-            'yaffa.gtm_container_id' => 'string',
+            'yaffa.runs_scheduler' => 'boolean',
+            'yaffa.sandbox_mode' => 'NULL',
+            'yaffa.gtm_container_id' => 'NULL',
             'yaffa.cookieyes_id' => 'string',
             'yaffa.account_date_presets.0.label' => 'string',
             'yaffa.account_date_presets.0.options.0.value' => 'string',
@@ -3362,23 +3376,23 @@ namespace PHPSTORM_META {
 'translation_sheet.googleApplicationName','translation_sheet.serviceAccountEmail','translation_sheet.serviceAccountCredentialsFile','translation_sheet.spreadsheetId','translation_sheet.locales',
 'translation_sheet.exclude','translation_sheet.primary_sheet.name','translation_sheet.extra_sheets','translation_sheet.skip_empty_for_php','trustedproxy.proxies',
 'yaffa.version','yaffa.admin_email','yaffa.alpha_vantage_key','yaffa.registered_user_limit','yaffa.incoming_receipts_email',
-'yaffa.email_verification_required','yaffa.sandbox_mode','yaffa.gtm_container_id','yaffa.cookieyes_id','yaffa.account_date_presets.0.label',
-'yaffa.account_date_presets.0.options.0.value','yaffa.account_date_presets.0.options.0.label','yaffa.account_date_presets.0.options.1.value','yaffa.account_date_presets.0.options.1.label','yaffa.account_date_presets.0.options.2.value',
-'yaffa.account_date_presets.0.options.2.label','yaffa.account_date_presets.0.options.3.value','yaffa.account_date_presets.0.options.3.label','yaffa.account_date_presets.0.options.4.value','yaffa.account_date_presets.0.options.4.label',
-'yaffa.account_date_presets.0.options.5.value','yaffa.account_date_presets.0.options.5.label','yaffa.account_date_presets.1.label','yaffa.account_date_presets.1.options.0.value','yaffa.account_date_presets.1.options.0.label',
-'yaffa.account_date_presets.1.options.1.value','yaffa.account_date_presets.1.options.1.label','yaffa.account_date_presets.1.options.2.value','yaffa.account_date_presets.1.options.2.label','yaffa.account_date_presets.1.options.3.value',
-'yaffa.account_date_presets.1.options.3.label','yaffa.account_date_presets.1.options.4.value','yaffa.account_date_presets.1.options.4.label','yaffa.account_date_presets.1.options.5.value','yaffa.account_date_presets.1.options.5.label',
-'yaffa.account_date_presets.2.label','yaffa.account_date_presets.2.options.0.value','yaffa.account_date_presets.2.options.0.label','yaffa.account_date_presets.2.options.1.value','yaffa.account_date_presets.2.options.1.label',
-'currency-exchange-rates.cache_prefix','currency-exchange-rates.default_provider','currency-exchange-rates.frankfurter.cache_ttl','roach.request_queue','roach.client',
-'roach.default_spider_namespace','model-flags.flag_model','ide-helper.filename','ide-helper.models_filename','ide-helper.meta_filename',
-'ide-helper.include_fluent','ide-helper.include_factory_builders','ide-helper.write_model_magic_where','ide-helper.write_model_external_builder_methods','ide-helper.write_model_relation_count_properties',
-'ide-helper.write_model_relation_exists_properties','ide-helper.write_eloquent_model_mixins','ide-helper.include_helpers','ide-helper.helper_files','ide-helper.model_locations',
-'ide-helper.ignored_models','ide-helper.model_hooks','ide-helper.extra.Eloquent','ide-helper.extra.Session','ide-helper.magic',
-'ide-helper.interfaces','ide-helper.model_camel_case_properties','ide-helper.type_overrides.integer','ide-helper.type_overrides.boolean','ide-helper.include_class_docblocks',
-'ide-helper.force_fqn','ide-helper.use_generics_annotations','ide-helper.macro_default_return_types.Illuminate\\Http\\Client\\Factory','ide-helper.additional_relation_types','ide-helper.additional_relation_return_types',
-'ide-helper.enforce_nullable_relationships','ide-helper.post_migrate','breadcrumbs.view','breadcrumbs.files','breadcrumbs.unnamed-route-exception',
-'breadcrumbs.missing-route-bound-breadcrumb-exception','breadcrumbs.invalid-named-breadcrumb-exception','breadcrumbs.manager-class','breadcrumbs.generator-class','tinker.commands',
-'tinker.alias','tinker.dont_alias',);
+'yaffa.email_verification_required','yaffa.runs_scheduler','yaffa.sandbox_mode','yaffa.gtm_container_id','yaffa.cookieyes_id',
+'yaffa.account_date_presets.0.label','yaffa.account_date_presets.0.options.0.value','yaffa.account_date_presets.0.options.0.label','yaffa.account_date_presets.0.options.1.value','yaffa.account_date_presets.0.options.1.label',
+'yaffa.account_date_presets.0.options.2.value','yaffa.account_date_presets.0.options.2.label','yaffa.account_date_presets.0.options.3.value','yaffa.account_date_presets.0.options.3.label','yaffa.account_date_presets.0.options.4.value',
+'yaffa.account_date_presets.0.options.4.label','yaffa.account_date_presets.0.options.5.value','yaffa.account_date_presets.0.options.5.label','yaffa.account_date_presets.1.label','yaffa.account_date_presets.1.options.0.value',
+'yaffa.account_date_presets.1.options.0.label','yaffa.account_date_presets.1.options.1.value','yaffa.account_date_presets.1.options.1.label','yaffa.account_date_presets.1.options.2.value','yaffa.account_date_presets.1.options.2.label',
+'yaffa.account_date_presets.1.options.3.value','yaffa.account_date_presets.1.options.3.label','yaffa.account_date_presets.1.options.4.value','yaffa.account_date_presets.1.options.4.label','yaffa.account_date_presets.1.options.5.value',
+'yaffa.account_date_presets.1.options.5.label','yaffa.account_date_presets.2.label','yaffa.account_date_presets.2.options.0.value','yaffa.account_date_presets.2.options.0.label','yaffa.account_date_presets.2.options.1.value',
+'yaffa.account_date_presets.2.options.1.label','currency-exchange-rates.cache_prefix','currency-exchange-rates.default_provider','currency-exchange-rates.frankfurter.cache_ttl','roach.request_queue',
+'roach.client','roach.default_spider_namespace','model-flags.flag_model','ide-helper.filename','ide-helper.models_filename',
+'ide-helper.meta_filename','ide-helper.include_fluent','ide-helper.include_factory_builders','ide-helper.write_model_magic_where','ide-helper.write_model_external_builder_methods',
+'ide-helper.write_model_relation_count_properties','ide-helper.write_model_relation_exists_properties','ide-helper.write_eloquent_model_mixins','ide-helper.include_helpers','ide-helper.helper_files',
+'ide-helper.model_locations','ide-helper.ignored_models','ide-helper.model_hooks','ide-helper.extra.Eloquent','ide-helper.extra.Session',
+'ide-helper.magic','ide-helper.interfaces','ide-helper.model_camel_case_properties','ide-helper.type_overrides.integer','ide-helper.type_overrides.boolean',
+'ide-helper.include_class_docblocks','ide-helper.force_fqn','ide-helper.use_generics_annotations','ide-helper.macro_default_return_types.Illuminate\\Http\\Client\\Factory','ide-helper.additional_relation_types',
+'ide-helper.additional_relation_return_types','ide-helper.enforce_nullable_relationships','ide-helper.post_migrate','breadcrumbs.view','breadcrumbs.files',
+'breadcrumbs.unnamed-route-exception','breadcrumbs.missing-route-bound-breadcrumb-exception','breadcrumbs.invalid-named-breadcrumb-exception','breadcrumbs.manager-class','breadcrumbs.generator-class',
+'tinker.commands','tinker.alias','tinker.dont_alias',);
         registerArgumentsSet('middleware', 
 'web','api','auth','auth.basic','auth.session',
 'cache.headers','can','guest','password.confirm','precognitive',
