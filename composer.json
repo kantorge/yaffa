@@ -1,7 +1,7 @@
 {
     "name": "kantorge/yaffa",
     "description": "Yet Another Free Financial Application: a free, self-hosted personal finance app",
-    "version": "1.12.3",
+    "version": "2.0.0",
     "type": "project",
     "keywords": [
         "personal finance",
@@ -63,13 +63,6 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "php-http/discovery": true
-        }
-    },
-    "extra": {
-        "laravel": {
-            "dont-discover": [
-                "laravel/telescope"
-            ]
         }
     },
     "autoload": {
