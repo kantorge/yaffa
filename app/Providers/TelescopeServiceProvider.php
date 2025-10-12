@@ -28,6 +28,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             return $entry->isReportableException() ||
                 $entry->isFailedRequest() ||
                 $entry->type === EntryType::JOB || // Keep all jobs
+                $entry->type === EntryType::EVENT || // Keep all events
                 $entry->isSlowQuery() ||
                 $entry->isScheduledTask() ||
                 $entry->hasMonitoredTag();
@@ -42,6 +43,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return $entry->isReportableException() ||
                     $entry->isFailedRequest() ||
                     $entry->type === EntryType::JOB || // Keep all jobs
+                    $entry->type === EntryType::EVENT || // Keep all events
                     $entry->isSlowQuery() ||
                     $entry->isScheduledTask() ||
                     $entry->hasMonitoredTag();

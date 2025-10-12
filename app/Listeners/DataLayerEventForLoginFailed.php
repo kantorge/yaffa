@@ -2,15 +2,17 @@
 
 namespace App\Listeners;
 
+use Illuminate\Auth\Events\Failed;
+
 class DataLayerEventForLoginFailed
 {
     /**
      * Handle the event.
      */
-    public function handle(object $event): void
+    public function handle(Failed $event): void
     {
         // This feature is triggered only if the GTM container ID is set
-        if (! config('yaffa.gtm_container_id')) {
+        if (!config('yaffa.gtm_container_id')) {
             return;
         }
 
