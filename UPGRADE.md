@@ -2,17 +2,21 @@
 
 This document describes the breaking changes of major versions, and the steps that need to be performed to get you migrated.
 
-# Upgrade from 1.x to 2.x
+Table of contents:
+
+- [Upgrade from 1.x to 2.x](#upgrade-from-1x-to-2x)
+
+## Upgrade from 1.x to 2.x
 
 The main reason for increasing the version is the migration of the framework from Laravel 10 to Laravel 11.
 
-## Breaking Changes
+### Breaking Changes
 
 - Some of the environment variable names used by YAFFA were changed, and you need to update them as part of your migration.
 
-## Step-by-step Guide
+### Step-by-step Guide
 
-1. Update your `.env` file with the following changes
+#### 1. Update your `.env` file with the following changes
 
 - The broadcast driver key has been renamed. As YAFFA is not using this Laravel feature, the actual impact is minimal.
 
@@ -51,7 +55,7 @@ The main reason for increasing the version is the migration of the framework fro
 
 - Laravel Telescope is now installed in production, but disabled by default. Verify that the `TELESCOPE_ENABLED` flag is in a state as you need it.
 
-2. Run the actual update steps per your hosting option
+#### 2. Run the actual update steps per your hosting option
 
 - Update the code base from Packagist or GitHub. Make sure to install updated dependencies, run migrations, and clear cached assets.
 - Pull the latest YAFFA image from Docker Hub, and restart your container. The entrypoint will take care of running the migrations and clearing various caches.
