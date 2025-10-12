@@ -7,11 +7,6 @@ use App\Console\Commands\GetInvestmentPrices;
 use App\Console\Commands\RecordScheduledTransactions;
 use Illuminate\Support\Facades\Schedule;
 
-
-if ($this->app->environment('local')) {
-    Schedule::command('telescope:prune')->daily();
-}
-
 // Potentially, the app can be separated into a main container and a worker container
 // We can control, if the scheduled commands need to be run in a given container
 if (config('yaffa.runs_scheduler')) {
@@ -44,4 +39,9 @@ if (config('yaffa.runs_scheduler')) {
 
     // Batch job cleanup
     Schedule::command('queue:prune-batches')->daily();
+
+    // Keep the Laravel Telescope entries clean, if enabled
+    if (config('telescope.enabled')) {
+        Schedule::command('telescope:prune --hours=168')->daily();
+    }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Telescope\EntryType;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
@@ -24,10 +26,26 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             }
 
             return $entry->isReportableException() ||
-                   $entry->isFailedRequest() ||
-                   $entry->isFailedJob() ||
-                   $entry->isScheduledTask() ||
-                   $entry->hasMonitoredTag();
+                $entry->isFailedRequest() ||
+                $entry->type === EntryType::JOB || // Keep all jobs
+                $entry->isSlowQuery() ||
+                $entry->isScheduledTask() ||
+                $entry->hasMonitoredTag();
+        });
+
+        Telescope::filterBatch(function (Collection $entries) {
+            if ($this->app->environment('local')) {
+                return $entries;
+            }
+
+            return $entries->filter(function (IncomingEntry $entry) {
+                return $entry->isReportableException() ||
+                    $entry->isFailedRequest() ||
+                    $entry->type === EntryType::JOB || // Keep all jobs
+                    $entry->isSlowQuery() ||
+                    $entry->isScheduledTask() ||
+                    $entry->hasMonitoredTag();
+            });
         });
     }
 
@@ -56,6 +74,11 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate()
     {
-        Gate::define('viewTelescope', fn ($user) => in_array($user->email, []));
+        Gate::define(
+            'viewTelescope',
+            fn($user) => in_array($user->email, [
+                config('yaffa.admin_email'),
+            ])
+        );
     }
 }
