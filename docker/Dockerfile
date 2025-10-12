@@ -50,5 +50,7 @@ EXPOSE 80
 # Add supervisord config, used only by the scheduler service
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 
-# Run migrations and clear caches at startup
-CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && apache2-foreground"]
+# Copy entrypoint script
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]
