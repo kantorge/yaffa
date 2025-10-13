@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Services\CategoryService;
@@ -150,7 +151,7 @@ class CategoryApiController extends Controller
          * @get('/api/assets/category/{category}')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $category);
+        Gate::authorize('view', $category);
 
         return response()
             ->json(
@@ -166,7 +167,7 @@ class CategoryApiController extends Controller
          * @name('api.category.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $category);
+        Gate::authorize('update', $category);
 
         $category->active = $active;
         $category->save();
@@ -185,7 +186,7 @@ class CategoryApiController extends Controller
          * @name('api.category.destroy')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('delete', $category);
+        Gate::authorize('delete', $category);
         $result = $this->categoryService->delete($category);
 
         if ($result['success']) {

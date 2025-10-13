@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
@@ -248,7 +249,7 @@ class PayeeApiController extends Controller
          * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
         $accountEntity->config->category_id = $category->id;
@@ -266,7 +267,7 @@ class PayeeApiController extends Controller
          * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
         $accountEntity->config->category_suggestion_dismissed = Carbon::now();
@@ -282,7 +283,7 @@ class PayeeApiController extends Controller
          * @name('api.payee.store')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('create', AccountEntity::class);
+        Gate::authorize('create', AccountEntity::class);
 
         $validated = $request->validated();
         $validated['user_id'] = Auth::user()->id;
@@ -348,7 +349,7 @@ class PayeeApiController extends Controller
          * @get('/api/assets/payee/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $accountEntity);
+        Gate::authorize('view', $accountEntity);
 
         $accountEntity->load([
             'config',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
@@ -241,7 +242,7 @@ class AccountApiController extends Controller
          * @get('/api/assets/account/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $accountEntity);
+        Gate::authorize('view', $accountEntity);
 
         $accountEntity->load(['config', 'config.currency']);
 
@@ -422,7 +423,7 @@ class AccountApiController extends Controller
          * @put('/api/account/monthlySummary/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         // Check if the account entity is an account
         if ($accountEntity->config_type !== 'account') {

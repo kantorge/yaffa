@@ -15,7 +15,11 @@ class ReceivedMailController extends Controller
     public function __construct(ReceivedMailService $receivedMailService)
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(ReceivedMail::class);
+        $this->middleware('can:viewAny,App\Models\ReceivedMail')->only('index');
+        $this->middleware('can:view,received_mail')->only('show');
+        $this->middleware('can:create,App\Models\ReceivedMail')->only('create', 'store');
+        $this->middleware('can:update,received_mail')->only('edit', 'update');
+        $this->middleware('can:delete,received_mail')->only('destroy');
         $this->receivedMailService = $receivedMailService;
     }
 

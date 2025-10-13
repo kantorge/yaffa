@@ -21,7 +21,11 @@ class InvestmentController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Investment::class);
+        $this->middleware('can:viewAny,App\Models\Investment')->only('index');
+        $this->middleware('can:view,investment')->only('show');
+        $this->middleware('can:create,App\Models\Investment')->only('create', 'store');
+        $this->middleware('can:update,investment')->only('edit', 'update');
+        $this->middleware('can:delete,investment')->only('destroy');
 
         $this->investmentService = new InvestmentService();
     }

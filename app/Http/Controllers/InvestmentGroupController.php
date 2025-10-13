@@ -15,7 +15,11 @@ class InvestmentGroupController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(InvestmentGroup::class);
+        $this->middleware('can:viewAny,App\Models\InvestmentGroup')->only('index');
+        $this->middleware('can:view,investment_group')->only('show');
+        $this->middleware('can:create,App\Models\InvestmentGroup')->only('create', 'store');
+        $this->middleware('can:update,investment_group')->only('edit', 'update');
+        $this->middleware('can:delete,investment_group')->only('destroy');
     }
 
     /**

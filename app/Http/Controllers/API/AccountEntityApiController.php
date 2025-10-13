@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -27,7 +28,7 @@ class AccountEntityApiController extends Controller
          * @name('api.accountentity.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->active = $active;
         $accountEntity->save();
@@ -53,7 +54,7 @@ class AccountEntityApiController extends Controller
          * @name('api.accountentity.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
-        $this->authorize('forceDelete', $accountEntity);
+        Gate::authorize('forceDelete', $accountEntity);
 
         try {
             $accountEntity->delete();

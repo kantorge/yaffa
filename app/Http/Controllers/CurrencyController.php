@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
@@ -22,7 +23,11 @@ class CurrencyController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Currency::class);
+        $this->middleware('can:viewAny,App\Models\Currency')->only('index');
+        $this->middleware('can:view,currency')->only('show');
+        $this->middleware('can:create,App\Models\Currency')->only('create', 'store');
+        $this->middleware('can:update,currency')->only('edit', 'update');
+        $this->middleware('can:delete,currency')->only('destroy');
     }
 
     /**
@@ -175,7 +180,7 @@ class CurrencyController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         // Authenticate the user against the currency using CurrencyPolicy
-        $this->authorize('update', $currency);
+        Gate::authorize('update', $currency);
 
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));

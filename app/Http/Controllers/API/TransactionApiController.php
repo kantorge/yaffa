@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
@@ -51,7 +52,7 @@ class TransactionApiController extends Controller
          * @put('/api/transaction/{transaction}/reconciled/{newState}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $transaction);
+        Gate::authorize('update', $transaction);
 
         $transaction->reconciled = boolval($newState);
         $transaction->save();

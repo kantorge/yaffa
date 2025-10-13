@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountGroup;
 use App\Services\AccountGroupService;
@@ -30,7 +31,7 @@ class AccountGroupApiController extends Controller
          * @name('api.accountgroup.destroy')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('delete', $accountGroup);
+        Gate::authorize('delete', $accountGroup);
         $result = $this->accountGroupService->delete($accountGroup);
 
         if ($result['success']) {

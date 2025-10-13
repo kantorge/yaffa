@@ -14,7 +14,11 @@ class TagController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Tag::class);
+        $this->middleware('can:viewAny,App\Models\Tag')->only('index');
+        $this->middleware('can:view,tag')->only('show');
+        $this->middleware('can:create,App\Models\Tag')->only('create', 'store');
+        $this->middleware('can:update,tag')->only('edit', 'update');
+        $this->middleware('can:delete,tag')->only('destroy');
     }
 
     /**

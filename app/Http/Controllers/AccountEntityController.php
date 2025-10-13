@@ -22,7 +22,11 @@ class AccountEntityController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(AccountEntity::class);
+        $this->middleware('can:viewAny,App\Models\AccountEntity')->only('index');
+        $this->middleware('can:view,account_entity')->only('show');
+        $this->middleware('can:create,App\Models\AccountEntity')->only('create', 'store');
+        $this->middleware('can:update,account_entity')->only('edit', 'update');
+        $this->middleware('can:delete,account_entity')->only('destroy');
     }
 
     /*

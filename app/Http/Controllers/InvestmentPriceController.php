@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -33,7 +34,7 @@ class InvestmentPriceController extends Controller
          * @name('investment-price.list')
          * @middlewares('web', 'auth', 'verified')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         // Load currency details for JavaScript
         $investment->load('currency');
@@ -67,7 +68,7 @@ class InvestmentPriceController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->get('investment'));
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         return view(
             'investment-prices.form',
@@ -85,7 +86,7 @@ class InvestmentPriceController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->investment_id);
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $validated = $request->validated();
 

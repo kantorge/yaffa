@@ -15,7 +15,11 @@ class AccountGroupController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(AccountGroup::class);
+        $this->middleware('can:viewAny,App\Models\AccountGroup')->only('index');
+        $this->middleware('can:view,account_group')->only('show');
+        $this->middleware('can:create,App\Models\AccountGroup')->only('create', 'store');
+        $this->middleware('can:update,account_group')->only('edit', 'update');
+        $this->middleware('can:delete,account_group')->only('destroy');
     }
 
     /**

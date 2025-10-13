@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -63,7 +64,7 @@ class InvestmentApiController extends Controller
          * @name('investment.getDetails')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $investment->load(['currency']);
 
@@ -76,7 +77,7 @@ class InvestmentApiController extends Controller
          * @get('/api/assets/investment/price/{investment}')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
             ->select(['id', 'date', 'price'])
@@ -97,7 +98,7 @@ class InvestmentApiController extends Controller
          * @name('api.investment.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $investment);
+        Gate::authorize('update', $investment);
 
         $investment->active = $active;
         $investment->save();

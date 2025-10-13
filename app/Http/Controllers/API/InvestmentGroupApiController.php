@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\InvestmentGroup;
 use App\Services\InvestmentGroupService;
@@ -30,7 +31,7 @@ class InvestmentGroupApiController extends Controller
          * @name('api.investmentgroup.destroy')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('delete', $investmentGroup);
+        Gate::authorize('delete', $investmentGroup);
         $result = $this->investmentGroupService->delete($investmentGroup);
 
         if ($result['success']) {

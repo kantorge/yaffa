@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
@@ -65,7 +66,7 @@ class TransactionController extends Controller
          */
 
         // Authorize user for transaction
-        $this->authorize('view', $transaction);
+        Gate::authorize('view', $transaction);
 
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
@@ -122,7 +123,7 @@ class TransactionController extends Controller
          */
 
         // Authorize user for transaction
-        $this->authorize('forceDelete', $transaction);
+        Gate::authorize('forceDelete', $transaction);
 
         // Remove the transaction and its config
         $transaction->delete();
