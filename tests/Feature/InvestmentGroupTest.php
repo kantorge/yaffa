@@ -14,7 +14,7 @@ class InvestmentGroupTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,8 +22,7 @@ class InvestmentGroupTest extends TestCase
         $this->setBaseModel(InvestmentGroup::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -38,8 +37,7 @@ class InvestmentGroupTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function unverified_user_cannot_access_resource()
+    public function test_unverified_user_cannot_access_resource(): void
     {
         /** @var \Illuminate\Contracts\Auth\Authenticatable $user_unverified */
         $user_unverified = User::factory()->create([
@@ -59,8 +57,7 @@ class InvestmentGroupTest extends TestCase
         $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertRedirect(route('verification.notice'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         $user1 = User::factory()->create();
         $investmentGroup = $this->createForUser($user1, $this->base_model);
@@ -72,8 +69,7 @@ class InvestmentGroupTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $investmentGroup))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_investment_groups()
+    public function test_user_can_view_list_of_investment_groups(): void
     {
         $user = User::factory()->create();
 
@@ -85,8 +81,7 @@ class InvestmentGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -98,8 +93,7 @@ class InvestmentGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_create_an_investment_group_with_missing_data()
+    public function test_user_cannot_create_an_investment_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -115,15 +109,13 @@ class InvestmentGroupTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_an_investment_group()
+    public function test_user_can_create_an_investment_group(): void
     {
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_investment_group()
+    public function test_user_can_edit_an_existing_investment_group(): void
     {
         $user = User::factory()->create();
 
@@ -135,8 +127,7 @@ class InvestmentGroupTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_an_investment_group_with_missing_data()
+    public function test_user_cannot_update_an_investment_group_with_missing_data(): void
     {
         $user = User::factory()->create();
 
@@ -156,8 +147,7 @@ class InvestmentGroupTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_an_investment_group_with_proper_data()
+    public function test_user_can_update_an_investment_group_with_proper_data(): void
     {
         $user = User::factory()->create();
 
@@ -177,19 +167,17 @@ class InvestmentGroupTest extends TestCase
         $response->assertRedirect($this->base_route);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn ($notification) => $notification['type'] === 'success');
+            ->contains(fn($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_investment_group()
+    public function test_user_can_delete_an_existing_investment_group(): void
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);
     }
 
-    /** @test */
-    public function user_cannot_delete_investment_group_with_attached_investment()
+    public function test_user_cannot_delete_investment_group_with_attached_investment(): void
     {
         $user = User::factory()->create();
 

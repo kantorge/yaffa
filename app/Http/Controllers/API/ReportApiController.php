@@ -69,14 +69,12 @@ class ReportApiController extends Controller
                     $query->whereUserId($request->user()->id)
                         ->byScheduleType('none')
                         ->byType('standard')
-                        ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
-                            return $query->whereHasMorph(
-                                'config',
-                                TransactionDetailStandard::class,
-                                fn ($query) => $query->where('account_from_id', $accountEntity)
-                                    ->orWhere('account_to_id', $accountEntity)
-                            );
-                        });
+                        ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
+                            'config',
+                            TransactionDetailStandard::class,
+                            fn ($query) => $query->where('account_from_id', $accountEntity)
+                                ->orWhere('account_to_id', $accountEntity)
+                        ));
                 })
                 ->get();
         }
@@ -128,14 +126,12 @@ class ReportApiController extends Controller
             ->where('user_id', $request->user()->id)
             ->byType('standard')
             ->byScheduleType('budget')
-            ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
-                return $query->whereHasMorph(
-                    'config',
-                    TransactionDetailStandard::class,
-                    fn ($query) => $query->where('account_from_id', $accountEntity)
-                        ->orWhere('account_to_id', $accountEntity)
-                );
-            })
+            ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
+                'config',
+                TransactionDetailStandard::class,
+                fn ($query) => $query->where('account_from_id', $accountEntity)
+                    ->orWhere('account_to_id', $accountEntity)
+            ))
             ->when($accountSelection === 'none', function ($query) {
                 return $query->where(function ($query) {
                     // Withdrawal with empty account_from_id
@@ -261,10 +257,8 @@ class ReportApiController extends Controller
                 ->whereHas('transaction', function ($query) use ($year, $month) {
                     $query->where('user_id', Auth::user()->id)
                         ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                        ->when($year && $month, function ($query) use ($year, $month) {
-                            return $query->whereRaw('YEAR(date) = ?', [$year])
-                                ->whereRaw('MONTH(date) = ?', [$month]);
-                        })
+                        ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                            ->whereRaw('MONTH(date) = ?', [$month]))
                         ->byScheduleType('none')
                         ->byType('standard')
                         ->where(
@@ -318,10 +312,8 @@ class ReportApiController extends Controller
                 )
                 ->where('user_id', Auth::user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                ->when($year && $month, function ($query) use ($year, $month) {
-                    return $query->whereRaw('YEAR(date) = ?', [$year])
-                        ->whereRaw('MONTH(date) = ?', [$month]);
-                })
+                ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                    ->whereRaw('MONTH(date) = ?', [$month]))
                 ->get();
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {

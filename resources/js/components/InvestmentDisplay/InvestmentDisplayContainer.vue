@@ -90,25 +90,28 @@
         date: qty.date ? new Date(qty.date) : null,
       }));
 
-      // Add a dummy value to quantities to draw beyond the last value. Set the date to two months ahead. Values are copied from last value.
-      this.processedQuantities.push({
-        ...this.processedQuantities[this.processedQuantities.length - 1],
-        date: new Date(
-          this.processedQuantities[
-            this.processedQuantities.length - 1
-          ].date.getTime() +
-            60 * 24 * 60 * 60 * 1000
-        ),
-      });
+      if (this.processedQuantities.length > 0) {
+        // Add a dummy value to quantities to draw beyond the last value. Set the date to two months ahead. Values are copied from last value.
+        this.processedQuantities.push({
+          ...this.processedQuantities[this.processedQuantities.length - 1],
+          date: new Date(
+            this.processedQuantities[
+              this.processedQuantities.length - 1
+            ].date.getTime() +
+              60 * 24 * 60 * 60 * 1000
+          ),
+        });
 
-      // Add a dummy value to quantities to draw before the first value. Set the date to two months before. Values are set to 0, assuming no historical quantity existed.
-      this.processedQuantities.unshift({
-        quantity: 0,
-        schedule: 0,
-        date: new Date(
-          this.processedQuantities[0].date.getTime() - 60 * 24 * 60 * 60 * 1000
-        ),
-      });
+        // Add a dummy value to quantities to draw before the first value. Set the date to two months before. Values are set to 0, assuming no historical quantity existed.
+        this.processedQuantities.unshift({
+          quantity: 0,
+          schedule: 0,
+          date: new Date(
+            this.processedQuantities[0].date.getTime() -
+              60 * 24 * 60 * 60 * 1000
+          ),
+        });
+      }
     },
     methods: {
       onSetDateRange({ type, date }) {

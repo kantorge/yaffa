@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\AccountEntity;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,13 +11,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AccountEntityFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var class-string<Model|TModel>
-     */
-    protected $model = AccountEntity::class;
-
     /**
      * Define the model's default state.
      *

@@ -16,7 +16,7 @@ class SetLocale
      * @param Closure(Request): (Response|RedirectResponse) $next
      * @return Response|RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): \Symfony\Component\HttpFoundation\Response
     {
         // Locale is determined primarily by the user setting
         if ($request->user() && $request->user()->locale) {

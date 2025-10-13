@@ -48,6 +48,17 @@ class PayeeApiController extends Controller
             $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
             $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
 
+            $transactionType = $request->get('transaction_type', null);
+            if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+                // If transaction type is provided but not valid, return a bad request response
+                return response()->json(
+                    [
+                        'message' => 'The transaction_type parameter is required and must be valid.',
+                    ],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $payeeIds = DB::table('transactions')
                 ->join(
                     'transaction_details_standard',
@@ -71,15 +82,13 @@ class PayeeApiController extends Controller
                     // TODO: fallback to query without this, if no results are found
                     'transaction_type_id',
                     '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
+                    config('transaction_types')[$transactionType]['id']
                 )
-                ->when($accountId, function ($query) use ($accountDirection, $accountId) {
-                    return $query->where(
-                        "transaction_details_standard.account_{$accountDirection}_id",
-                        '=',
-                        $accountId
-                    );
-                })
+                ->when($accountId, fn($query) => $query->where(
+                    "transaction_details_standard.account_{$accountDirection}_id",
+                    '=',
+                    $accountId
+                ))
                 ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
@@ -197,27 +206,26 @@ class PayeeApiController extends Controller
             ])
             ->selectRaw('count(*) as transactions')
             ->groupBy([
-                'payee_id', 'category_id',
+                'payee_id',
+                'category_id',
             ])
             ->get();
 
         // Calculate total by payees
         $payees = $data
             ->groupBy('payee_id')
-            ->map(function ($payee) {
-                return [
-                    'payee_id' => $payee->first()->payee_id,
-                    'sum' => $payee->sum('transactions'),
-                    'max' => $payee->max('transactions'),
-                    'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
-                ];
-            })
+            ->map(fn($payee) => [
+                'payee_id' => $payee->first()->payee_id,
+                'sum' => $payee->sum('transactions'),
+                'max' => $payee->max('transactions'),
+                'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
+            ])
             // Minimum required transactions to calculate with payee
             // TODO: make this dynamic, e.g based on average or mean
-            ->filter(fn ($value) => $value['sum'] > 5)
+            ->filter(fn($value) => $value['sum'] > 5)
             // Only where maximum is significant (at least half of all items)
             // TODO: make this dynamic
-            ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
+            ->filter(fn($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
             return response('', Response::HTTP_OK);
@@ -306,7 +314,7 @@ class PayeeApiController extends Controller
         // Get all payees of the user
         $payees = Auth::user()
             ->payees()
-            ->when($withActive, fn ($query) => $query->where('active', true))
+            ->when($withActive, fn($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);
 
         // Filter payees by similarity to query

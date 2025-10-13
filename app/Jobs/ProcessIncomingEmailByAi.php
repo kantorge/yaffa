@@ -326,7 +326,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return trim($result) !== 'N/A' ? (int) $result : null;
+        return mb_trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getPayeeIdFromPayee(User $user, string $payee = null): ?int
@@ -350,7 +350,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return trim($result) !== 'N/A' ? (int) $result : null;
+        return mb_trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getTransactionTypeIdFromType(string $type): int

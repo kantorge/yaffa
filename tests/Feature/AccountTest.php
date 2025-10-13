@@ -32,7 +32,7 @@ class AccountTest extends TestCase
         return $account;
     }
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -40,8 +40,7 @@ class AccountTest extends TestCase
         $this->setBaseModel(AccountEntity::class);
     }
 
-    /** @test */
-    public function user_cannot_create_new_account_without_an_account_group()
+    public function test_user_cannot_create_new_account_without_an_account_group(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -54,8 +53,7 @@ class AccountTest extends TestCase
         $response->assertRedirect(route('account-group.create'));
     }
 
-    /** @test */
-    public function user_cannot_create_new_account_without_a_currency()
+    public function test_user_cannot_create_new_account_without_a_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -68,8 +66,7 @@ class AccountTest extends TestCase
         $response->assertRedirect(route('currency.create'));
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         // Unauthenticated user cannot access any actions of the resource
         $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirect(route('login'));
@@ -85,8 +82,7 @@ class AccountTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         $account = $this->createAccountAndUser();
 
@@ -105,8 +101,7 @@ class AccountTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_accounts()
+    public function test_user_can_view_list_of_accounts(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -125,8 +120,7 @@ class AccountTest extends TestCase
         $response->assertViewIs('account.index');
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -142,8 +136,7 @@ class AccountTest extends TestCase
         $response->assertViewIs('account.form');
     }
 
-    /** @test */
-    public function user_cannot_create_an_account_with_missing_data()
+    public function test_user_cannot_create_an_account_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -169,8 +162,7 @@ class AccountTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_an_account()
+    public function test_user_can_create_an_account(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -193,8 +185,7 @@ class AccountTest extends TestCase
         $this->assertDatabaseHas($model->getTable(), $baseAttributes);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_account()
+    public function test_user_can_edit_an_existing_account(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -212,8 +203,7 @@ class AccountTest extends TestCase
         $response->assertViewIs('account.form');
     }
 
-    /** @test */
-    public function user_cannot_update_an_account_with_missing_data()
+    public function test_user_cannot_update_an_account_with_missing_data(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -235,8 +225,7 @@ class AccountTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_an_account_with_proper_data()
+    public function test_user_can_update_an_account_with_proper_data(): void
     {
         $account = $this->createAccountAndUser();
         $user = $account->user;
@@ -268,12 +257,11 @@ class AccountTest extends TestCase
         $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn ($notification) => $notification['type'] === 'success');
+            ->contains(fn($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function form_request_enforces_opening_balance_boundaries()
+    public function test_form_request_enforces_opening_balance_boundaries(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

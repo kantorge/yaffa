@@ -25,31 +25,25 @@ class InvestmentRequest extends FormRequest
                 'required',
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-                Rule::unique('investments')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
-                }),
+                Rule::unique('investments')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id))),
             ],
             'symbol' => [
                 'required',
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-                Rule::unique('investments')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
-                }),
+                Rule::unique('investments')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id))),
             ],
             'isin' => [
                 'nullable',
                 'min:12',
                 'max:12',
-                Rule::unique('investments')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id));
-                }),
+                Rule::unique('investments')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->when($this->investment, fn ($query) => $query->where('id', '!=', $this->investment->id))),
             ],
             'comment' => [
                 'nullable',
@@ -76,12 +70,12 @@ class InvestmentRequest extends FormRequest
             ],
             'scrape_url' => [
                 'exclude_unless:investment_price_provider,web_scraping',
-                Rule::RequiredIf(fn ()  => $this->investment_price_provider === 'web_scraping'),
+                Rule::RequiredIf(fn () => $this->investment_price_provider === 'web_scraping'),
                 'url',
             ],
             'scrape_selector' => [
                 'exclude_unless:investment_price_provider,web_scraping',
-                Rule::RequiredIf(fn ()  => $this->investment_price_provider === 'web_scraping'),
+                Rule::RequiredIf(fn () => $this->investment_price_provider === 'web_scraping'),
                 'string',
                 'min:1', // It's not likely to qualify as a selector, but let's go with the minimum
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,

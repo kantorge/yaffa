@@ -12,7 +12,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
 
     protected User $user;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,7 +26,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
         $this->user = User::firstWhere('email', $this::USER_EMAIL);
     }
 
-    public function test_user_can_load_the_standard_transaction_form_in_a_modal()
+    public function test_user_can_load_the_standard_transaction_form_in_a_modal(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
@@ -50,7 +50,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
         });
     }
 
-    public function test_add_new_payee_button_is_never_visible_in_the_modal()
+    public function test_add_new_payee_button_is_never_visible_in_the_modal(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)

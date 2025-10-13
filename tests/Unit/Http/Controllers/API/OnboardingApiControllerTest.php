@@ -13,13 +13,13 @@ class OnboardingApiControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->controller = new OnboardingApiController();
     }
 
-    public function testGetOnboardingDataReturnsCorrectData()
+    public function testGetOnboardingDataReturnsCorrectData(): void
     {
         $request = new Request();
         $request->setUserResolver(function () {
@@ -35,7 +35,7 @@ class OnboardingApiControllerTest extends TestCase
         $this->assertArrayHasKey('steps', $response->getData(true));
     }
 
-    public function testSetDismissedFlagSetsCorrectFlag()
+    public function testSetDismissedFlagSetsCorrectFlag(): void
     {
         $request = new Request();
         $request->setUserResolver(function () {
@@ -50,7 +50,7 @@ class OnboardingApiControllerTest extends TestCase
         $this->assertTrue($request->user()->hasFlag('dismissOnboardingWidgetDashboard'));
     }
 
-    public function testSetCompletedTourFlagSetsCorrectFlag()
+    public function testSetCompletedTourFlagSetsCorrectFlag(): void
     {
         $request = new Request();
         $request->setUserResolver(function () {
