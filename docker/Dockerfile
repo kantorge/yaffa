@@ -27,11 +27,7 @@ COPY . .
 
 # Set environment variables to force production mode
 ENV APP_ENV=production \
-    APP_DEBUG=false \
-    TELESCOPE_ENABLED=false
-
-# Ensure Telescope is not installed
-RUN rm -rf vendor/laravel/telescope
+    APP_DEBUG=false
 
 # Install dependencies via Composer
 RUN composer install --no-dev --no-interaction --no-progress
