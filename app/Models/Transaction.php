@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
 use Carbon\Carbon;
@@ -178,7 +179,8 @@ class Transaction extends Model
      * @param string $type
      * @return Builder
      */
-    public function scopeByScheduleType(Builder $query, string $type): Builder
+    #[Scope]
+    protected function byScheduleType(Builder $query, string $type): Builder
     {
         return match ($type) {
             'schedule' => $query->where('schedule', true),
@@ -195,7 +197,8 @@ class Transaction extends Model
     /**
      * Create a dynamic scope to filter transactions by their type
      */
-    public function scopeByType(Builder $query, string $type): Builder
+    #[Scope]
+    protected function byType(Builder $query, string $type): Builder
     {
         return match ($type) {
             'standard' => $query->where('config_type', 'standard'),

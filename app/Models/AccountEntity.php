@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Database\Factories\AccountEntityFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -177,7 +178,8 @@ class AccountEntity extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopeActive($query)
+    #[Scope]
+    protected function active($query)
     {
         return $query->where('active', 1);
     }
@@ -188,7 +190,8 @@ class AccountEntity extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopeAccounts($query): Builder
+    #[Scope]
+    protected function accounts($query): Builder
     {
         return $query->where('config_type', 'account');
     }
@@ -199,7 +202,8 @@ class AccountEntity extends Model
      * @param  Builder  $query
      * @return Builder
      */
-    public function scopePayees($query): Builder
+    #[Scope]
+    protected function payees($query): Builder
     {
         return $query->where('config_type', 'payee');
     }

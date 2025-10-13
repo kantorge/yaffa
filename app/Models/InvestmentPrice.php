@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\InvestmentPriceObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereUpdatedAt($value)
  * @mixin \Eloquent
  */
+#[ObservedBy([InvestmentPriceObserver::class])]
 class InvestmentPrice extends Model
 {
     /**

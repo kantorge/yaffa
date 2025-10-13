@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
@@ -99,7 +100,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeBase(Builder $query): Builder
+    #[Scope]
+    protected function base(Builder $query): Builder
     {
         return $query->where('base', true);
     }
@@ -110,7 +112,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeNotBase(Builder $query): Builder
+    #[Scope]
+    protected function notBase(Builder $query): Builder
     {
         return $query->whereNull('base');
     }
@@ -121,7 +124,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeAutoUpdate(Builder $query): Builder
+    #[Scope]
+    protected function autoUpdate(Builder $query): Builder
     {
         return $query->where('auto_update', true);
     }

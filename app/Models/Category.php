@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Http\Traits\ModelOwnedByUserTrait;
@@ -102,7 +103,8 @@ class Category extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', 1);
     }
@@ -113,7 +115,8 @@ class Category extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeParentCategory(Builder $query): Builder
+    #[Scope]
+    protected function parentCategory(Builder $query): Builder
     {
         return $query->whereNull('parent_id');
     }
@@ -124,7 +127,8 @@ class Category extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeChildCategory(Builder $query): Builder
+    #[Scope]
+    protected function childCategory(Builder $query): Builder
     {
         return $query->whereNotNull('parent_id');
     }
