@@ -84,7 +84,7 @@ class PayeeApiController extends Controller
                     '=',
                     config('transaction_types')[$transactionType]['id']
                 )
-                ->when($accountId, fn($query) => $query->where(
+                ->when($accountId, fn ($query) => $query->where(
                     "transaction_details_standard.account_{$accountDirection}_id",
                     '=',
                     $accountId
@@ -214,7 +214,7 @@ class PayeeApiController extends Controller
         // Calculate total by payees
         $payees = $data
             ->groupBy('payee_id')
-            ->map(fn($payee) => [
+            ->map(fn ($payee) => [
                 'payee_id' => $payee->first()->payee_id,
                 'sum' => $payee->sum('transactions'),
                 'max' => $payee->max('transactions'),
@@ -222,10 +222,10 @@ class PayeeApiController extends Controller
             ])
             // Minimum required transactions to calculate with payee
             // TODO: make this dynamic, e.g based on average or mean
-            ->filter(fn($value) => $value['sum'] > 5)
+            ->filter(fn ($value) => $value['sum'] > 5)
             // Only where maximum is significant (at least half of all items)
             // TODO: make this dynamic
-            ->filter(fn($value) => $value['max'] / $value['sum'] > .5);
+            ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
             return response('', Response::HTTP_OK);
@@ -314,7 +314,7 @@ class PayeeApiController extends Controller
         // Get all payees of the user
         $payees = Auth::user()
             ->payees()
-            ->when($withActive, fn($query) => $query->where('active', true))
+            ->when($withActive, fn ($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);
 
         // Filter payees by similarity to query

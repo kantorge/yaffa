@@ -89,7 +89,7 @@ class ResetPasswordTest extends TestCase
         $this->assertEquals($user->email, $user->fresh()->email);
         $this->assertTrue(Hash::check($password, $user->fresh()->password));
         $this->assertAuthenticatedAs($user);
-        Event::assertDispatched(PasswordReset::class, fn($e) => $e->user->id === $user->id);
+        Event::assertDispatched(PasswordReset::class, fn ($e) => $e->user->id === $user->id);
     }
 
     public function test_user_cannot_reset_password_with_invalid_token(): void

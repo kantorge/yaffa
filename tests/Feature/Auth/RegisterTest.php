@@ -106,7 +106,7 @@ class RegisterTest extends TestCase
         $this->assertTrue(Hash::check($password, $user->password));
 
         // Registration generates event
-        Event::assertDispatched(Registered::class, fn($e) => $e->user->id === $user->id);
+        Event::assertDispatched(Registered::class, fn ($e) => $e->user->id === $user->id);
     }
 
     public function test_user_registration_fails_when_user_limit_is_reached(): void

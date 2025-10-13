@@ -206,7 +206,7 @@ class PayeeTest extends TestCase
         $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'payee']));
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn($notification) => $notification['type'] === 'success');
+            ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 }

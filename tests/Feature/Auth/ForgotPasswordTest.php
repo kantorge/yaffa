@@ -65,7 +65,7 @@ class ForgotPasswordTest extends TestCase
         $token = DB::table('password_reset_tokens')->where('email', $user->email)->first();
         $this->assertNotNull($token);
 
-        Notification::assertSentTo($user, ResetPassword::class, fn($notification, $channels) => Hash::check($notification->token, $token->token) === true);
+        Notification::assertSentTo($user, ResetPassword::class, fn ($notification, $channels) => Hash::check($notification->token, $token->token) === true);
     }
 
     public function test_user_does_not_receive_email_when_not_registered(): void

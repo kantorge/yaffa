@@ -47,7 +47,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         ProcessIncomingEmailByAi::dispatch($mail);
 
         // Assert that the job fails and error message was sent to the user
-        Mail::assertSent(fn(TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn (TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
 
         // Assert that the mail is marked as processed
         $this->assertTrue($mail->fresh()->processed);
@@ -81,7 +81,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         ProcessIncomingEmailByAi::dispatch($mail);
 
         // Assert that the job fails and error message was sent to the user
-        Mail::assertSent(fn(TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn (TransactionErrorFromEmail $mail) => $mail->hasTo($user->email));
 
         // Assert that the mail is marked as processed
         $this->assertTrue($mail->fresh()->processed);
@@ -160,7 +160,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $job->handle();
 
         // Assert that reply email is sent to the user
-        Mail::assertSent(fn(TransactionCreatedFromEmail $mail) => $mail->hasTo($user->email));
+        Mail::assertSent(fn (TransactionCreatedFromEmail $mail) => $mail->hasTo($user->email));
 
         $mail->fresh();
 

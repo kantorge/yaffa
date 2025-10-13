@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Failed;
-use Tests\TestCase;
 
 class LoginFailedEventTest extends TestCase
 {
@@ -27,8 +26,6 @@ class LoginFailedEventTest extends TestCase
 
         $response->assertSessionHasErrors('email');
 
-        Event::assertDispatched(Failed::class, function ($event) use ($user) {
-            return $event->credentials['email'] === $user->email;
-        });
+        Event::assertDispatched(Failed::class, fn ($event) => $event->credentials['email'] === $user->email);
     }
 }
