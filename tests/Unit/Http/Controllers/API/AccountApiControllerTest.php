@@ -19,7 +19,7 @@ class AccountApiControllerTest extends TestCase
 
     private const BASE_ACCOUNT_NAME = 'Same account name';
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 

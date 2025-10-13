@@ -17,7 +17,7 @@ class PayeeApiControllerTest extends TestCase
 
     private const BASE_PAYEE_NAME = 'Same payee name';
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
