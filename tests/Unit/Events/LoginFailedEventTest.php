@@ -11,7 +11,7 @@ class LoginFailedEventTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_failed_event_is_dispatched_on_failed_login()
+    public function test_login_failed_event_is_dispatched_on_failed_login(): void
     {
         Event::fake();
 

@@ -12,7 +12,7 @@ class LoginEventTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_event_is_dispatched_on_successful_login()
+    public function test_login_event_is_dispatched_on_successful_login(): void
     {
         Event::fake();
 

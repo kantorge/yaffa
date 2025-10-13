@@ -12,7 +12,7 @@ class SendEmailVerificationNotification
      *
      * @param  \Illuminate\Auth\Events\Registered  $event
      */
-    public function handle(Registered $event)
+    public function handle(Registered $event): void
     {
         if ($event->user instanceof MustVerifyEmail && !$event->user->hasVerifiedEmail()) {
             $event->user->sendEmailVerificationNotification();
