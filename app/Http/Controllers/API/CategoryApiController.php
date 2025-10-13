@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -12,15 +14,21 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-class CategoryApiController extends Controller
+class CategoryApiController extends Controller implements HasMiddleware
 {
     protected CategoryService $categoryService;
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
 
         $this->categoryService = new CategoryService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            'auth:sanctum',
+        ];
     }
 
     public function getList(Request $request): JsonResponse

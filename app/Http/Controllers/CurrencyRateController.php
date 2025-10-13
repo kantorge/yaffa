@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
@@ -14,7 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class CurrencyRateController extends Controller
+class CurrencyRateController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
@@ -22,8 +24,15 @@ class CurrencyRateController extends Controller
 
     public function __construct(CurrencyRate $currencyRate)
     {
-        $this->middleware(['auth', 'verified']);
+
         $this->currencyRate = $currencyRate;
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**

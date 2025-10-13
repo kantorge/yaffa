@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
@@ -9,16 +11,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class TagController extends Controller
+class TagController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('can:viewAny,App\Models\Tag')->only('index');
-        $this->middleware('can:view,tag')->only('show');
-        $this->middleware('can:create,App\Models\Tag')->only('create', 'store');
-        $this->middleware('can:update,tag')->only('edit', 'update');
-        $this->middleware('can:delete,tag')->only('destroy');
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Tag', only: ['index']),
+            new Middleware('can:view,tag', only: ['show']),
+            new Middleware('can:create,App\Models\Tag', only: ['create', 'store']),
+            new Middleware('can:update,tag', only: ['edit', 'update']),
+            new Middleware('can:delete,tag', only: ['destroy']),
+        ];
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
@@ -19,7 +21,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ReportApiController extends Controller
+class ReportApiController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -28,8 +30,15 @@ class ReportApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+
         $this->categoryService = new CategoryService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     /**

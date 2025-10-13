@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentController extends Controller
+class InvestmentController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
@@ -20,14 +22,20 @@ class InvestmentController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('can:viewAny,App\Models\Investment')->only('index');
-        $this->middleware('can:view,investment')->only('show');
-        $this->middleware('can:create,App\Models\Investment')->only('create', 'store');
-        $this->middleware('can:update,investment')->only('edit', 'update');
-        $this->middleware('can:delete,investment')->only('destroy');
 
         $this->investmentService = new InvestmentService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Investment', only: ['index']),
+            new Middleware('can:view,investment', only: ['show']),
+            new Middleware('can:create,App\Models\Investment', only: ['create', 'store']),
+            new Middleware('can:update,investment', only: ['edit', 'update']),
+            new Middleware('can:delete,investment', only: ['destroy']),
+        ];
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
 use Illuminate\Database\QueryException;
@@ -10,16 +12,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentGroupController extends Controller
+class InvestmentGroupController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('can:viewAny,App\Models\InvestmentGroup')->only('index');
-        $this->middleware('can:view,investment_group')->only('show');
-        $this->middleware('can:create,App\Models\InvestmentGroup')->only('create', 'store');
-        $this->middleware('can:update,investment_group')->only('edit', 'update');
-        $this->middleware('can:delete,investment_group')->only('destroy');
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\InvestmentGroup', only: ['index']),
+            new Middleware('can:view,investment_group', only: ['show']),
+            new Middleware('can:create,App\Models\InvestmentGroup', only: ['create', 'store']),
+            new Middleware('can:update,investment_group', only: ['edit', 'update']),
+            new Middleware('can:delete,investment_group', only: ['destroy']),
+        ];
     }
 
     /**

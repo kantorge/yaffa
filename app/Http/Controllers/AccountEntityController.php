@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
@@ -17,16 +19,18 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class AccountEntityController extends Controller
+class AccountEntityController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('can:viewAny,App\Models\AccountEntity')->only('index');
-        $this->middleware('can:view,account_entity')->only('show');
-        $this->middleware('can:create,App\Models\AccountEntity')->only('create', 'store');
-        $this->middleware('can:update,account_entity')->only('edit', 'update');
-        $this->middleware('can:delete,account_entity')->only('destroy');
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\AccountEntity', only: ['index']),
+            new Middleware('can:view,account_entity', only: ['show']),
+            new Middleware('can:create,App\Models\AccountEntity', only: ['create', 'store']),
+            new Middleware('can:update,account_entity', only: ['edit', 'update']),
+            new Middleware('can:delete,account_entity', only: ['destroy']),
+        ];
     }
 
     /*

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessIncomingEmailByAi;
 use App\Models\ReceivedMail;
@@ -9,15 +11,21 @@ use App\Services\ReceivedMailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
-class ReceivedMailApiController extends Controller
+class ReceivedMailApiController extends Controller implements HasMiddleware
 {
     protected ReceivedMailService $receivedMailService;
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
 
         $this->receivedMailService = new ReceivedMailService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     /**

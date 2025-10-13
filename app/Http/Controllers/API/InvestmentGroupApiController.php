@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\InvestmentGroup;
@@ -10,15 +12,21 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
-class InvestmentGroupApiController extends Controller
+class InvestmentGroupApiController extends Controller implements HasMiddleware
 {
     protected InvestmentGroupService $investmentGroupService;
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
 
         $this->investmentGroupService = new InvestmentGroupService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            'auth:sanctum',
+        ];
     }
 
     /**

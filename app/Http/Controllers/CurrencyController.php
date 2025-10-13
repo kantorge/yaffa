@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
@@ -16,18 +18,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class CurrencyController extends Controller
+class CurrencyController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('can:viewAny,App\Models\Currency')->only('index');
-        $this->middleware('can:view,currency')->only('show');
-        $this->middleware('can:create,App\Models\Currency')->only('create', 'store');
-        $this->middleware('can:update,currency')->only('edit', 'update');
-        $this->middleware('can:delete,currency')->only('destroy');
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Currency', only: ['index']),
+            new Middleware('can:view,currency', only: ['show']),
+            new Middleware('can:create,App\Models\Currency', only: ['create', 'store']),
+            new Middleware('can:update,currency', only: ['edit', 'update']),
+            new Middleware('can:delete,currency', only: ['destroy']),
+        ];
     }
 
     /**
