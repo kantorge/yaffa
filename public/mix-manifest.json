@@ -2,5 +2,14 @@
     "/js/app.js": "/js/app.js",
     "/js/manifest.js": "/js/manifest.js",
     "/js/vendor.js": "/js/vendor.js",
-    "/css/app.css": "/css/app.css"
+    "/images/vendor/jstree/src/themes/default/32px.png?c5e3a56ab99c1306b453f89a7634d5e4": "/images/vendor/jstree/src/themes/default/32px.png?c5e3a56ab99c1306b453f89a7634d5e4",
+    "/images/vendor/jstree/src/themes/default/throbber.gif?56d4c7ce2d3591a021073d07a6ea7342": "/images/vendor/jstree/src/themes/default/throbber.gif?56d4c7ce2d3591a021073d07a6ea7342",
+    "/images/vendor/jstree/src/themes/default/40px.png?ece2600b7bd4064b0487646968786d66": "/images/vendor/jstree/src/themes/default/40px.png?ece2600b7bd4064b0487646968786d66",
+    "/css/app.css": "/css/app.css",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?914997e1bdfc990d0897cdaba877a0b3": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?914997e1bdfc990d0897cdaba877a0b3",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?c210719e60948b211a1260f79812efe5": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?c210719e60948b211a1260f79812efe5",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?1815e00441357e01619e5793e1caa78a": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?1815e00441357e01619e5793e1caa78a"
 }
