@@ -38,11 +38,11 @@ class UserRequest extends FormRequest
                 'string',
                 Rule::in(
                     collect(config('yaffa.account_date_presets'))
-                    ->pluck('options')
-                    ->flatten(1)
-                    ->pluck('value')
-                    ->prepend('none')
-                    ->all()
+                        ->pluck('options')
+                        ->flatten(1)
+                        ->pluck('value')
+                        ->prepend('none')
+                        ->all()
                 )
             ],
         ];

@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
+use App\Models\TransactionType;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,8 +19,15 @@ class AccountApiControllerTest extends TestCase
 
     private const BASE_ACCOUNT_NAME = 'Same account name';
 
-    /** @test */
-    public function test_account_list_with_query_applies_all_provided_filters()
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        // Load the transaction types into the config, used by some of the tests
+        config()->set('transaction_types', TransactionType::all()->keyBy('name')->toArray());
+    }
+
+    public function test_account_list_with_query_applies_all_provided_filters(): void
     {
         // Primary user with test data covering various use cases
         /** @var User $user */
@@ -115,5 +123,19 @@ class AccountApiControllerTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/assets/account?q=clone&limit=0');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(20);
+    }
+
+    public function test_transaction_type_must_be_valid_if_provided(): void
+    {
+        // New user, no data needed
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=invalid_type');
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJsonPath('message', 'The transaction_type parameter is required and must be valid.');
+
+        $response = $this->actingAs($user)->getJson('/api/assets/account?transaction_type=withdrawal');
+        $response->assertStatus(Response::HTTP_OK);
     }
 }

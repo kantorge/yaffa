@@ -3,10 +3,10 @@
 namespace App\Rules;
 
 use App\Models\Category;
+use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
 
-class CategoryMergeValidSource implements Rule, DataAwareRule
+class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule, DataAwareRule, \Illuminate\Contracts\Validation\ValidationRule
 {
     /**
      * All of the data under validation.
@@ -40,7 +40,7 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
     public function passes($attribute, $value): bool
     {
         // Fail if source category or target category is not set
-        if (! isset($this->data['category_source']) || ! isset($this->data['category_target'])) {
+        if (!isset($this->data['category_source']) || !isset($this->data['category_target'])) {
             return false;
         }
 
@@ -51,7 +51,22 @@ class CategoryMergeValidSource implements Rule, DataAwareRule
         $categoryTarget = Category::find($this->data['category_target']);
 
         // Check invalid combination, where source is a parent (it's parent is null) and target is a child (it's parent is not null)
-        return ! ($categorySource->parent_id === null && $categoryTarget->parent_id !== null);
+        return !($categorySource->parent_id === null && $categoryTarget->parent_id !== null);
+    }
+
+    /**
+     * Run the validation rule for the ValidationRule contract (Laravel 11).
+     *
+     * @param  string  $attribute
+     * @param  mixed  $value
+     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @return void
+     */
+    public function validate(string $attribute, mixed $value, Closure $fail): void
+    {
+        if (!$this->passes($attribute, $value)) {
+            $fail($this->message());
+        }
     }
 
     /**

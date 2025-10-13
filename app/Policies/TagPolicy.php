@@ -21,7 +21,7 @@ class TagPolicy
      * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
         return true;
     }
@@ -33,7 +33,7 @@ class TagPolicy
      * @param  Tag  $tag
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, Tag $tag)
+    public function view(User $user, Tag $tag): bool
     {
         return $this->isOwnItem($user, $tag);
     }
@@ -44,7 +44,7 @@ class TagPolicy
      * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
         return true;
     }
@@ -56,7 +56,7 @@ class TagPolicy
      * @param  Tag  $tag
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, Tag $tag)
+    public function update(User $user, Tag $tag): bool
     {
         return $this->isOwnItem($user, $tag);
     }
@@ -68,7 +68,7 @@ class TagPolicy
      * @param  Tag  $tag
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, Tag $tag)
+    public function delete(User $user, Tag $tag): bool
     {
         return $this->isOwnItem($user, $tag);
     }
@@ -80,7 +80,7 @@ class TagPolicy
      * @param  Tag  $tag
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user, Tag $tag)
+    public function restore(User $user, Tag $tag): bool
     {
         return $this->isOwnItem($user, $tag);
     }
@@ -92,7 +92,7 @@ class TagPolicy
      * @param  Tag  $tag
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, Tag $tag)
+    public function forceDelete(User $user, Tag $tag): bool
     {
         return $this->isOwnItem($user, $tag);
     }

@@ -19,10 +19,8 @@ class InvestmentPriceRequest extends FormRequest
             'date' => [
                 'required',
                 'date',
-                Rule::unique('investment_prices')->where(function ($query) {
-                    return $query
-                        ->where('investment_id', $this->investment_id);
-                })->ignore($this->id),
+                Rule::unique('investment_prices')->where(fn ($query) => $query
+                    ->where('investment_id', $this->investment_id))->ignore($this->id),
             ],
             'price' => [
                 'required',

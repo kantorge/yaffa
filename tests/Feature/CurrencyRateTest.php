@@ -39,8 +39,7 @@ class CurrencyRateTest extends TestCase
         return $currency;
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         // For this test, set the data provider of the currency exchange rate API to mock
         config(['currency-exchange-rates.default_provider' => 'mock']);
@@ -85,8 +84,7 @@ class CurrencyRateTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_can_access_their_own_resources()
+    public function test_user_can_access_their_own_resources(): void
     {
         // For this test, set the data provider of the currency exchange rate API to mock
         config(['currency-exchange-rates.default_provider' => 'mock']);

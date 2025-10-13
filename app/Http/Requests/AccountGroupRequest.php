@@ -23,11 +23,9 @@ class AccountGroupRequest extends FormRequest
                 'required',
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
-                Rule::unique('account_groups')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->when($this->account_group, fn ($query) => $query->where('id', '!=', $this->account_group->id));
-                }),
+                Rule::unique('account_groups')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->when($this->account_group, fn ($query) => $query->where('id', '!=', $this->account_group->id))),
             ],
         ];
     }

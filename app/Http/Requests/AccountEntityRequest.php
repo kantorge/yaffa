@@ -19,14 +19,10 @@ class AccountEntityRequest extends FormRequest
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 // The unique rule is scoped to the user and the config type of either the current entity or the request
-                Rule::unique('account_entities')->where(function ($query) {
-                    return $query
-                        ->where('user_id', $this->user()->id)
-                        ->where('config_type', $this->config_type)
-                        ->when($this->account_entity, function ($query) {
-                            return $query->where('id', '!=', $this->account_entity->id);
-                        });
-                }),
+                Rule::unique('account_entities')->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->where('config_type', $this->config_type)
+                    ->when($this->account_entity, fn ($query) => $query->where('id', '!=', $this->account_entity->id))),
             ],
             'config_type' => 'required|in:account,payee',
             'active' => 'boolean',
@@ -60,11 +56,11 @@ class AccountEntityRequest extends FormRequest
                     'string',
                     Rule::in(
                         collect(config('yaffa.account_date_presets'))
-                        ->pluck('options')
-                        ->flatten(1)
-                        ->pluck('value')
-                        ->prepend('none')
-                        ->all()
+                            ->pluck('options')
+                            ->flatten(1)
+                            ->pluck('value')
+                            ->prepend('none')
+                            ->all()
                     )
                 ],
             ]);

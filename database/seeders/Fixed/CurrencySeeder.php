@@ -11,7 +11,7 @@ class CurrencySeeder extends Seeder
     /**
      * Run the database seeds by creating pre-defined values
      */
-    public function run(User $user)
+    public function run(User $user): void
     {
         Currency::factory()->create([
             'name' => 'Hungarian Forint',

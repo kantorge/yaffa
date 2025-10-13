@@ -13,7 +13,7 @@ class InvestmentPriceTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -25,7 +25,7 @@ class InvestmentPriceTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_and_manage_investment_prices()
+    public function test_user_can_load_and_manage_investment_prices(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

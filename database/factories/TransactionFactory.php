@@ -15,13 +15,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class TransactionFactory extends Factory
 {
     /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = Transaction::class;
-
-    /**
      * Configure the model factory.
      *
      * @return $this
@@ -133,13 +126,11 @@ class TransactionFactory extends Factory
      */
     public function withdrawal(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
-                'config_type' => 'standard',
-                'config_id' => TransactionDetailStandard::factory()->withdrawal($user)->create(),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            'config_type' => 'standard',
+            'config_id' => TransactionDetailStandard::factory()->withdrawal($user)->create(),
+        ]);
     }
 
     /**
@@ -150,17 +141,15 @@ class TransactionFactory extends Factory
      */
     public function withdrawal_schedule(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return [
-                'date' => null,
-                'schedule' => 1,
-                'budget' => 0,
-                'reconciled' => 0,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
-                'config_type' => 'standard',
-                'config_id' => TransactionDetailStandard::factory()->withdrawal($user)->create(),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'date' => null,
+            'schedule' => 1,
+            'budget' => 0,
+            'reconciled' => 0,
+            'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            'config_type' => 'standard',
+            'config_id' => TransactionDetailStandard::factory()->withdrawal($user)->create(),
+        ]);
     }
 
     /**
@@ -171,13 +160,11 @@ class TransactionFactory extends Factory
      */
     public function deposit(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'deposit')->first()->id,
-                'config_type' => 'standard',
-                'config_id' => TransactionDetailStandard::factory()->deposit($user)->create(),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'deposit')->first()->id,
+            'config_type' => 'standard',
+            'config_id' => TransactionDetailStandard::factory()->deposit($user)->create(),
+        ]);
     }
 
     /**
@@ -188,13 +175,11 @@ class TransactionFactory extends Factory
      */
     public function transfer(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
-                'config_type' => 'standard',
-                'config_id' => TransactionDetailStandard::factory()->transfer($user)->create(),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+            'config_type' => 'standard',
+            'config_id' => TransactionDetailStandard::factory()->transfer($user)->create(),
+        ]);
     }
 
     /**
@@ -206,13 +191,11 @@ class TransactionFactory extends Factory
      */
     public function buy(User $user, array $configAttributes = []): Factory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
-                'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
+        ]);
     }
 
     /**
@@ -224,13 +207,11 @@ class TransactionFactory extends Factory
      */
     public function sell(User $user, array $configAttributes = []): Factory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
-                'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()->sell($user)->create($configAttributes),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()->sell($user)->create($configAttributes),
+        ]);
     }
 
     /**
@@ -242,15 +223,13 @@ class TransactionFactory extends Factory
      */
     public function dividend(User $user, array $configAttributes): Factory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            return [
-                'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
-                'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()
-                    ->dividend($user)
-                    ->create($configAttributes),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()
+                ->dividend($user)
+                ->create($configAttributes),
+        ]);
     }
 
     /**
@@ -258,17 +237,15 @@ class TransactionFactory extends Factory
      */
     public function buy_schedule(User $user, array $configAttributes = []): Factory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            return [
-                'date' => null,
-                'schedule' => 1,
-                'budget' => 0,
-                'reconciled' => 0,
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
-                'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'date' => null,
+            'schedule' => 1,
+            'budget' => 0,
+            'reconciled' => 0,
+            'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()->buy($user)->create($configAttributes),
+        ]);
     }
 
     /**
@@ -276,18 +253,16 @@ class TransactionFactory extends Factory
      */
     public function dividend_schedule(User $user, array $configAttributes): Factory
     {
-        return $this->state(function (array $attributes) use ($user, $configAttributes) {
-            return [
-                'date' => null,
-                'schedule' => 1,
-                'budget' => 0,
-                'reconciled' => 0,
-                'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
-                'config_type' => 'investment',
-                'config_id' => TransactionDetailInvestment::factory()
-                    ->dividend($user)
-                    ->create($configAttributes),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'date' => null,
+            'schedule' => 1,
+            'budget' => 0,
+            'reconciled' => 0,
+            'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
+            'config_type' => 'investment',
+            'config_id' => TransactionDetailInvestment::factory()
+                ->dividend($user)
+                ->create($configAttributes),
+        ]);
     }
 }
