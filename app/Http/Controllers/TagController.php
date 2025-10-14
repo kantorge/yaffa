@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
@@ -30,7 +31,7 @@ class TagController extends Controller implements HasMiddleware
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/tag')
@@ -38,7 +39,7 @@ class TagController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
          */
         // Get all tags of the user from the database and return to view
-        $tags = Auth::user()
+        $tags = $request->user()
             ->tags()
             ->select('id', 'name', 'active')
             ->get()

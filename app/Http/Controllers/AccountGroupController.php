@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\AccountGroupRequest;
@@ -31,7 +32,7 @@ class AccountGroupController extends Controller implements HasMiddleware
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/account-group')
@@ -39,7 +40,7 @@ class AccountGroupController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountGroup')
          */
         // Get all account groups of the user from the database and return to view
-        $accountGroups = Auth::user()
+        $accountGroups = $request->user()
             ->accountGroups()
             ->select('id', 'name')
             ->withCount('accountEntities')

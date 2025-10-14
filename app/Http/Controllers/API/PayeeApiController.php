@@ -34,7 +34,7 @@ class PayeeApiController extends Controller implements HasMiddleware
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
-            $payees = Auth::user()
+            $payees = $request->user()
                 ->payees()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
@@ -109,7 +109,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getPayeeDefaultSuggestion()
+    public function getPayeeDefaultSuggestion(Request $request)
     {
         /**
          * @get('/api/assets/get_default_category_suggestion')
@@ -146,9 +146,9 @@ class PayeeApiController extends Controller implements HasMiddleware
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id)
-            ->where('transactions.user_id', Auth::user()->id)
-            ->where('account_entities.user_id', Auth::user()->id)
+            ->where('categories.user_id', $request->user()->id)
+            ->where('transactions.user_id', $request->user()->id)
+            ->where('account_entities.user_id', $request->user()->id)
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -190,7 +190,7 @@ class PayeeApiController extends Controller implements HasMiddleware
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id) // Only for authenticated user
+            ->where('categories.user_id', $request->user()->id) // Only for authenticated user
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -289,7 +289,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         Gate::authorize('create', AccountEntity::class);
 
         $validated = $request->validated();
-        $validated['user_id'] = Auth::user()->id;
+        $validated['user_id'] = $request->user()->id;
 
         $newPayee = new AccountEntity($validated);
 
@@ -316,7 +316,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $withActive = $request->get('withActive');
 
         // Get all payees of the user
-        $payees = Auth::user()
+        $payees = $request->user()
             ->payees()
             ->when($withActive, fn ($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);

@@ -41,7 +41,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
          * @get('/api/assets/investment')
          * @middlewares('api', 'auth:sanctum')
          */
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->where('active', true)
             ->select(['id', 'name AS text'])
@@ -122,7 +122,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
      *
      * @return JsonResponse
      */
-    public function getInvestmentsWithTimeline(): JsonResponse
+    public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment/timeline')
@@ -130,7 +130,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
          */
         $investmentService = new InvestmentService();
 
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->with([
                 'currency',
@@ -180,7 +180,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
                 // If period start was set but the end date is missing, then set it to the app config end date
                 if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
-                    $period['end'] = Auth::user()->end_date;
+                    $period['end'] = $request->user()->end_date;
                     $period['last_price'] = $investment->getLatestPrice('combined');
                     $positions[] = $period;
                 }

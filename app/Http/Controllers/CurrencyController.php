@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
@@ -39,7 +40,7 @@ class CurrencyController extends Controller implements HasMiddleware
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/currency')
@@ -47,7 +48,7 @@ class CurrencyController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
-        $currencies = Auth::user()
+        $currencies = $request->user()
             ->currencies()
             ->get();
 
@@ -101,7 +102,7 @@ class CurrencyController extends Controller implements HasMiddleware
      * @param Currency $currency
      * @return View
      */
-    public function edit(Currency $currency): View
+    public function edit(Request $request, Currency $currency): View
     {
         /**
          * @get('/currency/{currency}/edit')
@@ -110,7 +111,7 @@ class CurrencyController extends Controller implements HasMiddleware
          */
 
         // Get all currencies, as base currency setting is defined based on this
-        $currencies = Auth::user()
+        $currencies = $request->user()
             ->currencies()
             ->get();
 

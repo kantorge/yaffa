@@ -236,7 +236,7 @@ class ReportApiController extends Controller implements HasMiddleware
      * @param int|null $month
      * @return JsonResponse
      */
-    public function getCategoryWaterfallData(
+    public function getCategoryWaterfallData(Request $request, 
         string $transactionType,
         string $dataType,
         int $year,
@@ -263,7 +263,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 'transaction.config.accountTo.config',
             ])
                 ->whereHas('transaction', function ($query) use ($year, $month) {
-                    $query->where('user_id', Auth::user()->id)
+                    $query->where('user_id', $request->user()->id)
                         ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                         ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                             ->whereRaw('MONTH(date) = ?', [$month]))
@@ -318,7 +318,7 @@ class ReportApiController extends Controller implements HasMiddleware
                         ->get()
                         ->pluck('id')
                 )
-                ->where('user_id', Auth::user()->id)
+                ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                     ->whereRaw('MONTH(date) = ?', [$month]))

@@ -68,7 +68,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                     $filters['date_preset'] = $request->get('date_preset');
                 } else {
                     $filters['date_preset'] = $accountEntity->config->default_date_range
-                    ?? Auth::user()->account_details_date_range
+                    ?? $request->user()->account_details_date_range
                     ?? 'none';
                 }
             }
@@ -243,7 +243,7 @@ class AccountEntityController extends Controller implements HasMiddleware
         $validated = $request->validated();
 
         $accountEntity = new AccountEntity($validated);
-        $accountEntity->user_id = Auth::user()->id;
+        $accountEntity->user_id = $request->user()->id;
 
         if ($validated['config_type'] === 'account') {
             $accountConfig = Account::create($validated['config']);

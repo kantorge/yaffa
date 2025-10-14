@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentRequest;
@@ -43,7 +44,7 @@ class InvestmentController extends Controller implements HasMiddleware
      *
      * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/investment')
@@ -51,7 +52,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
          */
         // Show all investments from the database and return to view
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->withCount('transactions')
             ->withCount('transactionsBasic')
@@ -72,7 +73,7 @@ class InvestmentController extends Controller implements HasMiddleware
         // Pass data for DataTables
         JavaScriptFacade::put([
             'investments' => $investments,
-            'investmentGroups' => Auth::user()->investmentGroups,
+            'investmentGroups' => $request->user()->investmentGroups,
         ]);
 
         return view('investment.index');
@@ -121,7 +122,7 @@ class InvestmentController extends Controller implements HasMiddleware
      *
      * @return View|RedirectResponse
      */
-    public function create(): View|RedirectResponse
+    public function create(Request $request): View|RedirectResponse
     {
         /**
          * @get('/investment/create')
@@ -129,7 +130,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
         // Redirect the user to the investment group form, if no investment groups are available
-        if (Auth::user()->investmentGroups()->count() === 0) {
+        if ($request->user()->investmentGroups()->count() === 0) {
             $this->addMessage(
                 __('investment.requirement.investmentGroup'),
                 'info',
@@ -141,7 +142,7 @@ class InvestmentController extends Controller implements HasMiddleware
         }
 
         // Redirect to currency form, if empty
-        if (Auth::user()->currencies()->count() === 0) {
+        if ($request->user()->currencies()->count() === 0) {
             $this->addMessage(
                 __('investment.requirement.currency'),
                 'info',
@@ -163,7 +164,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
         $investment = Investment::make($request->validated());
-        $investment->user()->associate(Auth::user());
+        $investment->user()->associate($request->user());
         $investment->save();
 
         self::addSimpleSuccessMessage(__('Investment added'));

@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class VerificationController extends Controller
 {
-    public function notice()
+    public function notice(Request $request)
     {
         // TODO: can this be achieved with middlewares?
-        $user = Auth::user();
+        $user = $request->user();
         if ($user->hasVerifiedEmail()) {
             return redirect(route('home'));
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
@@ -29,14 +30,14 @@ class MainController extends Controller implements HasMiddleware
         ];
     }
 
-    public function account_details(AccountEntity $account, $withForecast = null)
+    public function account_details(Request $request, AccountEntity $account, $withForecast = null)
     {
         /**
          * @get('/account/history/{account}/{withForecast?}')
          * @name('account.history')
          * @middlewares('web', 'auth', 'verified')
          */
-        $user = Auth::user();
+        $user = $request->user();
 
         // Get account details and load to class variable
         $this->currentAccount = $account->load([

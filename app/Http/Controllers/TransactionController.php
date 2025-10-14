@@ -24,7 +24,7 @@ class TransactionController extends Controller implements HasMiddleware
         ];
     }
 
-    public function create(string $type): View|RedirectResponse
+    public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
          * @get('/transactions/create/{type}
@@ -33,7 +33,7 @@ class TransactionController extends Controller implements HasMiddleware
          */
 
         // Sanity check for necessary assets
-        if (Auth::user()->accounts()->active()->count() === 0) {
+        if ($request->user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
                 'info',
