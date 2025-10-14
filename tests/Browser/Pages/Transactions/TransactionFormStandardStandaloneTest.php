@@ -321,7 +321,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction clone
             $browser->assertRouteIs(
@@ -343,7 +343,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(
@@ -365,7 +365,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')
+            $transaction = Transaction::orderByDesc('id')
                 ->with([
                     'config',
                 ])
@@ -498,7 +498,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')
+            $transaction = Transaction::orderByDesc('id')
                 ->with([
                     'config',
                     'config.accountTo'
@@ -678,7 +678,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(
@@ -721,7 +721,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
@@ -752,7 +752,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             ])
             ->save();
 
-        $transaction = Transaction::orderBy('id', 'desc')->first();
+        $transaction = Transaction::orderByDesc('id')->first();
 
         // Add transaction items
         $transaction->transactionItems()
@@ -841,7 +841,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $newTransaction = Transaction::orderBy('id', 'desc')->with('transactionSchedule')->first();
+            $newTransaction = Transaction::orderByDesc('id')->with('transactionSchedule')->first();
 
             // Check that the new transaction has a schedule start and next date set to today
             $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->start_date->format('Y-m-d'));
