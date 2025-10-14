@@ -229,7 +229,8 @@ class ReportApiController extends Controller implements HasMiddleware
      *
      * @param string $dataType Planned feature for budget. Currently actual transactions are supported.
      */
-    public function getCategoryWaterfallData(Request $request, 
+    public function getCategoryWaterfallData(
+        Request $request,
         string $transactionType,
         string $dataType,
         int $year,

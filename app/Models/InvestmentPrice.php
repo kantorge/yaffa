@@ -31,7 +31,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy([InvestmentPriceObserver::class])]
 class InvestmentPrice extends Model
 {
-
     /**
      * The attributes that are mass assignable.
      *

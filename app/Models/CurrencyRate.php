@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy([CurrencyRateObserver::class])]
 class CurrencyRate extends Model
 {
-
     public $timestamps = false;
 
     /**
