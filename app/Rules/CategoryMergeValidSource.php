@@ -22,7 +22,7 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
      *
      * @return $this
      */
-    public function setData($data)
+    public function setData(array $data): static
     {
         $this->data = $data;
 
@@ -37,7 +37,7 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
      *
      * @return bool
      */
-    public function passes($attribute, $value): bool
+    public function passes(string $attribute, $value): bool
     {
         // Fail if source category or target category is not set
         if (!isset($this->data['category_source']) || !isset($this->data['category_target'])) {

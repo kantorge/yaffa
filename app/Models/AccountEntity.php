@@ -177,7 +177,7 @@ class AccountEntity extends Model
      * @return Builder
      */
     #[Scope]
-    protected function active($query)
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', 1);
     }

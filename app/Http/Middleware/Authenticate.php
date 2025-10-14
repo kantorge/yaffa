@@ -17,7 +17,7 @@ class Authenticate extends Middleware
      *
      * @throws AuthenticationException
      */
-    protected function unauthenticated($request, array $guards): void
+    protected function unauthenticated(Request $request, array $guards): void
     {
         if ($request->expectsJson()) {
             abort(Response::HTTP_FORBIDDEN, 'Unauthorized.');
@@ -36,7 +36,7 @@ class Authenticate extends Middleware
      * @param  Request  $request
      * @return string|null
      */
-    protected function redirectTo($request): ?string
+    protected function redirectTo(Request $request): ?string
     {
         return route('login');
     }

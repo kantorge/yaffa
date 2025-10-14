@@ -109,7 +109,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getPayeeDefaultSuggestion(Request $request)
+    public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
          * @get('/api/assets/get_default_category_suggestion')
@@ -246,7 +246,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
+    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
          * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
@@ -264,7 +264,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
+    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
          * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')

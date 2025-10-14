@@ -20,7 +20,7 @@ class VerificationController extends Controller
         return view('auth.verify');
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function verify(EmailVerificationRequest $request): RedirectResponse
     {
         $request->fulfill();
 
