@@ -34,8 +34,6 @@ class CategoryController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -89,8 +87,6 @@ class CategoryController extends Controller implements HasMiddleware
 
     /**
      * Display a form for adding new resource.
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -118,9 +114,6 @@ class CategoryController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Category  $category
-     * @return View
      */
     public function edit(Category $category): View
     {
@@ -158,9 +151,6 @@ class CategoryController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Category  $category
-     * @return RedirectResponse
      */
     public function destroy(Category $category): RedirectResponse
     {
@@ -187,9 +177,6 @@ class CategoryController extends Controller implements HasMiddleware
 
     /**
      * Display a form to merge two categories.
-     *
-     * @param Category|null $categorySource
-     * @return View
      */
     public function mergeCategoriesForm(?Category $categorySource): View
     {

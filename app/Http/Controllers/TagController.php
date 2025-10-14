@@ -28,8 +28,6 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -65,9 +63,6 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Tag  $tag
-     * @return View
      */
     public function edit(Tag $tag): View
     {
@@ -114,9 +109,6 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Tag  $tag
-     * @return RedirectResponse
      */
     public function destroy(Tag $tag): RedirectResponse
     {

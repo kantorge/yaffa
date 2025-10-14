@@ -29,8 +29,6 @@ class AccountGroupController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -66,9 +64,6 @@ class AccountGroupController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return View
      */
     public function edit(AccountGroup $accountGroup): View
     {
@@ -114,9 +109,6 @@ class AccountGroupController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return RedirectResponse
      */
     public function destroy(AccountGroup $accountGroup): RedirectResponse
     {

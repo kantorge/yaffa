@@ -42,9 +42,6 @@ class ReportApiController extends Controller implements HasMiddleware
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function budgetChart(Request $request): JsonResponse
     {
@@ -230,11 +227,7 @@ class ReportApiController extends Controller implements HasMiddleware
     /**
      * Collect actual transactions for the given interval.
      *
-     * @param string $transactionType
      * @param string $dataType Planned feature for budget. Currently actual transactions are supported.
-     * @param int $year
-     * @param int|null $month
-     * @return JsonResponse
      */
     public function getCategoryWaterfallData(Request $request, 
         string $transactionType,

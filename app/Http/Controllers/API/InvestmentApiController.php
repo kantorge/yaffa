@@ -60,9 +60,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
     /**
      * Read and return the details of a selected investment
-     *
-     * @param Investment $investment
-     * @return JsonResponse
      */
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
@@ -119,8 +116,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
     /**
      * Get all investments with timeline data
-     *
-     * @return JsonResponse
      */
     public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
@@ -195,9 +190,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified investment.
-     *
-     * @param Investment $investment
-     * @return JsonResponse
      */
     public function destroy(Investment $investment): JsonResponse
     {

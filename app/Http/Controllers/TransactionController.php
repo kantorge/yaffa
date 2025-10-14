@@ -55,9 +55,6 @@ class TransactionController extends Controller implements HasMiddleware
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param Transaction $transaction
-     * @param string $action
-     * @return View
      * @throws AuthorizationException
      */
     public function openTransaction(Transaction $transaction, string $action): View
@@ -113,8 +110,6 @@ class TransactionController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      *
-     * @param Transaction $transaction
-     * @return RedirectResponse
      * @throws AuthorizationException
      */
     public function destroy(Transaction $transaction): RedirectResponse

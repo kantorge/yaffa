@@ -51,7 +51,6 @@ class OnboardingApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * @param string $topic
      * @uses onboardingTopicDataDashboard
      * @uses onboardingTopicDataReportsSchedules
      * @uses onboardingTopicDataAccountGroups

@@ -11,8 +11,6 @@ class ImportController extends Controller
 {
     /**
      * Display UI for importing and parsing CSV files.
-     *
-     * @return View
      */
     public function importCsv(Request $request): View
     {

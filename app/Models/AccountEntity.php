@@ -172,9 +172,6 @@ class AccountEntity extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
     #[Scope]
     protected function active(Builder $query): Builder
@@ -184,9 +181,6 @@ class AccountEntity extends Model
 
     /**
      * Scope a query to only include accounts.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
     #[Scope]
     protected function accounts(Builder $query): Builder
@@ -196,9 +190,6 @@ class AccountEntity extends Model
 
     /**
      * Scope a query to only include payees.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
     #[Scope]
     protected function payees(Builder $query): Builder

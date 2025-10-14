@@ -17,10 +17,6 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
 
     /**
      * Set the data under validation.
-     *
-     * @param  array  $data
-     *
-     * @return $this
      */
     public function setData(array $data): static
     {
@@ -32,10 +28,7 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string  $attribute
      * @param  mixed  $value
-     *
-     * @return bool
      */
     public function passes(string $attribute, $value): bool
     {
@@ -57,8 +50,6 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
     /**
      * Run the validation rule for the ValidationRule contract (Laravel 11).
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
      * @param  Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -70,8 +61,6 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): string
     {

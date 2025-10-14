@@ -342,9 +342,6 @@ class PayeeApiController extends Controller implements HasMiddleware
 
     /**
      * Get the payee entity and main attributes for the given id
-     *
-     * @param  AccountEntity  $accountEntity
-     * @return JsonResponse
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {

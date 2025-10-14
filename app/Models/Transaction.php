@@ -167,10 +167,6 @@ class Transaction extends Model
 
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
-     *
-     * @param Builder $query
-     * @param string $type
-     * @return Builder
      */
     #[Scope]
     protected function byScheduleType(Builder $query, string $type): Builder

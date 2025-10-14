@@ -106,9 +106,6 @@ class Investment extends Model
 
     /**
      * Scope a query to only include active investments.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function active(Builder $query): Builder
@@ -227,8 +224,6 @@ class Investment extends Model
      * Get the latest price of the investment
      *
      * @param string $type Can be 'stored', 'transaction' or 'combined'
-     * @param Carbon|null $onOrBefore
-     * @return float|null
      */
     public function getLatestPrice(string $type = 'combined', Carbon $onOrBefore = null): ?float
     {
@@ -330,9 +325,6 @@ class Investment extends Model
         ];
     }
 
-    /**
-     * @return string|null
-     */
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
@@ -351,8 +343,6 @@ class Investment extends Model
 
     /**
      * Return all available price providers with all their details.
-     *
-     * @return array
      */
     public function getAllInvestmentPriceProviders(): array
     {

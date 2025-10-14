@@ -126,8 +126,6 @@ class TransactionSchedule extends Model
 
     /**
      * Skip the next instance of this schedule, and return if it was successful.
-     *
-     * @return bool
      */
     public function skipNextInstance(): bool
     {
@@ -146,8 +144,6 @@ class TransactionSchedule extends Model
      * The transaction schedule is active, if it has a next date defined. This is the case for not finished schedules.
      * Otherwise we need to process the rule and check if any of the occurrences are in the future.
      * This is the case for budgets or ended schedules.
-     *
-     * @return bool
      */
     public function isActive(): bool
     {

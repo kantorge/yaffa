@@ -93,8 +93,6 @@ class AccountEntityController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource, for the type specified in request.
      *
-     * @param Request $request
-     * @return View
      * @uses indexAccount()
      * @uses indexPayee()
      */
@@ -110,9 +108,6 @@ class AccountEntityController extends Controller implements HasMiddleware
         return $this->{'index' . Str::ucfirst($request->get('type'))}();
     }
 
-    /**
-     * @return View
-     */
     private function indexAccount(): View
     {
         // Show all accounts of user from the database and return to view
@@ -139,9 +134,6 @@ class AccountEntityController extends Controller implements HasMiddleware
         return view('account.index');
     }
 
-    /**
-     * @return View
-     */
     private function indexPayee(): View
     {
         // Show all payees of the user from the database and return to view
@@ -167,7 +159,6 @@ class AccountEntityController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
      * @return View|RedirectResponse
      * @uses createPayee
      * @uses createAccount
@@ -213,9 +204,6 @@ class AccountEntityController extends Controller implements HasMiddleware
         return view('account.form');
     }
 
-    /**
-     * @return View
-     */
     private function createPayee(): View
     {
         JavaScriptFacade::put([
@@ -227,9 +215,6 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @return RedirectResponse
      */
     public function store(AccountEntityRequest $request): RedirectResponse
     {
@@ -298,8 +283,6 @@ class AccountEntityController extends Controller implements HasMiddleware
     /**
      * Show the form for editing the specified resource.
      *
-     * @param AccountEntity $accountEntity
-     * @return View
      * @uses editPayee
      * @uses editAccount
      */
@@ -357,10 +340,6 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @param AccountEntity $accountEntity
-     * @return RedirectResponse
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
@@ -420,9 +399,6 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     /**
      * Display a form to merge two payees.
-     *
-     * @param AccountEntity|null $payeeSource
-     * @return View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource): View
     {

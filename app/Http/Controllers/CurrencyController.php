@@ -37,8 +37,6 @@ class CurrencyController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -98,9 +96,6 @@ class CurrencyController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param Currency $currency
-     * @return View
      */
     public function edit(Request $request, Currency $currency): View
     {
@@ -141,7 +136,6 @@ class CurrencyController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      *
-     * @param Currency $currency
      * @return Response|RedirectResponse
      */
     public function destroy(Currency $currency): Response|RedirectResponse

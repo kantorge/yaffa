@@ -41,8 +41,6 @@ class InvestmentController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(Request $request): View
     {
@@ -81,9 +79,6 @@ class InvestmentController extends Controller implements HasMiddleware
 
     /**
      * Display form to edit the resource.
-     *
-     * @param Investment $investment
-     * @return View
      */
     public function edit(Investment $investment): View
     {
@@ -174,9 +169,6 @@ class InvestmentController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Investment $investment
-     * @return RedirectResponse
      */
     public function destroy(Investment $investment): RedirectResponse
     {
