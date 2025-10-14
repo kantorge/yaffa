@@ -5,8 +5,9 @@ namespace App\Rules;
 use App\Models\Category;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule, DataAwareRule, \Illuminate\Contracts\Validation\ValidationRule
+class CategoryMergeValidSource implements DataAwareRule, ValidationRule
 {
     /**
      * All of the data under validation.
