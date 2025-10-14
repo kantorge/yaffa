@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Database\QueryException;
@@ -10,12 +12,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class AccountGroupController extends Controller
+class AccountGroupController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(AccountGroup::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\AccountGroup', only: ['index']),
+            new Middleware('can:view,account_group', only: ['show']),
+            new Middleware('can:create,App\Models\AccountGroup', only: ['create', 'store']),
+            new Middleware('can:update,account_group', only: ['edit', 'update']),
+            new Middleware('can:delete,account_group', only: ['destroy']),
+        ];
     }
 
     /**

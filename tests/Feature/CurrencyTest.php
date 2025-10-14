@@ -157,7 +157,7 @@ class CurrencyTest extends TestCase
         $response->assertRedirect($this->base_route);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn($notification) => $notification['type'] === 'success');
+            ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 

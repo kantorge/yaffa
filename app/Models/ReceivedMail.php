@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,12 +46,14 @@ class ReceivedMail extends Model
         ];
     }
 
-    public function scopeUnprocessed($query)
+    #[Scope]
+    protected function unprocessed($query)
     {
         return $query->where('processed', false);
     }
 
-    public function scopeUnhandled($query)
+    #[Scope]
+    protected function unhandled($query)
     {
         return $query->where('handled', false);
     }

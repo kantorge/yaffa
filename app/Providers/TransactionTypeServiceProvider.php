@@ -27,7 +27,7 @@ class TransactionTypeServiceProvider extends ServiceProvider
                 $transactionTypeData = Cache::remember(
                     'transaction_types',
                     60 * 60 * 24 * 30,
-                    fn() => TransactionType::all()->keyBy('name')->toArray()
+                    fn () => TransactionType::all()->keyBy('name')->toArray()
                 );
             } catch (Exception $e) {
                 $transactionTypeData = [];

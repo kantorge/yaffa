@@ -4,11 +4,11 @@ This document describes the breaking changes of major versions, and the steps th
 
 Table of contents:
 
-- [Upgrade from 1.x to 2.x](#upgrade-from-1x-to-2x)
+- [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
 
-## Upgrade from 1.x to 2.x
+## Upgrade from YAFFA 1.x to 2.x
 
-The main reason for increasing the version is the migration of the framework from Laravel 10 to Laravel 11.
+The main reason for increasing the version is the migration of the framework from Laravel 10 to Laravel 12.
 
 ### Breaking Changes
 
@@ -30,6 +30,13 @@ The main reason for increasing the version is the migration of the framework fro
 ```diff
 - CACHE_DRIVER=#your_value#
 + CACHE_STORE=#your_value#
+```
+
+- The mail encryption environment variable has beeen renamed to be more generic, as not all mail schemes are encryption.
+
+```diff
+- MAIL_ENCRYPTION=#your_value#
++ MAIL_SCHEME=#your_value#
 ```
 
 - Add the following keys and default values that were introduced by Laravel 11. Customize them, if needed.

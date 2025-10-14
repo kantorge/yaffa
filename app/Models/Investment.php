@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Spiders\InvestmentPriceScraper;
 use Carbon\Carbon;
@@ -116,7 +117,8 @@ class Investment extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', true);
     }
@@ -341,7 +343,7 @@ class Investment extends Model
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
-        if (! $this->investment_price_provider) {
+        if (!$this->investment_price_provider) {
             return null;
         }
 
@@ -389,7 +391,7 @@ class Investment extends Model
     public function getInvestmentPriceFromAlphaVantage(Carbon|null $from = null, bool $refill = false): void
     {
         // Get 3 days data by default, assuming that scheduler is running
-        if (! $from) {
+        if (!$from) {
             $from = Carbon::now()->subDays(3);
         }
 

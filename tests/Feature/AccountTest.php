@@ -257,7 +257,7 @@ class AccountTest extends TestCase
         $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
-            ->contains(fn($notification) => $notification['type'] === 'success');
+            ->contains(fn ($notification) => $notification['type'] === 'success');
         $this->assertTrue($successNotificationExists);
     }
 

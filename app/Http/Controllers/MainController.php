@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class MainController extends Controller
+class MainController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -21,9 +22,11 @@ class MainController extends Controller
 
     private $currentAccount;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     public function account_details(AccountEntity $account, $withForecast = null)

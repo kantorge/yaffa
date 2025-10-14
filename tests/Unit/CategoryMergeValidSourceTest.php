@@ -13,7 +13,7 @@ class CategoryMergeValidSourceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_fails_when_merging_parent_into_child()
+    public function test_fails_when_merging_parent_into_child(): void
     {
         $user = User::factory()->create();
 
@@ -35,7 +35,7 @@ class CategoryMergeValidSourceTest extends TestCase
         $this->assertTrue($validator->fails());
     }
 
-    public function test_passes_for_valid_merges()
+    public function test_passes_for_valid_merges(): void
     {
         $user = User::factory()->create();
 
@@ -73,7 +73,7 @@ class CategoryMergeValidSourceTest extends TestCase
         $this->assertFalse($validator->fails());
     }
 
-    public function test_validate_method_calls_fail_callback_when_invalid()
+    public function test_validate_method_calls_fail_callback_when_invalid(): void
     {
         $user = User::factory()->create();
         $parent = Category::factory()->for($user)->create(['parent_id' => null]);

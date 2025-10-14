@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -99,7 +100,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeBase(Builder $query): Builder
+    #[Scope]
+    protected function base(Builder $query): Builder
     {
         return $query->where('base', true);
     }
@@ -110,7 +112,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeNotBase(Builder $query): Builder
+    #[Scope]
+    protected function notBase(Builder $query): Builder
     {
         return $query->whereNull('base');
     }
@@ -121,7 +124,8 @@ class Currency extends Model
      * @param Builder $query
      * @return Builder
      */
-    public function scopeAutoUpdate(Builder $query): Builder
+    #[Scope]
+    protected function autoUpdate(Builder $query): Builder
     {
         return $query->where('auto_update', true);
     }
@@ -155,8 +159,10 @@ class Currency extends Model
      */
     public function baseCurrency(): ?Currency
     {
-        return self::base()->where('user_id', $this->user_id)
-            ->firstOr(fn () => self::where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
+        return static::query()
+            ->base()
+            ->where('user_id', $this->user_id)
+            ->firstOr(fn() => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn() => null));
     }
 
     /**

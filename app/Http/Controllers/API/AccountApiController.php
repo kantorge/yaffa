@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
@@ -16,13 +18,15 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class AccountApiController extends Controller
+class AccountApiController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -78,7 +82,7 @@ class AccountApiController extends Controller
                 $query->where('account_entities.active', true);
             })
             // Optionally limit the search for specific transaction types
-            ->when($transactionType !== null, fn($query) => $query->where(
+            ->when($transactionType !== null, fn ($query) => $query->where(
                 'transaction_type_id',
                 '=',
                 config('transaction_types')[$transactionType]['id']
@@ -149,8 +153,8 @@ class AccountApiController extends Controller
                     'config',
                     [Account::class],
                     function (Builder $query) use ($parameters) {
-                    $query->where('currency_id', $parameters['currency_id']);
-                }
+                        $query->where('currency_id', $parameters['currency_id']);
+                    }
                 );
             })
             ->get();
@@ -174,8 +178,8 @@ class AccountApiController extends Controller
                         'config',
                         [Account::class],
                         function (Builder $query) use ($request) {
-                        $query->where('currency_id', $request->get('currency_id'));
-                    }
+                            $query->where('currency_id', $request->get('currency_id'));
+                        }
                     );
                 })
                 ->select(['id', 'name AS text'])
@@ -202,7 +206,7 @@ class AccountApiController extends Controller
                 ->where('account_entities.active', true)
                 ->where('transactions.user_id', $user->id)
                 ->where('account_entities.user_id', $user->id)
-                ->when($request->get('currency_id'), fn($query) => $query
+                ->when($request->get('currency_id'), fn ($query) => $query
                     ->join(
                         'accounts',
                         'accounts.id',
@@ -241,7 +245,7 @@ class AccountApiController extends Controller
          * @get('/api/assets/account/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $accountEntity);
+        Gate::authorize('view', $accountEntity);
 
         $accountEntity->load(['config', 'config.currency']);
 
@@ -304,7 +308,7 @@ class AccountApiController extends Controller
         // Load all accounts or the selected one
         $accounts = $user
             ->accounts()
-            ->when($accountEntity, fn($query) => $query->where('id', $accountEntity->id))
+            ->when($accountEntity, fn ($query) => $query->where('id', $accountEntity->id))
             ->with(['config', 'config.accountGroup', 'config.currency'])
             ->get()
             ->makeHidden([
@@ -323,11 +327,11 @@ class AccountApiController extends Controller
             ->where('data_type', 'fact')
             ->when(
                 $accountEntity !== null,
-                fn($query) => $query->where('account_entity_id', $accountEntity->id)
+                fn ($query) => $query->where('account_entity_id', $accountEntity->id)
             )
             ->when(
                 $accountEntity === null,
-                fn($query) => $query->whereIn('account_entity_id', $user->accounts()->pluck('id'))
+                fn ($query) => $query->whereIn('account_entity_id', $user->accounts()->pluck('id'))
             )
             ->groupBy('account_entity_id')
             ->get();
@@ -341,7 +345,7 @@ class AccountApiController extends Controller
             ->where('user_id', $user->id)
             ->when(
                 $accountEntity !== null,
-                fn($query) => $query->where('account_entity_id', $accountEntity->id),
+                fn ($query) => $query->where('account_entity_id', $accountEntity->id),
             )
             ->groupBy('account_entity_id');
 
@@ -353,7 +357,7 @@ class AccountApiController extends Controller
             ->where('account_monthly_summaries.user_id', $user->id)
             ->when(
                 $accountEntity !== null,
-                fn($query) => $query->where('account_monthly_summaries.account_entity_id', $accountEntity->id)
+                fn ($query) => $query->where('account_monthly_summaries.account_entity_id', $accountEntity->id)
             )
             ->joinSub($latestDates, 'latest_dates', function ($join) {
                 $join->on('account_monthly_summaries.account_entity_id', '=', 'latest_dates.account_entity_id')
@@ -422,7 +426,7 @@ class AccountApiController extends Controller
          * @put('/api/account/monthlySummary/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         // Check if the account entity is an account
         if ($accountEntity->config_type !== 'account') {

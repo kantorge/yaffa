@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
@@ -15,14 +18,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class CurrencyController extends Controller
+class CurrencyController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Currency::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Currency', only: ['index']),
+            new Middleware('can:view,currency', only: ['show']),
+            new Middleware('can:create,App\Models\Currency', only: ['create', 'store']),
+            new Middleware('can:update,currency', only: ['edit', 'update']),
+            new Middleware('can:delete,currency', only: ['destroy']),
+        ];
     }
 
     /**
@@ -175,7 +184,7 @@ class CurrencyController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         // Authenticate the user against the currency using CurrencyPolicy
-        $this->authorize('update', $currency);
+        Gate::authorize('update', $currency);
 
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));

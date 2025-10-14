@@ -69,7 +69,7 @@ class RecordScheduledTransactionsTest extends TestCase
             ->assertExitCode(0);
 
         // Assert that the job was pushed
-        Queue::assertPushed(RecordScheduledTransaction::class, fn($job) => $job->transaction->id === $transaction->id);
+        Queue::assertPushed(RecordScheduledTransaction::class, fn ($job) => $job->transaction->id === $transaction->id);
     }
 
     public function test_transaction_with_next_date_in_the_past_is_recorded(): void
@@ -88,7 +88,7 @@ class RecordScheduledTransactionsTest extends TestCase
             ->assertExitCode(0);
 
         // Assert that the job was pushed
-        Queue::assertPushed(RecordScheduledTransaction::class, fn($job) => $job->transaction->id === $transaction->id);
+        Queue::assertPushed(RecordScheduledTransaction::class, fn ($job) => $job->transaction->id === $transaction->id);
     }
 
     public function test_transaction_with_next_date_in_the_future_is_not_recorded(): void

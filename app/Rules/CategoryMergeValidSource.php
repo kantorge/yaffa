@@ -59,8 +59,7 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
      *
      * @param  string  $attribute
      * @param  mixed  $value
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
-     * @return void
+     * @param  Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

@@ -86,7 +86,7 @@ class IncomingEmailTest extends TestCase
 
         Event::assertDispatched(
             IncomingEmailReceived::class,
-            fn(IncomingEmailReceived $event) => $event->mail->user_id === $user->id
+            fn (IncomingEmailReceived $event) => $event->mail->user_id === $user->id
         );
 
         Event::assertListening(

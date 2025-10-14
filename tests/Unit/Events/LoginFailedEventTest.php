@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Unit\Events;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,7 +12,7 @@ class LoginFailedEventTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_failed_event_is_dispatched_on_failed_login()
+    public function test_login_failed_event_is_dispatched_on_failed_login(): void
     {
         Event::fake();
 
@@ -27,8 +27,6 @@ class LoginFailedEventTest extends TestCase
 
         $response->assertSessionHasErrors('email');
 
-        Event::assertDispatched(Failed::class, function ($event) use ($user) {
-            return $event->credentials['email'] === $user->email;
-        });
+        Event::assertDispatched(Failed::class, fn($event) => $event->credentials['email'] === $user->email);
     }
 }

@@ -1,4 +1,5 @@
 /.idea/sonarlint
+/.nova
 /.idea
 /.vscode
 /.phpunit.cache
@@ -17,3 +18,4 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+/storage/pail

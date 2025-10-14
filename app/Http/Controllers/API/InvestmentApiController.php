@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -14,7 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-class InvestmentApiController extends Controller
+class InvestmentApiController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
@@ -22,9 +24,15 @@ class InvestmentApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
 
         $this->investmentService = new InvestmentService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -63,7 +71,7 @@ class InvestmentApiController extends Controller
          * @name('investment.getDetails')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $investment->load(['currency']);
 
@@ -76,7 +84,7 @@ class InvestmentApiController extends Controller
          * @get('/api/assets/investment/price/{investment}')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
             ->select(['id', 'date', 'price'])
@@ -97,7 +105,7 @@ class InvestmentApiController extends Controller
          * @name('api.investment.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $investment);
+        Gate::authorize('update', $investment);
 
         $investment->active = $active;
         $investment->save();

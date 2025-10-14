@@ -2,21 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Models\ReceivedMail;
 use App\Services\ReceivedMailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class ReceivedMailController extends Controller
+class ReceivedMailController extends Controller implements HasMiddleware
 {
     protected ReceivedMailService $receivedMailService;
 
     public function __construct(ReceivedMailService $receivedMailService)
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(ReceivedMail::class);
+
         $this->receivedMailService = $receivedMailService;
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\ReceivedMail', only: ['index']),
+            new Middleware('can:view,received_mail', only: ['show']),
+            new Middleware('can:create,App\Models\ReceivedMail', only: ['create', 'store']),
+            new Middleware('can:update,received_mail', only: ['edit', 'update']),
+            new Middleware('can:delete,received_mail', only: ['destroy']),
+        ];
     }
 
     /**

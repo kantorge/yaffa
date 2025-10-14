@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
@@ -13,7 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class CurrencyRateController extends Controller
+class CurrencyRateController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
@@ -21,8 +23,15 @@ class CurrencyRateController extends Controller
 
     public function __construct(CurrencyRate $currencyRate)
     {
-        $this->middleware(['auth', 'verified']);
+
         $this->currencyRate = $currencyRate;
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**
@@ -42,8 +51,8 @@ class CurrencyRateController extends Controller
          */
 
         // Authorize user access to requested currencies
-        $this->authorize('view', $from);
-        $this->authorize('view', $to);
+        Gate::authorize('view', $from);
+        Gate::authorize('view', $to);
 
         $currencyRates = $this->currencyRate
             ->where('from_id', $from->id)
@@ -76,8 +85,8 @@ class CurrencyRateController extends Controller
          */
 
         // Authorize user access to requested currencies
-        $this->authorize('view', $currencyRate->currencyFrom);
-        $this->authorize('view', $currencyRate->currencyTo);
+        Gate::authorize('view', $currencyRate->currencyFrom);
+        Gate::authorize('view', $currencyRate->currencyTo);
 
         $currencyRate->delete();
 
@@ -98,7 +107,7 @@ class CurrencyRateController extends Controller
          */
 
         // Authorize user access to requested currency
-        $this->authorize('view', $currency);
+        Gate::authorize('view', $currency);
 
         try {
             $currency->retrieveCurrencyRateToBase($from);
@@ -120,7 +129,7 @@ class CurrencyRateController extends Controller
          * @middlewares('web')
          */
         // Authorize user access to requested currency
-        $this->authorize('view', $currency);
+        Gate::authorize('view', $currency);
 
         try {
             $currency->retrieveMissingCurrencyRateToBase();

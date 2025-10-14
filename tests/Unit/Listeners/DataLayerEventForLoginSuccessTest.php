@@ -11,7 +11,7 @@ use App\Models\User;
 
 class DataLayerEventForLoginSuccessTest extends TestCase
 {
-    public function test_listener_is_triggered_on_login_event()
+    public function test_listener_is_triggered_on_login_event(): void
     {
         // Set GTM container ID to enable listener
         Config::set('yaffa.gtm_container_id', 'GTM-XXXXXX');

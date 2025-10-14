@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use Illuminate\Http\Request;
@@ -10,14 +11,16 @@ use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class ReportController extends Controller
+class ReportController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     public function cashFlow(Request $request): View

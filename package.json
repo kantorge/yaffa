@@ -29,7 +29,8 @@
         "sass": "^1.57.1",
         "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
-        "vue-loader": "^16.8.3"
+        "vue-loader": "^16.8.3",
+        "concurrently": "^9.0.1"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.40",

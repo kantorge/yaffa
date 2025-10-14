@@ -39,15 +39,13 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return $entries;
             }
 
-            return $entries->filter(function (IncomingEntry $entry) {
-                return $entry->isReportableException() ||
+            return $entries->filter(fn (IncomingEntry $entry) => $entry->isReportableException() ||
                     $entry->isFailedRequest() ||
                     $entry->type === EntryType::JOB || // Keep all jobs
                     $entry->type === EntryType::EVENT || // Keep all events
                     $entry->isSlowQuery() ||
                     $entry->isScheduledTask() ||
-                    $entry->hasMonitoredTag();
-            });
+                    $entry->hasMonitoredTag());
         });
     }
 
@@ -78,7 +76,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     {
         Gate::define(
             'viewTelescope',
-            fn($user) => in_array($user->email, [
+            fn ($user) => in_array($user->email, [
                 config('yaffa.admin_email'),
             ])
         );

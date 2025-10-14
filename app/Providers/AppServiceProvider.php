@@ -4,13 +4,9 @@ namespace App\Providers;
 
 use App\Components\MailHandler;
 use App\Models\Account;
-use App\Models\CurrencyRate;
-use App\Models\InvestmentPrice;
 use App\Models\Payee;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use App\Observers\CurrencyRateObserver;
-use App\Observers\InvestmentPriceObserver;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -95,8 +91,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function bootEvent(): void
     {
-        CurrencyRate::observe(CurrencyRateObserver::class);
-        InvestmentPrice::observe(InvestmentPriceObserver::class);
 
     }
 }
