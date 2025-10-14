@@ -14,7 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -258,7 +257,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->config->category_id = $category->id;
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     /**
@@ -276,7 +275,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->config->category_suggestion_dismissed = Carbon::now();
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     public function storePayee(AccountEntityRequest $request)
