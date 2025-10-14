@@ -162,7 +162,7 @@ class Currency extends Model
         return static::query()
             ->base()
             ->where('user_id', $this->user_id)
-            ->firstOr(fn() => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn() => null));
+            ->firstOr(fn () => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
     }
 
     /**
