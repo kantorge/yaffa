@@ -63,8 +63,6 @@ class AccountEntity extends Model
 {
     use HasFactory;
 
-    protected $table = 'account_entities';
-
     /**
      * The attributes that are mass assignable.
      *

@@ -53,8 +53,6 @@ class Category extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
-    protected $table = 'categories';
-
     protected $with = [
         'parent',
     ];

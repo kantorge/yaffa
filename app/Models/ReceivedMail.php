@@ -23,8 +23,6 @@ class ReceivedMail extends Model
 {
     use HasFactory;
 
-    protected $table = 'received_mails';
-
     protected $fillable = [
         'message_id',
         'user_id',

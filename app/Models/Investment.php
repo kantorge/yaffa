@@ -82,13 +82,6 @@ class Investment extends Model
     protected $guarded = [];
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'investments';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
