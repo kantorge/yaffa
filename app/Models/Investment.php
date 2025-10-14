@@ -343,7 +343,7 @@ class Investment extends Model
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
-        if (! $this->investment_price_provider) {
+        if (!$this->investment_price_provider) {
             return null;
         }
 
@@ -391,7 +391,7 @@ class Investment extends Model
     public function getInvestmentPriceFromAlphaVantage(Carbon|null $from = null, bool $refill = false): void
     {
         // Get 3 days data by default, assuming that scheduler is running
-        if (! $from) {
+        if (!$from) {
             $from = Carbon::now()->subDays(3);
         }
 

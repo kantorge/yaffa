@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -159,8 +159,10 @@ class Currency extends Model
      */
     public function baseCurrency(): ?Currency
     {
-        return self::base()->where('user_id', $this->user_id)
-            ->firstOr(fn () => self::where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
+        return static::query()
+            ->base()
+            ->where('user_id', $this->user_id)
+            ->firstOr(fn() => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn() => null));
     }
 
     /**

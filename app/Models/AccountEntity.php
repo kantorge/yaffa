@@ -191,7 +191,7 @@ class AccountEntity extends Model
      * @return Builder
      */
     #[Scope]
-    protected function accounts($query): Builder
+    protected function accounts(Builder $query): Builder
     {
         return $query->where('config_type', 'account');
     }
@@ -203,7 +203,7 @@ class AccountEntity extends Model
      * @return Builder
      */
     #[Scope]
-    protected function payees($query): Builder
+    protected function payees(Builder $query): Builder
     {
         return $query->where('config_type', 'payee');
     }
