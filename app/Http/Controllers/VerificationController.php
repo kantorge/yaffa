@@ -14,7 +14,7 @@ class VerificationController extends Controller
         // TODO: can this be achieved with middlewares?
         $user = $request->user();
         if ($user->hasVerifiedEmail()) {
-            return redirect(route('home'));
+            return redirect()->route('home');
         }
 
         return view('auth.verify');
@@ -26,13 +26,13 @@ class VerificationController extends Controller
 
         self::addSimpleSuccessMessage(__('Email address verified'));
 
-        return redirect('/');
+        return redirect()->to('/');
     }
 
     public function send(Request $request): RedirectResponse
     {
         $request->user()->sendEmailVerificationNotification();
 
-        return back()->with('message', __('Verification link sent!'));
+        return redirect()->back()->with('message', __('Verification link sent!'));
     }
 }

@@ -235,6 +235,6 @@ class RegisterController extends Controller implements HasMiddleware
 
         return $request->wantsJson()
             ? new JsonResponse([], 201)
-            : redirect($this->redirectPath());
+            : redirect()->to($this->redirectPath());
     }
 }

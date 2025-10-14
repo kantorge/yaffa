@@ -232,7 +232,7 @@ class PayeeApiController extends Controller implements HasMiddleware
             ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
-            return response('', Response::HTTP_OK);
+            return response()->noContent(Response::HTTP_OK);
         }
 
         $payee = $payees->random();
