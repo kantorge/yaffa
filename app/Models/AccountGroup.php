@@ -36,13 +36,6 @@ class AccountGroup extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'account_groups';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

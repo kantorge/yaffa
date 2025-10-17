@@ -41,13 +41,6 @@ class TransactionItem extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'transaction_items';
-
-    /**
      * Indicates if the model should be timestamped.
      *
      * @var bool

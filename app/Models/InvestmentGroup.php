@@ -34,13 +34,6 @@ class InvestmentGroup extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'investment_groups';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>

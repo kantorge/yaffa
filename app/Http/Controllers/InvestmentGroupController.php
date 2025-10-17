@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentGroupRequest;
@@ -28,10 +29,8 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/investment-group')
@@ -39,7 +38,7 @@ class InvestmentGroupController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\InvestmentGroup')
          */
         // Get all investment groups of the user from the database and return to view
-        $investmentGroups = Auth::user()
+        $investmentGroups = $request->user()
             ->investmentGroups()
             ->select('id', 'name')
             ->withCount('investments')
@@ -65,9 +64,6 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  InvestmentGroup  $investmentGroup
-     * @return View
      */
     public function edit(InvestmentGroup $investmentGroup): View
     {
@@ -114,9 +110,6 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  InvestmentGroup  $investmentGroup
-     * @return RedirectResponse
      */
     public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
     {

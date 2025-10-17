@@ -14,7 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -34,7 +33,7 @@ class PayeeApiController extends Controller implements HasMiddleware
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
         if ($request->get('q')) {
-            $payees = Auth::user()
+            $payees = $request->user()
                 ->payees()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
@@ -109,7 +108,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getPayeeDefaultSuggestion()
+    public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
          * @get('/api/assets/get_default_category_suggestion')
@@ -146,9 +145,9 @@ class PayeeApiController extends Controller implements HasMiddleware
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id)
-            ->where('transactions.user_id', Auth::user()->id)
-            ->where('account_entities.user_id', Auth::user()->id)
+            ->where('categories.user_id', $request->user()->id)
+            ->where('transactions.user_id', $request->user()->id)
+            ->where('account_entities.user_id', $request->user()->id)
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -190,7 +189,7 @@ class PayeeApiController extends Controller implements HasMiddleware
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id) // Only for authenticated user
+            ->where('categories.user_id', $request->user()->id) // Only for authenticated user
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -232,7 +231,7 @@ class PayeeApiController extends Controller implements HasMiddleware
             ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
-            return response('', Response::HTTP_OK);
+            return response()->noContent(Response::HTTP_OK);
         }
 
         $payee = $payees->random();
@@ -246,7 +245,7 @@ class PayeeApiController extends Controller implements HasMiddleware
     /**
      * @throws AuthorizationException
      */
-    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
+    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
          * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
@@ -258,13 +257,13 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->config->category_id = $category->id;
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     /**
      * @throws AuthorizationException
      */
-    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
+    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
          * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
@@ -276,7 +275,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $accountEntity->config->category_suggestion_dismissed = Carbon::now();
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     public function storePayee(AccountEntityRequest $request)
@@ -289,7 +288,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         Gate::authorize('create', AccountEntity::class);
 
         $validated = $request->validated();
-        $validated['user_id'] = Auth::user()->id;
+        $validated['user_id'] = $request->user()->id;
 
         $newPayee = new AccountEntity($validated);
 
@@ -316,7 +315,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $withActive = $request->get('withActive');
 
         // Get all payees of the user
-        $payees = Auth::user()
+        $payees = $request->user()
             ->payees()
             ->when($withActive, fn ($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);
@@ -342,9 +341,6 @@ class PayeeApiController extends Controller implements HasMiddleware
 
     /**
      * Get the payee entity and main attributes for the given id
-     *
-     * @param  AccountEntity  $accountEntity
-     * @return JsonResponse
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {

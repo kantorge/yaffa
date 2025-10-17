@@ -37,9 +37,6 @@ class CurrencyRateController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource, based on the selected currencies.
      *
-     * @param Currency $from
-     * @param Currency $to
-     * @return View
      * @throws AuthorizationException
      */
     public function index(Currency $from, Currency $to): View
@@ -72,8 +69,6 @@ class CurrencyRateController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      *
-     * @param CurrencyRate $currencyRate
-     * @return RedirectResponse
      * @throws AuthorizationException
      */
     public function destroy(CurrencyRate $currencyRate): RedirectResponse

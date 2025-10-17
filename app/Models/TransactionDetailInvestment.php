@@ -95,8 +95,6 @@ class TransactionDetailInvestment extends Model
 
     /**
      * Get the investment details associated with the transaction.
-     *
-     * @return BelongsTo
      */
     public function investment(): BelongsTo
     {

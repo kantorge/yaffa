@@ -224,11 +224,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         });
     }
 
-    /**
-     * @param Transaction $transaction
-     * @param string $postfix
-     * @return string
-     */
     private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
     {
         return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');

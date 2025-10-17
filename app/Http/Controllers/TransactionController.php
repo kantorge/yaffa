@@ -24,7 +24,7 @@ class TransactionController extends Controller implements HasMiddleware
         ];
     }
 
-    public function create(string $type): View|RedirectResponse
+    public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
          * @get('/transactions/create/{type}
@@ -33,7 +33,7 @@ class TransactionController extends Controller implements HasMiddleware
          */
 
         // Sanity check for necessary assets
-        if (Auth::user()->accounts()->active()->count() === 0) {
+        if ($request->user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
                 'info',
@@ -55,9 +55,6 @@ class TransactionController extends Controller implements HasMiddleware
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param Transaction $transaction
-     * @param string $action
-     * @return View
      * @throws AuthorizationException
      */
     public function openTransaction(Transaction $transaction, string $action): View
@@ -113,8 +110,6 @@ class TransactionController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      *
-     * @param Transaction $transaction
-     * @return RedirectResponse
      * @throws AuthorizationException
      */
     public function destroy(Transaction $transaction): RedirectResponse

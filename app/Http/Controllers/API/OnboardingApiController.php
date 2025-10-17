@@ -40,18 +40,17 @@ class OnboardingApiController extends Controller implements HasMiddleware
     {
         $request->user()->flag('dismissOnboardingWidget' . ucfirst($topic));
 
-        return response('', Response::HTTP_OK);
+        return response()->noContent(Response::HTTP_OK);
     }
 
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('viewProductTour-' . $topic);
 
-        return response('', Response::HTTP_OK);
+        return response()->noContent(Response::HTTP_OK);
     }
 
     /**
-     * @param string $topic
      * @uses onboardingTopicDataDashboard
      * @uses onboardingTopicDataReportsSchedules
      * @uses onboardingTopicDataAccountGroups

@@ -14,8 +14,6 @@ trait CurrencyTrait
     /**
      * Load an array for all currencies, with an average rate by month
      * As this data is not expected to change often, it is cached for a day
-     *
-     * @return array
      */
     public function allCurrencyRatesByMonth(): array
     {

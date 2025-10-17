@@ -32,13 +32,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InvestmentPrice extends Model
 {
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'investment_prices';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array

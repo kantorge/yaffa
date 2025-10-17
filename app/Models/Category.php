@@ -53,8 +53,6 @@ class Category extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
-    protected $table = 'categories';
-
     protected $with = [
         'parent',
     ];
@@ -99,9 +97,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function active(Builder $query): Builder
@@ -111,9 +106,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include top level categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function parentCategory(Builder $query): Builder
@@ -123,9 +115,6 @@ class Category extends Model
 
     /**
      * Scope a query to only include child categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function childCategory(Builder $query): Builder

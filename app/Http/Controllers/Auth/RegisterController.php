@@ -105,9 +105,6 @@ class RegisterController extends Controller implements HasMiddleware
 
     /**
      * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data): \Illuminate\Contracts\Validation\Validator
     {
@@ -162,9 +159,6 @@ class RegisterController extends Controller implements HasMiddleware
 
     /**
      * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return User
      */
     protected function create(array $data): User
     {
@@ -181,7 +175,6 @@ class RegisterController extends Controller implements HasMiddleware
      * Handle a registration request for the application.
      * Overwrite default behavior by adding custom parameter to Registered event.
      *
-     * @param Request $request
      * @return RedirectResponse|JsonResponse
      */
     public function register(Request $request): JsonResponse|RedirectResponse
@@ -235,6 +228,6 @@ class RegisterController extends Controller implements HasMiddleware
 
         return $request->wantsJson()
             ? new JsonResponse([], 201)
-            : redirect($this->redirectPath());
+            : redirect()->to($this->redirectPath());
     }
 }

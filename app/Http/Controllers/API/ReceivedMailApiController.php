@@ -29,9 +29,6 @@ class ReceivedMailApiController extends Controller implements HasMiddleware
 
     /**
      * Reset the processed status of the given received mail.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return JsonResponse
      */
     public function resetProcessed(ReceivedMail $receivedMail): JsonResponse
     {
@@ -65,9 +62,6 @@ class ReceivedMailApiController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified investment.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return JsonResponse
      */
     public function destroy(ReceivedMail $receivedMail): JsonResponse
     {

@@ -5,8 +5,9 @@ namespace App\Rules;
 use App\Models\Category;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule, DataAwareRule, \Illuminate\Contracts\Validation\ValidationRule
+class CategoryMergeValidSource implements DataAwareRule, ValidationRule
 {
     /**
      * All of the data under validation.
@@ -17,12 +18,8 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
 
     /**
      * Set the data under validation.
-     *
-     * @param  array  $data
-     *
-     * @return $this
      */
-    public function setData($data)
+    public function setData(array $data): static
     {
         $this->data = $data;
 
@@ -32,12 +29,10 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string  $attribute
      * @param  mixed  $value
-     *
-     * @return bool
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function passes($attribute, $value): bool
+    public function passes(string $attribute, $value): bool
     {
         // Fail if source category or target category is not set
         if (!isset($this->data['category_source']) || !isset($this->data['category_target'])) {
@@ -57,8 +52,6 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
     /**
      * Run the validation rule for the ValidationRule contract (Laravel 11).
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
      * @param  Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -70,8 +63,6 @@ class CategoryMergeValidSource implements \Illuminate\Contracts\Validation\Rule,
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): string
     {

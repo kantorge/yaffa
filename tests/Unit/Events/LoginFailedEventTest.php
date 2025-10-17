@@ -27,6 +27,6 @@ class LoginFailedEventTest extends TestCase
 
         $response->assertSessionHasErrors('email');
 
-        Event::assertDispatched(Failed::class, fn($event) => $event->credentials['email'] === $user->email);
+        Event::assertDispatched(Failed::class, fn ($event) => $event->credentials['email'] === $user->email);
     }
 }

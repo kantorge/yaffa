@@ -345,8 +345,6 @@ class CreateDefaultAssetsForNewUser
 
     /**
      * Handle the event.
-     *
-     * @param Registered $event
      */
     public function handle(Registered $event): void
     {

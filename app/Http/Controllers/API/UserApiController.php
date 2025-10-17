@@ -29,7 +29,7 @@ class UserApiController extends Controller implements HasMiddleware
         $warningMessages = [];
 
         /** @var User $user */
-        $user = auth()->user();
+        $user = $request->user();
         $user->fill($validated);
 
         // If the end_date has changed, we need to recalculate the monthly summaries
@@ -74,7 +74,7 @@ class UserApiController extends Controller implements HasMiddleware
         $this->validator($request->all())->validate();
 
         /** @var User $user */
-        $user = auth()->user();
+        $user = $request->user();
         $user->password = Hash::make($request['password']);
         $user->save();
 

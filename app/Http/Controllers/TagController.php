@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
@@ -27,10 +28,8 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/tag')
@@ -38,7 +37,7 @@ class TagController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
          */
         // Get all tags of the user from the database and return to view
-        $tags = Auth::user()
+        $tags = $request->user()
             ->tags()
             ->select('id', 'name', 'active')
             ->get()
@@ -64,9 +63,6 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Tag  $tag
-     * @return View
      */
     public function edit(Tag $tag): View
     {
@@ -113,9 +109,6 @@ class TagController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Tag  $tag
-     * @return RedirectResponse
      */
     public function destroy(Tag $tag): RedirectResponse
     {

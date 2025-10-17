@@ -59,9 +59,6 @@ class ReportController extends Controller implements HasMiddleware
 
     /**
      * Display form for searching transactions.
-     *
-     * @param  Request  $request
-     * @return View
      */
     public function transactionsByCriteria(Request $request): View
     {
@@ -85,9 +82,6 @@ class ReportController extends Controller implements HasMiddleware
 
     /**
      * Display view with investment timeline chart.
-     *
-     * @param Request $request
-     * @return View
      */
     public function investmentTimeline(Request $request): View
     {
