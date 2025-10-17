@@ -252,6 +252,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_to', 'Investment account EUR', 10)
                 // Add amount from
                 ->type('#transaction_amount_from', '100')
+                // Temporarily add a command to take a screenshot
+                ->screenshot('transaction-form-after-typing-amount-from-amount-to-should-be-visible-and-empty')
                 // User cannot send the form, as amount to is missing
                 ->press('#transactionFormStandard-Save')
                 // Wait for the error message
