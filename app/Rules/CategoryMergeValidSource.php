@@ -52,6 +52,8 @@ class CategoryMergeValidSource implements DataAwareRule, ValidationRule
      * Run the validation rule for the ValidationRule contract (Laravel 11).
      *
      * @param  Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
