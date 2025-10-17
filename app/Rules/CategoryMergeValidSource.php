@@ -30,6 +30,7 @@ class CategoryMergeValidSource implements DataAwareRule, ValidationRule
      * Determine if the validation rule passes.
      *
      * @param  mixed  $value
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function passes(string $attribute, $value): bool
     {
@@ -52,8 +53,6 @@ class CategoryMergeValidSource implements DataAwareRule, ValidationRule
      * Run the validation rule for the ValidationRule contract (Laravel 11).
      *
      * @param  Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
