@@ -5,6 +5,10 @@ namespace App\Services;
 use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class TransactionService
 {
@@ -286,5 +290,128 @@ class TransactionService
             $account
         );
         dispatch($job);
+    }
+
+    /**
+     * Get standard transactions for an account (one-time AND scheduled)
+     */
+    public function getAccountStandardTransactions(AccountEntity $account, int $userId): Collection
+    {
+        return Transaction::where(function ($query) {
+            $query->where('schedule', 1)
+                ->orWhere(function ($query) {
+                    $query->byScheduleType('none');
+                });
+        })
+            ->where('user_id', $userId)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailStandard::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_from_id', $account->id);
+                    $query->orWhere('account_to_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'transactionType',
+                'transactionItems',
+                'transactionItems.category',
+                'transactionItems.tags',
+            ])
+            ->get();
+    }
+
+    /**
+     * Get investment transactions for an account (one-time AND scheduled)
+     */
+    public function getAccountInvestmentTransactions(AccountEntity $account, int $userId): Collection
+    {
+        return Transaction::where(function ($query) {
+            $query->where('schedule', 1)
+                ->orWhere(function ($query) {
+                    $query->byScheduleType('none');
+                });
+        })
+            ->where('user_id', $userId)
+            ->whereHasMorph(
+                'config',
+                [TransactionDetailInvestment::class],
+                function (Builder $query) use ($account) {
+                    $query->where('account_id', $account->id);
+                }
+            )
+            ->with([
+                'config',
+                'config.investment',
+                'transactionType',
+            ])
+            ->get();
+    }
+
+    /**
+     * Enrich a transaction with additional attributes for display
+     */
+    public function enrichTransactionForDisplay(
+        Transaction $transaction,
+        AccountEntity $currentAccount,
+        array $allAccounts
+    ): Transaction {
+        // Set transaction group
+        if ($transaction->schedule) {
+            $transaction->load(['transactionSchedule']);
+            $transaction->transactionGroup = 'schedule';
+        } else {
+            $transaction->transactionGroup = 'history';
+        }
+
+        // Enrich based on transaction type
+        if ($transaction->isStandard()) {
+            $this->enrichStandardTransaction($transaction, $currentAccount, $allAccounts);
+        } elseif ($transaction->isInvestment()) {
+            $this->enrichInvestmentTransaction($transaction, $currentAccount, $allAccounts);
+        }
+
+        return $transaction;
+    }
+
+    /**
+     * Enrich a standard transaction with display attributes
+     */
+    private function enrichStandardTransaction(
+        Transaction $transaction,
+        AccountEntity $currentAccount,
+        array $allAccounts
+    ): void {
+        $transaction->transactionOperator = $transaction->transactionType->amount_multiplier
+            ?? ($transaction->config->account_from_id === $currentAccount->id ? -1 : 1);
+        $transaction->account_from_name = $allAccounts[$transaction->config->account_from_id];
+        $transaction->account_to_name = $allAccounts[$transaction->config->account_to_id];
+        $transaction->amount_from = $transaction->config->amount_from;
+        $transaction->amount_to = $transaction->config->amount_to;
+        $transaction->tags = $transaction->tags()->values();
+        $transaction->categories = $transaction->categories()->values();
+    }
+
+    /**
+     * Enrich an investment transaction with display attributes
+     */
+    private function enrichInvestmentTransaction(
+        Transaction $transaction,
+        AccountEntity $currentAccount,
+        array $allAccounts
+    ): void {
+        $amount = $transaction->cashflow_value ?? 0;
+
+        $transaction->transactionOperator = $transaction->transactionType->amount_multiplier;
+        $transaction->account_from_name = $allAccounts[$transaction->config->account_id];
+        $transaction->account_to_name = $transaction->config->investment->name;
+        $transaction->amount_from = ($amount < 0 ? -$amount : null);
+        $transaction->amount_to = ($amount > 0 ? $amount : null);
+        $transaction->tags = [];
+        $transaction->categories = [];
+        $transaction->quantity = $transaction->config->quantity;
+        $transaction->price = $transaction->config->price;
+        $transaction->currency = $currentAccount->config->currency;
     }
 }

@@ -7,11 +7,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionDetailStandard;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
+use App\Services\TransactionService;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
 class MainController extends Controller implements HasMiddleware
@@ -22,6 +18,11 @@ class MainController extends Controller implements HasMiddleware
     private $allAccounts;
 
     private $currentAccount;
+
+    public function __construct(
+        private TransactionService $transactionService
+    ) {
+    }
 
     public static function middleware(): array
     {
@@ -45,140 +46,31 @@ class MainController extends Controller implements HasMiddleware
             'config.currency',
         ]);
 
-        // Get all accounts and payees so their name can be reused
+        // Get all accounts so their name can be reused
         $this->allAccounts = AccountEntity::where('user_id', $user->id)
             ->pluck('name', 'id')
             ->all();
 
-        // Get standard transactions related to selected account (one-time AND scheduled)
-        $standardTransactions = Transaction::where(function ($query) {
-            $query->where('schedule', 1)
-                ->orWhere(function ($query) {
-                    $query->byScheduleType('none');
-                });
-        })
-            ->where('user_id', $user->id)
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailStandard::class],
-                function (Builder $query) use ($account) {
-                    $query->where('account_from_id', $account->id);
-                    $query->orWhere('account_to_id', $account->id);
-                }
-            )
-            ->with([
-                'config',
-                'transactionType',
-                'transactionItems',
-                'transactionItems.category',
-                'transactionItems.tags',
-            ])
-            ->get();
+        // Get and merge transactions
+        $transactions = $this->fetchAndEnrichTransactions($user->id);
 
-        // Get all investment transactions related to selected account (one-time AND scheduled)
-        $investmentTransactions = Transaction::where(function ($query) {
-            $query->where('schedule', 1)
-                ->orWhere(function ($query) {
-                    $query->byScheduleType('none');
-                });
-        })
-            ->where('user_id', $user->id)
-            ->whereHasMorph(
-                'config',
-                [TransactionDetailInvestment::class],
-                function (Builder $query) use ($account) {
-                    $query->where('account_id', $account->id);
-                }
-            )
-            ->with([
-                'config',
-                'config.investment',
-                'transactionType',
-            ])
-            ->get();
-
-        // Unify and merge two transaction types
-        $transactions = $standardTransactions
-            ->concat($investmentTransactions)
-        // Add custom and pre-calculated attributes
-            ->map(function ($transaction) use ($account) {
-                if ($transaction->schedule) {
-                    $transaction->load(['transactionSchedule']);
-
-                    $transaction->transactionGroup = 'schedule';
-                } else {
-                    $transaction->transactionGroup = 'history';
-                }
-
-                if ($transaction->isStandard()) {
-                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier
-                        ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
-                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
-                    $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
-                    $transaction->amount_from = $transaction->config->amount_from;
-                    $transaction->amount_to = $transaction->config->amount_to;
-                    $transaction->tags = $transaction->tags()->values();
-                    $transaction->categories = $transaction->categories()->values();
-                } elseif ($transaction->isInvestment()) {
-                    $amount = $transaction->cashflow_value ?? 0;
-
-                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier;
-                    $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
-                    $transaction->account_to_name = $transaction->config->investment->name;
-                    $transaction->amount_from = ($amount < 0 ? -$amount : null);
-                    $transaction->amount_to = ($amount > 0 ? $amount : null);
-                    $transaction->tags = [];
-                    $transaction->categories = [];
-                    $transaction->quantity = $transaction->config->quantity;
-                    $transaction->price = $transaction->config->price;
-                    $transaction->currency = $account->config->currency;
-                }
-
-                return $transaction;
-            })
-            // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
-
-        // Add schedule to history items, if needeed
+        // Add forecast instances if needed
         if ($withForecast) {
-            $transactions = $transactions->concat(
-                $this->getScheduleInstances(
-                    $transactions
-                        ->filter(fn ($transaction) => $transaction->schedule),
-                    'next',
-                )
-            );
+            $transactions = $this->addForecastInstances($transactions);
         }
 
-        // Final ordering and running total calculation
-        $subTotal = 0;
+        // Prepare display data
+        $data = $this->prepareDisplayData($transactions);
 
-        $data = $transactions
-            ->filter(
-                fn ($transaction) =>
-                $transaction->transactionGroup === 'history'
-                || $transaction->transactionGroup === 'forecast'
-            )
-            ->sortByDesc('transactionType')
-            ->sortBy(['date', 'transactionType.amount_multiplier'])
-            // Add the opening balance dummy item to the beginning of transaction list
-            ->prepend($account->config->openingBalance())
-            ->map(function ($transaction) use (&$subTotal) {
-                $subTotal += ($transaction->transactionOperator === 1
-                    ? $transaction->amount_to
-                    : -1 * $transaction->amount_from);
-                $transaction->running_total = $subTotal;
-
-                return $transaction;
-            })
+        // Prepare schedule data
+        $scheduleData = $transactions
+            ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
             ->values();
 
         JavaScriptFacade::put([
             'currency' => $account->config->currency,
             'transactionData' => $data,
-            'scheduleData' => $transactions
-                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
-                ->values(),
+            'scheduleData' => $scheduleData,
         ]);
 
         return view(
@@ -188,5 +80,85 @@ class MainController extends Controller implements HasMiddleware
                 'withForecast' => $withForecast,
             ]
         );
+    }
+
+    /**
+     * Fetch and enrich transactions for the account
+     */
+    private function fetchAndEnrichTransactions(int $userId)
+    {
+        // Get standard transactions
+        $standardTransactions = $this->transactionService->getAccountStandardTransactions(
+            $this->currentAccount,
+            $userId
+        );
+
+        // Get investment transactions
+        $investmentTransactions = $this->transactionService->getAccountInvestmentTransactions(
+            $this->currentAccount,
+            $userId
+        );
+
+        // Merge and enrich transactions
+        return $standardTransactions
+            ->concat($investmentTransactions)
+            ->map(function ($transaction) {
+                return $this->transactionService->enrichTransactionForDisplay(
+                    $transaction,
+                    $this->currentAccount,
+                    $this->allAccounts
+                );
+            })
+            // Drop scheduled transactions which are not active
+            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
+    }
+
+    /**
+     * Add forecast instances to transactions
+     */
+    private function addForecastInstances($transactions)
+    {
+        return $transactions->concat(
+            $this->getScheduleInstances(
+                $transactions->filter(fn ($transaction) => $transaction->schedule),
+                'next',
+            )
+        );
+    }
+
+    /**
+     * Prepare display data with running totals
+     */
+    private function prepareDisplayData($transactions)
+    {
+        $subTotal = 0;
+
+        return $transactions
+            ->filter(
+                fn ($transaction) =>
+                $transaction->transactionGroup === 'history'
+                || $transaction->transactionGroup === 'forecast'
+            )
+            ->sortByDesc('transactionType')
+            ->sortBy(['date', 'transactionType.amount_multiplier'])
+            // Add the opening balance dummy item
+            ->prepend($this->currentAccount->config->openingBalance())
+            ->map(function ($transaction) use (&$subTotal) {
+                $subTotal += $this->calculateTransactionAmount($transaction);
+                $transaction->running_total = $subTotal;
+
+                return $transaction;
+            })
+            ->values();
+    }
+
+    /**
+     * Calculate the amount to add/subtract for running total
+     */
+    private function calculateTransactionAmount($transaction): float
+    {
+        return $transaction->transactionOperator === 1
+            ? $transaction->amount_to
+            : -1 * $transaction->amount_from;
     }
 }
