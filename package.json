@@ -30,7 +30,8 @@
         "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
         "vue-loader": "^16.8.3",
-        "concurrently": "^9.0.1"
+        "concurrently": "^9.0.1",
+        "@playwright/test": "^1.54.2"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.40",

@@ -41,7 +41,6 @@
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.23",
         "larastan/larastan": "^3.1",
-        "laravel/dusk": "^8.3",
         "laravel/pint": "^1.25",
         "laravel/sail": "^1.41",
         "laravel/tinker": "^2.10.1",
@@ -51,7 +50,9 @@
         "phpunit/phpunit": "^11.5.3",
         "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
         "ryoluo/sail-ssl": "^1.4",
-        "spatie/db-dumper": "^3.8"
+        "spatie/db-dumper": "^3.8",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-browser": "^4.0"
     },
     "config": {
         "discard-changes": true,
