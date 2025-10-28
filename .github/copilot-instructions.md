@@ -33,7 +33,7 @@
 │   └── Browser/          # Laravel Dusk browser tests
 ├── config/               # Laravel configuration files
 ├── database/
-│   ├── migrations/       # 44 database migration files
+│   ├── migrations/       # 43 database migration files
 │   ├── factories/        # Model factories for testing
 │   └── seeders/          # Database seeders (including demo.sql)
 ├── routes/
