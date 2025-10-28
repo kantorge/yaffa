@@ -1,9 +1,9 @@
-<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar" dusk="quick-action-bar">
+<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar" data-test="quick-action-bar">
     <div class="sidebar-header bg-transparent">
         <span class="sidebar-title">
             {{ __('Quick actions') }}
         </span>
-        <button class="sidebar-close-custom" type="button" data-coreui-close="sidebar" dusk="quick-action-bar-close">
+        <button class="sidebar-close-custom" type="button" data-coreui-close="sidebar" data-test="quick-action-bar-close">
             <i class="fa fa-close"></i>
         </button>
     </div>

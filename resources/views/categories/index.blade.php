@@ -28,7 +28,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New category') }}
                         <a class="btn btn-sm btn-success"
-                           dusk="button-new-category"
+                           data-test="button-new-category"
                            href="{{ route('categories.create') }}"
                            title="{{ __('New category') }}"
                         >
@@ -38,7 +38,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('Merge categories') }}
                         <a class="btn btn-sm btn-primary"
-                           dusk="button-merge-categories"
+                           data-test="button-merge-categories"
                            href="{{ route('categories.merge.form') }}"
                            title="{{ __('Merge categories') }}"
                         >
@@ -74,7 +74,7 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-categories"
+                            data-test="table-categories"
                             id="table"
                             role="grid"
                     ></table>

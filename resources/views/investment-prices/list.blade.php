@@ -23,7 +23,7 @@
                             href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}"
                             class="btn btn-sm btn-success"
                             title="{{ __('Add investment price manually') }}"
-                            dusk="button-add-investment-price"
+                            data-test="button-add-investment-price"
                     >
                         <i class="fa fa-plus"></i>
                     </a>
@@ -33,7 +33,7 @@
                             class="table table-bordered table-hover"
                             role="grid"
                             id="table"
-                            dusk="table-investment-prices"
+                            data-test="table-investment-prices"
                     ></table>
                 </div>
             </div>

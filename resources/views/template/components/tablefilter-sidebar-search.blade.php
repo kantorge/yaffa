@@ -6,7 +6,7 @@
         <input
                 autocomplete="off"
                 class="form-control form-control-sm"
-                dusk="input-table-filter-search"
+                data-test="input-table-filter-search"
                 id="table_filter_search_text"
                 type="text"
         >

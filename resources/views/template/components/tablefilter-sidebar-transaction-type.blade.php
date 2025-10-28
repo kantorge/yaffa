@@ -3,7 +3,7 @@
     <div
             aria-label="Toggle button group for transaction type"
             class="btn-group"
-            dusk="button-group-table-filter-category-level"
+            data-test="button-group-table-filter-category-level"
             role="group"
     >
         <input type="radio" class="btn-check" name="table_filter_transaction_type" id="table_filter_transaction_type_standard" value="{{__('standard')}}">

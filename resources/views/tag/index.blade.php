@@ -28,7 +28,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New tag') }}
                         <a class="btn btn-success btn-sm"
-                           dusk="button-new-tag"
+                           data-test="button-new-tag"
                            href="{{ route('tag.create') }}" title="{{ __('New tag') }}"
                         >
                             <i class="fa fa-fw fa-plus" title="{{ __('New tag') }}"></i>
@@ -62,7 +62,7 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-tags"
+                            data-test="table-tags"
                             id="table"
                             role="grid"
                     ></table>

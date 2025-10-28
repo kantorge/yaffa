@@ -2,7 +2,6 @@
 
 namespace Tests\Browser;
 
-use Laravel\Dusk\Browser;
 use Exception;
 
 class DuskMacros

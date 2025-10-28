@@ -83,7 +83,7 @@
                     </div>
                 </li>
             </ul>
-            <button class="header-toggler px-md-0 me-md-3" dusk="quick-action-bar-toggler" type="button"
+            <button class="header-toggler px-md-0 me-md-3" data-test="quick-action-bar-toggler" type="button"
                 onclick="coreui.Sidebar.getInstance(document.querySelector('#quick-action-bar')).show()">
                 <i class="fa fa-fw fa-bolt"></i>
             </button>

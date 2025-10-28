@@ -1,36 +1,26 @@
 <?php
 
-namespace Tests\Browser\Pages\Auth;
-
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-class LoginTest extends DuskTestCase
-{
-    use DatabaseMigrations;
+uses(Tests\DuskTestCase::class);
+uses(DatabaseMigrations::class);
 
-    public function test_login_page_loads(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/')
-                ->assertSee('YAFFA');
-        });
-    }
+test('login page loads', function () {
+    $browser = visit('/')
+        ->assertSee('YAFFA');;
+});
 
-    public function test_user_login_redirects_to_main_page(): void
-    {
-        $user = User::factory()->create([
-            'language' => 'en'
-        ]);
+test('user login redirects to main page', function () {
+    $user = User::factory()->create([
+        'language' => 'en'
+    ]);
 
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit('/login')
-                ->type('email', $user->email)
-                ->type('password', 'password')
-                ->press('@login-button')
-                ->waitForLocation('/', 10);
-        });
-    }
-}
+    $browser = visit('/login')
+        ->type('email', $user->email)
+        ->type('password', 'password')
+        ->press('@login-button')
+        ->waitForLocation('/', 10);;
+});

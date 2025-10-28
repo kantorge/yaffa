@@ -44,7 +44,7 @@
                 @if (isset($source_id))
                     :source-id = "{{ $source_id }}"
                 @endif
-                dusk="transaction-container-standard"
+                data-test="transaction-container-standard"
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')

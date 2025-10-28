@@ -28,7 +28,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New investment') }}
                         <a class="btn btn-sm btn-success"
-                           dusk="button-new-investment"
+                           data-test="button-new-investment"
                            href="{{ route('investment.create') }}"
                            title="{{ __('New investment') }}"
                         >

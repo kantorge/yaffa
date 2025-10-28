@@ -13,7 +13,7 @@
                 <button
                     type="button"
                     class="btn btn-sm btn-success ms-1"
-                    dusk="button-add-transaction-item"
+                    data-test="button-add-transaction-item"
                     @click="this.$emit('addTransactionItem')"
                     :title="__('New transaction item')"
                     :disabled="!enabled"

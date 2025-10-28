@@ -33,13 +33,13 @@
                             @if ($receivedMail->processed)
                                 <i
                                         class="fa fa-check-square text-success"
-                                        dusk="icon-received-mail-processed-yes"
+                                        data-test="icon-received-mail-processed-yes"
                                         title="{{ __('Yes') }}"
                                 ></i>
                             @else
                                 <i
                                         class="fa fa-square text-danger"
-                                        dusk="icon-received-mail-processed-no"
+                                        data-test="icon-received-mail-processed-no"
                                         title="{{ __('No') }}"
                                 ></i>
                             @endif
@@ -49,13 +49,13 @@
                             @if ($receivedMail->handled)
                                 <i
                                         class="fa fa-check-square text-success"
-                                        dusk="icon-received-mail-handled-yes"
+                                        data-test="icon-received-mail-handled-yes"
                                         title="{{ __('Yes') }}"
                                 ></i>
                             @else
                                 <i
                                         class="fa fa-square text-danger"
-                                        dusk="icon-received-mail-handled-no"
+                                        data-test="icon-received-mail-handled-no"
                                         title="{{ __('No') }}"
                                 ></i>
                             @endif
@@ -64,7 +64,7 @@
                         <dd class="col-4">
                             @if ($receivedMail->transaction_id)
                                 <a
-                                        dusk="link-received-mail-transaction"
+                                        data-test="link-received-mail-transaction"
                                         href="{{ route('transaction.open', [
                                             'transaction' => $receivedMail->transaction_id,
                                             'action' => 'show'
@@ -76,7 +76,7 @@
                             @else
                                 <i
                                         class="fa fa-square text-danger"
-                                        dusk="icon-received-mail-transaction-no"
+                                        data-test="icon-received-mail-transaction-no"
                                         title="{{ __('No') }}"
                                 ></i>
                         @endif
@@ -91,7 +91,7 @@
                             class="card-title collapse-control"
                             data-coreui-toggle="collapse"
                             data-coreui-target="#cardExtractedData"
-                            dusk="card-received-mail-extracted-data"
+                            data-test="card-received-mail-extracted-data"
                     >
                         <i class="fa fa-angle-down"></i>
                         {{ __('Extracted data') }}
@@ -151,7 +151,7 @@
                         {{ __('Process email again') }}
                         <button
                                 class="btn btn-xs btn-warning reprocessIcon"
-                                dusk="button-received-mail-reprocess"
+                                data-test="button-received-mail-reprocess"
                                 type="button"
                                 title="{{ __('Process email again') }}"
                         >
@@ -164,7 +164,7 @@
                         {{ __('Finalize transaction') }}
                         <button
                                 class="btn btn-xs btn-primary finalizeIcon"
-                                dusk="button-received-mail-finalize"
+                                data-test="button-received-mail-finalize"
                                 type="button"
                                 title="{{ __('Finalize transaction') }}"
                         >
@@ -176,7 +176,7 @@
                         {{ __('Delete email') }}
                         <button
                                 class="btn btn-xs btn-danger deleteIcon"
-                                dusk="button-received-mail-delete"
+                                data-test="button-received-mail-delete"
                                 type="button"
                                 title="{{ __('Delete') }}"
                         >
@@ -195,7 +195,7 @@
                         <li class="nav-item">
                             <button
                                     class="nav-link active"
-                                    dusk="button-received-mail-tab-html"
+                                    data-test="button-received-mail-tab-html"
                                     id="nav-email-tab-html"
                                     data-coreui-toggle="tab"
                                     data-coreui-target="#email-tab-html"
@@ -210,7 +210,7 @@
                         <li class="nav-item">
                             <button
                                     class="nav-link"
-                                    dusk="button-received-mail-tab-text"
+                                    data-test="button-received-mail-tab-text"
                                     id="nav-email-tab-text"
                                     data-coreui-toggle="tab"
                                     data-coreui-target="#email-tab-text"
@@ -228,7 +228,7 @@
                     <div class="tab-content" id="nav-tabContent">
                         <div
                                 class="tab-pane fade show active"
-                                dusk="received-mail-tab-html"
+                                data-test="received-mail-tab-html"
                                 id="email-tab-html"
                                 role="tabpanel"
                                 aria-labelledby="nav-email-tab-html"
@@ -238,7 +238,7 @@
                         </div>
                         <div
                                 class="tab-pane fade"
-                                dusk="received-mail-tab-text"
+                                data-test="received-mail-tab-text"
                                 id="email-tab-text"
                                 role="tabpanel"
                                 aria-labelledby="nav-email-tab-text"

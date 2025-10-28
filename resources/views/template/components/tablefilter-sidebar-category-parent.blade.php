@@ -3,7 +3,7 @@
     <div
             aria-label="Toggle button group for category level"
             class="btn-group"
-            dusk="button-group-table-filter-category-level"
+            data-test="button-group-table-filter-category-level"
             role="group"
     >
         <input type="radio" class="btn-check" name="table_filter_category_level" id="table_filter_category_level_parent" value="parents">
