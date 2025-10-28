@@ -15,7 +15,7 @@
                 </button>
             </div>
         </div>
-        <div class="card-body" ref="dateRangePicker" dusk="dateRangePicker">
+        <div class="card-body" ref="dateRangePicker" data-test="dateRangePicker">
             <div class="row">
                 <div class="col-6">
                     <label for="date_from" class="form-label">{{ __('Date from') }}</label>

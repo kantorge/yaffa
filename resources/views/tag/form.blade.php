@@ -12,7 +12,7 @@
     accept-charset="UTF-8"
     action="{{ route('tag.update', $tag) }}"
     autocomplete="off"
-    dusk="form-tag"
+    data-test="form-tag"
     method="POST"
 >
 @method('PATCH')
@@ -21,7 +21,7 @@
     accept-charset="UTF-8"
     action="{{ route('tag.store') }}"
     autocomplete="off"
-    dusk="form-tag"
+    data-test="form-tag"
     method="POST"
 >
 @endif
@@ -44,7 +44,7 @@
                 <div class="col-sm-9">
                     <input
                         class="form-control"
-                        dusk="form-tag-field-name"
+                        data-test="form-tag-field-name"
                         id="name"
                         name="name"
                         type="text"

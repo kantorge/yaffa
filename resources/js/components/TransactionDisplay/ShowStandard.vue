@@ -31,7 +31,7 @@
                             <dd
                                     class="col-6"
                                     :class="(transaction.config.account_from?.name ? '' : 'text-muted')"
-                                    dusk="label-account-from-name"
+                                    data-test="label-account-from-name"
                             >
                                 {{ transaction.config.account_from?.name || __('Not set') }}
                             </dd>
@@ -42,7 +42,7 @@
                             <dd
                                     class="col-6"
                                     :class="(transaction.config.account_to?.name ? '' : 'text-muted')"
-                                    dusk="label-account-to-name"
+                                    data-test="label-account-to-name"
                             >
                                 {{ transaction.config.account_to?.name || __('Not set') }}
                             </dd>
@@ -71,7 +71,7 @@
                             <dt class="col-6">
                                 {{ __('Budget') }}
                             </dt>
-                            <dd class="col-6" dusk="label-budget">
+                            <dd class="col-6" data-test="label-budget">
                                 <i
                                         v-if="transaction.budget"
                                         class="fa fa-check text-success"

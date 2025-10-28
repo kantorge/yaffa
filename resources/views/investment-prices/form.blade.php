@@ -15,7 +15,7 @@
         action="{{ route('investment-price.update', $investmentPrice->id) }}"
         autocomplete="off"
         method="POST"
-        dusk="form-investment-price"
+        data-test="form-investment-price"
     >
         @method('PATCH')
 @else
@@ -24,7 +24,7 @@
         action="{{ route('investment-price.store') }}"
         autocomplete="off"
         method="POST"
-        dusk="form-investment-price"
+        data-test="form-investment-price"
     >
 @endif
 
@@ -50,7 +50,7 @@
                         name="date"
                         type="text"
                         value="{{old('date', $investmentPrice->date ?? '' )}}"
-                        dusk="input-date"
+                        data-test="input-date"
                     >
                 </div>
             </div>
@@ -66,7 +66,7 @@
                         name="price"
                         type="text"
                         value="{{ old('price', $investmentPrice['price'] ?? '' ) }}"
-                        dusk="input-price"
+                        data-test="input-price"
                     >
                 </div>
             </div>
@@ -84,7 +84,7 @@
                 value="{{ old('investment_id', $investment->id) }}"
             >
 
-            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}" dusk="button-submit">
+            <input class="btn btn-primary" type="submit" value="{{ __('Save') }}" data-test="button-submit">
             <a href="{{ route('investment-price.list', ['investment' => $investment->id]) }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
     </div>

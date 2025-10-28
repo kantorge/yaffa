@@ -35,7 +35,7 @@
                                             class="btn"
                                             :class="transactionTypeBaseClass('withdrawal')"
                                             :disabled="!isBaseSettingsEditsAllowed"
-                                            dusk="transaction-type-withdrawal"
+                                            data-test="transaction-type-withdrawal"
                                             type="button"
                                             value="withdrawal"
                                             @click="changeTransactionType"
@@ -47,7 +47,7 @@
                                             class="btn"
                                             :class="transactionTypeBaseClass('deposit')"
                                             :disabled="!isBaseSettingsEditsAllowed"
-                                            dusk="transaction-type-deposit"
+                                            data-test="transaction-type-deposit"
                                             type="button"
                                             value="deposit"
                                             @click="changeTransactionType"
@@ -59,7 +59,7 @@
                                             class="btn"
                                             :class="transactionTypeBaseClass('transfer')"
                                             :disabled="form.budget || !isBaseSettingsEditsAllowed"
-                                            dusk="transaction-type-transfer"
+                                            data-test="transaction-type-transfer"
                                             type="button"
                                             value="transfer"
                                             @click="changeTransactionType"
@@ -80,7 +80,7 @@
                                     >
                                     <label
                                             class="btn btn-outline-dark w-100"
-                                            dusk="checkbox-transaction-schedule"
+                                            data-test="checkbox-transaction-schedule"
                                             for="checkbox-transaction-schedule"
                                             :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
                                             :data-toggle="(action === 'replace' ? 'tooltip' : '')"
@@ -99,7 +99,7 @@
                                     >
                                     <label
                                             class="btn btn-outline-dark w-100"
-                                            dusk="checkbox-transaction-budget"
+                                            data-test="checkbox-transaction-budget"
                                             for="checkbox-transaction-budget"
                                             :title="(action === 'replace' ? __('You cannot change schedule settings for this type of action') : '')"
                                             :data-toggle="(action === 'replace' ? 'tooltip' : '')"
@@ -282,7 +282,7 @@
                                 >
                                     <label for="transaction_amount_from" class="form-label">
                                         {{ ammountFromFieldLabel }}
-                                        <span v-if="ammountFromCurrencyLabel" dusk="label-amountFrom-currency">
+                                        <span v-if="ammountFromCurrencyLabel" data-test="label-amountFrom-currency">
                                             ({{ ammountFromCurrencyLabel }})
                                         </span>
                                         <span v-if="form.budget && !ammountFromCurrencyLabel">
@@ -302,7 +302,7 @@
                                 <div
                                         v-show="exchangeRatePresent"
                                         class="col-4"
-                                        dusk="label-transaction-exchange-rate"
+                                        data-test="label-transaction-exchange-rate"
                                 >
                                     <span class="block-label">
                                         {{ __('Exchange rate') }}
@@ -317,7 +317,7 @@
                                     <label for="transaction_amount_to" class="form-label">
                                         {{ __('Amount to') }}
                                         <span v-if="to.account_currency"
-                                              dusk="label-amountTo-currency">
+                                              data-test="label-amountTo-currency">
                                               ({{ getCurrencySymbol(locale, to.account_currency.iso_code) }})
                                         </span>
                                     </label>
@@ -410,7 +410,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="d-none d-md-block col-md-10">
-                            <div v-show="!fromModal" dusk="action-after-save-desktop-button-group">
+                            <div v-show="!fromModal" data-test="action-after-save-desktop-button-group">
                                 <div class="btn-group">
                                     <button
                                             class="btn btn-secondary"

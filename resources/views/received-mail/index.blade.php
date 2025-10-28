@@ -26,7 +26,7 @@
                         <li class="nav-item d-flex justify-content-between align-items-center">
                             {{ __('New account') }}
                             <a class="btn btn-success"
-                               dusk="button-new-account"
+                               data-test="button-new-account"
                                href="{{ route('account-entity.create', ['type' => 'account']) }}"
                                title="{{ __('New account') }}"
                             >
@@ -66,7 +66,7 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-received-mails"
+                            data-test="table-received-mails"
                             id="table"
                     ></table>
                 </div>

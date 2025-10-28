@@ -1,9 +1,9 @@
 <template>
-  <div class="d-flex justify-content-end w-auto" dusk="action-bar">
+  <div class="d-flex justify-content-end w-auto" data-test="action-bar">
     <button
       class="btn btn-warning ms-2"
       :disabled="skipInstanceButtonBusy"
-      dusk="button-action-bar-skip"
+      data-test="button-action-bar-skip"
       :title="__('Skip schedule instance')"
       v-if="
         controls.skip &&
@@ -18,7 +18,7 @@
 
     <a
       class="btn btn-success enter ms-2"
-      dusk="button-action-bar-enter-instance"
+      data-test="button-action-bar-enter-instance"
       :href="getRoute('enter')"
       :title="__('Enter schedule instance')"
       v-if="
@@ -33,7 +33,7 @@
 
     <a
       class="btn btn-success ms-2"
-      dusk="button-action-bar-open"
+      data-test="button-action-bar-open"
       :href="getRoute('show')"
       :title="__('View details')"
       v-if="isModal && controls.show"
@@ -63,7 +63,7 @@
       class="btn btn-secondary ms-2"
       data-coreui-dismiss="modal"
       data-coreui-target="#modal-quickview"
-      dusk="button-action-bar-close"
+      data-test="button-action-bar-close"
       type="button"
       v-if="isModal"
     >

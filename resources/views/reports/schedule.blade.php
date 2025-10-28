@@ -35,7 +35,7 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     {{ __('New scheduled, standard transaction') }}
                     <a class="btn btn-sm btn-success"
-                       dusk="button-new-payee"
+                       data-test="button-new-payee"
                        href="{{ route('transaction.create', [
                             'type' => 'standard',
                             'schedule' => '1',
@@ -49,7 +49,7 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     {{ __('New scheduled, investment transaction') }}
                     <a class="btn btn-sm btn-success"
-                       dusk="button-new-payee"
+                       data-test="button-new-payee"
                        href="{{ route('transaction.create', [
                             'type' => 'investment',
                             'schedule' => '1',

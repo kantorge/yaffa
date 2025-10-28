@@ -28,7 +28,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New payee') }}
                         <a class="btn btn-sm btn-success"
-                           dusk="button-new-payee"
+                           data-test="button-new-payee"
                            href="{{ route('account-entity.create', ['type' => 'payee']) }}"
                            title="{{ __('New payee') }}"
                         >
@@ -38,7 +38,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('Merge payees') }}
                         <a class="btn btn-sm btn-primary"
-                           dusk="button-merge-payees"
+                           data-test="button-merge-payees"
                            href="{{ route('payees.merge.form') }}"
                            title="{{ __('Merge payees') }}"
                         >
@@ -73,7 +73,7 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-payees"
+                            data-test="table-payees"
                             id="table"
                             role="grid"
                     ></table>

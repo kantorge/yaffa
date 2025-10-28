@@ -13,7 +13,7 @@
               <dt class="col-6">
                 {{ __('Type') }}
               </dt>
-              <dd class="col-6" dusk="label-transaction-type">
+              <dd class="col-6" data-test="label-transaction-type">
                 {{ __(transaction.transaction_type.name) }}
               </dd>
 
@@ -32,7 +32,7 @@
               <dt class="col-6">
                 {{ __('Account') }}
               </dt>
-              <dd class="col-6" dusk="label-account-name">
+              <dd class="col-6" data-test="label-account-name">
                 <a
                   :href="
                     route('account-entity.show', {
@@ -48,7 +48,7 @@
               <dt class="col-6">
                 {{ __('Investment') }}
               </dt>
-              <dd class="col-6" dusk="label-investment-name">
+              <dd class="col-6" data-test="label-investment-name">
                 <a
                   :href="
                     route('investment.show', {
@@ -110,14 +110,14 @@
               <dt class="col-6">
                 {{ __('Quantity') }}
               </dt>
-              <dd class="col-6" dusk="label-quantity">
+              <dd class="col-6" data-test="label-quantity">
                 {{ formattedQuantity }}
               </dd>
 
               <dt class="col-6">
                 {{ __('Price') }}
               </dt>
-              <dd class="col-6" dusk="label-price">
+              <dd class="col-6" data-test="label-price">
                 {{
                   toFormattedCurrency(
                     transaction.config.price,
@@ -165,7 +165,7 @@
               <dd
                 class="col-6"
                 v-if="transaction.config.dividend"
-                dusk="label-dividend"
+                data-test="label-dividend"
               >
                 {{
                   toFormattedCurrency(
@@ -175,7 +175,7 @@
                   )
                 }}
               </dd>
-              <dd class="col-6" v-else dusk="label-dividend">
+              <dd class="col-6" v-else data-test="label-dividend">
                 <span class="text-muted text-italic">{{ __('Not set') }}</span>
               </dd>
             </dl>

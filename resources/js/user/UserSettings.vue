@@ -205,7 +205,7 @@
                 <Button
                         class="btn btn-primary"
                         :form="form"
-                        dusk="button-update-settings"
+                        data-test="button-update-settings"
                 >
                   {{ __('Save') }}
                 </Button>

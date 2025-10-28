@@ -34,7 +34,7 @@
                                                 'btn-primary',
                                                 'px-4',
                                                 'g-recaptcha' => config('recaptcha.api_site_key'),
-                                            ]) type="submit" dusk="login-button"
+                                            ]) type="submit" data-test="login-button"
                                                 id="login" @if(config('recaptcha.api_site_key'))
                                                     data-sitekey="{{ config('recaptcha.api_site_key') }}"
                                                 data-callback="onSubmit" @endif>

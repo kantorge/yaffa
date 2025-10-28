@@ -35,7 +35,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ __('New investment group') }}
                         <a class="btn btn-sm btn-success"
-                           dusk="button-new-investment-group"
+                           data-test="button-new-investment-group"
                            href="{{ route('investment-group.create') }}"
                            title="{{ __('New investment group') }}"
                         >
@@ -66,7 +66,7 @@
                 <div class="card-body no-datatable-search">
                     <table
                             class="table table-striped table-bordered table-hover"
-                            dusk="table-investment-groups"
+                            data-test="table-investment-groups"
                             id="table"
                     ></table>
                 </div>

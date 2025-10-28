@@ -63,7 +63,7 @@
                   />
                   <label
                     class="btn btn-outline-dark w-100"
-                    dusk="checkbox-transaction-schedule"
+                    data-test="checkbox-transaction-schedule"
                     for="checkbox-transaction-schedule"
                     :title="
                       action === 'replace'
@@ -210,7 +210,7 @@
                   <span
                     class="me-1"
                     v-if="currency"
-                    dusk="transaction-total-value"
+                    data-test="transaction-total-value"
                   >
                     {{ toFormattedCurrency(total, this.locale, currency) }}
                   </span>
@@ -330,7 +330,7 @@
             <div class="d-none d-md-block col-md-10">
               <div
                 v-show="!fromModal"
-                dusk="action-after-save-desktop-button-group"
+                data-test="action-after-save-desktop-button-group"
               >
                 <div class="btn-group">
                   <button class="btn btn-secondary" disabled>

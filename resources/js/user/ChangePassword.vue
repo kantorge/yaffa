@@ -73,7 +73,7 @@
         <Button
           class="btn btn-primary"
           :form="form"
-          dusk="button-change-password"
+          data-test="button-change-password"
         >
           {{ __('Change Password') }}
         </Button>

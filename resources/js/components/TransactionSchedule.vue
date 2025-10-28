@@ -1,5 +1,5 @@
 <template>
-    <div class="card mb-3" dusk="card-transaction-schedule" :id="'transaction_schedule_' + this.$.vnode.key">
+    <div class="card mb-3" data-test="card-transaction-schedule" :id="'transaction_schedule_' + this.$.vnode.key">
         <div class="card-header d-flex justify-content-between">
             <div class="card-title">
                 {{ title }}
@@ -123,7 +123,7 @@
                         <br>
                         <input
                                 class="form-check-input"
-                                dusk="checkbox-schedule-automatic-recording"
+                                data-test="checkbox-schedule-automatic-recording"
                                 type="checkbox"
                                 value="1"
                                 v-model="schedule.automatic_recording"

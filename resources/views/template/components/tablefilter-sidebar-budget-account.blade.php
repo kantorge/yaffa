@@ -3,7 +3,7 @@
     <div
             aria-label="Toggle button group for account filtering"
             class="btn-group"
-            dusk="button-group-table-filter-account-scope"
+            data-test="button-group-table-filter-account-scope"
             role="group"
     >
         <input type="radio" class="btn-check" name="table_filter_account_scope" id="table_filter_account_scope_selected" value="selected">
