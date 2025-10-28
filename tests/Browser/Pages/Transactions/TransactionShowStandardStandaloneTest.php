@@ -28,22 +28,20 @@ test('user can load the standard transaction details', function () {
             'reconciled' => true,
         ]);
 
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the transaction page
-            ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
-            // Check the details container is present
-            ->assertPresent('#transactionShowStandard')
+    $browser->loginAs($user)
+        // Load the transaction page
+        ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
+        // Check the details container is present
+        ->assertPresent('#transactionShowStandard')
 
-            // TODO: Check the details are correct
+        // TODO: Check the details are correct
 
-            // Action button bar is present
-            ->assertPresent('@action-bar')
-            // Close and open button is not available in the action bar
-            ->assertMissing('@button-action-bar-close')
-            ->assertMissing('@button-action-bar-open')
-            // Skip and enter instance buttons are not available in the action bar
-            ->assertMissing('@button-action-bar-skip')
-            ->assertMissing('@button-action-bar-enter-instance');
-    });
+        // Action button bar is present
+        ->assertPresent('@action-bar')
+        // Close and open button is not available in the action bar
+        ->assertMissing('@button-action-bar-close')
+        ->assertMissing('@button-action-bar-open')
+        // Skip and enter instance buttons are not available in the action bar
+        ->assertMissing('@button-action-bar-skip')
+        ->assertMissing('@button-action-bar-enter-instance');;
 });

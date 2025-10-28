@@ -40,35 +40,33 @@ test('user can load the investment transaction details', function () {
             'reconciled' => true,
         ]);
 
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the transaction page
-            ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
-            // Check the details container is present
-            ->assertPresent('#transactionShowInvestment')
-            // Check the details are correct
-            // Transaction type is 'Buy'
-            ->assertSeeIn('@label-transaction-type', 'Buy')
-            // Investment is 'Test investment USD'
-            ->assertSeeIn('@label-investment-name', 'Test investment USD')
-            // Account is 'Investment account USD'
-            ->assertSeeIn('@label-account-name', 'Investment account USD')
-            // Quantity is rounded to 4 decimal places
-            ->assertSeeIn('@label-quantity', '2.3457')
-            // Price is rounded to  decimal places
-            // and has the currency symbol according to the account currency and user locale
-            ->assertSeeIn('@label-price', '$1.23')
-            // Dividend is not present, labelled as 'Not set'
-            ->assertSeeIn('@label-dividend', 'Not set')
-            // Action button bar is present
-            ->assertPresent('@action-bar')
-            // Close and open button is not available in the action bar
-            ->assertMissing('@button-action-bar-close')
-            ->assertMissing('@button-action-bar-open')
-            // Skip and enter instance buttons are not available in the action bar
-            ->assertMissing('@button-action-bar-skip')
-            ->assertMissing('@button-action-bar-enter-instance');
-    });
+    $browser->loginAs($user)
+        // Load the transaction page
+        ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
+        // Check the details container is present
+        ->assertPresent('#transactionShowInvestment')
+        // Check the details are correct
+        // Transaction type is 'Buy'
+        ->assertSeeIn('@label-transaction-type', 'Buy')
+        // Investment is 'Test investment USD'
+        ->assertSeeIn('@label-investment-name', 'Test investment USD')
+        // Account is 'Investment account USD'
+        ->assertSeeIn('@label-account-name', 'Investment account USD')
+        // Quantity is rounded to 4 decimal places
+        ->assertSeeIn('@label-quantity', '2.3457')
+        // Price is rounded to  decimal places
+        // and has the currency symbol according to the account currency and user locale
+        ->assertSeeIn('@label-price', '$1.23')
+        // Dividend is not present, labelled as 'Not set'
+        ->assertSeeIn('@label-dividend', 'Not set')
+        // Action button bar is present
+        ->assertPresent('@action-bar')
+        // Close and open button is not available in the action bar
+        ->assertMissing('@button-action-bar-close')
+        ->assertMissing('@button-action-bar-open')
+        // Skip and enter instance buttons are not available in the action bar
+        ->assertMissing('@button-action-bar-skip')
+        ->assertMissing('@button-action-bar-enter-instance');;
 });
 
 /**
@@ -94,29 +92,27 @@ test('user can load the dividend transaction details', function () {
         )
         ->create();
 
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the transaction page
-            ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
-            // Check the details container is present
-            ->assertPresent('#transactionShowInvestment')
-            // Check the details are correct
-            // Transaction type is 'Dividend'
-            ->assertSeeIn('@label-transaction-type', 'Dividend')
-            // Investment is 'Test investment USD'
-            ->assertSeeIn('@label-investment-name', 'Test investment USD')
-            // Account is 'Investment account USD'
-            ->assertSeeIn('@label-account-name', 'Investment account USD')
-            // Quantity is rounded to 4 decimal places
-            ->assertSeeIn('@label-quantity', 'Not set')
-            // Dividend is rounded to 2 decimal places
-            // and has the currency symbol according to the account currency and user locale
-            ->assertSeeIn('@label-dividend', '100')
-            // Price is not present, labelled as 'Not set'
-            ->assertSeeIn('@label-price', 'Not set')
-            // Action button bar is present
-            ->assertPresent('@action-bar');
-    });
+    $browser->loginAs($user)
+        // Load the transaction page
+        ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
+        // Check the details container is present
+        ->assertPresent('#transactionShowInvestment')
+        // Check the details are correct
+        // Transaction type is 'Dividend'
+        ->assertSeeIn('@label-transaction-type', 'Dividend')
+        // Investment is 'Test investment USD'
+        ->assertSeeIn('@label-investment-name', 'Test investment USD')
+        // Account is 'Investment account USD'
+        ->assertSeeIn('@label-account-name', 'Investment account USD')
+        // Quantity is rounded to 4 decimal places
+        ->assertSeeIn('@label-quantity', 'Not set')
+        // Dividend is rounded to 2 decimal places
+        // and has the currency symbol according to the account currency and user locale
+        ->assertSeeIn('@label-dividend', '100')
+        // Price is not present, labelled as 'Not set'
+        ->assertSeeIn('@label-price', 'Not set')
+        // Action button bar is present
+        ->assertPresent('@action-bar');;
 });
 
 /**
@@ -147,18 +143,16 @@ test('user can load the investment transaction details for a scheduled transacti
             'schedule' => true,
         ]);
 
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the transaction page
-            ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
-            // Check the details container is present
-            ->assertPresent('#transactionShowInvestment')
+    $browser->loginAs($user)
+        // Load the transaction page
+        ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
+        // Check the details container is present
+        ->assertPresent('#transactionShowInvestment')
 
-            // Action button bar is present
-            ->assertPresent('@action-bar')
+        // Action button bar is present
+        ->assertPresent('@action-bar')
 
-            // Skip and enter instance buttons are available in the action bar
-            ->assertPresent('@button-action-bar-skip')
-            ->assertPresent('@button-action-bar-enter-instance');
-    });
+        // Skip and enter instance buttons are available in the action bar
+        ->assertPresent('@button-action-bar-skip')
+        ->assertPresent('@button-action-bar-enter-instance');;
 });

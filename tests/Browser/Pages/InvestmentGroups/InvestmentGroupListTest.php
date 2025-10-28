@@ -33,40 +33,38 @@ test('user can load the investment group list and use filters', function () {
 
     $investmentGroupToSearch = $investmentGroups->first();
 
-    $this->browse(function (Browser $browser) use ($user, $investmentGroupToSearch) {
-        $browser
-            // Acting as the main user
-            ->loginAs($user)
-            // Load the investment group list
-            ->visitRoute('investment-group.index')
-            // Wait for the table to load
-            ->waitFor('@table-investment-groups')
-            // Check that the investment group list is visible
-            ->assertPresent('@table-investment-groups');
+    $browser
+        // Acting as the main user
+        ->loginAs($user)
+        // Load the investment group list
+        ->visitRoute('investment-group.index')
+        // Wait for the table to load
+        ->waitFor('@table-investment-groups')
+        // Check that the investment group list is visible
+        ->assertPresent('@table-investment-groups');
 
-        // Get the number of investment groups in the table using JavaScript
-        $this->assertEquals(
-            $user->investmentGroups()->count(),
-            $this->getTableRowCount($browser, TABLE_SELECTOR)
-        );
+    // Get the number of investment groups in the table using JavaScript
+    $this->assertEquals(
+        $user->investmentGroups()->count(),
+        $this->getTableRowCount($browser, TABLE_SELECTOR)
+    );
 
-        // Filter the table using the search field
-        $browser->type('@input-table-filter-search', $investmentGroupToSearch->name);
-        $this->assertEquals(
-            1,
-            $this->getTableRowCount($browser, TABLE_SELECTOR)
-        );
+    // Filter the table using the search field
+    $browser->type('@input-table-filter-search', $investmentGroupToSearch->name);
+    $this->assertEquals(
+        1,
+        $this->getTableRowCount($browser, TABLE_SELECTOR)
+    );
 
-        // Clear the search field
-        $browser->clear('@input-table-filter-search');
-        // Enter a dummy search string
-        $browser->type('@input-table-filter-search', '_dummy_');
-        // The number of filtered investment groups should be 0
-        $this->assertEquals(
-            0,
-            $this->getTableRowCount($browser, TABLE_SELECTOR)
-        );
-    });
+    // Clear the search field
+    $browser->clear('@input-table-filter-search');
+    // Enter a dummy search string
+    $browser->type('@input-table-filter-search', '_dummy_');
+    // The number of filtered investment groups should be 0
+    $this->assertEquals(
+        0,
+        $this->getTableRowCount($browser, TABLE_SELECTOR)
+    );;
 });
 
 test('delete button behaviour', function () {
@@ -87,28 +85,26 @@ test('delete button behaviour', function () {
     Investment::factory()->for($user)->for($investmentGroupWithInvestment)->create();
 
     // Perform the tests
-    $this->browse(function (Browser $browser) use ($user, $standaloneInvestmentGroup, $investmentGroupWithInvestment) {
-        $browser
-            // Acting as the main user
-            ->loginAs($user)
-            // Load the investment group list
-            ->visitRoute('investment-group.index')
-            // Wait for the table to load
-            ->waitFor('@table-investment-groups')
-            // Check that the investment group list is visible
-            ->assertPresent('@table-investment-groups');
+    $browser
+        // Acting as the main user
+        ->loginAs($user)
+        // Load the investment group list
+        ->visitRoute('investment-group.index')
+        // Wait for the table to load
+        ->waitFor('@table-investment-groups')
+        // Check that the investment group list is visible
+        ->assertPresent('@table-investment-groups');
 
-        // Validate that the standalone investment group can be deleted
-        $browser->assertPresent(
-            TABLE_SELECTOR . " button.deleteIcon[data-id='{$standaloneInvestmentGroup->id}']"
-        );
+    // Validate that the standalone investment group can be deleted
+    $browser->assertPresent(
+        TABLE_SELECTOR . " button.deleteIcon[data-id='{$standaloneInvestmentGroup->id}']"
+    );
 
-        // Validate that the investment group with an investment cannot be deleted
-        $browser->assertMissing(
-            TABLE_SELECTOR . " button.deleteIcon[data-id='{$investmentGroupWithInvestment->id}']"
-        );
-        $browser->assertPresent(
-            TABLE_SELECTOR . " button[data-id='{$investmentGroupWithInvestment->id}']:not(.deleteIcon)"
-        );
-    });
+    // Validate that the investment group with an investment cannot be deleted
+    $browser->assertMissing(
+        TABLE_SELECTOR . " button.deleteIcon[data-id='{$investmentGroupWithInvestment->id}']"
+    );
+    $browser->assertPresent(
+        TABLE_SELECTOR . " button[data-id='{$investmentGroupWithInvestment->id}']:not(.deleteIcon)"
+    );;
 });

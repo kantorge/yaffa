@@ -51,37 +51,35 @@ test('details of a buy transaction are correct', function () {
         ]);
 
     // Run the test
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the list of scheduled transactions
-            ->visitRoute('report.schedules')
-            // Wait for the table to load, when the placeholder is gone
-            ->waitUntilMissing('#table .dataTables_empty', 10)
-            // Check that a row with the transaction is present
-            ->waitFor(getTableRowSelector($transaction), 10)
-            // The 8th column is the payee, which contains the account name
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-            // The 9th column is the category, which contains the investment type
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
+    $browser->loginAs($user)
+        // Load the list of scheduled transactions
+        ->visitRoute('report.schedules')
+        // Wait for the table to load, when the placeholder is gone
+        ->waitUntilMissing('#table .dataTables_empty', 10)
+        // Check that a row with the transaction is present
+        ->waitFor(getTableRowSelector($transaction), 10)
+        // The 8th column is the payee, which contains the account name
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+        // The 9th column is the category, which contains the investment type
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Buy');
 
-        // Calculate the formatted value of the transaction using JavaScript
-        $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-            + ($transaction->config->dividend ?? 0)
-            + ($transaction->config->commission ?? 0) + ($transaction->config->tax ?? 0);
-        $formattedValue = "- " . $browser
-            ->script("const value = {$value};
-                return value.toLocaleString(
-                '{$user->locale}',
-                {
-                    style: 'currency',
-                    currency: '{$transaction->config->account->config->currency->iso_code}',
-                    currencyDisplay: 'narrowSymbol',
-                    minimumFractionDigits: 0
-                });")[0];
+    // Calculate the formatted value of the transaction using JavaScript
+    $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
+        + ($transaction->config->dividend ?? 0)
+        + ($transaction->config->commission ?? 0) + ($transaction->config->tax ?? 0);
+    $formattedValue = "- " . $browser
+        ->script("const value = {$value};
+            return value.toLocaleString(
+            '{$user->locale}',
+            {
+                style: 'currency',
+                currency: '{$transaction->config->account->config->currency->iso_code}',
+                currencyDisplay: 'narrowSymbol',
+                minimumFractionDigits: 0
+            });")[0];
 
-        // The 10th column is the amount, which contains the formatted value
-        $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
-    });
+    // The 10th column is the amount, which contains the formatted value
+    $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);;
 });
 
 test('details of a sell transaction are correct', function () {
@@ -115,37 +113,35 @@ test('details of a sell transaction are correct', function () {
         ]);
 
     // Run the test
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the list of scheduled transactions
-            ->visitRoute('report.schedules')
-            // Wait for the table to load, when the placeholder is gone
-            ->waitUntilMissing('#table .dataTables_empty', 10)
-            // Check that a row with the transaction is present
-            ->waitFor(getTableRowSelector($transaction), 10)
-            // The 8th column is the payee, which contains the account name
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-            // The 9th column is the category, which contains the investment type
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
+    $browser->loginAs($user)
+        // Load the list of scheduled transactions
+        ->visitRoute('report.schedules')
+        // Wait for the table to load, when the placeholder is gone
+        ->waitUntilMissing('#table .dataTables_empty', 10)
+        // Check that a row with the transaction is present
+        ->waitFor(getTableRowSelector($transaction), 10)
+        // The 8th column is the payee, which contains the account name
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+        // The 9th column is the category, which contains the investment type
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Sell');
 
-        // Calculate the formatted value of the transaction using JavaScript
-        $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-            + ($transaction->config->dividend ?? 0)
-            - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
-        $formattedValue = "+ " . $browser
-            ->script("const value = {$value};
-                return value.toLocaleString(
-                '{$user->locale}',
-                {
-                    style: 'currency',
-                    currency: '{$transaction->config->account->config->currency->iso_code}',
-                    currencyDisplay: 'narrowSymbol',
-                    minimumFractionDigits: 0
-                });")[0];
+    // Calculate the formatted value of the transaction using JavaScript
+    $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
+        + ($transaction->config->dividend ?? 0)
+        - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+    $formattedValue = "+ " . $browser
+        ->script("const value = {$value};
+            return value.toLocaleString(
+            '{$user->locale}',
+            {
+                style: 'currency',
+                currency: '{$transaction->config->account->config->currency->iso_code}',
+                currencyDisplay: 'narrowSymbol',
+                minimumFractionDigits: 0
+            });")[0];
 
-        // The 10th column is the amount, which contains the formatted value
-        $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
-    });
+    // The 10th column is the amount, which contains the formatted value
+    $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);;
 });
 
 test('details of a dividend transaction are correct', function () {
@@ -181,37 +177,35 @@ test('details of a dividend transaction are correct', function () {
         ]);
 
     // Run the test
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the list of scheduled transactions
-            ->visitRoute('report.schedules')
-            // Wait for the table to load, when the placeholder is gone
-            ->waitUntilMissing('#table .dataTables_empty', 10)
-            // Check that a row with the transaction is present
-            ->waitFor(getTableRowSelector($transaction), 10)
-            // The 8th column is the payee, which contains the account name
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
-            // The 9th column is the category, which contains the investment type
-            ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
+    $browser->loginAs($user)
+        // Load the list of scheduled transactions
+        ->visitRoute('report.schedules')
+        // Wait for the table to load, when the placeholder is gone
+        ->waitUntilMissing('#table .dataTables_empty', 10)
+        // Check that a row with the transaction is present
+        ->waitFor(getTableRowSelector($transaction), 10)
+        // The 8th column is the payee, which contains the account name
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(8)'), 'Investment account USD')
+        // The 9th column is the category, which contains the investment type
+        ->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(9)'), 'Dividend');
 
-        // Calculate the formatted value of the transaction using JavaScript
-        $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
-            + ($transaction->config->dividend ?? 0)
-            - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
-        $formattedValue = "+ " . $browser
-            ->script("const value = {$value};
-                return value.toLocaleString(
-                '{$user->locale}',
-                {
-                    style: 'currency',
-                    currency: '{$transaction->config->account->config->currency->iso_code}',
-                    currencyDisplay: 'narrowSymbol',
-                    minimumFractionDigits: 0
-                });")[0];
+    // Calculate the formatted value of the transaction using JavaScript
+    $value = ($transaction->config->quantity ?? 0) * ($transaction->config->price ?? 0)
+        + ($transaction->config->dividend ?? 0)
+        - ($transaction->config->commission ?? 0) - ($transaction->config->tax ?? 0);
+    $formattedValue = "+ " . $browser
+        ->script("const value = {$value};
+            return value.toLocaleString(
+            '{$user->locale}',
+            {
+                style: 'currency',
+                currency: '{$transaction->config->account->config->currency->iso_code}',
+                currencyDisplay: 'narrowSymbol',
+                minimumFractionDigits: 0
+            });")[0];
 
-        // The 10th column is the amount, which contains the formatted value
-        $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);
-    });
+    // The 10th column is the amount, which contains the formatted value
+    $browser->assertSeeIn(getTableRowSelector($transaction, 'td:nth-child(10)'), $formattedValue);;
 });
 
 // Helpers

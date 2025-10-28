@@ -9,10 +9,8 @@ uses(Tests\DuskTestCase::class);
 uses(DatabaseMigrations::class);
 
 test('login page loads', function () {
-    $this->browse(function (Browser $browser) {
-        $browser->visit('/')
-            ->assertSee('YAFFA');
-    });
+    $browser = visit('/')
+        ->assertSee('YAFFA');;
 });
 
 test('user login redirects to main page', function () {
@@ -20,11 +18,9 @@ test('user login redirects to main page', function () {
         'language' => 'en'
     ]);
 
-    $this->browse(function (Browser $browser) use ($user) {
-        $browser->visit('/login')
-            ->type('email', $user->email)
-            ->type('password', 'password')
-            ->press('@login-button')
-            ->waitForLocation('/', 10);
-    });
+    $browser = visit('/login')
+        ->type('email', $user->email)
+        ->type('password', 'password')
+        ->press('@login-button')
+        ->waitForLocation('/', 10);;
 });

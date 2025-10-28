@@ -43,25 +43,23 @@ test('user can view the investment transaction details', function () {
             'date' => Carbon::create(2000, 1, 1),
         ]);
 
-    $this->browse(function (Browser $browser) use ($user, $transaction) {
-        $browser->loginAs($user)
-            // Load the 'find transactions' page
-            ->visitRoute('reports.transactions', [
-                'date_from' => '2000-01-01',
-                'date_to' => '2000-01-01',
-            ])
+    $browser->loginAs($user)
+        // Load the 'find transactions' page
+        ->visitRoute('reports.transactions', [
+            'date_from' => '2000-01-01',
+            'date_to' => '2000-01-01',
+        ])
 
-            // Wait for the results container to be present (targeting the navigation elements)
-            ->waitFor('#nav-transaction-list')
-            ->click('#nav-transaction-list')
+        // Wait for the results container to be present (targeting the navigation elements)
+        ->waitFor('#nav-transaction-list')
+        ->click('#nav-transaction-list')
 
-            // Click the quick-view button for the transaction
-            ->waitFor('#tab-transaction-list table button.transaction-quickview[data-id="' . $transaction->id . '"]')
-            ->click('#tab-transaction-list table button.transaction-quickview[data-id="' . $transaction->id . '"]')
+        // Click the quick-view button for the transaction
+        ->waitFor('#tab-transaction-list table button.transaction-quickview[data-id="' . $transaction->id . '"]')
+        ->click('#tab-transaction-list table button.transaction-quickview[data-id="' . $transaction->id . '"]')
 
-            // Check the modal is present
-            ->waitFor('#modal-quickview')
-            // Validate the ID in the header
-            ->assertSeeIn('#modal-quickview .modal-title', '#' . $transaction->id);
-    });
+        // Check the modal is present
+        ->waitFor('#modal-quickview')
+        // Validate the ID in the header
+        ->assertSeeIn('#modal-quickview .modal-title', '#' . $transaction->id);;
 });

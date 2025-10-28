@@ -25,11 +25,10 @@ test('quick action bar is initially hidden', function () {
     // Load the main test user
     $user = User::firstWhere('email', $this::USER_EMAIL);
 
-    $this->browse(function (Browser $browser) use ($user) {
-        $browser->loginAs($user)
-            ->visit(route('home'))
-            ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');
-    });
+    $this->actingAs($user);
+
+        $browser = visit(route('home'))
+        ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');;
 });
 
 /**
@@ -39,13 +38,12 @@ test('quick action bar can be opened and closed', function () {
     // Load the main test user
     $user = User::firstWhere('email', $this::USER_EMAIL);
 
-    $this->browse(function (Browser $browser) use ($user) {
-        $browser->loginAs($user)
-            ->visit(route('home'))
-            ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)')
-            ->click('@quick-action-bar-toggler')
-            ->waitFor(QUICK_ACTION_BAR_SELECTOR)
-            ->click('@quick-action-bar-close')
-            ->waitUntilMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');
-    });
+    $this->actingAs($user);
+
+        $browser = visit(route('home'))
+        ->assertMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)')
+        ->click('@quick-action-bar-toggler')
+        ->waitFor(QUICK_ACTION_BAR_SELECTOR)
+        ->click('@quick-action-bar-close')
+        ->waitUntilMissing(QUICK_ACTION_BAR_SELECTOR . ':not(.hidden)');;
 });

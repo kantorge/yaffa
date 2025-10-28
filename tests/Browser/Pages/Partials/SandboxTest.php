@@ -21,17 +21,15 @@ test('reset alert is not present if sandbox is disabled', function () {
     // Load the main test user
     $user = User::firstWhere('email', $this::USER_EMAIL);
 
-    $this->browse(function ($browser) use ($user) {
-        // Log in using the generic test user
-        $browser->loginAs($user)
-            ->visit(route('home'));
+    $this->actingAs($user);
 
-        // Make sure the element is not present
-        $browser->assertMissing('#sandBoxResetAlert');
+        $browser = visit(route('home'));
 
-        // Finally, log out by submitting the logout form
-        $browser->logout();
-    });
+    // Make sure the element is not present
+    $browser->assertMissing('#sandBoxResetAlert');
+
+    // Finally, log out by submitting the logout form
+    $browser->logout();;
 });
 
 test('reset alert is present if sandbox is enabled', function () {
@@ -41,15 +39,13 @@ test('reset alert is present if sandbox is enabled', function () {
     // Load the main test user
     $user = User::firstWhere('email', $this::USER_EMAIL);
 
-    $this->browse(function ($browser) use ($user) {
-        // Log in using the generic test user
-        $browser->loginAs($user)
-            ->visit(route('home'));
+    $this->actingAs($user);
 
-        // Make sure the element is present
-        $browser->assertVisible('#sandBoxResetAlert');
+        $browser = visit(route('home'));
 
-        // Finally, log out by submitting the logout form
-        $browser->logout();
-    });
+    // Make sure the element is present
+    $browser->assertVisible('#sandBoxResetAlert');
+
+    // Finally, log out by submitting the logout form
+    $browser->logout();;
 });
