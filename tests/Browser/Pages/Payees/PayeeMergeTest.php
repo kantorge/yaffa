@@ -1,22 +1,18 @@
 <?php
 
-namespace Tests\Browser\Pages\Payees;
-
 use App\Models\User;
 use Tests\DuskTestCase;
 
-class PayeeMergeTest extends DuskTestCase
-{
-    public function test_user_can_load_the_merge_payee_form(): void
-    {
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
+uses(Tests\DuskTestCase::class);
 
-        $this->browse(function ($browser) use ($user) {
-            $browser
-                ->loginAs($user)
-                ->visitRoute('payees.merge.form')
-                ->assertSee('Merge payees');
-        });
-    }
-}
+test('user can load the merge payee form', function () {
+    // Load the main test user
+    $user = User::firstWhere('email', $this::USER_EMAIL);
+
+    $this->browse(function ($browser) use ($user) {
+        $browser
+            ->loginAs($user)
+            ->visitRoute('payees.merge.form')
+            ->assertSee('Merge payees');
+    });
+});

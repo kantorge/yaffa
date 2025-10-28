@@ -1,221 +1,209 @@
 <?php
 
-namespace Tests\Browser\Pages\Partials;
-
 use App\Models\User;
 use Tests\DuskTestCase;
 
-class DataLayerTest extends DuskTestCase
-{
-    protected static bool $migrationRun = false;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Migrate and seed only once for this file
-        if (!static::$migrationRun) {
-            $this->artisan('migrate:fresh');
-            $this->artisan('db:seed');
-            static::$migrationRun = true;
-        }
+uses(Tests\DuskTestCase::class);
+beforeEach(function () {
+    // Migrate and seed only once for this file
+    if (!static::$migrationRun) {
+        $this->artisan('migrate:fresh');
+        $this->artisan('db:seed');
+        static::$migrationRun = true;
     }
+});
 
-    public function testDataLayerIsNotPresentIfGtmIdIsNotSet(): void
-    {
-        // Make sure, that the GTM ID is not set in the .env file
-        $this->setConfig('yaffa.gtm_container_id', null);
 
-        // Load the main test user
-        $user = User::firstWhere('email', $this::USER_EMAIL);
+test('data layer is not present if gtm id is not set', function () {
+    // Make sure, that the GTM ID is not set in the .env file
+    $this->setConfig('yaffa.gtm_container_id', null);
 
-        $this->browse(function ($browser) use ($user) {
-            // Open the login page
-            $browser->visit(route('login'));
+    // Load the main test user
+    $user = User::firstWhere('email', $this::USER_EMAIL);
 
-            // Make sure the dataLayer is empty
-            $output = $browser->script('return window.dataLayer;');
-            $this->assertEmpty($output[0]);
+    $this->browse(function ($browser) use ($user) {
+        // Open the login page
+        $browser->visit(route('login'));
 
-            // Log in using the generic test user
-            $browser->loginAs($user)
-                ->visit(route('home'));
+        // Make sure the dataLayer is empty
+        $output = $browser->script('return window.dataLayer;');
+        $this->assertEmpty($output[0]);
 
-            // Make sure the dataLayer is still empty
-            $output = $browser->script('return window.dataLayer;');
-            $this->assertEmpty($output[0]);
+        // Log in using the generic test user
+        $browser->loginAs($user)
+            ->visit(route('home'));
 
-            // Finally, log out by submitting the logout form
-            $browser->logout();
-        });
-    }
+        // Make sure the dataLayer is still empty
+        $output = $browser->script('return window.dataLayer;');
+        $this->assertEmpty($output[0]);
 
-    public function testDataLayerIsPresentIfGtmIdIsSetForDemoUser(): void
-    {
-        // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
-        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
-        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+        // Finally, log out by submitting the logout form
+        $browser->logout();
+    });
+});
 
-        $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
-        $this->setConfig('yaffa.sandbox_mode', true);
+test('data layer is present if gtm id is set for demo user', function () {
+    // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+    $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+    $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
 
-        $this->browse(function ($browser) {
-            // Open the login page
-            $browser->visit(route('login'))
-                // Wait for the page to load
-                ->waitForLocation('/login', 10)
-                ->waitFor('#login', 10);
+    $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
+    $this->setConfig('yaffa.sandbox_mode', true);
 
-            // Make sure the dataLayer is not empty
-            $output = $browser->script('return window.dataLayer;');
+    $this->browse(function ($browser) {
+        // Open the login page
+        $browser->visit(route('login'))
+            // Wait for the page to load
+            ->waitForLocation('/login', 10)
+            ->waitFor('#login', 10);
 
-            $this->assertNotEmpty($output[0]);
+        // Make sure the dataLayer is not empty
+        $output = $browser->script('return window.dataLayer;');
 
-            // Log in using the generic test (demo) user by continuing with the current browser session
-            $browser
-                ->type('email', $this::USER_EMAIL)
-                ->type('password', 'demo')
-                ->press('@login-button')
-                // Wait for the page to load
-                ->waitForRoute('home', [], 10)
-                ->waitFor('footer', 10);
+        $this->assertNotEmpty($output[0]);
 
-            // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
-            $browser->waitForDataLayerEvent('loginSuccess', ['is_generic_demo_user' => true]);
-            $output = $browser->script('
-                const events = window.dataLayer.filter(function(item) {
-                    return item.event === "loginSuccess" && item.is_generic_demo_user === true;
-                });
+        // Log in using the generic test (demo) user by continuing with the current browser session
+        $browser
+            ->type('email', $this::USER_EMAIL)
+            ->type('password', 'demo')
+            ->press('@login-button')
+            // Wait for the page to load
+            ->waitForRoute('home', [], 10)
+            ->waitFor('footer', 10);
 
-                return events.length;');
+        // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
+        $browser->waitForDataLayerEvent('loginSuccess', ['is_generic_demo_user' => true]);
+        $output = $browser->script('
+            const events = window.dataLayer.filter(function(item) {
+                return item.event === "loginSuccess" && item.is_generic_demo_user === true;
+            });
 
-            $this->assertEquals(1, $output[0]);
+            return events.length;');
 
-            // Finally, log out by submitting the logout form
-            $browser->logout();
-        });
+        $this->assertEquals(1, $output[0]);
 
-        // Reset the original GTM ID and sandbox mode
-        $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
-        $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
-    }
+        // Finally, log out by submitting the logout form
+        $browser->logout();
+    });
 
-    public function testDataLayerIsPresentIfGtmIdIsSetForNonDemoUser(): void
-    {
-        $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
+    // Reset the original GTM ID and sandbox mode
+    $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
+    $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
+});
 
-        // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
-        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
-        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+test('data layer is present if gtm id is set for non demo user', function () {
+    $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
 
-        $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
-        $this->setConfig('yaffa.sandbox_mode', true);
+    // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+    $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+    $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
 
-        // Create a new, verified user, different from the generic test (demo) user
-        $user = User::factory()->create([
-            'email_verified_at' => now(),
-            'language' => 'en',
-        ]);
+    $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
+    $this->setConfig('yaffa.sandbox_mode', true);
 
-        $this->browse(function ($browser) use ($user) {
-            // Open the login page
-            $browser->visit(route('login'))
-                // Wait for the page to load
-                ->waitForLocation('/login', 10)
-                ->waitFor('#login', 10);
+    // Create a new, verified user, different from the generic test (demo) user
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'language' => 'en',
+    ]);
 
-            // Make sure the dataLayer is not empty
-            $output = $browser->script('return window.dataLayer;');
+    $this->browse(function ($browser) use ($user) {
+        // Open the login page
+        $browser->visit(route('login'))
+            // Wait for the page to load
+            ->waitForLocation('/login', 10)
+            ->waitFor('#login', 10);
 
-            $this->assertNotEmpty($output[0]);
+        // Make sure the dataLayer is not empty
+        $output = $browser->script('return window.dataLayer;');
 
-            // Log in using the newly created user
-            $browser
-                ->type('email', $user->email)
-                ->type('password', 'password')
-                ->press('@login-button')
-                // Wait for the page to load
-                ->waitForLocation('/', 10)
-                ->waitFor('footer', 10);
+        $this->assertNotEmpty($output[0]);
 
-            // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
-            $browser->waitForDataLayerEvent('loginSuccess', ['is_generic_demo_user' => false]);
-            $output = $browser->script('
-                const events = window.dataLayer.filter(function(item) {
-                    return item.event === "loginSuccess" && item.is_generic_demo_user === false;
-                });
+        // Log in using the newly created user
+        $browser
+            ->type('email', $user->email)
+            ->type('password', 'password')
+            ->press('@login-button')
+            // Wait for the page to load
+            ->waitForLocation('/', 10)
+            ->waitFor('footer', 10);
 
-                return events.length;');
+        // Make sure the dataLayer exists and the loginSuccess event is present, with the correct demo user flag
+        $browser->waitForDataLayerEvent('loginSuccess', ['is_generic_demo_user' => false]);
+        $output = $browser->script('
+            const events = window.dataLayer.filter(function(item) {
+                return item.event === "loginSuccess" && item.is_generic_demo_user === false;
+            });
 
-            $this->assertEquals(1, $output[0]);
+            return events.length;');
 
-            // Finally, log out by submitting the logout form
-            $browser->logout();
-        });
+        $this->assertEquals(1, $output[0]);
 
-        // Reset the original GTM ID and sandbox mode
-        $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
-        $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
-    }
+        // Finally, log out by submitting the logout form
+        $browser->logout();
+    });
 
-    public function testDataLayerIsPresentIfLoginFailed(): void
-    {
-        $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
+    // Reset the original GTM ID and sandbox mode
+    $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
+    $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
+});
 
-        // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
-        $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
-        $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
+test('data layer is present if login failed', function () {
+    $this->markTestSkipped('Recently this test started failing. It needs further investigation.');
 
-        $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
-        $this->setConfig('yaffa.sandbox_mode', true);
+    // Make sure the GTM ID is set in the .env file, and sandbox mode is enabled
+    $originalGtmId = $this->getConfig('yaffa.gtm_container_id');
+    $originalSandboxMode = $this->getConfig('yaffa.sandbox_mode');
 
-        $this->browse(function ($browser) {
-            // Open the login page
-            $browser->visit(route('login'))
-                // Wait for the page to load
-                ->waitForLocation('/login', 10)
-                ->waitFor('#login', 10)
-                // Type in an invalid email address
-                ->type('email', 'thisisnotauser@example.com')
-                ->type('password', 'password')
-                ->press('@login-button')
-                // Wait for the page to reload
-                ->waitForLocation('/login', 10)
-                ->waitFor('#login', 10);
+    $this->setConfig('yaffa.gtm_container_id', 'GTM-XXXXXXX');
+    $this->setConfig('yaffa.sandbox_mode', true);
 
-            // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
-            $browser->waitForDataLayerEvent('loginFailed', ['is_generic_demo_user' => false]);
-            $output = $browser->script('
-                const events = window.dataLayer.filter(function(item) {
-                    return item.event === "loginFailed" && item.is_generic_demo_user === false;
-                });
+    $this->browse(function ($browser) {
+        // Open the login page
+        $browser->visit(route('login'))
+            // Wait for the page to load
+            ->waitForLocation('/login', 10)
+            ->waitFor('#login', 10)
+            // Type in an invalid email address
+            ->type('email', 'thisisnotauser@example.com')
+            ->type('password', 'password')
+            ->press('@login-button')
+            // Wait for the page to reload
+            ->waitForLocation('/login', 10)
+            ->waitFor('#login', 10);
 
-                return events.length;');
+        // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
+        $browser->waitForDataLayerEvent('loginFailed', ['is_generic_demo_user' => false]);
+        $output = $browser->script('
+            const events = window.dataLayer.filter(function(item) {
+                return item.event === "loginFailed" && item.is_generic_demo_user === false;
+            });
 
-            $this->assertEquals(1, $output[0]);
+            return events.length;');
 
-            // Type in the demo user email address
-            $browser->type('email', $this::USER_EMAIL)
-                ->type('password', 'incorrect_password')
-                ->press('@login-button')
-                // Wait for the page to reload
-                ->waitForLocation('/login', 10)
-                ->waitFor('#login', 10);
+        $this->assertEquals(1, $output[0]);
 
-            // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
-            $browser->waitForDataLayerEvent('loginFailed', ['is_generic_demo_user' => true]);
-            $output = $browser->script('
-                const events = window.dataLayer.filter(function(item) {
-                    return item.event === "loginFailed" && item.is_generic_demo_user === true;
-                });
+        // Type in the demo user email address
+        $browser->type('email', $this::USER_EMAIL)
+            ->type('password', 'incorrect_password')
+            ->press('@login-button')
+            // Wait for the page to reload
+            ->waitForLocation('/login', 10)
+            ->waitFor('#login', 10);
 
-                return events.length;');
+        // Make sure the dataLayer exists and the loginFailed event is present, with the correct demo user flag
+        $browser->waitForDataLayerEvent('loginFailed', ['is_generic_demo_user' => true]);
+        $output = $browser->script('
+            const events = window.dataLayer.filter(function(item) {
+                return item.event === "loginFailed" && item.is_generic_demo_user === true;
+            });
 
-            $this->assertEquals(1, $output[0]);
-        });
+            return events.length;');
 
-        // Reset the original GTM ID and sandbox mode
-        $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
-        $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
-    }
-}
+        $this->assertEquals(1, $output[0]);
+    });
+
+    // Reset the original GTM ID and sandbox mode
+    $this->setConfig('yaffa.gtm_container_id', $originalGtmId);
+    $this->setConfig('yaffa.sandbox_mode', $originalSandboxMode);
+});
