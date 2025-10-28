@@ -337,7 +337,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
 
             // Get the last transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the view is the transaction clone
             $browser->assertRouteIs(
@@ -360,7 +360,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
 
             // Get the last transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the view is the transaction clone
             $browser->assertRouteIs(
@@ -383,7 +383,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
 
             // Get the last transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')
+            $transaction = Transaction::orderByDesc('id')
                 ->with(['config'])
                 ->first();
 
@@ -446,7 +446,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
 
             // Get the last transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(

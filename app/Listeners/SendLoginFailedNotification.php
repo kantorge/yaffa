@@ -10,8 +10,6 @@ class SendLoginFailedNotification
 {
     /**
      * Handle the event.
-     *
-     * @param Failed $event
      */
     public function handle(Failed $event): void
     {

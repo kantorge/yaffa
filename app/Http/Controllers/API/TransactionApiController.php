@@ -49,9 +49,6 @@ class TransactionApiController extends Controller implements HasMiddleware
     /**
      * Change the reconciled flag of a transaction to a new value.
      *
-     * @param Transaction $transaction
-     * @param string $newState
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function reconcile(Transaction $transaction, string $newState): JsonResponse
@@ -726,9 +723,6 @@ class TransactionApiController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Transaction $transaction
-     * @return JsonResponse
      */
     public function destroy(Transaction $transaction): JsonResponse
     {
@@ -755,9 +749,6 @@ class TransactionApiController extends Controller implements HasMiddleware
 
     /**
      * Handle additional updates to a source transaction
-     *
-     * @param array $validated
-     *
      */
     private function handleSourceTransactionUpdates(array $validated): void
     {

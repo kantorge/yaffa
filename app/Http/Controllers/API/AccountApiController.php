@@ -235,8 +235,6 @@ class AccountApiController extends Controller implements HasMiddleware
     /**
      * Get the account entity for the given id.
      *
-     * @param AccountEntity $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
@@ -261,9 +259,6 @@ class AccountApiController extends Controller implements HasMiddleware
      *
      * The balance is calculated using AccountMonthlySummary, which is regularly updated.
      *
-     * @param Request $request
-     * @param AccountEntity|null $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse

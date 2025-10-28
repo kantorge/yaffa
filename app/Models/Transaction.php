@@ -69,13 +69,6 @@ class Transaction extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'transactions';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -174,10 +167,6 @@ class Transaction extends Model
 
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
-     *
-     * @param Builder $query
-     * @param string $type
-     * @return Builder
      */
     #[Scope]
     protected function byScheduleType(Builder $query, string $type): Builder

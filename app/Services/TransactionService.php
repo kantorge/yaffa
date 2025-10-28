@@ -136,8 +136,6 @@ class TransactionService
      * This function can be used to initiate the recalculation of the monthly summaries,
      * based on the creation or any change of a transaction.
      * The function will trigger the relevant job or jobs to recalculate the summaries.
-     *
-     * @param Transaction $transaction
      */
     public function recalculateMonthlySummaries(Transaction $transaction): void
     {
@@ -151,8 +149,6 @@ class TransactionService
     /**
      * This function will initiate the recalculation of the monthly summaries for standard transactions,
      * based on the properties of the given transaction. (transaction type, schedule, budget)
-     *
-     * @param Transaction $transaction
      */
     private function recalculateSummaryStandard(Transaction $transaction): void
     {

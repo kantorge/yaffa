@@ -53,13 +53,6 @@ class Currency extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'currencies';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -86,8 +79,6 @@ class Currency extends Model
 
     /**
      * Get the user that owns this currency.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -96,9 +87,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function base(Builder $query): Builder
@@ -108,9 +96,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return currencies that are not base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function notBase(Builder $query): Builder
@@ -120,9 +105,6 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return currencies that are set to be automatically updated.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function autoUpdate(Builder $query): Builder
@@ -133,8 +115,6 @@ class Currency extends Model
     /**
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
-     *
-     * @return float|null
      */
     public function rate(): ?float
     {
@@ -154,21 +134,18 @@ class Currency extends Model
 
     /**
      * Get the base currency of the same user, who owns this currency.
-     *
-     * @return Currency|null
      */
     public function baseCurrency(): ?Currency
     {
         return static::query()
             ->base()
             ->where('user_id', $this->user_id)
-            ->firstOr(fn() => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn() => null));
+            ->firstOr(fn () => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
     }
 
     /**
      * Get and save the currency rates for this currency against the base currency.
      *
-     * @param Carbon|null $dateFrom
      * @throws CurrencyRateConversionException
      * @throws Exception
      */
