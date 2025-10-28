@@ -478,7 +478,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#newPayeeModal button[type="submit"]')
 
                 // Verify that the modal is closed
-                ->waitUntilMissing('#newPayeeModal')
+                ->waitUntilMissing('#newPayeeModal', 10)
 
                 // Add amount
                 ->type('#transaction_amount_from', '100')
@@ -488,7 +488,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Set the first category input to the random category
                 ->select2('#transaction_item_container .transaction_item_row select.category', $category->name, 10)
-                //->select2ExactSearch('#transaction_item_container .transaction_item_row select.category', $category->fullName, 10)
 
                 // Set the first amount to the same amount as the transaction
                 ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
