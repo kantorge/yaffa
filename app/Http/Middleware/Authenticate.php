@@ -12,8 +12,6 @@ class Authenticate extends Middleware
     /**
      * Handle an unauthenticated user.
      *
-     * @param Request $request
-     * @param  array  $guards
      *
      * @throws AuthenticationException
      */
@@ -33,10 +31,9 @@ class Authenticate extends Middleware
     /**
      * Get the path the user should be redirected to when they are not authenticated.
      *
-     * @param  Request  $request
-     * @return string|null
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function redirectTo($request): ?string
+    protected function redirectTo(Request $request): ?string
     {
         return route('login');
     }

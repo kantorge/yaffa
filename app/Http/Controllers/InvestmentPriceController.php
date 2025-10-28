@@ -27,8 +27,6 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
     /**
      * @throws AuthorizationException
-     * @param Investment $investment
-     * @return View
      */
     public function list(Investment $investment): View
     {
@@ -102,9 +100,6 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  InvestmentPrice  $investmentPrice
-     * @return View
      */
     public function edit(InvestmentPrice $investmentPrice): View
     {
@@ -143,9 +138,6 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  InvestmentPrice  $investmentPrice
-     * @return RedirectResponse
      */
     public function destroy(InvestmentPrice $investmentPrice): RedirectResponse
     {

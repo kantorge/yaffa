@@ -43,13 +43,6 @@ class Tag extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'tags';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -98,9 +91,6 @@ class Tag extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     #[Scope]
     protected function active(Builder $query): Builder

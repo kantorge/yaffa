@@ -131,7 +131,6 @@ class CalculateAccountMonthlySummaries extends Command
     }
 
     /**
-     * @param int $accountEntityId
      * @throws Throwable
      */
     public function handleSpecifiedAccountEntity(int $accountEntityId): void

@@ -46,8 +46,6 @@ class AccountEntityApiController extends Controller implements HasMiddleware
     /**
      * Remove the specified account entity.
      *
-     * @param AccountEntity $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function destroy(AccountEntity $accountEntity): JsonResponse

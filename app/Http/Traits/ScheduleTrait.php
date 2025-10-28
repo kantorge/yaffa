@@ -17,7 +17,6 @@ trait ScheduleTrait
      * @param Carbon|null $customStart Custom start date for calculation, if start type is 'custom'.
      * @param Carbon|null $maxLookAhead Latest date for calculation, if no end date is present in schedule rules, to avoid infinite loop.
      * @param int|null $virtualLimit The maximum number of instances to calculate. This is used to prevent the generation of too many instances.
-     * @return Collection
      */
     public function getScheduleInstances(
         Collection $transactions,

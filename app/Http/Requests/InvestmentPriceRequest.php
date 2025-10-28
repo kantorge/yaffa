@@ -10,8 +10,6 @@ class InvestmentPriceRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      * Pass ID to unique check, if it exists in request
-     *
-     * @return array
      */
     public function rules(): array
     {

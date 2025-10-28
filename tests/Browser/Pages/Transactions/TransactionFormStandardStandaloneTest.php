@@ -252,6 +252,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->select2ExactSearch('#account_to', 'Investment account EUR', 10)
                 // Add amount from
                 ->type('#transaction_amount_from', '100')
+                // Temporarily add a command to take a screenshot
+                ->screenshot('transaction-form-after-typing-amount-from-amount-to-should-be-visible-and-empty')
                 // User cannot send the form, as amount to is missing
                 ->press('#transactionFormStandard-Save')
                 // Wait for the error message
@@ -321,7 +323,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction clone
             $browser->assertRouteIs(
@@ -343,7 +345,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(
@@ -365,7 +367,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')
+            $transaction = Transaction::orderByDesc('id')
                 ->with([
                     'config',
                 ])
@@ -476,7 +478,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->click('#newPayeeModal button[type="submit"]')
 
                 // Verify that the modal is closed
-                ->waitUntilMissing('#newPayeeModal')
+                ->waitUntilMissing('#newPayeeModal', 10)
 
                 // Add amount
                 ->type('#transaction_amount_from', '100')
@@ -486,7 +488,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // Set the first category input to the random category
                 ->select2('#transaction_item_container .transaction_item_row select.category', $category->name, 10)
-                //->select2ExactSearch('#transaction_item_container .transaction_item_row select.category', $category->fullName, 10)
 
                 // Set the first amount to the same amount as the transaction
                 ->type('#transaction_item_container .transaction_item_row input.transaction_item_amount', '100')
@@ -498,7 +499,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')
+            $transaction = Transaction::orderByDesc('id')
                 ->with([
                     'config',
                     'config.accountTo'
@@ -678,7 +679,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Check that the view is the transaction show
             $browser->assertRouteIs(
@@ -721,7 +722,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $transaction = Transaction::orderBy('id', 'desc')->first();
+            $transaction = Transaction::orderByDesc('id')->first();
 
             // Confirm that the transaction date is the first day of the previous month
             $this->assertEquals(
@@ -752,7 +753,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             ])
             ->save();
 
-        $transaction = Transaction::orderBy('id', 'desc')->first();
+        $transaction = Transaction::orderByDesc('id')->first();
 
         // Add transaction items
         $transaction->transactionItems()
@@ -841,7 +842,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 ->clickAndWaitForReload('#transactionFormStandard-Save');
 
             // Get the latest transaction from the database
-            $newTransaction = Transaction::orderBy('id', 'desc')->with('transactionSchedule')->first();
+            $newTransaction = Transaction::orderByDesc('id')->with('transactionSchedule')->first();
 
             // Check that the new transaction has a schedule start and next date set to today
             $this->assertEquals(now()->format('Y-m-d'), $newTransaction->transactionSchedule->start_date->format('Y-m-d'));

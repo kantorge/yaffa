@@ -10,13 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy([CurrencyRateObserver::class])]
 class CurrencyRate extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'currency_rates';
-
     public $timestamps = false;
 
     /**

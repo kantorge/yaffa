@@ -42,7 +42,7 @@
         "kkomelin/laravel-translatable-string-exporter": "^1.23",
         "larastan/larastan": "^3.1",
         "laravel/dusk": "^8.2",
-        "laravel/pint": "^1.13",
+        "laravel/pint": "^1.25",
         "laravel/sail": "^1.41",
         "laravel/tinker": "^2.10.1",
         "mockery/mockery": "^1.6",
@@ -52,8 +52,7 @@
         "phpunit/phpunit": "^11.5.3",
         "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
         "ryoluo/sail-ssl": "^1.4",
-        "spatie/db-dumper": "^3.8",
-        "laravel/pail": "^1.2.2"
+        "spatie/db-dumper": "^3.8"
     },
     "config": {
         "discard-changes": true,

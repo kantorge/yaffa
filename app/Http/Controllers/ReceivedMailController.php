@@ -34,8 +34,6 @@ class ReceivedMailController extends Controller implements HasMiddleware
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -51,9 +49,6 @@ class ReceivedMailController extends Controller implements HasMiddleware
 
     /**
      * Display the specified resource.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return View
      */
     public function show(ReceivedMail $receivedMail): View
     {
@@ -66,9 +61,6 @@ class ReceivedMailController extends Controller implements HasMiddleware
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return RedirectResponse
      */
     public function destroy(ReceivedMail $receivedMail): RedirectResponse
     {

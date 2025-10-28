@@ -16,9 +16,6 @@ class UserController extends Controller implements HasMiddleware
         ];
     }
 
-    /**
-     * @return View
-     */
     public function settings(): View
     {
         /**
