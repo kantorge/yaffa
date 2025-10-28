@@ -5,6 +5,7 @@
 **YAFFA (Yet Another Free Financial Application)** is a self-hosted personal finance web application built with **Laravel 12** (PHP 8.3) and **Vue 3**. It helps users track income/expenses, manage multiple currencies, handle investments, and perform long-term financial planning. The application includes ~7,700 lines of PHP code across Controllers, Models, Services, and more.
 
 **Key Technologies:**
+
 - Backend: PHP 8.3, Laravel 12 Framework
 - Frontend: Vue 3, Bootstrap 5, CoreUI, jQuery, DataTables
 - Build: Laravel Mix (Webpack), NPM
@@ -46,6 +47,7 @@
 ```
 
 **Important Configuration Files:**
+
 - `composer.json` - PHP dependencies and scripts
 - `package.json` - NPM dependencies and build scripts
 - `phpunit.xml` - PHPUnit test configuration
@@ -61,6 +63,7 @@
 ### Initial Setup
 
 **CRITICAL: Composer install may encounter GitHub API rate limiting issues.** If you see "Could not authenticate against github.com" errors, this is due to GitHub API rate limits when downloading packages. This is a known environment limitation and may require:
+
 - Waiting for rate limits to reset
 - Using `--prefer-source` flag (slower but may bypass some issues)
 - Accepting that some packages may need manual intervention
@@ -89,6 +92,7 @@ php artisan migrate
 npm run dev                    # ~30-40 seconds
 
 # Production build (optimized, minified - use for deployment)
+# This is used only for the `main` branch as part of releasing new versions.
 npm run production             # ~32 seconds
 ```
 
@@ -125,6 +129,7 @@ php artisan dusk                             # Run browser tests
 ```
 
 **Test Configuration:**
+
 - PHPUnit uses a separate `testing` database (see `phpunit.xml`)
 - Dusk tests use `.env.dusk.ci` for configuration
 - Database credentials: user=`default`, password=`password`, database=`testing`
@@ -147,15 +152,16 @@ composer dev                                # Starts: server, queue, logs, vite
 The repository has CI/CD configured in `.github/workflows/`:
 
 ### 1. Automated Tests (`automated-tests.yml`)
-**Triggers:** Push to any branch EXCEPT `main` and `other/sandbox`, only when code files change (`.php`, `.js`, `.vue`, `.scss`, `.json`, `.lock`, etc.)
+
+**Triggers:** Push to any branch EXCEPT `main`, only when code files change (`.php`, `.js`, `.vue`, `.scss`, `.json`, `.lock`, etc.)
 
 **Jobs:**
+
 - **phpunit**: Runs PHPUnit tests against MySQL 8
   - PHP 8.3 with extensions: mbstring, dom, fileinfo, mysql, xdebug
   - Uses `.env.ci` for configuration
   - Runs migrations before tests
   - Uploads coverage to Codacy
-  
 - **dusk-php**: Runs Laravel Dusk browser tests
   - Sets up Chrome Driver
   - Builds frontend assets with `npm run dev`
@@ -163,6 +169,7 @@ The repository has CI/CD configured in `.github/workflows/`:
   - Uploads screenshots/logs on failure
 
 **Critical Steps for Reproducing CI Locally:**
+
 ```bash
 # For PHPUnit tests (mimicking CI)
 ln -f -s .env.ci .env
@@ -181,6 +188,7 @@ php artisan dusk
 ```
 
 ### 2. Docker Build (`docker-build.yml`)
+
 **Triggers:** Push to tags matching `v*.*.*` or manual workflow dispatch
 
 Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Docker Hub.
@@ -188,43 +196,52 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 ## Common Pitfalls & Workarounds
 
 ### Composer Install Issues
+
 **Problem:** GitHub API rate limiting causes "Could not authenticate" errors during `composer install`.
 **Workaround:** This is an environment limitation. The install may partially complete. If vendor directory exists with most packages, you may be able to proceed with testing. For full install, wait for rate limits to reset or use a GitHub token.
 
 ### Asset Build Timing
+
 **Problem:** Forgetting to build assets before testing UI changes.
-**Solution:** ALWAYS run `npm run dev` or `npm run production` after making JavaScript/Vue/SCSS changes.
+**Solution:** ALWAYS run `npm run dev` after making JavaScript/Vue/SCSS changes.
 
 ### Database Issues
+
 **Problem:** Tests fail with database connection errors.
 **Solution:** Ensure MySQL is running and credentials match those in `phpunit.xml` (user=`default`, password=`password`, database=`testing`).
 
 ### Environment File Confusion
+
 **Problem:** Multiple `.env` files exist (`.env.example`, `.env.ci`, `.env.dusk.ci`).
-**Solution:** 
+**Solution:**
+
 - Use `.env.example` as base for local development
 - CI uses `.env.ci` for PHPUnit tests
 - CI uses `.env.dusk.ci` for Dusk browser tests
 
 ### Artisan Command Failures
+
 **Problem:** Running `php artisan` commands fails with vendor/autoload.php not found.
 **Solution:** Always run `composer install` first to generate the autoloader.
 
 ## Code Style & Standards
 
 ### PHP (Laravel)
+
 - **Style:** PSR-12 (enforced by Laravel Pint in `pint.json`)
 - **Static Analysis:** PHPStan Level 5
 - **Key Rules:** Strict comparison (`===`), arrow functions preferred, logical operators instead of symbolic, no Yoda conditions
 - **Namespaces:** PSR-4 autoloading, `App\` namespace for application code
 
 ### JavaScript/Vue
+
 - **Style:** ESLint with Vue 3 recommended rules + Prettier
 - **Indentation:** 2 spaces
 - **Framework:** Vue 3 Options API (see webpack config)
 
 ### Testing
-- **Unit Tests:** `tests/Unit/` - 68 test files total
+
+- **Unit Tests:** `tests/Unit/` - ~70 test files total
 - **Feature Tests:** `tests/Feature/` - Test HTTP endpoints and integrations
 - **Browser Tests:** `tests/Browser/` - Laravel Dusk for E2E testing
 - **Factories:** Use model factories in `database/factories/` for test data
@@ -237,7 +254,7 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 
 3. **Database Required:** Most tests require MySQL. Use Docker Compose or local MySQL instance.
 
-4. **Timeout Considerations:** 
+4. **Timeout Considerations:**
    - Composer install: May take 5-10 minutes, can timeout at 300s
    - NPM install: ~43 seconds
    - NPM production build: ~32 seconds
@@ -254,6 +271,7 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 ## Validation Checklist
 
 Before submitting changes:
+
 - [ ] Run `./vendor/bin/pint` to fix PHP code style
 - [ ] Run `./vendor/bin/phpstan analyse` to catch type errors
 - [ ] Run `npx eslint resources/js --ext .js,.vue` for frontend linting
