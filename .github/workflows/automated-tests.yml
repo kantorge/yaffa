@@ -5,7 +5,6 @@ on:
     # Ignore branches which are expected to have producion assets, and some tests would fail
     branches-ignore:
       - main
-      - other/sandbox
 
     # Only run tests if relevant file types (php, js, css, etc) are changed
     paths:
