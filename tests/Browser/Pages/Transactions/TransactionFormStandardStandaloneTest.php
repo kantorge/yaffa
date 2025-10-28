@@ -255,7 +255,6 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
                 // The amount to field should be empty, but let's clear and verify this
                 ->waitFor('#transaction_amount_to', 10)
-                ->screenshot('transaction-form-transfer-standard-amount-to-empty')
 
                 // User cannot send the form, as amount to is missing
                 ->press('#transactionFormStandard-Save')
