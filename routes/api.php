@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
+use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\OnboardingApiController;
@@ -37,6 +38,15 @@ Route::put('/assets/category/{category}/active/{active}', [CategoryApiController
 Route::get('/assets/category/{category}', [CategoryApiController::class, 'getItem']);
 Route::delete('/assets/category/{category}', [CategoryApiController::class, 'destroy'])
     ->name('api.category.destroy');
+
+Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
+    ->name('api.currency-rate.index');
+Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
+    ->name('api.currency-rate.store');
+Route::put('/currency-rates/{currency_rate}', [CurrencyRateApiController::class, 'update'])
+    ->name('api.currency-rate.update');
+Route::delete('/currency-rates/{currency_rate}', [CurrencyRateApiController::class, 'destroy'])
+    ->name('api.currency-rate.destroy');
 
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);
