@@ -41,6 +41,7 @@
         "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.23",
         "larastan/larastan": "^3.1",
+        "laravel/boost": "^1.6",
         "laravel/dusk": "^8.3",
         "laravel/pint": "^1.25",
         "laravel/sail": "^1.41",
@@ -92,7 +93,8 @@
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:meta",
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
-            "Illuminate\\Foundation\\ComposerScripts::postUpdate"
+            "Illuminate\\Foundation\\ComposerScripts::postUpdate",
+            "@php artisan boost:update --ansi"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
