@@ -4,10 +4,6 @@ require("datatables.net-responsive-bs5");
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 
-import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
-
-import presetCalculators from '../presetDates';
-
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
 
@@ -37,21 +33,8 @@ if (!presetFilters.ready()) {
     document.getElementById('reload').setAttribute('disabled', 'disabled');
 }
 
-// Initialize date range picker
-const dateRangePicker = new DateRangePicker(
-    document.getElementById('dateRangePicker'),
-    {
-        allowOneSidedRange: true,
-        weekStart: 1,
-        todayBtn: true,
-        todayBtnMode: 1,
-        todayHighlight: true,
-        language: window.YAFFA.language,
-        format: 'yyyy-mm-dd',
-        autohide: true,
-        buttonClass: 'btn',
-    }
-);
+// Reference to the date range picker component (will be set after Vue mounts)
+let dateRangeSelectorComponent = null;
 
 /**
  * Helper function to get adjusted cash flow in the context of the current account
@@ -80,7 +63,6 @@ const processTransaction = function (transaction) {
 };
 
 let initialLoad = true;
-let isPresetChange = false;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
     ajax: function (_data, callback, _settings) {
@@ -90,13 +72,17 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             return;
         }
 
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
         const params = new URLSearchParams();
-        if (dates[0]) {
-            params.append('date_from', dates[0]);
-        }
-        if (dates[1]) {
-            params.append('date_to', dates[1]);
+        
+        // Get dates from the Vue component if available
+        if (dateRangeSelectorComponent) {
+            const dates = dateRangeSelectorComponent.getDates();
+            if (dates[0]) {
+                params.append('date_from', dates[0]);
+            }
+            if (dates[1]) {
+                params.append('date_to', dates[1]);
+            }
         }
         params.append('accounts[]', account.id);
 
@@ -488,112 +474,16 @@ function reloadTable() {
 }
 
 // Reload button functionality
-$("#reload").on('click', reloadTable);
-
-$("#clear_dates").on('click', function () {
-    dateRangePicker.setDates(
-        {clear: true},
-        {clear: true}
-    );
-})
-
-// Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
-    isPresetChange = true;
-    const preset = this.options[this.selectedIndex].value;
-    const date = new Date();
-    let start;
-    let end;
-
-    // Get the start and end dates based on the selected preset and the external calculator functions
-    const calculator = presetCalculators[preset];
-    if (calculator) {
-        const dates = calculator(date);
-        start = dates.start;
-        end = dates.end;
-    } else {
-        start = {clear: true};
-        end = {clear: true};
-    }
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-    isPresetChange = false;
-});
-
-let rebuildUrl = function () {
-    let params = [];
-
-    if (isPresetChange) {
-        const preset = document.getElementById('dateRangePickerPresets').value;
-        if (preset && preset !== 'none') {
-            params.push('date_preset=' + preset);
-        }
-    } else {
-
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
-        // Date from
-        if (dates[0]) {
-            params.push('date_from=' + dates[0]);
-        }
-
-        // Date to
-        if (dates[1]) {
-            params.push('date_to=' + dates[1]);
-        }
-    }
-
-    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
-}
-
-// Attach event listener to date pickers
-document.getElementById('date_from').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-document.getElementById('date_to').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-
-// Set initial dates
-if (filters.date_from || filters.date_to) {
-    const start = (filters.date_from ? filters.date_from : {clear: true});
-    const end = (filters.date_to ? filters.date_to : {clear: true});
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
+// Handle initial date filters
+if (filters.date_from || filters.date_to || (filters.date_preset && filters.date_preset !== 'none')) {
     presetFilters.date_from = true;
     presetFilters.date_to = true;
-
+    presetFilters.date_preset = true;
+    
     // If all preset filters are ready, reload table data
     if (presetFilters.ready()) {
         reloadTable();
     }
-} else if (filters.date_preset && filters.date_preset !== 'none') {
-    // If date preset is set, apply it
-    document.getElementById('dateRangePickerPresets').value = filters.date_preset;
-    const event = new Event('change');
-    document.getElementById('dateRangePickerPresets').dispatchEvent(event);
-
-    presetFilters.date_preset = true;
-    // If all preset filters are ready, reload table data
-    if (presetFilters.ready()) {
-        reloadTable();
-    }
-} else if (filters.date_preset && filters.date_preset === 'none') {
-    presetFilters.date_preset = true;
-    // At the moment we don't expect any other filters, and the table does not need to be reloaded
 }
 
 // Set up event listener for new standard transaction button
@@ -755,7 +645,55 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
 
-const app = createApp({})
+const app = createApp({
+    methods: {
+        handleDateRangeUpdate(data) {
+            // Rebuild URL with date parameters
+            let params = [];
+            
+            if (data.preset && data.preset !== 'none') {
+                params.push('date_preset=' + data.preset);
+            } else {
+                if (data.dateFrom) {
+                    params.push('date_from=' + data.dateFrom);
+                }
+                if (data.dateTo) {
+                    params.push('date_to=' + data.dateTo);
+                }
+            }
+            
+            window.history.pushState('', '', window.location.origin + window.location.pathname + (params.length > 0 ? '?' + params.join('&') : ''));
+            
+            // Reload table data
+            reloadTable();
+        },
+        handleDateChange(data) {
+            // Update URL on date change (without triggering reload)
+            let params = [];
+            
+            if (data.preset && data.preset !== 'none') {
+                params.push('date_preset=' + data.preset);
+            } else {
+                if (data.dateFrom) {
+                    params.push('date_from=' + data.dateFrom);
+                }
+                if (data.dateTo) {
+                    params.push('date_to=' + data.dateTo);
+                }
+            }
+            
+            window.history.pushState('', '', window.location.origin + window.location.pathname + (params.length > 0 ? '?' + params.join('&') : ''));
+        }
+    },
+    mounted() {
+        // Get reference to the date selector component
+        const dateSelector = this.$refs.accountDateRangeSelector || 
+                           this.$el.querySelector('#accountDateRangeSelector')?.__vueParentComponent?.ctx;
+        if (dateSelector) {
+            dateRangeSelectorComponent = dateSelector;
+        }
+    }
+})
 
 // Add global translator function
 app.config.globalProperties.__ = window.__;
@@ -763,10 +701,12 @@ app.config.globalProperties.__ = window.__;
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
 import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
+import DateRangeSelectorWithPresets from './../components/DateRangeSelectorWithPresets.vue'
 
 app.component('transaction-show-modal', TransactionShowModal)
 app.component('transaction-create-standard-modal', CreateStandardTransactionModal)
 app.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
+app.component('date-range-selector-with-presets', DateRangeSelectorWithPresets)
 
 app.mount('#app')
 

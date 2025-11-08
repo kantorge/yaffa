@@ -126,49 +126,8 @@
                     </div>
                 </div>
             </div>
-            <div class="card mb-3">
-                <div class="card-header">
-                    <div class="card-title">
-                        {{ __('Date') }}
-                    </div>
-                </div>
-                <div class="card-body" id="dateRangePicker">
-                    <div class="row">
-                        <div class="col-6">
-                            <label for="date_from" class="form-label">{{ __('Date from') }}</label>
-                            <input type="text" class="form-control" name="date_from" id="date_from"
-                                   placeholder="{{ __('Select date') }}" autocomplete="off">
-                        </div>
-                        <div class="col-6">
-                            <label for="date_to" class="form-label">{{ __('Date to') }}</label>
-                            <input type="text" class="form-control" name="date_to" id="date_to"
-                                   placeholder="{{ __('Select date') }}" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-12">
-                            <select id="dateRangePickerPresets" class="form-select">
-                                <option value="none">{{ __('Select preset') }}</option>
-                                @foreach(config('yaffa.account_date_presets') as $group)
-                                    <optgroup label="{{ __($group['label']) }}">
-                                        @foreach($group['options'] as $option)
-                                            <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer text-end">
-                    <button class="btn btn-sm btn-outline-dark"
-                            id="clear_dates"
-                    >{{ __('Clear selection') }}</button>
-                    <button name="reload" type="button" id="reload"
-                            class="btn btn-sm btn-primary ms-2"
-                    >{{ __('Update') }}</button>
-                </div>
-            </div>
+            
+            <div id="dateRangeSelectorVue"></div>
         </div>
 
         <div class="col-12 col-lg-9">
@@ -224,6 +183,17 @@
         <transaction-show-modal></transaction-show-modal>
         <transaction-create-standard-modal></transaction-create-standard-modal>
         <transaction-create-investment-modal></transaction-create-investment-modal>
+        <date-range-selector-with-presets
+            ref="accountDateRangeSelector"
+            id="accountDateRangeSelector"
+            :initial-date-from="'{{ $filters['date_from'] ?? '' }}'"
+            :initial-date-to="'{{ $filters['date_to'] ?? '' }}'"
+            :initial-preset="'{{ $filters['date_preset'] ?? 'none' }}'"
+            :show-update-button="true"
+            :preset-groups="{{ json_encode(config('yaffa.account_date_presets')) }}"
+            @update="handleDateRangeUpdate"
+            @date-change="handleDateChange"
+        ></date-range-selector-with-presets>
     </div>
 
     @include('template.components.model-delete-form')
