@@ -16,7 +16,7 @@
                     @rates-loaded="reloadData"
                 />
 
-                <date-range-selector
+                <date-range-selector-with-presets
                     :initial-date-from="dateFrom"
                     :initial-date-to="dateTo"
                     @update="onDateChange"
@@ -65,7 +65,7 @@ import CurrencyRateFilters from './CurrencyRateFilters.vue';
 import CurrencyRateTable from './CurrencyRateTable.vue';
 import CurrencyRateChart from './CurrencyRateChart.vue';
 import CurrencyRateModal from './CurrencyRateModal.vue';
-import DateRangeSelector from './DateRangeSelector.vue';
+import DateRangeSelectorWithPresets from './DateRangeSelectorWithPresets.vue';
 
 export default {
     name: 'CurrencyRateManager',
@@ -76,7 +76,7 @@ export default {
         CurrencyRateTable,
         CurrencyRateChart,
         CurrencyRateModal,
-        DateRangeSelector,
+        DateRangeSelectorWithPresets,
     },
     props: {
         from: {

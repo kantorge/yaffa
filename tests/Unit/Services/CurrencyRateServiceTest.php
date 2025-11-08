@@ -24,8 +24,18 @@ class CurrencyRateServiceTest extends TestCase
 
         $this->service = new CurrencyRateService();
         $this->user = User::factory()->create();
-        $this->fromCurrency = Currency::factory()->for($this->user)->create(['iso_code' => 'EUR']);
-        $this->toCurrency = Currency::factory()->for($this->user)->create(['iso_code' => 'USD', 'base' => true]);
+        
+        // Create unique currencies for this test by using a unique ISO code
+        $uniqueId = uniqid();
+        $this->fromCurrency = Currency::factory()->for($this->user)->create([
+            'iso_code' => 'EUR' . $uniqueId,
+            'name' => 'Euro ' . $uniqueId,
+        ]);
+        $this->toCurrency = Currency::factory()->for($this->user)->create([
+            'iso_code' => 'USD' . $uniqueId,
+            'name' => 'US Dollar ' . $uniqueId,
+            'base' => true,
+        ]);
     }
 
     public function test_can_create_rate(): void

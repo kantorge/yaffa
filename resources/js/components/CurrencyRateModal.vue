@@ -108,9 +108,21 @@ export default {
     },
     mounted() {
         const modalElement = document.getElementById('currencyRateModal');
-        this.modal = new window.bootstrap.Modal(modalElement);
+        
+        // Use CoreUI Modal instead of Bootstrap Modal
+        if (window.coreui && window.coreui.Modal) {
+            this.modal = new window.coreui.Modal(modalElement);
+        } else {
+            this.modal = new window.bootstrap.Modal(modalElement);
+        }
 
         modalElement.addEventListener('hidden.bs.modal', () => {
+            this.resetForm();
+            this.$emit('close');
+        });
+        
+        // Also listen for CoreUI modal events
+        modalElement.addEventListener('hidden.coreui.modal', () => {
             this.resetForm();
             this.$emit('close');
         });
