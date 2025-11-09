@@ -39,6 +39,9 @@
                     ref="rateChart"
                     :currency-rates="allRates"
                     :to-currency="toCurrency"
+                    :date-from="dateFrom"
+                    :date-to="dateTo"
+                    @date-range-selected="onChartDateRangeSelected"
                 />
             </div>
         </div>
@@ -111,6 +114,21 @@ export default {
             this.dateTo = dateTo;
             // Force table update when dates are cleared
             this.updateDisplayRates();
+        },
+        onChartDateRangeSelected({ dateFrom, dateTo }) {
+            // Update the date selector component when chart selection changes
+            this.dateFrom = dateFrom;
+            this.dateTo = dateTo;
+            this.updateDisplayRates();
+            
+            // Update the DateRangeSelector component if we have a ref to it
+            // Note: This creates a bidirectional sync between chart and date selector
+            if (this.$refs.dateSelector && this.$refs.dateSelector.dateRangePicker) {
+                this.$refs.dateSelector.dateRangePicker.setDates(
+                    new Date(dateFrom),
+                    new Date(dateTo)
+                );
+            }
         },
         updateDisplayRates() {
             if (!this.dateFrom && !this.dateTo) {

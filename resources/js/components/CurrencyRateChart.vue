@@ -31,7 +31,16 @@ export default {
             type: String,
             default: () => window.YAFFA ? window.YAFFA.locale : navigator.language,
         },
+        dateFrom: {
+            type: String,
+            default: null,
+        },
+        dateTo: {
+            type: String,
+            default: null,
+        },
     },
+    emits: ['date-range-selected'],
     computed: {
         hasData() {
             return this.currencyRates && this.currencyRates.length > 0;
@@ -45,6 +54,12 @@ export default {
                 }
             },
             deep: true,
+        },
+        dateFrom(newVal) {
+            this.updateChartZoom();
+        },
+        dateTo(newVal) {
+            this.updateChartZoom();
         },
     },
     mounted() {
@@ -94,11 +109,54 @@ export default {
             scrollbarX.series.push(series);
             chart.scrollbarX = scrollbarX;
 
+            // Add cursor for date selection
+            chart.cursor = new am4charts.XYCursor();
+            chart.cursor.behavior = 'zoomX';
+            chart.cursor.xAxis = categoryAxis;
+            
+            // Listen to selection events
+            categoryAxis.events.on('selectionextremeschanged', (ev) => {
+                const startDate = new Date(ev.target.minZoomed);
+                const endDate = new Date(ev.target.maxZoomed);
+                
+                // Format dates as YYYY-MM-DD
+                const dateFrom = startDate.toISOString().split('T')[0];
+                const dateTo = endDate.toISOString().split('T')[0];
+                
+                // Emit the selected date range
+                this.$emit('date-range-selected', { dateFrom, dateTo });
+            });
+
             this.chart = chart;
+            
+            // Apply initial zoom if dates are provided
+            this.updateChartZoom();
         },
         updateChart(rates) {
             if (this.chart && rates && rates.length > 0) {
                 this.chart.data = rates;
+            }
+        },
+        updateChartZoom() {
+            if (!this.chart || !this.chart.xAxes || this.chart.xAxes.length === 0) {
+                return;
+            }
+            
+            const dateAxis = this.chart.xAxes.getIndex(0);
+            if (!dateAxis) {
+                return;
+            }
+            
+            // If both dates are provided, zoom to that range
+            if (this.dateFrom && this.dateTo) {
+                const startDate = new Date(this.dateFrom);
+                const endDate = new Date(this.dateTo);
+                
+                // Zoom to the selected date range
+                dateAxis.zoomToDates(startDate, endDate);
+            } else if (!this.dateFrom && !this.dateTo) {
+                // If no dates, zoom out to show all data
+                dateAxis.zoom({ start: 0, end: 1 });
             }
         },
         __: function (string, replace) {
