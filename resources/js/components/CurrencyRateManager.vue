@@ -17,13 +17,10 @@
                 />
 
                 <date-range-selector-with-presets
+                    ref="dateSelector"
                     :initial-date-from="dateFrom"
                     :initial-date-to="dateTo"
                     @update="onDateChange"
-                />
-
-                <currency-rate-filters
-                    @search-change="onSearchChange"
                 />
             </div>
             <div class="col-12 col-lg-3">
@@ -33,7 +30,6 @@
                     :filtered-rates="displayRates"
                     :from-currency="fromCurrency"
                     :to-currency="toCurrency"
-                    :search-text="searchText"
                     @edit-rate="openEditModal"
                     @delete-rate="onRateDeleted"
                 />
@@ -61,7 +57,6 @@
 <script>
 import CurrencyRateOverview from './CurrencyRateOverview.vue';
 import CurrencyRateActions from './CurrencyRateActions.vue';
-import CurrencyRateFilters from './CurrencyRateFilters.vue';
 import CurrencyRateTable from './CurrencyRateTable.vue';
 import CurrencyRateChart from './CurrencyRateChart.vue';
 import CurrencyRateModal from './CurrencyRateModal.vue';
@@ -72,7 +67,6 @@ export default {
     components: {
         CurrencyRateOverview,
         CurrencyRateActions,
-        CurrencyRateFilters,
         CurrencyRateTable,
         CurrencyRateChart,
         CurrencyRateModal,
@@ -100,7 +94,6 @@ export default {
             displayRates: null,
             dateFrom: null,
             dateTo: null,
-            searchText: '',
             editingRate: null,
         };
     },
@@ -116,9 +109,8 @@ export default {
         onDateChange({ dateFrom, dateTo }) {
             this.dateFrom = dateFrom;
             this.dateTo = dateTo;
-        },
-        onSearchChange(searchText) {
-            this.searchText = searchText;
+            // Force table update when dates are cleared
+            this.updateDisplayRates();
         },
         updateDisplayRates() {
             if (!this.dateFrom && !this.dateTo) {

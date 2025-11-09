@@ -33,10 +33,6 @@ export default {
             type: Array,
             default: null,
         },
-        searchText: {
-            type: String,
-            default: '',
-        },
     },
     emits: ['edit-rate', 'delete-rate', 'data-updated'],
     data() {
@@ -47,18 +43,18 @@ export default {
     watch: {
         filteredRates: {
             handler(newRates) {
-                if (this.table && newRates) {
+                if (this.table) {
                     this.table.clear();
-                    this.table.rows.add(newRates);
+                    if (newRates) {
+                        this.table.rows.add(newRates);
+                    } else {
+                        // If no filtered rates, show all rates
+                        this.table.rows.add(this.currencyRates);
+                    }
                     this.table.draw();
                 }
             },
             deep: true,
-        },
-        searchText(newVal) {
-            if (this.table) {
-                this.table.search(newVal).draw();
-            }
         },
     },
     mounted() {
