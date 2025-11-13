@@ -6,12 +6,14 @@ use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
+use App\Http\Controllers\API\InvestmentUploadController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TransactionUploadController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -106,6 +108,16 @@ Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiCo
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
     ->name('api.transactions.destroy');
 
+Route::post('/investment-upload/wisealpha', [\App\Http\Controllers\API\InvestmentUploadWiseAlphaController::class, 'upload']);
+Route::post('/investment-upload', [\App\Http\Controllers\API\InvestmentUploadController::class, 'upload']);
+Route::post('/investment-upload/validate', [\App\Http\Controllers\API\InvestmentUploadController::class, 'validateFile']);
+Route::get('/investment-upload/mapping', [\App\Http\Controllers\API\InvestmentUploadController::class, 'getMapping']);
+
+Route::get('/transaction-upload/accounts', [TransactionUploadController::class, 'getAccounts']);
+Route::post('/transaction-upload/moneyhub', [TransactionUploadController::class, 'upload']);
+Route::post('/transaction-upload/moneyhub/import', [TransactionUploadController::class, 'import']);
+
+Route::get('/accounts', [AccountEntityApiController::class, 'getAccountsForDropdown']);
 Route::get('/onboarding/{topic}', [OnboardingApiController::class, 'getOnboardingData']);
 Route::put('/onboarding/{topic}/dismiss', [OnboardingApiController::class, 'setDismissedFlag']);
 Route::put('/onboarding/{topic}/complete-tour', [OnboardingApiController::class, 'setCompletedTourFlag']);

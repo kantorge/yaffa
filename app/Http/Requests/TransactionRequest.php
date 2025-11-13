@@ -246,6 +246,16 @@ class TransactionRequest extends FormRequest
             ];
         }
 
+        // Interest ReInvest (ID 13)
+        // Requires dividend (interest amount), quantity (same as dividend), and price (fixed at 1)
+        if ($transactionTypeId === 13) {
+            return [
+                'config.dividend' => 'required|numeric|gt:0',
+                'config.quantity' => 'required|numeric|gt:0',
+                'config.price' => 'required|numeric',
+            ];
+        }
+
         // Earlier cap gains (9 and 10) are not used currently
 
         // Fallback

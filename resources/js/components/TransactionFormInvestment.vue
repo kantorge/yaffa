@@ -613,6 +613,20 @@
           dividend: true,
           amount_multiplier: 1,
         },
+        {
+          name: 'Purchased Interest',
+          quantity: false,
+          price: false,
+          dividend: true,
+          amount_multiplier: -1,
+        },
+        {
+          name: 'Interest ReInvest',
+          quantity: true,
+          price: true,
+          dividend: true,
+          amount_multiplier: null,
+        },
       ];
 
       // Check for various default values in URL
@@ -911,6 +925,11 @@
         if (!settings.dividend) {
           this.form.config.dividend = null;
         }
+        
+        // Special handling for Interest ReInvest
+        if (this.form.transaction_type === 'Interest ReInvest') {
+          this.form.config.price = 1;
+        }
       },
 
       loadCallbackUrl(transactionId) {
@@ -1036,6 +1055,13 @@
         // Load default value for accounts
         this.getDefaultAccountDetails(transaction.config.account_id);
         this.getDefaultInvestmentDetails(transaction.config.investment_id);
+      },
+
+      // For Interest ReInvest, automatically set quantity equal to dividend
+      'form.config.dividend': function (newDividend) {
+        if (this.form.transaction_type === 'Interest ReInvest') {
+          this.form.config.quantity = newDividend;
+        }
       },
     },
   };

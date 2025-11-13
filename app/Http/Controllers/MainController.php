@@ -123,6 +123,7 @@ class MainController extends Controller
                     $transaction->account_to_name = $transaction->config->investment->name;
                     $transaction->amount_from = ($amount < 0 ? -$amount : null);
                     $transaction->amount_to = ($amount > 0 ? $amount : null);
+                    $transaction->amount = ($amount <> 0 ? $amount : null);
                     $transaction->tags = [];
                     $transaction->categories = [];
                     $transaction->quantity = $transaction->config->quantity;

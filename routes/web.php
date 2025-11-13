@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\AccountEntityController;
@@ -15,11 +16,13 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionImportRuleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationController;
 use App\Mail\TransactionCreatedFromEmail;
 use App\Models\ReceivedMail;
 use Illuminate\Support\Facades\Route;
+// MoneyHub Transaction Upload
 
 /*********************
  * Generic routes
@@ -75,6 +78,11 @@ Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy'
  * Investment related routes
  ********************/
 Route::resource('investment-group', InvestmentGroupController::class)->except(['show']);
+
+Route::get('/investment/transaction/upload', [InvestmentController::class, 'uploadForm'])
+    ->name('investment.upload');
+Route::get('/import/moneyhub', [ImportController::class, 'moneyhubUpload'])->middleware(['auth', 'verified'])->name('import.moneyhub');
+
 Route::resource('investment', InvestmentController::class);
 
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
@@ -95,6 +103,9 @@ Route::resource('tag', TagController::class)
 /*******************
  * Transaction related routes
  ******************/
+Route::resource('transaction-import-rules', TransactionImportRuleController::class)
+    ->except(['show']);
+
 Route::get('/transactions/create/{type}', [TransactionController::class, 'create'])
     ->where('type', 'standard|investment')
     ->name('transaction.create');
@@ -133,6 +144,7 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 // Route for the CSV import functionality
 Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
+Route::post('/import/csv', [ImportController::class, 'uploadCsv'])->middleware(['auth', 'verified'])->name('import.csv.upload');
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');

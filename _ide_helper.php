@@ -9332,77 +9332,6 @@ namespace Illuminate\Support\Facades {
                         return $instance->setConnectionName($name);
         }
                     /**
-         * Release a reserved job back onto the queue after (n) seconds.
-         *
-         * @param string $queue
-         * @param \Illuminate\Queue\Jobs\DatabaseJobRecord $job
-         * @param int $delay
-         * @return mixed 
-         * @static 
-         */        public static function release($queue, $job, $delay)
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        return $instance->release($queue, $job, $delay);
-        }
-                    /**
-         * Delete a reserved job from the queue.
-         *
-         * @param string $queue
-         * @param string $id
-         * @return void 
-         * @throws \Throwable
-         * @static 
-         */        public static function deleteReserved($queue, $id)
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        $instance->deleteReserved($queue, $id);
-        }
-                    /**
-         * Delete a reserved job from the reserved queue and release it.
-         *
-         * @param string $queue
-         * @param \Illuminate\Queue\Jobs\DatabaseJob $job
-         * @param int $delay
-         * @return void 
-         * @static 
-         */        public static function deleteAndRelease($queue, $job, $delay)
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        $instance->deleteAndRelease($queue, $job, $delay);
-        }
-                    /**
-         * Delete all of the jobs from the queue.
-         *
-         * @param string $queue
-         * @return int 
-         * @static 
-         */        public static function clear($queue)
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        return $instance->clear($queue);
-        }
-                    /**
-         * Get the queue or return the default.
-         *
-         * @param string|null $queue
-         * @return string 
-         * @static 
-         */        public static function getQueue($queue)
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        return $instance->getQueue($queue);
-        }
-                    /**
-         * Get the underlying database instance.
-         *
-         * @return \Illuminate\Database\Connection 
-         * @static 
-         */        public static function getDatabase()
-        {
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
-                        return $instance->getDatabase();
-        }
-                    /**
          * Get the maximum number of attempts for an object-based queue handler.
          *
          * @param mixed $job
@@ -9410,7 +9339,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function getJobTries($job)
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
+                        /** @var \Illuminate\Queue\SyncQueue $instance */
                         return $instance->getJobTries($job);
         }
                     /**
@@ -9421,7 +9350,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function getJobBackoff($job)
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
+                        /** @var \Illuminate\Queue\SyncQueue $instance */
                         return $instance->getJobBackoff($job);
         }
                     /**
@@ -9432,7 +9361,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function getJobExpiration($job)
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
+                        /** @var \Illuminate\Queue\SyncQueue $instance */
                         return $instance->getJobExpiration($job);
         }
                     /**
@@ -9443,7 +9372,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function createPayloadUsing($callback)
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        \Illuminate\Queue\DatabaseQueue::createPayloadUsing($callback);
+                        \Illuminate\Queue\SyncQueue::createPayloadUsing($callback);
         }
                     /**
          * Get the container instance being used by the connection.
@@ -9452,7 +9381,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function getContainer()
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
+                        /** @var \Illuminate\Queue\SyncQueue $instance */
                         return $instance->getContainer();
         }
                     /**
@@ -9463,7 +9392,7 @@ namespace Illuminate\Support\Facades {
          * @static 
          */        public static function setContainer($container)
         {            //Method inherited from \Illuminate\Queue\Queue         
-                        /** @var \Illuminate\Queue\DatabaseQueue $instance */
+                        /** @var \Illuminate\Queue\SyncQueue $instance */
                         $instance->setContainer($container);
         }
             }
@@ -17262,7 +17191,7 @@ namespace Diglactic\Breadcrumbs {
      *
      * @method static array getCurrentRoute()
      * @mixin \Illuminate\Support\Traits\Macroable
-     * @see Manager
+     * @see \Diglactic\Breadcrumbs\Manager
      */        class Breadcrumbs {
                     /**
          * Register a breadcrumb-generating callback for a page.
@@ -17270,12 +17199,13 @@ namespace Diglactic\Breadcrumbs {
          * @param string $name The name of the page.
          * @param callable $callback The callback, which should accept a Generator instance as the first parameter and may
          *                           accept additional parameters.
-         * @throws DuplicateBreadcrumbException If the given name has already been used.
+         * @return void 
+         * @throws \Diglactic\Breadcrumbs\Exceptions\DuplicateBreadcrumbException If the given name has already been used.
          * @static 
          */        public static function for($name, $callback)
         {
                         /** @var \Diglactic\Breadcrumbs\Manager $instance */
-                        return $instance->for($name, $callback);
+                        $instance->for($name, $callback);
         }
                     /**
          * Register a closure to call before generating breadcrumbs for the current page.
@@ -17283,11 +17213,12 @@ namespace Diglactic\Breadcrumbs {
          * For example, this can be used to always prepend the homepage without needing to manually add it to each page.
          *
          * @param callable $callback The callback, which should accept a Generator instance as the first and only parameter.
+         * @return void 
          * @static 
          */        public static function before($callback)
         {
                         /** @var \Diglactic\Breadcrumbs\Manager $instance */
-                        return $instance->before($callback);
+                        $instance->before($callback);
         }
                     /**
          * Register a closure to call after generating breadcrumbs for the current page.
@@ -17295,11 +17226,12 @@ namespace Diglactic\Breadcrumbs {
          * For example, this can be used to append the current page number when using pagination.
          *
          * @param callable $callback The callback, which should accept a Generator instance as the first and only parameter.
+         * @return void 
          * @static 
          */        public static function after($callback)
         {
                         /** @var \Diglactic\Breadcrumbs\Manager $instance */
-                        return $instance->after($callback);
+                        $instance->after($callback);
         }
                     /**
          * Check if a breadcrumb with the given name exists.
@@ -17320,9 +17252,9 @@ namespace Diglactic\Breadcrumbs {
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
          * @return \Illuminate\Support\Collection The generated breadcrumbs.
-         * @throws UnnamedRouteException if no name is given and the current route doesn't
+         * @throws \Diglactic\Breadcrumbs\Exceptions\UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
-         * @throws InvalidBreadcrumbException if the name is (or any ancestor names  are)
+         * @throws \Diglactic\Breadcrumbs\Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names  are)
          *                                                                      not registered.
          * @static 
          */        public static function generate($name = null, ...$params)
@@ -17337,9 +17269,9 @@ namespace Diglactic\Breadcrumbs {
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
          * @return \Illuminate\View\View The generated HTML.
-         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @throws \Diglactic\Breadcrumbs\Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
-         * @throws UnnamedRouteException if no name is given and the current route doesn't
+         * @throws \Diglactic\Breadcrumbs\Exceptions\UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
          * @static 
          */        public static function view($view, $name = null, ...$params)
@@ -17352,12 +17284,12 @@ namespace Diglactic\Breadcrumbs {
          *
          * @param string|null $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
-         * @return \View The generated view.
-         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @return \Illuminate\Contracts\View\View The generated view.
+         * @throws \Diglactic\Breadcrumbs\Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
-         * @throws UnnamedRouteException if no name is given and the current route doesn't
+         * @throws \Diglactic\Breadcrumbs\Exceptions\UnnamedRouteException if no name is given and the current route doesn't
          *                                                                 have an associated name.
-         * @throws ViewNotSetException if no view has been set.
+         * @throws \Diglactic\Breadcrumbs\Exceptions\ViewNotSetException if no view has been set.
          * @static 
          */        public static function render($name = null, ...$params)
         {
@@ -17368,9 +17300,9 @@ namespace Diglactic\Breadcrumbs {
          * Get the last breadcrumb for the current page.
          *
          * @return object|null The breadcrumb for the current page.
-         * @throws UnnamedRouteException if the current route doesn't have an associated
+         * @throws \Diglactic\Breadcrumbs\Exceptions\UnnamedRouteException if the current route doesn't have an associated
          *                                                                 name.
-         * @throws InvalidBreadcrumbException if the name is (or any ancestor names are)
+         * @throws \Diglactic\Breadcrumbs\Exceptions\InvalidBreadcrumbException if the name is (or any ancestor names are)
          *                                                                      not registered.
          * @static 
          */        public static function current()
@@ -17383,22 +17315,24 @@ namespace Diglactic\Breadcrumbs {
          *
          * @param string $name The name of the current page.
          * @param mixed $params The parameters to pass to the closure for the current page.
+         * @return void 
          * @static 
          */        public static function setCurrentRoute($name, ...$params)
         {
                         /** @var \Diglactic\Breadcrumbs\Manager $instance */
-                        return $instance->setCurrentRoute($name, ...$params);
+                        $instance->setCurrentRoute($name, ...$params);
         }
                     /**
          * Clear the previously set route name and parameters to use when calling render() or generate() with no parameters.
          * 
          * Next time it will revert to the default behaviour of using the current route from Laravel.
          *
+         * @return void 
          * @static 
          */        public static function clearCurrentRoute()
         {
                         /** @var \Diglactic\Breadcrumbs\Manager $instance */
-                        return $instance->clearCurrentRoute();
+                        $instance->clearCurrentRoute();
         }
                     /**
          * Register a custom macro.

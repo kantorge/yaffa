@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Spiders\InvestmentPriceScraper;
+use App\Spiders\WisealphaInvestmentPriceScraper;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
 use Eloquent;
@@ -330,6 +331,12 @@ class Investment extends Model
             'description' => 'Web scraping is a technique to extract data from websites. It is a common method to get data from websites that do not provide APIs.',
             'instructions' => 'To use web scraping, you need to provide a URL and a CSS selector to extract the price from the website.',
         ],
+        'wisealpha' => [
+            'name' => 'WiseAlpha',
+            'refillAvailable' => false,
+            'description' => 'WiseAlpha specialized scraper for corporate bond prices. Extracts buyPrice from JavaScript variables.',
+            'instructions' => 'Provide the WiseAlpha bond URL. The scraper will automatically extract the buyPrice and divide by 100.',
+        ],
     ];
 
     /**
@@ -373,6 +380,11 @@ class Investment extends Model
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
     {
         $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
+        
+        if (!method_exists($this, $providerSuffix)) {
+            throw new \Exception("Investment price provider method '{$providerSuffix}' not found for provider '{$this->investment_price_provider}'");
+        }
+        
         $this->{$providerSuffix}($from, $refill);
     }
 
@@ -465,5 +477,101 @@ class Investment extends Model
         // We are intentionally not triggering the observer here, as there can be multiple similar operations
         // It means, that it's the responsibility of the caller to trigger the observer or any related actions
         $investmentPrice->saveQuietly();
+    }
+
+    /**
+     * Get the investment price from WiseAlpha by scraping the buyPrice JavaScript variable
+     * TODO: this is getting and saving the data, but it should be split into two functions
+     * @param Carbon|null $from Optionally specify the date to retrieve data from
+     * @param bool $refill Future option to request reload of prices
+     */
+    public function getInvestmentPriceFromWiseAlpha(Carbon|null $from = null, bool $refill = false): void
+    {
+        // This provider ignores the $from and $refill parameters, as it looks for the latest price,
+        // which is assumed to be the one applying to the previous day
+
+        // Use Guzzle directly to handle SSL issues in development
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($this->scrape_url, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+                ],
+                'timeout' => 30,
+                'verify' => false  // Disable SSL verification for development
+            ]);
+            
+            $html = $response->getBody()->getContents();
+            
+            // Use the same parsing logic as the spider
+            $patterns = [
+                '/buyPrice\s*:\s*"(\d+(?:\.\d+)?)"/i',  // JSON format: buyPrice: "96.0"
+                '/buyPrice\s*[:=]\s*(\d+(?:\.\d+)?)/i',
+                '/["\']buyPrice["\']\s*[:=]\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
+                '/"buyPrice"\s*:\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
+                '/var\s+buyPrice\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
+                '/const\s+buyPrice\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
+                '/let\s+buyPrice\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
+            ];
+            
+            $priceValue = null;
+            $matchedPattern = null;
+            
+            foreach ($patterns as $index => $pattern) {
+                if (preg_match($pattern, $html, $matches)) {
+                    $priceValue = (float) $matches[1];
+                    $matchedPattern = $pattern;
+                    break;
+                }
+            }
+            
+            // If no buyPrice found, try to find price in data attributes or other locations
+            if ($priceValue === null) {
+                if (preg_match('/data-price\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i', $html, $matches)) {
+                    $priceValue = (float) $matches[1];
+                    $matchedPattern = 'data-price attribute';
+                }
+            }
+            
+            if ($priceValue === null) {
+                \Log::warning('WiseAlpha direct scrape could not find buyPrice', [
+                    'url' => $this->scrape_url,
+                    'html_length' => strlen($html),
+                    'contains_buyPrice' => str_contains($html, 'buyPrice'),
+                ]);
+                return;
+            }
+            
+            // Log successful price extraction
+            \Log::info('WiseAlpha direct scrape extracted price', [
+                'url' => $this->scrape_url,
+                'raw_price' => $priceValue,
+                'final_price' => $priceValue / 100,
+                'matched_pattern' => $matchedPattern
+            ]);
+            
+            // Divide by 100 as requested
+            $priceValue = $priceValue / 100;
+
+            $investmentPrice = InvestmentPrice::firstOrNew(
+                [
+                    'investment_id' => $this->id,
+                    'date' => Carbon::yesterday()->format('Y-m-d'),
+                ]
+            );
+
+            $investmentPrice->price = $priceValue;
+
+            // We are intentionally not triggering the observer here, as there can be multiple similar operations
+            // It means, that it's the responsibility of the caller to trigger the observer or any related actions
+            $investmentPrice->saveQuietly();
+            
+        } catch (\Exception $e) {
+            \Log::error('WiseAlpha direct scrape failed', [
+                'url' => $this->scrape_url,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 }

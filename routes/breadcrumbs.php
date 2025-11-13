@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Models\Investment;
@@ -142,6 +143,10 @@ Breadcrumbs::for('investment.show', function (BreadcrumbTrail $trail, $investmen
     $trail->parent('investment.index');
     $trail->push(__($investment->name), route('investment.show', $investment));
 });
+Breadcrumbs::for('investment.upload', function (BreadcrumbTrail $trail) {
+    $trail->parent('investment.index');
+    $trail->push(__('Upload Transactions'), route('investment.upload'));
+});
 
 // Investment price resource views (create, edit)
 Breadcrumbs::for('investment-price.create', function (BreadcrumbTrail $trail) {
@@ -248,4 +253,26 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('user.settings', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('My profile'), route('user.settings'));
+});
+
+// MoneyHub Upload
+Breadcrumbs::for('import.moneyhub', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('Upload MoneyHub transactions'), route('import.moneyhub'));
+});
+
+// Transaction Import Rules
+Breadcrumbs::for('transaction-import-rules.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('Transaction Import Rules'), route('transaction-import-rules.index'));
+});
+Breadcrumbs::for('transaction-import-rules.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('transaction-import-rules.index');
+    $trail->push(__('Create'), route('transaction-import-rules.create'));
+});
+Breadcrumbs::for('transaction-import-rules.edit', function (BreadcrumbTrail $trail, $rule) {
+    $trail->parent('transaction-import-rules.index');
+    $trail->push(__('Edit'), route('transaction-import-rules.edit', $rule));
 });

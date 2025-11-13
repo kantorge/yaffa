@@ -165,17 +165,31 @@ class InvestmentPriceController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
 
-        // Get latest known date of price date, so we can retrieve missing values
-        $lastPrice = $investment->investmentPrices->last('date');
-        $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
+        // Check if user is authorized to view this investment
+        $this->authorize('view', $investment);
 
-        $investment->getInvestmentPriceFromProvider($date);
+        // Check if the investment has a price provider configured
+        if (!$investment->investment_price_provider) {
+            self::addSimpleErrorMessage(__('No price provider configured for this investment.'));
+            return redirect()->back();
+        }
 
-        // Use the InvestmentService to recalculate the related accounts
-        $investmentService = new InvestmentService();
-        $investmentService->recalculateRelatedAccounts($investment);
+        try {
+            // Get latest known date of price date, so we can retrieve missing values
+            $lastPrice = $investment->investmentPrices->last('date');
+            $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
-        self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
+            $investment->getInvestmentPriceFromProvider($date);
+
+            // Use the InvestmentService to recalculate the related accounts
+            $investmentService = new InvestmentService();
+            $investmentService->recalculateRelatedAccounts($investment);
+
+            self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
+
+        } catch (\Exception $e) {
+            self::addSimpleErrorMessage(__('Failed to retrieve investment prices: :error', ['error' => $e->getMessage()]));
+        }
 
         return redirect()->back();
     }

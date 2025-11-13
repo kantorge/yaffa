@@ -1,3 +1,8 @@
+            <x-nav-link
+                href="{{ route('import.moneyhub') }}"
+                iconClasses="fa-solid fa-cloud-upload-alt"
+                text="{{ __('Upload MoneyHub transactions') }}"
+            />
 <ul class="sidebar-nav" data-coreui="navigation" data-simplebar>
     <li class="nav-item">
         <a class="nav-link" href="{{ route('home') }}">
@@ -107,6 +112,11 @@
                     href="{{ route('import.csv') }}"
                     iconClasses="fa-solid fa-upload"
                     text="{{ __('Import transactions') }}"
+            />
+            <x-nav-link
+                    href="{{ route('investment.upload') }}"
+                    iconClasses="fa-solid fa-file-arrow-up"
+                    text="{{ __('Upload investment transactions') }}"
             />
         </ul>
     </li>

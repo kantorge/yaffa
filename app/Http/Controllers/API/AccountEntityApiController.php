@@ -84,4 +84,28 @@ class AccountEntityApiController extends Controller
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
     }
+
+    /**
+     * Get list of accounts for dropdown selection
+     */
+    public function getAccountsForDropdown(): JsonResponse
+    {
+        /**
+         * @get('/api/accounts')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $accounts = AccountEntity::where('user_id', auth()->id())
+            ->where('active', true)
+            ->whereHasMorph('config', [\App\Models\Account::class])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($accountEntity) {
+                return [
+                    'id' => $accountEntity->id,
+                    'name' => $accountEntity->name,
+                ];
+            });
+
+        return response()->json($accounts);
+    }
 }

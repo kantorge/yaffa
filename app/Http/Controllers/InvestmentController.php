@@ -223,4 +223,19 @@ class InvestmentController extends Controller
             'prices' => $prices,
         ]);
     }
+
+    /**
+     * Display the transaction upload form.
+     *
+     * @return View
+     */
+    public function uploadForm(): View
+    {
+        /**
+         * @get('/investment/transaction/upload')
+         * @name('investment.upload')
+         * @middlewares('web', 'auth', 'verified')
+         */
+        return view('investment.upload');
+    }
 }

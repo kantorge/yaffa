@@ -12,6 +12,7 @@ routeMap.set('currency-rate.index', 'currencyrates/index');
 routeMap.set('investment-group.index', 'investment-group/index');
 routeMap.set('investment.index', 'investment/index');
 routeMap.set('investment.show', 'investment/show');
+routeMap.set('investment.upload', 'investment/upload');
 routeMap.set('investment-price.create', 'investment-price/form');
 routeMap.set('investment-price.edit', 'investment-price/form');
 routeMap.set('investment-price.list', 'investment-price/list');
@@ -24,15 +25,26 @@ routeMap.set('reports.transactions', 'reports/transactions');
 routeMap.set('reports.investment_timeline', 'reports/investment-timeline');
 routeMap.set('search', 'search/search');
 routeMap.set('import.csv', 'import/csv');
+routeMap.set('import.moneyhub', 'import/moneyhub');
 routeMap.set('register', 'auth/register');
 routeMap.set('login', 'auth/login');
 routeMap.set('tag.index', 'tag/index');
 routeMap.set('user.settings', 'user/settings');
 
+console.log('=== APP.JS ROUTE LOADING DEBUG ===');
+console.log('typeof route:', typeof route);
+
 // Generic loader based on map above
 // Check if current route exists in map. If yes, load the corresponding file.
-if (routeMap.has(route().current())) {
-    require('./' + routeMap.get(route().current()));
+try {
+    console.log('Current route from route():', route().current());
+    console.log('Route map has this route?', routeMap.has(route().current()));
+    if (routeMap.has(route().current())) {
+        console.log('Loading module:', routeMap.get(route().current()));
+        require('./' + routeMap.get(route().current()));
+    }
+} catch (error) {
+    console.error('Error in route loading:', error);
 }
 
 // More specific loaders

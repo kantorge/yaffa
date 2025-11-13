@@ -1,3 +1,34 @@
+    @if(isset($parsedRows) && is_array($parsedRows) && count($parsedRows) > 0)
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">{{ __('CSV Preview') }}</div>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    @foreach(array_keys($parsedRows[0]) as $header)
+                                        <th>{{ $header }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($parsedRows as $row)
+                                    <tr>
+                                        @foreach($row as $cell)
+                                            <td>{{ $cell }}</td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 @extends('template.layouts.page')
 
 @section('title', __('Import CSV'))
@@ -16,7 +47,11 @@
                         </div>
                         <div class="col-md-6 form-group">
                             <label for="csv_file">{{ __('File') }}</label><br>
-                            <input type="file" class="form-control-file" id="csv_file" name="file" disabled>
+                            <form method="POST" action="{{ route('import.csv.upload') }}" enctype="multipart/form-data">
+                                @csrf
+                                <input type="file" class="form-control-file" id="csv_file" name="file" required>
+                                <button type="submit" class="btn btn-success mt-2">{{ __('Upload CSV') }}</button>
+                            </form>
                         </div>
                         <div class="col-md-2 form-group">
                             <label for="reset">&nbsp;</label>
