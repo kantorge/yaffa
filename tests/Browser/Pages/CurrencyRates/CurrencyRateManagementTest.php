@@ -46,7 +46,7 @@ class CurrencyRateManagementTest extends DuskTestCase
                 // The main test user has English as preferred language by default
                 ->assertSee('Overview')
                 ->assertSee('Actions')
-                ->assertSee('Filters')
+                ->assertSee('Date')
                 ->assertSee('Currency rate values');
         });
     }
