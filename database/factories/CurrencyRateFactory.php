@@ -15,11 +15,45 @@ class CurrencyRateFactory extends Factory
      */
     public function definition(): array
     {
+        // Create a user first to ensure both currencies belong to the same user
+        $user = \App\Models\User::factory()->create();
+
         return [
-            'from_id' => Currency::factory(),
-            'to_id' => Currency::factory(),
+            'from_id' => Currency::factory()->for($user),
+            'to_id' => Currency::factory()->for($user),
             'date' => $this->faker->date(),
             'rate' => $this->faker->randomFloat(4, 0.1, 10),
         ];
+    }
+
+    /**
+     * State for creating currency rates for a specific user's currencies.
+     */
+    public function forUser(\App\Models\User $user): static
+    {
+        return $this->state(function (array $attributes) use ($user) {
+            return [
+                'from_id' => Currency::factory()->for($user),
+                'to_id' => Currency::factory()->for($user),
+            ];
+        });
+    }
+
+    /**
+     * State for creating currency rates between specific currencies.
+     */
+    public function betweenCurrencies(Currency $fromCurrency, Currency $toCurrency): static
+    {
+        return $this->state(function (array $attributes) use ($fromCurrency, $toCurrency) {
+            // Ensure both currencies belong to the same user
+            if ($fromCurrency->user_id !== $toCurrency->user_id) {
+                throw new \InvalidArgumentException('Both currencies must belong to the same user');
+            }
+
+            return [
+                'from_id' => $fromCurrency->id,
+                'to_id' => $toCurrency->id,
+            ];
+        });
     }
 }

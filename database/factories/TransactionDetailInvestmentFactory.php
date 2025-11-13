@@ -45,7 +45,7 @@ class TransactionDetailInvestmentFactory extends Factory
             $investment = $investments->where('currency_id', $currency)->random();
         } else {
             // Get a random currency for the user, or create one if none exists
-            $currency = Currency::inRandomOrder()->firstOr(fn () => Currency::factory()->create())->id;
+            $currency = Currency::inRandomOrder()->firstOr(fn() => Currency::factory()->for($user)->create())->id;
 
             // Create a new account with the random currency
             $account = AccountEntity::factory()
@@ -73,7 +73,7 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function buy(User $user): Factory
     {
-        return $this->state(fn (array $attributes) => array_merge(
+        return $this->state(fn(array $attributes) => array_merge(
             [
                 'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
                 'quantity' => $this->faker->randomFloat(4, 1, 100),
@@ -93,7 +93,7 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function sell(User $user): Factory
     {
-        return $this->state(fn (array $attributes) => array_merge(
+        return $this->state(fn(array $attributes) => array_merge(
             [
                 'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
                 'quantity' => $this->faker->randomFloat(4, 1, 100),
@@ -113,7 +113,7 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function dividend(User $user): Factory
     {
-        return $this->state(fn (array $attributes) => array_merge(
+        return $this->state(fn(array $attributes) => array_merge(
             [
                 'price' => null,
                 'quantity' => null,

@@ -21,31 +21,72 @@ class CurrencyRateApiTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
-        $this->fromCurrency = Currency::factory()->for($this->user)->create(['iso_code' => 'EUR']);
-        $this->toCurrency = Currency::factory()->for($this->user)->create(['iso_code' => 'USD', 'base' => true]);
+
+        // Intentionally create different currencies for testing
+        $this->fromCurrency = Currency::factory()->for($this->user)->fromIsoCodes(['EUR'])->create();
+        $this->toCurrency = Currency::factory()->for($this->user)->fromIsoCodes(['USD'])->create(['base' => true]);
     }
 
     public function test_guest_cannot_access_api(): void
     {
+        // Without authentication, try to access the API endpoints
+
+        // Get rates
         $this->getJson(route('api.currency-rate.index', [
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
         ]))->assertUnauthorized();
 
+        // Create rate
         $this->postJson(route('api.currency-rate.store'), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-15',
             'rate' => 1.2345,
         ])->assertUnauthorized();
+
+        // Update rate
+        $rate = CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2345,
+            ]);
+        $this->putJson(route('api.currency-rate.update', $rate), [
+            'from_id' => $this->fromCurrency->id,
+            'to_id' => $this->toCurrency->id,
+            'date' => '2024-01-16',
+            'rate' => 1.3456,
+        ])->assertUnauthorized();
+
+        // Delete rate
+        $this->deleteJson(route('api.currency-rate.destroy', $rate))->assertUnauthorized();
+    }
+
+    public function test_user_cannot_access_other_users_currencies(): void
+    {
+        $otherUser = User::factory()->create();
+        $otherCurrency = Currency::factory()->for($otherUser)->create(['iso_code' => 'GBP']);
+
+        $this->actingAs($this->user)
+            ->getJson(route('api.currency-rate.index', [
+                'from' => $otherCurrency->id,
+                'to' => $this->toCurrency->id,
+            ]))->assertForbidden();
+
+        $this->actingAs($this->user)
+            ->getJson(route('api.currency-rate.index', [
+                'from' => $this->fromCurrency->id,
+                'to' => $otherCurrency->id,
+            ]))->assertForbidden();
     }
 
     public function test_can_get_all_rates(): void
     {
-        CurrencyRate::factory()->count(3)->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-        ]);
+        CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->count(3)
+            ->create();
 
         $response = $this->actingAs($this->user)
             ->getJson(route('api.currency-rate.index', [
@@ -64,26 +105,26 @@ class CurrencyRateApiTest extends TestCase
 
     public function test_can_get_rates_filtered_by_date_range(): void
     {
-        CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-10',
-            'rate' => 1.1,
-        ]);
+        CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-10',
+                'rate' => 1.1,
+            ]);
 
-        CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2,
-        ]);
+        CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2,
+            ]);
 
-        CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-20',
-            'rate' => 1.3,
-        ]);
+        CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-20',
+                'rate' => 1.3,
+            ]);
 
         $response = $this->actingAs($this->user)
             ->getJson(route('api.currency-rate.index', [
@@ -124,12 +165,12 @@ class CurrencyRateApiTest extends TestCase
 
     public function test_cannot_create_duplicate_rate(): void
     {
-        CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ]);
+        CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2345,
+            ]);
 
         $data = [
             'from_id' => $this->fromCurrency->id,
@@ -147,12 +188,12 @@ class CurrencyRateApiTest extends TestCase
 
     public function test_can_update_rate(): void
     {
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ]);
+        $rate = CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2345,
+            ]);
 
         $updateData = [
             'from_id' => $this->fromCurrency->id,
@@ -179,12 +220,12 @@ class CurrencyRateApiTest extends TestCase
 
     public function test_can_delete_rate(): void
     {
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ]);
+        $rate = CurrencyRate::factory()
+            ->betweenCurrencies($this->fromCurrency, $this->toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2345,
+            ]);
 
         $response = $this->actingAs($this->user)
             ->deleteJson(route('api.currency-rate.destroy', $rate));
@@ -195,20 +236,6 @@ class CurrencyRateApiTest extends TestCase
         $this->assertDatabaseMissing('currency_rates', [
             'id' => $rate->id,
         ]);
-    }
-
-    public function test_user_cannot_access_other_users_currencies(): void
-    {
-        $otherUser = User::factory()->create();
-        $otherCurrency = Currency::factory()->for($otherUser)->create(['iso_code' => 'GBP']);
-
-        $response = $this->actingAs($this->user)
-            ->getJson(route('api.currency-rate.index', [
-                'from' => $otherCurrency->id,
-                'to' => $this->toCurrency->id,
-            ]));
-
-        $response->assertForbidden();
     }
 
     public function test_validation_requires_positive_rate(): void
