@@ -30,12 +30,13 @@ class CurrencyRateApiTest extends TestCase
     public function test_guest_cannot_access_api(): void
     {
         // Without authentication, try to access the API endpoints
+        // Since auth:sanctum middleware is applied, unauthenticated users should get 401
 
-        // Get rates
+        // Get rates - should fail at authentication middleware level
         $this->getJson(route('api.currency-rate.index', [
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
-        ]))->assertUnauthorized();
+        ]))->assertStatus(401);
 
         // Create rate
         $this->postJson(route('api.currency-rate.store'), [
@@ -43,7 +44,7 @@ class CurrencyRateApiTest extends TestCase
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-15',
             'rate' => 1.2345,
-        ])->assertUnauthorized();
+        ])->assertStatus(401);
 
         // Update rate
         $rate = CurrencyRate::factory()
@@ -57,10 +58,10 @@ class CurrencyRateApiTest extends TestCase
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-16',
             'rate' => 1.3456,
-        ])->assertUnauthorized();
+        ])->assertStatus(401);
 
         // Delete rate
-        $this->deleteJson(route('api.currency-rate.destroy', $rate))->assertUnauthorized();
+        $this->deleteJson(route('api.currency-rate.destroy', $rate))->assertStatus(401);
     }
 
     public function test_user_cannot_access_other_users_currencies(): void
