@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages\CurrencyRates;
 
-use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Laravel\Dusk\Browser;
@@ -26,23 +25,25 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_user_can_view_currency_rates(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        // Create currencies for the user
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'EUR']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         // Create some rates
-        CurrencyRate::factory()->count(3)->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-        ]);
+        CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->count(3)->create();
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency) {
             $browser
                 ->loginAs($user)
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
+                // The main test user has English as preferred language by default
                 ->assertSee('Overview')
                 ->assertSee('Actions')
                 ->assertSee('Filters')
@@ -52,10 +53,12 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_user_can_add_currency_rate(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'GBP']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency) {
             $browser
@@ -88,17 +91,20 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_user_can_edit_currency_rate(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'CHF']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-10',
-            'rate' => 1.1111,
-        ]);
+        $rate = CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-10',
+                'rate' => 1.1111,
+            ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency, $rate) {
             $browser
@@ -130,17 +136,20 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_user_can_delete_currency_rate(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'JPY']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-10',
-            'rate' => 150.0,
-        ]);
+        $rate = CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-10',
+                'rate' => 150.0,
+            ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency, $rate) {
             $browser
@@ -167,32 +176,37 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_user_can_filter_rates_by_date_range(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'CAD']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         // Create rates with different dates
-        CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-10',
-            'rate' => 1.1,
-        ]);
+        CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-10',
+                'rate' => 1.1,
+            ]);
 
-        CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2,
-        ]);
+        CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 1.2,
+            ]);
 
-        CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-20',
-            'rate' => 1.3,
-        ]);
+        CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-20',
+                'rate' => 1.3,
+            ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency) {
             $browser
@@ -209,18 +223,21 @@ class CurrencyRateManagementTest extends DuskTestCase
 
     public function test_validation_prevents_duplicate_rates(): void
     {
+        // Get the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
-        $fromCurrency = Currency::factory()->for($user)->create(['iso_code' => 'AUD']);
-        $toCurrency = Currency::factory()->for($user)->create(['iso_code' => 'USD', 'base' => true]);
+        // The user is expected to have EUR and USD currencies
+        $fromCurrency = $user->currencies->firstWhere('iso_code', 'EUR');
+        $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         // Create existing rate
-        CurrencyRate::factory()->create([
-            'from_id' => $fromCurrency->id,
-            'to_id' => $toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 0.75,
-        ]);
+        CurrencyRate::factory()
+            ->for($user)
+            ->betweenCurrencies($fromCurrency, $toCurrency)
+            ->create([
+                'date' => '2024-01-15',
+                'rate' => 0.75,
+            ]);
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency) {
             $browser
