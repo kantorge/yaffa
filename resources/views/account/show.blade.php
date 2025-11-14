@@ -127,7 +127,18 @@
                 </div>
             </div>
             
-            <div id="dateRangeSelectorVue"></div>
+            <div id="accountDateRangeSelectorApp">
+                <date-range-selector-with-presets
+                    ref="accountDateRangeSelector"
+                    :initial-date-from="'{{ $filters['date_from'] ?? '' }}'"
+                    :initial-date-to="'{{ $filters['date_to'] ?? '' }}'"
+                    :initial-preset="'{{ $filters['date_preset'] ?? 'none' }}'"
+                    :show-update-button="true"
+                    :preset-groups="{{ json_encode(config('yaffa.account_date_presets')) }}"
+                    @update="handleDateRangeUpdate"
+                    @date-change="handleDateChange"
+                ></date-range-selector-with-presets>
+            </div>
         </div>
 
         <div class="col-12 col-lg-9">
@@ -179,21 +190,10 @@
         </div>
     </div>
 
-    <div id="app">
+    <div id="app" class="d-none">
         <transaction-show-modal></transaction-show-modal>
         <transaction-create-standard-modal></transaction-create-standard-modal>
         <transaction-create-investment-modal></transaction-create-investment-modal>
-        <date-range-selector-with-presets
-            ref="accountDateRangeSelector"
-            id="accountDateRangeSelector"
-            :initial-date-from="'{{ $filters['date_from'] ?? '' }}'"
-            :initial-date-to="'{{ $filters['date_to'] ?? '' }}'"
-            :initial-preset="'{{ $filters['date_preset'] ?? 'none' }}'"
-            :show-update-button="true"
-            :preset-groups="{{ json_encode(config('yaffa.account_date_presets')) }}"
-            @update="handleDateRangeUpdate"
-            @date-change="handleDateChange"
-        ></date-range-selector-with-presets>
     </div>
 
     @include('template.components.model-delete-form')

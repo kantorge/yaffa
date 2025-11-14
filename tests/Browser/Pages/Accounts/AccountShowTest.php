@@ -460,4 +460,108 @@ class AccountShowTest extends DuskTestCase
                 ->assertSeeIn('#historyTable_info', 'Showing 0 to 0 of 0 entries');
         });
     }
+
+    public function test_update_button_triggers_table_reload(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // Get the EUR cash account of the user
+        $account = $user->accounts()->where('name', 'Cash account EUR')->first();
+        
+        // Get a payee
+        $payee = $user->payees()->first();
+
+        // Set the date for the transactions
+        $date = now()->addDays(10);
+
+        // Create a transaction
+        Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 100,
+                    'amount_to' => 100,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->make([
+                'date' => $date->format('Y-m-d'),
+                'config_type' => 'standard',
+                'comment' => null,
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            ])
+            ->save();
+
+        $this->browse(function (Browser $browser) use ($user, $account, $date) {
+            $browser
+                ->loginAs($user)
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                ->waitFor('#historyTable')
+                ->waitFor('#accountDateRangeSelectorApp')
+                // Select a date range that includes the transaction
+                ->type('[name="date_from"]', $date->copy()->subDays(1)->format('Y-m-d'))
+                ->type('[name="date_to"]', $date->copy()->addDays(1)->format('Y-m-d'))
+                // Click the Update button to trigger table reload
+                ->click('button:contains("' . __('Update') . '")')
+                // Wait for table to reload with the transaction
+                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
+                // Verify the transaction is shown
+                ->assertSeeIn('#historyTable tbody', '€100');
+        });
+    }
+
+    public function test_date_selector_with_preset_loads_data(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // Get an account
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+        
+        // Get a payee
+        $payee = $user->payees()->first();
+
+        // Create a transaction with today's date
+        Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 50,
+                    'amount_to' => 50,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->make([
+                'date' => now()->format('Y-m-d'),
+                'config_type' => 'standard',
+                'comment' => null,
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            ])
+            ->save();
+
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                ->loginAs($user)
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                ->waitFor('#historyTable')
+                ->waitFor('#accountDateRangeSelectorApp')
+                // Select "This month" preset
+                ->select('#dateRangePickerPresets', 'thisMonth')
+                // Click Update button
+                ->click('button:contains("' . __('Update') . '")')
+                // Wait for table to load data
+                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
+                // Verify the transaction is shown
+                ->assertSeeIn('#historyTable tbody', '€50');
+        });
+    }
 }

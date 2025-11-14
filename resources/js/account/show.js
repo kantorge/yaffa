@@ -30,7 +30,10 @@ for (let key in window.filters) {
 
 // Disable table refresh, if any filters are preset
 if (!presetFilters.ready()) {
-    document.getElementById('reload').setAttribute('disabled', 'disabled');
+    const reloadBtn = document.getElementById('reload');
+    if (reloadBtn) {
+        reloadBtn.setAttribute('disabled', 'disabled');
+    }
 }
 
 // Reference to the date range picker component (will be set after Vue mounts)
@@ -645,7 +648,22 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 // Initialize Vue for the quick view
 import {createApp} from 'vue'
 
-const app = createApp({
+// Create separate app for modals
+const modalApp = createApp({})
+modalApp.config.globalProperties.__ = window.__;
+
+import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
+import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
+import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
+
+modalApp.component('transaction-show-modal', TransactionShowModal)
+modalApp.component('transaction-create-standard-modal', CreateStandardTransactionModal)
+modalApp.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
+
+modalApp.mount('#app')
+
+// Create separate app for date range selector
+const dateRangeApp = createApp({
     methods: {
         handleDateRangeUpdate(data) {
             // Rebuild URL with date parameters
@@ -687,28 +705,18 @@ const app = createApp({
     },
     mounted() {
         // Get reference to the date selector component
-        const dateSelector = this.$refs.accountDateRangeSelector || 
-                           this.$el.querySelector('#accountDateRangeSelector')?.__vueParentComponent?.ctx;
-        if (dateSelector) {
-            dateRangeSelectorComponent = dateSelector;
-        }
+        dateRangeSelectorComponent = this.$refs.accountDateRangeSelector;
     }
 })
 
 // Add global translator function
-app.config.globalProperties.__ = window.__;
+dateRangeApp.config.globalProperties.__ = window.__;
 
-import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
-import CreateStandardTransactionModal from './../components/TransactionForm/ModalStandard.vue'
-import CreateInvestmentTransactionModal from './../components/TransactionForm/ModalInvestment.vue'
 import DateRangeSelectorWithPresets from './../components/DateRangeSelectorWithPresets.vue'
 
-app.component('transaction-show-modal', TransactionShowModal)
-app.component('transaction-create-standard-modal', CreateStandardTransactionModal)
-app.component('transaction-create-investment-modal', CreateInvestmentTransactionModal)
-app.component('date-range-selector-with-presets', DateRangeSelectorWithPresets)
+dateRangeApp.component('date-range-selector-with-presets', DateRangeSelectorWithPresets)
 
-app.mount('#app')
+dateRangeApp.mount('#accountDateRangeSelectorApp')
 
 // Initialize tooltips in table
 $(document).ready(function () {
