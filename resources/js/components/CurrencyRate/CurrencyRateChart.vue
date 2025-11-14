@@ -149,17 +149,22 @@
           return;
         }
 
-        // If both dates are provided, zoom to that range
-        if (this.dateFrom && this.dateTo) {
-          const startDate = new Date(this.dateFrom);
-          const endDate = new Date(this.dateTo);
+        // Use nextTick to ensure chart is ready before zooming
+        this.$nextTick(() => {
+          // If both dates are provided, zoom to that range
+          if (this.dateFrom && this.dateTo) {
+            const startDate = new Date(this.dateFrom);
+            const endDate = new Date(this.dateTo);
+            // Add one day to end date to include the full end day
+            endDate.setDate(endDate.getDate() + 1);
 
-          // Zoom to the selected date range
-          dateAxis.zoomToDates(startDate, endDate);
-        } else if (!this.dateFrom && !this.dateTo) {
-          // If no dates, zoom out to show all data
-          dateAxis.zoom({ start: 0, end: 1 });
-        }
+            // Zoom to the selected date range
+            dateAxis.zoomToDates(startDate, endDate);
+          } else if (!this.dateFrom && !this.dateTo) {
+            // If no dates, zoom out to show all data
+            dateAxis.zoom({ start: 0, end: 1 });
+          }
+        });
       },
       __,
     },
