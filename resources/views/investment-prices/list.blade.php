@@ -20,6 +20,13 @@
                         </a>
                     @endif
                     <a
+                            href="{{ route('investment-price.importFromTrades', ['investment' =>  $investment->id ]) }}"
+                            class="btn btn-sm btn-info"
+                            title="{{ __('Import prices from trade history') }}"
+                    >
+                        <i class="fa fa-history"></i>
+                    </a>
+                    <a
                             href="{{ route('investment-price.create', ['investment' =>  $investment->id ]) }}"
                             class="btn btn-sm btn-success"
                             title="{{ __('Add investment price manually') }}"

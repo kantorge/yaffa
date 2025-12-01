@@ -188,9 +188,37 @@ class InvestmentPriceController extends Controller
             self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
 
         } catch (\Exception $e) {
-            self::addSimpleErrorMessage(__('Failed to retrieve investment prices: :error', ['error' => $e->getMessage()]));
+            // Sanitize error message to remove API keys and sensitive data
+            $errorMessage = $e->getMessage();
+            
+            // Remove API key from URL if present
+            $errorMessage = preg_replace('/apikey=[A-Za-z0-9]+/', 'apikey=***', $errorMessage);
+            
+            // Remove file paths
+            $errorMessage = preg_replace('/[A-Z]:\\\\[^\\s]+/', '***', $errorMessage);
+            
+            self::addSimpleErrorMessage(__('Failed to retrieve investment prices: :error', ['error' => $errorMessage]));
         }
 
         return redirect()->back();
     }
+
+    /**
+     * Import price history from Buy/Sell transactions for an investment
+     *
+     * @param Investment $investment
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function importFromTrades(Investment $investment)
+    {
+        $this->authorize('view', $investment);
+
+        // Dispatch the job after the response is sent to avoid timeout
+        \App\Jobs\ImportInvestmentPricesFromTrades::dispatchAfterResponse($investment, auth()->id());
+
+        self::addSimpleSuccessMessage(__('Price import from trades has been queued. This may take a few moments to complete.'));
+
+        return redirect()->route('investment-price.list', $investment);
+    }
 }
+

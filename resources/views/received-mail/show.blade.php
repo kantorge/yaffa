@@ -98,38 +98,42 @@
                     </div>
                 </div>
                 <div class="collapse card-body show" aria-expanded="true" id="cardExtractedData">
+                    @if($receivedMail->transaction_data)
                     <dl class="row mb-0">
                         <dd class="col-6">
                             {{ __('Transaction type') }}
                         </dd>
                         <dt class="col-6">
-                            {{ $receivedMail->transaction_data['transaction_type']['name'] }}
+                            {{ $receivedMail->transaction_data['transaction_type']['name'] ?? 'N/A' }}
                         </dt>
                         <dd class="col-6">
                             {{ __('Date') }}
                         </dd>
                         <dt class="col-6">
-                            {{ $receivedMail->transaction_data['date'] }}
+                            {{ $receivedMail->transaction_data['date'] ?? 'N/A' }}
                         </dt>
                         <dd class="col-6">
                             {{ __('Account') }}
                         </dd>
                         <dt class="col-6">
-                            {{ $receivedMail->transaction_data['raw']['account'] }}
+                            {{ $receivedMail->transaction_data['raw']['account'] ?? 'N/A' }}
                         </dt>
                         <dd class="col-6">
                             {{ __('Payee') }}
                         </dd>
                         <dt class="col-6">
-                            {{ $receivedMail->transaction_data['raw']['payee'] }}
+                            {{ $receivedMail->transaction_data['raw']['payee'] ?? 'N/A' }}
                         </dt>
                         <dd class="col-6">
                             {{ __('Amount') }}
                         </dd>
                         <dt class="col-6">
-                            {{ $receivedMail->transaction_data['raw']['amount'] }}
+                            {{ $receivedMail->transaction_data['raw']['amount'] ?? 'N/A' }}
                         </dt>
                     </dl>
+                    @else
+                    <p class="text-muted">{{ __('Email was processed but no transaction data was extracted.') }}</p>
+                    @endif
                 </div>
             </div>
             @endif

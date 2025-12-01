@@ -83,6 +83,31 @@
                     </div>
 
                     <div class="row mb-3">
+                        <label for="tax_exempt" class="col-form-label col-sm-3">
+                            {{ __('Tax Exempt') }}
+                        </label>
+                        <div class="col-sm-9">
+                            <input
+                                id="tax_exempt"
+                                class="form-check-input"
+                                name="tax_exempt"
+                                type="checkbox"
+                                value="1"
+                                @if (old())
+                                    @if (old('tax_exempt') == '1')
+                                        checked="checked"
+                                    @endif
+                                @elseif(isset($payee))
+                                    @if ($payee['tax_exempt'] == '1')
+                                        checked="checked"
+                                    @endif
+                                @endif
+                            >
+                            <small class="form-text text-muted">Check this for ISA, SIPP, or pension accounts that are exempt from dividend and capital gains tax.</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <label for="category_id" class="col-form-label col-sm-3">
                             {{ __('Default category') }}
                         </label>

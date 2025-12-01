@@ -59,12 +59,18 @@ class InvestmentService
             ->get()
             ->load(['transactionSchedule'])
             ->filter(function ($transaction) {
-                return $transaction->transactionSchedule->active;
+                return $transaction->transactionSchedule?->active ?? false;
             });
 
         // Add all scheduled items to list of transactions
         $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
         $transactions = $transactions->concat($scheduleInstances);
+
+        // If no transactions, return empty quantities
+        if ($transactions->isEmpty()) {
+            $investment->quantities = [];
+            return $investment;
+        }
 
         // Calculate historical and scheduled quantity changes for chart
         $runningTotal = 0;
@@ -74,7 +80,9 @@ class InvestmentService
             ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
                 // Quantity operator can be 1, -1 or null.
                 // It's the expected behavior to set the quantity to 0 if the operator is null.
-                $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
+                $quantityMultiplier = $transaction->transactionType?->quantity_multiplier ?? 0;
+                $transactionQuantity = $transaction->config?->quantity ?? 0;
+                $quantity = $quantityMultiplier * $transactionQuantity;
 
                 $runningSchedule += $quantity;
                 if (!$transaction->schedule) {

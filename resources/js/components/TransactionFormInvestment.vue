@@ -299,6 +299,61 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Advanced: Calculate price from cashflow -->
+              <div class="row mt-3">
+                <div class="col-12">
+                  <div class="accordion" id="advancedCalculationAccordion">
+                    <div class="accordion-item">
+                      <h2 class="accordion-header" id="headingAdvanced">
+                        <button 
+                          class="accordion-button collapsed" 
+                          type="button" 
+                          data-coreui-toggle="collapse" 
+                          data-coreui-target="#collapseAdvanced" 
+                          aria-expanded="false" 
+                          aria-controls="collapseAdvanced"
+                        >
+                          {{ __('Advanced: Calculate Price from Cashflow') }}
+                        </button>
+                      </h2>
+                      <div 
+                        id="collapseAdvanced" 
+                        class="accordion-collapse collapse" 
+                        aria-labelledby="headingAdvanced" 
+                        data-coreui-parent="#advancedCalculationAccordion"
+                      >
+                        <div class="accordion-body">
+                          <div class="row">
+                            <div class="col-md-12 mb-2">
+                              <div class="alert alert-info">
+                                {{ __('Enter the total cost (cashflow) and quantity, and the price will be calculated automatically. This is useful when you have cost data but no price per unit.') }}
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-group">
+                                <label for="manual_cashflow" class="form-label">
+                                  {{ __('Total Cost (Cashflow)') }}
+                                </label>
+                                <MathInput
+                                  class="form-control"
+                                  id="manual_cashflow"
+                                  v-model="manualCashflow"
+                                  :disabled="!transactionTypeSettings.price"
+                                  :placeholder="__('Enter total cost')"
+                                ></MathInput>
+                                <small class="form-text text-muted">
+                                  {{ __('Enter the absolute cost value (e.g., 1000 for a £1000 purchase)') }}
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -477,6 +532,7 @@
       // Other values
       data.account_currency = null;
       data.investment_currency = null;
+      data.manualCashflow = null;
 
       data.csrfToken = window.csrfToken;
       data.callback = this.initialCallback;
@@ -932,6 +988,30 @@
         }
       },
 
+      calculatePriceFromCashflow() {
+        // Only calculate if we have both cashflow and quantity
+        if (!this.manualCashflow || !this.form.config.quantity || this.form.config.quantity === 0) {
+          return;
+        }
+
+        // Calculate price from cashflow
+        // For Buy transactions: cashflow = -(quantity * price + commission + tax)
+        // For Sell transactions: cashflow = quantity * price - commission - tax
+        // Simplified: we'll calculate price ignoring commission/tax, user can adjust manually
+        const quantity = parseFloat(this.form.config.quantity);
+        const cashflow = parseFloat(this.manualCashflow);
+        
+        if (isNaN(quantity) || isNaN(cashflow) || quantity === 0) {
+          return;
+        }
+
+        // Calculate price as absolute value of cashflow / quantity
+        // User enters the absolute cost, so we don't need to worry about negative values
+        const calculatedPrice = Math.abs(cashflow / quantity);
+        
+        this.form.config.price = calculatedPrice.toFixed(6);
+      },
+
       loadCallbackUrl(transactionId) {
         if (this.callback === 'returnToDashboard') {
           location.href = window.route('home');
@@ -1061,6 +1141,17 @@
       'form.config.dividend': function (newDividend) {
         if (this.form.transaction_type === 'Interest ReInvest') {
           this.form.config.quantity = newDividend;
+        }
+      },
+
+      // Calculate price from cashflow when either cashflow or quantity changes
+      manualCashflow: function (newCashflow) {
+        this.calculatePriceFromCashflow();
+      },
+
+      'form.config.quantity': function () {
+        if (this.manualCashflow) {
+          this.calculatePriceFromCashflow();
         }
       },
     },

@@ -119,4 +119,34 @@ trait CurrencyTrait
         // If no rate is found, return null
         return null;
     }
+
+    /**
+     * Convert an amount from one currency to another at a specific date
+     * 
+     * @param float $amount The amount to convert
+     * @param int $fromCurrencyId The source currency ID
+     * @param int $toCurrencyId The target currency ID  
+     * @param Carbon $date The date for the conversion rate
+     * @return float The converted amount
+     */
+    public function convertCurrency(float $amount, int $fromCurrencyId, int $toCurrencyId, Carbon $date): float
+    {
+        // If same currency, no conversion needed
+        if ($fromCurrencyId === $toCurrencyId) {
+            return $amount;
+        }
+
+        // Get all currency rates by month
+        $allRatesMap = $this->allCurrencyRatesByMonth();
+        
+        // Get the rate from source currency to target currency
+        $rate = $this->getLatestRateFromMap($fromCurrencyId, $date, $allRatesMap, $toCurrencyId);
+        
+        // If no rate found, return amount unchanged
+        if ($rate === null) {
+            return $amount;
+        }
+        
+        return $amount * $rate;
+    }
 }

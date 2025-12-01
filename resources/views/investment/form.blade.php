@@ -246,6 +246,62 @@
             </div>
 
             <div class="row mb-3">
+                <label for="price_factor" class="col-form-label col-sm-3">
+                    {{ __('Price factor') }}
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-select"
+                        id="price_factor"
+                        name="price_factor"
+                    >
+                        <option value="1" @if(old('price_factor', $investment->price_factor ?? 1) == 1) selected @endif>1 ({{ __('No conversion') }})</option>
+                        <option value="0.01" @if(old('price_factor', $investment->price_factor ?? 1) == 0.01) selected @endif>1/100 ({{ __('Divide by 100 - pence to pounds') }})</option>
+                        <option value="0.001" @if(old('price_factor', $investment->price_factor ?? 1) == 0.001) selected @endif>1/1000 ({{ __('Divide by 1000') }})</option>
+                        <option value="100" @if(old('price_factor', $investment->price_factor ?? 1) == 100) selected @endif>100 ({{ __('Multiply by 100') }})</option>
+                        <option value="1000" @if(old('price_factor', $investment->price_factor ?? 1) == 1000) selected @endif>1000 ({{ __('Multiply by 1000') }})</option>
+                    </select>
+                    <div class="form-text">{{ __('Factor to apply when importing prices. Use 1/100 if provider returns prices in pence but you need pounds.') }}</div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="interest_rate" class="col-form-label col-sm-3">
+                    {{ __('Interest rate (%)') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="interest_rate"
+                        name="interest_rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value="{{old('interest_rate', isset($investment->interest_rate) ? $investment->interest_rate * 100 : '' )}}"
+                        placeholder="4.50"
+                    >
+                    <div class="form-text">{{ __('Annual interest rate as percentage (e.g., 4.50 for 4.5%). Leave blank if not interest-bearing.') }}</div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="maturity_date" class="col-form-label col-sm-3">
+                    {{ __('Maturity date') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="maturity_date"
+                        name="maturity_date"
+                        type="date"
+                        value="{{old('maturity_date', isset($investment->maturity_date) ? $investment->maturity_date->format('Y-m-d') : '' )}}"
+                    >
+                    <div class="form-text">{{ __('Date when fixed term investment matures. Interest will be calculated up to this date.') }}</div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="investment_scrape_url" class="col-form-label col-sm-3">
                     {{ __('URL to scrape for investment price') }}
                 </label>

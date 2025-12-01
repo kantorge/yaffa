@@ -89,6 +89,7 @@ class Transaction extends Model
         'config_type',
         'config_id',
         'user_id',
+        'cashflow_value',
     ];
 
     protected $hidden = [

@@ -47,6 +47,11 @@ class InvestmentGroup extends Model
      */
     protected $fillable = [
         'name',
+        'generates_interest',
+    ];
+
+    protected $casts = [
+        'generates_interest' => 'boolean',
     ];
 
     public function user(): BelongsTo

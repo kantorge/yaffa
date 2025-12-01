@@ -74,9 +74,26 @@ class InvestmentRequest extends FormRequest
                 'required_if_accepted:auto_update',
                 Rule::in($investmentPriceProviders),
             ],
+            'price_factor' => [
+                'nullable',
+                'numeric',
+                'min:0.0001',
+                'max:10000',
+            ],
+            'interest_rate' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
+            'maturity_date' => [
+                'nullable',
+                'date',
+                'after:today',
+            ],
             'scrape_url' => [
-                'exclude_unless:investment_price_provider,web_scraping',
-                Rule::RequiredIf(fn ()  => $this->investment_price_provider === 'web_scraping'),
+                'nullable',
+                Rule::RequiredIf(fn ()  => in_array($this->investment_price_provider, ['web_scraping', 'wisealpha'])),
                 'url',
             ],
             'scrape_selector' => [
@@ -94,11 +111,20 @@ class InvestmentRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Convert interest rate from percentage to decimal
+        $interestRate = $this->interest_rate;
+        if ($interestRate !== null && $interestRate !== '') {
+            $interestRate = floatval($interestRate) / 100;
+        } else {
+            $interestRate = null;
+        }
+
         // Check for checkboxes and dropdown empty values
         $this->merge([
             'active' => $this->active ?? 0,
             'auto_update' => $this->auto_update ?? 0,
             'investment_price_provider' => $this->investment_price_provider ?? null,
+            'interest_rate' => $interestRate,
         ]);
     }
 }

@@ -9,6 +9,31 @@
 @section('content')
     <div class="row">
         <div class="col-12 col-lg-3">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div
+                            class="card-title collapse-control"
+                            data-coreui-toggle="collapse"
+                            data-coreui-target="#cardActions"
+                    >
+                        <i class="fa fa-angle-down"></i>
+                        {{ __('Actions') }}
+                    </div>
+                </div>
+                <div class="card-body collapse show" aria-expanded="true" id="cardActions">
+                    <form action="{{ route('received-mail.upload-pdf') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="pdf" class="form-label">{{ __('Upload Landlord PDF') }}</label>
+                            <input type="file" class="form-control" id="pdf" name="pdf" accept="application/pdf" required>
+                            <div class="form-text">{{ __('Upload a landlord statement PDF to extract transactions') }}</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fa fa-upload"></i> {{ __('Upload PDF') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
             {{-- Placeholder for any actions to be introduced in the future
             <div class="card mb-3">
                 <div class="card-header">

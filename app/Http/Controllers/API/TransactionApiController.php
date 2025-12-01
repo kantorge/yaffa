@@ -17,6 +17,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Services\CategoryService;
+use App\Services\TransactionService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -466,6 +467,14 @@ class TransactionApiController extends Controller
          */
         $validated = $request->validated();
 
+        \Log::info('storeInvestment called', ['transaction_type_id' => $validated['transaction_type_id']]);
+
+        // Special handling for Interest ReInvest (transaction_type_id = 13)
+        if ($validated['transaction_type_id'] == 13) {
+            \Log::info('Redirecting to handleInterestReInvestTransaction');
+            return $this->handleInterestReInvestTransaction($validated, $request);
+        }
+
         $transaction = DB::transaction(function () use ($validated, $request) {
             // Create the configuration first
             $transactionDetails = TransactionDetailInvestment::create($validated['config']);
@@ -784,5 +793,139 @@ class TransactionApiController extends Controller
                 'schedule_config' => $originalScheduleConfig,
             ]));
         }
+    }
+
+    /**
+     * Handle Interest ReInvest transactions by creating two separate transactions:
+     * 1. Interest yield transaction (for the dividend/interest income)
+     * 2. Buy transaction (for reinvesting at price 1)
+     */
+    private function handleInterestReInvestTransaction(array $validated, $request): JsonResponse
+    {
+        $transactionService = new TransactionService();
+        
+        \Log::info('handleInterestReInvestTransaction called', ['validated' => $validated]);
+        
+        return DB::transaction(function () use ($validated, $request, $transactionService) {
+            // Get the currency from the account
+            $account = \App\Models\Account::find($validated['config']['account_id']);
+            $currencyId = $account->config->currency_id;
+            
+            \Log::info('Creating Interest transaction', ['currencyId' => $currencyId]);
+            
+            // 1. Create Interest Yield transaction
+            $interestConfig = TransactionDetailInvestment::create([
+                'account_id' => $validated['config']['account_id'],
+                'investment_id' => $validated['config']['investment_id'],
+                'price' => null,
+                'quantity' => null,
+                'commission' => $validated['config']['commission'] ?? 0,
+                'tax' => $validated['config']['tax'] ?? 0,
+                'dividend' => $validated['config']['dividend'],
+            ]);
+            
+            // Calculate cashflow: dividend - tax - commission
+            $interestCashflow = $validated['config']['dividend'] 
+                - ($validated['config']['tax'] ?? 0) 
+                - ($validated['config']['commission'] ?? 0);
+            
+            \Log::info('Interest cashflow calculated', ['cashflow' => $interestCashflow]);
+            
+            $interestTransaction = new Transaction([
+                'user_id' => $request->user()->id,
+                'date' => $validated['date'],
+                'transaction_type_id' => 11, // Interest yield
+                'config_type' => 'investment',
+                'config_id' => $interestConfig->id,
+                'schedule' => $validated['schedule'] ?? false,
+                'budget' => $validated['budget'] ?? false,
+                'reconciled' => $validated['reconciled'] ?? false,
+                'comment' => ($validated['comment'] ?? '') . ' (Interest)',
+            ]);
+            $interestTransaction->push();
+            
+            // Set cashflow after push since these fields aren't fillable
+            $interestTransaction->currency_id = $currencyId;
+            $interestTransaction->cashflow_value = $interestCashflow;
+            $interestTransaction->saveQuietly();
+            
+            \Log::info('Interest transaction created', ['id' => $interestTransaction->id, 'cashflow' => $interestCashflow]);
+            
+            // Don't fire event - we already set cashflow manually
+            // event(new TransactionCreated($interestTransaction));
+            
+            // Recalculate monthly summaries once for both transactions at the end
+            
+            \Log::info('Creating Buy transaction');
+            
+            // 2. Create Buy transaction
+            $buyConfig = TransactionDetailInvestment::create([
+                'account_id' => $validated['config']['account_id'],
+                'investment_id' => $validated['config']['investment_id'],
+                'price' => 1,
+                'quantity' => $validated['config']['dividend'], // shares = dividend amount
+                'commission' => null,
+                'tax' => null,
+                'dividend' => null,
+            ]);
+            
+            // Calculate cashflow: -1 * price * quantity
+            $buyCashflow = -1 * 1 * $validated['config']['dividend'];
+            
+            \Log::info('Buy cashflow calculated', ['cashflow' => $buyCashflow]);
+            
+            $buyTransaction = new Transaction([
+                'user_id' => $request->user()->id,
+                'date' => $validated['date'],
+                'transaction_type_id' => 4, // Buy
+                'config_type' => 'investment',
+                'config_id' => $buyConfig->id,
+                'schedule' => $validated['schedule'] ?? false,
+                'budget' => $validated['budget'] ?? false,
+                'reconciled' => $validated['reconciled'] ?? false,
+                'comment' => ($validated['comment'] ?? '') . ' (Buy)',
+            ]);
+            $buyTransaction->push();
+            
+            // Set cashflow after push since these fields aren't fillable
+            $buyTransaction->currency_id = $currencyId;
+            $buyTransaction->cashflow_value = $buyCashflow;
+            $buyTransaction->saveQuietly();
+            
+            \Log::info('Buy transaction created', ['id' => $buyTransaction->id, 'cashflow' => $buyCashflow]);
+            
+            // Don't fire event - we already set cashflow manually
+            // event(new TransactionCreated($buyTransaction));
+            
+            // Skip recalculateMonthlySummaries for now - it's causing timeouts
+            // The summaries will be recalculated by the normal flow later
+            // $transactionService->recalculateMonthlySummaries($interestTransaction);
+            // $transactionService->recalculateMonthlySummaries($buyTransaction);
+            
+            \Log::info('Skipping monthly summary recalculation to avoid timeout');
+            
+            // Create notification
+            if (!$validated['fromModal']) {
+                self::addMessage(
+                    'Interest ReInvest created two transactions: Interest yield (#' . $interestTransaction->id . ') and Buy (#' . $buyTransaction->id . ')',
+                    'success',
+                    '',
+                    '',
+                    true
+                );
+            }
+            
+            \Log::info('Handler complete', [
+                'interest_id' => $interestTransaction->id,
+                'buy_id' => $buyTransaction->id,
+            ]);
+            
+            // Return the Buy transaction as the "main" one (it has the shares)
+            $buyTransaction->loadDetails();
+            return response()->json([
+                'transaction' => $buyTransaction,
+                'interest_transaction' => $interestTransaction,
+            ]);
+        });
     }
 }

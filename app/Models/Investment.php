@@ -103,13 +103,21 @@ class Investment extends Model
         'investment_group_id',
         'currency_id',
         'investment_price_provider',
+        'price_factor',
         'scrape_url',
         'scrape_selector',
+        'interest_rate',
+        'maturity_date',
+        'last_interest_payment_date',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'auto_update' => 'boolean',
+        'price_factor' => 'float',
+        'interest_rate' => 'float',
+        'maturity_date' => 'date',
+        'last_interest_payment_date' => 'date',
     ];
 
     protected $appends = [
@@ -200,6 +208,88 @@ class Investment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Calculate pending interest for this investment in a specific account
+     * 
+     * @param AccountEntity $account The account to calculate interest for
+     * @param Carbon|null $asOfDate Calculate interest up to this date (default: today)
+     * @return array ['amount' => float, 'days' => int, 'from_date' => Carbon, 'to_date' => Carbon]
+     */
+    public function calculatePendingInterest(AccountEntity $account, Carbon $asOfDate = null): array
+    {
+        // Return zero if no interest rate set
+        if (!$this->interest_rate || $this->interest_rate == 0) {
+            return [
+                'amount' => 0,
+                'days' => 0,
+                'from_date' => null,
+                'to_date' => null,
+                'average_balance' => 0,
+            ];
+        }
+
+        $asOfDate = $asOfDate ?? Carbon::today();
+        
+        // If there's a maturity date and we're past it, cap at maturity date
+        if ($this->maturity_date && $asOfDate->gt($this->maturity_date)) {
+            $asOfDate = $this->maturity_date;
+        }
+
+        // Determine the start date for interest calculation
+        // Use the later of: last interest payment date or first transaction date
+        $fromDate = $this->last_interest_payment_date ?? Carbon::today()->subYears(10);
+        
+        // Get the first transaction date for this investment in this account
+        $firstTransaction = Transaction::whereHasMorph(
+            'config',
+            [TransactionDetailInvestment::class],
+            function ($query) use ($account) {
+                $query->where('account_id', $account->id)
+                      ->where('investment_id', $this->id);
+            }
+        )
+        ->where('schedule', false)
+        ->orderBy('date')
+        ->first();
+
+        if ($firstTransaction && $firstTransaction->date->gt($fromDate)) {
+            $fromDate = $firstTransaction->date;
+        }
+
+        // If fromDate is after asOfDate, no interest to calculate
+        if ($fromDate->gte($asOfDate)) {
+            return [
+                'amount' => 0,
+                'days' => 0,
+                'from_date' => $fromDate,
+                'to_date' => $asOfDate,
+                'average_balance' => 0,
+            ];
+        }
+
+        // Calculate days
+        $days = $fromDate->diffInDays($asOfDate);
+
+        // Get average balance over the period
+        // For simplicity, we'll use current quantity * current price
+        // A more accurate calculation would track balance changes over time
+        $currentQuantity = $this->getCurrentQuantity($account);
+        $currentPrice = $this->getLatestPrice() ?? 1; // Use price of 1 for bonds/fixed term savings
+        $averageBalance = $currentQuantity * $currentPrice;
+
+        // Calculate simple interest: Principal × Rate × Time
+        // Time is in days, so divide by 365
+        $interestAmount = $averageBalance * $this->interest_rate * ($days / 365);
+
+        return [
+            'amount' => round($interestAmount, 2),
+            'days' => $days,
+            'from_date' => $fromDate,
+            'to_date' => $asOfDate,
+            'average_balance' => $averageBalance,
+        ];
     }
 
     public function getCurrentQuantity(AccountEntity $account = null): float
@@ -402,7 +492,13 @@ class Investment extends Model
             $from = Carbon::now()->subDays(3);
         }
 
-        $client = new GuzzleClient();
+        // Configure Guzzle client with SSL verification disabled for local development
+        $clientConfig = [];
+        if (app()->environment('local')) {
+            $clientConfig['verify'] = false;
+        }
+
+        $client = new GuzzleClient($clientConfig);
 
         $response = $client->request(
             'GET',
@@ -431,7 +527,10 @@ class Investment extends Model
                     'date' => $date,
                 ]
             );
-            $investmentPrice->price = $daily_data->{'4. close'};
+            
+            // Apply price factor (e.g., divide by 100 for pence to pounds conversion)
+            $rawPrice = $daily_data->{'4. close'};
+            $investmentPrice->price = $rawPrice * ($this->price_factor ?? 1);
 
             // We are intentionally not triggering the observer here, as there can be multiple similar operations
             // It means, that it's the responsibility of the caller to trigger the observer or any related actions
@@ -472,7 +571,9 @@ class Investment extends Model
             ]
         );
 
-        $investmentPrice->price = $result[0]->get('price');
+        // Apply price factor (e.g., divide by 100 for pence to pounds conversion)
+        $rawPrice = $result[0]->get('price');
+        $investmentPrice->price = $rawPrice * ($this->price_factor ?? 1);
 
         // We are intentionally not triggering the observer here, as there can be multiple similar operations
         // It means, that it's the responsibility of the caller to trigger the observer or any related actions
@@ -542,16 +643,17 @@ class Investment extends Model
                 return;
             }
             
+            // Apply price factor (e.g., divide by 100 for pence to pounds conversion)
+            $finalPrice = $priceValue * ($this->price_factor ?? 1);
+            
             // Log successful price extraction
             \Log::info('WiseAlpha direct scrape extracted price', [
                 'url' => $this->scrape_url,
                 'raw_price' => $priceValue,
-                'final_price' => $priceValue / 100,
+                'price_factor' => $this->price_factor ?? 1,
+                'final_price' => $finalPrice,
                 'matched_pattern' => $matchedPattern
             ]);
-            
-            // Divide by 100 as requested
-            $priceValue = $priceValue / 100;
 
             $investmentPrice = InvestmentPrice::firstOrNew(
                 [
@@ -560,7 +662,7 @@ class Investment extends Model
                 ]
             );
 
-            $investmentPrice->price = $priceValue;
+            $investmentPrice->price = $finalPrice;
 
             // We are intentionally not triggering the observer here, as there can be multiple similar operations
             // It means, that it's the responsibility of the caller to trigger the observer or any related actions

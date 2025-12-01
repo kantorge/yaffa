@@ -38,6 +38,9 @@
                 </a>
                 <a href="{{ route('transaction.create', ['type' => 'standard', 'account_from' => $account->id ]) }}" class="btn btn-success" title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
                 <a href="{{ route('transaction.create', ['type' => 'investment', 'account' => $account->id ]) }}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                @if($account->config_type === 'account')
+                    <a href="{{ route('account.batch-entry.investment', $account) }}" class="btn btn-primary" title="{{ __('Batch entry - Investment') }}"><i class="fa fa-list"></i></a>
+                @endif
             </div>
         </div>
         <div class="card-body">

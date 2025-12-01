@@ -19,9 +19,14 @@
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{{ __('Import Rules') }}</h5>
-            <a href="{{ route('transaction-import-rules.create') }}" class="btn btn-primary btn-sm">
-                <i class="fa fa-plus"></i> {{ __('Add Rule') }}
-            </a>
+            <div>
+                <a href="{{ route('transaction-import-rules.test') }}" class="btn btn-info btn-sm me-2">
+                    <i class="fa fa-flask"></i> {{ __('Test Rules') }}
+                </a>
+                <a href="{{ route('transaction-import-rules.create') }}" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> {{ __('Add Rule') }}
+                </a>
+            </div>
         </div>
     </div>
     <div class="card-body">

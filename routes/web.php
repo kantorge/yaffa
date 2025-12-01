@@ -42,6 +42,11 @@ Route::resource('account-entity', AccountEntityController::class)
 Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
     ->name('account.history');
 
+Route::get('/account/{account}/batch-entry/investment', [TransactionController::class, 'batchEntryInvestment'])
+    ->name('account.batch-entry.investment');
+Route::post('/account/{account}/batch-entry/investment', [TransactionController::class, 'storeBatchEntryInvestment'])
+    ->name('account.batch-entry.investment.store');
+
 // Routes to display form to merge two payees
 Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
     ->name('payees.merge.form');
@@ -88,6 +93,9 @@ Route::resource('investment', InvestmentController::class);
 Route::get('/investment-price/list/{investment}', [InvestmentPriceController::class, 'list'])
     ->name('investment-price.list');
 
+Route::get('/investment-price/import-from-trades/{investment}', [InvestmentPriceController::class, 'importFromTrades'])
+    ->name('investment-price.importFromTrades');
+
 Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retrieveInvestmentPrice'])
     ->name('investment-price.retrieve');
 
@@ -105,6 +113,10 @@ Route::resource('tag', TagController::class)
  ******************/
 Route::resource('transaction-import-rules', TransactionImportRuleController::class)
     ->except(['show']);
+Route::get('/transaction-import-rules-test', [TransactionImportRuleController::class, 'test'])
+    ->name('transaction-import-rules.test');
+Route::post('/transaction-import-rules-apply', [TransactionImportRuleController::class, 'applyCorrections'])
+    ->name('transaction-import-rules.apply');
 
 Route::get('/transactions/create/{type}', [TransactionController::class, 'create'])
     ->where('type', 'standard|investment')
@@ -130,6 +142,8 @@ Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
 Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
+Route::get('/reports/tax', [App\Http\Controllers\TaxReportController::class, 'index'])->name('reports.tax');
+Route::get('/reports/tax/export', [App\Http\Controllers\TaxReportController::class, 'export'])->name('reports.tax.export');
 
 /*******************
  * Miscellanous routes
@@ -138,6 +152,9 @@ Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])
 // Received emails
 Route::resource('received-mail', ReceivedMailController::class)
     ->only(['index', 'show', 'destroy']);
+Route::post('/received-mail/upload-pdf', [ReceivedMailController::class, 'uploadPdf'])
+    ->middleware(['auth', 'verified'])
+    ->name('received-mail.upload-pdf');
 
 // Route(s) for search related functionality
 Route::get('/search', [SearchController::class, 'search'])->name('search');

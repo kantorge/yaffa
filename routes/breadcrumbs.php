@@ -64,6 +64,12 @@ Breadcrumbs::for('account.history', function (BreadcrumbTrail $trail, $accountEn
     $trail->push(__('History'), route('account.history', $accountEntity));
 });
 
+// Account > Batch Entry > Investment
+Breadcrumbs::for('account.batch-entry.investment', function (BreadcrumbTrail $trail, $accountEntity) {
+    $trail->parent('account.history', $accountEntity);
+    $trail->push(__('Batch Entry - Investment'), route('account.batch-entry.investment', $accountEntity));
+});
+
 // Payee > merge form
 Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -224,6 +230,11 @@ Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail
     $trail->push(__('Investments'), route('investment.index'));
     $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
 });
+Breadcrumbs::for('reports.tax', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push('Reports');
+    $trail->push(__('UK Tax Report'), route('reports.tax'));
+});
 
 // Miscellaneous routes - received mails resource views
 Breadcrumbs::for('received-mail.index', function (BreadcrumbTrail $trail) {
@@ -275,4 +286,8 @@ Breadcrumbs::for('transaction-import-rules.create', function (BreadcrumbTrail $t
 Breadcrumbs::for('transaction-import-rules.edit', function (BreadcrumbTrail $trail, $rule) {
     $trail->parent('transaction-import-rules.index');
     $trail->push(__('Edit'), route('transaction-import-rules.edit', $rule));
+});
+Breadcrumbs::for('transaction-import-rules.test', function (BreadcrumbTrail $trail) {
+    $trail->parent('transaction-import-rules.index');
+    $trail->push(__('Test Rules'), route('transaction-import-rules.test'));
 });

@@ -196,4 +196,161 @@ class TransactionController extends Controller
             'source_id' => $request->input('mail_id'),
         ]);
     }
+
+    /**
+     * Display batch entry form for investment transactions
+     */
+    public function batchEntryInvestment(AccountEntity $account): View|RedirectResponse
+    {
+        /**
+         * @get('/account/{account}/batch-entry/investment')
+         * @name('account.batch-entry.investment')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Verify the account belongs to the user
+        if ($account->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Verify this is actually an account (not a payee)
+        if ($account->config_type !== 'account') {
+            $this->addMessage(
+                __('This feature is only available for accounts'),
+                'error',
+                __('Invalid account type'),
+                'exclamation-triangle'
+            );
+            return redirect()->route('account.history', $account);
+        }
+
+        // Get all investments currently held in this account with their quantities
+        $investmentData = $account->config->getAssociatedInvestmentsAndQuantity();
+        
+        // Load full investment models with latest prices and last commission
+        $investments = collect();
+        foreach ($investmentData as $data) {
+            if ($data->quantity > 0) {
+                $investment = \App\Models\Investment::find($data->investment_id);
+                if ($investment) {
+                    $investment->current_quantity = $data->quantity;
+                    $investment->latest_price = $investment->getLatestPrice();
+                    
+                    // Get last commission for this investment in this account
+                    $lastTransaction = \App\Models\Transaction::whereHasMorph(
+                        'config',
+                        [\App\Models\TransactionDetailInvestment::class],
+                        function ($query) use ($account, $investment) {
+                            $query->where('account_id', $account->id)
+                                  ->where('investment_id', $investment->id)
+                                  ->whereNotNull('commission');
+                        }
+                    )
+                    ->where('schedule', false)
+                    ->latest('date')
+                    ->first();
+                    
+                    $investment->last_commission = $lastTransaction?->config->commission ?? 0;
+                    
+                    $investments->push($investment);
+                }
+            }
+        }
+
+        return view('transactions.batch-entry-investment', [
+            'account' => $account,
+            'investments' => $investments,
+        ]);
+    }
+
+    /**
+     * Store batch of investment transactions
+     */
+    public function storeBatchEntryInvestment(Request $request, AccountEntity $account): RedirectResponse
+    {
+        /**
+         * @post('/account/{account}/batch-entry/investment')
+         * @name('account.batch-entry.investment.store')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Verify the account belongs to the user
+        if ($account->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'transactions' => 'required|array',
+            'transactions.*.investment_id' => 'required|exists:investments,id',
+            'transactions.*.quantity' => 'required|numeric',
+            'transactions.*.price' => 'required|numeric|min:0',
+            'transactions.*.commission' => 'nullable|numeric|min:0',
+            'transactions.*.tax' => 'nullable|numeric|min:0',
+            'transactions.*.transaction_type' => 'required|in:buy,sell',
+        ]);
+
+        $createdCount = 0;
+
+        foreach ($validated['transactions'] as $transactionData) {
+            // Skip if quantity is 0
+            if ($transactionData['quantity'] == 0) {
+                continue;
+            }
+
+            // Get transaction type
+            $transactionType = \App\Models\TransactionType::where(
+                'name',
+                ucfirst($transactionData['transaction_type'])
+            )->first();
+
+            if (!$transactionType) {
+                continue;
+            }
+
+            // Create transaction detail
+            $transactionDetail = \App\Models\TransactionDetailInvestment::create([
+                'account_id' => $account->id,
+                'investment_id' => $transactionData['investment_id'],
+                'quantity' => abs($transactionData['quantity']),
+                'price' => $transactionData['price'],
+                'commission' => $transactionData['commission'] ?? 0,
+                'tax' => $transactionData['tax'] ?? 0,
+            ]);
+
+            // Calculate cashflow
+            $cashflow = (abs($transactionData['quantity']) * $transactionData['price'])
+                + ($transactionData['commission'] ?? 0)
+                + ($transactionData['tax'] ?? 0);
+
+            if ($transactionData['transaction_type'] === 'buy') {
+                $cashflow = -$cashflow;
+            }
+
+            // Create transaction
+            $transaction = Transaction::create([
+                'user_id' => Auth::id(),
+                'date' => $validated['date'],
+                'transaction_type_id' => $transactionType->id,
+                'config_type' => 'investment',
+                'config_id' => $transactionDetail->id,
+                'schedule' => false,
+                'budget' => false,
+                'reconciled' => false,
+                'cashflow_value' => $cashflow,
+            ]);
+
+            $createdCount++;
+        }
+
+        $this->addMessage(
+            __('Created :count investment transactions', ['count' => $createdCount]),
+            'success',
+            __('Batch entry completed'),
+            'check-circle'
+        );
+
+        return redirect()->route('account.history', $account);
+    }
 }
+

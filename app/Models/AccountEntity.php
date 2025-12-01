@@ -72,6 +72,7 @@ class AccountEntity extends Model
     protected $fillable = [
         'name',
         'active',
+        'tax_exempt',
         'config_type',
         'config_id',
         'user_id',
@@ -82,6 +83,7 @@ class AccountEntity extends Model
 
     protected $casts = [
         'active' => 'boolean',
+        'tax_exempt' => 'boolean',
     ];
 
     public function config(): MorphTo
