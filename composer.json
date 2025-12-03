@@ -18,7 +18,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "kantorge/laravel-currency-exchange-rates": "^0.0.3",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^12.39",
+        "laravel/framework": "^12.41",
         "laravel/sanctum": "^4.2",
         "laravel/telescope": "^5.14",
         "laravel/ui": "^4.6",
