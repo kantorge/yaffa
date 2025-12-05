@@ -15,7 +15,7 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
-  import { __ } from '../../helpers';
+  import { __, getCurrencySymbol } from '../../helpers';
 
   export default {
     name: 'CurrencyRateChart',
@@ -33,14 +33,6 @@
         default: () =>
           window.YAFFA ? window.YAFFA.locale : navigator.language,
       },
-      dateFrom: {
-        type: String,
-        default: null,
-      },
-      dateTo: {
-        type: String,
-        default: null,
-      },
     },
     emits: ['date-range-selected'],
     computed: {
@@ -56,12 +48,6 @@
           }
         },
         deep: true,
-      },
-      dateFrom(newVal) {
-        this.updateChartZoom();
-      },
-      dateTo(newVal) {
-        this.updateChartZoom();
       },
     },
     mounted() {
@@ -82,18 +68,32 @@
         const chart = am4core.create(this.$refs.chartRate, am4charts.XYChart);
         chart.data = this.currencyRates;
         chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
-        chart.numberFormatter.intlLocales = this.locale;
-        chart.numberFormatter.numberFormat = {
-          style: 'currency',
-          currency: this.toCurrency.iso_code,
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 4,
-        };
 
         const categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
         categoryAxis.dataFields.category = 'date';
 
         const valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+        // Apply custom number formatter using Intl.NumberFormat
+        const intlFormatter = new Intl.NumberFormat(this.locale, {
+          style: 'currency',
+          currency: this.toCurrency.iso_code,
+          currencyDisplay: 'narrowSymbol',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 4,
+        });
+
+        // Create custom formatter function that respects locale formatting
+        valueAxis.numberFormatter = new am4core.NumberFormatter();
+        valueAxis.numberFormatter.numberFormat = '#,###.####';
+
+        // Override the format method to use Intl formatting
+        const originalFormat = valueAxis.numberFormatter.format.bind(
+          valueAxis.numberFormatter,
+        );
+        valueAxis.numberFormatter.format = function (value) {
+          return intlFormatter.format(value);
+        };
 
         const series = chart.series.push(new am4charts.LineSeries());
         series.dataFields.valueY = 'rate';
@@ -116,55 +116,12 @@
         chart.cursor.behavior = 'zoomX';
         chart.cursor.xAxis = categoryAxis;
 
-        // Listen to selection events
-        categoryAxis.events.on('selectionextremeschanged', (ev) => {
-          const startDate = new Date(ev.target.minZoomed);
-          const endDate = new Date(ev.target.maxZoomed);
-
-          // Format dates as YYYY-MM-DD
-          const dateFrom = startDate.toISOString().split('T')[0];
-          const dateTo = endDate.toISOString().split('T')[0];
-
-          // Emit the selected date range
-          this.$emit('date-range-selected', { dateFrom, dateTo });
-        });
-
         this.chart = chart;
-
-        // Apply initial zoom if dates are provided
-        this.updateChartZoom();
       },
       updateChart(rates) {
         if (this.chart && rates && rates.length > 0) {
           this.chart.data = rates;
         }
-      },
-      updateChartZoom() {
-        if (!this.chart || !this.chart.xAxes || this.chart.xAxes.length === 0) {
-          return;
-        }
-
-        const dateAxis = this.chart.xAxes.getIndex(0);
-        if (!dateAxis) {
-          return;
-        }
-
-        // Use nextTick to ensure chart is ready before zooming
-        this.$nextTick(() => {
-          // If both dates are provided, zoom to that range
-          if (this.dateFrom && this.dateTo) {
-            const startDate = new Date(this.dateFrom);
-            const endDate = new Date(this.dateTo);
-            // Add one day to end date to include the full end day
-            endDate.setDate(endDate.getDate() + 1);
-
-            // Zoom to the selected date range
-            dateAxis.zoomToDates(startDate, endDate);
-          } else if (!this.dateFrom && !this.dateTo) {
-            // If no dates, zoom out to show all data
-            dateAxis.zoom({ start: 0, end: 1 });
-          }
-        });
       },
       __,
     },
