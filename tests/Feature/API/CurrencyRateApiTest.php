@@ -35,13 +35,13 @@ class CurrencyRateApiTest extends TestCase
         // This is expected behavior when using Gate::authorize() with unauthenticated users.
 
         // Get rates - returns 403 because Gate::authorize() fails
-        $this->getJson(route('api.currency-rate.index', [
+        $this->actingAsGuest()->getJson(route('api.currency-rate.index', [
             'from' => $this->fromCurrency->id,
             'to' => $this->toCurrency->id,
         ]))->assertForbidden();
 
         // Create rate - returns 403 because of missing authentication
-        $this->postJson(route('api.currency-rate.store'), [
+        $this->actingAsGuest()->postJson(route('api.currency-rate.store'), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-15',
@@ -55,7 +55,7 @@ class CurrencyRateApiTest extends TestCase
                 'date' => '2024-01-15',
                 'rate' => 1.2345,
             ]);
-        $this->putJson(route('api.currency-rate.update', $rate), [
+        $this->actingAsGuest()->putJson(route('api.currency-rate.update', $rate), [
             'from_id' => $this->fromCurrency->id,
             'to_id' => $this->toCurrency->id,
             'date' => '2024-01-16',
@@ -63,7 +63,12 @@ class CurrencyRateApiTest extends TestCase
         ])->assertForbidden();
 
         // Delete rate - returns 403
-        $this->deleteJson(route('api.currency-rate.destroy', $rate))->assertForbidden();
+        $this->actingAsGuest()->deleteJson(route('api.currency-rate.destroy', $rate))->assertForbidden();
+
+        // Get missing rates - returns 403
+        $this->actingAsGuest()->getJson(route('api.currency-rate.retrieveMissing', [
+            'currency' => $this->fromCurrency->id,
+        ]))->assertForbidden();
     }
 
     public function test_user_cannot_access_other_users_currencies(): void
@@ -81,6 +86,11 @@ class CurrencyRateApiTest extends TestCase
             ->getJson(route('api.currency-rate.index', [
                 'from' => $this->fromCurrency->id,
                 'to' => $otherCurrency->id,
+            ]))->assertForbidden();
+
+        $this->actingAs($this->user)
+            ->getJson(route('api.currency-rate.retrieveMissing', [
+                'currency' => $otherCurrency->id
             ]))->assertForbidden();
     }
 

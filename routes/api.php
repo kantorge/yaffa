@@ -47,6 +47,8 @@ Route::put('/currency-rates/{currency_rate}', [CurrencyRateApiController::class,
     ->name('api.currency-rate.update');
 Route::delete('/currency-rates/{currency_rate}', [CurrencyRateApiController::class, 'destroy'])
     ->name('api.currency-rate.destroy');
+Route::get('/currencyrates/missing/{currency}', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
+    ->name('api.currency-rate.retrieveMissing');
 
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);

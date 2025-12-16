@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CurrencyRateRequest;
 use App\Models\Currency;
@@ -112,5 +113,27 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         return response()->json([
             'message' => __('Currency rate deleted'),
         ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function retrieveMissingCurrencyRateToBase(Currency $currency): JsonResponse
+    {
+        /**
+         * @get('/currencyrates/missing/{currency}')
+         * @name('currency-rate.retrieveMissing')
+         * @middlewares('web')
+         */
+        // Authorize user access to requested currency
+        Gate::authorize('view', $currency);
+
+        try {
+            $currency->retrieveMissingCurrencyRateToBase();
+        } catch (CurrencyRateConversionException $e) {
+            self::addSimpleErrorMessage($e->getMessage());
+        }
+
+        return response()->json();
     }
 }

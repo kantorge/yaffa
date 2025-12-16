@@ -34,9 +34,9 @@ class CurrencyRateManagementTest extends DuskTestCase
 
         // Create some rates
         CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
-            ->count(3)->create();
+            ->count(3)
+            ->create();
 
         $this->browse(function (Browser $browser) use ($user, $fromCurrency, $toCurrency) {
             $browser
@@ -65,14 +65,15 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->loginAs($user)
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
-                // Click add new rate button
-                ->click('button:contains("Add new rate")')
-                ->whenAvailable('#currencyRateModal', function (Browser $modal) {
+                // Click add new rate button. TODO: add a more robust selector
+                ->click('button > span.fa.fa-fw.fa-plus')
+                ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
                         ->assertSee('Add Currency Rate')
-                        ->type('#rateDate', '2024-01-15')
+                        // This is expexted to be a date input in US format (mm/dd/yyyy)
+                        ->type('#rateDate', '01/15/2024')
                         ->type('#rateValue', '1.2345')
-                        ->click('button:contains("Add")');
+                        ->click('button.btn-primary');
                 })
                 // Wait for modal to close
                 ->waitUntilMissing('#currencyRateModal.show')
@@ -99,10 +100,9 @@ class CurrencyRateManagementTest extends DuskTestCase
         $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         $rate = CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-10',
+                'date' => '2024-02-01',
                 'rate' => 1.1111,
             ]);
 
@@ -113,12 +113,12 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->waitFor('#currencyRateApp')
                 // Click edit button
                 ->click('.edit-rate[data-id="' . $rate->id . '"]')
-                ->whenAvailable('#currencyRateModal', function (Browser $modal) {
+                ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
                         ->assertSee('Edit Currency Rate')
                         ->clear('#rateValue')
                         ->type('#rateValue', '1.2222')
-                        ->click('button:contains("Update")');
+                        ->click('button.btn-primary');
                 })
                 // Wait for modal to close
                 ->waitUntilMissing('#currencyRateModal.show')
@@ -144,10 +144,9 @@ class CurrencyRateManagementTest extends DuskTestCase
         $toCurrency = $user->currencies->firstWhere('iso_code', 'USD');
 
         $rate = CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-10',
+                'date' => '2024-02-02',
                 'rate' => 150.0,
             ]);
 
@@ -185,26 +184,23 @@ class CurrencyRateManagementTest extends DuskTestCase
 
         // Create rates with different dates
         CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-10',
+                'date' => '2024-02-10',
                 'rate' => 1.1,
             ]);
 
         CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-15',
+                'date' => '2024-02-15',
                 'rate' => 1.2,
             ]);
 
         CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-20',
+                'date' => '2024-02-20',
                 'rate' => 1.3,
             ]);
 
@@ -232,10 +228,9 @@ class CurrencyRateManagementTest extends DuskTestCase
 
         // Create existing rate
         CurrencyRate::factory()
-            ->for($user)
             ->betweenCurrencies($fromCurrency, $toCurrency)
             ->create([
-                'date' => '2024-01-15',
+                'date' => '2024-03-15',
                 'rate' => 0.75,
             ]);
 
@@ -245,12 +240,13 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
                 // Try to add duplicate rate
-                ->click('button:contains("Add new rate")')
-                ->whenAvailable('#currencyRateModal', function (Browser $modal) {
+                ->click('button > span.fa.fa-fw.fa-plus')
+                ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
-                        ->type('#rateDate', '2024-01-15')
+                        // This is expexted to be a date input in US format (mm/dd/yyyy)
+                        ->type('#rateDate', '03/15/2024')
                         ->type('#rateValue', '0.76')
-                        ->click('button:contains("Add")');
+                        ->click('button.btn-primary');
                 })
                 // Should show validation error
                 ->waitFor('.invalid-feedback', 5)

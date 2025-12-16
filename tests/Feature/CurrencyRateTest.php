@@ -70,16 +70,6 @@ class CurrencyRateTest extends TestCase
         ]))
             ->assertRedirect(route('login'));
 
-        $this->get(route("currency-rate.retrieveRate", [
-            'currency' => $otherCurrency,
-        ]))
-            ->assertRedirect(route('login'));
-
-        $this->get(route("currency-rate.retrieveMissing", [
-            'currency' => $otherCurrency,
-        ]))
-            ->assertRedirect(route('login'));
-
         $this->delete(route("currency-rate.destroy", $rate))
             ->assertRedirect(route('login'));
     }
@@ -116,32 +106,5 @@ class CurrencyRateTest extends TestCase
             ]))
             ->assertStatus(200)
             ->assertViewIs("currency-rate.index");
-
-        $this->actingAs($user)
-            ->from(route("currency-rate.index", [
-                'from' => $otherCurrency,
-                'to' => $baseCurrency
-            ]))
-            ->get(route("currency-rate.retrieveRate", [
-                'currency' => $otherCurrency,
-            ]))
-            ->assertRedirectToRoute("currency-rate.index", [
-                'from' => $otherCurrency,
-                'to' => $baseCurrency
-            ]);
-
-
-        $this->actingAs($user)
-            ->from(route("currency-rate.index", [
-                'from' => $otherCurrency,
-                'to' => $baseCurrency
-            ]))
-            ->get(route("currency-rate.retrieveMissing", [
-                'currency' => $otherCurrency,
-            ]))
-            ->assertRedirectToRoute("currency-rate.index", [
-                'from' => $otherCurrency,
-                'to' => $baseCurrency
-            ]);
     }
 }

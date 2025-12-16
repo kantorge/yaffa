@@ -30,22 +30,8 @@
           @click="addNewRate"
           :title="__('Add new rate')"
         >
-          <span class="fa fa-plus"></span>
+          <span class="fa fa-fw fa-plus"></span>
         </button>
-      </li>
-      <li
-        class="list-group-item d-flex justify-content-between align-items-center"
-      >
-        <a class="" :href="retrieveLatestUrl" :title="__('Load latest rates')">
-          {{ __('Load latest rates') }}
-        </a>
-        <a
-          class="btn btn-xs btn-success"
-          :href="retrieveLatestUrl"
-          :title="__('Load latest rates')"
-        >
-          <span class="fa fa-cloud-download"></span>
-        </a>
       </li>
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
@@ -66,9 +52,9 @@
         >
           <span
             v-if="isLoadingMissing"
-            class="spinner-border spinner-border-sm"
+            class="fa fa-fw fa-spinner fa-spin"
           ></span>
-          <span v-else class="fa fa-cloud-download"></span>
+          <span v-else class="fa fa-fw fa-cloud-download"></span>
         </button>
       </li>
     </ul>
@@ -100,13 +86,6 @@
         isLoadingMissing: false,
       };
     },
-    computed: {
-      retrieveLatestUrl() {
-        return window.route('currency-rate.retrieveRate', {
-          currency: this.fromCurrency.id,
-        });
-      },
-    },
     methods: {
       addNewRate() {
         this.$emit('add-rate');
@@ -131,7 +110,7 @@
         try {
           // Call the existing endpoint to retrieve missing rates
           await window.axios.get(
-            window.route('currency-rate.retrieveMissing', {
+            window.route('api.currency-rate.retrieveMissing', {
               currency: this.fromCurrency.id,
             }),
           );
@@ -165,12 +144,16 @@
 
           // Close loading toast
           setTimeout(() => {
-            const toastElement = document.querySelector(
+            // Theorteically, there should be only one toast with this class, but let's make sure to remove all
+            const toastElements = document.querySelectorAll(
               '.toast-loading-missing-rates',
             );
-            if (toastElement) {
-              const toastInstance = new window.bootstrap.Toast(toastElement);
-              toastInstance.hide();
+
+            if (toastElements.length > 0) {
+              toastElements.forEach((toastElement) => {
+                const toastInstance = new window.bootstrap.Toast(toastElement);
+                toastInstance.dispose();
+              });
             }
           }, 250);
         }
