@@ -81,9 +81,7 @@
         date = new Date(date);
         return date.toLocaleDateString(this.locale);
       },
-      toFormattedCurrency(value, locale, currency) {
-        return toFormattedCurrency(value, locale, currency);
-      },
+      toFormattedCurrency,
       __,
     },
   };
