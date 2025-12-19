@@ -11,6 +11,7 @@ use App\Services\CurrencyRateService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 
@@ -120,18 +121,18 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      */
     public function retrieveMissingCurrencyRateToBase(Currency $currency): JsonResponse
     {
-        /**
-         * @get('/currencyrates/missing/{currency}')
-         * @name('currency-rate.retrieveMissing')
-         * @middlewares('web')
-         */
         // Authorize user access to requested currency
         Gate::authorize('view', $currency);
 
         try {
             $currency->retrieveMissingCurrencyRateToBase();
         } catch (CurrencyRateConversionException $e) {
-            self::addSimpleErrorMessage($e->getMessage());
+            return response()->json(
+                [
+                    'message' => $e->getMessage(),
+                ],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
 
         return response()->json();

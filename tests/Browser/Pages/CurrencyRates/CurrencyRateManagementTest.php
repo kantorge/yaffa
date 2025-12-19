@@ -65,8 +65,8 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->loginAs($user)
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
-                // Click add new rate button. TODO: add a more robust selector
-                ->click('button > span.fa.fa-fw.fa-plus')
+                // Click add new rate button.
+                ->click('button.add-currency-rate-button')
                 ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
                         ->assertSee('Add Currency Rate')
@@ -211,7 +211,8 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->waitFor('#currencyRateApp')
                 // Select date range preset
                 ->select('#dateRangePickerPresets', 'thisMonth')
-                ->pause(1000) // Wait for filter to apply
+                // Wait for filter to apply - this is done locally, so a short pause is sufficient
+                ->pause(2000)
                 // Verify table shows filtered results
                 ->assertPresent('#ratesTable');
         });
@@ -240,7 +241,7 @@ class CurrencyRateManagementTest extends DuskTestCase
                 ->visitRoute('currency-rate.index', ['from' => $fromCurrency, 'to' => $toCurrency])
                 ->waitFor('#currencyRateApp')
                 // Try to add duplicate rate
-                ->click('button > span.fa.fa-fw.fa-plus')
+                ->click('button.add-currency-rate-button')
                 ->whenAvailable('#currencyRateModal.show', function (Browser $modal) {
                     $modal
                         // This is expexted to be a date input in US format (mm/dd/yyyy)

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Currency;
 use App\Models\CurrencyRate;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CurrencyRateFactory extends Factory
@@ -16,7 +17,7 @@ class CurrencyRateFactory extends Factory
     public function definition(): array
     {
         // Create a user first to ensure both currencies belong to the same user
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
 
         return [
             'from_id' => Currency::factory()->for($user),
@@ -29,7 +30,7 @@ class CurrencyRateFactory extends Factory
     /**
      * State for creating currency rates for a specific user's currencies.
      */
-    public function forUser(\App\Models\User $user): static
+    public function forUser(User $user): static
     {
         return $this->state(function (array $attributes) use ($user) {
             return [

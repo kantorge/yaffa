@@ -19,14 +19,14 @@
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         <button
-          class="btn btn-link text-decoration-none p-0"
+          class="btn btn-link text-decoration-none p-0 add-currency-rate-button"
           @click="addNewRate"
           :title="__('Add new rate')"
         >
           {{ __('Add new rate') }}
         </button>
         <button
-          class="btn btn-xs btn-primary"
+          class="btn btn-xs btn-primary add-currency-rate-button"
           @click="addNewRate"
           :title="__('Add new rate')"
         >

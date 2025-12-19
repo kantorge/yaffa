@@ -91,7 +91,7 @@
       return {
         fromCurrency: this.from,
         toCurrency: this.to,
-        allRates: [...this.initialRates],
+        allRates: JSON.parse(JSON.stringify(this.initialRates)),
         displayRates: null,
         dateFrom: null,
         dateTo: null,
