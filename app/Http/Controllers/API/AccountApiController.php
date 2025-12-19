@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AccountEntity;
-use App\Models\AccountMonthlySummary;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -17,13 +18,15 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class AccountApiController extends Controller
+class AccountApiController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -48,6 +51,16 @@ class AccountApiController extends Controller
         }
 
         $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
+        $transactionType = $request->get('transaction_type', null);
+        if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+            // If transaction type is provided but not valid, return a bad request response
+            return response()->json(
+                [
+                    'message' => 'The transaction_type parameter is required and must be valid.',
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
         $accountIds = DB::table('transactions')
             ->join(
@@ -69,13 +82,11 @@ class AccountApiController extends Controller
                 $query->where('account_entities.active', true);
             })
             // Optionally limit the search for specific transaction types
-            ->when($request->has('transaction_type'), function ($query) use ($request) {
-                return $query->where(
-                    'transaction_type_id',
-                    '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
-                );
-            })
+            ->when($transactionType !== null, fn ($query) => $query->where(
+                'transaction_type_id',
+                '=',
+                config('transaction_types')[$transactionType]['id']
+            ))
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
             ->where('account_entities.user_id', $parameters['user']->id)
@@ -195,19 +206,17 @@ class AccountApiController extends Controller
                 ->where('account_entities.active', true)
                 ->where('transactions.user_id', $user->id)
                 ->where('account_entities.user_id', $user->id)
-                ->when($request->get('currency_id'), function ($query) use ($request) {
-                    return $query
-                        ->join(
-                            'accounts',
-                            'accounts.id',
-                            '=',
-                            'account_entities.config_id'
-                        )->where(
-                            'accounts.currency_id',
-                            '=',
-                            $request->get('currency_id')
-                        );
-                })
+                ->when($request->get('currency_id'), fn ($query) => $query
+                    ->join(
+                        'accounts',
+                        'accounts.id',
+                        '=',
+                        'account_entities.config_id'
+                    )->where(
+                        'accounts.currency_id',
+                        '=',
+                        $request->get('currency_id')
+                    ))
                 ->where(
                     'transaction_type_id',
                     '=',
@@ -226,8 +235,6 @@ class AccountApiController extends Controller
     /**
      * Get the account entity for the given id.
      *
-     * @param AccountEntity $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
@@ -236,7 +243,7 @@ class AccountApiController extends Controller
          * @get('/api/assets/account/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $accountEntity);
+        Gate::authorize('view', $accountEntity);
 
         $accountEntity->load(['config', 'config.currency']);
 
@@ -252,9 +259,6 @@ class AccountApiController extends Controller
      *
      * The balance is calculated using AccountMonthlySummary, which is regularly updated.
      *
-     * @param Request $request
-     * @param AccountEntity|null $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function getAccountBalance(Request $request, AccountEntity|null $accountEntity = null): JsonResponse
@@ -322,7 +326,7 @@ class AccountApiController extends Controller
             )
             ->when(
                 $accountEntity === null,
-                fn ($query) => $query->whereIn('account_entity_id', $user->accounts()->get()->pluck('id'))
+                fn ($query) => $query->whereIn('account_entity_id', $user->accounts()->pluck('id'))
             )
             ->groupBy('account_entity_id')
             ->get();
@@ -417,7 +421,7 @@ class AccountApiController extends Controller
          * @put('/api/account/monthlySummary/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         // Check if the account entity is an account
         if ($accountEntity->config_type !== 'account') {

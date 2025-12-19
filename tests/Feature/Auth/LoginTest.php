@@ -33,7 +33,7 @@ class LoginTest extends TestCase
     /**
      * For all these tests, make sure that recaptcha is disabled.
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -41,8 +41,7 @@ class LoginTest extends TestCase
         config(['recaptcha.api_secret_key' => null]);
     }
 
-    /** @test */
-    public function unsigned_visitor_can_access_the_login_form()
+    public function test_unsigned_visitor_can_access_the_login_form(): void
     {
         $response = $this->get($this->loginGetRoute());
 
@@ -50,8 +49,7 @@ class LoginTest extends TestCase
         $response->assertViewIs('auth.login');
     }
 
-    /** @test */
-    public function signed_visitor_cannot_access_the_login_form()
+    public function test_signed_visitor_cannot_access_the_login_form(): void
     {
         $user = User::factory()->make();
 
@@ -60,8 +58,7 @@ class LoginTest extends TestCase
         $response->assertRedirect($this->successfulLoginRoute());
     }
 
-    /** @test */
-    public function login_form_displays_validation_errors_on_empty_form_submission()
+    public function test_login_form_displays_validation_errors_on_empty_form_submission(): void
     {
         $response = $this->post(
             $this->loginPostRoute(),
@@ -72,8 +69,7 @@ class LoginTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    /** @test */
-    public function user_cannot_log_in_with_incorrect_password()
+    public function test_user_cannot_log_in_with_incorrect_password(): void
     {
         $password = 'secret';
 
@@ -97,8 +93,7 @@ class LoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
-    public function user_cannot_log_in_with_email_that_does_not_exist()
+    public function test_user_cannot_log_in_with_email_that_does_not_exist(): void
     {
         $response = $this
             ->from($this->loginGetRoute())
@@ -114,8 +109,7 @@ class LoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
-    public function test_user_cannot_make_too_many_failed_attempts()
+    public function test_user_cannot_make_too_many_failed_attempts(): void
     {
         $password = 'secret';
 
@@ -156,8 +150,7 @@ class LoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
-    public function user_can_log_in_with_correct_credentials()
+    public function test_user_can_log_in_with_correct_credentials(): void
     {
         $password = 'secret';
 

@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
+use App\Observers\CurrencyRateObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy([CurrencyRateObserver::class])]
 class CurrencyRate extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'currency_rates';
+    use HasFactory;
 
     public $timestamps = false;
 
@@ -29,14 +28,17 @@ class CurrencyRate extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      *
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'date' => 'datetime:Y-m-d',
-        'rate' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'datetime:Y-m-d',
+            'rate' => 'float',
+        ];
+    }
 
     public function currencyFrom(): BelongsTo
     {

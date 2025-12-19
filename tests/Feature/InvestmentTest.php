@@ -14,7 +14,7 @@ class InvestmentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,8 +22,7 @@ class InvestmentTest extends TestCase
         $this->setBaseModel(Investment::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -40,8 +39,7 @@ class InvestmentTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $investment->id))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -60,8 +58,7 @@ class InvestmentTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_investments()
+    public function test_user_can_view_list_of_investments(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -74,8 +71,7 @@ class InvestmentTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -92,8 +88,7 @@ class InvestmentTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function investment_form_requires_investment_group_and_currency()
+    public function test_investment_form_requires_investment_group_and_currency(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -126,8 +121,7 @@ class InvestmentTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
     }
 
-    /** @test */
-    public function user_cannot_create_an_investment_with_missing_data()
+    public function test_user_cannot_create_an_investment_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -152,8 +146,7 @@ class InvestmentTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_an_investment()
+    public function test_user_can_create_an_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -168,8 +161,7 @@ class InvestmentTest extends TestCase
         );
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_investment()
+    public function test_user_can_edit_an_existing_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -190,8 +182,7 @@ class InvestmentTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_an_investment_with_missing_data()
+    public function test_user_cannot_update_an_investment_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -221,8 +212,7 @@ class InvestmentTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_an_investment_with_proper_data()
+    public function test_user_can_update_an_investment_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -269,8 +259,7 @@ class InvestmentTest extends TestCase
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_investment()
+    public function test_user_can_delete_an_existing_investment(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

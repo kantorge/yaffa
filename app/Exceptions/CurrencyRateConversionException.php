@@ -2,8 +2,6 @@
 
 namespace App\Exceptions;
 
-use App\Models\Currency;
-use Carbon\Carbon;
 use Exception;
 
 class CurrencyRateConversionException extends Exception

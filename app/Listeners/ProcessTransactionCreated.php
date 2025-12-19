@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Events\TransactionCreated;
 use App\Services\TransactionService;
 
 class ProcessTransactionCreated
@@ -11,7 +12,7 @@ class ProcessTransactionCreated
     /**
      * Handle the event.
      */
-    public function handle(object $event): void
+    public function handle(TransactionCreated $event): void
     {
         $this->transactionService = new TransactionService();
 

@@ -13,7 +13,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -25,7 +25,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_investment_transaction_details()
+    public function test_user_can_load_the_investment_transaction_details(): void
     {
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -82,7 +82,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
     /**
      * Test that a transaction with 'Dividend' type can be loaded
      */
-    public function test_user_can_load_the_dividend_transaction_details()
+    public function test_user_can_load_the_dividend_transaction_details(): void
     {
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -132,7 +132,7 @@ class TransactionShowInvestmentStandaloneTest extends DuskTestCase
      * Test that a scheduled transaction can be loaded
      * and it has buttons for skipping and entering an instance
      **/
-    public function test_user_can_load_the_investment_transaction_details_for_a_scheduled_transaction()
+    public function test_user_can_load_the_investment_transaction_details_for_a_scheduled_transaction(): void
     {
         $user = User::firstWhere('email', $this::USER_EMAIL);
 

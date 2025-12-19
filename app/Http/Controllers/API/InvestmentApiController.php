@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
-use App\Models\Transaction;
-use App\Models\TransactionDetailInvestment;
 use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-class InvestmentApiController extends Controller
+class InvestmentApiController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
@@ -25,9 +24,15 @@ class InvestmentApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
 
         $this->investmentService = new InvestmentService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -36,7 +41,7 @@ class InvestmentApiController extends Controller
          * @get('/api/assets/investment')
          * @middlewares('api', 'auth:sanctum')
          */
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->where('active', true)
             ->select(['id', 'name AS text'])
@@ -55,9 +60,6 @@ class InvestmentApiController extends Controller
 
     /**
      * Read and return the details of a selected investment
-     *
-     * @param Investment $investment
-     * @return JsonResponse
      */
     public function getInvestmentDetails(Investment $investment): JsonResponse
     {
@@ -66,7 +68,7 @@ class InvestmentApiController extends Controller
          * @name('investment.getDetails')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $investment->load(['currency']);
 
@@ -79,7 +81,7 @@ class InvestmentApiController extends Controller
          * @get('/api/assets/investment/price/{investment}')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $prices = InvestmentPrice::where('investment_id', '=', $investment->id)
             ->select(['id', 'date', 'price'])
@@ -100,7 +102,7 @@ class InvestmentApiController extends Controller
          * @name('api.investment.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $investment);
+        Gate::authorize('update', $investment);
 
         $investment->active = $active;
         $investment->save();
@@ -114,10 +116,8 @@ class InvestmentApiController extends Controller
 
     /**
      * Get all investments with timeline data
-     *
-     * @return JsonResponse
      */
-    public function getInvestmentsWithTimeline(): JsonResponse
+    public function getInvestmentsWithTimeline(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment/timeline')
@@ -125,7 +125,7 @@ class InvestmentApiController extends Controller
          */
         $investmentService = new InvestmentService();
 
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->with([
                 'currency',
@@ -137,10 +137,8 @@ class InvestmentApiController extends Controller
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(function ($investment) use ($investmentService) {
-            return $investmentService->enrichInvestmentWithQuantityHistory($investment);
-        })
-            ->each(function ($investment) use (&$positions) {
+        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+            ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
 
@@ -161,7 +159,7 @@ class InvestmentApiController extends Controller
                         continue;
                     }
 
-                    if (! $start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
+                    if (!$start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
                         $period['end'] = $item['date'];
                         $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
                         $positions[] = $period;
@@ -176,8 +174,8 @@ class InvestmentApiController extends Controller
                 }
 
                 // If period start was set but the end date is missing, then set it to the app config end date
-                if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
-                    $period['end'] = Auth::user()->end_date;
+                if (array_key_exists('start', $period) && !array_key_exists('end', $period)) {
+                    $period['end'] = $request->user()->end_date;
                     $period['last_price'] = $investment->getLatestPrice('combined');
                     $positions[] = $period;
                 }
@@ -192,9 +190,6 @@ class InvestmentApiController extends Controller
 
     /**
      * Remove the specified investment.
-     *
-     * @param Investment $investment
-     * @return JsonResponse
      */
     public function destroy(Investment $investment): JsonResponse
     {

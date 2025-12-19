@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Exception;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,13 +53,6 @@ class Currency extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'currencies';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -71,19 +65,20 @@ class Currency extends Model
     ];
 
     /**
-     * The attributes that should be cast to native types.
+     * Get the attributes that should be cast.
      *
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'base' => 'boolean',
-        'auto_update' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'base' => 'boolean',
+            'auto_update' => 'boolean',
+        ];
+    }
 
     /**
      * Get the user that owns this currency.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -92,33 +87,27 @@ class Currency extends Model
 
     /**
      * Create a scope for the query to only return base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeBase(Builder $query): Builder
+    #[Scope]
+    protected function base(Builder $query): Builder
     {
         return $query->where('base', true);
     }
 
     /**
      * Create a scope for the query to only return currencies that are not base currencies.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeNotBase(Builder $query): Builder
+    #[Scope]
+    protected function notBase(Builder $query): Builder
     {
         return $query->whereNull('base');
     }
 
     /**
      * Create a scope for the query to only return currencies that are set to be automatically updated.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeAutoUpdate(Builder $query): Builder
+    #[Scope]
+    protected function autoUpdate(Builder $query): Builder
     {
         return $query->where('auto_update', true);
     }
@@ -126,8 +115,6 @@ class Currency extends Model
     /**
      * Get the latest currency rate for this currency, compared to the base currency.
      * If no currency rate exists, return null.
-     *
-     * @return float|null
      */
     public function rate(): ?float
     {
@@ -147,19 +134,18 @@ class Currency extends Model
 
     /**
      * Get the base currency of the same user, who owns this currency.
-     *
-     * @return Currency|null
      */
     public function baseCurrency(): ?Currency
     {
-        return self::base()->where('user_id', $this->user_id)
-            ->firstOr(fn () => self::where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
+        return static::query()
+            ->base()
+            ->where('user_id', $this->user_id)
+            ->firstOr(fn () => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
     }
 
     /**
      * Get and save the currency rates for this currency against the base currency.
      *
-     * @param Carbon|null $dateFrom
      * @throws CurrencyRateConversionException
      * @throws Exception
      */

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
@@ -12,11 +13,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
-class UserApiController extends Controller
+class UserApiController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
     public function updateSettings(UserRequest $request): JsonResponse
     {
@@ -26,7 +29,7 @@ class UserApiController extends Controller
         $warningMessages = [];
 
         /** @var User $user */
-        $user = auth()->user();
+        $user = $request->user();
         $user->fill($validated);
 
         // If the end_date has changed, we need to recalculate the monthly summaries
@@ -71,7 +74,7 @@ class UserApiController extends Controller
         $this->validator($request->all())->validate();
 
         /** @var User $user */
-        $user = auth()->user();
+        $user = $request->user();
         $user->password = Hash::make($request['password']);
         $user->save();
 

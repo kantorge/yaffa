@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
@@ -9,20 +12,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class TagController extends Controller
+class TagController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Tag::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Tag', only: ['index']),
+            new Middleware('can:view,tag', only: ['show']),
+            new Middleware('can:create,App\Models\Tag', only: ['create', 'store']),
+            new Middleware('can:update,tag', only: ['edit', 'update']),
+            new Middleware('can:delete,tag', only: ['destroy']),
+        ];
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/tag')
@@ -30,7 +37,7 @@ class TagController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Tag')
          */
         // Get all tags of the user from the database and return to view
-        $tags = Auth::user()
+        $tags = $request->user()
             ->tags()
             ->select('id', 'name', 'active')
             ->get()
@@ -56,9 +63,6 @@ class TagController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Tag  $tag
-     * @return View
      */
     public function edit(Tag $tag): View
     {
@@ -105,9 +109,6 @@ class TagController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Tag  $tag
-     * @return RedirectResponse
      */
     public function destroy(Tag $tag): RedirectResponse
     {

@@ -9,8 +9,6 @@ class CategoryListComposer
 {
     /**
      * Bind list of all accounts to the view.
-     *
-     * @param View $view
      */
     public function compose(View $view)
     {

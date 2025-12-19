@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class MainController extends Controller
+class MainController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -21,19 +23,21 @@ class MainController extends Controller
 
     private $currentAccount;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
-    public function account_details(AccountEntity $account, $withForecast = null)
+    public function account_details(Request $request, AccountEntity $account, $withForecast = null)
     {
         /**
          * @get('/account/history/{account}/{withForecast?}')
          * @name('account.history')
          * @middlewares('web', 'auth', 'verified')
          */
-        $user = Auth::user();
+        $user = $request->user();
 
         // Get account details and load to class variable
         $this->currentAccount = $account->load([

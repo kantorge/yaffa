@@ -39,15 +39,17 @@
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Responsive 3.0.6
+/*! Responsive 3.0.7
  * © SpryMedia Ltd - datatables.net/license
  */
 
-/*! Select for DataTables 3.1.0
+/*! Select for DataTables 3.1.3
  * © SpryMedia Ltd - datatables.net/license/mit
  */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */
 
 /**
 * @vue/runtime-core v3.5.22

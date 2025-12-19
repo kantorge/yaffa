@@ -9,7 +9,7 @@ class SandboxTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,7 +21,7 @@ class SandboxTest extends DuskTestCase
         }
     }
 
-    public function testResetAlertIsNotPresentIfSandboxIsDisabled()
+    public function testResetAlertIsNotPresentIfSandboxIsDisabled(): void
     {
         // Make sure sandbox mode is disabled
         $this->setConfig('yaffa.sandbox_mode', false);
@@ -42,7 +42,7 @@ class SandboxTest extends DuskTestCase
         });
     }
 
-    public function testResetAlertIsPresentIfSandboxIsEnabled()
+    public function testResetAlertIsPresentIfSandboxIsEnabled(): void
     {
         // Make sure sandbox mode is enabled
         $this->setConfig('yaffa.sandbox_mode', true);

@@ -15,7 +15,7 @@ class CategoryListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,7 +27,7 @@ class CategoryListTest extends DuskTestCase
         }
     }
 
-    public function test_user_can_load_the_category_list_and_use_filters()
+    public function test_user_can_load_the_category_list_and_use_filters(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL)
@@ -120,7 +120,7 @@ class CategoryListTest extends DuskTestCase
         });
     }
 
-    public function test_delete_button_behaviour()
+    public function test_delete_button_behaviour(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

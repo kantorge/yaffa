@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UserRequest;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class UserController extends Controller
+class UserController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
-    /**
-     * @return View
-     */
     public function settings(): View
     {
         /**

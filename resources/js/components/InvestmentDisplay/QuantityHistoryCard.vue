@@ -5,7 +5,7 @@
         {{ __('Quantity history') }}
       </div>
       <div>
-        <span class="label label-danger" v-if="!hasData">{{
+        <span class="badge text-bg-warning me-2" v-if="!hasData">{{
           __('No data available')
         }}</span>
       </div>

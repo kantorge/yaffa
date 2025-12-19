@@ -6,19 +6,11 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Currency;
 use App\Models\Investment;
-use App\Models\TransactionDetailInvestment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionDetailInvestmentFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = TransactionDetailInvestment::class;
-
     /**
      * Define the model's default state.
      *
@@ -53,7 +45,7 @@ class TransactionDetailInvestmentFactory extends Factory
             $investment = $investments->where('currency_id', $currency)->random();
         } else {
             // Get a random currency for the user, or create one if none exists
-            $currency = Currency::inRandomOrder()->firstOr(fn () => Currency::factory()->create())->id;
+            $currency = Currency::inRandomOrder()->firstOr(fn () => Currency::factory()->for($user)->create())->id;
 
             // Create a new account with the random currency
             $account = AccountEntity::factory()
@@ -81,18 +73,16 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function buy(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return array_merge(
-                [
-                    'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
-                    'quantity' => $this->faker->randomFloat(4, 1, 100),
-                    'commission' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'tax' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'dividend' => null,
-                ],
-                $this->withUser($user)
-            );
-        });
+        return $this->state(fn (array $attributes) => array_merge(
+            [
+                'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => null,
+            ],
+            $this->withUser($user)
+        ));
     }
 
     /**
@@ -103,18 +93,16 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function sell(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return array_merge(
-                [
-                    'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
-                    'quantity' => $this->faker->randomFloat(4, 1, 100),
-                    'commission' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'tax' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'dividend' => null,
-                ],
-                $this->withUser($user)
-            );
-        });
+        return $this->state(fn (array $attributes) => array_merge(
+            [
+                'price' => $this->faker->randomFloat(4, 0.0001, 100),  //TODO: dynamic based on related investment price range
+                'quantity' => $this->faker->randomFloat(4, 1, 100),
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => null,
+            ],
+            $this->withUser($user)
+        ));
     }
 
     /**
@@ -125,17 +113,15 @@ class TransactionDetailInvestmentFactory extends Factory
      */
     public function dividend(User $user): Factory
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return array_merge(
-                [
-                    'price' => null,
-                    'quantity' => null,
-                    'commission' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'tax' => $this->faker->randomFloat(4, 0.0001, 100),
-                    'dividend' => $this->faker->randomFloat(4, 0.0001, 100),
-                ],
-                $this->withUser($user)
-            );
-        });
+        return $this->state(fn (array $attributes) => array_merge(
+            [
+                'price' => null,
+                'quantity' => null,
+                'commission' => $this->faker->randomFloat(4, 0.0001, 100),
+                'tax' => $this->faker->randomFloat(4, 0.0001, 100),
+                'dividend' => $this->faker->randomFloat(4, 0.0001, 100),
+            ],
+            $this->withUser($user)
+        ));
     }
 }

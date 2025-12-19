@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Database\Factories\TagFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,13 +43,6 @@ class Tag extends Model
     use ModelOwnedByUserTrait;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'tags';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -59,13 +53,16 @@ class Tag extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      *
-     * @var array<string, string>
+     * @return array<string, string>
      */
-    protected $casts = [
-        'active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
 
     public function transactionItems(): BelongsToMany
     {
@@ -94,11 +91,9 @@ class Tag extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', 1);
     }

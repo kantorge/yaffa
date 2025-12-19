@@ -5,19 +5,11 @@ namespace Database\Factories;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Payee;
-use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionDetailStandardFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = TransactionDetailStandard::class;
-
     /**
      * Define the model's default state.
      *

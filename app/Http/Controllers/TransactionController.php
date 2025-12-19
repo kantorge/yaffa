@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
@@ -13,14 +15,16 @@ use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 use Exception;
 
-class TransactionController extends Controller
+class TransactionController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
-    public function create(string $type): View|RedirectResponse
+    public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
          * @get('/transactions/create/{type}
@@ -29,7 +33,7 @@ class TransactionController extends Controller
          */
 
         // Sanity check for necessary assets
-        if (Auth::user()->accounts()->active()->count() === 0) {
+        if ($request->user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
                 'info',
@@ -51,9 +55,6 @@ class TransactionController extends Controller
      * Show the form with data of selected transaction
      * Actual behavior is controlled by action
      *
-     * @param Transaction $transaction
-     * @param string $action
-     * @return View
      * @throws AuthorizationException
      */
     public function openTransaction(Transaction $transaction, string $action): View
@@ -65,7 +66,7 @@ class TransactionController extends Controller
          */
 
         // Authorize user for transaction
-        $this->authorize('view', $transaction);
+        Gate::authorize('view', $transaction);
 
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
@@ -109,8 +110,6 @@ class TransactionController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Transaction $transaction
-     * @return RedirectResponse
      * @throws AuthorizationException
      */
     public function destroy(Transaction $transaction): RedirectResponse
@@ -122,7 +121,7 @@ class TransactionController extends Controller
          */
 
         // Authorize user for transaction
-        $this->authorize('forceDelete', $transaction);
+        Gate::authorize('forceDelete', $transaction);
 
         // Remove the transaction and its config
         $transaction->delete();

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -10,11 +12,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
-class AccountEntityApiController extends Controller
+class AccountEntityApiController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     /**
@@ -27,7 +31,7 @@ class AccountEntityApiController extends Controller
          * @name('api.accountentity.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->active = $active;
         $accountEntity->save();
@@ -42,8 +46,6 @@ class AccountEntityApiController extends Controller
     /**
      * Remove the specified account entity.
      *
-     * @param AccountEntity $accountEntity
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function destroy(AccountEntity $accountEntity): JsonResponse
@@ -53,7 +55,7 @@ class AccountEntityApiController extends Controller
          * @name('api.accountentity.destroy')
          * @middlewares('web', 'auth', 'verified')
          */
-        $this->authorize('forceDelete', $accountEntity);
+        Gate::authorize('forceDelete', $accountEntity);
 
         try {
             $accountEntity->delete();

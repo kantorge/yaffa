@@ -2,18 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\TransactionSchedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TransactionScheduleFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = TransactionSchedule::class;
-
     /**
      * Define the model's default state.
      *

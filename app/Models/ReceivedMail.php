@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,8 +23,6 @@ class ReceivedMail extends Model
 {
     use HasFactory;
 
-    protected $table = 'received_mails';
-
     protected $fillable = [
         'message_id',
         'user_id',
@@ -36,18 +35,23 @@ class ReceivedMail extends Model
         'transaction_id',
     ];
 
-    protected $casts = [
-        'processed' => 'boolean',
-        'handled' => 'boolean',
-        'transaction_data' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'processed' => 'boolean',
+            'handled' => 'boolean',
+            'transaction_data' => 'array',
+        ];
+    }
 
-    public function scopeUnprocessed($query)
+    #[Scope]
+    protected function unprocessed($query)
     {
         return $query->where('processed', false);
     }
 
-    public function scopeUnhandled($query)
+    #[Scope]
+    protected function unhandled($query)
     {
         return $query->where('handled', false);
     }

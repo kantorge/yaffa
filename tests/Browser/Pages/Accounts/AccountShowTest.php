@@ -7,7 +7,6 @@ use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionType;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
@@ -15,7 +14,7 @@ class AccountShowTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,7 +26,7 @@ class AccountShowTest extends DuskTestCase
         }
     }
 
-    public function test_account_history_uses_correct_currency_for_standard_transactions()
+    public function test_account_history_uses_correct_currency_for_standard_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -142,7 +141,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions()
+    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -270,7 +269,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_date_parameters_take_precedence_over_preset_settings() {
+    public function test_date_parameters_take_precedence_over_preset_settings(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -330,7 +330,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_preset_parameter_takes_precedence_over_account_and_user_setting() {
+    public function test_preset_parameter_takes_precedence_over_account_and_user_setting(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -362,7 +363,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_date_preset_setting_takes_precedence_over_user_setting() {
+    public function test_account_date_preset_setting_takes_precedence_over_user_setting(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -393,7 +395,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_user_date_setting_is_used_if_no_other_date_setting_exists() {
+    public function test_user_date_setting_is_used_if_no_other_date_setting_exists(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -424,7 +427,8 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_default_date_range_is_used_if_no_settings_exists(): void {
+    public function test_default_date_range_is_used_if_no_settings_exists(): void
+    {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
 
@@ -454,6 +458,59 @@ class AccountShowTest extends DuskTestCase
                 ->assertSeeIn('#dateRangePickerPresets', 'Select preset')
                 // Verify that the table loads no data
                 ->assertSeeIn('#historyTable_info', 'Showing 0 to 0 of 0 entries');
+        });
+    }
+
+    public function test_update_button_triggers_table_reload(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // Get the EUR cash account of the user
+        $account = $user->accounts()->where('name', 'Cash account EUR')->first();
+
+        // Get a payee
+        $payee = $user->payees()->first();
+
+        // Set the date for the transactions
+        $date = now()->addDays(10);
+
+        // Create a transaction
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 100,
+                    'amount_to' => 100,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->create([
+                'date' => $date->format('Y-m-d'),
+                'config_type' => 'standard',
+                'comment' => null,
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            ]);
+
+        $this->browse(function (Browser $browser) use ($user, $account, $date, $transaction) {
+            $browser
+                ->loginAs($user)
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                ->waitFor('#historyTable')
+                ->waitFor('#reload')
+                // Select a date range that includes the transaction
+                ->type('[name="date_from"]', $date->copy()->subDays(1)->format('Y-m-d'))
+                ->type('[name="date_to"]', $date->copy()->addDays(1)->format('Y-m-d'))
+                // Click the Update button to trigger table reload
+                ->click('#reload')
+                // Wait for table to reload with the transaction
+                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
+                // Verify the transaction is shown
+                ->assertPresent(('button.transaction-quickview[data-id="' . $transaction->id . '"]'));
         });
     }
 }

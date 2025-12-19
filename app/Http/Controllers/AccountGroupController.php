@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Database\QueryException;
@@ -10,20 +13,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class AccountGroupController extends Controller
+class AccountGroupController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(AccountGroup::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\AccountGroup', only: ['index']),
+            new Middleware('can:view,account_group', only: ['show']),
+            new Middleware('can:create,App\Models\AccountGroup', only: ['create', 'store']),
+            new Middleware('can:update,account_group', only: ['edit', 'update']),
+            new Middleware('can:delete,account_group', only: ['destroy']),
+        ];
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/account-group')
@@ -31,7 +38,7 @@ class AccountGroupController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountGroup')
          */
         // Get all account groups of the user from the database and return to view
-        $accountGroups = Auth::user()
+        $accountGroups = $request->user()
             ->accountGroups()
             ->select('id', 'name')
             ->withCount('accountEntities')
@@ -57,9 +64,6 @@ class AccountGroupController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return View
      */
     public function edit(AccountGroup $accountGroup): View
     {
@@ -105,9 +109,6 @@ class AccountGroupController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  AccountGroup  $accountGroup
-     * @return RedirectResponse
      */
     public function destroy(AccountGroup $accountGroup): RedirectResponse
     {

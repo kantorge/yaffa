@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use App\Providers\AppServiceProvider;
 use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
-class RegisterController extends Controller
+class RegisterController extends Controller implements HasMiddleware
 {
     /*
     |--------------------------------------------------------------------------
@@ -47,11 +48,17 @@ class RegisterController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest');
 
         foreach (CurrencyData::getCurrencies() as $currency) {
             $this->availableCurrencies[$currency['iso_code']] = $currency['name'];
         }
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            'guest',
+        ];
     }
 
     /**
@@ -94,13 +101,10 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected string $redirectTo = RouteServiceProvider::HOME;
+    protected string $redirectTo = AppServiceProvider::HOME;
 
     /**
      * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data): \Illuminate\Contracts\Validation\Validator
     {
@@ -143,8 +147,10 @@ class RegisterController extends Controller
             ]
         ];
 
-        if (config('recaptcha.api_site_key')
-            && config('recaptcha.api_secret_key')) {
+        if (
+            config('recaptcha.api_site_key')
+            && config('recaptcha.api_secret_key')
+        ) {
             $rules[recaptchaFieldName()] = recaptchaRuleName();
         }
 
@@ -153,9 +159,6 @@ class RegisterController extends Controller
 
     /**
      * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return User
      */
     protected function create(array $data): User
     {
@@ -172,11 +175,30 @@ class RegisterController extends Controller
      * Handle a registration request for the application.
      * Overwrite default behavior by adding custom parameter to Registered event.
      *
-     * @param Request $request
      * @return RedirectResponse|JsonResponse
      */
     public function register(Request $request): JsonResponse|RedirectResponse
     {
+        // Enforce optional user limit.
+        if (config('yaffa.registered_user_limit') && User::count() >= config('yaffa.registered_user_limit')) {
+            if ($request->wantsJson()) {
+                return new JsonResponse(
+                    [
+                        'message' => __('You cannot register new users.'),
+                        'title' => __('User limit reached'),
+                    ],
+                    429
+                );
+            }
+            self::addMessage(
+                __('You cannot register new users.'),
+                'danger',
+                __('User limit reached'),
+                'exclamation-triangle'
+            );
+            return redirect()->route('login');
+        }
+
         $this->validator($request->all())->validate();
 
         $user = $this->create($request->all());
@@ -196,6 +218,7 @@ class RegisterController extends Controller
             )
         );
 
+        // Log the user in after registering.
         $this->guard()->login($user);
 
         $response = $this->registered($request, $user);
@@ -205,6 +228,6 @@ class RegisterController extends Controller
 
         return $request->wantsJson()
             ? new JsonResponse([], 201)
-            : redirect($this->redirectPath());
+            : redirect()->to($this->redirectPath());
     }
 }

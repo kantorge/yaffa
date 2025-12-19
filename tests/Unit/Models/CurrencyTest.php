@@ -10,12 +10,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kantorge\CurrencyExchangeRates\ApiClients\ExchangeRateApiClientInterface;
 use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
 use Tests\TestCase;
+use Mockery;
 
 class CurrencyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_retrieve_supported_currency_rates_successfully()
+    public function test_retrieve_supported_currency_rates_successfully(): void
     {
         // Create a user
         /** @var User $user */
@@ -26,20 +27,20 @@ class CurrencyTest extends TestCase
             ->for($user)
             ->fromIsoCodes(['USD'])
             ->create([
-            'base' => true
-        ]);
+                'base' => true
+            ]);
 
         /** @var Currency $currency */
         $currency = Currency::factory()
             ->for($user)
             ->fromIsoCodes(['EUR'])
             ->create([
-            'base' => false
-        ]);
+                'base' => false
+            ]);
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -63,12 +64,17 @@ class CurrencyTest extends TestCase
         ]);
     }
 
-    public function test_throws_exception_when_currency_is_same_as_base()
+    public function test_throws_exception_when_currency_is_same_as_base(): void
     {
+        /** @var User $user */
+        $user = User::factory()->create();
+
         /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->create([
-            'base' => true
-        ]);
+        $baseCurrency = Currency::factory()
+            ->for($user)
+            ->create([
+                'base' => true
+            ]);
 
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('Currency is the same as the base currency');
@@ -76,7 +82,7 @@ class CurrencyTest extends TestCase
         $baseCurrency->retrieveCurrencyRateToBase();
     }
 
-    public function test_throws_exception_for_currency_not_supported_by_api()
+    public function test_throws_exception_for_currency_not_supported_by_api(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('One or more of the currencies are not supported by the API');
@@ -102,7 +108,7 @@ class CurrencyTest extends TestCase
                 'name' => 'Unknown currency'
             ]);
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -112,7 +118,7 @@ class CurrencyTest extends TestCase
         $currency->retrieveCurrencyRateToBase();
     }
 
-    public function test_throws_exception_when_no_data_returned_from_api()
+    public function test_throws_exception_when_no_data_returned_from_api(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('No data returned from the API');
@@ -137,7 +143,7 @@ class CurrencyTest extends TestCase
                 'base' => false
             ]);
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -152,7 +158,7 @@ class CurrencyTest extends TestCase
         $currency->retrieveCurrencyRateToBase();
     }
 
-    public function test_throws_exception_when_rate_is_out_of_range()
+    public function test_throws_exception_when_rate_is_out_of_range(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('Currency rate is out of the valid range');
@@ -179,7 +185,7 @@ class CurrencyTest extends TestCase
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')
@@ -196,7 +202,7 @@ class CurrencyTest extends TestCase
         $currency->retrieveCurrencyRateToBase($dateFrom);
     }
 
-    public function test_throws_exception_when_rate_is_negative()
+    public function test_throws_exception_when_rate_is_negative(): void
     {
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('Currency rate is out of the valid range');
@@ -223,7 +229,7 @@ class CurrencyTest extends TestCase
 
         $dateFrom = Carbon::parse('2023-01-01');
 
-        $interface = \Mockery::mock(ExchangeRateApiClientInterface::class);
+        $interface = Mockery::mock(ExchangeRateApiClientInterface::class);
         CurrencyExchangeRates::shouldReceive('create')
             ->andReturn($interface);
         $interface->shouldReceive('isCurrencySupported')

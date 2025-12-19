@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
@@ -14,17 +16,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentPriceController extends Controller
+class InvestmentPriceController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**
      * @throws AuthorizationException
-     * @param Investment $investment
-     * @return View
      */
     public function list(Investment $investment): View
     {
@@ -33,7 +35,7 @@ class InvestmentPriceController extends Controller
          * @name('investment-price.list')
          * @middlewares('web', 'auth', 'verified')
          */
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         // Load currency details for JavaScript
         $investment->load('currency');
@@ -67,7 +69,7 @@ class InvestmentPriceController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->get('investment'));
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         return view(
             'investment-prices.form',
@@ -85,7 +87,7 @@ class InvestmentPriceController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         $investment = Investment::find($request->investment_id);
-        $this->authorize('view', $investment);
+        Gate::authorize('view', $investment);
 
         $validated = $request->validated();
 
@@ -98,9 +100,6 @@ class InvestmentPriceController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  InvestmentPrice  $investmentPrice
-     * @return View
      */
     public function edit(InvestmentPrice $investmentPrice): View
     {
@@ -139,9 +138,6 @@ class InvestmentPriceController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  InvestmentPrice  $investmentPrice
-     * @return RedirectResponse
      */
     public function destroy(InvestmentPrice $investmentPrice): RedirectResponse
     {

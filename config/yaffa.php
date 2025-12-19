@@ -8,10 +8,11 @@ return [
     'alpha_vantage_key' => env('ALPHA_VANTAGE_KEY'),
     'registered_user_limit' => intval(env('REGISTERED_USER_LIMIT')),
     'incoming_receipts_email' => env('INCOMING_RECEIPTS_EMAIL'),
-    'email_verification_required' =>env('EMAIL_VERIFICATION_REQUIRED',false),
+    'email_verification_required' => env('EMAIL_VERIFICATION_REQUIRED', false),
+    'runs_scheduler' => env('RUNS_SCHEDULER', false),
 
     // Optional settings, used primarily for the public facing Sandbox environment
-    'sandbox_mode' => env('SANDBOX_MODE',false),
+    'sandbox_mode' => env('SANDBOX_MODE', false),
     'gtm_container_id' => env('GTM_CONTAINER_ID'),
     'cookieyes_id' => env('COOKIEYES_ID'),
 
@@ -46,7 +47,7 @@ return [
             'label' => 'Previous interval',
             'options' => [
                 ['value' => 'previousMonth', 'label' => 'Previous month'],
-                ['value' => 'previousMonthToDate', 'label' => 'Previous month to date'],                
+                ['value' => 'previousMonthToDate', 'label' => 'Previous month to date'],
             ],
         ]
     ]

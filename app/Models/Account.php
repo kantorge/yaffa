@@ -62,13 +62,6 @@ class Account extends Model
     public $timestamps = false;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'accounts';
-
-    /**
      * The primary key associated with the table.
      *
      * @var string
@@ -87,9 +80,12 @@ class Account extends Model
         'default_date_range',
     ];
 
-    protected $casts = [
-        'opening_balance' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'opening_balance' => 'float',
+        ];
+    }
 
     public function config(): MorphOne
     {

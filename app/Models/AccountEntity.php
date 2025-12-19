@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Database\Factories\AccountEntityFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -62,8 +63,6 @@ class AccountEntity extends Model
 {
     use HasFactory;
 
-    protected $table = 'account_entities';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -80,9 +79,12 @@ class AccountEntity extends Model
 
     protected $hidden = ['config_id'];
 
-    protected $casts = [
-        'active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
 
     public function config(): MorphTo
     {
@@ -170,33 +172,27 @@ class AccountEntity extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
-    public function scopeActive($query)
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', 1);
     }
 
     /**
      * Scope a query to only include accounts.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
-    public function scopeAccounts($query): Builder
+    #[Scope]
+    protected function accounts(Builder $query): Builder
     {
         return $query->where('config_type', 'account');
     }
 
     /**
      * Scope a query to only include payees.
-     *
-     * @param  Builder  $query
-     * @return Builder
      */
-    public function scopePayees($query): Builder
+    #[Scope]
+    protected function payees(Builder $query): Builder
     {
         return $query->where('config_type', 'payee');
     }

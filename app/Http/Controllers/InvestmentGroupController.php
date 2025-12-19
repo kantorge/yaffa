@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
 use Illuminate\Database\QueryException;
@@ -10,20 +13,24 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentGroupController extends Controller
+class InvestmentGroupController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(InvestmentGroup::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\InvestmentGroup', only: ['index']),
+            new Middleware('can:view,investment_group', only: ['show']),
+            new Middleware('can:create,App\Models\InvestmentGroup', only: ['create', 'store']),
+            new Middleware('can:update,investment_group', only: ['edit', 'update']),
+            new Middleware('can:delete,investment_group', only: ['destroy']),
+        ];
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/investment-group')
@@ -31,7 +38,7 @@ class InvestmentGroupController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\InvestmentGroup')
          */
         // Get all investment groups of the user from the database and return to view
-        $investmentGroups = Auth::user()
+        $investmentGroups = $request->user()
             ->investmentGroups()
             ->select('id', 'name')
             ->withCount('investments')
@@ -57,9 +64,6 @@ class InvestmentGroupController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  InvestmentGroup  $investmentGroup
-     * @return View
      */
     public function edit(InvestmentGroup $investmentGroup): View
     {
@@ -106,9 +110,6 @@ class InvestmentGroupController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  InvestmentGroup  $investmentGroup
-     * @return RedirectResponse
      */
     public function destroy(InvestmentGroup $investmentGroup): RedirectResponse
     {

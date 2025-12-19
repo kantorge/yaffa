@@ -60,16 +60,8 @@ Route::resource('currency', CurrencyController::class)->except(['show']);
 Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDefault'])
     ->name('currency.setDefault');
 
-Route::get('/currencyrates/missing/{currency}', [CurrencyRateController::class, 'retrieveMissingCurrencyRateToBase'])
-    ->name('currency-rate.retrieveMissing');
-
-Route::get('/currencyrates/get/{currency}/{from?}', [CurrencyRateController::class, 'retrieveCurrencyRateToBase'])
-    ->name('currency-rate.retrieveRate');
-
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
-
-Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy']);
 
 /*********************
  * Investment related routes

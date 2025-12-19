@@ -17,12 +17,21 @@ use Illuminate\Validation\Rules\Password;
 class AppServiceProvider extends ServiceProvider
 {
     /**
+     * The path to your application's "home" route.
+     *
+     * Typically, users are redirected here after authentication.
+     *
+     * @var string
+     */
+    public const HOME = '/';
+
+    /**
      * Register any application services.
      */
     public function register(): void
     {
         // Register Telescope if enabled
-        if ($this->app->environment('local') && config('telescope.enabled')) {
+        if (config('telescope.enabled')) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
@@ -70,5 +79,18 @@ class AppServiceProvider extends ServiceProvider
         if (config('yaffa.incoming_receipts_email')) {
             Mailbox::to(config('yaffa.incoming_receipts_email'), MailHandler::class);
         }
+
+        // Manually override the default verification listener to use our own event which has a context parameter
+        $this->app->bind(
+            \Illuminate\Auth\Listeners\SendEmailVerificationNotification::class,
+            \App\Listeners\SendEmailVerificationNotification::class
+        );
+
+        $this->bootEvent();
+    }
+
+    public function bootEvent(): void
+    {
+
     }
 }

@@ -393,8 +393,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
      * This is a relatively complex calculation, as every month's value is calculated based on the previous month.
      * In this case, it involves both previous fact values, and forecast values.
      * The price is still taken from known fact values, but the quantity is calculated based on the forecast values, too
-     *
-     * @return Collection
      */
     private function getInvestmentValueForecastData(): Collection
     {

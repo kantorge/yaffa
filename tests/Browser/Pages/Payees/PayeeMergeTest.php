@@ -2,14 +2,12 @@
 
 namespace Tests\Browser\Pages\Payees;
 
-
-
 use App\Models\User;
 use Tests\DuskTestCase;
 
 class PayeeMergeTest extends DuskTestCase
 {
-    public function test_user_can_load_the_merge_payee_form()
+    public function test_user_can_load_the_merge_payee_form(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);

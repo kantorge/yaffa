@@ -10,8 +10,6 @@ class InvestmentPriceRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      * Pass ID to unique check, if it exists in request
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -19,10 +17,8 @@ class InvestmentPriceRequest extends FormRequest
             'date' => [
                 'required',
                 'date',
-                Rule::unique('investment_prices')->where(function ($query) {
-                    return $query
-                        ->where('investment_id', $this->investment_id);
-                })->ignore($this->id),
+                Rule::unique('investment_prices')->where(fn ($query) => $query
+                    ->where('investment_id', $this->investment_id))->ignore($this->id),
             ],
             'price' => [
                 'required',

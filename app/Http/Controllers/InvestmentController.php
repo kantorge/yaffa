@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\InvestmentRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -12,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class InvestmentController extends Controller
+class InvestmentController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
@@ -20,18 +23,26 @@ class InvestmentController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Investment::class);
 
         $this->investmentService = new InvestmentService();
     }
 
+    public static function middleware(): array
+    {
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Investment', only: ['index']),
+            new Middleware('can:view,investment', only: ['show']),
+            new Middleware('can:create,App\Models\Investment', only: ['create', 'store']),
+            new Middleware('can:update,investment', only: ['edit', 'update']),
+            new Middleware('can:delete,investment', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/investment')
@@ -39,7 +50,7 @@ class InvestmentController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
          */
         // Show all investments from the database and return to view
-        $investments = Auth::user()
+        $investments = $request->user()
             ->investments()
             ->withCount('transactions')
             ->withCount('transactionsBasic')
@@ -60,7 +71,7 @@ class InvestmentController extends Controller
         // Pass data for DataTables
         JavaScriptFacade::put([
             'investments' => $investments,
-            'investmentGroups' => Auth::user()->investmentGroups,
+            'investmentGroups' => $request->user()->investmentGroups,
         ]);
 
         return view('investment.index');
@@ -68,9 +79,6 @@ class InvestmentController extends Controller
 
     /**
      * Display form to edit the resource.
-     *
-     * @param Investment $investment
-     * @return View
      */
     public function edit(Investment $investment): View
     {
@@ -109,7 +117,7 @@ class InvestmentController extends Controller
      *
      * @return View|RedirectResponse
      */
-    public function create(): View|RedirectResponse
+    public function create(Request $request): View|RedirectResponse
     {
         /**
          * @get('/investment/create')
@@ -117,7 +125,7 @@ class InvestmentController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
         // Redirect the user to the investment group form, if no investment groups are available
-        if (Auth::user()->investmentGroups()->count() === 0) {
+        if ($request->user()->investmentGroups()->count() === 0) {
             $this->addMessage(
                 __('investment.requirement.investmentGroup'),
                 'info',
@@ -129,7 +137,7 @@ class InvestmentController extends Controller
         }
 
         // Redirect to currency form, if empty
-        if (Auth::user()->currencies()->count() === 0) {
+        if ($request->user()->currencies()->count() === 0) {
             $this->addMessage(
                 __('investment.requirement.currency'),
                 'info',
@@ -151,7 +159,7 @@ class InvestmentController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
          */
         $investment = Investment::make($request->validated());
-        $investment->user()->associate(Auth::user());
+        $investment->user()->associate($request->user());
         $investment->save();
 
         self::addSimpleSuccessMessage(__('Investment added'));
@@ -161,9 +169,6 @@ class InvestmentController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Investment $investment
-     * @return RedirectResponse
      */
     public function destroy(Investment $investment): RedirectResponse
     {

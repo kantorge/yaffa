@@ -5,7 +5,6 @@ on:
     # Ignore branches which are expected to have producion assets, and some tests would fail
     branches-ignore:
       - main
-      - other/sandbox
 
     # Only run tests if relevant file types (php, js, css, etc) are changed
     paths:
@@ -92,7 +91,7 @@ jobs:
   dusk-php:
     runs-on: ubuntu-latest
     env:
-      APP_URL: "http://127.0.0.1:8000"
+      APP_URL: 'http://127.0.0.1:8000'
       DB_USERNAME: root
       DB_PASSWORD: root
       MAIL_MAILER: log
@@ -123,7 +122,7 @@ jobs:
         run: php artisan dusk:chrome-driver --detect
 
       - name: Start Chrome Driver
-        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 >/dev/null 2>&1 &
 
       - name: Cache NPM Dependencies
         uses: actions/cache@v4

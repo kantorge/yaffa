@@ -53,8 +53,7 @@ class RecordScheduledTransactionsTest extends TestCase
         return $transaction;
     }
 
-    /** @test */
-    public function test_transaction_with_next_date_today_is_recorded()
+    public function test_transaction_with_next_date_today_is_recorded(): void
     {
         $date = Carbon::today()->startOfDay();
 
@@ -73,8 +72,7 @@ class RecordScheduledTransactionsTest extends TestCase
         Queue::assertPushed(RecordScheduledTransaction::class, fn ($job) => $job->transaction->id === $transaction->id);
     }
 
-    /** @test */
-    public function test_transaction_with_next_date_in_the_past_is_recorded()
+    public function test_transaction_with_next_date_in_the_past_is_recorded(): void
     {
         $date = Carbon::yesterday()->startOfDay();
 
@@ -93,8 +91,7 @@ class RecordScheduledTransactionsTest extends TestCase
         Queue::assertPushed(RecordScheduledTransaction::class, fn ($job) => $job->transaction->id === $transaction->id);
     }
 
-    /** @test */
-    public function test_transaction_with_next_date_in_the_future_is_not_recorded()
+    public function test_transaction_with_next_date_in_the_future_is_not_recorded(): void
     {
         $date = Carbon::tomorrow()->startOfDay();
 
@@ -113,8 +110,7 @@ class RecordScheduledTransactionsTest extends TestCase
         Queue::assertNotPushed(RecordScheduledTransaction::class);
     }
 
-    /** @test */
-    public function test_transaction_with_empty_next_date_is_not_recorded()
+    public function test_transaction_with_empty_next_date_is_not_recorded(): void
     {
         $this->createTestTransaction(['next_date' => null]);
 

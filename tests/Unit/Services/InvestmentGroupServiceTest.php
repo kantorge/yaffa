@@ -7,13 +7,11 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use App\Services\InvestmentGroupService;
-use Exception;
 use Tests\TestCase;
 
 class InvestmentGroupServiceTest extends TestCase
 {
-    /** @test */
-    public function deletesInvestmentGroupSuccessfully(): void
+    public function test_deletesInvestmentGroupSuccessfully(): void
     {
         $investmentGroup = InvestmentGroup::factory()->create();
 
@@ -25,8 +23,7 @@ class InvestmentGroupServiceTest extends TestCase
         $this->assertDatabaseMissing('investment_groups', ['id' => $investmentGroup->id]);
     }
 
-    /** @test */
-    public function doesNotDeleteInvestmentGroupInUse(): void
+    public function test_doesNotDeleteInvestmentGroupInUse(): void
     {
         $user = User::factory()->create();
 

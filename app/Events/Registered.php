@@ -21,9 +21,6 @@ class Registered extends OriginalRegistered
 
     /**
      * Create a new event instance.
-     *
-     * @param User $user
-     * @param array $context
      */
     public function __construct(User $user, array $context)
     {

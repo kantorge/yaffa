@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
 use Carbon\Carbon;
@@ -68,13 +69,6 @@ class Transaction extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'transactions';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -95,19 +89,6 @@ class Transaction extends Model
         'config_id',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'date' => 'date',
-        'reconciled' => 'boolean',
-        'schedule' => 'boolean',
-        'budget' => 'boolean',
-        'cashflow_value' => 'float',
-    ];
-
     protected $appends = [
         'transaction_currency',
     ];
@@ -116,6 +97,22 @@ class Transaction extends Model
         'config',
         'transactionItems',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'reconciled' => 'boolean',
+            'schedule' => 'boolean',
+            'budget' => 'boolean',
+            'cashflow_value' => 'float',
+        ];
+    }
 
     public function config(): MorphTo
     {
@@ -170,12 +167,9 @@ class Transaction extends Model
 
     /**
      * Create a dynamic scope to filter transactions by schedule and/or budget flag
-     *
-     * @param Builder $query
-     * @param string $type
-     * @return Builder
      */
-    public function scopeByScheduleType(Builder $query, string $type): Builder
+    #[Scope]
+    protected function byScheduleType(Builder $query, string $type): Builder
     {
         return match ($type) {
             'schedule' => $query->where('schedule', true),
@@ -192,7 +186,8 @@ class Transaction extends Model
     /**
      * Create a dynamic scope to filter transactions by their type
      */
-    public function scopeByType(Builder $query, string $type): Builder
+    #[Scope]
+    protected function byType(Builder $query, string $type): Builder
     {
         return match ($type) {
             'standard' => $query->where('config_type', 'standard'),

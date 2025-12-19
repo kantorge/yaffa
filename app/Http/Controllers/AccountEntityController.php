@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
@@ -17,12 +19,18 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class AccountEntityController extends Controller
+class AccountEntityController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(AccountEntity::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\AccountEntity', only: ['index']),
+            new Middleware('can:view,account_entity', only: ['show']),
+            new Middleware('can:create,App\Models\AccountEntity', only: ['create', 'store']),
+            new Middleware('can:update,account_entity', only: ['edit', 'update']),
+            new Middleware('can:delete,account_entity', only: ['destroy']),
+        ];
     }
 
     /*
@@ -60,7 +68,7 @@ class AccountEntityController extends Controller
                     $filters['date_preset'] = $request->get('date_preset');
                 } else {
                     $filters['date_preset'] = $accountEntity->config->default_date_range
-                    ?? Auth::user()->account_details_date_range
+                    ?? $request->user()->account_details_date_range
                     ?? 'none';
                 }
             }
@@ -85,8 +93,6 @@ class AccountEntityController extends Controller
     /**
      * Display a listing of the resource, for the type specified in request.
      *
-     * @param Request $request
-     * @return View
      * @uses indexAccount()
      * @uses indexPayee()
      */
@@ -102,9 +108,6 @@ class AccountEntityController extends Controller
         return $this->{'index' . Str::ucfirst($request->get('type'))}();
     }
 
-    /**
-     * @return View
-     */
     private function indexAccount(): View
     {
         // Show all accounts of user from the database and return to view
@@ -131,9 +134,6 @@ class AccountEntityController extends Controller
         return view('account.index');
     }
 
-    /**
-     * @return View
-     */
     private function indexPayee(): View
     {
         // Show all payees of the user from the database and return to view
@@ -159,7 +159,6 @@ class AccountEntityController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
      * @return View|RedirectResponse
      * @uses createPayee
      * @uses createAccount
@@ -205,9 +204,6 @@ class AccountEntityController extends Controller
         return view('account.form');
     }
 
-    /**
-     * @return View
-     */
     private function createPayee(): View
     {
         JavaScriptFacade::put([
@@ -219,9 +215,6 @@ class AccountEntityController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @return RedirectResponse
      */
     public function store(AccountEntityRequest $request): RedirectResponse
     {
@@ -235,7 +228,7 @@ class AccountEntityController extends Controller
         $validated = $request->validated();
 
         $accountEntity = new AccountEntity($validated);
-        $accountEntity->user_id = Auth::user()->id;
+        $accountEntity->user_id = $request->user()->id;
 
         if ($validated['config_type'] === 'account') {
             $accountConfig = Account::create($validated['config']);
@@ -290,8 +283,6 @@ class AccountEntityController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param AccountEntity $accountEntity
-     * @return View
      * @uses editPayee
      * @uses editAccount
      */
@@ -330,13 +321,11 @@ class AccountEntityController extends Controller
         $accountEntity->load(['config', 'categoryPreference']);
 
         // Simplify the category preference structure and pass it as JavaScript variable
-        $categoryPreference = $accountEntity->categoryPreference->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'full_name' => $item->full_name,
-                'preferred' => $item->pivot->preferred,
-            ];
-        });
+        $categoryPreference = $accountEntity->categoryPreference->map(fn ($item) => [
+            'id' => $item->id,
+            'full_name' => $item->full_name,
+            'preferred' => $item->pivot->preferred,
+        ]);
         JavaScriptFacade::put([
             'categoryPreferences' => $categoryPreference->toArray(),
         ]);
@@ -351,10 +340,6 @@ class AccountEntityController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param AccountEntityRequest $request
-     * @param AccountEntity $accountEntity
-     * @return RedirectResponse
      */
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
@@ -414,9 +399,6 @@ class AccountEntityController extends Controller
 
     /**
      * Display a form to merge two payees.
-     *
-     * @param AccountEntity|null $payeeSource
-     * @return View
      */
     public function mergePayeesForm(?AccountEntity $payeeSource): View
     {

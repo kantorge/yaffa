@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\InvestmentPriceObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,15 +28,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereUpdatedAt($value)
  * @mixin \Eloquent
  */
+#[ObservedBy([InvestmentPriceObserver::class])]
 class InvestmentPrice extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'investment_prices';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -47,14 +43,17 @@ class InvestmentPrice extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        'date' => 'datetime:Y-m-d',
-        'price' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'datetime:Y-m-d',
+            'price' => 'float',
+        ];
+    }
 
     public function investment(): BelongsTo
     {
