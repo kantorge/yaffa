@@ -65,12 +65,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      */
     public function store(CurrencyRateRequest $request): JsonResponse
     {
-        $fromCurrency = Currency::findOrFail($request->from_id);
-        $toCurrency = Currency::findOrFail($request->to_id);
-
-        Gate::authorize('view', $fromCurrency);
-        Gate::authorize('view', $toCurrency);
-
+        // Note, that the CurrencyRateRequest validates that from_id and to_id exist and belong to the authenticated user.
         $rate = CurrencyRate::create($request->validated());
 
         return response()->json([
@@ -86,9 +81,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
      */
     public function update(CurrencyRateRequest $request, CurrencyRate $currencyRate): JsonResponse
     {
-        Gate::authorize('view', $currencyRate->currencyFrom);
-        Gate::authorize('view', $currencyRate->currencyTo);
-
+        // Note, that the CurrencyRateRequest validates that from_id and to_id exist and belong to the authenticated user.
         $currencyRate->update($request->validated());
 
         return response()->json([
