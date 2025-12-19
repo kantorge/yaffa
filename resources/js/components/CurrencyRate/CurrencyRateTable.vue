@@ -209,7 +209,7 @@
             );
             if (toastElement) {
               const toastInstance = new window.bootstrap.Toast(toastElement);
-              toastInstance.hide();
+              toastInstance.dispose();
             }
           }, 250);
         }

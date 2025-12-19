@@ -190,7 +190,6 @@
         this.$refs.rateTable.updateTableData(
           this.displayRates || this.allRates,
         );
-        this.$refs.rateChart.updateChart(this.allRates);
       },
       onRateDeleted(rateId) {
         // Remove the rate from allRates

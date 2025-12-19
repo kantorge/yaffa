@@ -108,7 +108,8 @@ Breadcrumbs::for('currency.edit', function (BreadcrumbTrail $trail, $currency) {
 // Currency rate, only index view
 Breadcrumbs::for('currency-rate.index', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push(__('Currency Rates'));
+    $trail->push(__('Currencies'), route('currency.index'));
+    $trail->push(__('Currency rates'));
 });
 
 // Investment group resource views (index, create, edit)
