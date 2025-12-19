@@ -45,7 +45,7 @@ class TransactionDetailInvestmentFactory extends Factory
             $investment = $investments->where('currency_id', $currency)->random();
         } else {
             // Get a random currency for the user, or create one if none exists
-            $currency = Currency::inRandomOrder()->firstOr(fn () => Currency::factory()->create())->id;
+            $currency = Currency::inRandomOrder()->firstOr(fn () => Currency::factory()->for($user)->create())->id;
 
             // Create a new account with the random currency
             $account = AccountEntity::factory()

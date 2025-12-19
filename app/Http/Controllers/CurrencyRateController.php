@@ -4,14 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
-use App\Exceptions\CurrencyRateConversionException;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Currency;
 use App\Models\CurrencyRate;
-use Carbon\Carbon;
-use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -64,74 +60,5 @@ class CurrencyRateController extends Controller implements HasMiddleware
             'to' => $to,
             'currencyRates' => $currencyRates,
         ]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @throws AuthorizationException
-     */
-    public function destroy(CurrencyRate $currencyRate): RedirectResponse
-    {
-        /**
-         * @delete('/currency-rate/{currency_rate}')
-         * @name('currency-rate.destroy')
-         * @middlewares('web')
-         */
-
-        // Authorize user access to requested currencies
-        Gate::authorize('view', $currencyRate->currencyFrom);
-        Gate::authorize('view', $currencyRate->currencyTo);
-
-        $currencyRate->delete();
-
-        self::addSimpleSuccessMessage(__('Currency rate deleted'));
-
-        return redirect()->back();
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function retrieveCurrencyRateToBase(Currency $currency, ?Carbon $from = null): RedirectResponse
-    {
-        /**
-         * @get('/currencyrates/get/{currency}/{from?}')
-         * @name('currency-rate.retrieveRate')
-         * @middlewares('web')
-         */
-
-        // Authorize user access to requested currency
-        Gate::authorize('view', $currency);
-
-        try {
-            $currency->retrieveCurrencyRateToBase($from);
-        } catch (CurrencyRateConversionException|Exception $e) {
-            self::addSimpleErrorMessage($e->getMessage());
-        }
-
-        return redirect()->back();
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function retrieveMissingCurrencyRateToBase(Currency $currency): RedirectResponse
-    {
-        /**
-         * @get('/currencyrates/missing/{currency}')
-         * @name('currency-rate.retrieveMissing')
-         * @middlewares('web')
-         */
-        // Authorize user access to requested currency
-        Gate::authorize('view', $currency);
-
-        try {
-            $currency->retrieveMissingCurrencyRateToBase();
-        } catch (CurrencyRateConversionException $e) {
-            self::addSimpleErrorMessage($e->getMessage());
-        }
-
-        return redirect()->back();
     }
 }

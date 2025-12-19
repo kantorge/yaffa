@@ -137,8 +137,8 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
-            ->each(function ($investment) use (&$positions) {
+        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+            ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
 
@@ -159,7 +159,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                         continue;
                     }
 
-                    if (! $start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
+                    if (!$start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
                         $period['end'] = $item['date'];
                         $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
                         $positions[] = $period;
@@ -174,7 +174,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 }
 
                 // If period start was set but the end date is missing, then set it to the app config end date
-                if (array_key_exists('start', $period) && ! array_key_exists('end', $period)) {
+                if (array_key_exists('start', $period) && !array_key_exists('end', $period)) {
                     $period['end'] = $request->user()->end_date;
                     $period['last_price'] = $investment->getLatestPrice('combined');
                     $positions[] = $period;
