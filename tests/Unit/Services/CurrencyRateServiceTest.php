@@ -24,12 +24,12 @@ class CurrencyRateServiceTest extends TestCase
 
         $this->service = new CurrencyRateService();
         $this->user = User::factory()->create();
-        
+
         // Create unique currencies for this test using randomized 3-letter codes
         // Generate a random suffix to ensure uniqueness within the 3-letter limit
         $codes = ['EUR', 'USD', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN'];
         shuffle($codes);
-        
+
         $this->fromCurrency = Currency::factory()->for($this->user)->create([
             'iso_code' => $codes[0],
             'name' => 'Test Currency From',
@@ -38,71 +38,6 @@ class CurrencyRateServiceTest extends TestCase
             'iso_code' => $codes[1],
             'name' => 'Test Currency To',
             'base' => true,
-        ]);
-    }
-
-    public function test_can_create_rate(): void
-    {
-        $data = [
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ];
-
-        $rate = $this->service->createRate($data);
-
-        $this->assertInstanceOf(CurrencyRate::class, $rate);
-        $this->assertEquals($data['from_id'], $rate->from_id);
-        $this->assertEquals($data['to_id'], $rate->to_id);
-        $this->assertEquals($data['date'], $rate->date->format('Y-m-d'));
-        $this->assertEquals($data['rate'], $rate->rate);
-        $this->assertDatabaseHas('currency_rates', [
-            'from_id' => $data['from_id'],
-            'to_id' => $data['to_id'],
-            'date' => $data['date'],
-        ]);
-    }
-
-    public function test_can_update_rate(): void
-    {
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ]);
-
-        $updateData = [
-            'date' => '2024-01-16',
-            'rate' => 1.3456,
-        ];
-
-        $updatedRate = $this->service->updateRate($rate, $updateData);
-
-        $this->assertEquals($updateData['date'], $updatedRate->date->format('Y-m-d'));
-        $this->assertEquals($updateData['rate'], $updatedRate->rate);
-        $this->assertDatabaseHas('currency_rates', [
-            'id' => $rate->id,
-            'date' => $updateData['date'],
-            'rate' => $updateData['rate'],
-        ]);
-    }
-
-    public function test_can_delete_rate(): void
-    {
-        $rate = CurrencyRate::factory()->create([
-            'from_id' => $this->fromCurrency->id,
-            'to_id' => $this->toCurrency->id,
-            'date' => '2024-01-15',
-            'rate' => 1.2345,
-        ]);
-
-        $result = $this->service->deleteRate($rate);
-
-        $this->assertTrue($result);
-        $this->assertDatabaseMissing('currency_rates', [
-            'id' => $rate->id,
         ]);
     }
 

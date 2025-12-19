@@ -69,9 +69,6 @@ class CurrencyRateTest extends TestCase
             'to' => $baseCurrency
         ]))
             ->assertRedirect(route('login'));
-
-        $this->delete(route("currency-rate.destroy", $rate))
-            ->assertRedirect(route('login'));
     }
 
     public function test_user_can_access_their_own_resources(): void

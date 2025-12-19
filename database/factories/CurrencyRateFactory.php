@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use InvalidArgumentException;
 
 class CurrencyRateFactory extends Factory
 {
@@ -32,12 +33,10 @@ class CurrencyRateFactory extends Factory
      */
     public function forUser(User $user): static
     {
-        return $this->state(function (array $attributes) use ($user) {
-            return [
-                'from_id' => Currency::factory()->for($user),
-                'to_id' => Currency::factory()->for($user),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'from_id' => Currency::factory()->for($user),
+            'to_id' => Currency::factory()->for($user),
+        ]);
     }
 
     /**
@@ -48,7 +47,7 @@ class CurrencyRateFactory extends Factory
         return $this->state(function (array $attributes) use ($fromCurrency, $toCurrency) {
             // Ensure both currencies belong to the same user
             if ($fromCurrency->user_id !== $toCurrency->user_id) {
-                throw new \InvalidArgumentException('Both currencies must belong to the same user');
+                throw new InvalidArgumentException('Both currencies must belong to the same user');
             }
 
             return [

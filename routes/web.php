@@ -63,8 +63,6 @@ Route::get('currency/{currency}/setDefault', [CurrencyController::class, 'setDef
 Route::get('/currencyrates/{from}/{to}', [CurrencyRateController::class, 'index'])
     ->name('currency-rate.index');
 
-Route::resource('currency-rate', CurrencyRateController::class)->only(['destroy']);
-
 /*********************
  * Investment related routes
  ********************/

@@ -17,11 +17,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CurrencyRateApiController extends Controller implements HasMiddleware
 {
-    protected CurrencyRateService $currencyRateService;
-
-    public function __construct(CurrencyRateService $currencyRateService)
-    {
-        $this->currencyRateService = $currencyRateService;
+    public function __construct(
+        protected CurrencyRateService $currencyRateService
+    ) {
     }
 
     public static function middleware(): array
@@ -73,7 +71,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         Gate::authorize('view', $fromCurrency);
         Gate::authorize('view', $toCurrency);
 
-        $rate = $this->currencyRateService->createRate($request->validated());
+        $rate = CurrencyRate::create($request->validated());
 
         return response()->json([
             'rate' => $rate->load(['currencyFrom', 'currencyTo']),
@@ -91,10 +89,10 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         Gate::authorize('view', $currencyRate->currencyFrom);
         Gate::authorize('view', $currencyRate->currencyTo);
 
-        $rate = $this->currencyRateService->updateRate($currencyRate, $request->validated());
+        $currencyRate->update($request->validated());
 
         return response()->json([
-            'rate' => $rate->load(['currencyFrom', 'currencyTo']),
+            'rate' => $currencyRate->fresh(['currencyFrom', 'currencyTo']),
             'message' => __('Currency rate updated'),
         ]);
     }
@@ -109,7 +107,7 @@ class CurrencyRateApiController extends Controller implements HasMiddleware
         Gate::authorize('view', $currencyRate->currencyFrom);
         Gate::authorize('view', $currencyRate->currencyTo);
 
-        $this->currencyRateService->deleteRate($currencyRate);
+        $currencyRate->delete();
 
         return response()->json([
             'message' => __('Currency rate deleted'),
