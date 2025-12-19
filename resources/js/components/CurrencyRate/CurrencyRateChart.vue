@@ -42,8 +42,21 @@
     watch: {
       currencyRates: {
         handler(newRates) {
-          if (this.chart && newRates && newRates.length > 0) {
-            this.chart.data = newRates;
+          if (newRates && newRates.length > 0) {
+            if (this.chart) {
+              this.chart.data = newRates;
+            } else {
+              // Chart wasn't initialized yet (mounted with no data) or was disposed
+              this.$nextTick(() => {
+                this.initializeChart();
+              });
+            }
+          } else {
+            // No data - dispose chart if it exists
+            if (this.chart) {
+              this.chart.dispose();
+              this.chart = null;
+            }
           }
         },
         deep: true,
