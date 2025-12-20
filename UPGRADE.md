@@ -33,6 +33,7 @@ The main reason for increasing the version is the migration of the framework fro
 ```
 
 - The mail encryption environment variable has beeen renamed to be more generic, as not all mail schemes are encryption.
+- Make sure to double-check the list of accepted values, and update if necessary. E.g. earlier `ssl` value should be changed to `smtp` or `smtps`, based on your server configuration.
 
 ```diff
 - MAIL_ENCRYPTION=#your_value#
