@@ -72,10 +72,10 @@ class ReportApiController extends Controller implements HasMiddleware
                     $query->whereUserId($request->user()->id)
                         ->byScheduleType('none')
                         ->byType('standard')
-                        ->when($accountSelection === 'selected', fn($query) => $query->whereHasMorph(
+                        ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                             'config',
                             TransactionDetailStandard::class,
-                            fn($query) => $query->where('account_from_id', $accountEntity)
+                            fn ($query) => $query->where('account_from_id', $accountEntity)
                                 ->orWhere('account_to_id', $accountEntity)
                         ));
                 })
@@ -131,10 +131,10 @@ class ReportApiController extends Controller implements HasMiddleware
             ->where('user_id', $request->user()->id)
             ->byType('standard')
             ->byScheduleType('budget')
-            ->when($accountSelection === 'selected', fn($query) => $query->whereHasMorph(
+            ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                 'config',
                 TransactionDetailStandard::class,
-                fn($query) => $query->where('account_from_id', $accountEntity)
+                fn ($query) => $query->where('account_from_id', $accountEntity)
                     ->orWhere('account_to_id', $accountEntity)
             ))
             ->when($accountSelection === 'none', function ($query) {
@@ -145,18 +145,18 @@ class ReportApiController extends Controller implements HasMiddleware
                             ->whereHasMorph(
                                 'config',
                                 TransactionDetailStandard::class,
-                                fn($query) => $query->whereNull('account_from_id')
+                                fn ($query) => $query->whereNull('account_from_id')
                             );
                     })
                         // Or deposit with empty account_to_id
                         ->orWhere(function ($query) {
-                        $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
-                            ->whereHasMorph(
-                                'config',
-                                TransactionDetailStandard::class,
-                                fn($query) => $query->whereNull('account_to_id')
-                            );
-                    });
+                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                                ->whereHasMorph(
+                                    'config',
+                                    TransactionDetailStandard::class,
+                                    fn ($query) => $query->whereNull('account_to_id')
+                                );
+                        });
                 });
             })
             ->get();
@@ -164,7 +164,7 @@ class ReportApiController extends Controller implements HasMiddleware
         // Unify currencies and calculate amounts only for given categories
         $budgetTransactions->transform(function ($transaction) use ($categories) {
             $transaction->sum = $transaction->transactionItems
-                ->filter(fn($item) => $categories->pluck('id')->contains($item->category_id))
+                ->filter(fn ($item) => $categories->pluck('id')->contains($item->category_id))
                 ->sum('amount');
 
             return $transaction;
@@ -220,7 +220,7 @@ class ReportApiController extends Controller implements HasMiddleware
             ];
         }
 
-        usort($result, fn($a, $b) => $a['period'] <=> $b['period']);
+        usort($result, fn ($a, $b) => $a['period'] <=> $b['period']);
 
         // Return fetched and prepared data
         return response()->json($result, Response::HTTP_OK);
@@ -260,8 +260,8 @@ class ReportApiController extends Controller implements HasMiddleware
             ])
                 ->whereHas('transaction', function ($query) use ($year, $month, $request) {
                     $query->where('user_id', $request->user()->id)
-                        ->when($month === null, fn($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                        ->when($year && $month, fn($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                        ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
+                        ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                             ->whereRaw('MONTH(date) = ?', [$month]))
                         ->byScheduleType('none')
                         ->byType('standard')
@@ -315,8 +315,8 @@ class ReportApiController extends Controller implements HasMiddleware
                         ->pluck('id')
                 )
                 ->where('user_id', $request->user()->id)
-                ->when($month === null, fn($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                ->when($year && $month, fn($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
+                ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                     ->whereRaw('MONTH(date) = ?', [$month]))
                 ->get();
 
@@ -409,12 +409,12 @@ class ReportApiController extends Controller implements HasMiddleware
             ->where('account_monthly_summaries.user_id', $user->id)
             ->when(
                 !$withForecast,
-                fn($query) => $query->where('data_type', '=', 'fact')
+                fn ($query) => $query->where('data_type', '=', 'fact')
             )
             // Optionally filter by accountEntity
             ->when(
                 $request->get('accountEntity'),
-                fn($query) => $query->where('account_entity_id', '=', $request->get('accountEntity'))
+                fn ($query) => $query->where('account_entity_id', '=', $request->get('accountEntity'))
             )
             ->select(
                 'date',

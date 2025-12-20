@@ -66,10 +66,15 @@ class CurrencyTest extends TestCase
 
     public function test_throws_exception_when_currency_is_same_as_base(): void
     {
+        /** @var User $user */
+        $user = User::factory()->create();
+
         /** @var Currency $baseCurrency */
-        $baseCurrency = Currency::factory()->create([
-            'base' => true
-        ]);
+        $baseCurrency = Currency::factory()
+            ->for($user)
+            ->create([
+                'base' => true
+            ]);
 
         $this->expectException(CurrencyRateConversionException::class);
         $this->expectExceptionMessage('Currency is the same as the base currency');
