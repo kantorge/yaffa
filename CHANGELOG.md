@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.0](https://github.com/kantorge/yaffa/compare/v1.15.1...v2.0.0) (2025-12-19)
+
+
+### 🛠️ Chores
+
+* composer update ([142326a](https://github.com/kantorge/yaffa/commit/142326a271959e4c2ceaa799aebbd61d8ae820ac))
+* **deps-dev:** bump js-yaml ([ff6de72](https://github.com/kantorge/yaffa/commit/ff6de72075b0a5add35d0f6369a4fa8e642f3959))
+* **deps:** bump symfony/http-foundation ([c3acc8c](https://github.com/kantorge/yaffa/commit/c3acc8c9528e6e611cf618249c18d076fd8c3dda))
+* release 2.0.0 ([f364fc1](https://github.com/kantorge/yaffa/commit/f364fc1a03a608666f45fbb2182745041412a334))
+
 ## [1.15.1](https://github.com/kantorge/yaffa/compare/v1.15.0...v1.15.1) (2025-10-03)
 
 
