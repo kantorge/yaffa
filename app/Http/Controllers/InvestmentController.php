@@ -214,12 +214,27 @@ class InvestmentController extends Controller implements HasMiddleware
         $investmentService = new InvestmentService();
         $investment = $investmentService->enrichInvestmentWithQuantityHistory($investment);
 
+        // Get basic (non-scheduled) transactions
         $transactions = $investment->transactionsBasic()
             ->with([
                 'config',
                 'transactionType',
             ])
             ->get();
+
+        // Get scheduled transactions and generate instances
+        $scheduledTransactions = $investment->transactionsScheduled()
+            ->with([
+                'config',
+                'transactionType',
+                'transactionSchedule',
+            ])
+            ->get()
+            ->filter(fn ($transaction) => $transaction->transactionSchedule && $transaction->transactionSchedule->active);
+
+        // Add all scheduled instances to list of transactions
+        $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
+        $transactions = $transactions->concat($scheduleInstances);
 
         return view('investment.show', [
             'investment' => $investment,
