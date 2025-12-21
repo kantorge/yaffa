@@ -8,18 +8,20 @@
         <span class="badge text-bg-warning me-2" v-if="!hasData">{{
           __('No data available')
         }}</span>
-        <template v-if="investment.investment_price_provider">
-          <a
-            :href="priceProviderUrl"
-            class="btn btn-sm btn-success me-2"
-            :title="__('Load new price data')"
-          >
-            <span class="fa fa-cloud-download"></span>
+        <template v-if="!hideActions">
+          <template v-if="investment.investment_price_provider">
+            <a
+              :href="priceProviderUrl"
+              class="btn btn-sm btn-success me-2"
+              :title="__('Load new price data')"
+            >
+              <span class="fa fa-cloud-download"></span>
+            </a>
+          </template>
+          <a :href="priceListUrl" class="btn btn-sm btn-primary">
+            <span class="fa fa-search" :title="__('List prices')"></span>
           </a>
         </template>
-        <a :href="priceListUrl" class="btn btn-sm btn-primary">
-          <span class="fa fa-search" :title="__('List prices')"></span>
-        </a>
       </div>
     </div>
     <div class="card-body">
@@ -47,6 +49,10 @@
         type: String,
         default: () =>
           window.YAFFA ? window.YAFFA.locale : navigator.language,
+      },
+      hideActions: {
+        type: Boolean,
+        default: false,
       },
     },
     computed: {
