@@ -254,7 +254,43 @@
                       id="transaction_price"
                       v-model="form.config.price"
                       :disabled="!transactionTypeSettings.price"
+                      @input="onPriceChange"
                     ></MathInput>
+                    <div
+                      v-if="shouldShowStorePriceCheckbox"
+                      class="form-check mt-2"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="store_price_checkbox"
+                        v-model="storePriceEnabled"
+                        :disabled="existingPriceForDate !== null"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="store_price_checkbox"
+                      >
+                        {{ __('Store this as a price for this date') }}
+                      </label>
+                    </div>
+                    <small
+                      v-if="existingPriceForDate !== null"
+                      class="form-text text-muted"
+                    >
+                      {{
+                        __(
+                          'Existing price for this date: :price',
+                          {
+                            price: toFormattedCurrency(
+                              existingPriceForDate,
+                              locale,
+                              investment_currency,
+                            ),
+                          }
+                        )
+                      }}
+                    </small>
                   </div>
                 </div>
               </div>
@@ -480,6 +516,11 @@
       data.csrfToken = window.csrfToken;
       data.callback = this.initialCallback;
 
+      // Store price feature
+      data.storePriceEnabled = false;
+      data.existingPriceForDate = null;
+      data.priceCheckTimeout = null;
+
       // Possible callback options
       data.callbackOptions = [
         {
@@ -561,6 +602,16 @@
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
         return ['create', 'clone', 'finalize'].includes(this.action);
+      },
+
+      // Should we show the "Store this as a price" checkbox?
+      shouldShowStorePriceCheckbox() {
+        return (
+          ['create', 'clone', 'finalize'].includes(this.action) &&
+          !this.form.schedule &&
+          this.transactionTypeSettings.price &&
+          this.form.config.investment_id
+        );
       },
     },
 
@@ -988,6 +1039,9 @@
         this.form
           .post(window.route('api.transactions.storeInvestment'), this.form)
           .then((response) => {
+            // Store price if enabled
+            this.storePriceIfEnabled(response.data.transaction);
+
             this.$emit(
               'success',
               processTransaction(response.data.transaction),
@@ -1022,6 +1076,102 @@
         this.investment_currency = null;
       },
 
+      async checkExistingPrice() {
+        if (
+          !this.form.config.investment_id ||
+          !this.form.date ||
+          !this.shouldShowStorePriceCheckbox
+        ) {
+          this.existingPriceForDate = null;
+          return;
+        }
+
+        try {
+          const response = await window.axios.get(
+            window.route('api.investment-price.checkPrice', {
+              investment: this.form.config.investment_id,
+            }),
+            {
+              params: {
+                date: toIsoDateString(this.form.date),
+              },
+            },
+          );
+
+          if (response.data.exists) {
+            this.existingPriceForDate = response.data.price;
+            this.storePriceEnabled = false;
+          } else {
+            this.existingPriceForDate = null;
+          }
+        } catch (error) {
+          console.error('Failed to check existing price:', error);
+          this.existingPriceForDate = null;
+        }
+      },
+
+      onPriceChange() {
+        // Debounce price check
+        if (this.priceCheckTimeout) {
+          clearTimeout(this.priceCheckTimeout);
+        }
+
+        this.priceCheckTimeout = setTimeout(() => {
+          this.checkExistingPrice();
+        }, 500);
+      },
+
+      async storePriceIfEnabled(transaction) {
+        if (!this.storePriceEnabled || !this.form.config.price) {
+          return;
+        }
+
+        try {
+          await window.axios.post(
+            window.route('api.investment-price.store'),
+            {
+              investment_id: this.form.config.investment_id,
+              date: toIsoDateString(this.form.date),
+              price: this.form.config.price,
+            },
+          );
+
+          // Show success toast
+          const successEvent = new CustomEvent('toast', {
+            detail: {
+              header: this.__('Success'),
+              body: this.__('Investment price stored'),
+              toastClass: 'bg-success',
+            },
+          });
+          window.dispatchEvent(successEvent);
+        } catch (error) {
+          // If duplicate (422), show warning instead of error
+          if (error.response && error.response.status === 422) {
+            const warningEvent = new CustomEvent('toast', {
+              detail: {
+                header: this.__('Warning'),
+                body: this.__(
+                  'Price for this date already exists and was not updated',
+                ),
+                toastClass: 'bg-warning',
+              },
+            });
+            window.dispatchEvent(warningEvent);
+          } else {
+            // Show error toast for other errors
+            const errorEvent = new CustomEvent('toast', {
+              detail: {
+                header: this.__('Error'),
+                body: this.__('Failed to store investment price'),
+                toastClass: 'bg-danger',
+              },
+            });
+            window.dispatchEvent(errorEvent);
+          }
+        }
+      },
+
       toFormattedCurrency,
     },
 
@@ -1029,6 +1179,16 @@
       // On change of new schedule start date, adjust original schedule end date to previous day
       'form.schedule_config.start_date': function (newDate) {
         this.syncScheduleStartDate(newDate);
+      },
+
+      // Check for existing price when date changes
+      'form.date': function () {
+        this.checkExistingPrice();
+      },
+
+      // Check for existing price when investment changes
+      'form.config.investment_id': function () {
+        this.checkExistingPrice();
       },
 
       transaction(transaction) {
