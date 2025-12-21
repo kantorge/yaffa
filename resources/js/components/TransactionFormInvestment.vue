@@ -19,7 +19,7 @@
                 data-coreui-placement="right"
                 :title="
                   __(
-                    'These settings cannot be changed after saving the transaction.'
+                    'These settings cannot be changed after saving the transaction.',
                   )
                 "
               ></span>
@@ -55,7 +55,7 @@
                   <input
                     class="btn-check"
                     :disabled="form.reconciled || !isBaseSettingsEditsAllowed"
-                    id="checkbox-transaction-schedule"
+                    id="checkbox-investment-transaction-schedule"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
@@ -64,11 +64,11 @@
                   <label
                     class="btn btn-outline-dark w-100"
                     dusk="checkbox-transaction-schedule"
-                    for="checkbox-transaction-schedule"
+                    for="checkbox-investment-transaction-schedule"
                     :title="
                       action === 'replace'
                         ? __(
-                            'You cannot change schedule settings for this type of action'
+                            'You cannot change schedule settings for this type of action',
                           )
                         : ''
                     "
@@ -98,7 +98,7 @@
                   <input
                     class="btn-check"
                     :disabled="form.schedule"
-                    id="checkbox-transaction-reconciled"
+                    id="checkbox-investment-transaction-reconciled"
                     type="checkbox"
                     autocomplete="off"
                     value="1"
@@ -106,7 +106,7 @@
                   />
                   <label
                     class="btn btn-outline-success"
-                    for="checkbox-transaction-reconciled"
+                    for="checkbox-investment-transaction-reconciled"
                   >
                     <span class="fa fa-check"></span><br />
                     {{ __('Reconciled') }}
@@ -116,7 +116,7 @@
                   class="col-6 col-sm-2 mb-3 mb-sm-0"
                   :class="{ 'has-error': form.errors.has('date') }"
                 >
-                  <label class="block-label" for="date">
+                  <label class="block-label" for="investment-date">
                     {{ __('Date') }}
                   </label>
                   <DatePicker
@@ -138,7 +138,7 @@
                       <input
                         class="form-control"
                         :disabled="form.schedule"
-                        id="date"
+                        id="investment-date"
                         :value="inputValue"
                         v-on="inputEvents"
                       />
@@ -149,12 +149,12 @@
                   class="col-12 col-sm-8 mb-0"
                   :class="form.errors.has('comment') ? 'has-error' : ''"
                 >
-                  <label for="comment" class="block-label">
+                  <label for="investment-comment" class="block-label">
                     {{ __('Comment') }}
                   </label>
                   <input
                     class="form-control"
-                    id="comment"
+                    id="investment-comment"
                     maxlength="255"
                     type="text"
                     v-model="form.comment"
@@ -356,14 +356,14 @@
               <div v-show="!fromModal">
                 <label
                   class="form-label block-label"
-                  for="callback-selector-mobile"
+                  for="callback-selector-mobile-investment"
                 >
                   {{ __('Action after saving') }}
                 </label>
                 <select
                   class="form-control"
                   v-model="callback"
-                  id="callback-selector-mobile"
+                  id="callback-selector-mobile-investment"
                 >
                   <option
                     v-for="item in activeCallbackOptions"
@@ -404,7 +404,7 @@
   $.fn.select2.amd.define(
     'select2/i18n/' + window.YAFFA.language,
     [],
-    require('select2/src/js/select2/i18n/' + window.YAFFA.language)
+    require('select2/src/js/select2/i18n/' + window.YAFFA.language),
   );
 
   import MathInput from './MathInput.vue';
@@ -418,7 +418,6 @@
 
   import {
     toFormattedCurrency,
-    getCurrencySymbol,
     processTransaction,
     todayInUTC,
     toIsoDateString,
@@ -535,7 +534,7 @@
       transactionTypeSettings() {
         return (
           this.transactionTypes.find(
-            (item) => item.name === this.form.transaction_type
+            (item) => item.name === this.form.transaction_type,
           ) || {}
         );
       },
@@ -658,7 +657,7 @@
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
             document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body')
+              document.querySelector('body'),
           ),
         })
         .on('select2:select', function (e) {
@@ -715,7 +714,7 @@
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
             document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body')
+              document.querySelector('body'),
           ),
         })
         .on('select2:select', function (e) {
@@ -846,15 +845,15 @@
               this.transaction.transaction_schedule.interval;
 
             this.form.schedule_config.start_date = this.copyDateObject(
-              this.transaction.transaction_schedule.start_date
+              this.transaction.transaction_schedule.start_date,
             );
             this.form.schedule_config.next_date = this.copyDateObject(
-              this.transaction.transaction_schedule.next_date
+              this.transaction.transaction_schedule.next_date,
             );
             this.form.schedule_config.automatic_recording =
               this.transaction.transaction_schedule.automatic_recording;
             this.form.schedule_config.end_date = this.copyDateObject(
-              this.transaction.transaction_schedule.end_date
+              this.transaction.transaction_schedule.end_date,
             );
 
             this.form.schedule_config.inflation =
@@ -873,7 +872,7 @@
             this.form.original_schedule_config.inflation =
               this.form.schedule_config.inflation;
             this.form.original_schedule_config.start_date = this.copyDateObject(
-              this.form.schedule_config.start_date
+              this.form.schedule_config.start_date,
             );
             this.form.original_schedule_config.automatic_recording =
               this.form.schedule_config.automatic_recording;
@@ -891,7 +890,7 @@
 
             // Set original schedule end date to today - 1 day
             this.form.original_schedule_config.end_date = new Date(
-              todayInUTC().getTime() - 24 * 60 * 60 * 1000
+              todayInUTC().getTime() - 24 * 60 * 60 * 1000,
             );
           }
         }
@@ -971,7 +970,7 @@
               window.route('api.transactions.updateInvestment', {
                 transaction: this.form.id,
               }),
-              this.form
+              this.form,
             )
             .then((response) => {
               this.$emit(
@@ -979,7 +978,7 @@
                 processTransaction(response.data.transaction),
                 {
                   callback: this.callback,
-                }
+                },
               );
             });
           return;
@@ -994,7 +993,7 @@
               processTransaction(response.data.transaction),
               {
                 callback: this.callback,
-              }
+              },
             );
           });
       },
@@ -1017,6 +1016,12 @@
         this.form.original_schedule_config.end_date = toIsoDateString(date);
       },
 
+      // Clear the investment dropdown (used when resetting the form in modal context)
+      clearInvestmentDropdown() {
+        $('#investment').val(null).trigger('change');
+        this.investment_currency = null;
+      },
+
       toFormattedCurrency,
     },
 
@@ -1035,7 +1040,13 @@
 
         // Load default value for accounts
         this.getDefaultAccountDetails(transaction.config.account_id);
-        this.getDefaultInvestmentDetails(transaction.config.investment_id);
+
+        // Load default value for investment, or clear if not set
+        if (transaction.config.investment_id) {
+          this.getDefaultInvestmentDetails(transaction.config.investment_id);
+        } else {
+          this.clearInvestmentDropdown();
+        }
       },
     },
   };

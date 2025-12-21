@@ -39,25 +39,25 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return retry(3, fn () => $browser
+        return retry(3, fn() => $browser
             ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Wait for the form and key elements to be present
+            // Wait for the form and key elements to be present
             ->waitFor(self::MAIN_FORM_SELECTOR)
             ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
             ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
-                // Select type
+            // Select type
             ->select('#transaction_type', 'Buy')
-                // Add quantity
+            // Add quantity
             ->type('#transaction_quantity', '10')
-                // Add price
+            // Add price
             ->type('#transaction_price', '20')
-                // Add commission
+            // Add commission
             ->type('#transaction_commission', '30')
-                // Add taxes
+            // Add taxes
             ->type('#transaction_tax', '40')
-                // Select account
+            // Select account
             ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                // Select investment
+            // Select investment
             ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10));
     }
 
@@ -432,7 +432,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             // Fill form with standard data
             $this->fillStandardBuyForm($browser)
                 // Click the date field to open the date picker
-                ->click('#date')
+                ->click('#investment-date')
                 // Wait for the date picker to open
                 ->waitFor('.vc-pane-container', 10)
                 // Click the first day of the previous month, which is in the first column

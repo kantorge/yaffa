@@ -14,6 +14,8 @@
     "devDependencies": {
         "@vue/compiler-sfc": "^3.2.45",
         "autoprefixer": "^10.4.13",
+        "baseline-browser-mapping": "^2.9.11",
+        "concurrently": "^9.0.1",
         "cross-env": "^7.0.3",
         "css-loader": "^6.7.3",
         "eslint": "^9.36.0",
@@ -29,8 +31,7 @@
         "sass": "^1.57.1",
         "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
-        "vue-loader": "^16.8.3",
-        "concurrently": "^9.0.1"
+        "vue-loader": "^16.8.3"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.40",

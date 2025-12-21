@@ -708,7 +708,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 
             $this->fillStandardWithdrawalForm($browser)
                 // Click the date input to open the date picker
-                ->click('#date')
+                ->click('#standard-date')
                 // Wait for the calendar to be visible
                 ->waitFor('.vc-pane-container', 10)
                 // Click the first day of the previous month, which is in the first column
