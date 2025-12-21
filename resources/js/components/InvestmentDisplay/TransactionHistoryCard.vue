@@ -138,6 +138,85 @@
             });
         });
       },
+      confirmSkipScheduledInstance(id) {
+        Swal.fire({
+          animation: false,
+          text: this.__('Are you sure you want to skip this scheduled instance?'),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: this.__('Cancel'),
+          confirmButtonText: this.__('Confirm'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-warning',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+          },
+        }).then((result) => {
+          if (!result.isConfirmed) {
+            return;
+          }
+
+          // Show skipping toast
+          let notificationEvent = new CustomEvent('toast', {
+            detail: {
+              body: this.__('Skipping scheduled instance...'),
+              toastClass: `bg-info toast-transaction-${id}`,
+              delay: Infinity,
+            },
+          });
+          window.dispatchEvent(notificationEvent);
+
+          window.axios
+            .patch(
+              window.route('api.transactions.skipScheduleInstance', {
+                transaction: id,
+              })
+            )
+            .then(() => {
+              // Success toast
+              let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                  header: this.__('Success'),
+                  body: this.__('Scheduled instance skipped'),
+                  toastClass: 'bg-success',
+                },
+              });
+              window.dispatchEvent(notificationEvent);
+              // Remove from UI
+              this.$emit('delete-transaction', id);
+            })
+            .catch((error) => {
+              // Error toast
+              let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                  header: this.__('Error'),
+                  body: this.__(
+                    'Error skipping scheduled instance: :error',
+                    { error: error }
+                  ),
+                  toastClass: 'bg-danger',
+                },
+              });
+              window.dispatchEvent(notificationEvent);
+            })
+            .finally(() => {
+              // Close the toast with a small delay
+              setTimeout(() => {
+                let toastElement = document.querySelector(
+                  `.toast-transaction-${id}`
+                );
+                if (
+                  toastElement &&
+                  window.bootstrap &&
+                  window.bootstrap.Toast
+                ) {
+                  let toastInstance = new window.bootstrap.Toast(toastElement);
+                  toastInstance.hide();
+                }
+              }, 250);
+            });
+        });
+      },
     },
     computed: {
       newTransactionUrl() {
@@ -169,6 +248,16 @@
                 const id = btn.getAttribute('data-id');
                 if (id) {
                   this.confirmDeleteTransaction(id);
+                }
+                event.stopPropagation();
+              };
+            });
+            // Skip button for scheduled transactions
+            row.querySelectorAll('.data-skip').forEach((btn) => {
+              btn.onclick = (event) => {
+                const id = btn.getAttribute('data-id');
+                if (id) {
+                  this.confirmSkipScheduledInstance(id);
                 }
                 event.stopPropagation();
               };
@@ -290,6 +379,25 @@
                   `<button class="btn btn-xs btn-danger data-delete" data-id="${id}" type="button" title="${vm.__(
                     'Delete'
                   )}"><i class="fa fa-fw fa-trash"></i></button> `;
+              } else {
+                // Scheduled transaction actions
+                const id = row.id;
+                actions +=
+                  `<a href="${window.route('transaction.open', {
+                    transaction: id,
+                    action: 'enter',
+                  })}" class="btn btn-xs btn-success" title="${vm.__(
+                    'Enter/Finalize'
+                  )}"><i class="fa fa-fw fa-calendar-check"></i></a> ` +
+                  `<a href="${window.route('transaction.open', {
+                    transaction: id,
+                    action: 'replace',
+                  })}" class="btn btn-xs btn-primary" title="${vm.__(
+                    'Edit schedule'
+                  )}"><i class="fa fa-fw fa-edit"></i></a> ` +
+                  `<button class="btn btn-xs btn-warning data-skip" data-id="${id}" type="button" title="${vm.__(
+                    'Skip this instance'
+                  )}"><i class="fa fa-fw fa-forward"></i></button> `;
               }
               return actions;
             },
