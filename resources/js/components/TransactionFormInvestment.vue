@@ -1025,6 +1025,18 @@
               this.form,
             )
             .then((response) => {
+              // Show success toast if not in modal context
+              if (!this.fromModal) {
+                const successEvent = new CustomEvent('toast', {
+                  detail: {
+                    header: this.__('Success'),
+                    body: this.__('Transaction updated'),
+                    toastClass: 'bg-success',
+                  },
+                });
+                window.dispatchEvent(successEvent);
+              }
+
               this.$emit(
                 'success',
                 processTransaction(response.data.transaction),
@@ -1040,6 +1052,18 @@
         this.form
           .post(window.route('api.transactions.storeInvestment'), this.form)
           .then((response) => {
+            // Show success toast if not in modal context
+            if (!this.fromModal) {
+              const successEvent = new CustomEvent('toast', {
+                detail: {
+                  header: this.__('Success'),
+                  body: this.__('Transaction created'),
+                  toastClass: 'bg-success',
+                },
+              });
+              window.dispatchEvent(successEvent);
+            }
+
             // Store price if enabled
             this.storePriceIfEnabled(response.data.transaction);
 
@@ -1139,10 +1163,21 @@
           return;
         }
 
+        // Use the transaction's date from the response, not form.date
+        let transactionDate;
+        if (transaction.date instanceof Date) {
+          transactionDate = toIsoDateString(transaction.date);
+        } else if (typeof transaction.date === 'string') {
+          transactionDate = transaction.date;
+        } else {
+          // Fallback to form date if transaction date is invalid
+          transactionDate = toIsoDateString(this.form.date);
+        }
+
         try {
           await window.axios.post(window.route('api.investment-price.store'), {
             investment_id: this.form.config.investment_id,
-            date: toIsoDateString(this.form.date),
+            date: transactionDate,
             price: this.form.config.price,
           });
 
