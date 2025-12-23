@@ -279,16 +279,13 @@
                       class="form-text text-muted"
                     >
                       {{
-                        __(
-                          'Existing price for this date: :price',
-                          {
-                            price: toFormattedCurrency(
-                              existingPriceForDate,
-                              locale,
-                              investment_currency,
-                            ),
-                          }
-                        )
+                        __('Existing price for this date: :price', {
+                          price: toFormattedCurrency(
+                            existingPriceForDate,
+                            locale,
+                            investment_currency,
+                          ),
+                        })
                       }}
                     </small>
                   </div>
@@ -1129,14 +1126,11 @@
         }
 
         try {
-          await window.axios.post(
-            window.route('api.investment-price.store'),
-            {
-              investment_id: this.form.config.investment_id,
-              date: toIsoDateString(this.form.date),
-              price: this.form.config.price,
-            },
-          );
+          await window.axios.post(window.route('api.investment-price.store'), {
+            investment_id: this.form.config.investment_id,
+            date: toIsoDateString(this.form.date),
+            price: this.form.config.price,
+          });
 
           // Show success toast
           const successEvent = new CustomEvent('toast', {
