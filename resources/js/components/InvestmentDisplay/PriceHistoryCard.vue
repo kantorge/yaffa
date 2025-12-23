@@ -5,9 +5,6 @@
         {{ __('Price history') }}
       </div>
       <div>
-        <span class="badge text-bg-warning me-2" v-if="!hasData">{{
-          __('No data available')
-        }}</span>
         <template v-if="!hideActions">
           <template v-if="investment.investment_price_provider">
             <a
@@ -39,6 +36,7 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+  import { __ } from '../../helpers';
 
   export default {
     name: 'PriceHistoryCard',
@@ -116,6 +114,8 @@
         this.chart.dispose();
       }
     },
-    methods: {},
+    methods: {
+      __,
+    },
   };
 </script>
