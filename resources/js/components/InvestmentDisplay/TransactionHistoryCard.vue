@@ -381,7 +381,8 @@
                   )}"><i class="fa fa-fw fa-trash"></i></button> `;
               } else {
                 // Scheduled transaction actions
-                const id = row.id;
+                // For scheduled instances, use originalId (parent transaction ID)
+                const id = row.originalId || row.id;
                 actions +=
                   `<a href="${window.route('transaction.open', {
                     transaction: id,

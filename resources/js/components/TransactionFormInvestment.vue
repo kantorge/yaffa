@@ -786,6 +786,10 @@
         .on('select2:unselect', function () {
           $vm.investment_id = null;
           $vm.investment_currency = null;
+          $vm.form.config.investment_id = null;
+          // Reset price-related data when investment is cleared
+          $vm.existingPriceForDate = null;
+          $vm.storePriceEnabled = false;
         });
 
       // Load default value for investment
@@ -1084,13 +1088,25 @@
         }
 
         try {
+          // Ensure date is properly formatted
+          let dateString;
+          if (this.form.date instanceof Date) {
+            dateString = toIsoDateString(this.form.date);
+          } else if (typeof this.form.date === 'string') {
+            // If it's already a string, use it directly
+            dateString = this.form.date;
+          } else {
+            // Fallback to today if date is invalid
+            dateString = toIsoDateString(new Date());
+          }
+
           const response = await window.axios.get(
             window.route('api.investment-price.checkPrice', {
               investment: this.form.config.investment_id,
             }),
             {
               params: {
-                date: toIsoDateString(this.form.date),
+                date: dateString,
               },
             },
           );
