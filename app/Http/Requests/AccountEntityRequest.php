@@ -107,9 +107,8 @@ class AccountEntityRequest extends FormRequest
 
         // Handle category_id - use input() method to handle both array and object notation
         if ($this->has('config')) {
-            $categoryId = $this->input('config.category_id');
             $this->merge([
-                'config.category_id' => $categoryId ?? null,
+                'config.category_id' => $this->input('config.category_id'),
             ]);
         }
     }
