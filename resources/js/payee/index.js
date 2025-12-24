@@ -2,6 +2,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
 import { createApp } from 'vue';
 import PayeeForm from '../components/PayeeForm.vue';
+import Swal from 'sweetalert2';
 
 import {
     booleanToTableIcon,
@@ -253,53 +254,59 @@ window.table = $(dataTableSelector).DataTable({
 
         // Listener for delete button
         $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
             let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
             let element = $(this);
-            element.addClass('busy');
 
-            // Send request to delete payee
-            $.ajax({
-                type: 'DELETE',
-                url: window.route('api.accountentity.destroy', row.data().id),
-                data: {
-                    "_token": csrfToken,
-                },
-                dataType: "json",
-                context: this,
-                success: function (data) {
-                    // Update row in table data source
-                    window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
+            // Confirm the action with the user using Sweetalert2
+            Swal.fire({
+                title: __('Are you sure?'),
+                text: __('Are you sure to want to delete this item?'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: __('Yes, delete it!'),
+                cancelButtonText: __('Cancel')
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Change icon to spinner
+                    element.addClass('busy');
 
-                    row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Payee deleted'),
-                            toastClass: 'bg-success',
+                    // Send request to delete payee
+                    $.ajax({
+                        type: 'DELETE',
+                        url: window.route('api.accountentity.destroy', row.data().id),
+                        data: {
+                            "_token": csrfToken,
+                        },
+                        dataType: "json",
+                        context: this,
+                        success: function (data) {
+                            // Update row in table data source
+                            window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
+
+                            row.remove().draw();
+                            
+                            Swal.fire({
+                                title: __('Deleted!'),
+                                text: __('Payee deleted'),
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function (_data) {
+                            Swal.fire({
+                                title: __('Error'),
+                                text: __('Error while trying to delete payee'),
+                                icon: 'error'
+                            });
+                        },
+                        complete: function (_data) {
+                            // Restore button icon
+                            element.removeClass('busy');
                         }
                     });
-                    window.dispatchEvent(notificationEvent);
-                },
-                error: function (_data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete payee'),
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
-                },
-                complete: function (_data) {
-                    // Restore button icon
-                    element.removeClass('busy');
                 }
             });
         });
