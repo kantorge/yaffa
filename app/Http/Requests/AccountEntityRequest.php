@@ -103,7 +103,14 @@ class AccountEntityRequest extends FormRequest
         // Ensure that checkbox values are available
         $this->merge([
             'active' => $this->active ?? 0,
-            'config.category_id' => $this->config->category_id ?? null,
         ]);
+
+        // Handle category_id - use input() method to handle both array and object notation
+        if ($this->has('config')) {
+            $categoryId = $this->input('config.category_id');
+            $this->merge([
+                'config.category_id' => $categoryId ?? null,
+            ]);
+        }
     }
 }

@@ -1,5 +1,7 @@
 import 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
+import { createApp } from 'vue';
+import PayeeForm from '../components/PayeeForm.vue';
 
 import {
     booleanToTableIcon,
@@ -19,6 +21,68 @@ const deleteButtonConditions = [
         errorMessage: __('It is already used in transactions.'),
     },
 ];
+
+// Initialize Vue app
+const app = createApp({
+    components: {
+        PayeeForm,
+    },
+    methods: {
+        onPayeeCreated(payee) {
+            // Add the new payee to the table
+            window.payees.push({
+                ...payee,
+                transactions_count: 0,
+                from_count: 0,
+                to_count: 0,
+                from_min_date: null,
+                from_max_date: null,
+                to_min_date: null,
+                to_max_date: null,
+                transactions_min_date: null,
+                transactions_max_date: null,
+            });
+            
+            window.table.row.add(window.payees[window.payees.length - 1]).draw();
+            
+            // Show success notification
+            let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                    header: __('Success'),
+                    body: __('Payee added'),
+                    toastClass: 'bg-success',
+                }
+            });
+            window.dispatchEvent(notificationEvent);
+        },
+        onPayeeUpdated(payee) {
+            // Find and update the payee in the data array
+            const index = window.payees.findIndex(p => p.id === payee.id);
+            if (index !== -1) {
+                // Preserve transaction counts and dates
+                window.payees[index] = {
+                    ...window.payees[index],
+                    ...payee,
+                };
+                
+                // Redraw the table
+                window.table.row((idx, data) => data.id === payee.id).invalidate().draw();
+            }
+            
+            // Show success notification
+            let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                    header: __('Success'),
+                    body: __('Payee updated'),
+                    toastClass: 'bg-success',
+                }
+            });
+            window.dispatchEvent(notificationEvent);
+        }
+    }
+});
+
+app.mount('#payeeIndex');
 
 // Loop payees and prepare data for datatable
 window.payees = window.payees.map(function(payee) {
@@ -116,7 +180,7 @@ window.table = $(dataTableSelector).DataTable({
             data: "id",
             title: __("Actions"),
             render: function(data, _type, row) {
-                return  '<a href="' + window.route('account-entity.edit', {type: 'payee', account_entity: data}) + '" class="btn btn-xs btn-primary" title="' + __('Edit') + '"><i class="fa fa-edit"></i></a> ' +
+                return  '<button class="btn btn-xs btn-primary edit-payee-btn" data-payee-id="' + data + '" title="' + __('Edit') + '"><i class="fa fa-edit"></i></button> ' +
                          renderDeleteAssetButton(row, deleteButtonConditions, __("This payee cannot be deleted.")) +
                         '<a href="' + window.route('payees.merge.form', {payeeSource: data}) + '" class="btn btn-xs btn-primary" title="' + __('Merge into an other payee') + '"><i class="fa fa-random"></i></a> ';
             },
@@ -239,6 +303,12 @@ window.table = $(dataTableSelector).DataTable({
                 }
             });
         });
+
+        // Listener for edit button
+        $(settings.nTable).on("click", "button.edit-payee-btn", function () {
+            const payeeId = $(this).data('payee-id');
+            app._instance.refs.payeeFormEdit.show(payeeId);
+        });
     }
 });
 
@@ -249,3 +319,8 @@ $('input[name=table_filter_active]').on("change", function() {
 $('#table_filter_search_text').keyup(function(){
     table.search($(this).val()).draw() ;
 })
+
+// Listener for new payee button
+$('#button-new-payee').on('click', function() {
+    app._instance.refs.payeeFormNew.show();
+});

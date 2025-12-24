@@ -64,9 +64,10 @@ Route::delete('/assets/investmentgroup/{investmentGroup}', [InvestmentGroupApiCo
     ->name('api.investmentgroup.destroy');
 
 Route::get('/assets/payee', [PayeeApiController::class, 'getList']);
-Route::post('/assets/payee', [PayeeApiController::class, 'storePayee'])->name('api.payee.store');
 Route::get('/assets/payee/similar', [PayeeApiController::class, 'getSimilarPayees'])->name('api.payee.similar');
-Route::get('/assets/payee/{accountEntity}', [PayeeApiController::class, 'getItem']);
+Route::post('/assets/payee', [PayeeApiController::class, 'storePayee'])->name('api.payee.store');
+Route::get('/assets/payee/{accountEntity}', [PayeeApiController::class, 'getItem'])->name('api.payee.show');
+Route::patch('/assets/payee/{accountEntity}', [PayeeApiController::class, 'updatePayee'])->name('api.payee.update');
 
 Route::get('/assets/get_default_category_suggestion', [PayeeApiController::class, 'getPayeeDefaultSuggestion']);
 Route::get(
