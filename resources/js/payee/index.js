@@ -2,6 +2,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
 import { createApp } from 'vue';
 import PayeeForm from '../components/PayeeForm.vue';
+import Swal from 'sweetalert2';
 
 import {
     booleanToTableIcon,
@@ -45,9 +46,9 @@ const app = createApp({
                 transactions_min_date: null,
                 transactions_max_date: null,
             });
-            
+
             window.table.row.add(window.payees[window.payees.length - 1]).draw();
-            
+
             // Show success notification
             let notificationEvent = new CustomEvent('toast', {
                 detail: {
@@ -67,11 +68,11 @@ const app = createApp({
                     ...window.payees[index],
                     ...payee,
                 };
-                
+
                 // Redraw the table
                 window.table.row((idx, data) => data.id === payee.id).invalidate().draw();
             }
-            
+
             // Show success notification
             let notificationEvent = new CustomEvent('toast', {
                 detail: {
@@ -257,16 +258,23 @@ window.table = $(dataTableSelector).DataTable({
 
         // Listener for delete button
         $(settings.nTable).on("click", "td > button.deleteIcon:not(.busy)", function () {
-            // Confirm the action with the user
-            if (!confirm(__('Are you sure to want to delete this item?'))) {
-                return;
-            }
-
             let row = $(settings.nTable).DataTable().row($(this).parents('tr'));
-
-            // Change icon to spinner
             let element = $(this);
-            element.addClass('busy');
+
+            // Confirm the action with the user using Sweetalert2
+            Swal.fire({
+                title: __('Are you sure?'),
+                text: __('Are you sure to want to delete this item?'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: __('Yes, delete it!'),
+                cancelButtonText: __('Cancel')
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Change icon to spinner
+                    element.addClass('busy');
 
             // Send request to delete payee
             $.ajax({
