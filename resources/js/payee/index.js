@@ -24,7 +24,7 @@ const deleteButtonConditions = [
 ];
 
 // Initialize Vue app
-const app = createApp({
+const vueApp = createApp({
     components: {
         PayeeForm,
     },
@@ -79,11 +79,17 @@ const app = createApp({
                 }
             });
             window.dispatchEvent(notificationEvent);
+        },
+        showNewPayeeModal() {
+            this.$refs.payeeFormNew.show();
+        },
+        showEditPayeeModal(payeeId) {
+            this.$refs.payeeFormEdit.show(payeeId);
         }
     }
 });
 
-app.mount('#payeeIndex');
+const app = vueApp.mount('#payeeIndex');
 
 // Loop payees and prepare data for datatable
 window.payees = window.payees.map(function(payee) {
@@ -314,7 +320,7 @@ window.table = $(dataTableSelector).DataTable({
         // Listener for edit button
         $(settings.nTable).on("click", "button.edit-payee-btn", function () {
             const payeeId = $(this).data('payee-id');
-            app._instance.refs.payeeFormEdit.show(payeeId);
+            app.showEditPayeeModal(payeeId);
         });
     }
 });
@@ -329,5 +335,5 @@ $('#table_filter_search_text').keyup(function(){
 
 // Listener for new payee button
 $('#button-new-payee').on('click', function() {
-    app._instance.refs.payeeFormNew.show();
+    app.showNewPayeeModal();
 });
