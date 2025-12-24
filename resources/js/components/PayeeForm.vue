@@ -156,11 +156,12 @@
         name: '',
         active: true,
         config: {
-          category_id: '',
+          category_id: null,
         },
       });
 
       data.similarPayees = [];
+      data.payeeId = null;
 
       return data;
     },
@@ -210,16 +211,51 @@
     },
 
     methods: {
-      show() {
+      show(payeeId = null) {
+        if (payeeId) {
+          // Load payee data for editing
+          this.loadPayeeData(payeeId);
+        }
         this.modal.show();
+      },
+
+      loadPayeeData(payeeId) {
+        this.payeeId = payeeId;
+
+        // Fetch payee data from API
+        fetch(route('api.payee.show', { accountEntity: payeeId }))
+          .then((response) => response.json())
+          .then((data) => {
+            this.form.name = data.name;
+            this.form.active = data.active;
+            this.form.config.category_id = data.config?.category_id || null;
+
+            // Update Select2 with the current category
+            let elementCategory = $(this.$el).find('select.category');
+            if (data.config?.category) {
+              // Add the option and select it
+              let option = new Option(
+                data.config.category.full_name,
+                data.config.category.id,
+                true,
+                true,
+              );
+              elementCategory.append(option).trigger('change');
+            } else {
+              elementCategory.val(null).trigger('change');
+            }
+          });
       },
 
       resetForm() {
         // Clear form data
         this.form.name = '';
         this.form.active = true;
-        this.form.config.category_id = '';
-        $(this.$el).find('select.category').val('').trigger('change');
+        this.form.config.category_id = null;
+        $(this.$el).find('select.category').val(null).trigger('change');
+
+        // Reset payee ID
+        this.payeeId = null;
 
         // Reset list of similar payees
         this.similarPayees = [];
