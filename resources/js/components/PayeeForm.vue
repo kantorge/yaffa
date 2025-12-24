@@ -224,7 +224,12 @@
 
         // Fetch payee data from API
         fetch(route('api.payee.show', { accountEntity: payeeId }))
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to load payee data');
+            }
+            return response.json();
+          })
           .then((data) => {
             this.form.name = data.name;
             this.form.active = data.active;
@@ -244,6 +249,12 @@
             } else {
               elementCategory.val(null).trigger('change');
             }
+          })
+          .catch((error) => {
+            console.error('Error loading payee:', error);
+            this.form.errors.set({
+              general: __('Failed to load payee data'),
+            });
           });
       },
 
@@ -268,9 +279,18 @@
       onNameChange(event) {
         // Get similar payees from API
         fetch('/api/v1/payees/similar?query=' + event.target.value)
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to fetch similar payees');
+            }
+            return response.json();
+          })
           .then((data) => {
             this.similarPayees = data;
+          })
+          .catch((error) => {
+            console.error('Error fetching similar payees:', error);
+            this.similarPayees = [];
           });
       },
 
