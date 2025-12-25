@@ -113,4 +113,143 @@ class PayeeApiControllerTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/assets/payee?account_entity_id=1&transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
     }
+
+    public function test_user_can_create_payee_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $attributes = [
+            'name' => 'Test Payee',
+            'active' => true,
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => null,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/assets/payee', $attributes);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('name', 'Test Payee');
+        $response->assertJsonPath('active', true);
+
+        $this->assertDatabaseHas('account_entities', [
+            'name' => 'Test Payee',
+            'user_id' => $user->id,
+            'config_type' => 'payee',
+        ]);
+    }
+
+    public function test_user_can_create_payee_with_category_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var \App\Models\Category $category */
+        $category = \App\Models\Category::factory()->for($user)->create();
+
+        $attributes = [
+            'name' => 'Test Payee With Category',
+            'active' => true,
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => $category->id,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/api/assets/payee', $attributes);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('name', 'Test Payee With Category');
+        $response->assertJsonPath('config.category_id', $category->id);
+    }
+
+    public function test_user_can_update_payee_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(\App\Models\Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        $attributes = [
+            'name' => 'Updated Payee Name',
+            'active' => false,
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => null,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('name', 'Updated Payee Name');
+        $response->assertJsonPath('active', false);
+
+        $this->assertDatabaseHas('account_entities', [
+            'id' => $payee->id,
+            'name' => 'Updated Payee Name',
+            'active' => false,
+        ]);
+    }
+
+    public function test_user_can_update_payee_category_via_api(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        /** @var \App\Models\Category $category */
+        $category = \App\Models\Category::factory()->for($user)->create();
+
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(\App\Models\Payee::factory()->withUser($user), 'config')
+            ->create();
+
+        $attributes = [
+            'name' => $payee->name,
+            'active' => $payee->active,
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => $category->id,
+            ],
+        ];
+
+        $response = $this->actingAs($user)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('config.category_id', $category->id);
+
+        $payee->refresh();
+        $this->assertEquals($category->id, $payee->config->category_id);
+    }
+
+    public function test_user_cannot_update_other_users_payee(): void
+    {
+        /** @var User $user1 */
+        $user1 = User::factory()->create();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        /** @var AccountEntity $payee */
+        $payee = AccountEntity::factory()
+            ->for($user1)
+            ->for(\App\Models\Payee::factory()->withUser($user1), 'config')
+            ->create();
+
+        $attributes = [
+            'name' => 'Hacked Name',
+            'active' => true,
+            'config_type' => 'payee',
+            'config' => [
+                'category_id' => null,
+            ],
+        ];
+
+        $response = $this->actingAs($user2)->patchJson("/api/assets/payee/{$payee->id}", $attributes);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
 }

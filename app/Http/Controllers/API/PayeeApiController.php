@@ -363,4 +363,43 @@ class PayeeApiController extends Controller implements HasMiddleware
                 Response::HTTP_OK
             );
     }
+
+    /**
+     * Update an existing payee
+     *
+     * @throws AuthorizationException
+     */
+    public function updatePayee(AccountEntityRequest $request, AccountEntity $accountEntity): JsonResponse
+    {
+        /**
+         * @patch('/api/assets/payee/{accountEntity}')
+         * @name('api.payee.update')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        Gate::authorize('update', $accountEntity);
+
+        $validated = $request->validated();
+
+        $accountEntity->load(['config']);
+        $accountEntity->fill($validated);
+
+        // Update config if provided
+        if (isset($validated['config']) && $accountEntity->config) {
+            $accountEntity->config->fill($validated['config']);
+        }
+
+        $accountEntity->push();
+
+        // Reload to get fresh data
+        $accountEntity->load([
+            'config',
+            'config.category',
+        ]);
+
+        return response()
+            ->json(
+                $accountEntity,
+                Response::HTTP_OK
+            );
+    }
 }

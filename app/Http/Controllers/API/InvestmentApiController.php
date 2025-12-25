@@ -137,7 +137,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
             ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
