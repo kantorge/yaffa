@@ -11,7 +11,7 @@ import {toFormattedCurrency, toIsoDateString} from '../helpers';
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
 import 'select2';
-require('jquery-csv');
+import 'jquery-csv';
 
 window.transactions = [];
 window.account_currency = {};

@@ -1,4 +1,4 @@
-require('./bootstrap');
+import './bootstrap';
 
 const routeMap = new Map();
 routeMap.set('home', 'dashboard');
@@ -82,7 +82,7 @@ if (route().current() === 'transaction.open'
 }
 
 // Notifications
-require('./notifications');
+import './notifications';
 
 $(function () {
     // Generally available account selector

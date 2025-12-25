@@ -1,5 +1,5 @@
 
-require('select2');
+import 'select2';
 $.fn.select2.amd.define(
     'select2/i18n/' + window.YAFFA.language,
     [],
