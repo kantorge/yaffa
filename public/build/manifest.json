@@ -1,19 +1,15 @@
 {
-  "node_modules/jstree/src/themes/default/32px.png": {
-    "file": "assets/32px.6785cd4e.png",
-    "src": "node_modules/jstree/src/themes/default/32px.png"
-  },
   "node_modules/jstree/src/themes/default/throbber.gif": {
     "file": "assets/throbber.f6ecff61.gif",
     "src": "node_modules/jstree/src/themes/default/throbber.gif"
   },
+  "node_modules/jstree/src/themes/default/32px.png": {
+    "file": "assets/32px.6785cd4e.png",
+    "src": "node_modules/jstree/src/themes/default/32px.png"
+  },
   "node_modules/jstree/src/themes/default/40px.png": {
     "file": "assets/40px.77a14ef0.png",
     "src": "node_modules/jstree/src/themes/default/40px.png"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2": {
-    "file": "assets/fa-solid-900.aa759986.woff2",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"
   },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
     "file": "assets/fa-brands-400.d7236a19.woff2",
@@ -23,9 +19,9 @@
     "file": "assets/fa-regular-400.e3456d12.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2"
   },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf": {
-    "file": "assets/fa-solid-900.d2f05935.ttf",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf"
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2": {
+    "file": "assets/fa-solid-900.aa759986.woff2",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"
   },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf": {
     "file": "assets/fa-brands-400.808443ae.ttf",
@@ -35,8 +31,12 @@
     "file": "assets/fa-regular-400.54cf6086.ttf",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.ttf"
   },
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf": {
+    "file": "assets/fa-solid-900.d2f05935.ttf",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf"
+  },
   "resources/js/app.js": {
-    "file": "assets/app.1ea3d35e.js",
+    "file": "assets/app.ffd9927a.js",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
@@ -48,11 +48,11 @@
       "resources/js/auth/register.js",
       "resources/js/categories/index.js",
       "resources/js/categories/merge.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/currency/index.js",
       "resources/js/currencyrates/index.js",
       "resources/js/dashboard.js",
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "resources/js/import/rules/hun_raiffeisen_v1.js",
       "resources/js/investment-group/index.js",
       "resources/js/investment-price/form.js",
@@ -92,29 +92,29 @@
     ]
   },
   "resources/js/account-group/index.js": {
-    "file": "assets/index.e76148a3.js",
+    "file": "assets/index.35ceccad.js",
     "src": "resources/js/account-group/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
-      "_OnboardingCard.ccc4815d.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
+      "_OnboardingCard.0113cd56.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
-  "_dataTables.bootstrap5.9fbefa5d.js": {
-    "file": "assets/dataTables.bootstrap5.9fbefa5d.js",
+  "_dataTables.bootstrap5.509daac4.js": {
+    "file": "assets/dataTables.bootstrap5.509daac4.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_dataTableHelper.f10b8b21.js": {
-    "file": "assets/dataTableHelper.f10b8b21.js",
+  "_dataTableHelper.1c2d9edf.js": {
+    "file": "assets/dataTableHelper.1c2d9edf.js",
     "isDynamicEntry": true,
     "imports": [
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js"
     ],
     "css": [
@@ -126,8 +126,8 @@
       "assets/40px.77a14ef0.png"
     ]
   },
-  "_helpers.0d23fc7a.js": {
-    "file": "assets/helpers.0d23fc7a.js",
+  "_helpers.35739ffe.js": {
+    "file": "assets/helpers.35739ffe.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
@@ -138,10 +138,10 @@
       "node_modules/select2/dist/js/i18n/hu.js"
     ]
   },
-  "_OnboardingCard.ccc4815d.js": {
-    "file": "assets/OnboardingCard.ccc4815d.js",
+  "_OnboardingCard.0113cd56.js": {
+    "file": "assets/OnboardingCard.0113cd56.js",
     "imports": [
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js"
     ],
     "css": [
@@ -152,39 +152,39 @@
     "file": "assets/tslib.es6.598c7c7a.js"
   },
   "resources/js/account/history.js": {
-    "file": "assets/history.3d34ad5b.js",
+    "file": "assets/history.ac492f44.js",
     "src": "resources/js/account/history.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
-      "_Modal.ff995f25.js",
-      "_helpers.0d23fc7a.js",
+      "_Modal.3b9d77d6.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js",
-      "_ActionButtonBar.0fc40870.js"
+      "_ActionButtonBar.fefa1163.js"
     ]
   },
-  "_responsive.bootstrap5.a235b38a.js": {
-    "file": "assets/responsive.bootstrap5.a235b38a.js",
+  "_responsive.bootstrap5.f789e6f7.js": {
+    "file": "assets/responsive.bootstrap5.f789e6f7.js",
     "imports": [
       "resources/js/app.js",
-      "_dataTables.bootstrap5.9fbefa5d.js"
+      "_dataTables.bootstrap5.509daac4.js"
     ]
   },
-  "_Modal.ff995f25.js": {
-    "file": "assets/Modal.ff995f25.js",
+  "_Modal.3b9d77d6.js": {
+    "file": "assets/Modal.3b9d77d6.js",
     "imports": [
-      "_ActionButtonBar.0fc40870.js",
-      "_helpers.0d23fc7a.js",
+      "_ActionButtonBar.fefa1163.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js"
     ]
   },
-  "_ActionButtonBar.0fc40870.js": {
-    "file": "assets/ActionButtonBar.0fc40870.js",
+  "_ActionButtonBar.fefa1163.js": {
+    "file": "assets/ActionButtonBar.fefa1163.js",
     "imports": [
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js"
     ],
     "css": [
@@ -192,52 +192,52 @@
     ]
   },
   "resources/js/account/index.js": {
-    "file": "assets/index.0fca4926.js",
+    "file": "assets/index.e4b4ab35.js",
     "src": "resources/js/account/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTables.contextualActions.min.a1d01579.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTables.contextualActions.min.3129c0ea.js",
       "_sweetalert2.esm.all.dd009341.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_helpers.35739ffe.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
-  "_dataTables.contextualActions.min.a1d01579.js": {
-    "file": "assets/dataTables.contextualActions.min.a1d01579.js",
+  "_dataTables.contextualActions.min.3129c0ea.js": {
+    "file": "assets/dataTables.contextualActions.min.3129c0ea.js",
     "imports": [
       "resources/js/app.js",
-      "_dataTables.bootstrap5.9fbefa5d.js"
+      "_dataTables.bootstrap5.509daac4.js"
     ]
   },
   "_sweetalert2.esm.all.dd009341.js": {
     "file": "assets/sweetalert2.esm.all.dd009341.js"
   },
   "resources/js/account/show.js": {
-    "file": "assets/show.de7a1ea7.js",
+    "file": "assets/show.551658af.js",
     "src": "resources/js/account/show.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
       "_DateRangePicker.73854680.js",
       "resources/js/presetDates.js",
       "resources/js/app.js",
-      "_Modal.ff995f25.js",
-      "_TransactionFormStandard.560180c4.js",
-      "_TransactionFormInvestment.b1c6d093.js",
+      "_Modal.3b9d77d6.js",
+      "_TransactionFormStandard.0dd288ed.js",
+      "_TransactionFormInvestment.f25df232.js",
       "_tslib.es6.598c7c7a.js",
       "_Datepicker.86824658.js",
-      "_ActionButtonBar.0fc40870.js",
-      "_select2.23b23e14.js",
-      "_TransactionSchedule.6ec72524.js",
-      "_index.d8923a62.js",
+      "_ActionButtonBar.fefa1163.js",
+      "_select2.7201c0e6.js",
+      "_TransactionSchedule.afa5be60.js",
+      "_index.d9d612f0.js",
       "_defineProperty.b744b18c.js",
-      "_Button.f5acc136.js"
+      "_Button.ae7edbbb.js"
     ],
     "css": [
       "assets/show.4ff081f8.css"
@@ -257,57 +257,57 @@
   "_Datepicker.86824658.js": {
     "file": "assets/Datepicker.86824658.js"
   },
-  "_TransactionFormStandard.560180c4.js": {
-    "file": "assets/TransactionFormStandard.560180c4.js",
+  "_TransactionFormStandard.0dd288ed.js": {
+    "file": "assets/TransactionFormStandard.0dd288ed.js",
     "imports": [
-      "_helpers.0d23fc7a.js",
-      "_select2.23b23e14.js",
-      "_TransactionSchedule.6ec72524.js",
-      "_Button.f5acc136.js",
+      "_helpers.35739ffe.js",
+      "_select2.7201c0e6.js",
+      "_TransactionSchedule.afa5be60.js",
+      "_Button.ae7edbbb.js",
       "resources/js/app.js",
-      "_index.d8923a62.js"
+      "_index.d9d612f0.js"
     ],
     "css": [
-      "assets/TransactionFormStandard.692d5340.css"
+      "assets/TransactionFormStandard.71cb9d37.css"
     ]
   },
-  "_TransactionFormInvestment.b1c6d093.js": {
-    "file": "assets/TransactionFormInvestment.b1c6d093.js",
+  "_TransactionFormInvestment.f25df232.js": {
+    "file": "assets/TransactionFormInvestment.f25df232.js",
     "imports": [
-      "_TransactionSchedule.6ec72524.js",
-      "_Button.f5acc136.js",
+      "_TransactionSchedule.afa5be60.js",
+      "_Button.ae7edbbb.js",
       "resources/js/app.js",
-      "_index.d8923a62.js",
-      "_helpers.0d23fc7a.js",
-      "_select2.23b23e14.js"
+      "_index.d9d612f0.js",
+      "_helpers.35739ffe.js",
+      "_select2.7201c0e6.js"
     ],
     "css": [
       "assets/TransactionFormInvestment.bc340743.css"
     ]
   },
-  "_select2.23b23e14.js": {
-    "file": "assets/select2.23b23e14.js",
+  "_select2.7201c0e6.js": {
+    "file": "assets/select2.7201c0e6.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_TransactionSchedule.6ec72524.js": {
-    "file": "assets/TransactionSchedule.6ec72524.js",
+  "_TransactionSchedule.afa5be60.js": {
+    "file": "assets/TransactionSchedule.afa5be60.js",
     "imports": [
       "resources/js/app.js",
-      "_index.d8923a62.js",
+      "_index.d9d612f0.js",
       "_defineProperty.b744b18c.js",
-      "_helpers.0d23fc7a.js"
+      "_helpers.35739ffe.js"
     ]
   },
-  "_Button.f5acc136.js": {
-    "file": "assets/Button.f5acc136.js",
+  "_Button.ae7edbbb.js": {
+    "file": "assets/Button.ae7edbbb.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_index.d8923a62.js": {
-    "file": "assets/index.d8923a62.js",
+  "_index.d9d612f0.js": {
+    "file": "assets/index.d9d612f0.js",
     "imports": [
       "resources/js/app.js"
     ]
@@ -326,83 +326,83 @@
     "isDynamicEntry": true
   },
   "resources/js/categories/index.js": {
-    "file": "assets/index.e768673c.js",
+    "file": "assets/index.af9674cc.js",
     "src": "resources/js/categories/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/categories/merge.js": {
-    "file": "assets/merge.ee416d96.js",
+    "file": "assets/merge.f3b5a596.js",
     "src": "resources/js/categories/merge.js",
     "isDynamicEntry": true,
     "imports": [
-      "_helpers.0d23fc7a.js",
-      "_select2.23b23e14.js",
+      "_helpers.35739ffe.js",
+      "_select2.7201c0e6.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/currency/index.js": {
-    "file": "assets/index.379f05e3.js",
+    "file": "assets/index.20a7956b.js",
     "src": "resources/js/currency/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/currencyrates/index.js": {
-    "file": "assets/index.491486e5.js",
+    "file": "assets/index.21b4e51b.js",
     "src": "resources/js/currencyrates/index.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_helpers.35739ffe.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTableHelper.1c2d9edf.js",
       "_sweetalert2.esm.all.dd009341.js",
-      "_animated.b7973092.js",
+      "_animated.085da57c.js",
       "_DateRangePicker.73854680.js",
       "resources/js/presetDates.js",
       "_tslib.es6.598c7c7a.js",
       "_Datepicker.86824658.js"
     ]
   },
-  "_animated.b7973092.js": {
-    "file": "assets/animated.b7973092.js",
+  "_animated.085da57c.js": {
+    "file": "assets/animated.085da57c.js",
     "imports": [
       "_tslib.es6.598c7c7a.js",
       "resources/js/app.js"
     ],
     "dynamicImports": [
-      "_pdfmake.a6ab851e.js",
+      "_pdfmake.95e33e13.js",
       "node_modules/@amcharts/amcharts4/.internal/pdfmake/vfs_fonts.js",
       "node_modules/@amcharts/amcharts4/.internal/canvg/index.js",
       "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs"
     ]
   },
   "resources/js/dashboard.js": {
-    "file": "assets/dashboard.36e1702c.js",
+    "file": "assets/dashboard.2705d668.js",
     "src": "resources/js/dashboard.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
-      "_animated.b7973092.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_index.d8923a62.js",
-      "_OnboardingCard.ccc4815d.js",
+      "_helpers.35739ffe.js",
+      "_animated.085da57c.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_index.d9d612f0.js",
+      "_OnboardingCard.0113cd56.js",
       "_tslib.es6.598c7c7a.js"
     ],
     "css": [
@@ -410,7 +410,7 @@
     ]
   },
   "resources/js/import/rules/hun_raiffeisen_v1.js": {
-    "file": "assets/hun_raiffeisen_v1.76b6ae6e.js",
+    "file": "assets/hun_raiffeisen_v1.6b53a315.js",
     "src": "resources/js/import/rules/hun_raiffeisen_v1.js",
     "isDynamicEntry": true,
     "imports": [
@@ -418,14 +418,14 @@
     ]
   },
   "resources/js/investment-group/index.js": {
-    "file": "assets/index.6664a814.js",
+    "file": "assets/index.b10b978f.js",
     "src": "resources/js/investment-group/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
-      "_OnboardingCard.ccc4815d.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
+      "_OnboardingCard.0113cd56.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
@@ -439,42 +439,42 @@
     ]
   },
   "resources/js/investment-price/list.js": {
-    "file": "assets/list.592b3265.js",
+    "file": "assets/list.8a4bb718.js",
     "src": "resources/js/investment-price/list.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
-      "_animated.b7973092.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
+      "_animated.085da57c.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/investment/index.js": {
-    "file": "assets/index.7ddeeb5e.js",
+    "file": "assets/index.65caa2a3.js",
     "src": "resources/js/investment/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/investment/show.js": {
-    "file": "assets/show.0c921d79.js",
+    "file": "assets/show.4ead1a28.js",
     "src": "resources/js/investment/show.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTables.bootstrap5.9fbefa5d.js",
+      "_helpers.35739ffe.js",
+      "_dataTables.bootstrap5.509daac4.js",
       "_sweetalert2.esm.all.dd009341.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_animated.b7973092.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_animated.085da57c.js",
       "_tslib.es6.598c7c7a.js"
     ],
     "css": [
@@ -482,53 +482,53 @@
     ]
   },
   "resources/js/payee/form.js": {
-    "file": "assets/form.7fbf643d.js",
+    "file": "assets/form.ecf9532f.js",
     "src": "resources/js/payee/form.js",
     "isDynamicEntry": true,
     "imports": [
-      "_helpers.0d23fc7a.js",
-      "_select2.23b23e14.js",
+      "_helpers.35739ffe.js",
+      "_select2.7201c0e6.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/payee/index.js": {
-    "file": "assets/index.536f2888.js",
+    "file": "assets/index.f30ff98c.js",
     "src": "resources/js/payee/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/payee/merge.js": {
-    "file": "assets/merge.a2f8c69e.js",
+    "file": "assets/merge.9f158063.js",
     "src": "resources/js/payee/merge.js",
     "isDynamicEntry": true,
     "imports": [
-      "_helpers.0d23fc7a.js",
-      "_select2.23b23e14.js",
+      "_helpers.35739ffe.js",
+      "_select2.7201c0e6.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/received-mail/index.js": {
-    "file": "assets/index.a43fcc38.js",
+    "file": "assets/index.4881e695.js",
     "src": "resources/js/received-mail/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
-      "_Modal.ff995f25.js",
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_helpers.0d23fc7a.js",
+      "_Modal.3b9d77d6.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js",
-      "_ActionButtonBar.0fc40870.js"
+      "_ActionButtonBar.fefa1163.js"
     ]
   },
   "resources/js/received-mail/show.js": {
@@ -537,83 +537,83 @@
     "isDynamicEntry": true
   },
   "resources/js/reports/budgetchart.js": {
-    "file": "assets/budgetchart.ba86630f.js",
+    "file": "assets/budgetchart.08f1feef.js",
     "src": "resources/js/reports/budgetchart.js",
     "isDynamicEntry": true,
     "imports": [
-      "_animated.b7973092.js",
-      "_kelly.2c029627.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_select2.23b23e14.js",
+      "_animated.085da57c.js",
+      "_kelly.7d1a4835.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_select2.7201c0e6.js",
       "_tslib.es6.598c7c7a.js",
       "resources/js/app.js"
     ]
   },
-  "_kelly.2c029627.js": {
-    "file": "assets/kelly.2c029627.js",
+  "_kelly.7d1a4835.js": {
+    "file": "assets/kelly.7d1a4835.js",
     "imports": [
-      "_animated.b7973092.js"
+      "_animated.085da57c.js"
     ]
   },
   "resources/js/reports/cashflow.js": {
-    "file": "assets/cashflow.81e2a4b3.js",
+    "file": "assets/cashflow.3223702b.js",
     "src": "resources/js/reports/cashflow.js",
     "isDynamicEntry": true,
     "imports": [
-      "_animated.b7973092.js",
-      "_select2.23b23e14.js",
+      "_animated.085da57c.js",
+      "_select2.7201c0e6.js",
       "_tslib.es6.598c7c7a.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/reports/investment-timeline.js": {
-    "file": "assets/investment-timeline.16abe70c.js",
+    "file": "assets/investment-timeline.494d0a77.js",
     "src": "resources/js/reports/investment-timeline.js",
     "isDynamicEntry": true,
     "imports": [
-      "_animated.b7973092.js",
-      "_kelly.2c029627.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_animated.085da57c.js",
+      "_kelly.7d1a4835.js",
+      "_helpers.35739ffe.js",
+      "_dataTableHelper.1c2d9edf.js",
       "_tslib.es6.598c7c7a.js",
       "resources/js/app.js"
     ]
   },
   "resources/js/reports/schedules.js": {
-    "file": "assets/schedules.1dac8cf1.js",
+    "file": "assets/schedules.2083da48.js",
     "src": "resources/js/reports/schedules.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_dataTables.contextualActions.min.a1d01579.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_dataTables.contextualActions.min.3129c0ea.js",
       "_sweetalert2.esm.all.dd009341.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_helpers.0d23fc7a.js",
-      "_OnboardingCard.ccc4815d.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_helpers.35739ffe.js",
+      "_OnboardingCard.0113cd56.js",
       "resources/js/app.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/reports/transactions.js": {
-    "file": "assets/transactions.98ced5f7.js",
+    "file": "assets/transactions.93a189fa.js",
     "src": "resources/js/reports/transactions.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
-      "_dataTableHelper.f10b8b21.js",
-      "_select2.23b23e14.js",
+      "_helpers.35739ffe.js",
+      "_dataTableHelper.1c2d9edf.js",
+      "_select2.7201c0e6.js",
       "_DateRangePicker.73854680.js",
-      "_animated.b7973092.js",
-      "_Modal.ff995f25.js",
+      "_animated.085da57c.js",
+      "_Modal.3b9d77d6.js",
       "_tslib.es6.598c7c7a.js",
       "_Datepicker.86824658.js",
-      "_ActionButtonBar.0fc40870.js"
+      "_ActionButtonBar.fefa1163.js"
     ],
     "css": [
-      "assets/transactions.ec3e4f21.css"
+      "assets/transactions.45a0e19b.css"
     ]
   },
   "resources/js/sandbox-components/login-helper.js": {
@@ -627,83 +627,83 @@
     "isDynamicEntry": true
   },
   "resources/js/search/search.js": {
-    "file": "assets/search.b318aef0.js",
+    "file": "assets/search.89b9d2fd.js",
     "src": "resources/js/search/search.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTableHelper.f10b8b21.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
-      "_Modal.ff995f25.js",
-      "_helpers.0d23fc7a.js",
+      "_Modal.3b9d77d6.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js",
-      "_ActionButtonBar.0fc40870.js"
+      "_ActionButtonBar.fefa1163.js"
     ]
   },
   "resources/js/tag/index.js": {
-    "file": "assets/index.92c15115.js",
+    "file": "assets/index.338ac281.js",
     "src": "resources/js/tag/index.js",
     "isDynamicEntry": true,
     "imports": [
-      "_dataTables.bootstrap5.9fbefa5d.js",
-      "_responsive.bootstrap5.a235b38a.js",
-      "_dataTableHelper.f10b8b21.js",
+      "_dataTables.bootstrap5.509daac4.js",
+      "_responsive.bootstrap5.f789e6f7.js",
+      "_dataTableHelper.1c2d9edf.js",
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/transactions/investment.js": {
-    "file": "assets/investment.5ac396a8.js",
+    "file": "assets/investment.96db0736.js",
     "src": "resources/js/transactions/investment.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_TransactionFormInvestment.b1c6d093.js",
-      "_TransactionSchedule.6ec72524.js",
-      "_index.d8923a62.js",
+      "_TransactionFormInvestment.f25df232.js",
+      "_TransactionSchedule.afa5be60.js",
+      "_index.d9d612f0.js",
       "_defineProperty.b744b18c.js",
-      "_helpers.0d23fc7a.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js",
-      "_Button.f5acc136.js",
-      "_select2.23b23e14.js"
+      "_Button.ae7edbbb.js",
+      "_select2.7201c0e6.js"
     ]
   },
   "resources/js/transactions/show.js": {
-    "file": "assets/show.53dd11fc.js",
+    "file": "assets/show.1ae54487.js",
     "src": "resources/js/transactions/show.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ActionButtonBar.0fc40870.js",
-      "_helpers.0d23fc7a.js",
+      "_ActionButtonBar.fefa1163.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
   "resources/js/transactions/standard.js": {
-    "file": "assets/standard.fad41d42.js",
+    "file": "assets/standard.85b13896.js",
     "src": "resources/js/transactions/standard.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_TransactionFormStandard.560180c4.js",
-      "_helpers.0d23fc7a.js",
+      "_TransactionFormStandard.0dd288ed.js",
+      "_helpers.35739ffe.js",
       "_tslib.es6.598c7c7a.js",
-      "_select2.23b23e14.js",
-      "_TransactionSchedule.6ec72524.js",
-      "_index.d8923a62.js",
+      "_select2.7201c0e6.js",
+      "_TransactionSchedule.afa5be60.js",
+      "_index.d9d612f0.js",
       "_defineProperty.b744b18c.js",
-      "_Button.f5acc136.js"
+      "_Button.ae7edbbb.js"
     ]
   },
   "resources/js/user/settings.js": {
-    "file": "assets/settings.47638a35.js",
+    "file": "assets/settings.2d017b08.js",
     "src": "resources/js/user/settings.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_helpers.0d23fc7a.js",
-      "_Button.f5acc136.js",
-      "_index.d8923a62.js",
+      "_helpers.35739ffe.js",
+      "_Button.ae7edbbb.js",
+      "_index.d9d612f0.js",
       "_tslib.es6.598c7c7a.js"
     ]
   },
@@ -717,8 +717,8 @@
     "src": "node_modules/select2/dist/js/i18n/hu.js",
     "isDynamicEntry": true
   },
-  "_pdfmake.a6ab851e.js": {
-    "file": "assets/pdfmake.a6ab851e.js",
+  "_pdfmake.95e33e13.js": {
+    "file": "assets/pdfmake.95e33e13.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js"
@@ -730,7 +730,7 @@
     "isDynamicEntry": true
   },
   "node_modules/@amcharts/amcharts4/.internal/canvg/index.js": {
-    "file": "assets/index.9159cd8f.js",
+    "file": "assets/index.e518add4.js",
     "src": "node_modules/@amcharts/amcharts4/.internal/canvg/index.js",
     "isDynamicEntry": true,
     "imports": [
@@ -743,33 +743,33 @@
     "src": "node_modules/@amcharts/amcharts4/.internal/bundled/xlsx/xlsx.mjs",
     "isDynamicEntry": true
   },
-  "resources/js/reports/transactions.css": {
-    "file": "assets/transactions.ec3e4f21.css",
-    "src": "resources/js/reports/transactions.css"
+  "resources/js/dashboard.css": {
+    "file": "assets/dashboard.4473e240.css",
+    "src": "resources/js/dashboard.css"
   },
   "TransactionFormInvestment.css": {
     "file": "assets/TransactionFormInvestment.bc340743.css",
     "src": "TransactionFormInvestment.css"
   },
-  "OnboardingCard.css": {
-    "file": "assets/OnboardingCard.4b398481.css",
-    "src": "OnboardingCard.css"
+  "TransactionFormStandard.css": {
+    "file": "assets/TransactionFormStandard.71cb9d37.css",
+    "src": "TransactionFormStandard.css"
   },
   "resources/js/account/show.css": {
     "file": "assets/show.4ff081f8.css",
     "src": "resources/js/account/show.css"
   },
+  "OnboardingCard.css": {
+    "file": "assets/OnboardingCard.4b398481.css",
+    "src": "OnboardingCard.css"
+  },
+  "resources/js/reports/transactions.css": {
+    "file": "assets/transactions.45a0e19b.css",
+    "src": "resources/js/reports/transactions.css"
+  },
   "ActionButtonBar.css": {
     "file": "assets/ActionButtonBar.fff52b0b.css",
     "src": "ActionButtonBar.css"
-  },
-  "resources/js/dashboard.css": {
-    "file": "assets/dashboard.4473e240.css",
-    "src": "resources/js/dashboard.css"
-  },
-  "TransactionFormStandard.css": {
-    "file": "assets/TransactionFormStandard.692d5340.css",
-    "src": "TransactionFormStandard.css"
   },
   "resources/js/investment/show.css": {
     "file": "assets/show.2b6629ca.css",

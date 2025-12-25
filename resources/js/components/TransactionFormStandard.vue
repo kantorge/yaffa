@@ -23,8 +23,8 @@
               </div>
               <span
                 class="fa fa-info-circle text-primary"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="right"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
                 :title="
                   __(
                     'These settings cannot be changed after saving the transaction.',
@@ -96,7 +96,7 @@
                           )
                         : ''
                     "
-                    :data-toggle="action === 'replace' ? 'tooltip' : ''"
+                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
                     <span class="fa-solid fa-arrows-rotate"></span><br />
                     {{ __('Scheduled') }}
@@ -125,7 +125,7 @@
                           )
                         : ''
                     "
-                    :data-toggle="action === 'replace' ? 'tooltip' : ''"
+                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
                     <span class="fa-solid fa-hourglass-half"></span><br />
                     {{ __('Budget') }}
@@ -274,8 +274,8 @@
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
-                      data-coreui-toggle="modal"
-                      data-coreui-target="#newPayeeModal"
+                      data-bs-toggle="modal"
+                      data-bs-target="#newPayeeModal"
                       v-if="form.transaction_type === 'deposit' && !fromModal"
                     >
                       <span class="fa fa-fw fa-plus"></span>
@@ -302,8 +302,8 @@
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
-                      data-coreui-toggle="modal"
-                      data-coreui-target="#newPayeeModal"
+                      data-bs-toggle="modal"
+                      data-bs-target="#newPayeeModal"
                       v-if="
                         form.transaction_type === 'withdrawal' && !fromModal
                       "
@@ -552,6 +552,7 @@
     processTransaction,
     toFormattedCurrency,
     loadSelect2Language,
+    initializeBootstrapTooltips,
   } from '../helpers';
 
   import select2 from 'select2';
@@ -955,20 +956,10 @@
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
       // Initialize tooltips
-      this.applyTooltips();
+      initializeBootstrapTooltips();
     },
 
     methods: {
-      applyTooltips() {
-        const tooltipTriggerList = document.querySelectorAll(
-          '[data-coreui-toggle="tooltip"]:not(.handled)',
-        );
-        Array.from(tooltipTriggerList).forEach((tooltipTriggerEl) => {
-          new coreui.Tooltip(tooltipTriggerEl);
-          tooltipTriggerEl.classList.add('handled');
-        });
-      },
-
       getCurrencySymbol,
       toFormattedCurrency,
       initializeTransaction() {
