@@ -23,7 +23,6 @@
         "eslint-plugin-prettier": "^5.5.4",
         "eslint-plugin-vue": "^10.5.0",
         "file-loader": "^6.2.0",
-        "laravel-mix": "^6.0.49",
         "mini-css-extract-plugin": "^2.7.2",
         "postcss": "^8.4.31",
         "postcss-loader": "^7.0.2",
@@ -31,7 +30,9 @@
         "sass": "^1.57.1",
         "sass-loader": "^13.2.0",
         "style-loader": "^3.3.1",
-        "vue-loader": "^16.8.3"
+        "vue-loader": "^16.8.3",
+        "vite": "^3.0.2",
+        "laravel-vite-plugin": "^0.6.0"
     },
     "dependencies": {
         "@amcharts/amcharts4": "^4.10.40",
@@ -60,6 +61,7 @@
         "vanillajs-datepicker": "^1.3.4",
         "vform": "^2.1.2",
         "vue": "^3.5.20",
-        "webpack": "^5.101.3"
+        "webpack": "^5.101.3",
+        "@vitejs/plugin-vue": "^3.0.1"
     }
 }
