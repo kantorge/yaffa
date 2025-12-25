@@ -24,7 +24,7 @@
         @endif
     </title>
 
-    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+    @vite('resources/css/app.css')
 
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}" />
 
@@ -53,9 +53,9 @@
     @routes
 
     <!-- REQUIRED JS SCRIPTS -->
-    <script src="{{ mix('js/manifest.js') }}"></script>
-    <script src="{{ mix('js/vendor.js') }}"></script>
-    <script src="{{ mix('js/app.js') }}"></script>
+    @vite('resources/js/manifest.js')
+    @vite('resources/js/vendor.js')
+    @vite('resources/js/app.js')
 
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.body-close')
 </body>
