@@ -202,7 +202,7 @@
 
 import { __ as translator, processTransaction } from "../helpers"
 import * as dataTableHelpers from "./dataTableHelper";
-import FindTransactionSelectCard from "./FindTransactionSelectCard"
+import FindTransactionSelectCard from "./FindTransactionSelectCard.vue"
 import DateRangeSelector from "./DateRangeSelector.vue";
 import ReportingCanvasFindTransactionsCategoryDetails from "./ReportingWidgets/ReportingCanvas-FindTransactions-CategoryDetails.vue";
 import ReportingCanvasFindTransactionsSummary from "./ReportingWidgets/ReportingCanvas-FindTransactions-Summary.vue";
