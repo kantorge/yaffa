@@ -54,7 +54,7 @@
                     <a class="nav-link" href="{{ route('account.history', ['account' => $account]) }}">
                         {{ __('Load account transaction history') }}
                     </a>
-                    <i class="fa-solid fa-clock text-warning" data-toggle="tooltip"
+                    <i class="fa-solid fa-clock text-warning" data-bs-toggle="tooltip"
                         title="{{ __('This page can load slowly based on the number of transactions.') }}"></i>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
@@ -174,15 +174,13 @@
     'account_from' => $account->id,
     'schedule' => 1,
     'callback' => 'back'
-]) }}" title="{{ __('New scheduled transaction') }}"><i
-                            class="fa fa-cart-plus"></i></a>
+]) }}" title="{{ __('New scheduled transaction') }}"><i class="fa fa-cart-plus"></i></a>
                     <a class="btn btn-sm btn-success" href="{{ route('transaction.create', [
     'type' => 'investment',
     'account' => $account->id,
     'schedule' => 1,
     'callback' => 'back'
-]) }}" title="{{ __('New scheduled investment transaction') }}"><i
-                            class="fa fa-line-chart"></i></a>
+]) }}" title="{{ __('New scheduled investment transaction') }}"><i class="fa fa-line-chart"></i></a>
                 </div>
             </div>
             <div class="card-body">

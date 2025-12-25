@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.head')
 
@@ -24,17 +25,18 @@
         @endif
     </title>
 
-    @vite('resources/css/app.css')
-
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}" />
+
+    {{-- Vite preload tags to prevent FOUC --}}
+    @vite(['resources/js/app.js'])
 
     {{-- Disable animations during testing --}}
     @if (app()->environment('testing'))
         <style>
-        * {
-            transition: none !important;
-            animation: none !important;
-        }
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
         </style>
     @endif
 </head>
@@ -52,11 +54,7 @@
 
     @routes
 
-    <!-- REQUIRED JS SCRIPTS -->
-    @vite('resources/js/manifest.js')
-    @vite('resources/js/vendor.js')
-    @vite('resources/js/app.js')
-
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.body-close')
 </body>
+
 </html>

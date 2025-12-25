@@ -1,12 +1,7 @@
-
-import 'select2';
-$.fn.select2.amd.define(
-    'select2/i18n/' + window.YAFFA.language,
-    [],
-    require("select2/src/js/select2/i18n/" + window.YAFFA.language)
-);
-
-import { __ } from '../helpers';
+import { __, loadSelect2Language } from '../helpers';
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
 
 // Add select2 functionality to payee_source select
 const selectorSourceCategory = '#category_source';

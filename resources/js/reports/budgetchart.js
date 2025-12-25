@@ -187,7 +187,7 @@ let reloadData = function () {
     // We need to reload the table content, too
     window.table.ajax.reload(function () {
         // (Re-)initialize tooltips in table, once data is reloaded
-        $('[data-toggle="tooltip"]').tooltip();
+        helpers.initializeBootstrapTooltips();
     });
 }
 

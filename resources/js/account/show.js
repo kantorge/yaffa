@@ -483,7 +483,7 @@ function reloadTable() {
         document.getElementById('reload').removeAttribute('disabled');
 
         // (Re-)Initialize tooltips in table
-        $('[data-toggle="tooltip"]').tooltip();
+        helpers.initializeBootstrapTooltips();
     });
 }
 
@@ -772,5 +772,5 @@ app.mount('#app')
 
 // Initialize tooltips in table
 $(document).ready(function () {
-    $('[data-toggle="tooltip"]').tooltip()
+    helpers.initializeBootstrapTooltips();
 });

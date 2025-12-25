@@ -6,6 +6,10 @@
 /node_modules
 /public/hot
 /public/storage
+/public/css
+/public/js
+/public/fonts
+/public/mix-manifest.json
 /storage
 /vendor
 /resources/google

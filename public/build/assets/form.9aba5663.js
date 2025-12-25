@@ -1,0 +1,1 @@
+import{D as t}from"./Datepicker.86824658.js";$(function(){new t(document.getElementById("date"),{weekStart:1,todayBtn:!0,todayBtnMode:1,todayHighlight:!0,format:"yyyy-mm-dd",autohide:!0,buttonClass:"btn"})});
