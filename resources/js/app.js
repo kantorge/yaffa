@@ -1,3 +1,4 @@
+import '../sass/app.scss';
 import './bootstrap';
 
 const routeMap = new Map();
