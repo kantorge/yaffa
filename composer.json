@@ -51,7 +51,6 @@
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.3",
         "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
-        "ryoluo/sail-ssl": "^1.4",
         "spatie/db-dumper": "^3.8"
     },
     "config": {

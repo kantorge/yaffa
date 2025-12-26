@@ -175,12 +175,7 @@
 
         this.$emit(`update`, this.selectedValues);
       },
-      /**
-       * Define the translation helper function locally.
-       */
-      __: function (string, replace) {
-        return translator(string, replace);
-      },
+      __,
     },
   };
 </script>
