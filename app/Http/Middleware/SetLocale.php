@@ -12,7 +12,7 @@ class SetLocale
     /**
      * Handle an incoming request.
      *
-     * @param  Closure(Request): (Response|RedirectResponse)  $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      */
     public function handle(Request $request, Closure $next): \Symfony\Component\HttpFoundation\Response
     {
