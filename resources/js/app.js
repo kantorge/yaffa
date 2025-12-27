@@ -82,8 +82,24 @@ if (current === 'transaction.open' && ['show'].includes(route().params.action)) 
 import './notifications';
 
 // jQuery handlers...
-// (rest of file unchanged)
+$(function () {
+    // Generally available account selector
+    $('#jump_to_account').on('change', function () {
+        if (this.value === '') {
+            return false;
+        }
+        window.location.href = route('account-entity.show', {account_entity: this.value});
+    });
 
+    // Generally available cancel button with confirmation
+    $(".cancel.confirm-needed").on("click", function () {
+        return confirm(__('Are you sure to abandon this form?'));
+    });
+});
+
+/**
+ * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
+ */
 if (window.sandbox_mode) {
     if (current !== 'login') {
         loadModule('sandbox-components/reset-timer');

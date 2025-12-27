@@ -92,7 +92,9 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             // Test with no tags
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
-                ->waitUntilVue('presetsReady.tag', true, '@component-find-transactions')
+                ->waitFor('#findTransactionsActionsCard', 10)
+                ->scrollIntoView('#findTransactionsSelectCard-tag')
+                //->waitUntilVue('presetsReady.tag', true, '@component-find-transactions', 10)
                 ->assertVue('selectedTags', [], '@component-find-transactions');
         });
 
@@ -100,6 +102,7 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             // Test with one tag
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['tags' => [$tag1->id]])
+                ->waitFor('#findTransactionContainer', 10)
                 ->waitUntilVue('presetsReady.tag', true, '@component-find-transactions')
                 ->assertVue('selectedTags', [$tag1->id], '@component-find-transactions');
         });

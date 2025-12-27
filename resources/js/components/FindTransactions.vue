@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <div class="col-sm-3">
-      <div class="card mb-3">
+      <div class="card mb-3" id="findTransactionsActionsCard">
         <div class="card-header">
           <div class="card-title">
             {{ __('Actions') }}

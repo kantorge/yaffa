@@ -11,7 +11,6 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Services\InvestmentService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 

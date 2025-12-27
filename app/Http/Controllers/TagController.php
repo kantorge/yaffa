@@ -8,7 +8,6 @@ use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 

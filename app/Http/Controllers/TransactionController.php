@@ -11,7 +11,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 use Exception;
 
@@ -70,7 +69,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
-        if (! in_array($action, $availableActions)) {
+        if (!in_array($action, $availableActions)) {
             abort(404);
         }
 
@@ -170,7 +169,7 @@ class TransactionController extends Controller implements HasMiddleware
         }
 
         // Ensure that a config relation exists, even if it's empty
-        if (! array_key_exists('config', $transactionData)) {
+        if (!array_key_exists('config', $transactionData)) {
             $transactionData['config'] = [];
         }
         $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));

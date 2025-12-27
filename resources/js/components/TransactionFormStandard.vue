@@ -274,8 +274,8 @@
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
-                      data-bs-toggle="modal"
-                      data-bs-target="#newPayeeModal"
+                      data-coreui-toggle="modal"
+                      data-coreui-target="#newPayeeModal"
                       v-if="form.transaction_type === 'deposit' && !fromModal"
                     >
                       <span class="fa fa-fw fa-plus"></span>
@@ -302,8 +302,8 @@
                       style="padding: 0.05rem 0.25rem"
                       :title="__('Add new payee')"
                       type="button"
-                      data-bs-toggle="modal"
-                      data-bs-target="#newPayeeModal"
+                      data-coreui-toggle="modal"
+                      data-coreui-target="#newPayeeModal"
                       v-if="
                         form.transaction_type === 'withdrawal' && !fromModal
                       "

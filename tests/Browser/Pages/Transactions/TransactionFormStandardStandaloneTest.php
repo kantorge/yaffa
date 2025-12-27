@@ -16,6 +16,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
+    private const string MAIN_FORM_SELECTOR = '#transactionFormStandard';
+
     protected User $user;
 
     protected function setUp(): void
@@ -38,7 +40,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             // Open vanilla form (withdrawal, no preselected account)
             ->visitRoute('transaction.create', ['type' => 'standard'])
             // Wait for the form to load
-            ->waitFor('#transactionFormStandard')
+            ->waitFor(self::MAIN_FORM_SELECTOR)
             // Select account from, random from dropdown
             ->select2('#account_from', null, 10)
             // Select payeee, random from dropdown
@@ -58,7 +60,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
-                ->assertPresent('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Standalone view should have the after save action button group visible
                 ->assertVisible('@action-after-save-desktop-button-group')
@@ -93,6 +95,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Try to save form without any data
                 ->pressAndWaitFor('#transactionFormStandard-Save')
                 // The page should no have changed
@@ -108,6 +112,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // No currency should be visible
                 ->assertNotPresent('@label-amountFrom-currency')
@@ -188,6 +193,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Switch to deposit transaction type
                 ->click('@transaction-type-deposit')
                 // Confirm alert
@@ -217,6 +224,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
@@ -242,6 +251,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Switch to deposit transaction type
                 ->click('@transaction-type-transfer')
                 // Confirm alert
@@ -277,8 +288,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
-                // Wait for the form to load
-                ->waitFor('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // The schedule card should not be visible
                 ->assertMissing('@card-transaction-schedule')
                 // Select budget checkbox
@@ -389,6 +400,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Switch to transfer
                 ->click('@transaction-type-transfer')
                 // Confirm alert
@@ -459,6 +472,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Select account from, random from dropdown
                 ->select2('#account_from', null, 10)
 
@@ -525,6 +540,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Open the payee modal
                 ->click('#account_to_container > button')
@@ -559,6 +575,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Verify that the add new payee button is visible next to the account to dropdown
                 ->assertVisible('#account_to_container > button[data-coreui-target="#newPayeeModal"]')
 
@@ -583,6 +601,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Add amount
                 ->type('#transaction_amount_from', '100')
                 // Add one transaction item
@@ -629,7 +649,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Open the transaction edit form
                 ->visitRoute('transaction.open', ['action' => 'edit', 'transaction' => $transaction->id])
                 // Wait for the form to load, including the amount to field, which might be slightly delayed due to Vue reactivity
-                ->waitFor('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
                 ->waitFor('#transaction_amount_to', 10)
 
                 // Assert that the form is loaded correctly, especially the amount and currency fields
@@ -649,7 +669,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 // Open vanilla form (withdrawal, no preselected account)
                 ->visitRoute('transaction.create', ['type' => 'standard'])
                 // Wait for the form to load
-                ->waitFor('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Validate that the account is empty, by checking if the select2 has no options
                 ->assertPresent('#account_from')
                 ->assertMissing('#account_from > option')
@@ -776,8 +797,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open the transaction edit form
                 ->visitRoute('transaction.open', ['action' => 'clone', 'transaction' => $transaction->id])
-                // Wait for the form to load
-                ->waitFor('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Assert that the form is loaded correctly, especially the amount and currency fields
                 #->assertSelected('#account_from', $transaction->config->accountFrom->id)
@@ -821,8 +841,8 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open the transaction edit form
                 ->visitRoute('transaction.open', ['action' => 'replace', 'transaction' => $transaction->id])
-                // Wait for the form to load
-                ->waitFor('#transactionFormStandard')
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Assert that two schedules are visible
                 ->assertVisible('#transaction_schedule_current')
                 ->assertVisible('#transaction_schedule_original')

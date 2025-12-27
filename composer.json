@@ -38,7 +38,6 @@
         "barryvdh/laravel-ide-helper": "^3.6",
         "deployer/deployer": "^7.5",
         "fakerphp/faker": "^1.23",
-        "imanghafoori/laravel-microscope": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.23",
         "larastan/larastan": "^3.1",
         "laravel/boost": "^1.6",
