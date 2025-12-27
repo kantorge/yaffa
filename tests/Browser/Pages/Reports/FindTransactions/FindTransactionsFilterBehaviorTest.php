@@ -94,25 +94,33 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
                 ->visitRoute('reports.transactions', [])
                 ->waitFor('#findTransactionsActionsCard', 10)
                 ->scrollIntoView('#findTransactionsSelectCard-tag')
-                //->waitUntilVue('presetsReady.tag', true, '@component-find-transactions', 10)
-                ->assertVue('selectedTags', [], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_tag.select2-hidden-accessible', 10)
+                // Verify Select2 element has no values selected
+                ->assertScript("return $('#select_tag').select2('data').length === 0", true);
         });
 
         $this->browse(function (Browser $browser) use ($tag1) {
             // Test with one tag
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['tags' => [$tag1->id]])
-                ->waitFor('#findTransactionContainer', 10)
-                ->waitUntilVue('presetsReady.tag', true, '@component-find-transactions')
-                ->assertVue('selectedTags', [$tag1->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_tag.select2-hidden-accessible', 10)
+                // Verify Select2 has the correct tag selected by checking selected values
+                ->assertScript("return $('#select_tag').select2('val').includes('" . $tag1->id . "')", true)
+                ->assertScript("return $('#select_tag').select2('val').length === 1", true);
         });
 
         $this->browse(function (Browser $browser) use ($tag1, $tag2) {
             // Test with two tags
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['tags' => [$tag1->id, $tag2->id]])
-                ->waitUntilVue('presetsReady.tag', true, '@component-find-transactions')
-                ->assertVue('selectedTags', [$tag1->id, $tag2->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_tag.select2-hidden-accessible', 10)
+                // Verify Select2 has both tags selected
+                ->assertScript("return $('#select_tag').select2('val').includes('" . $tag1->id . "')", true)
+                ->assertScript("return $('#select_tag').select2('val').includes('" . $tag2->id . "')", true)
+                ->assertScript("return $('#select_tag').select2('val').length === 2", true);
         });
     }
 
@@ -126,24 +134,33 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             // Test with no categories
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
-                ->waitUntilVue('presetsReady.category', true, '@component-find-transactions')
-                ->assertVue('selectedCategories', [], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_category.select2-hidden-accessible', 10)
+                // Verify Select2 element has no values selected
+                ->assertScript("return $('#select_category').select2('data').length === 0", true);
         });
 
         $this->browse(function (Browser $browser) use ($category1) {
             // Test with one category
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['categories' => [$category1->id]])
-                ->waitUntilVue('presetsReady.category', true, '@component-find-transactions')
-                ->assertVue('selectedCategories', [$category1->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_category.select2-hidden-accessible', 10)
+                // Verify Select2 has the correct category selected
+                ->assertScript("return $('#select_category').select2('val').includes('" . $category1->id . "')", true)
+                ->assertScript("return $('#select_category').select2('val').length === 1", true);
         });
 
         $this->browse(function (Browser $browser) use ($category1, $category2) {
             // Test with two categories
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['categories' => [$category1->id, $category2->id]])
-                ->waitUntilVue('presetsReady.category', true, '@component-find-transactions')
-                ->assertVue('selectedCategories', [$category1->id, $category2->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_category.select2-hidden-accessible', 10)
+                // Verify Select2 has both categories selected
+                ->assertScript("return $('#select_category').select2('val').includes('" . $category1->id . "')", true)
+                ->assertScript("return $('#select_category').select2('val').includes('" . $category2->id . "')", true)
+                ->assertScript("return $('#select_category').select2('val').length === 2", true);
         });
     }
 
@@ -157,24 +174,33 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             // Test with no accounts
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
-                ->waitUntilVue('presetsReady.account', true, '@component-find-transactions')
-                ->assertVue('selectedAccounts', [], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_account.select2-hidden-accessible', 10)
+                // Verify Select2 element has no values selected
+                ->assertScript("return $('#select_account').select2('data').length === 0", true);
         });
 
         $this->browse(function (Browser $browser) use ($account1) {
             // Test with one account
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['accounts' => [$account1->id]])
-                ->waitUntilVue('presetsReady.account', true, '@component-find-transactions')
-                ->assertVue('selectedAccounts', [$account1->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_account.select2-hidden-accessible', 10)
+                // Verify Select2 has the correct account selected
+                ->assertScript("return $('#select_account').select2('val').includes('" . $account1->id . "')", true)
+                ->assertScript("return $('#select_account').select2('val').length === 1", true);
         });
 
         $this->browse(function (Browser $browser) use ($account1, $account2) {
             // Test with two accounts
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['accounts' => [$account1->id, $account2->id]])
-                ->waitUntilVue('presetsReady.account', true, '@component-find-transactions')
-                ->assertVue('selectedAccounts', [$account1->id, $account2->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_account.select2-hidden-accessible', 10)
+                // Verify Select2 has both accounts selected
+                ->assertScript("return $('#select_account').select2('val').includes('" . $account1->id . "')", true)
+                ->assertScript("return $('#select_account').select2('val').includes('" . $account2->id . "')", true)
+                ->assertScript("return $('#select_account').select2('val').length === 2", true);
         });
     }
 
@@ -188,24 +214,33 @@ class FindTransactionsFilterBehaviorTest extends DuskTestCase
             // Test with no payees
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', [])
-                ->waitUntilVue('presetsReady.payee', true, '@component-find-transactions')
-                ->assertVue('selectedPayees', [], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_payee.select2-hidden-accessible', 10)
+                // Verify Select2 element has no values selected
+                ->assertScript("return $('#select_payee').select2('data').length === 0", true);
         });
 
         $this->browse(function (Browser $browser) use ($payee1) {
             // Test with one payee
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['payees' => [$payee1->id]])
-                ->waitUntilVue('presetsReady.payee', true, '@component-find-transactions')
-                ->assertVue('selectedPayees', [$payee1->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_payee.select2-hidden-accessible', 10)
+                // Verify Select2 has the correct payee selected
+                ->assertScript("return $('#select_payee').select2('val').includes('" . $payee1->id . "')", true)
+                ->assertScript("return $('#select_payee').select2('val').length === 1", true);
         });
 
         $this->browse(function (Browser $browser) use ($payee1, $payee2) {
             // Test with two payees
             $browser->loginAs($this->user)
                 ->visitRoute('reports.transactions', ['payees' => [$payee1->id, $payee2->id]])
-                ->waitUntilVue('presetsReady.payee', true, '@component-find-transactions')
-                ->assertVue('selectedPayees', [$payee1->id, $payee2->id], '@component-find-transactions');
+                // Wait for Select2 to be initialized
+                ->waitFor('#select_payee.select2-hidden-accessible', 10)
+                // Verify Select2 has both payees selected
+                ->assertScript("return $('#select_payee').select2('val').includes('" . $payee1->id . "')", true)
+                ->assertScript("return $('#select_payee').select2('val').includes('" . $payee2->id . "')", true)
+                ->assertScript("return $('#select_payee').select2('val').length === 2", true);
         });
     }
 }

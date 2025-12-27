@@ -43,6 +43,7 @@
                 @endif
                 @if (isset($source_id))
                     :source-id = "{{ $source_id }}"
+                    data-source-id = "{{ $source_id }}"
                 @endif
             ></transaction-container-standard>
         </div>

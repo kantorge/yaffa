@@ -187,11 +187,13 @@ class TransactionController extends Controller implements HasMiddleware
         $transaction->budget = false;
         $transaction->reconciled = false;
 
+        $sourceId = $request->input('mail_id');
+
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
             'type' => 'standard',
-            'source_id' => $request->input('mail_id'),
+            'source_id' => $sourceId,
         ]);
     }
 }
