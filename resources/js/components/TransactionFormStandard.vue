@@ -23,8 +23,8 @@
               </div>
               <span
                 class="fa fa-info-circle text-primary"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="right"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
                 :title="
                   __(
                     'These settings cannot be changed after saving the transaction.',
@@ -96,7 +96,7 @@
                           )
                         : ''
                     "
-                    :data-toggle="action === 'replace' ? 'tooltip' : ''"
+                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
                     <span class="fa-solid fa-arrows-rotate"></span><br />
                     {{ __('Scheduled') }}
@@ -125,7 +125,7 @@
                           )
                         : ''
                     "
-                    :data-toggle="action === 'replace' ? 'tooltip' : ''"
+                    :data-bs-toggle="action === 'replace' ? 'tooltip' : ''"
                   >
                     <span class="fa-solid fa-hourglass-half"></span><br />
                     {{ __('Budget') }}
@@ -337,7 +337,7 @@
                             'Budget is calculated using your base currency, unless you define an account with an other currency.',
                           )
                         "
-                        data-toggle="tooltip"
+                        data-bs-toggle="tooltip"
                       ></span>
                     </span>
                   </label>
@@ -551,14 +551,13 @@
     getCurrencySymbol,
     processTransaction,
     toFormattedCurrency,
+    loadSelect2Language,
+    initializeBootstrapTooltips,
   } from '../helpers';
 
-  require('select2');
-  $.fn.select2.amd.define(
-    'select2/i18n/' + window.YAFFA.language,
-    [],
-    require('select2/src/js/select2/i18n/' + window.YAFFA.language),
-  );
+  import select2 from 'select2';
+  select2();
+  loadSelect2Language(window.YAFFA.language);
 
   import MathInput from './MathInput.vue';
 
@@ -957,20 +956,10 @@
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
       // Initialize tooltips
-      this.applyTooltips();
+      initializeBootstrapTooltips();
     },
 
     methods: {
-      applyTooltips() {
-        const tooltipTriggerList = document.querySelectorAll(
-          '[data-coreui-toggle="tooltip"]:not(.handled)',
-        );
-        Array.from(tooltipTriggerList).forEach((tooltipTriggerEl) => {
-          new coreui.Tooltip(tooltipTriggerEl);
-          tooltipTriggerEl.classList.add('handled');
-        });
-      },
-
       getCurrencySymbol,
       toFormattedCurrency,
       initializeTransaction() {

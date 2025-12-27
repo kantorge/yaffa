@@ -9,7 +9,6 @@ use App\Http\Requests\AccountGroupRequest;
 use App\Models\AccountGroup;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 

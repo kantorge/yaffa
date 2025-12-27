@@ -84,15 +84,12 @@
 </template>
 
 <script>
-  require('select2');
-  $.fn.select2.amd.define(
-    'select2/i18n/' + window.YAFFA.language,
-    [],
-    require('select2/src/js/select2/i18n/' + window.YAFFA.language)
-  );
-
   import MathInput from './MathInput.vue';
-  import { __ } from '../helpers';
+  import { __, loadSelect2Language } from '../helpers';
+
+  import select2 from 'select2';
+  select2();
+  loadSelect2Language(window.YAFFA.language);
 
   export default {
     components: {
@@ -133,7 +130,7 @@
 
       // Add select2 functionality to category
       let elementCategory = $(
-        '#transaction_item_' + this.id + ' select.category'
+        '#transaction_item_' + this.id + ' select.category',
       );
 
       elementCategory
@@ -163,7 +160,7 @@
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
             document.getElementById('modal-transaction-form-standard') ||
-              document.querySelector('body')
+              document.querySelector('body'),
           ),
         })
         .on('select2:select select2:unselect', function (e) {
@@ -235,7 +232,7 @@
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
             document.getElementById('modal-transaction-form-standard') ||
-              document.querySelector('body')
+              document.querySelector('body'),
           ),
         })
         .on('select2:select select2:unselect', function (e) {

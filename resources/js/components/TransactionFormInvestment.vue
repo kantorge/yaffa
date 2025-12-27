@@ -15,8 +15,8 @@
               </div>
               <span
                 class="fa fa-info-circle text-primary"
-                data-coreui-toggle="tooltip"
-                data-coreui-placement="right"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
                 :title="
                   __(
                     'These settings cannot be changed after saving the transaction.',
@@ -400,13 +400,6 @@
 </template>
 
 <script>
-  require('select2');
-  $.fn.select2.amd.define(
-    'select2/i18n/' + window.YAFFA.language,
-    [],
-    require('select2/src/js/select2/i18n/' + window.YAFFA.language),
-  );
-
   import MathInput from './MathInput.vue';
 
   import Form from 'vform';
@@ -421,7 +414,13 @@
     processTransaction,
     todayInUTC,
     toIsoDateString,
+    initializeBootstrapTooltips,
+    loadSelect2Language,
   } from '../helpers';
+
+  import select2 from 'select2';
+  select2();
+  loadSelect2Language(window.YAFFA.language);
 
   export default {
     components: {
@@ -745,6 +744,9 @@
 
       // Initial sync between schedules, if applicable
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
+
+      // Initialize tooltips
+      initializeBootstrapTooltips();
     },
 
     methods: {
@@ -1050,12 +1052,6 @@
       },
     },
   };
-
-  // Initialize tooltips
-  // TODO: can this be part of Vue init?
-  $(document).ready(function () {
-    $('[data-toggle="tooltip"]').tooltip();
-  });
 </script>
 
 <style scoped>

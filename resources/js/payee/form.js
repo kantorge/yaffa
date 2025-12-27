@@ -1,9 +1,7 @@
-import 'select2';
-$.fn.select2.amd.define(
-    'select2/i18n/' + window.YAFFA.language,
-    [],
-    require("select2/src/js/select2/i18n/" + window.YAFFA.language)
-);
+import { loadSelect2Language } from '../helpers';
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
 
 // Common config for preference selects
 const config = {
@@ -34,7 +32,8 @@ const config = {
     },
     selectOnClose: true,
     placeholder: __('Select category'),
-    allowClear: true
+    allowClear: true,
+    width: '100%',
 };
 
 // Initialize the selects

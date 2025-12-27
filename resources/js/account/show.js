@@ -1,5 +1,5 @@
-require('datatables.net-bs5');
-require("datatables.net-responsive-bs5");
+import 'datatables.net-bs5';
+import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
@@ -483,7 +483,7 @@ function reloadTable() {
         document.getElementById('reload').removeAttribute('disabled');
 
         // (Re-)Initialize tooltips in table
-        $('[data-toggle="tooltip"]').tooltip();
+        helpers.initializeBootstrapTooltips();
     });
 }
 
@@ -772,5 +772,5 @@ app.mount('#app')
 
 // Initialize tooltips in table
 $(document).ready(function () {
-    $('[data-toggle="tooltip"]').tooltip()
+    helpers.initializeBootstrapTooltips();
 });

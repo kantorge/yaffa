@@ -135,7 +135,7 @@ jobs:
         run: npm ci
 
       - name: Build Assets
-        run: npm run dev
+        run: npm run build
 
       - name: Run Laravel Server
         run: php artisan serve --no-reload &

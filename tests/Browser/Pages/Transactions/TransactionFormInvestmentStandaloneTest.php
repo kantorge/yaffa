@@ -41,6 +41,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
     {
         return retry(3, fn() => $browser
             ->visitRoute('transaction.create', ['type' => 'investment'])
+
             // Wait for the form and key elements to be present
             ->waitFor(self::MAIN_FORM_SELECTOR)
             ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
@@ -66,6 +67,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
                 ->assertPresent(self::MAIN_FORM_SELECTOR);
         });
     }
@@ -75,6 +77,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Try to save form without any data
                 ->pressAndWaitFor(self::SUBMIT_BUTTON_SELECTOR)
                 // The page should no have changed
@@ -90,6 +94,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->browse(function (Browser $browser) {
                 $browser->loginAs($this->user)
                     ->visitRoute('transaction.create', ['type' => 'investment'])
+                    ->waitFor(self::MAIN_FORM_SELECTOR)
+
                     // Select account
                     ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                     ->assertSeeIn(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_ACCOUNT_NAME_USD)
@@ -116,6 +122,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // As a preparation, select an investment with known currency
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 ->assertSeeIn(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_INVESTMENT_NAME_USD)
@@ -138,7 +146,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
@@ -172,7 +180,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
@@ -221,6 +229,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(
+                    self::MAIN_FORM_SELECTOR
+                )
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
@@ -249,6 +260,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
@@ -286,6 +299,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->browse(function (Browser $browser) {
                 $browser->loginAs($this->user)
                     ->visitRoute('transaction.create', ['type' => 'investment'])
+                    ->waitFor(self::MAIN_FORM_SELECTOR)
+
                     // Select account
                     ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                     // Select investment

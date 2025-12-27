@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\Currency;
 use App\Models\User;
@@ -29,18 +28,18 @@ class AccountFactory extends Factory
     {
         return $this->state(function (array $attributes) use ($user) {
             // If the account group is not set, get one, or create a new one for the user
-            if (! isset($attributes['account_group_id'])) {
+            if (!isset($attributes['account_group_id'])) {
                 $attributes['account_group_id'] = $user->accountGroups()
                     ->inRandomOrder()
-                    ->firstOr(fn () => AccountGroup::factory()->for($user)->create())
+                    ->firstOr(fn() => AccountGroup::factory()->for($user)->create())
                     ->id;
             }
 
             // If the currency is not set, get one, or create a new one for the user
-            if (! isset($attributes['currency_id'])) {
+            if (!isset($attributes['currency_id'])) {
                 $attributes['currency_id'] = $user->currencies()
                     ->inRandomOrder()
-                    ->firstOr(fn () => Currency::factory()->for($user)->create())
+                    ->firstOr(fn() => Currency::factory()->for($user)->create())
                     ->id;
             }
 
