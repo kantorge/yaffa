@@ -136,14 +136,14 @@ class MainController extends Controller implements HasMiddleware
                 return $transaction;
             })
             // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(fn($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
+            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
             $transactions = $transactions->concat(
                 $this->getScheduleInstances(
                     $transactions
-                        ->filter(fn($transaction) => $transaction->schedule),
+                        ->filter(fn ($transaction) => $transaction->schedule),
                     'next',
                 )
             );
@@ -154,7 +154,7 @@ class MainController extends Controller implements HasMiddleware
 
         $data = $transactions
             ->filter(
-                fn($transaction) =>
+                fn ($transaction) =>
                 $transaction->transactionGroup === 'history'
                 || $transaction->transactionGroup === 'forecast'
             )
@@ -176,7 +176,7 @@ class MainController extends Controller implements HasMiddleware
             'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
-                ->filter(fn($transaction) => $transaction->transactionGroup === 'schedule')
+                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
                 ->values(),
         ]);
 

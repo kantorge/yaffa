@@ -68,14 +68,14 @@ trait CurrencyTrait
         $cacheKey = "baseCurrency_forUser_{$userId}";
 
         // The base currency is not expected to change often, so it is cached for a month
-        return Cache::remember($cacheKey, now()->addMonth(), fn() => Auth::user()
+        return Cache::remember($cacheKey, now()->addMonth(), fn () => Auth::user()
             ->currencies()
             ->where('base', 1)
             ->firstOr(
-                fn() => Auth::user()
+                fn () => Auth::user()
                     ->currencies()
                     ->orderBy('id')
-                    ->firstOr(fn() => null)
+                    ->firstOr(fn () => null)
             ));
     }
 

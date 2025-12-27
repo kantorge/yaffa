@@ -39,7 +39,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return retry(3, fn() => $browser
+        return retry(3, fn () => $browser
             ->visitRoute('transaction.create', ['type' => 'investment'])
 
             // Wait for the form and key elements to be present
