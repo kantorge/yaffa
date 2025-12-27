@@ -1,4 +1,16 @@
-# Stage 1: Base PHP + Apache setup (this part won't change often)
+# Stage 1: Build frontend assets with Vite
+FROM node:20-alpine AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json vite.config.js ./
+COPY resources ./resources
+COPY public ./public
+
+RUN npm ci
+RUN npm run build
+
+# Stage 2: Base PHP + Apache setup (this part won't change often)
 FROM php:8.3-apache AS base
 
 # Install system dependencies and PHP extensions
@@ -16,7 +28,7 @@ RUN a2enmod rewrite
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Stage 2: Copy application code and dependencies
+# Stage 3: Copy application code, PHP dependencies, and built assets
 FROM base AS app
 
 # Set working directory
@@ -24,6 +36,7 @@ WORKDIR /var/www/html
 
 # Copy only necessary files (we copy everything after dependencies to prevent frequent cache invalidation)
 COPY . .
+COPY --from=assets /app/public/build /var/www/html/public/build
 
 # Set environment variables to force production mode
 ENV APP_ENV=production \
