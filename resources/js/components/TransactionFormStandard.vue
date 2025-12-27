@@ -337,7 +337,7 @@
                             'Budget is calculated using your base currency, unless you define an account with an other currency.',
                           )
                         "
-                        data-bstoggle="tooltip"
+                        data-bs-toggle="tooltip"
                       ></span>
                     </span>
                   </label>
