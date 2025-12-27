@@ -249,7 +249,7 @@ class ReceivedMailListTest extends DuskTestCase
                 // since the form would not initialize properly without it
                 ->waitFor('#transactionFormStandard')
                 // Verify the form is actually present and initialized
-                ->assertPresent('#transactionFormStandard');
+                ->assertAttribute('#transactionFormStandard', 'data-source-id', $mailId);
         });
     }
 }
