@@ -766,6 +766,12 @@ export default {
                 'finalize'
             ].includes(this.action);
         },
+
+        // Get current CSRF token from meta tag (refreshes if token is regenerated)
+        csrfToken() {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            return token || window.csrfToken;
+        },
     },
 
     created() {
@@ -1171,6 +1177,12 @@ export default {
         },
 
         onSubmit() {
+            // Refresh CSRF token in axios headers before submission
+            const currentToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (currentToken) {
+                window.axios.defaults.headers.common['X-CSRF-TOKEN'] = currentToken;
+            }
+
             // Some preparation before submitting the form
 
             // Adjust the "amount to" value. It needs to match the "amount from" value, if the currencies are the same,

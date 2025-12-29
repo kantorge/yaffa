@@ -40,7 +40,11 @@
                 <a href="{{ route('transaction.create', ['type' => 'investment', 'account' => $account->id ]) }}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
                 @if($account->config_type === 'account')
                     <a href="{{ route('account.batch-entry.investment', $account) }}" class="btn btn-primary" title="{{ __('Batch entry - Investment') }}"><i class="fa fa-list"></i></a>
+                    <a href="{{ route('account.batch-reconcile.investment', $account) }}" class="btn btn-info" title="{{ __('Batch reconcile - Investment') }}"><i class="fa fa-check-circle"></i></a>
                 @endif
+                    <a href="{{ route('transaction-import-rules.create', ['description_pattern' => $account->name]) }}" class="btn btn-warning" title="{{ __('Create import rule for this account') }}">
+                        <i class="fa fa-filter"></i>
+                    </a>
             </div>
         </div>
         <div class="card-body">

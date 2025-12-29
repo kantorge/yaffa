@@ -14,7 +14,8 @@ return [
      |
      */
 
-    'enabled' => env('DEBUGBAR_ENABLED', null),
+    // Interpret string env values as booleans to avoid accidental enabling (eg. 'FALSE' -> false)
+    'enabled' => filter_var(env('DEBUGBAR_ENABLED', null), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
     'except' => [
         'telescope*',
         'horizon*',

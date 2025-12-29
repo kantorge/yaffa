@@ -36,6 +36,10 @@
                                 <td class="text-end"><strong>£{{ number_format($summary['total_dividends'], 2) }}</strong></td>
                             </tr>
                             <tr>
+                                <td>Tax Paid:</td>
+                                <td class="text-end text-info"><strong>£{{ number_format($summary['total_tax_paid'], 2) }}</strong></td>
+                            </tr>
+                            <tr>
                                 <td>Tax-Exempt (ISA/SIPP):</td>
                                 <td class="text-end text-success">£{{ number_format($summary['tax_exempt_dividends'], 2) }}</td>
                             </tr>
@@ -87,6 +91,7 @@
                                     <th>Investment Group</th>
                                     <th class="text-center">Tax Status</th>
                                     <th class="text-end">Total Dividend</th>
+                                    <th class="text-end">Tax Paid</th>
                                     <th class="text-end">Taxable Amount</th>
                                     <th class="text-center">Transactions</th>
                                 </tr>
@@ -105,6 +110,7 @@
                                         @endif
                                     </td>
                                     <td class="text-end">£{{ number_format($dividend->total_dividend, 2) }}</td>
+                                    <td class="text-end text-info">£{{ number_format($dividend->total_tax, 2) }}</td>
                                     <td class="text-end">£{{ number_format($dividend->taxable_amount, 2) }}</td>
                                     <td class="text-center">{{ $dividend->transaction_count }}</td>
                                 </tr>
@@ -114,6 +120,7 @@
                                 <tr class="table-active fw-bold">
                                     <td colspan="4" class="text-end">Total:</td>
                                     <td class="text-end">£{{ number_format($dividends->sum('total_dividend'), 2) }}</td>
+                                    <td class="text-end text-info">£{{ number_format($dividends->sum('total_tax'), 2) }}</td>
                                     <td class="text-end">£{{ number_format($dividends->sum('taxable_amount'), 2) }}</td>
                                     <td class="text-center">{{ $dividends->sum('transaction_count') }}</td>
                                 </tr>
@@ -193,6 +200,55 @@
             </div>
         </div>
 
+        <!-- EIS/SEIS Investments Summary -->
+        @if($eisSeisBuys->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">EIS/SEIS Investments - Buy Events</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Scheme</th>
+                                <th>Investment Name</th>
+                                <th>Account</th>
+                                <th class="text-end">Total Quantity</th>
+                                <th class="text-end">Total Cost (GBP)</th>
+                                <th>Buy Dates</th>
+                                <th class="text-center">Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($eisSeisBuys as $buy)
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">{{ $buy->investment_group_name }}</span>
+                                </td>
+                                <td>{{ $buy->investment_name }}</td>
+                                <td>{{ $buy->account_name }}</td>
+                                <td class="text-end">{{ number_format($buy->total_quantity, 2) }}</td>
+                                <td class="text-end"><strong>£{{ number_format($buy->total_cost, 2) }}</strong></td>
+                                <td>{{ $buy->buy_dates->implode(', ') }}</td>
+                                <td class="text-center">{{ $buy->transaction_count }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active fw-bold">
+                                <td colspan="3" class="text-end">Total:</td>
+                                <td class="text-end">{{ number_format($eisSeisBuys->sum('total_quantity'), 2) }}</td>
+                                <td class="text-end">£{{ number_format($eisSeisBuys->sum('total_cost'), 2) }}</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Help Information -->
         <div class="card">
             <div class="card-header">
@@ -216,6 +272,10 @@
                 
                 <h6>Currency Conversion</h6>
                 <p>All amounts are converted to GBP (base currency) using the exchange rate on the transaction date. This ensures accurate tax reporting regardless of the original currency of the investment.</p>
+                
+                <h6>EIS/SEIS Schemes</h6>
+                <p>Enterprise Investment Scheme (EIS) and Seed Enterprise Investment Scheme (SEIS) are tax-advantaged investment schemes. Buy events for investments in these schemes are tracked and reported here for informational purposes. 
+                Please refer to HMRC guidance for specific tax reliefs available under these schemes.</p>
                 
                 <p class="text-muted"><small><strong>Note:</strong> This report is for informational purposes only. Please consult with a qualified tax advisor or accountant for tax filing purposes.</small></p>
             </div>

@@ -81,4 +81,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Payee Transactions Modal -->
+    <div class="modal fade" id="payeeTransactionsModal" tabindex="-1" aria-labelledby="payeeTransactionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payeeTransactionsModalLabel">
+                        {{ __('Transactions for') }}: <span id="payeeName"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="transactionsLoading" class="text-center py-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">{{ __('Loading...') }}</span>
+                        </div>
+                    </div>
+                    <div id="transactionsContent" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('Date') }}</th>
+                                        <th>{{ __('Type') }}</th>
+                                        <th>{{ __('From') }}</th>
+                                        <th>{{ __('To') }}</th>
+                                        <th>{{ __('Amount') }}</th>
+                                        <th>{{ __('Comment') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mt-2">{{ __('Showing last 100 transactions') }}</p>
+                    </div>
+                    <div id="transactionsEmpty" style="display: none;" class="alert alert-info">
+                        {{ __('No transactions found for this payee.') }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">{{ __('Close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop

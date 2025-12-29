@@ -20,13 +20,14 @@ class SetLocale
     {
         // Locale is determined primarily by the user setting
         if ($request->user() && $request->user()->locale) {
-            app()->setLocale($request->user()->language);
+            $userLanguage = $request->user()->language ?? 'en';
+            app()->setLocale($userLanguage);
             return $next($request);
         }
 
         // Alternatively user can set this on the UI, which is also stored in session
         $lang = $request->get('language');
-        if ($lang && array_key_exists($lang, config('app.available_languages'))) {
+        if ($lang && is_array(config('app.available_languages')) && array_key_exists($lang, config('app.available_languages'))) {
             app()->setLocale($lang);
             $request->session()->put('language', $lang);
             return $next($request);

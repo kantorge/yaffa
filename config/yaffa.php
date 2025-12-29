@@ -24,5 +24,9 @@ return [
     'sandbox_mode' => env('SANDBOX_MODE',false),
     'gtm_container_id' => env('GTM_CONTAINER_ID'),
     'cookieyes_id' => env('COOKIEYES_ID'),
+
+    // NLP Service settings
+    'nlp_service_url' => env('NLP_SERVICE_URL', 'http://nlp-service:8083'),
+    'nlp_service_timeout' => env('NLP_SERVICE_TIMEOUT', 30),
 ];
 

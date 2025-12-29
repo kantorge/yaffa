@@ -9,11 +9,13 @@
 @stop
 
 @section('content')
+    <!-- Debug: Waterfall Data Count = {{ count($waterfallData) }} -->
     <div id="app">
         <investment-display-container
             :investment="{{ json_encode($investment) }}"
             :transactions="{{ json_encode($transactions) }}"
             :prices="{{ json_encode($prices) }}"
+            :waterfall-data="{{ json_encode($waterfallData) }}"
         ></investment-display-container>
     </div>
 

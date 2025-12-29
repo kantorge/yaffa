@@ -170,6 +170,17 @@
                                             <div class="small text-muted mt-1">
                                                 → {{ $rule->transferAccount?->name ?? __('Unknown') }}
                                             </div>
+                                        @elseif($rule->action === 'merge_payee')
+                                            <span class="badge bg-success">
+                                                <i class="fa fa-object-group"></i> 
+                                                {{ __('Merge Payee') }}
+                                            </span>
+                                            <div class="small text-muted mt-1">
+                                                → {{ $rule->mergePayee?->name ?? __('Unknown') }}
+                                                @if($rule->append_original_to_comment)
+                                                    <i class="fa fa-comment ms-1" title="{{ __('Will append original to comment') }}"></i>
+                                                @endif
+                                            </div>
                                         @elseif($rule->action === 'skip')
                                             <span class="badge bg-danger">
                                                 <i class="fa fa-ban"></i> 
@@ -224,19 +235,43 @@
 <script>
 // Global function for "Apply All" button
 function applyAllCorrections() {
+    const form = document.getElementById('corrections-form');
+    if (!form) {
+        console.error('Corrections form not found');
+        return;
+    }
+    
     // Check all checkboxes
-    document.querySelectorAll('.correction-checkbox').forEach(checkbox => {
+    const checkboxes = document.querySelectorAll('.correction-checkbox');
+    if (checkboxes.length === 0) {
+        alert('{{ __("No transactions to correct.") }}');
+        return;
+    }
+    
+    checkboxes.forEach(checkbox => {
         checkbox.checked = true;
     });
     
     // Update UI
-    document.getElementById('select-all').checked = true;
-    document.getElementById('selected-count').textContent = document.querySelectorAll('.correction-checkbox').length;
-    document.getElementById('apply-selected-btn').disabled = false;
+    const selectAll = document.getElementById('select-all');
+    const selectedCount = document.getElementById('selected-count');
+    const applyBtn = document.getElementById('apply-selected-btn');
+    
+    if (selectAll) selectAll.checked = true;
+    if (selectedCount) selectedCount.textContent = checkboxes.length;
+    if (applyBtn) applyBtn.disabled = false;
     
     // Submit form
     if (confirm('{{ __("Apply corrections to ALL matching transactions? This will modify your existing transactions.") }}')) {
-        document.getElementById('corrections-form').submit();
+        form.submit();
+    } else {
+        // Uncheck everything if user cancels
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        if (selectAll) selectAll.checked = false;
+        if (selectedCount) selectedCount.textContent = '0';
+        if (applyBtn) applyBtn.disabled = true;
     }
 }
 
@@ -246,11 +281,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedCountSpan = document.getElementById('selected-count');
     const applySelectedBtn = document.getElementById('apply-selected-btn');
     
+    // Only set up event listeners if we have the necessary elements
+    if (!correctionCheckboxes.length || !selectedCountSpan || !applySelectedBtn) {
+        return;
+    }
+    
     // Update selected count
     function updateSelectedCount() {
         const checkedCount = document.querySelectorAll('.correction-checkbox:checked').length;
-        selectedCountSpan.textContent = checkedCount;
-        applySelectedBtn.disabled = checkedCount === 0;
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = checkedCount;
+        }
+        if (applySelectedBtn) {
+            applySelectedBtn.disabled = checkedCount === 0;
+        }
+        
+        // Update select all checkbox state
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = checkedCount === correctionCheckboxes.length && checkedCount > 0;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < correctionCheckboxes.length;
+        }
     }
     
     // Select/deselect all
@@ -268,20 +318,27 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', updateSelectedCount);
     });
     
+    // Initialize count on page load
+    updateSelectedCount();
+    
     // Confirmation before applying
-    document.getElementById('corrections-form')?.addEventListener('submit', function(e) {
-        const checkedCount = document.querySelectorAll('.correction-checkbox:checked').length;
-        if (checkedCount === 0) {
-            e.preventDefault();
-            alert('{{ __("Please select at least one transaction to correct.") }}');
-            return false;
-        }
-        
-        if (!confirm('{{ __("Are you sure you want to apply corrections to :count transaction(s)? This will modify your existing transactions.", ["count" => ""]) }}'.replace(':count', checkedCount))) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    const form = document.getElementById('corrections-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const checkedCount = document.querySelectorAll('.correction-checkbox:checked').length;
+            if (checkedCount === 0) {
+                e.preventDefault();
+                alert('{{ __("Please select at least one transaction to correct.") }}');
+                return false;
+            }
+            
+            const message = '{{ __("Are you sure you want to apply corrections to :count transaction(s)? This will modify your existing transactions.") }}'.replace(':count', checkedCount);
+            if (!confirm(message)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
 });
 </script>
 @endpush

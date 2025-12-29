@@ -129,10 +129,37 @@
             </button>
             <button type="submit" class="btn btn-primary" :disabled="uploading || !selectedSource || !file">
               <span v-if="uploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ uploading ? __('Uploading...') : __('Upload & Process') }}
+              {{ uploading ? __('Processing...') : __('Upload & Process') }}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Import Progress -->
+    <div v-if="uploading && importStatus" class="mt-3">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0">{{ __('Processing Import') }}</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <strong>{{ __('Status') }}:</strong> {{ importStatus.status }}
+          </div>
+          <div class="mb-2">
+            <strong>{{ __('Processed') }}:</strong> {{ importStatus.processed_rows }} {{ __('rows') }}
+          </div>
+          <div class="progress">
+            <div 
+              class="progress-bar progress-bar-striped progress-bar-animated" 
+              role="progressbar" 
+              :style="{ width: importStatus.total_rows ? ((importStatus.processed_rows / importStatus.total_rows) * 100) + '%' : '100%' }"
+            ></div>
+          </div>
+          <div class="mt-2 text-muted small">
+            {{ __('This may take a few moments for large files...') }}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -251,6 +278,9 @@ export default {
       previewRows: [],
       previewLoading: false,
       previewError: null,
+      importStatus: null,
+      importId: null,
+      pollInterval: null,
     };
   },
   mounted() {
@@ -346,6 +376,7 @@ export default {
       
       this.uploading = true;
       this.uploadResult = null;
+      this.importStatus = null;
       
       const formData = new FormData();
       formData.append('source', this.selectedSource);
@@ -367,7 +398,17 @@ export default {
         });
         
         const result = await response.json();
-        this.uploadResult = result;
+        
+        if (result.success && result.queued) {
+          // Background processing - start polling for status
+          this.importId = result.import_id;
+          this.importStatus = { status: 'queued', processed_rows: 0 };
+          this.startPolling();
+        } else {
+          // Direct response (old behavior for small files or errors)
+          this.uploadResult = result;
+          this.uploading = false;
+        }
         
         if (result.success) {
           // Clear form after successful upload
@@ -380,10 +421,65 @@ export default {
         }
       } catch (e) {
         this.uploadResult = { success: false, message: e.message };
-      } finally {
         this.uploading = false;
       }
     },
+    
+    startPolling() {
+      this.pollInterval = setInterval(() => {
+        this.checkImportStatus();
+      }, 2000); // Poll every 2 seconds
+    },
+    
+    stopPolling() {
+      if (this.pollInterval) {
+        clearInterval(this.pollInterval);
+        this.pollInterval = null;
+      }
+    },
+    
+    async checkImportStatus() {
+      if (!this.importId) return;
+      
+      try {
+        const response = await fetch(`/imports/${this.importId}/status`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        
+        const status = await response.json();
+        this.importStatus = status;
+        
+        if (status.status === 'finished') {
+          this.stopPolling();
+          this.uploading = false;
+          this.uploadResult = {
+            success: true,
+            message: `Import completed! Processed ${status.processed_rows} rows.`,
+            results: {
+              processed: status.processed_rows,
+              total: status.total_rows || status.processed_rows,
+              duplicates: 0,
+              errors: status.errors || [],
+            }
+          };
+        } else if (status.status === 'failed') {
+          this.stopPolling();
+          this.uploading = false;
+          this.uploadResult = {
+            success: false,
+            message: 'Import failed: ' + (status.errors ? status.errors.join(', ') : 'Unknown error'),
+          };
+        }
+      } catch (e) {
+        console.error('Failed to check import status:', e);
+      }
+    },
+  },
+  
+  beforeUnmount() {
+    this.stopPolling();
   },
 };
 </script>

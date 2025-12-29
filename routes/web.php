@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\AccountEntityController;
@@ -24,6 +23,31 @@ use App\Models\ReceivedMail;
 use Illuminate\Support\Facades\Route;
 // MoneyHub Transaction Upload
 
+// Investment CSV Upload routes
+Route::get('/imports/fuel-ventures', [\App\Http\Controllers\InvestmentCsvUploadController::class, 'showForm'])->name('investment.upload_csv');
+Route::post('/investment/upload-csv', [\App\Http\Controllers\InvestmentCsvUploadController::class, 'handleUpload']);
+// Investment statement multi-upload (WiseAlpha)
+Route::get('/imports/wisealpha', [\App\Http\Controllers\InvestmentStatementUploadController::class, 'showForm'])->name('investment.upload_statements')->middleware(['auth', 'verified']);
+Route::post('/investment/upload-statements', [\App\Http\Controllers\InvestmentStatementUploadController::class, 'handleUpload'])->name('investment.upload_statements.handle')->middleware(['auth', 'verified']);
+// Backwards-compatible singular path: redirect to the plural route to avoid 404s
+Route::get('/investment/upload-statement', function () {
+    return redirect()->route('investment.upload_statements');
+})->name('investment.upload_statement')->middleware(['auth', 'verified']);
+Route::post('/investment/upload-statement', function () {
+    return redirect()->route('investment.upload_statements');
+})->middleware(['auth', 'verified']);
+// Payslip upload routes
+Route::get('/imports/payslip', [\App\Http\Controllers\PayslipUploadController::class, 'showForm'])->name('payslip.upload')->middleware(['auth', 'verified']);
+Route::post('/payslip/upload', [\App\Http\Controllers\PayslipUploadController::class, 'handleUpload'])->name('payslip.upload.handle')->middleware(['auth', 'verified']);
+// Import job status endpoint
+Route::get('/imports/{import}/status', [\App\Http\Controllers\ImportController::class, 'importStatus'])
+    ->name('imports.status');
+Route::get('/imports/{import}/errors', [\App\Http\Controllers\ImportController::class, 'importErrors'])
+    ->name('imports.errors');
+
+// List past imports for the user
+Route::get('/imports', [\App\Http\Controllers\ImportController::class, 'index'])->name('imports.index')->middleware(['auth', 'verified']);
+
 /*********************
  * Generic routes
  ********************/
@@ -39,6 +63,9 @@ Route::resource('account-entity', AccountEntityController::class)
     // Destroy is expected to be handled only using the AccountEntityApiController
     ->except(['destroy']);
 
+Route::get('/account-entity/{accountEntity}/transactions', [AccountEntityController::class, 'getTransactions'])
+    ->name('account-entity.transactions');
+
 Route::get('/account/history/{account}/{withForecast?}', [MainController::class, 'account_details'])
     ->name('account.history');
 
@@ -46,6 +73,13 @@ Route::get('/account/{account}/batch-entry/investment', [TransactionController::
     ->name('account.batch-entry.investment');
 Route::post('/account/{account}/batch-entry/investment', [TransactionController::class, 'storeBatchEntryInvestment'])
     ->name('account.batch-entry.investment.store');
+
+Route::get('/account/{account}/batch-reconcile/investment', [TransactionController::class, 'batchReconcileInvestment'])
+    ->name('account.batch-reconcile.investment');
+Route::post('/account/{account}/batch-reconcile/investment', [TransactionController::class, 'storeBatchReconcileInvestment'])
+    ->name('account.batch-reconcile.investment.store');
+Route::post('/account/{account}/batch-reconcile/investment/quantities', [TransactionController::class, 'getBatchReconcileQuantities'])
+    ->name('account.batch-reconcile.investment.quantities');
 
 // Routes to display form to merge two payees
 Route::get('/payees/merge/{payeeSource?}', [AccountEntityController::class, 'mergePayeesForm'])
@@ -87,6 +121,10 @@ Route::resource('investment-group', InvestmentGroupController::class)->except(['
 Route::get('/investment/transaction/upload', [InvestmentController::class, 'uploadForm'])
     ->name('investment.upload');
 Route::get('/import/moneyhub', [ImportController::class, 'moneyhubUpload'])->middleware(['auth', 'verified'])->name('import.moneyhub');
+Route::post('/import/moneyhub', [ImportController::class, 'handleMoneyhubUpload'])->middleware(['auth', 'verified'])->name('import.moneyhub.upload');
+
+Route::get('/investment/{investment}/interest', [InvestmentController::class, 'interest'])
+    ->name('investment.interest');
 
 Route::resource('investment', InvestmentController::class);
 
@@ -142,6 +180,7 @@ Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
 Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
+Route::get('/reports/unrealised-interest', [ReportController::class, 'unrealisedInterest'])->name('reports.unrealised_interest');
 Route::get('/reports/tax', [App\Http\Controllers\TaxReportController::class, 'index'])->name('reports.tax');
 Route::get('/reports/tax/export', [App\Http\Controllers\TaxReportController::class, 'export'])->name('reports.tax.export');
 

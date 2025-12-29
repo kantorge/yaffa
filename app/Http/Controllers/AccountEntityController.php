@@ -467,4 +467,58 @@ class AccountEntityController extends Controller
 
         return redirect()->route('account-entity.index', ['type' => 'payee']);
     }
+
+    /**
+     * Get transactions for a specific account entity (payee).
+     */
+    public function getTransactions(AccountEntity $accountEntity)
+    {
+        // Ensure user owns this entity
+        if ($accountEntity->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Get transactions where this entity is involved
+        $transactions = collect();
+        
+        if ($accountEntity->config_type === 'payee') {
+            // Get transactions from both directions
+            $transactionsFrom = $accountEntity->transactionsStandardFrom()
+                ->with(['transactionType', 'config.accountFrom', 'config.accountTo'])
+                ->orderBy('date', 'desc')
+                ->limit(100)
+                ->get();
+                
+            $transactionsTo = $accountEntity->transactionsStandardTo()
+                ->with(['transactionType', 'config.accountFrom', 'config.accountTo'])
+                ->orderBy('date', 'desc')
+                ->limit(100)
+                ->get();
+                
+            $transactions = $transactionsFrom->merge($transactionsTo)
+                ->sortByDesc('date')
+                ->take(100)
+                ->values();
+        }
+
+        return response()->json([
+            'payee' => [
+                'id' => $accountEntity->id,
+                'name' => $accountEntity->name,
+            ],
+            'transactions' => $transactions->map(function ($transaction) {
+                $config = $transaction->config;
+                return [
+                    'id' => $transaction->id,
+                    'date' => $transaction->date->format('Y-m-d'),
+                    'comment' => $transaction->comment,
+                    'transaction_type' => $transaction->transactionType->name,
+                    'amount_from' => $config->amount_from,
+                    'amount_to' => $config->amount_to,
+                    'account_from' => $config->accountFrom?->name,
+                    'account_to' => $config->accountTo?->name,
+                ];
+            }),
+        ]);
+    }
 }

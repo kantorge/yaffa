@@ -18,6 +18,8 @@ class TransactionImportRule extends Model
         'action',
         'transfer_account_id',
         'transaction_type_id',
+        'merge_payee_id',
+        'append_original_to_comment',
         'priority',
         'active',
     ];
@@ -25,6 +27,7 @@ class TransactionImportRule extends Model
     protected $casts = [
         'use_regex' => 'boolean',
         'active' => 'boolean',
+        'append_original_to_comment' => 'boolean',
         'priority' => 'integer',
         'transaction_type_id' => 'integer',
     ];
@@ -42,6 +45,11 @@ class TransactionImportRule extends Model
     public function transferAccount(): BelongsTo
     {
         return $this->belongsTo(AccountEntity::class, 'transfer_account_id');
+    }
+
+    public function mergePayee(): BelongsTo
+    {
+        return $this->belongsTo(AccountEntity::class, 'merge_payee_id');
     }
 
     /**

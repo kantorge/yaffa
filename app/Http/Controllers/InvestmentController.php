@@ -7,6 +7,7 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Services\InvestmentService;
+use App\Services\UnrealisedInterestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -217,10 +218,149 @@ class InvestmentController extends Controller
             ])
             ->get();
 
+        // Generate waterfall data grouped by month
+        $waterfallData = $this->generateWaterfallData($investment, $transactions, $prices);
+
         return view('investment.show', [
             'investment' => $investment,
             'transactions' => $transactions,
             'prices' => $prices,
+            'waterfallData' => $waterfallData,
+        ]);
+    }
+
+    /**
+     * Generate waterfall data for Price/Volume analysis
+     * Groups transactions by month and calculates buy/sell volumes and price changes
+     */
+    private function generateWaterfallData($investment, $transactions, $prices)
+    {
+        $waterfall = [];
+        $monthlyData = [];
+
+        // Get prices by month for price change calculation
+        $pricesByMonth = [];
+        foreach ($prices as $price) {
+            $period = $price->date->format('Y-m');
+            $pricesByMonth[$period] = $price->price;
+        }
+
+        // Initialize all periods with prices (not just transaction months)
+        foreach (array_keys($pricesByMonth) as $period) {
+            $monthlyData[$period] = [
+                'period' => $period,
+                'buys' => 0,
+                'sells' => 0,
+                'quantity_start' => 0,
+                'quantity_end' => 0,
+            ];
+        }
+
+        // Group transactions by month
+        foreach ($transactions as $transaction) {
+            $period = $transaction->date->format('Y-m');
+            
+            if (!isset($monthlyData[$period])) {
+                $monthlyData[$period] = [
+                    'period' => $period,
+                    'buys' => 0,
+                    'sells' => 0,
+                    'quantity_start' => 0,
+                    'quantity_end' => 0,
+                ];
+            }
+
+            $config = $transaction->config;
+            $typeId = $transaction->transaction_type_id;
+
+            // Buy transaction (type 4)
+            if ($typeId === 4 && $config) {
+                $value = ($config->price * $config->quantity) + ($config->commission ?? 0);
+                $monthlyData[$period]['buys'] += $value;
+            }
+            // Sell transaction (type 5)
+            elseif ($typeId === 5 && $config) {
+                $value = ($config->price * $config->quantity) - ($config->commission ?? 0);
+                $monthlyData[$period]['sells'] -= $value; // Negative value for waterfall
+            }
+        }
+
+        // Sort by period
+        ksort($monthlyData);
+
+        // Calculate price changes and running totals
+        $previousPrice = null;
+        $cumulativeQuantity = 0;
+        $runningTotal = 0;
+
+        foreach ($monthlyData as $period => $data) {
+            // Calculate quantity change
+            $quantityChange = 0;
+            foreach ($transactions as $transaction) {
+                if ($transaction->date->format('Y-m') === $period) {
+                    $config = $transaction->config;
+                    $typeId = $transaction->transaction_type_id;
+                    
+                    if (in_array($typeId, [4, 6]) && $config) { // Buy or Add shares
+                        $quantityChange += $config->quantity ?? 0;
+                    } elseif (in_array($typeId, [5, 7]) && $config) { // Sell or Remove shares
+                        $quantityChange -= $config->quantity ?? 0;
+                    }
+                }
+            }
+
+            $data['quantity_start'] = $cumulativeQuantity;
+            $cumulativeQuantity += $quantityChange;
+            $data['quantity_end'] = $cumulativeQuantity;
+
+            // Get current month price or use previous month's price
+            $currentPrice = $pricesByMonth[$period] ?? $previousPrice;
+            
+            // Calculate price change impact on value
+            $priceChange = 0;
+            if ($previousPrice !== null && $currentPrice !== null && $data['quantity_start'] > 0) {
+                $priceChange = ($currentPrice - $previousPrice) * $data['quantity_start'];
+            }
+
+            $data['priceChange'] = round($priceChange, 2);
+            
+            // Calculate running total (waterfall cumulative)
+            // Start with buys (increases total)
+            $runningTotal += $data['buys'];
+            
+            // Then apply price changes (can increase or decrease)
+            $runningTotal += $data['priceChange'];
+            
+            // Then apply sells (decreases total, already negative)
+            $runningTotal += $data['sells'];
+            
+            // Set the final running total after all adjustments
+            $data['runningTotal'] = round($runningTotal, 2);
+            
+            $previousPrice = $currentPrice;
+
+            $waterfall[] = $data;
+        }
+
+        return $waterfall;
+    }
+
+    /**
+     * Display unrealised interest details for the investment
+     */
+    public function interest(Investment $investment): View
+    {
+        /**
+         * @get('/investment/{investment}/interest')
+         * @name('investment.interest')
+         * @middlewares('web', 'auth', 'verified', 'can:view,investment')
+         */
+        $service = new UnrealisedInterestService();
+        $interestData = $service->calculateInvestmentInterest($investment);
+
+        return view('investment.interest', [
+            'investment' => $investment,
+            'interestData' => $interestData,
         ]);
     }
 

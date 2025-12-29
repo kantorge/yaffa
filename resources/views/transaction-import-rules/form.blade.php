@@ -72,12 +72,12 @@
                     {{ __('Description Pattern') }} <span class="text-danger">*</span>
                 </label>
                 <div class="col-sm-9">
-                    <input type="text" 
-                           class="form-control @error('description_pattern') is-invalid @enderror" 
-                           id="description_pattern" 
-                           name="description_pattern" 
-                           value="{{ old('description_pattern', $rule->description_pattern ?? '') }}"
-                           required>
+                          <input type="text" 
+                              class="form-control @error('description_pattern') is-invalid @enderror" 
+                              id="description_pattern" 
+                              name="description_pattern" 
+                              value="{{ old('description_pattern', $rule->description_pattern ?? ($prefillDescription ?? '')) }}"
+                              required>
                     <small class="form-text text-muted">{{ __('Text to match in transaction descriptions (case-insensitive)') }}</small>
                     @error('description_pattern')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -120,6 +120,9 @@
                         <option value="convert_to_transfer" {{ old('action', $rule->action ?? '') == 'convert_to_transfer' ? 'selected' : '' }}>
                             {{ __('Convert to Transfer') }}
                         </option>
+                        <option value="merge_payee" {{ old('action', $rule->action ?? '') == 'merge_payee' ? 'selected' : '' }}>
+                            {{ __('Merge Payee') }}
+                        </option>
                         <option value="skip" {{ old('action', $rule->action ?? '') == 'skip' ? 'selected' : '' }}>
                             {{ __('Skip (Don\'t Import)') }}
                         </option>
@@ -151,6 +154,50 @@
                     @error('transfer_account_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                </div>
+            </div>
+
+            <!-- Merge Payee (shown when action is merge_payee) -->
+            <div class="row mb-3" id="merge-payee-row">
+                <label for="merge_payee_id" class="col-form-label col-sm-3">
+                    {{ __('Merge to Payee') }}
+                </label>
+                <div class="col-sm-9">
+                    <select class="form-select @error('merge_payee_id') is-invalid @enderror" 
+                            id="merge_payee_id" 
+                            name="merge_payee_id">
+                        <option value="">{{ __('Select Payee') }}</option>
+                        @foreach($payees as $payee)
+                            <option value="{{ $payee->id }}" 
+                                    {{ old('merge_payee_id', $rule->merge_payee_id ?? '') == $payee->id ? 'selected' : '' }}>
+                                {{ $payee->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="form-text text-muted">{{ __('The payee to merge matched transactions into') }}</small>
+                    @error('merge_payee_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- Append Original to Comment (shown when action is merge_payee) -->
+            <div class="row mb-3" id="append-comment-row">
+                <label for="append_original_to_comment" class="col-form-label col-sm-3">
+                    {{ __('Append Original') }}
+                </label>
+                <div class="col-sm-9">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" 
+                               class="form-check-input" 
+                               id="append_original_to_comment" 
+                               name="append_original_to_comment"
+                               {{ old('append_original_to_comment', $rule->append_original_to_comment ?? false) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="append_original_to_comment">
+                            {{ __('Append original payee name to transaction comment') }}
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">{{ __('Preserves the original payee name in the comment field') }}</small>
                 </div>
             </div>
 
@@ -217,11 +264,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const actionSelect = document.getElementById('action');
     const transferAccountRow = document.getElementById('transfer-account-row');
     const transactionTypeRow = document.getElementById('transaction-type-row');
+    const mergePayeeRow = document.getElementById('merge-payee-row');
+    const appendCommentRow = document.getElementById('append-comment-row');
 
     function toggleFields() {
-        const isTransfer = actionSelect.value === 'convert_to_transfer';
+        const action = actionSelect.value;
+        const isTransfer = action === 'convert_to_transfer';
+        const isMergePayee = action === 'merge_payee';
+        
         transferAccountRow.style.display = isTransfer ? 'flex' : 'none';
         transactionTypeRow.style.display = isTransfer ? 'flex' : 'none';
+        mergePayeeRow.style.display = isMergePayee ? 'flex' : 'none';
+        appendCommentRow.style.display = isMergePayee ? 'flex' : 'none';
     }
 
     actionSelect.addEventListener('change', toggleFields);

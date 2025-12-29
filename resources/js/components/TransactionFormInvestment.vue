@@ -534,7 +534,7 @@
       data.investment_currency = null;
       data.manualCashflow = null;
 
-      data.csrfToken = window.csrfToken;
+      data.csrfTokenStatic = window.csrfToken;
       data.callback = this.initialCallback;
 
       // Possible callback options
@@ -618,6 +618,12 @@
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
         return ['create', 'clone', 'finalize'].includes(this.action);
+      },
+
+      // Get current CSRF token from meta tag (refreshes if token is regenerated)
+      csrfToken() {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        return token || this.csrfTokenStatic;
       },
     },
 
@@ -1063,6 +1069,12 @@
       },
 
       onSubmit() {
+        // Refresh CSRF token in axios headers before submission
+        const currentToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (currentToken) {
+          window.axios.defaults.headers.common['X-CSRF-TOKEN'] = currentToken;
+        }
+
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form

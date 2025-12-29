@@ -29,7 +29,8 @@ class PayeeApiController extends Controller
          * @get('/api/assets/payee')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        if ($request->get('q')) {
+        if ($request->has('q') || $request->missing(['q', 'account_entity_id'])) {
+            // Handle search query or default list
             $payees = Auth::user()
                 ->payees()
                 ->when($request->missing('withInactive'), function ($query) {
@@ -40,7 +41,14 @@ class PayeeApiController extends Controller
                 })
                 ->orderBy('name')
                 ->take(10)
-                ->get();
+                ->get()
+                ->map(function ($payee) {
+                    return [
+                        'id' => $payee->id,
+                        'text' => $payee->name,
+                    ];
+                })
+                ->values();
         } elseif ($request->get('account_entity_id')) {
             // Account and transaction type is expected to be present
             $accountId = $request->get('account_entity_id');
@@ -86,8 +94,15 @@ class PayeeApiController extends Controller
                 ->get()
                 ->pluck('id');
 
-            // Hydrate models
-            $payees = AccountEntity::findMany($payeeIds);
+            // Hydrate models and format for Select2
+            $payees = AccountEntity::findMany($payeeIds)
+                ->map(function ($payee) {
+                    return [
+                        'id' => $payee->id,
+                        'text' => $payee->name,
+                    ];
+                })
+                ->values();
         } else {
             // Set payees to be empty
             $payees = collect();

@@ -43,6 +43,10 @@
         @update:date-from="(val) => (dateFrom = val)"
         @update:date-to="(val) => (dateTo = val)"
       />
+      <price-volume-waterfall-card
+        :waterfall-data="waterfallData"
+        :investment="investment"
+      />
     </div>
   </div>
 </template>
@@ -54,6 +58,7 @@
   import TransactionHistoryCard from './TransactionHistoryCard.vue';
   import PriceHistoryCard from './PriceHistoryCard.vue';
   import QuantityHistoryCard from './QuantityHistoryCard.vue';
+  import PriceVolumeWaterfallCard from './PriceVolumeWaterfallCard.vue';
 
   export default {
     components: {
@@ -63,12 +68,14 @@
       TransactionHistoryCard,
       PriceHistoryCard,
       QuantityHistoryCard,
+      PriceVolumeWaterfallCard,
     },
     props: {
       investment: Object,
       transactions: Array,
       prices: Array,
       quantities: Array,
+      waterfallData: Array,
     },
     data() {
       return {

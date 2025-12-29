@@ -108,3 +108,60 @@ foreach ($rules as $rule) {
     }
 }
 ```
+
+## Bulk Import Options
+
+### Investment Statement Upload (WiseAlpha)
+
+Upload multiple CSV files with account selection via web UI:
+
+1. Navigate to `/investment/upload-statements`
+2. Select the target account for transactions
+3. Choose multiple CSV files
+4. Submit - jobs will be queued for background processing
+5. Monitor progress at `/imports`
+
+### Investment CSV Upload (Fuel Ventures format)
+
+For legacy Fuel Ventures CSV format:
+
+```bash
+# Via web UI
+# Navigate to /investment/upload-csv
+# Select file and upload
+
+# Or via console
+php artisan tinker
+
+$service = new \App\Services\InvestmentCsvUploadService(config('services.companies_house.api_key'));
+$filePath = storage_path('app/imports/fuel_ventures.csv');
+$userId = 1;
+$result = $service->processFromStoredFile($filePath, $userId);
+
+echo "Processed: {$result['processed']}\n";
+echo "Created: {$result['created']}\n";
+echo "Errors: " . count($result['errors']) . "\n";
+```
+
+### Standard Transaction CSV Import
+
+Upload standard transaction CSV files:
+
+```bash
+# Via web UI
+# Navigate to /import/csv
+# Upload CSV with columns: date, description, amount, type, etc.
+
+# Monitor all imports
+# Navigate to /imports to see status, progress, and download errors
+```
+
+### MoneyHub Import
+
+For MoneyHub exported data:
+
+```bash
+# Via web UI
+# Navigate to /import/moneyhub
+# Upload the MoneyHub export file
+```

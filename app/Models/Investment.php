@@ -95,6 +95,7 @@ class Investment extends Model
      */
     protected $fillable = [
         'name',
+        'user_id',
         'symbol',
         'isin',
         'comment',
@@ -292,7 +293,7 @@ class Investment extends Model
         ];
     }
 
-    public function getCurrentQuantity(AccountEntity $account = null): float
+    public function getCurrentQuantity(AccountEntity $account = null, $asOfDate = null): float
     {
         $quantity = DB::table('transactions')
             ->select(
@@ -319,9 +320,21 @@ class Investment extends Model
             ->when($account !== null, function ($query) use ($account) {
                 $query->where('transaction_details_investment.account_id', '=', $account->id);
             })
+            ->when($asOfDate !== null, function ($query) use ($asOfDate) {
+                $query->where('transactions.date', '<=', $asOfDate);
+            })
             ->get();
 
         return $quantity->first()->quantity ?? 0;
+    }
+
+    /**
+     * Get current quantity for a specific account ID and optional date
+     */
+    public function getCurrentQuantityForAccount(int $accountId, $asOfDate = null): float
+    {
+        $account = AccountEntity::find($accountId);
+        return $account ? $this->getCurrentQuantity($account, $asOfDate) : 0;
     }
 
     /**

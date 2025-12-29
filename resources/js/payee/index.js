@@ -249,3 +249,72 @@ $('input[name=table_filter_active]').on("change", function() {
 $('#table_filter_search_text').keyup(function(){
     table.search($(this).val()).draw() ;
 })
+
+// Click handler for payee names to show transactions
+$(dataTableSelector).on('click', 'tbody td:first-child', function() {
+    const row = table.row($(this).parents('tr'));
+    const payeeData = row.data();
+    
+    if (!payeeData || !payeeData.id) {
+        return;
+    }
+    
+    // Show modal
+    const modal = new coreui.Modal(document.getElementById('payeeTransactionsModal'));
+    modal.show();
+    
+    // Set payee name
+    $('#payeeName').text(payeeData.name);
+    
+    // Show loading, hide content
+    $('#transactionsLoading').show();
+    $('#transactionsContent').hide();
+    $('#transactionsEmpty').hide();
+    
+    // Fetch transactions
+    $.ajax({
+        url: window.route('account-entity.transactions', payeeData.id),
+        method: 'GET',
+        success: function(response) {
+            $('#transactionsLoading').hide();
+            
+            if (response.transactions && response.transactions.length > 0) {
+                // Build table rows
+                const tbody = $('#transactionsTableBody');
+                tbody.empty();
+                
+                response.transactions.forEach(function(tx) {
+                    const amount = tx.amount_from || tx.amount_to || 0;
+                    const formattedAmount = new Intl.NumberFormat(window.YAFFA.locale, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(amount);
+                    
+                    const row = $('<tr>').append(
+                        $('<td>').text(tx.date),
+                        $('<td>').append($('<span>').addClass('badge bg-secondary').text(tx.transaction_type)),
+                        $('<td>').text(tx.account_from || '-'),
+                        $('<td>').text(tx.account_to || '-'),
+                        $('<td>').addClass('text-end').text(formattedAmount),
+                        $('<td>').text(tx.comment || '-')
+                    );
+                    
+                    tbody.append(row);
+                });
+                
+                $('#transactionsContent').show();
+            } else {
+                $('#transactionsEmpty').show();
+            }
+        },
+        error: function() {
+            $('#transactionsLoading').hide();
+            $('#transactionsEmpty').text(__('Error loading transactions')).show();
+        }
+    });
+});
+
+// Add pointer cursor to payee names
+$(dataTableSelector).on('draw.dt', function() {
+    $(dataTableSelector + ' tbody td:first-child').css('cursor', 'pointer');
+});

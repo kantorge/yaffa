@@ -94,9 +94,11 @@ class TransactionUploadController extends Controller
                     $date = Carbon::parse($row['date']);
 
                     // Check for import rules
+                    Log::info("Checking rules for description: '{$row['description']}' on account {$account->id}");
                     $rule = $service->findMatchingRule($row['description'], $account->id);
                     
                     if ($rule) {
+                        Log::info("Found matching rule: ID {$rule->id}, Action: {$rule->action}");
                         // Handle rule action
                         if ($rule->action === 'skip') {
                             $skipped++;
@@ -118,10 +120,35 @@ class TransactionUploadController extends Controller
                                 $accountToId = $rule->transfer_account_id;
                             }
                             
-                            $transactionTypeId = $rule->transaction_type_id;
-                            $categoryId = null; // Transfers typically don't have categories
+                            $transactionTypeId = $rule->transaction_type_id ?? 3; // Default to transfer type
+                            $categoryId = null; // Transfers don't have categories
+                            $payeeId = null; // Transfers don't have payees
                             
                             Log::info("Applied transfer rule: {$row['description']} -> Transfer between accounts");
+                        } elseif ($rule->action === 'merge_payee' && $rule->merge_payee_id) {
+                            // Merge to specified payee - use the payee's default category
+                            $amount = (float) $row['amount'];
+                            $payeeId = $rule->merge_payee_id;
+                            
+                            // Get the merge payee's default category instead of creating from CSV
+                            $mergePayee = \App\Models\AccountEntity::with('config')->find($payeeId);
+                            $categoryId = $mergePayee?->config?->category_id;
+                            
+                            if ($amount > 0) {
+                                // Money coming in: from payee to account (deposit)
+                                $accountFromId = $payeeId;
+                                $accountToId = $account->id;
+                                $transactionTypeId = 2; // deposit
+                            } else {
+                                // Money going out: from account to payee (withdrawal)
+                                $accountFromId = $account->id;
+                                $accountToId = $payeeId;
+                                $amount = abs($amount);
+                                $transactionTypeId = 1; // withdrawal
+                            }
+                            
+                            Log::info("Applied merge payee rule: {$row['description']} -> Payee ID {$payeeId}" . 
+                                     ($categoryId ? " (Category ID: {$categoryId})" : " (no default category)"));
                         } else {
                             // Default handling if rule doesn't apply properly
                             goto default_handling;
@@ -186,9 +213,27 @@ class TransactionUploadController extends Controller
                         'user_id' => $user->id,
                     ]);
 
-                    // Attach category if exists
-                    if ($categoryId) {
-                        $transaction->categories()->attach($categoryId);
+                    // Create transaction item for withdrawal/deposit transactions (not transfers)
+                    // Transfer transactions (type 3) should NOT have transaction items
+                    if ($transactionTypeId != 3 && $categoryId) {
+                        // Get the payee entity to access default category
+                        $payeeEntity = \App\Models\AccountEntity::find($payeeId ?? null);
+                        $defaultCategoryId = null;
+                        
+                        if ($payeeEntity && $payeeEntity->config_type === 'payee' && $payeeEntity->config) {
+                            $defaultCategoryId = $payeeEntity->config->category_id ?? $categoryId;
+                        } else {
+                            $defaultCategoryId = $categoryId;
+                        }
+                        
+                        if ($defaultCategoryId) {
+                            \App\Models\TransactionItem::create([
+                                'transaction_id' => $transaction->id,
+                                'category_id' => $defaultCategoryId,
+                                'amount' => $amount,
+                                'comment' => null,
+                            ]);
+                        }
                     }
 
                     $created++;

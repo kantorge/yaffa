@@ -405,20 +405,23 @@ class TransactionApiController extends Controller
             $transaction->config()->associate($transactionDetails);
             $transaction->push();
 
-            $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
+            // Transfer transactions (type 3) should NOT have transaction items
+            if ($transaction->transaction_type_id != 3) {
+                $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
-            // Handle default payee amount, if present, by adding amount as an item
-            if (array_key_exists('remaining_payee_default_amount', $validated)
-                && $validated['remaining_payee_default_amount'] > 0) {
-                $newItem = TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'amount' => $validated['remaining_payee_default_amount'],
-                    'category_id' => $validated['remaining_payee_default_category_id'],
-                ]);
-                $transactionItems[] = $newItem;
+                // Handle default payee amount, if present, by adding amount as an item
+                if (array_key_exists('remaining_payee_default_amount', $validated)
+                    && $validated['remaining_payee_default_amount'] > 0) {
+                    $newItem = TransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'amount' => $validated['remaining_payee_default_amount'],
+                        'category_id' => $validated['remaining_payee_default_category_id'],
+                    ]);
+                    $transactionItems[] = $newItem;
+                }
+
+                $transaction->transactionItems()->saveMany($transactionItems);
             }
-
-            $transaction->transactionItems()->saveMany($transactionItems);
 
             $transaction->push();
 
@@ -567,22 +570,25 @@ class TransactionApiController extends Controller
         // Replace exising transaction items with new array
         $transaction->transactionItems()->delete();
 
-        $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
+        // Transfer transactions (type 3) should NOT have transaction items
+        if ($transaction->transaction_type_id != 3) {
+            $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
-        // Handle default payee amount, if present, by adding amount as an item
-        if (array_key_exists('remaining_payee_default_amount', $validated)
-            && $validated['remaining_payee_default_amount'] > 0) {
-            $newItem = TransactionItem::create(
-                [
-                    'transaction_id' => $transaction->id,
-                    'amount' => $validated['remaining_payee_default_amount'],
-                    'category_id' => $validated['remaining_payee_default_category_id'],
-                ]
-            );
-            $transactionItems[] = $newItem;
+            // Handle default payee amount, if present, by adding amount as an item
+            if (array_key_exists('remaining_payee_default_amount', $validated)
+                && $validated['remaining_payee_default_amount'] > 0) {
+                $newItem = TransactionItem::create(
+                    [
+                        'transaction_id' => $transaction->id,
+                        'amount' => $validated['remaining_payee_default_amount'],
+                        'category_id' => $validated['remaining_payee_default_category_id'],
+                    ]
+                );
+                $transactionItems[] = $newItem;
+            }
+
+            $transaction->transactionItems()->saveMany($transactionItems);
         }
-
-        $transaction->transactionItems()->saveMany($transactionItems);
         // Transaction items are not stored as changes, as they are not triggering updates to monthly summaries
 
         // Save entire transaction

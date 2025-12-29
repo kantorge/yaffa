@@ -210,7 +210,7 @@ class TransactionRequest extends FormRequest
                     'required',
                     'exists:investments,id',
                 ],
-                'config.commission' => 'nullable|numeric|gte:0',
+                'config.commission' => 'nullable|numeric',
                 'config.tax' => 'nullable|numeric|gte:0',
             ]);
 

@@ -98,8 +98,8 @@ class FetchInvestmentPricesRange extends Command
         }
         
         // Check if investment has AlphaVantage as price provider
-        if ($investment->price_provider !== 'alpha_vantage') {
-            $this->warn("Investment price provider is '{$investment->price_provider}', not 'alpha_vantage'");
+        if ($investment->investment_price_provider !== 'alpha_vantage') {
+            $this->warn("Investment price provider is '{$investment->investment_price_provider}', not 'alpha_vantage'");
             if (!$this->confirm('Continue anyway?', false)) {
                 return 0;
             }

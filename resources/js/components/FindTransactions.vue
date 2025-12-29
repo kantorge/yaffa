@@ -139,6 +139,21 @@
                                 {{ __('Category charts') }}
                             </button>
                         </li>
+                        <li class="nav-item">
+                            <button
+                                    class="nav-link"
+                                    id="nav-pivot-table"
+                                    data-coreui-toggle="tab"
+                                    data-coreui-target="#tab-pivot-table"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="tab-pivot-table"
+                                    aria-selected="false"
+                                    @click="initializePivotTable"
+                            >
+                                {{ __('Pivot Table') }}
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -189,6 +204,15 @@
                                     :busy="busy"
                             ></reporting-canvas-categories>
                         </div>
+                        <div
+                                class="tab-pane fade"
+                                id="tab-pivot-table"
+                                role="tabpanel"
+                                aria-labelledby="nav-pivot-table"
+                                tabindex="5"
+                        >
+                            <div ref="pivotTableContainer" class="pivot-table-container"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,6 +234,7 @@ import ReportingCanvasFindTransactionsTimeline from "./ReportingWidgets/Reportin
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 
 require ('datatables.net-bs5');
+import 'pivottable/dist/pivot.css';
 
 export default {
     name: 'FindTransactions',
@@ -240,6 +265,7 @@ export default {
                 tag: false,
             },
             transactions: [],
+            pivotTableInitialized: false,
         }
     },
     methods: {
@@ -365,6 +391,181 @@ export default {
         __: function (string, replace) {
             return translator(string, replace);
         },
+
+        /**
+         * Initialize the pivot table with transaction data
+         */
+        initializePivotTable() {
+            if (this.pivotTableInitialized || this.transactions.length === 0) {
+                return;
+            }
+
+            try {
+                // Ensure jQuery and pivottable are loaded
+                const $ = window.jQuery;
+                if (!$ || !$.pivotUtilities) {
+                    console.error('Pivottable library not loaded');
+                    return;
+                }
+
+
+
+                // Helper function to parse currency string to number
+                const parseCurrency = (value) => {
+                    if (typeof value === 'number') return value;
+                    if (!value) return 0;
+                    // Remove currency symbols, commas, and parse as float
+                    return parseFloat(String(value).replace(/[£$€,\s]/g, '')) || 0;
+                };
+
+                // Helper function to get category name from transaction
+                const getCategoryName = (transaction) => {
+                    // Try to get category from various possible locations
+                    if (transaction.category?.full_name) {
+                        return transaction.category.full_name;
+                    }
+                    if (transaction.category?.name) {
+                        return transaction.category.name;
+                    }
+                    // Check transaction items for category
+                    if (transaction.transaction_items && transaction.transaction_items.length > 0) {
+                        const firstItem = transaction.transaction_items[0];
+                        if (firstItem.category?.full_name) {
+                            return firstItem.category.full_name;
+                        }
+                        if (firstItem.category?.name) {
+                            return firstItem.category.name;
+                        }
+                    }
+                    // Also try transactionItems (camelCase)
+                    if (transaction.transactionItems && transaction.transactionItems.length > 0) {
+                        const firstItem = transaction.transactionItems[0];
+                        if (firstItem.category?.full_name) {
+                            return firstItem.category.full_name;
+                        }
+                        if (firstItem.category?.name) {
+                            return firstItem.category.name;
+                        }
+                    }
+                    return 'Uncategorized';
+                };
+
+                // Transform transactions into a format suitable for pivot table
+                // Note: transactions can have multiple items with different categories
+                // We'll create one row per transaction item, or one row with "Uncategorized" if no items
+                const pivotData = [];
+                
+                this.transactions.forEach((transaction, index) => {
+                    const date = new Date(transaction.date);
+                    
+                    // For transfers (type 3), cashflow_value is NULL, so use amount_from/amount_to from config
+                    let amount;
+                    if (transaction.transaction_type_id === 3 && transaction.config) {
+                        amount = Math.abs(transaction.config.amount_from || transaction.config.amount_to || 0);
+                    } else {
+                        amount = Math.abs(transaction.cashflow_value || 0);
+                    }
+                    
+                    // Base transaction data
+                    const baseData = {
+                        'Date': transaction.date,
+                        'Year': date.getFullYear(),
+                        'Month': date.toLocaleString(window.YAFFA.locale, { month: 'long' }),
+                        'Year-Month': `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+                        'Type': transaction.transaction_type?.name || 'N/A',
+                        'Config Type': transaction.config_type || 'N/A',
+                        'From': transaction.config?.account_from?.name || '',
+                        'To': transaction.config?.account_to?.name || '',
+                        'Comment': transaction.comment || '',
+                    };
+                    
+                    // Determine if this is a withdrawal (negative) or deposit (positive)
+                    // transaction_type_id: 1 = withdrawal, 2 = deposit, 3 = transfer, 4 = Buy
+                    // - Withdrawals and Buy transactions should be negative (money out)
+                    // - For transfers, check if money is going out or coming in based on filtered accounts
+                    let isNegative = transaction.transaction_type_id === 1 || transaction.transaction_type_id === 4;
+                    
+                    // Handle transfers specially based on the account filter
+                    if (transaction.transaction_type_id === 3) {
+                        const accountFromId = transaction.config?.account_from?.id;
+                        const accountToId = transaction.config?.account_to?.id;
+                        
+                        if (this.selectedAccounts.length > 0) {
+                            // We have account filters - check if this transfer involves any of them
+                            const fromMatches = accountFromId && this.selectedAccounts.includes(accountFromId);
+                            const toMatches = accountToId && this.selectedAccounts.includes(accountToId);
+                            
+                            if (fromMatches) {
+                                // Money leaving the filtered account (or one of them)
+                                isNegative = true;
+                            } else if (toMatches) {
+                                // Money entering the filtered account (or one of them)
+                                isNegative = false;
+                            } else {
+                                // Neither account is in filter - use cashflow_value sign as fallback
+                                isNegative = (transaction.cashflow_value || 0) < 0;
+                            }
+                        } else {
+                            // No account filter - use cashflow_value sign
+                            isNegative = (transaction.cashflow_value || 0) < 0;
+                        }
+                    }
+                    
+                    const directionalMultiplier = isNegative ? -1 : 1;
+                    
+                    // Check if transaction has items with categories
+                    if (transaction.transaction_items && Array.isArray(transaction.transaction_items) && transaction.transaction_items.length > 0) {
+                        // Create a row for each transaction item
+                        transaction.transaction_items.forEach((item, itemIndex) => {
+                            const categoryName = item.category?.full_name || item.category?.name || 'Uncategorized';
+                            const itemAmount = Math.abs(item.amount || 0);
+                            const directionalAmount = itemAmount * directionalMultiplier;
+                            
+                            pivotData.push({
+                                ...baseData,
+                                'Category': categoryName,
+                                'Amount': itemAmount,
+                                'Directional Amount': directionalAmount,
+                            });
+                        });
+                    } else {
+                        // No items, create single row with total amount
+                        const directionalAmount = amount * directionalMultiplier;
+                        
+                        pivotData.push({
+                            ...baseData,
+                            'Category': 'Uncategorized',
+                            'Amount': amount,
+                            'Directional Amount': directionalAmount,
+                        });
+                    }
+                });
+
+                console.log('Pivot data sample:', JSON.parse(JSON.stringify(pivotData.slice(0, 3))));
+
+                // Clear previous pivot table if exists
+                $(this.$refs.pivotTableContainer).empty();
+
+                // Initialize pivot table
+                $(this.$refs.pivotTableContainer).pivotUI(pivotData, {
+                    rows: ['Category'],
+                    cols: ['Year-Month'],
+                    aggregatorName: 'Sum',
+                    vals: ['Amount'],
+                    rendererName: 'Table',
+                    sorters: {
+                        'Year-Month': function(a, b) {
+                            return a.localeCompare(b);
+                        }
+                    }
+                });
+
+                this.pivotTableInitialized = true;
+            } catch (error) {
+                console.error('Error initializing pivot table:', error);
+                $(this.$refs.pivotTableContainer).html('<div class="alert alert-danger">Error loading pivot table: ' + error.message + '</div>');
+            }
+        },
     },
 
     watch: {
@@ -379,6 +580,17 @@ export default {
                 return;
             }
             this.dataTable.processing(newBusy);
+        },
+        // Re-initialize pivot table when transactions change
+        transactions: function () {
+            this.pivotTableInitialized = false;
+            // If pivot table tab is currently active, reinitialize it
+            const pivotTab = document.getElementById('tab-pivot-table');
+            if (pivotTab && pivotTab.classList.contains('active')) {
+                this.$nextTick(() => {
+                    this.initializePivotTable();
+                });
+            }
         }
     },
 

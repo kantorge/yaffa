@@ -15537,6 +15537,28 @@ div.card-header > div.card-title {
   font-size: 18px;
 }
 
+.pivot-table-container {
+  overflow-x: auto;
+}
+.pivot-table-container table.pvtTable {
+  font-size: 0.875rem;
+}
+.pivot-table-container table.pvtTable thead tr th, .pivot-table-container table.pvtTable tbody tr th {
+  background-color: var(--cui-tertiary-bg);
+  color: var(--cui-body-color);
+  border: 1px solid var(--cui-border-color);
+}
+.pivot-table-container table.pvtTable tbody tr td {
+  border: 1px solid var(--cui-border-color);
+}
+.pivot-table-container table.pvtTable .pvtTotal, .pivot-table-container table.pvtTable .pvtGrandTotal {
+  font-weight: bold;
+}
+.pivot-table-container .pvtUi select, .pivot-table-container .pvtUi input {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+
 .select2-container {
   box-sizing: border-box;
   display: inline-block;

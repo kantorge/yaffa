@@ -47,6 +47,7 @@ class InvestmentGroup extends Model
      */
     protected $fillable = [
         'name',
+        'user_id',
         'generates_interest',
     ];
 

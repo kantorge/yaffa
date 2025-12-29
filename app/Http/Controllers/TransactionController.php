@@ -285,8 +285,8 @@ class TransactionController extends Controller
             'transactions.*.investment_id' => 'required|exists:investments,id',
             'transactions.*.quantity' => 'required|numeric',
             'transactions.*.price' => 'required|numeric|min:0',
-            'transactions.*.commission' => 'nullable|numeric|min:0',
-            'transactions.*.tax' => 'nullable|numeric|min:0',
+            'transactions.*.commission' => 'nullable|numeric',
+            'transactions.*.tax' => 'nullable|numeric',
             'transactions.*.transaction_type' => 'required|in:buy,sell',
         ]);
 
@@ -352,5 +352,221 @@ class TransactionController extends Controller
 
         return redirect()->route('account.history', $account);
     }
-}
 
+    /**
+     * Display batch reconciliation form for investment account
+     */
+    public function batchReconcileInvestment(AccountEntity $account): View|RedirectResponse
+    {
+        /**
+         * @get('/account/{account}/batch-reconcile/investment')
+         * @name('account.batch-reconcile.investment')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Verify the account belongs to the user
+        if ($account->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Verify this is actually an account (not a payee)
+        if ($account->config_type !== 'account') {
+            $this->addMessage(
+                __('This feature is only available for accounts'),
+                'error',
+                __('Invalid account type'),
+                'exclamation-triangle'
+            );
+            return redirect()->route('account.history', $account);
+        }
+
+        // Get all investments that have ever been in this account
+        $investmentIds = \App\Models\TransactionDetailInvestment::where('account_id', $account->id)
+            ->distinct()
+            ->pluck('investment_id');
+
+        $investments = \App\Models\Investment::whereIn('id', $investmentIds)
+            ->get()
+            ->map(function ($investment) use ($account) {
+                $investment->current_quantity = $investment->getCurrentQuantityForAccount($account->id);
+                $investment->latest_price = $investment->getLatestPrice();
+                return $investment;
+            });
+
+        return view('transactions.batch-reconcile-investment', [
+            'account' => $account,
+            'investments' => $investments,
+        ]);
+    }
+
+    /**
+     * Store batch reconciliation adjustments
+     */
+    public function storeBatchReconcileInvestment(Request $request, AccountEntity $account): RedirectResponse
+    {
+        /**
+         * @post('/account/{account}/batch-reconcile/investment')
+         * @name('account.batch-reconcile.investment.store')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Verify the account belongs to the user
+        if ($account->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'reconciliations' => 'required|array',
+            'reconciliations.*.investment_id' => 'required|exists:investments,id',
+            'reconciliations.*.current_quantity' => 'required|numeric',
+            'reconciliations.*.statement_quantity' => 'required|numeric',
+            'reconciliations.*.price' => 'nullable|numeric|min:0',
+        ]);
+
+        $adjustedCount = 0;
+        $reconciledCount = 0;
+        $pricesAdded = 0;
+
+        foreach ($validated['reconciliations'] as $reconciliationData) {
+            $investment = \App\Models\Investment::find($reconciliationData['investment_id']);
+            if (!$investment) {
+                continue;
+            }
+
+            $currentQty = $reconciliationData['current_quantity'];
+            $statementQty = $reconciliationData['statement_quantity'];
+            $price = $reconciliationData['price'] ?? 0;
+
+            // Add price to history if provided
+            if ($price > 0) {
+                $existingPrice = \App\Models\InvestmentPrice::where('investment_id', $investment->id)
+                    ->where('date', $validated['date'])
+                    ->first();
+
+                if (!$existingPrice) {
+                    \App\Models\InvestmentPrice::create([
+                        'investment_id' => $investment->id,
+                        'date' => $validated['date'],
+                        'price' => $price,
+                    ]);
+                    $pricesAdded++;
+                }
+            }
+
+            // Check if quantities match
+            if ($currentQty == $statementQty) {
+                // Mark all Buy/Sell transactions as reconciled
+                $updated = \App\Models\Transaction::whereHasMorph(
+                    'config',
+                    [\App\Models\TransactionDetailInvestment::class],
+                    function ($query) use ($account, $investment, $validated) {
+                        $query->where('account_id', $account->id)
+                              ->where('investment_id', $investment->id);
+                    }
+                )
+                ->whereIn('transaction_type_id', [4, 5]) // Buy or Sell
+                ->where('date', '<=', $validated['date'])
+                ->where('reconciled', false)
+                ->update(['reconciled' => true]);
+
+                if ($updated > 0) {
+                    $reconciledCount++;
+                }
+            } else {
+                // Create adjustment transaction
+                $difference = $statementQty - $currentQty;
+                $transactionTypeName = $difference > 0 ? 'Add shares' : 'Remove shares';
+                
+                $transactionType = \App\Models\TransactionType::where('name', $transactionTypeName)->first();
+                if (!$transactionType) {
+                    continue;
+                }
+
+                // Create transaction detail
+                $transactionDetail = \App\Models\TransactionDetailInvestment::create([
+                    'account_id' => $account->id,
+                    'investment_id' => $investment->id,
+                    'quantity' => abs($difference),
+                    'price' => null,
+                    'commission' => null,
+                    'tax' => null,
+                ]);
+
+                // Create transaction
+                Transaction::create([
+                    'user_id' => Auth::id(),
+                    'date' => $validated['date'],
+                    'transaction_type_id' => $transactionType->id,
+                    'config_type' => 'investment',
+                    'config_id' => $transactionDetail->id,
+                    'schedule' => false,
+                    'budget' => false,
+                    'reconciled' => false,
+                    'cashflow_value' => 0,
+                    'comment' => 'RECONCILE ERROR - TO CHECK',
+                ]);
+
+                $adjustedCount++;
+            }
+        }
+
+        $messages = [];
+        if ($reconciledCount > 0) {
+            $messages[] = __('Reconciled :count investments', ['count' => $reconciledCount]);
+        }
+        if ($adjustedCount > 0) {
+            $messages[] = __('Created :count adjustment transactions', ['count' => $adjustedCount]);
+        }
+        if ($pricesAdded > 0) {
+            $messages[] = __('Added :count prices', ['count' => $pricesAdded]);
+        }
+
+        $this->addMessage(
+            implode('. ', $messages),
+            'success',
+            __('Batch reconciliation completed'),
+            'check-circle'
+        );
+
+        return redirect()->route('account.history', $account);
+    }
+
+    /**
+     * Get quantities as of a specific date for batch reconciliation
+     */
+    public function getBatchReconcileQuantities(Request $request, AccountEntity $account)
+    {
+        /**
+         * @post('/account/{account}/batch-reconcile/investment/quantities')
+         * @name('account.batch-reconcile.investment.quantities')
+         * @middlewares('web', 'auth', 'verified')
+         */
+
+        // Verify the account belongs to the user
+        if ($account->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'investment_ids' => 'required|array',
+            'investment_ids.*' => 'exists:investments,id',
+        ]);
+
+        $quantities = [];
+        foreach ($validated['investment_ids'] as $investmentId) {
+            $investment = \App\Models\Investment::find($investmentId);
+            if ($investment) {
+                $quantities[$investmentId] = $investment->getCurrentQuantityForAccount(
+                    $account->id,
+                    $validated['date']
+                );
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'quantities' => $quantities,
+        ]);
+    }}

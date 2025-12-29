@@ -41,7 +41,7 @@
                             <th>{{ __('Account') }}</th>
                             <th>{{ __('Description Pattern') }}</th>
                             <th>{{ __('Action') }}</th>
-                            <th>{{ __('Transfer To') }}</th>
+                            <th>{{ __('Target') }}</th>
                             <th>{{ __('Status') }}</th>
                             <th>{{ __('Actions') }}</th>
                         </tr>
@@ -66,6 +66,8 @@
                                 <td>
                                     @if($rule->action === 'convert_to_transfer')
                                         <span class="badge bg-primary">{{ __('Transfer') }}</span>
+                                    @elseif($rule->action === 'merge_payee')
+                                        <span class="badge bg-success">{{ __('Merge Payee') }}</span>
                                     @elseif($rule->action === 'skip')
                                         <span class="badge bg-danger">{{ __('Skip') }}</span>
                                     @else
@@ -73,8 +75,15 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($rule->transferAccount)
+                                    @if($rule->action === 'convert_to_transfer' && $rule->transferAccount)
                                         {{ $rule->transferAccount->name }}
+                                    @elseif($rule->action === 'merge_payee' && $rule->mergePayee)
+                                        {{ $rule->mergePayee->name }}
+                                        @if($rule->append_original_to_comment)
+                                            <span class="badge bg-info text-white" title="{{ __('Original payee name will be appended to comment') }}">
+                                                <i class="fa fa-comment"></i>
+                                            </span>
+                                        @endif
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -126,6 +135,7 @@
             <li><strong>{{ __('Account') }}:</strong> {{ __('If set, rule only applies when importing to that specific account. Leave blank for global rules.') }}</li>
             <li><strong>{{ __('Description Pattern') }}:</strong> {{ __('Text to match in transaction descriptions (case-insensitive). Use "Regex" for advanced pattern matching.') }}</li>
             <li><strong>{{ __('Convert to Transfer') }}:</strong> {{ __('Transforms a payee transaction into a transfer between two accounts.') }}</li>
+            <li><strong>{{ __('Merge Payee') }}:</strong> {{ __('Replaces the matched payee with a specific payee, optionally appending the original name to the comment.') }}</li>
             <li><strong>{{ __('Skip') }}:</strong> {{ __('Don\'t import transactions matching this pattern (useful to avoid duplicates).') }}</li>
         </ul>
     </div>

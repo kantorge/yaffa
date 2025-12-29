@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
+use App\Http\Traits\UkTaxYearTrait;
+use App\Services\UnrealisedInterestService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Carbon\Carbon;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
@@ -14,6 +17,7 @@ class ReportController extends Controller
 {
     use CurrencyTrait;
     use ScheduleTrait;
+    use UkTaxYearTrait;
 
     public function __construct()
     {
@@ -100,5 +104,44 @@ class ReportController extends Controller
         ]);
 
         return view('reports.investment-timeline');
+    }
+
+    public function unrealisedInterest(Request $request): View
+    {
+        /**
+         * @get('/reports/unrealised-interest')
+         * @name('reports.unrealised_interest')
+         * @middlewares('web', 'auth', 'verified')
+         */
+        $service = new UnrealisedInterestService();
+        
+        // Get tax year from request or use current
+        $taxYear = $request->get('tax_year');
+        
+        if ($taxYear) {
+            // Parse tax year like "2024/25"
+            $dates = $this->parseTaxYearString($taxYear);
+            $startDate = $dates['start'];
+            $endDate = $dates['end'];
+            $label = $this->getTaxYearLabel($startDate);
+        } else {
+            // Default to current tax year
+            $today = Carbon::today();
+            $startDate = $this->getTaxYearStart($today);
+            $endDate = $this->getTaxYearEnd($today);
+            $label = $this->getTaxYearLabel($startDate);
+        }
+
+        $report = $service->getUnrealisedInterestReport(Auth::id(), $startDate, $endDate);
+        $availableYears = $this->getAvailableTaxYears();
+
+        return view('reports.unrealised-interest', [
+            'report' => $report,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'label' => $label,
+            'taxYear' => $taxYear,
+            'availableYears' => $availableYears,
+        ]);
     }
 }

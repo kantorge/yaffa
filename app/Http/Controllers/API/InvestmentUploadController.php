@@ -35,7 +35,7 @@ class InvestmentUploadController extends Controller
         }
 
         try {
-            // Store the uploaded file temporarily
+            // Store the uploaded file for background processing
             $file = $request->file('file');
             $path = $file->storeAs(
                 'investment-uploads',
@@ -43,23 +43,28 @@ class InvestmentUploadController extends Controller
                 'local'
             );
 
-            $fullPath = Storage::disk('local')->path($path);
-
             // Get custom config or use defaults
             $config = $configData ?? [];
             $config['default_account_id'] = $request->input('default_account_id');
 
-            // Process the file
-            $uploader = new InvestmentTransactionUploader($request->user(), $config);
-            $results = $uploader->processFile($fullPath, $request->input('source'));
+            // Create import job record
+            $import = \App\Models\ImportJob::create([
+                'user_id' => $request->user()->id,
+                'account_entity_id' => $request->input('default_account_id'),
+                'file_path' => $path,
+                'source' => $request->input('source'),
+                'status' => 'queued',
+                'processed_rows' => 0,
+            ]);
 
-            // Clean up the temporary file
-            Storage::disk('local')->delete($path);
+            // Dispatch background job to process the file
+            \App\Jobs\ProcessInvestmentTransactionImport::dispatch($import->id, $request->input('source'), $config);
 
             return response()->json([
                 'success' => true,
-                'message' => "Processed {$results['processed']} transactions successfully.",
-                'results' => $results
+                'queued' => true,
+                'message' => 'Upload received. Processing in background...',
+                'import_id' => $import->id
             ]);
 
         } catch (\Exception $e) {

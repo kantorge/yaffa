@@ -490,6 +490,38 @@ $("#clear_dates").on('click', function () {
     );
 })
 
+// Previous month button functionality
+$("#prev_month").on('click', function () {
+    const dates = dateRangePicker.getDates();
+    if (dates[0]) {
+        const currentStart = new Date(dates[0]);
+        const newStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - 1, 1);
+        const newEnd = new Date(currentStart.getFullYear(), currentStart.getMonth(), 0); // Last day of previous month
+        
+        dateRangePicker.setDates(
+            newStart.toISOString().split('T')[0],
+            newEnd.toISOString().split('T')[0]
+        );
+        reloadTable();
+    }
+});
+
+// Next month button functionality
+$("#next_month").on('click', function () {
+    const dates = dateRangePicker.getDates();
+    if (dates[0]) {
+        const currentStart = new Date(dates[0]);
+        const newStart = new Date(currentStart.getFullYear(), currentStart.getMonth() + 1, 1);
+        const newEnd = new Date(currentStart.getFullYear(), currentStart.getMonth() + 2, 0); // Last day of next month
+        
+        dateRangePicker.setDates(
+            newStart.toISOString().split('T')[0],
+            newEnd.toISOString().split('T')[0]
+        );
+        reloadTable();
+    }
+});
+
 // Set initial dates
 if (filters.date_from || filters.date_to) {
     const start = (filters.date_from ? filters.date_from : {clear: true});

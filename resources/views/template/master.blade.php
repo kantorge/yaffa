@@ -57,6 +57,9 @@
     <script src="{{ mix('js/vendor.js') }}"></script>
     <script src="{{ mix('js/app.js') }}"></script>
 
+    {{-- Page-specific scripts pushed via @push('scripts') --}}
+    @stack('scripts')
+
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.body-close')
 </body>
 </html>

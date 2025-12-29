@@ -70,6 +70,12 @@ Breadcrumbs::for('account.batch-entry.investment', function (BreadcrumbTrail $tr
     $trail->push(__('Batch Entry - Investment'), route('account.batch-entry.investment', $accountEntity));
 });
 
+// Account > Batch Reconcile > Investment
+Breadcrumbs::for('account.batch-reconcile.investment', function (BreadcrumbTrail $trail, $accountEntity) {
+    $trail->parent('account.history', $accountEntity);
+    $trail->push('Batch Reconcile - Investment', route('account.batch-reconcile.investment', $accountEntity));
+});
+
 // Payee > merge form
 Breadcrumbs::for('payees.merge.form', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
@@ -149,9 +155,23 @@ Breadcrumbs::for('investment.show', function (BreadcrumbTrail $trail, $investmen
     $trail->parent('investment.index');
     $trail->push(__($investment->name), route('investment.show', $investment));
 });
+Breadcrumbs::for('investment.interest', function (BreadcrumbTrail $trail, $investment) {
+    $trail->parent('investment.show', $investment);
+    $trail->push(__('Unrealised Interest'), route('investment.interest', $investment));
+});
 Breadcrumbs::for('investment.upload', function (BreadcrumbTrail $trail) {
     $trail->parent('investment.index');
     $trail->push(__('Upload Transactions'), route('investment.upload'));
+});
+Breadcrumbs::for('investment.upload_csv', function (BreadcrumbTrail $trail) {
+    $trail->parent('investment.index');
+    $trail->push(__('Upload Investments CSV'), route('investment.upload_csv'));
+});
+
+// Upload statements (WiseAlpha multi-file uploader)
+Breadcrumbs::for('investment.upload_statements', function (BreadcrumbTrail $trail) {
+    $trail->parent('investment.index');
+    $trail->push(__('Upload Investment Statements'), route('investment.upload_statements'));
 });
 
 // Investment price resource views (create, edit)
@@ -230,6 +250,11 @@ Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail
     $trail->push(__('Investments'), route('investment.index'));
     $trail->push(__('Investment timeline'), route('reports.investment_timeline'));
 });
+Breadcrumbs::for('reports.unrealised_interest', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push('Reports');
+    $trail->push(__('Unrealised Interest Report'), route('reports.unrealised_interest'));
+});
 Breadcrumbs::for('reports.tax', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push('Reports');
@@ -258,6 +283,20 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
     $trail->push(__('Import transactions'), route('import.csv'));
+});
+
+// Imports index
+Breadcrumbs::for('imports.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push('Automations');
+    $trail->push('Import Jobs', route('imports.index'));
+});
+
+// Payslip upload
+Breadcrumbs::for('payslip.upload', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('Upload Payslips'), route('payslip.upload'));
 });
 
 // User related routes

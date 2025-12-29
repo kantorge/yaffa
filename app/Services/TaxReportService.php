@@ -52,7 +52,8 @@ class TaxReportService
                 'investments.name as investment_name',
                 'investment_groups.name as investment_group_name',
                 'ae.tax_exempt',
-                'tdi.dividend'
+                'tdi.dividend',
+                'tdi.tax'
             )
             ->orderBy('ae.name')
             ->orderBy('investments.name')
@@ -67,6 +68,7 @@ class TaxReportService
         })->map(function($group) use ($baseCurrency) {
             $first = $group->first();
             $totalDividendInBase = 0;
+            $totalTaxInBase = 0;
             
             foreach ($group as $item) {
                 // Convert dividend to base currency at transaction date rate
@@ -77,6 +79,17 @@ class TaxReportService
                     Carbon::parse($item->transaction_date)
                 );
                 $totalDividendInBase += $dividendInBase;
+                
+                // Convert tax to base currency at transaction date rate
+                if ($item->tax) {
+                    $taxInBase = $this->convertCurrency(
+                        $item->tax,
+                        $item->currency_id,
+                        $baseCurrency->id,
+                        Carbon::parse($item->transaction_date)
+                    );
+                    $totalTaxInBase += $taxInBase;
+                }
             }
             
             return (object)[
@@ -87,6 +100,7 @@ class TaxReportService
                 'investment_group_name' => $first->investment_group_name,
                 'tax_exempt' => $first->tax_exempt,
                 'total_dividend' => $totalDividendInBase,
+                'total_tax' => $totalTaxInBase,
                 'transaction_count' => $group->count(),
                 'tax_rate' => $first->tax_exempt ? 0 : null,
                 'taxable_amount' => $first->tax_exempt ? 0 : $totalDividendInBase,
@@ -274,6 +288,7 @@ class TaxReportService
             'total_dividends' => $dividends->sum('total_dividend'),
             'taxable_dividends' => $dividends->sum('taxable_amount'),
             'tax_exempt_dividends' => $dividends->where('tax_exempt', true)->sum('total_dividend'),
+            'total_tax_paid' => $dividends->sum('total_tax'),
             'total_proceeds' => $capitalGains->sum('net_proceeds'),
             'total_cost_basis' => $capitalGains->sum('cost_basis'),
             'total_gains' => $capitalGains->sum('gain_loss'),
@@ -281,4 +296,76 @@ class TaxReportService
             'tax_exempt_gains' => $capitalGains->where('tax_exempt', true)->sum('gain_loss'),
         ];
     }
+
+    /**
+     * Get EIS/SEIS investments with buy events in a tax year
+     */
+    public function getEisSeisBuys(int $userId, Carbon $startDate, Carbon $endDate): Collection
+    {
+        // Transaction types: 4 = Buy, 6 = Add shares
+        $buys = Transaction::where('transactions.user_id', $userId)
+            ->where('transactions.config_type', 'investment')
+            ->whereIn('transactions.transaction_type_id', [4, 6])
+            ->whereBetween('transactions.date', [$startDate, $endDate])
+            ->join('transaction_details_investment as tdi', function($join) {
+                $join->on('transactions.config_id', '=', 'tdi.id');
+            })
+            ->join('investments', 'tdi.investment_id', '=', 'investments.id')
+            ->join('investment_groups', 'investments.investment_group_id', '=', 'investment_groups.id')
+            ->join('account_entities as ae', 'tdi.account_id', '=', 'ae.id')
+            ->join('accounts', 'ae.config_id', '=', 'accounts.id')
+            ->whereIn(DB::raw('LOWER(investment_groups.name)'), ['eis', 'seis'])
+            ->select(
+                'transactions.id as transaction_id',
+                'transactions.date as transaction_date',
+                'investments.id as investment_id',
+                'investments.name as investment_name',
+                'investment_groups.name as investment_group_name',
+                'ae.name as account_name',
+                DB::raw('COALESCE(transactions.currency_id, accounts.currency_id) as currency_id'),
+                'tdi.quantity',
+                'tdi.price',
+                'tdi.commission'
+            )
+            ->orderBy('investment_groups.name')
+            ->orderBy('investments.name')
+            ->orderBy('transactions.date')
+            ->get();
+
+        // Get base currency
+        $baseCurrency = $this->getBaseCurrency();
+
+        // Convert amounts to base currency and group by investment
+        return $buys->groupBy(function($item) {
+            return $item->investment_id;
+        })->map(function($group) use ($baseCurrency) {
+            $first = $group->first();
+            $totalCostInBase = 0;
+            $totalQuantity = 0;
+
+            foreach ($group as $item) {
+                $cost = ($item->quantity * $item->price) + ($item->commission ?? 0);
+                $costInBase = $this->convertCurrency(
+                    $cost,
+                    $item->currency_id,
+                    $baseCurrency->id,
+                    Carbon::parse($item->transaction_date)
+                );
+                $totalCostInBase += $costInBase;
+                $totalQuantity += $item->quantity;
+            }
+
+            return (object)[
+                'investment_id' => $first->investment_id,
+                'investment_name' => $first->investment_name,
+                'investment_group_name' => $first->investment_group_name,
+                'account_name' => $first->account_name,
+                'total_quantity' => $totalQuantity,
+                'total_cost' => $totalCostInBase,
+                'transaction_count' => $group->count(),
+                'buy_dates' => $group->map(fn($b) => Carbon::parse($b->transaction_date)->format('d M Y'))->unique()->values(),
+            ];
+        })->values();
+    }
 }
+

@@ -1,8 +1,4 @@
-            <x-nav-link
-                href="{{ route('import.moneyhub') }}"
-                iconClasses="fa-solid fa-cloud-upload-alt"
-                text="{{ __('Upload MoneyHub transactions') }}"
-            />
+
 <ul class="sidebar-nav" data-coreui="navigation" data-simplebar>
     <li class="nav-item">
         <a class="nav-link" href="{{ route('home') }}">
@@ -93,6 +89,16 @@
                 iconClasses="fa-solid fa-chart-gantt"
                 text="{{ __('Investment timeline') }}"
             />
+            <x-nav-link
+                href="{{ route('reports.unrealised_interest') }}"
+                iconClasses="fa-solid fa-percent"
+                text="{{ __('Unrealised interest') }}"
+            />
+            <x-nav-link
+                href="{{ route('reports.tax') }}"
+                iconClasses="fa-solid fa-receipt"
+                text="{{ __('UK Tax Report') }}"
+            />
         </ul>
     </li>
 
@@ -118,6 +124,27 @@
                     iconClasses="fa-solid fa-file-arrow-up"
                     text="{{ __('Upload investment transactions') }}"
             />
+               <x-nav-link
+                href="{{ route('investment.upload_statements') }}"
+                iconClasses="fa-solid fa-cloud-upload-alt"
+                text="{{ __('Upload WiseAlpha Investment Statement') }}"
+            />
+                          <x-nav-link
+                href="{{ route('payslip.upload') }}"
+                iconClasses="fa-solid fa-cloud-upload-alt"
+                text="{{ __('Upload Payslip') }}"
+            />
+                        <x-nav-link
+                href="{{ route('import.moneyhub') }}"
+                iconClasses="fa-solid fa-cloud-upload-alt"
+                text="{{ __('Upload MoneyHub transactions') }}"
+            />
+                   <x-nav-link
+                href="{{ route('investment.upload_csv') }}"
+                iconClasses="fa-solid fa-cloud-upload-alt"
+                text="{{ __('Upload FuelVentures transactions') }}"
+            />
+          
         </ul>
     </li>
 

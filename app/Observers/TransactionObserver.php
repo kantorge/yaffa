@@ -20,6 +20,22 @@ class TransactionObserver
      */
     public function creating(Transaction $transaction): bool
     {
+        // Auto-remap negative Dividend (type 8) transactions based on account
+        if ($transaction->transaction_type_id == 8 && $transaction->cashflow_value < 0) {
+            // Load the config relationship to get the account
+            $transaction->loadMissing('config.account');
+            
+            if ($transaction->config && method_exists($transaction->config, 'account')) {
+                $account = $transaction->config->account;
+                
+                if ($account) {
+                    // If account name contains "WiseAlpha", use type 12 (Purchased Interest)
+                    // Otherwise use type 14 (Product Fee)
+                    $transaction->transaction_type_id = str_contains($account->name, 'WiseAlpha') ? 12 : 14;
+                }
+            }
+        }
+        
         // Observer not needed for Interest ReInvest anymore - handled in API controller
         return true; // Allow all transactions to proceed
     }

@@ -162,7 +162,15 @@
                     </div>
                 </div>
                 <div class="card-footer text-end">
-                    <button class="btn btn-sm btn-outline-dark"
+                    <button class="btn btn-sm btn-outline-secondary"
+                            id="prev_month"
+                            title="{{ __('Previous month') }}"
+                    ><i class="fa fa-chevron-left"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            id="next_month"
+                            title="{{ __('Next month') }}"
+                    ><i class="fa fa-chevron-right"></i></button>
+                    <button class="btn btn-sm btn-outline-dark ms-2"
                             id="clear_dates"
                     >{{ __('Clear selection') }}</button>
                     <button name="reload" type="button" id="reload"

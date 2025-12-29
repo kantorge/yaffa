@@ -81,6 +81,24 @@ services:
             - '4444:4444'
         networks:
             - sail
+    nlp-service:
+        build:
+            context: ./docker/nlp-service
+            dockerfile: Dockerfile
+        image: yaffa-nlp:latest
+        ports:
+            - '${NLP_SERVICE_PORT:-8083}:8083'
+        environment:
+            - FLASK_ENV=production
+        networks:
+            - sail
+        healthcheck:
+            test: ['CMD', 'python', '-c', 'import requests; requests.get("http://localhost:5000/health")']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        restart: unless-stopped
 networks:
     sail:
         driver: bridge

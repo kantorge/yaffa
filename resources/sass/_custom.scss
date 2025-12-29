@@ -229,3 +229,33 @@ div.card-header > div.card-title {
     color: var(--cui-secondary-color);
     font-size: 18px;
 }
+
+// Pivot Table styling
+.pivot-table-container {
+    overflow-x: auto;
+    
+    table.pvtTable {
+        font-size: 0.875rem;
+        
+        thead tr th, tbody tr th {
+            background-color: var(--cui-tertiary-bg);
+            color: var(--cui-body-color);
+            border: 1px solid var(--cui-border-color);
+        }
+        
+        tbody tr td {
+            border: 1px solid var(--cui-border-color);
+        }
+        
+        .pvtTotal, .pvtGrandTotal {
+            font-weight: bold;
+        }
+    }
+    
+    .pvtUi {
+        select, input {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+}

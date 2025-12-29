@@ -1,6 +1,12 @@
 window.$ = window.jQuery = require('jquery');
 window.bootstrap = require('bootstrap')
 
+// Load jquery-ui (required by pivottable)
+require('jquery-ui-dist/jquery-ui');
+
+// Load pivottable
+require('pivottable');
+
 // Get CSRF Token from meta tag
 window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 

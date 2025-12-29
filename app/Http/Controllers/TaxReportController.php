@@ -65,12 +65,20 @@ class TaxReportController extends Controller
             $taxYear['end']
         );
 
+        // Get EIS/SEIS investments with buy events
+        $eisSeisBuys = $this->taxReportService->getEisSeisBuys(
+            $userId,
+            $taxYear['start'],
+            $taxYear['end']
+        );
+
         return view('reports.tax', [
             'taxYear' => $taxYear,
             'availableTaxYears' => $availableTaxYears,
             'dividends' => $dividends,
             'capitalGains' => $capitalGains,
             'summary' => $summary,
+            'eisSeisBuys' => $eisSeisBuys,
         ]);
     }
 
