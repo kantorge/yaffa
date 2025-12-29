@@ -2,26 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Http\Traits\UkTaxYearTrait;
 use App\Services\UnrealisedInterestService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Carbon\Carbon;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
-class ReportController extends Controller
+class ReportController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
     use UkTaxYearTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     public function cashFlow(Request $request): View
@@ -60,9 +62,6 @@ class ReportController extends Controller
 
     /**
      * Display form for searching transactions.
-     *
-     * @param  Request  $request
-     * @return View
      */
     public function transactionsByCriteria(Request $request): View
     {
@@ -86,9 +85,6 @@ class ReportController extends Controller
 
     /**
      * Display view with investment timeline chart.
-     *
-     * @param Request $request
-     * @return View
      */
     public function investmentTimeline(Request $request): View
     {

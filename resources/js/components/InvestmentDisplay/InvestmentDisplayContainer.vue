@@ -43,10 +43,6 @@
         @update:date-from="(val) => (dateFrom = val)"
         @update:date-to="(val) => (dateTo = val)"
       />
-      <price-volume-waterfall-card
-        :waterfall-data="waterfallData"
-        :investment="investment"
-      />
     </div>
   </div>
 </template>
@@ -58,7 +54,6 @@
   import TransactionHistoryCard from './TransactionHistoryCard.vue';
   import PriceHistoryCard from './PriceHistoryCard.vue';
   import QuantityHistoryCard from './QuantityHistoryCard.vue';
-  import PriceVolumeWaterfallCard from './PriceVolumeWaterfallCard.vue';
 
   export default {
     components: {
@@ -68,14 +63,12 @@
       TransactionHistoryCard,
       PriceHistoryCard,
       QuantityHistoryCard,
-      PriceVolumeWaterfallCard,
     },
     props: {
       investment: Object,
       transactions: Array,
       prices: Array,
       quantities: Array,
-      waterfallData: Array,
     },
     data() {
       return {
@@ -92,12 +85,11 @@
         date: tx.date ? new Date(tx.date) : null,
       }));
 
-      this.processedQuantities = (this.investment.quantities || []).map((qty) => ({
+      this.processedQuantities = this.investment.quantities.map((qty) => ({
         ...qty,
         date: qty.date ? new Date(qty.date) : null,
       }));
 
-      // Only add dummy values if we have quantities
       if (this.processedQuantities.length > 0) {
         // Add a dummy value to quantities to draw beyond the last value. Set the date to two months ahead. Values are copied from last value.
         this.processedQuantities.push({
@@ -115,7 +107,8 @@
           quantity: 0,
           schedule: 0,
           date: new Date(
-            this.processedQuantities[0].date.getTime() - 60 * 24 * 60 * 60 * 1000
+            this.processedQuantities[0].date.getTime() -
+              60 * 24 * 60 * 60 * 1000
           ),
         });
       }

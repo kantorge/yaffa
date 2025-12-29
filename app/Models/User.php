@@ -34,6 +34,7 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property string $locale
  * @property Carbon $start_date
  * @property Carbon $end_date
+ * @property string $account_details_date_range
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, AccountGroup> $accountGroups
@@ -101,6 +102,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'locale',
         'start_date',
         'end_date',
+        'account_details_date_range',
     ];
 
     /**
@@ -113,20 +115,23 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-    ];
-
     protected $withCount = [
         'unhandledReceivedMail',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
+        ];
+    }
 
     public function accountGroups(): HasMany
     {

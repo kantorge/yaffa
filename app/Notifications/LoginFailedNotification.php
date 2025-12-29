@@ -20,8 +20,6 @@ class LoginFailedNotification extends Notification
 
     /**
      * Get the notification's delivery channels.
-     *
-     * @return array
      */
     public function via(): array
     {
@@ -30,8 +28,6 @@ class LoginFailedNotification extends Notification
 
     /**
      * Get the mail representation of the notification.
-     *
-     * @return MailMessage
      */
     public function toMail(): MailMessage
     {

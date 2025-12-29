@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Events\Registered;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -11,7 +12,6 @@ use App\Models\InvestmentGroup;
 use App\Models\Tag;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
-use Illuminate\Auth\Events\Registered;
 
 class CreateDefaultAssetsForNewUser
 {
@@ -345,8 +345,6 @@ class CreateDefaultAssetsForNewUser
 
     /**
      * Handle the event.
-     *
-     * @param Registered $event
      */
     public function handle(Registered $event): void
     {

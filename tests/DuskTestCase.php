@@ -21,12 +21,10 @@ abstract class DuskTestCase extends BaseTestCase
 
     /**
      * Prepare for Dusk test execution.
-     *
-     * @beforeClass
      */
     public static function prepare(): void
     {
-        if (! static::runningInSail()) {
+        if (!static::runningInSail()) {
             static::startChromeDriver(['--port=9515']);
         }
     }
@@ -37,6 +35,15 @@ abstract class DuskTestCase extends BaseTestCase
         DuskMacros::register();
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->browse(function ($browser) {
+            $browser->resize(1920, 1080);
+        });
+    }
+
     /**
      * Create the RemoteWebDriver instance.
      *
@@ -44,24 +51,22 @@ abstract class DuskTestCase extends BaseTestCase
      */
     protected function driver(): RemoteWebDriver
     {
-        $options = (new ChromeOptions())->addArguments(collect([
-            $this->shouldStartMaximized() ? '--start-maximized' : '--window-size=1920,1080',
-        ])->unless($this->hasHeadlessDisabled(), function ($items) {
-            return $items->merge([
-                '--disable-gpu',
-                '--headless=new',
-                '--no-sandbox',
-                '--disable-dev-shm-usage',
-                '--ignore-certificate-errors',
-                '--allow-insecure-localhost',
-                '--disable-extensions',
-                '--disable-background-networking',
-                '--disable-sync',
-                '--disable-translate',
-                '--disable-search-engine-choice-screen',
-                '--disable-smooth-scrolling',
-            ]);
-        })->all());
+        $options = (new ChromeOptions())->addArguments([
+            '--window-size=1920,1080',
+            '--force-device-scale-factor=1',
+            '--headless=new',
+            '--disable-gpu',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--ignore-certificate-errors',
+            '--allow-insecure-localhost',
+            '--disable-extensions',
+            '--disable-background-networking',
+            '--disable-sync',
+            '--disable-translate',
+            '--disable-search-engine-choice-screen',
+            '--disable-smooth-scrolling',
+        ]);
 
         return RemoteWebDriver::create(
             $_ENV['DUSK_DRIVER_URL'] ?? env('DUSK_DRIVER_URL') ?? 'http://localhost:9515',
@@ -80,18 +85,7 @@ abstract class DuskTestCase extends BaseTestCase
     protected function hasHeadlessDisabled(): bool
     {
         return isset($_SERVER['DUSK_HEADLESS_DISABLED']) ||
-               isset($_ENV['DUSK_HEADLESS_DISABLED']);
-    }
-
-    /**
-     * Determine if the browser window should start maximized.
-     *
-     * @return bool
-     */
-    protected function shouldStartMaximized(): bool
-    {
-        return isset($_SERVER['DUSK_START_MAXIMIZED']) ||
-               isset($_ENV['DUSK_START_MAXIMIZED']);
+            isset($_ENV['DUSK_HEADLESS_DISABLED']);
     }
 
     /**

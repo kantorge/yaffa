@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
 use App\Events\TransactionDeleted;
 use App\Events\TransactionUpdated;
@@ -26,7 +28,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class TransactionApiController extends Controller
+class TransactionApiController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
@@ -34,16 +36,20 @@ class TransactionApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+
         $this->categoryService = new CategoryService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     /**
      * Change the reconciled flag of a transaction to a new value.
      *
-     * @param Transaction $transaction
-     * @param string $newState
-     * @return JsonResponse
      * @throws AuthorizationException
      */
     public function reconcile(Transaction $transaction, string $newState): JsonResponse
@@ -52,7 +58,7 @@ class TransactionApiController extends Controller
          * @put('/api/transaction/{transaction}/reconciled/{newState}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $transaction);
+        Gate::authorize('update', $transaction);
 
         $transaction->reconciled = boolval($newState);
         $transaction->save();
@@ -732,9 +738,6 @@ class TransactionApiController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param Transaction $transaction
-     * @return JsonResponse
      */
     public function destroy(Transaction $transaction): JsonResponse
     {
@@ -761,9 +764,6 @@ class TransactionApiController extends Controller
 
     /**
      * Handle additional updates to a source transaction
-     *
-     * @param array $validated
-     *
      */
     private function handleSourceTransactionUpdates(array $validated): void
     {

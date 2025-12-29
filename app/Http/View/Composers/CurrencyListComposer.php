@@ -9,8 +9,6 @@ class CurrencyListComposer
 {
     /**
      * Bind list of all currencies to the view.
-     *
-     * @param View $view
      */
     public function compose(View $view): void
     {

@@ -2,33 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\CategoryMergeRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Exception;
 use Throwable;
 
-class CategoryController extends Controller
+class CategoryController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Category::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Category', only: ['index']),
+            new Middleware('can:view,category', only: ['show']),
+            new Middleware('can:create,App\Models\Category', only: ['create', 'store']),
+            new Middleware('can:update,category', only: ['edit', 'update']),
+            new Middleware('can:delete,category', only: ['destroy']),
+        ];
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/categories')
@@ -36,7 +42,7 @@ class CategoryController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Category')
          */
         // Show all categories of user from the database and return to view
-        $categories = Auth::user()
+        $categories = $request->user()
             ->categories()
             ->with(['parent'])
             // Also pass the number of associated standard transactions
@@ -80,8 +86,6 @@ class CategoryController extends Controller
 
     /**
      * Display a form for adding new resource.
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -109,9 +113,6 @@ class CategoryController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  Category  $category
-     * @return View
      */
     public function edit(Category $category): View
     {
@@ -149,9 +150,6 @@ class CategoryController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  Category  $category
-     * @return RedirectResponse
      */
     public function destroy(Category $category): RedirectResponse
     {
@@ -178,9 +176,6 @@ class CategoryController extends Controller
 
     /**
      * Display a form to merge two categories.
-     *
-     * @param Category|null $categorySource
-     * @return View
      */
     public function mergeCategoriesForm(?Category $categorySource): View
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessIncomingEmailByAi;
 use App\Models\ReceivedMail;
@@ -9,22 +10,25 @@ use App\Services\ReceivedMailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
-class ReceivedMailApiController extends Controller
+class ReceivedMailApiController extends Controller implements HasMiddleware
 {
     protected ReceivedMailService $receivedMailService;
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
 
         $this->receivedMailService = new ReceivedMailService();
     }
 
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
+    }
+
     /**
      * Reset the processed status of the given received mail.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return JsonResponse
      */
     public function resetProcessed(ReceivedMail $receivedMail): JsonResponse
     {
@@ -58,9 +62,6 @@ class ReceivedMailApiController extends Controller
 
     /**
      * Remove the specified investment.
-     *
-     * @param ReceivedMail $receivedMail
-     * @return JsonResponse
      */
     public function destroy(ReceivedMail $receivedMail): JsonResponse
     {

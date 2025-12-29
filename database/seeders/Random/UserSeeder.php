@@ -10,7 +10,7 @@ class UserSeeder extends Seeder
     /**
      * Run the database seeds by creating random values with factory
      */
-    public function run()
+    public function run(): void
     {
         User::factory()->count(2)->create();
     }

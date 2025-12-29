@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Currency;
-use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -11,13 +10,6 @@ use Illuminate\Support\Str;
 
 class InvestmentFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = Investment::class;
-
     /**
      * Define the model's default state.
      *
@@ -49,18 +41,18 @@ class InvestmentFactory extends Factory
     {
         return $this->state(function (array $attributes) use ($user) {
             // If the investment group is not set, get one, or create a new one for the user
-            if (! isset($attributes['investment_group_id'])) {
+            if (!isset($attributes['investment_group_id'])) {
                 $attributes['investment_group_id'] = $user->investmentGroups()
                     ->inRandomOrder()
-                    ->firstOr(fn () => InvestmentGroup::factory()->for($user)->create())
+                    ->firstOr(fn() => InvestmentGroup::factory()->for($user)->create())
                     ->id;
             }
 
             // If the currency is not set, get one, or create a new one for the user
-            if (! isset($attributes['currency_id'])) {
+            if (!isset($attributes['currency_id'])) {
                 $attributes['currency_id'] = $user->currencies()
                     ->inRandomOrder()
-                    ->firstOr(fn () => Currency::factory()->for($user)->create())
+                    ->firstOr(fn() => Currency::factory()->for($user)->create())
                     ->id;
             }
 

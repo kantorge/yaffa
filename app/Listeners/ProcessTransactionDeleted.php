@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Events\TransactionDeleted;
 use App\Services\TransactionService;
 
 class ProcessTransactionDeleted
@@ -11,7 +12,7 @@ class ProcessTransactionDeleted
     /**
      * Handle the event.
      */
-    public function handle(object $event): void
+    public function handle(TransactionDeleted $event): void
     {
         $this->transactionService = new TransactionService();
 

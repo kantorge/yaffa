@@ -1,10 +1,16 @@
 /.idea/sonarlint
+/.nova
 /.idea
 /.vscode
 /.phpunit.cache
 /node_modules
+/public/build
 /public/hot
 /public/storage
+/public/css
+/public/js
+/public/fonts
+/public/mix-manifest.json
 /storage
 /vendor
 /resources/google
@@ -17,3 +23,4 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+/storage/pail

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
-use App\Models\AccountEntity;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -16,10 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ReportApiController extends Controller
+class ReportApiController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -28,15 +27,19 @@ class ReportApiController extends Controller
 
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+
         $this->categoryService = new CategoryService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     /**
      * Collect actual and budgeted cost for selected categories, and return it aggregated by month.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function budgetChart(Request $request): JsonResponse
     {
@@ -69,14 +72,12 @@ class ReportApiController extends Controller
                     $query->whereUserId($request->user()->id)
                         ->byScheduleType('none')
                         ->byType('standard')
-                        ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
-                            return $query->whereHasMorph(
-                                'config',
-                                TransactionDetailStandard::class,
-                                fn ($query) => $query->where('account_from_id', $accountEntity)
-                                    ->orWhere('account_to_id', $accountEntity)
-                            );
-                        });
+                        ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
+                            'config',
+                            TransactionDetailStandard::class,
+                            fn ($query) => $query->where('account_from_id', $accountEntity)
+                                ->orWhere('account_to_id', $accountEntity)
+                        ));
                 })
                 ->get();
         }
@@ -91,8 +92,10 @@ class ReportApiController extends Controller
                 ? -1 * $item->amount
                 : $item->amount;
 
-            if (!array_key_exists($period, $standardCompact)
-                || !array_key_exists($currency_id, $standardCompact[$period])) {
+            if (
+                !array_key_exists($period, $standardCompact)
+                || !array_key_exists($currency_id, $standardCompact[$period])
+            ) {
                 $standardCompact[$period][$currency_id] = 0;
             }
             $standardCompact[$period][$currency_id] += $amount;
@@ -128,14 +131,12 @@ class ReportApiController extends Controller
             ->where('user_id', $request->user()->id)
             ->byType('standard')
             ->byScheduleType('budget')
-            ->when($accountSelection === 'selected', function ($query) use ($accountEntity) {
-                return $query->whereHasMorph(
-                    'config',
-                    TransactionDetailStandard::class,
-                    fn ($query) => $query->where('account_from_id', $accountEntity)
-                        ->orWhere('account_to_id', $accountEntity)
-                );
-            })
+            ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
+                'config',
+                TransactionDetailStandard::class,
+                fn ($query) => $query->where('account_from_id', $accountEntity)
+                    ->orWhere('account_to_id', $accountEntity)
+            ))
             ->when($accountSelection === 'none', function ($query) {
                 return $query->where(function ($query) {
                     // Withdrawal with empty account_from_id
@@ -182,8 +183,10 @@ class ReportApiController extends Controller
             $period = $transaction->date->format('Y-m-01');
             $currency_id = $transaction->currency_id ?? $baseCurrency->id;
 
-            if (!array_key_exists($period, $budgetCompact)
-                || !array_key_exists($currency_id, $budgetCompact[$period])) {
+            if (
+                !array_key_exists($period, $budgetCompact)
+                || !array_key_exists($currency_id, $budgetCompact[$period])
+            ) {
                 $budgetCompact[$period][$currency_id] = 0;
             }
 
@@ -226,13 +229,10 @@ class ReportApiController extends Controller
     /**
      * Collect actual transactions for the given interval.
      *
-     * @param string $transactionType
      * @param string $dataType Planned feature for budget. Currently actual transactions are supported.
-     * @param int $year
-     * @param int|null $month
-     * @return JsonResponse
      */
     public function getCategoryWaterfallData(
+        Request $request,
         string $transactionType,
         string $dataType,
         int $year,
@@ -258,13 +258,11 @@ class ReportApiController extends Controller
                 'transaction.config.accountFrom.config',
                 'transaction.config.accountTo.config',
             ])
-                ->whereHas('transaction', function ($query) use ($year, $month) {
-                    $query->where('user_id', Auth::user()->id)
+                ->whereHas('transaction', function ($query) use ($year, $month, $request) {
+                    $query->where('user_id', $request->user()->id)
                         ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                        ->when($year && $month, function ($query) use ($year, $month) {
-                            return $query->whereRaw('YEAR(date) = ?', [$year])
-                                ->whereRaw('MONTH(date) = ?', [$month]);
-                        })
+                        ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                            ->whereRaw('MONTH(date) = ?', [$month]))
                         ->byScheduleType('none')
                         ->byType('standard')
                         ->where(
@@ -316,12 +314,10 @@ class ReportApiController extends Controller
                         ->get()
                         ->pluck('id')
                 )
-                ->where('user_id', Auth::user()->id)
+                ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
-                ->when($year && $month, function ($query) use ($year, $month) {
-                    return $query->whereRaw('YEAR(date) = ?', [$year])
-                        ->whereRaw('MONTH(date) = ?', [$month]);
-                })
+                ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
+                    ->whereRaw('MONTH(date) = ?', [$month]))
                 ->get();
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {

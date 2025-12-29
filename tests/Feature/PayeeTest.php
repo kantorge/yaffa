@@ -14,7 +14,7 @@ class PayeeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,8 +22,7 @@ class PayeeTest extends TestCase
         $this->setBaseModel(AccountEntity::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index", ['type' => 'payee']))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirect(route('login'));
@@ -41,8 +40,7 @@ class PayeeTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         /** @var User $user1 */
         $user1 = User::factory()->create();
@@ -58,8 +56,7 @@ class PayeeTest extends TestCase
             ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_payees()
+    public function test_user_can_view_list_of_payees(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -76,8 +73,7 @@ class PayeeTest extends TestCase
         $response->assertViewIs('payee.index');
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -89,8 +85,7 @@ class PayeeTest extends TestCase
         $response->assertViewIs('payee.form');
     }
 
-    /** @test */
-    public function user_cannot_create_a_payee_with_missing_data()
+    public function test_user_cannot_create_a_payee_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -114,8 +109,7 @@ class PayeeTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_a_payee()
+    public function test_user_can_create_a_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -138,8 +132,7 @@ class PayeeTest extends TestCase
         $this->assertDatabaseHas($model->getTable(), $baseAttributes);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_payee()
+    public function test_user_can_edit_an_existing_payee(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -160,8 +153,7 @@ class PayeeTest extends TestCase
         $response->assertViewIs('payee.form');
     }
 
-    /** @test */
-    public function user_cannot_update_a_payee_with_missing_data()
+    public function test_user_cannot_update_a_payee_with_missing_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -186,8 +178,7 @@ class PayeeTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_a_payee_with_proper_data()
+    public function test_user_can_update_a_payee_with_proper_data(): void
     {
         /** @var User $user */
         $user = User::factory()->create();

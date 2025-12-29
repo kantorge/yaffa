@@ -8,8 +8,6 @@ class UserRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -32,7 +30,19 @@ class UserRequest extends FormRequest
                 'required',
                 'date',
                 'after:start_date',
-            ]
+            ],
+            'account_details_date_range' => [
+                'required',
+                'string',
+                Rule::in(
+                    collect(config('yaffa.account_date_presets'))
+                        ->pluck('options')
+                        ->flatten(1)
+                        ->pluck('value')
+                        ->prepend('none')
+                        ->all()
+                )
+            ],
         ];
     }
 }

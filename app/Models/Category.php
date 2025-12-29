@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,8 +53,6 @@ class Category extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
-    protected $table = 'categories';
-
     protected $with = [
         'parent',
     ];
@@ -68,13 +69,16 @@ class Category extends Model
         'default_aggregation',
     ];
 
-    protected $casts = [
-        'active' => 'boolean',
-    ];
-
     protected $appends = [
         'full_name',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
 
     public function parent(): BelongsTo
     {
@@ -93,33 +97,27 @@ class Category extends Model
 
     /**
      * Scope a query to only include active entities.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', 1);
     }
 
     /**
      * Scope a query to only include top level categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeParentCategory(Builder $query): Builder
+    #[Scope]
+    protected function parentCategory(Builder $query): Builder
     {
         return $query->whereNull('parent_id');
     }
 
     /**
      * Scope a query to only include child categories only.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeChildCategory(Builder $query): Builder
+    #[Scope]
+    protected function childCategory(Builder $query): Builder
     {
         return $query->whereNotNull('parent_id');
     }
@@ -134,7 +132,7 @@ class Category extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
-    public function transaction()
+    public function transaction(): HasManyThrough
     {
         return $this->hasManyThrough(
             Transaction::class,
@@ -146,7 +144,7 @@ class Category extends Model
         );
     }
 
-    public function payeesNotPreferring()
+    public function payeesNotPreferring(): BelongsToMany
     {
         return $this->belongsToMany(
             AccountEntity::class,
@@ -154,7 +152,7 @@ class Category extends Model
         )->where('preferred', false);
     }
 
-    public function payeesPreferring()
+    public function payeesPreferring(): BelongsToMany
     {
         return $this->belongsToMany(
             AccountEntity::class,
@@ -162,7 +160,7 @@ class Category extends Model
         )->where('preferred', true);
     }
 
-    public function payeesDefaulting()
+    public function payeesDefaulting(): HasManyThrough
     {
         return $this->hasManyThrough(
             AccountEntity::class,

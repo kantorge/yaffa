@@ -14,7 +14,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,7 +26,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         }
     }
 
-    public function test_details_of_a_buy_transaction_are_correct()
+    public function test_details_of_a_buy_transaction_are_correct(): void
     {
         // Select main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -92,7 +92,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         });
     }
 
-    public function test_details_of_a_sell_transaction_are_correct()
+    public function test_details_of_a_sell_transaction_are_correct(): void
     {
         // Select main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -157,7 +157,7 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         });
     }
 
-    public function test_details_of_a_dividend_transaction_are_correct()
+    public function test_details_of_a_dividend_transaction_are_correct(): void
     {
         // Select main test user
         /** @var User $user */
@@ -224,11 +224,6 @@ class ScheduledInvestmentTransactionsInDataTablesTest extends DuskTestCase
         });
     }
 
-    /**
-     * @param Transaction $transaction
-     * @param string $postfix
-     * @return string
-     */
     private function getTableRowSelector(Transaction $transaction, string $postfix = ''): string
     {
         return '#table tbody tr[data-id="' . $transaction->id . '"]' . ($postfix ? ' ' . $postfix : '');

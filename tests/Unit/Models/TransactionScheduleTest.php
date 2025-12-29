@@ -98,7 +98,7 @@ class TransactionScheduleTest extends TestCase
         $this->assertFalse($transaction->transactionSchedule->active);
     }
 
-    public function testIsActiveReturnsTrueWhenNextDateIsSet()
+    public function testIsActiveReturnsTrueWhenNextDateIsSet(): void
     {
         /** @var TransactionSchedule $schedule */
         $schedule = TransactionSchedule::factory()->make([
@@ -108,7 +108,7 @@ class TransactionScheduleTest extends TestCase
         $this->assertTrue($schedule->isActive());
     }
 
-    public function testIsActiveReturnsFalseWhenNextDateIsNotSetAndNoFutureRecurrences()
+    public function testIsActiveReturnsFalseWhenNextDateIsNotSetAndNoFutureRecurrences(): void
     {
         /** @var TransactionSchedule $schedule */
         $schedule = TransactionSchedule::factory()->make([
@@ -123,7 +123,7 @@ class TransactionScheduleTest extends TestCase
         $this->assertFalse($schedule->isActive());
     }
 
-    public function testIsActiveReturnsTrueWhenNextDateIsNotSetButHasFutureRecurrences()
+    public function testIsActiveReturnsTrueWhenNextDateIsNotSetButHasFutureRecurrences(): void
     {
         /** @var TransactionSchedule $schedule */
         $schedule = TransactionSchedule::factory()->make([
@@ -138,7 +138,7 @@ class TransactionScheduleTest extends TestCase
         $this->assertTrue($schedule->isActive());
     }
 
-    public function testIsActiveReturnsFalseWhenRecurrenceThrowsException()
+    public function testIsActiveReturnsFalseWhenRecurrenceThrowsException(): void
     {
         /** @var TransactionSchedule $schedule */
         $schedule = TransactionSchedule::factory()->make([

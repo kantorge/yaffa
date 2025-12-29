@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Controllers\Controller;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
@@ -13,11 +14,13 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Spatie\Onboard\Facades\Onboard;
 
-class OnboardingApiController extends Controller
+class OnboardingApiController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getOnboardingData(Request $request, string $topic): JsonResponse
@@ -37,18 +40,17 @@ class OnboardingApiController extends Controller
     {
         $request->user()->flag('dismissOnboardingWidget' . ucfirst($topic));
 
-        return response('', Response::HTTP_OK);
+        return response()->noContent(Response::HTTP_OK);
     }
 
     public function setCompletedTourFlag(Request $request, string $topic): Response
     {
         $request->user()->flag('viewProductTour-' . $topic);
 
-        return response('', Response::HTTP_OK);
+        return response()->noContent(Response::HTTP_OK);
     }
 
     /**
-     * @param string $topic
      * @uses onboardingTopicDataDashboard
      * @uses onboardingTopicDataReportsSchedules
      * @uses onboardingTopicDataAccountGroups

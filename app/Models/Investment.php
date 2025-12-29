@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Spiders\InvestmentPriceScraper;
 use App\Spiders\WisealphaInvestmentPriceScraper;
@@ -82,13 +83,6 @@ class Investment extends Model
     protected $guarded = [];
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'investments';
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>
@@ -112,14 +106,17 @@ class Investment extends Model
         'last_interest_payment_date',
     ];
 
-    protected $casts = [
-        'active' => 'boolean',
-        'auto_update' => 'boolean',
-        'price_factor' => 'float',
-        'interest_rate' => 'float',
-        'maturity_date' => 'date',
-        'last_interest_payment_date' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+            'auto_update' => 'boolean',
+            'price_factor' => 'float',
+            'interest_rate' => 'float',
+            'maturity_date' => 'date',
+            'last_interest_payment_date' => 'date',
+        ];
+    }
 
     protected $appends = [
         'investment_price_provider_name',
@@ -127,11 +124,9 @@ class Investment extends Model
 
     /**
      * Scope a query to only include active investments.
-     *
-     * @param Builder $query
-     * @return Builder
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('active', true);
     }
@@ -341,8 +336,6 @@ class Investment extends Model
      * Get the latest price of the investment
      *
      * @param string $type Can be 'stored', 'transaction' or 'combined'
-     * @param Carbon|null $onOrBefore
-     * @return float|null
      */
     public function getLatestPrice(string $type = 'combined', Carbon $onOrBefore = null): ?float
     {
@@ -442,13 +435,18 @@ class Investment extends Model
         ],
     ];
 
-    /**
-     * @return string|null
-     */
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+            'auto_update' => 'boolean',
+        ];
+    }
+
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
-        if (! $this->investment_price_provider) {
+        if (!$this->investment_price_provider) {
             return null;
         }
 
@@ -463,8 +461,6 @@ class Investment extends Model
 
     /**
      * Return all available price providers with all their details.
-     *
-     * @return array
      */
     public function getAllInvestmentPriceProviders(): array
     {
@@ -501,7 +497,7 @@ class Investment extends Model
     public function getInvestmentPriceFromAlphaVantage(Carbon|null $from = null, bool $refill = false): void
     {
         // Get 3 days data by default, assuming that scheduler is running
-        if (! $from) {
+        if (!$from) {
             $from = Carbon::now()->subDays(3);
         }
 

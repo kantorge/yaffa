@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
@@ -12,15 +14,16 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class PayeeApiController extends Controller
+class PayeeApiController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -31,7 +34,7 @@ class PayeeApiController extends Controller
          */
         if ($request->has('q') || $request->missing(['q', 'account_entity_id'])) {
             // Handle search query or default list
-            $payees = Auth::user()
+            $payees = $request->user()
                 ->payees()
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
@@ -56,6 +59,17 @@ class PayeeApiController extends Controller
             $accountDirection = ($request->get('account_type') === 'from' ? 'to' : 'from');
             $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
 
+            $transactionType = $request->get('transaction_type', null);
+            if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+                // If transaction type is provided but not valid, return a bad request response
+                return response()->json(
+                    [
+                        'message' => 'The transaction_type parameter is required and must be valid.',
+                    ],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $payeeIds = DB::table('transactions')
                 ->join(
                     'transaction_details_standard',
@@ -79,15 +93,13 @@ class PayeeApiController extends Controller
                     // TODO: fallback to query without this, if no results are found
                     'transaction_type_id',
                     '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
+                    config('transaction_types')[$transactionType]['id']
                 )
-                ->when($accountId, function ($query) use ($accountDirection, $accountId) {
-                    return $query->where(
-                        "transaction_details_standard.account_{$accountDirection}_id",
-                        '=',
-                        $accountId
-                    );
-                })
+                ->when($accountId, fn ($query) => $query->where(
+                    "transaction_details_standard.account_{$accountDirection}_id",
+                    '=',
+                    $accountId
+                ))
                 ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
@@ -111,7 +123,7 @@ class PayeeApiController extends Controller
         return response()->json($payees, Response::HTTP_OK);
     }
 
-    public function getPayeeDefaultSuggestion()
+    public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
          * @get('/api/assets/get_default_category_suggestion')
@@ -148,9 +160,9 @@ class PayeeApiController extends Controller
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id)
-            ->where('transactions.user_id', Auth::user()->id)
-            ->where('account_entities.user_id', Auth::user()->id)
+            ->where('categories.user_id', $request->user()->id)
+            ->where('transactions.user_id', $request->user()->id)
+            ->where('account_entities.user_id', $request->user()->id)
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -192,7 +204,7 @@ class PayeeApiController extends Controller
                 '=',
                 'account_entities.config_id'
             )
-            ->where('categories.user_id', Auth::user()->id) // Only for authenticated user
+            ->where('categories.user_id', $request->user()->id) // Only for authenticated user
             ->where('categories.active', true) // Only active category can be recommended
             ->whereNull('payees.category_id') // No category set
             ->whereNull('payees.category_suggestion_dismissed') // Suggestion was not dismissed yet
@@ -212,21 +224,20 @@ class PayeeApiController extends Controller
             ])
             ->selectRaw('count(*) as transactions')
             ->groupBy([
-                'payee_id', 'category_id',
+                'payee_id',
+                'category_id',
             ])
             ->get();
 
         // Calculate total by payees
         $payees = $data
             ->groupBy('payee_id')
-            ->map(function ($payee) {
-                return [
-                    'payee_id' => $payee->first()->payee_id,
-                    'sum' => $payee->sum('transactions'),
-                    'max' => $payee->max('transactions'),
-                    'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
-                ];
-            })
+            ->map(fn ($payee) => [
+                'payee_id' => $payee->first()->payee_id,
+                'sum' => $payee->sum('transactions'),
+                'max' => $payee->max('transactions'),
+                'max_category_id' => $payee->firstWhere('transactions', $payee->max('transactions'))->category_id,
+            ])
             // Minimum required transactions to calculate with payee
             // TODO: make this dynamic, e.g based on average or mean
             ->filter(fn ($value) => $value['sum'] > 5)
@@ -235,7 +246,7 @@ class PayeeApiController extends Controller
             ->filter(fn ($value) => $value['max'] / $value['sum'] > .5);
 
         if ($payees->count() === 0) {
-            return response('', Response::HTTP_OK);
+            return response()->noContent(Response::HTTP_OK);
         }
 
         $payee = $payees->random();
@@ -249,37 +260,37 @@ class PayeeApiController extends Controller
     /**
      * @throws AuthorizationException
      */
-    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category)
+    public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
          * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
         $accountEntity->config->category_id = $category->id;
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     /**
      * @throws AuthorizationException
      */
-    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity)
+    public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
          * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $accountEntity);
+        Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
         $accountEntity->config->category_suggestion_dismissed = Carbon::now();
         $accountEntity->config->save();
 
-        return Response::HTTP_OK;
+        return response()->noContent(Response::HTTP_OK);
     }
 
     public function storePayee(AccountEntityRequest $request)
@@ -289,10 +300,10 @@ class PayeeApiController extends Controller
          * @name('api.payee.store')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('create', AccountEntity::class);
+        Gate::authorize('create', AccountEntity::class);
 
         $validated = $request->validated();
-        $validated['user_id'] = Auth::user()->id;
+        $validated['user_id'] = $request->user()->id;
 
         $newPayee = new AccountEntity($validated);
 
@@ -319,7 +330,7 @@ class PayeeApiController extends Controller
         $withActive = $request->get('withActive');
 
         // Get all payees of the user
-        $payees = Auth::user()
+        $payees = $request->user()
             ->payees()
             ->when($withActive, fn ($query) => $query->where('active', true))
             ->get(['id', 'name', 'active']);
@@ -345,9 +356,6 @@ class PayeeApiController extends Controller
 
     /**
      * Get the payee entity and main attributes for the given id
-     *
-     * @param  AccountEntity  $accountEntity
-     * @return JsonResponse
      */
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
@@ -355,7 +363,7 @@ class PayeeApiController extends Controller
          * @get('/api/assets/payee/{accountEntity}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $accountEntity);
+        Gate::authorize('view', $accountEntity);
 
         $accountEntity->load([
             'config',

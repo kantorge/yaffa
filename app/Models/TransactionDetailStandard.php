@@ -63,10 +63,13 @@ class TransactionDetailStandard extends Model
         'amount_to',
     ];
 
-    protected $casts = [
-        'amount_from' => 'float',
-        'amount_to' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'amount_from' => 'float',
+            'amount_to' => 'float',
+        ];
+    }
 
     public function transaction(): MorphOne
     {

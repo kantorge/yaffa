@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Services\CategoryService;
@@ -11,15 +13,21 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-class CategoryApiController extends Controller
+class CategoryApiController extends Controller implements HasMiddleware
 {
     protected CategoryService $categoryService;
 
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
 
         $this->categoryService = new CategoryService();
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            'auth:sanctum',
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -150,7 +158,7 @@ class CategoryApiController extends Controller
          * @get('/api/assets/category/{category}')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('view', $category);
+        Gate::authorize('view', $category);
 
         return response()
             ->json(
@@ -166,7 +174,7 @@ class CategoryApiController extends Controller
          * @name('api.category.updateActive')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('update', $category);
+        Gate::authorize('update', $category);
 
         $category->active = $active;
         $category->save();
@@ -185,7 +193,7 @@ class CategoryApiController extends Controller
          * @name('api.category.destroy')
          * @middlewares('api', 'auth:sanctum')
          */
-        $this->authorize('delete', $category);
+        Gate::authorize('delete', $category);
         $result = $this->categoryService->delete($category);
 
         if ($result['success']) {

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
  * @property float $opening_balance
  * @property int $account_group_id
  * @property int $currency_id
+ * @property string|null $default_date_range
  * @property-read AccountGroup $accountGroup
  * @property-read Collection|Category[] $categoryPreference
  * @property-read int|null $category_preference_count
@@ -61,13 +62,6 @@ class Account extends Model
     public $timestamps = false;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'accounts';
-
-    /**
      * The primary key associated with the table.
      *
      * @var string
@@ -83,11 +77,15 @@ class Account extends Model
         'opening_balance',
         'account_group_id',
         'currency_id',
+        'default_date_range',
     ];
 
-    protected $casts = [
-        'opening_balance' => 'float',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'opening_balance' => 'float',
+        ];
+    }
 
     public function config(): MorphOne
     {

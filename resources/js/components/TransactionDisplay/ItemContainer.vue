@@ -27,7 +27,10 @@
                     :currency="currency"
                 ></transaction-item>
             </div>
-            <div v-if="transactionItems.length === 0" class="text-muted text-italic">
+            <div v-if="!enabled">
+                {{ __('Transaction items are disabled for this transaction type') }}
+            </div>
+            <div v-else-if="transactionItems.length === 0" class="text-muted text-italic">
                 {{ __('No items added') }}
             </div>
         </div>
@@ -54,6 +57,10 @@
         props: {
             transactionItems: Array,
             currency: Object,
+            enabled: {
+                type: Boolean,
+                default: true,
+            }
         },
 
         mounted() {
