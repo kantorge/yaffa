@@ -25,14 +25,14 @@ services:
     container_name: yaffa_app
     ports:
       # Select one of the following options to expose Yaffa to the world
-      - "80:80" # Expose YAFFA on port 80 directly, if you don't use Caddy
+      - '80:80' # Expose YAFFA on port 80 directly, if you don't use Caddy
       #- "80" # Expose the app on port 80, Caddy will handle opening it to the world
     env_file:
       - .env
     environment:
       RUNS_SCHEDULER: FALSE
     volumes:
-      - yaffa_storage:/var/www/html/storage  # Yaffa storage for logs and planned future upload features
+      - yaffa_storage:/var/www/html/storage # Yaffa storage for logs and planned future upload features
     depends_on:
       # Uncomment the following line if you use Caddy as a reverse proxy
       # caddy:
@@ -45,7 +45,7 @@ services:
     networks:
       - yaffa-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
+      test: ['CMD', 'curl', '-f', 'http://localhost']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,7 +54,7 @@ services:
   scheduler:
     image: kantorge/yaffa:latest
     container_name: yaffa_scheduler
-    command: ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+    entrypoint: ['/usr/bin/supervisord', '-c', '/etc/supervisord.conf']
     env_file:
       - .env
     environment:
@@ -93,7 +93,17 @@ services:
     networks:
       - yaffa-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u',
+          '${DB_USERNAME}',
+          '-p${DB_PASSWORD}',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

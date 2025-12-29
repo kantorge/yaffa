@@ -229,8 +229,6 @@ EOF;
 
     /**
      * Clean up the text to make it easier for the AI to process. Remove image and link references.
-     * @param string $text
-     * @return string
      */
     private function cleanUpText(string $text): string
     {
@@ -247,7 +245,6 @@ EOF;
      * @param string $name The name of the account to search for.
      * @param int $limit The maximum number of accounts to return.
      * @param User $user The user to search for accounts for.
-     * @return Collection
      */
     private function getSimilarAccounts(string $name, int $limit, User $user): Collection
     {
@@ -279,7 +276,6 @@ EOF;
      * @param string $name The name of the payee to search for.
      * @param int $limit The maximum number of payees to return.
      * @param User $user The user to search for payees for.
-     * @return Collection
      */
     private function getSimilarPayees(string $name, int $limit, User $user): Collection
     {
@@ -326,7 +322,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return trim($result) !== 'N/A' ? (int) $result : null;
+        return mb_trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getPayeeIdFromPayee(User $user, string $payee = null): ?int
@@ -350,7 +346,7 @@ EOF;
             'result' => $result,
         ]);
 
-        return trim($result) !== 'N/A' ? (int) $result : null;
+        return mb_trim($result) !== 'N/A' ? (int) $result : null;
     }
 
     private function getTransactionTypeIdFromType(string $type): int
@@ -371,11 +367,6 @@ EOF;
         $this->mail->save();
     }
 
-    /**
-     * @param string $prompt
-     * @param array $attributes
-     * @return CreateResponse
-     */
     private function getAiResponse(string $prompt, array $attributes = []): CreateResponse
     {
         // Merge the attributes with defaults

@@ -42,7 +42,7 @@ class ResetPasswordTest extends TestCase
     /**
      * For all these tests, make sure that recaptcha is disabled.
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -50,8 +50,7 @@ class ResetPasswordTest extends TestCase
         config(['recaptcha.api_secret_key' => null]);
     }
 
-    /** @test */
-    public function test_user_can_view_password_reset_form()
+    public function test_user_can_view_password_reset_form(): void
     {
         $user = User::factory()->create();
 
@@ -62,8 +61,7 @@ class ResetPasswordTest extends TestCase
         $response->assertViewHas('token', $token);
     }
 
-    /** @test */
-    public function test_user_can_view_password_reset_form_when_authenticated()
+    public function test_user_can_view_password_reset_form_when_authenticated(): void
     {
         $user = User::factory()->create();
 
@@ -74,8 +72,7 @@ class ResetPasswordTest extends TestCase
         $response->assertViewHas('token', $token);
     }
 
-    /** @test */
-    public function test_user_can_reset_password_with_valid_token()
+    public function test_user_can_reset_password_with_valid_token(): void
     {
         Event::fake();
         $user = User::factory()->create();
@@ -95,8 +92,7 @@ class ResetPasswordTest extends TestCase
         Event::assertDispatched(PasswordReset::class, fn ($e) => $e->user->id === $user->id);
     }
 
-    /** @test */
-    public function test_user_cannot_reset_password_with_invalid_token()
+    public function test_user_cannot_reset_password_with_invalid_token(): void
     {
         $oldPassword = 'old-password';
         $newPassword = 'new-awesome-password';
@@ -120,8 +116,7 @@ class ResetPasswordTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
-    public function test_user_cannot_reset_password_without_providing_new_password()
+    public function test_user_cannot_reset_password_without_providing_new_password(): void
     {
         $oldPassword = 'old-password';
 
@@ -147,8 +142,7 @@ class ResetPasswordTest extends TestCase
         $this->assertGuest();
     }
 
-    /** @test */
-    public function test_user_cannot_reset_password_without_providing_email()
+    public function test_user_cannot_reset_password_without_providing_email(): void
     {
         $oldPassword = 'old-password';
         $newPassword = 'new-awesome-password';

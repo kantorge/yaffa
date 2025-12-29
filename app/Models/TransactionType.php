@@ -25,15 +25,17 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionType extends Model
 {
     public $timestamps = false;
-    protected $table = 'transaction_types';
 
     protected $guarded = [
         'amount_multiplier',
         'quantity_multiplier',
     ];
 
-    protected $casts = [
-        'amount_multiplier' => 'integer',
-        'quantity_multiplier' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'amount_multiplier' => 'integer',
+            'quantity_multiplier' => 'integer',
+        ];
+    }
 }

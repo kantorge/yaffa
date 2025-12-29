@@ -5,7 +5,7 @@ export function dataTablesActionButton(id, action) {
     const functions = {
         delete: function () {
             return `
-                <button 
+                <button
                     class="btn btn-xs btn-danger data-delete"
                     data-delete
                     data-id="${id}"
@@ -18,7 +18,7 @@ export function dataTablesActionButton(id, action) {
         },
         quickView: function () {
             return `
-                <button 
+                <button
                     class="btn btn-xs btn-success transaction-quickview"
                     data-id="${id}"
                     type="button"
@@ -30,7 +30,7 @@ export function dataTablesActionButton(id, action) {
         },
         show: function () {
             return `
-                <a 
+                <a
                     href="${route('transaction.open', {
                         transaction: id,
                         action: 'show'
@@ -64,7 +64,7 @@ export function dataTablesActionButton(id, action) {
         },
         enter: function () {
             return `
-                <a 
+                <a
                     href="${route('transaction.open', {
                         transaction: id,
                         action: 'enter'
@@ -135,7 +135,7 @@ export function tagIcon(tags, type) {
         return tags.join(', ');
     }
 
-    return ' <i class="fa fa-tag text-primary" data-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
+    return ' <i class="fa fa-tag text-primary" data-bs-toggle="tooltip" data-placement="top" title="' + tags.join(', ') + '"></i>';
 }
 
 export function commentIcon(comment, type) {
@@ -147,7 +147,7 @@ export function commentIcon(comment, type) {
         return comment;
     }
 
-    return ' <i class="fa fa-comment text-primary" data-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
+    return ' <i class="fa fa-comment text-primary" data-bs-toggle="tooltip" data-placement="top" title="' + comment + '"></i>';
 }
 
 /**
@@ -191,19 +191,19 @@ export function transactionTypeIcon(type, name, customTitle) {
     if (type === 'standard') {
         if (name === 'withdrawal') {
             customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-circle-minus text-danger" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'deposit') {
             customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-circle-plus text-success" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
         if (name === 'transfer') {
             customTitle = customTitle || __("Transfer");
-            return '<i class="fa fa-exchange-alt text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
+            return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
     } else if (type === 'investment') {
         customTitle = customTitle || name;
-        return '<i class="fa fa-line-chart text-primary" data-toggle="tooltip" title="' + customTitle + '"></i>';
+        return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
     }
 
     return null;
@@ -612,7 +612,7 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
 
     if (passes === requirements.length) {
         return `
-            <button 
+            <button
                 class="btn btn-xs btn-danger deleteIcon"
                 data-id="${row.id}"
                 type="button"
@@ -626,7 +626,7 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
     let title = errorMessages.join("\n");
 
     return `
-        <button 
+        <button
             class="btn btn-xs btn-outline-danger"
             data-id="${row.id}"
             type="button"

@@ -15,8 +15,7 @@ class FormRequest extends IlluminationFormRequest
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
+     * As there are no user roles at the moment, all logged in users are authorized.
      */
     public function authorize(): bool
     {
@@ -28,10 +27,13 @@ class FormRequest extends IlluminationFormRequest
      */
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $validator) {
-            foreach ($validator->errors()->all() as $message) {
-                self::addSimpleErrorMessage($message);
-            }
-        });
+        // Add flash messages for non-API requests (traditional form submissions)
+        if (!$this->expectsJson()) {
+            $validator->after(function (Validator $validator) {
+                foreach ($validator->errors()->all() as $message) {
+                    self::addSimpleErrorMessage($message);
+                }
+            });
+        }
     }
 }

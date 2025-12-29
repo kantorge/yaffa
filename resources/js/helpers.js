@@ -199,3 +199,26 @@ export function showToast(header, body, toastClass, otherProperties ) {
     });
     window.dispatchEvent(notificationEvent);
 }
+
+export function initializeBootstrapTooltips() {
+    const tooltipTriggerList = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]',
+    );
+    [...tooltipTriggerList].map(
+      (tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl),
+    );
+}
+
+// Helper to load Select2 i18n files in a Vite-friendly way
+const select2I18nLoaders = {
+    en: () => import('select2/dist/js/i18n/en.js'),
+    hu: () => import('select2/dist/js/i18n/hu.js'),
+};
+
+export function loadSelect2Language(lang) {
+    const loader = select2I18nLoaders[lang] || select2I18nLoaders.en;
+    if (loader) {
+        return loader();
+    }
+    return Promise.resolve();
+}

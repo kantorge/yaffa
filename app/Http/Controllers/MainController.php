@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
@@ -9,10 +11,9 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class MainController extends Controller
+class MainController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
     use ScheduleTrait;
@@ -21,19 +22,21 @@ class MainController extends Controller
 
     private $currentAccount;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
-    public function account_details(AccountEntity $account, $withForecast = null)
+    public function account_details(Request $request, AccountEntity $account, $withForecast = null)
     {
         /**
          * @get('/account/history/{account}/{withForecast?}')
          * @name('account.history')
          * @middlewares('web', 'auth', 'verified')
          */
-        $user = Auth::user();
+        $user = $request->user();
 
         // Get account details and load to class variable
         $this->currentAccount = $account->load([
@@ -96,7 +99,7 @@ class MainController extends Controller
         // Unify and merge two transaction types
         $transactions = $standardTransactions
             ->concat($investmentTransactions)
-        // Add custom and pre-calculated attributes
+            // Add custom and pre-calculated attributes
             ->map(function ($transaction) use ($account) {
                 if ($transaction->schedule) {
                     $transaction->load(['transactionSchedule']);
@@ -134,14 +137,14 @@ class MainController extends Controller
                 return $transaction;
             })
             // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
+            ->filter(fn($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
             $transactions = $transactions->concat(
                 $this->getScheduleInstances(
                     $transactions
-                        ->filter(fn ($transaction) => $transaction->schedule),
+                        ->filter(fn($transaction) => $transaction->schedule),
                     'next',
                 )
             );
@@ -152,7 +155,7 @@ class MainController extends Controller
 
         $data = $transactions
             ->filter(
-                fn ($transaction) =>
+                fn($transaction) =>
                 $transaction->transactionGroup === 'history'
                 || $transaction->transactionGroup === 'forecast'
             )
@@ -174,7 +177,7 @@ class MainController extends Controller
             'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
-                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
+                ->filter(fn($transaction) => $transaction->transactionGroup === 'schedule')
                 ->values(),
         ]);
 

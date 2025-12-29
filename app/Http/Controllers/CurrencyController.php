@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\CurrencyRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Jobs\GetCurrencyRates as GetCurrencyRatesJob;
@@ -10,27 +14,30 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class CurrencyController extends Controller
+class CurrencyController extends Controller implements HasMiddleware
 {
     use CurrencyTrait;
 
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
-        $this->authorizeResource(Currency::class);
+        return [
+            ['auth', 'verified'],
+            new Middleware('can:viewAny,App\Models\Currency', only: ['index']),
+            new Middleware('can:view,currency', only: ['show']),
+            new Middleware('can:create,App\Models\Currency', only: ['create', 'store']),
+            new Middleware('can:update,currency', only: ['edit', 'update']),
+            new Middleware('can:delete,currency', only: ['destroy']),
+        ];
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return View
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         /**
          * @get('/currency')
@@ -38,7 +45,7 @@ class CurrencyController extends Controller
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Currency')
          */
         // Show all currencies of user from the database and return to view
-        $currencies = Auth::user()
+        $currencies = $request->user()
             ->currencies()
             ->get();
 
@@ -88,11 +95,8 @@ class CurrencyController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param Currency $currency
-     * @return View
      */
-    public function edit(Currency $currency): View
+    public function edit(Request $request, Currency $currency): View
     {
         /**
          * @get('/currency/{currency}/edit')
@@ -101,7 +105,7 @@ class CurrencyController extends Controller
          */
 
         // Get all currencies, as base currency setting is defined based on this
-        $currencies = Auth::user()
+        $currencies = $request->user()
             ->currencies()
             ->get();
 
@@ -131,7 +135,6 @@ class CurrencyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Currency $currency
      * @return Response|RedirectResponse
      */
     public function destroy(Currency $currency): Response|RedirectResponse
@@ -175,7 +178,7 @@ class CurrencyController extends Controller
          * @middlewares('web', 'auth', 'verified')
          */
         // Authenticate the user against the currency using CurrencyPolicy
-        $this->authorize('update', $currency);
+        Gate::authorize('update', $currency);
 
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));

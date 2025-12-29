@@ -18,10 +18,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can view any models.
      *
-     * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
         return true;
     }
@@ -29,11 +28,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can view the model.
      *
-     * @param  User  $user
-     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, InvestmentGroup $investmentGroup)
+    public function view(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -41,10 +38,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can create models.
      *
-     * @param  User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
         return true;
     }
@@ -52,11 +48,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can update the model.
      *
-     * @param  User  $user
-     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, InvestmentGroup $investmentGroup)
+    public function update(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -64,11 +58,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can delete the model.
      *
-     * @param  User  $user
-     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, InvestmentGroup $investmentGroup)
+    public function delete(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -76,11 +68,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can restore the model.
      *
-     * @param  User  $user
-     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user, InvestmentGroup $investmentGroup)
+    public function restore(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }
@@ -88,11 +78,9 @@ class InvestmentGroupPolicy
     /**
      * Determine whether the user can permanently delete the model.
      *
-     * @param  User  $user
-     * @param  InvestmentGroup  $investmentGroup
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, InvestmentGroup $investmentGroup)
+    public function forceDelete(User $user, InvestmentGroup $investmentGroup): bool
     {
         return $this->isOwnItem($user, $investmentGroup);
     }

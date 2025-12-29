@@ -14,7 +14,7 @@
     autocomplete="off"
     method="POST"
 >
-<input name="_method" type="hidden" value="PATCH">
+@method('PATCH')
 @else
 <form
     accept-charset="UTF-8"
@@ -192,6 +192,42 @@
                                     id="alias"
                                     name="alias"
                             >{{old('alias', $account->alias ?? '' )}}</textarea>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="default_date_range" class="col-form-label col-sm-3">
+                    {{ __('Default date range for account details') }}
+                </label>
+                <div class="col-sm-9">
+                    <select
+                        class="form-select"
+                        id="default_date_range"
+                        name="config[default_date_range]"
+                    >
+                        <option value="">{{ __('Inherit user setting') }}</option>
+                        <option value="none">{{ __("Don't load data by default") }}</option>
+                        @foreach (config('yaffa.account_date_presets') as $group)
+                            <optgroup label="{{ __($group['label']) }}">
+                                @foreach ($group['options'] as $option)
+                                    <option
+                                        value="{{ $option['value'] }}"
+                                        @if (old())
+                                            @if (old('config.default_date_range') == $option['value'])
+                                                selected="selected"
+                                            @endif
+                                        @elseif(isset($account))
+                                            @if (($account['config']['default_date_range'] ?? null) == $option['value'])
+                                                selected="selected"
+                                            @endif
+                                        @endif
+                                    >
+                                        {{ __($option['label']) }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                 </div>
             </div>
         </div>

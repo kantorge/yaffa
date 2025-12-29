@@ -6,7 +6,7 @@ import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
-import { __ } from '../helpers';
+import { __, initializeBootstrapTooltips } from '../helpers';
 
 let ajaxIsBusy = true;
 
@@ -66,10 +66,7 @@ let table = $(tableSelector).DataTable({
         }
     },
     drawCallback: function () {
-        const tooltipElements = $('[data-toggle="tooltip"]');
-        if (tooltipElements.length) {
-            tooltipElements.tooltip();
-        }
+        initializeBootstrapTooltips();
     },
     order: [
         // Start date, which is the second column

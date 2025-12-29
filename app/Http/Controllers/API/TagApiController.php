@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -9,11 +11,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class TagApiController extends Controller
+class TagApiController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth:sanctum', 'verified']);
+        return [
+            ['auth:sanctum', 'verified'],
+        ];
     }
 
     public function getList(Request $request): JsonResponse
@@ -48,7 +52,7 @@ class TagApiController extends Controller
          * @get('/api/assets/tag/{tag}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('view', $tag);
+        Gate::authorize('view', $tag);
 
         return response()
             ->json(
@@ -66,7 +70,7 @@ class TagApiController extends Controller
          * @put('/api/assets/tag/{tag}/active/{active}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
-        $this->authorize('update', $tag);
+        Gate::authorize('update', $tag);
 
         $tag->active = $active === '1';
         $tag->save();

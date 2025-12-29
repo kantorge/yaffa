@@ -1,5 +1,5 @@
 // Categorization rule engine functionality
-const { Engine } = require('json-rules-engine')
+import Engine from 'json-rules-engine';
 let engine = new Engine()
 
 /**

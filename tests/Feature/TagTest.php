@@ -13,7 +13,7 @@ class TagTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,8 +21,7 @@ class TagTest extends TestCase
         $this->setBaseModel(Tag::class);
     }
 
-    /** @test */
-    public function guest_cannot_access_resource()
+    public function test_guest_cannot_access_resource(): void
     {
         $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
         $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
@@ -37,8 +36,7 @@ class TagTest extends TestCase
         $this->delete(route("{$this->base_route}.destroy", $tag))->assertRedirect(route('login'));
     }
 
-    /** @test */
-    public function unverified_user_cannot_access_resource()
+    public function test_unverified_user_cannot_access_resource(): void
     {
         /** @var Authenticatable $user_unverified */
         $user_unverified = User::factory()->create([
@@ -58,8 +56,7 @@ class TagTest extends TestCase
         $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $tag))->assertRedirect(route('verification.notice'));
     }
 
-    /** @test */
-    public function user_cannot_access_other_users_resource()
+    public function test_user_cannot_access_other_users_resource(): void
     {
         $user1 = User::factory()->create();
         $tag = $this->createForUser($user1, $this->base_model);
@@ -72,8 +69,7 @@ class TagTest extends TestCase
         $this->actingAs($user2)->delete(route("{$this->base_route}.destroy", $tag))->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    /** @test */
-    public function user_can_view_list_of_tags()
+    public function test_user_can_view_list_of_tags(): void
     {
         $user = User::factory()->create();
         $this->createForUser($user, $this->base_model, [], 5);
@@ -84,8 +80,7 @@ class TagTest extends TestCase
         $response->assertViewIs("{$this->base_route}.index");
     }
 
-    /** @test */
-    public function user_can_access_create_form()
+    public function test_user_can_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -97,8 +92,7 @@ class TagTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_create_a_tag_with_missing_data()
+    public function test_user_cannot_create_a_tag_with_missing_data(): void
     {
         $user = User::factory()->create();
         $response = $this
@@ -113,15 +107,13 @@ class TagTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_create_a_tag()
+    public function test_user_can_create_a_tag(): void
     {
         $user = User::factory()->create();
         $this->assertCreateForUser($user);
     }
 
-    /** @test */
-    public function user_can_edit_an_existing_tag()
+    public function test_user_can_edit_an_existing_tag(): void
     {
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
@@ -132,8 +124,7 @@ class TagTest extends TestCase
         $response->assertViewIs("{$this->base_route}.form");
     }
 
-    /** @test */
-    public function user_cannot_update_a_tag_with_missing_data()
+    public function test_user_cannot_update_a_tag_with_missing_data(): void
     {
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
@@ -152,8 +143,7 @@ class TagTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
-    public function user_can_update_a_tag_with_proper_data()
+    public function test_user_can_update_a_tag_with_proper_data(): void
     {
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
@@ -176,8 +166,7 @@ class TagTest extends TestCase
         $this->assertTrue($successNotificationExists);
     }
 
-    /** @test */
-    public function user_can_delete_an_existing_tag()
+    public function test_user_can_delete_an_existing_tag(): void
     {
         $user = User::factory()->create();
         $this->assertDestroyWithUser($user);

@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class SearchController extends Controller
+class SearchController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**
      * Search various models based on the search term.
-     *
-     * @param Request $request
-     * @return View
      */
     public function search(Request $request): View
     {
@@ -59,10 +59,6 @@ class SearchController extends Controller
 
     /**
      * Search for accounts of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchAccounts(User $user, string $searchTerm): Collection
     {
@@ -75,10 +71,6 @@ class SearchController extends Controller
 
     /**
      * Search for payees of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchPayees(User $user, string $searchTerm): Collection
     {
@@ -91,10 +83,6 @@ class SearchController extends Controller
 
     /**
      * Search for tag of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchTags(User $user, string $searchTerm): Collection
     {
@@ -107,10 +95,6 @@ class SearchController extends Controller
 
     /**
      * Search for categories of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchCategories(User $user, string $searchTerm): Collection
     {
@@ -123,10 +107,6 @@ class SearchController extends Controller
 
     /**
      * Search for investments of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchInvestments(User $user, string $searchTerm): Collection
     {
@@ -139,10 +119,6 @@ class SearchController extends Controller
 
     /**
      * Search for transactions of the user.
-     *
-     * @param User $user
-     * @param string $searchTerm
-     * @return Collection
      */
     private function searchTransactions(User $user, string $searchTerm): Collection
     {

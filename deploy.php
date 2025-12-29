@@ -7,7 +7,21 @@ require 'recipe/laravel.php';
 set('repository', 'https://github.com/kantorge/yaffa.git');
 set('keep_releases', 5);
 set('identity_file', '~/.ssh/private_key');
-set('branch', 'main');
+set('branch', getenv('DEPLOY_REF') ?: 'main');
+
+set('upload_dirs', ['public/build']);
+
+task('build:assets', static function () {
+    runLocally('npm ci');
+    runLocally('npm run build');
+});
+
+task('deploy:upload_assets', static function () {
+    upload('public/build/', '{{ release_path }}/public/build');
+});
+
+before('deploy:prepare', 'build:assets');
+after('deploy:vendors', 'deploy:upload_assets');
 
 host('private')
     ->set('hostname', getenv('SSH_HOST'))

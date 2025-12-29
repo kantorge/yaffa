@@ -14,7 +14,7 @@ class AccountShowTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,7 +26,7 @@ class AccountShowTest extends DuskTestCase
         }
     }
 
-    public function test_account_history_uses_correct_currency_for_standard_transactions()
+    public function test_account_history_uses_correct_currency_for_standard_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -132,7 +132,7 @@ class AccountShowTest extends DuskTestCase
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 4)
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 4)
                 // Verify the currency and amount in the table for each transaction
                 ->assertSeeIn('#historyTable tbody', '€1.11')
                 ->assertSeeIn('#historyTable tbody', '€2')
@@ -141,7 +141,7 @@ class AccountShowTest extends DuskTestCase
         });
     }
 
-    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions()
+    public function test_account_history_uses_correct_currency_and_value_for_investment_transactions(): void
     {
         // Load the main test user
         $user = User::firstWhere('email', $this::USER_EMAIL);
@@ -260,12 +260,257 @@ class AccountShowTest extends DuskTestCase
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 4)
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 4)
                 // Verify the currency and amount in the table for each transaction
                 ->assertSeeIn('#historyTable tbody', '-$1,150')
                 ->assertSeeIn('#historyTable tbody', '$0')
                 ->assertSeeIn('#historyTable tbody', '$100')
                 ->assertSeeIn('#historyTable tbody', '$300');
+        });
+    }
+
+    public function test_date_parameters_take_precedence_over_preset_settings(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has a non-default date setting
+        $user->account_details_date_range = 'previous30Days';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+        $payee = $user->payees()->first();
+
+        // Set the date range for the account, too
+        $account->config->default_date_range = 'previous90Days';
+        $account->config->save();
+
+        // Set the date for the transactions to the future, out of the default ranges
+        $date = now()->addYears(1);
+
+        // Create a transaction for this user
+        Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 1.11,
+                    'amount_to' => 1.11,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->make([
+                'date' => $date->format('Y-m-d'),
+                'config_type' => 'standard',
+                'comment' => null,
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            ])
+            ->save();
+
+        // Run the test, opening the account page with date parameters that include the transaction, and verifying the transaction is shown
+        $this->browse(function (Browser $browser) use ($user, $account, $date) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account and pass the date range parameters that include the transaction
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                    'date_from' => $date->copy()->subDays(1)->format('Y-m-d'),
+                    'date_to' => $date->copy()->addDays(1)->format('Y-m-d'),
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 1)
+                // Verify the transaction is shown
+                ->assertSeeIn('#historyTable tbody', '€1.11')
+                // Additionally, verify that the date range selector shows the default "Select preset" option, as we used explicit date parameters
+                ->assertSeeIn('#dateRangePickerPresets', 'Select preset');
+        });
+    }
+
+    public function test_preset_parameter_takes_precedence_over_account_and_user_setting(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has a non-default date setting
+        $user->account_details_date_range = 'previous30Days';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+
+        // Set the date range for the account, too, to a different value than the user's setting
+        $account->config->default_date_range = 'previous90Days';
+        $account->config->save();
+
+        // Run the test, opening the account page with a preset parameter that takes precedence over both the account and user settings
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account with a preset parameter that takes precedence over both the account and user settings
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                    'date_preset' => 'previous7Days',
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                // Additionally, verify that the date range selector shows the preset option we used in the URL parameters
+                ->assertSeeIn('#dateRangePickerPresets', 'Previous 7 days');
+        });
+    }
+
+    public function test_account_date_preset_setting_takes_precedence_over_user_setting(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has a non-default date setting
+        $user->account_details_date_range = 'previous30Days';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+
+        // Set the date range for the account, too, to a different value than the user's setting
+        $account->config->default_date_range = 'previous90Days';
+        $account->config->save();
+
+        // Run the test, opening the account page without date parameters, and verifying the transaction is shown as per the account's preset setting
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account without any date range parameters
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                // Additionally, verify that the date range selector shows the account's preset option, as we used no explicit date parameters
+                ->assertSeeIn('#dateRangePickerPresets', 'Previous 90 days');
+        });
+    }
+
+    public function test_user_date_setting_is_used_if_no_other_date_setting_exists(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has a non-default date setting
+        $user->account_details_date_range = 'previous30Days';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+
+        // Make sure the account has no date range setting
+        $account->config->default_date_range = null;
+        $account->config->save();
+
+        // Run the test, opening the account page without date parameters, and verifying the transaction is shown as per the user's preset setting
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account without any date range parameters
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                // Additionally, verify that the date range selector shows the user's preset option, as we used no explicit date parameters and the account has no setting
+                ->assertSeeIn('#dateRangePickerPresets', 'Previous 30 days');
+        });
+    }
+
+    public function test_default_date_range_is_used_if_no_settings_exists(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // For this test, make sure the user has no date setting
+        $user->account_details_date_range = 'none';
+        $user->save();
+
+        // Get an account and a payee of the user
+        $account = $user->accounts()->where('name', 'Wallet')->first();
+
+        // Make sure the account has no date range setting
+        $account->config->default_date_range = null;
+        $account->config->save();
+
+        // Run the test, opening the account page without date parameters, and verifying the transaction is shown as per the default preset setting
+        $this->browse(function (Browser $browser) use ($user, $account) {
+            $browser
+                // Acting as the main user
+                ->loginAs($user)
+                // Load the account show page for the Wallet account without any date range parameters
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                // Wait for the page to load, including the table content
+                ->waitFor('#historyTable')
+                // Additionally, verify that the date range selector shows the default preset option, as we used no explicit date parameters and neither the user nor the account have a setting
+                ->assertSeeIn('#dateRangePickerPresets', 'Select preset')
+                // Verify that the table loads no data
+                ->assertSeeIn('#historyTable_info', 'Showing 0 to 0 of 0 entries');
+        });
+    }
+
+    public function test_update_button_triggers_table_reload(): void
+    {
+        // Load the main test user
+        $user = User::firstWhere('email', $this::USER_EMAIL);
+
+        // Get the EUR cash account of the user
+        $account = $user->accounts()->where('name', 'Cash account EUR')->first();
+
+        // Get a payee
+        $payee = $user->payees()->first();
+
+        // Set the date for the transactions
+        $date = now()->addDays(10);
+
+        // Create a transaction
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->for(
+                TransactionDetailStandard::factory()->create([
+                    'amount_from' => 100,
+                    'amount_to' => 100,
+                    'account_from_id' => $account->id,
+                    'account_to_id' => $payee->id,
+                ]),
+                'config'
+            )
+            ->create([
+                'date' => $date->format('Y-m-d'),
+                'config_type' => 'standard',
+                'comment' => null,
+                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+            ]);
+
+        $this->browse(function (Browser $browser) use ($user, $account, $date, $transaction) {
+            $browser
+                ->loginAs($user)
+                ->visitRoute('account-entity.show', [
+                    'account_entity' => $account->id,
+                ])
+                ->waitFor('#historyTable')
+                ->waitFor('#reload')
+                // Select a date range that includes the transaction
+                ->type('[name="date_from"]', $date->copy()->subDays(1)->format('Y-m-d'))
+                ->type('[name="date_to"]', $date->copy()->addDays(1)->format('Y-m-d'))
+                // Click the Update button to trigger table reload
+                ->click('#reload')
+                // Wait for table to reload with the transaction
+                ->waitUsing(10, 75, fn() => $this->getTableRowCount($browser, '#historyTable') >= 1)
+                // Verify the transaction is shown
+                ->assertPresent(('button.transaction-quickview[data-id="' . $transaction->id . '"]'));
         });
     }
 }

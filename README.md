@@ -67,6 +67,10 @@ Read the full documentation at https://yaffa.cc/documentation/,
 including the [Getting Started](https://yaffa.cc/documentation/resources/category/getting-started/) guide
 and the [Installation instructions](https://yaffa.cc/documentation/resources/category/installation/).
 
+## Upgrading
+
+When upgrading between major versions, please see the details and follow the instructions listed in the [upgrade guide](UPGRADE.md).
+
 ## License
 
 Yaffa is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

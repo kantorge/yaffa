@@ -15,7 +15,7 @@
     dusk="form-tag"
     method="POST"
 >
-<input name="_method" type="hidden" value="PATCH">
+@method('PATCH')
 @else
 <form
     accept-charset="UTF-8"

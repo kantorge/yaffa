@@ -10,8 +10,6 @@ class ProcessIncomingEmail
 {
     /**
      * Handle the event.
-     *
-     * @param IncomingEmailReceived $event
      */
     public function handle(IncomingEmailReceived $event): void
     {

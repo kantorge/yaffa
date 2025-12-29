@@ -17,8 +17,6 @@ class AccountEntityPolicy
 
     /**
      * Determine whether the user can view any models.
-     *
-     * @return bool
      */
     public function viewAny(): bool
     {
@@ -27,10 +25,6 @@ class AccountEntityPolicy
 
     /**
      * Determine whether the user can view the model.
-     *
-     * @param User $user
-     * @param AccountEntity $accountEntity
-     * @return bool
      */
     public function view(User $user, AccountEntity $accountEntity): bool
     {
@@ -39,8 +33,6 @@ class AccountEntityPolicy
 
     /**
      * Determine whether the user can create models.
-     *
-     * @return bool
      */
     public function create(): bool
     {
@@ -49,10 +41,6 @@ class AccountEntityPolicy
 
     /**
      * Determine whether the user can update the model.
-     *
-     * @param User $user
-     * @param AccountEntity $accountEntity
-     * @return bool
      */
     public function update(User $user, AccountEntity $accountEntity): bool
     {
@@ -61,10 +49,6 @@ class AccountEntityPolicy
 
     /**
      * Determine whether the user can permanently delete the model.
-     *
-     * @param User $user
-     * @param AccountEntity $accountEntity
-     * @return bool
      */
     public function forceDelete(User $user, AccountEntity $accountEntity): bool
     {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 use Illuminate\Http\Request;
@@ -44,13 +44,11 @@ class ImportController extends Controller
     }
     /**
      * Display UI for importing and parsing CSV files.
-     *
-     * @return View
      */
-    public function importCsv(): View
+    public function importCsv(Request $request): View
     {
         // Load all active payees of user with config and pass to view as JavaScript variable.
-        $payees = Auth::user()
+        $payees = $request->user()
             ->payees()
             ->active()
             ->with('config', 'config.category')
