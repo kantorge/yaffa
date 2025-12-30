@@ -14,6 +14,11 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+<<<<<<< Updated upstream
+=======
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+>>>>>>> Stashed changes
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
@@ -53,6 +58,112 @@ class InvestmentApiController extends Controller implements HasMiddleware
             ->orderBy('name')
             ->take(10)
             ->get();
+
+        return response()->json($investments, Response::HTTP_OK);
+    }
+
+    /**
+     * Get investments for index page with optional active filter
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
+    {
+        /**
+         * @get('/api/investments')
+         * @middlewares('api', 'auth:sanctum')
+         */
+        $query = Auth::user()
+            ->investments()
+            ->withCount('transactions')
+            ->withCount('transactionsBasic')
+            ->withCount('transactionsScheduled')
+            ->with([
+                'currency',
+                'investmentGroup',
+                // Eager load latest investment price for each investment
+                'investmentPrices' => function ($query) {
+                    $query->latest('date')->limit(1);
+                },
+            ]);
+
+        // Apply active filter if specified
+        if ($request->has('active') && $request->get('active') !== null) {
+            $query->where('active', $request->get('active') == 1);
+        }
+
+        $investments = $query->get();
+
+        // Bulk calculate quantities for all investments in ONE query
+        $investmentIds = $investments->pluck('id');
+        
+        if ($investmentIds->isNotEmpty()) {
+            // Get quantities for all investments at once
+            $quantities = \DB::table('transactions')
+                ->select(
+                    'transaction_details_investment.investment_id',
+                    \DB::raw('SUM(
+                        IFNULL(transaction_types.quantity_multiplier, 0)
+                        * IFNULL(transaction_details_investment.quantity, 0)
+                    ) AS quantity')
+                )
+                ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
+                ->leftJoin('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+                ->where('transactions.schedule', 0)
+                ->where('transactions.config_type', 'investment')
+                ->whereIn('transaction_details_investment.investment_id', $investmentIds)
+                ->groupBy('transaction_details_investment.investment_id')
+                ->pluck('quantity', 'investment_id');
+
+            // Get latest transaction prices for all investments at once
+            $latestTransactionPrices = \DB::table('transactions')
+                ->select(
+                    'transaction_details_investment.investment_id',
+                    'transactions.date',
+                    'transaction_details_investment.price'
+                )
+                ->join('transaction_details_investment', function($join) {
+                    $join->on('transactions.config_id', '=', 'transaction_details_investment.id')
+                        ->where('transactions.config_type', '=', 'investment');
+                })
+                ->where('transactions.schedule', 0)
+                ->whereIn('transaction_details_investment.investment_id', $investmentIds)
+                ->whereNotNull('transaction_details_investment.price')
+                ->orderBy('transactions.date', 'desc')
+                ->get()
+                ->groupBy('investment_id')
+                ->map(fn($group) => $group->first());
+
+            // Apply calculated values to each investment
+            $investments->each(function ($investment) use ($quantities, $latestTransactionPrices) {
+                // Set quantity from bulk query
+                $investment->quantity = $quantities[$investment->id] ?? 0;
+
+                // Determine price from stored prices or transaction prices (combined logic)
+                $storedPrice = $investment->investmentPrices->first();
+                $transactionPrice = $latestTransactionPrices[$investment->id] ?? null;
+
+                if ($storedPrice && $transactionPrice) {
+                    // Compare dates to get most recent
+                    $investment->price = $storedPrice->date > $transactionPrice->date
+                        ? $storedPrice->price
+                        : $transactionPrice->price;
+                } elseif ($storedPrice) {
+                    $investment->price = $storedPrice->price;
+                } elseif ($transactionPrice) {
+                    $investment->price = $transactionPrice->price;
+                } else {
+                    $investment->price = null;
+                }
+            });
+        } else {
+            // No investments, set defaults
+            $investments->each(function ($investment) {
+                $investment->price = null;
+                $investment->quantity = 0;
+            });
+        }
 
         return response()->json($investments, Response::HTTP_OK);
     }

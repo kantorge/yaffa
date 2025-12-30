@@ -19,7 +19,7 @@ const deleteButtonConditions = [
 
 
 let table = $('#investmentSummary').DataTable({
-    data: window.investments,
+    data: [],
     columns: [
         {
             data: "name",
@@ -54,6 +54,9 @@ let table = $('#investmentSummary').DataTable({
             data: "quantity",
             title: __("Quantity"),
             render: function (data, type) {
+                if (data === null || data === undefined) {
+                    return type === 'display' ? '—' : 0;
+                }
                 if (type === 'display') {
                     return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 2, useGrouping: true});
                 }
@@ -66,6 +69,9 @@ let table = $('#investmentSummary').DataTable({
             data: "price",
             title: __("Latest price"),
             render: function (data, type, row) {
+                if (data === null || data === undefined) {
+                    return type === 'display' ? '—' : 0;
+                }
                 if (type === 'display' && !isNaN(data) && typeof data === "number") {
                     return toFormattedCurrency(data, window.YAFFA.locale, row.currency);
                 }
@@ -79,6 +85,9 @@ let table = $('#investmentSummary').DataTable({
             defaultContent: "",
             title: __("Value"),
             render: function (_data, type, row) {
+                if (row.quantity === null || row.quantity === undefined || row.price === null || row.price === undefined) {
+                    return type === 'display' ? '—' : 0;
+                }
                 const value = row.quantity * row.price;
 
                 if (type === 'display') {
@@ -201,6 +210,54 @@ let table = $('#investmentSummary').DataTable({
     paging: false,
 });
 
+// Initialize window.investments array
+window.investments = [];
+
+// Load investments based on active filter and selected groups
+function loadInvestments(activeOnly = true) {
+    table.clear();
+    table.processing(true);
+    
+    const params = {};
+    if (activeOnly === true) {
+        params.active = 1;
+    }
+    
+    $.ajax({
+        url: '/api/investments',
+        type: 'GET',
+        data: params,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        dataType: 'json',
+        success: function(data) {
+            console.log('Loaded investments:', data.length);
+            window.investments = data;
+            table.rows.add(data).draw();
+            // Apply group filter after loading
+            filterInvestmentGroup();
+        },
+        error: function(xhr, status, error) {
+            console.error('Failed to load investments:', {xhr, status, error});
+            let notificationEvent = new CustomEvent('toast', {
+                detail: {
+                    header: __('Error'),
+                    body: __('Failed to load investments: ') + (xhr.responseJSON?.message || error),
+                    toastClass: 'bg-danger',
+                }
+            });
+            window.dispatchEvent(notificationEvent);
+        },
+        complete: function() {
+            table.processing(false);
+        }
+    });
+}
+
+// Don't load anything on page load - wait for user to select investment groups
+
 // Initialize the "tree" for the investment group filter list
 const selectorTreeContainer = '#investment-group-tree-container';
 dataTableHelpers.investmentGroupTree(
@@ -212,11 +269,30 @@ dataTableHelpers.investmentGroupTree(
 // Listeners for filters
 function filterInvestmentGroup() {
     const selectedNodes = $(selectorTreeContainer).jstree().get_checked(true);
+    
+    // If no investments loaded yet and groups are selected, load them
+    if (window.investments.length === 0 && selectedNodes.length > 0) {
+        // Determine active filter state
+        const activeFilter = $('input[name=table_filter_active]:checked').val();
+        // Active filter: "Yes" = active only, "" (Any) = all, "No" = inactive only
+        const activeOnly = activeFilter === __('Yes') ? true : activeFilter === '' ? false : false;
+        loadInvestments(activeOnly);
+        return;
+    }
+    
+    // Filter the loaded investments by selected groups
     const selectedInvestmentGroupNames = selectedNodes.map(node => '^' + node.text + '$');
     table.column(2).search(selectedInvestmentGroupNames.join('|'), true, false).draw();
 }
 $('input[name=table_filter_active]').on("change", function() {
-    table.column(1).search(this.value).draw();
+    const filterValue = this.value;
+    
+    // Only reload if data is already loaded
+    if (window.investments.length > 0) {
+        // filterValue: "Yes" = active only, "" (Any) = all, "No" = inactive only
+        const activeOnly = filterValue === __('Yes') ? true : false;
+        loadInvestments(activeOnly);
+    }
 });
 $('#table_filter_search_text').keyup(function(){
     table.search($(this).val()).draw() ;

@@ -49,6 +49,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @name('investment.index')
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
          */
+<<<<<<< Updated upstream
         // Show all investments from the database and return to view
         $investments = $request->user()
             ->investments()
@@ -72,6 +73,12 @@ class InvestmentController extends Controller implements HasMiddleware
         JavaScriptFacade::put([
             'investments' => $investments,
             'investmentGroups' => $request->user()->investmentGroups,
+=======
+        // Don't load investments on initial page load to avoid timeout
+        // JavaScript will fetch via AJAX based on filter state
+        JavaScriptFacade::put([
+            'investmentGroups' => Auth::user()->investmentGroups,
+>>>>>>> Stashed changes
         ]);
 
         return view('investment.index');

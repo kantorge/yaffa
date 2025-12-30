@@ -41,6 +41,7 @@ Route::get('/assets/category/{category}', [CategoryApiController::class, 'getIte
 Route::delete('/assets/category/{category}', [CategoryApiController::class, 'destroy'])
     ->name('api.category.destroy');
 
+<<<<<<< Updated upstream
 Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
     ->name('api.currency-rate.index');
 Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
@@ -52,6 +53,9 @@ Route::delete('/currency-rates/{currency_rate}', [CurrencyRateApiController::cla
 Route::get('/currencyrates/missing/{currency}', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
     ->name('api.currency-rate.retrieveMissing');
 
+=======
+Route::get('/investments', [InvestmentApiController::class, 'index']);
+>>>>>>> Stashed changes
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);
 Route::get('/assets/investment/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])

@@ -665,13 +665,13 @@ export function investmentGroupTree(selector, data, changeHandler) {
         })
         .sort((a, b) => a.text.localeCompare(b.text));
 
-    // Artificially add a root node
+    // Artificially add a root node (unselected by default)
     treeData.push({
         id: 0,
         parent: '#',
         text: __('Investment groups'),
         state: {
-            selected: true,
+            selected: false,
             opened: true
         }
     });
