@@ -90,7 +90,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
-        return redirect()->route('currency.index');
+        return to_route('currency.index');
     }
 
     /**
@@ -129,7 +129,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency updated'));
 
-        return redirect()->route('currency.index');
+        return to_route('currency.index');
     }
 
     /**
@@ -155,7 +155,7 @@ class CurrencyController extends Controller implements HasMiddleware
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));
 
-            return redirect()->route('currency.index');
+            return to_route('currency.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));

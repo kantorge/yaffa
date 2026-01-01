@@ -95,7 +95,7 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment price added'));
 
-        return redirect()->route('investment-price.list', $investment);
+        return to_route('investment-price.list', $investment);
     }
 
     /**
@@ -133,7 +133,7 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment price updated'));
 
-        return redirect()->route('investment-price.list', $request->investment_id);
+        return to_route('investment-price.list', $request->investment_id);
     }
 
     /**

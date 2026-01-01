@@ -40,7 +40,7 @@ class TransactionController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('account-entity.create', ['type' => 'account']);
+            return to_route('account-entity.create', ['type' => 'account']);
         }
 
         return view('transactions.form', [

@@ -84,7 +84,7 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag added'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 
     public function update(TagRequest $request, Tag $tag): RedirectResponse
@@ -103,7 +103,7 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag updated'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 
     /**
@@ -120,6 +120,6 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag deleted'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 }

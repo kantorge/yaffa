@@ -186,7 +186,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('account-group.create');
+            return to_route('account-group.create');
         }
 
         // Redirect to currency form, if empty
@@ -198,7 +198,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('currency.create');
+            return to_route('currency.create');
         }
 
         return view('account.form');
@@ -244,7 +244,7 @@ class AccountEntityController extends Controller implements HasMiddleware
                 true
             );
 
-            return redirect()->route('account-entity.index', ['type' => 'account']);
+            return to_route('account-entity.index', ['type' => 'account']);
         }
 
         if ($validated['config_type'] === 'payee') {
@@ -273,7 +273,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
             self::addSimpleSuccessMessage(__('Payee added'));
 
-            return redirect()->route('account-entity.index', ['type' => 'payee']);
+            return to_route('account-entity.index', ['type' => 'payee']);
         }
 
         // This redirect is theoretically not used
@@ -361,7 +361,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
             self::addSimpleSuccessMessage(__('Account updated'));
 
-            return redirect()->route('account-entity.index', ['type' => 'account']);
+            return to_route('account-entity.index', ['type' => 'account']);
         }
 
         if ($accountEntity->config_type === 'payee') {
@@ -390,7 +390,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
             self::addSimpleSuccessMessage(__('Payee updated'));
 
-            return redirect()->route('account-entity.index', ['type' => 'payee']);
+            return to_route('account-entity.index', ['type' => 'payee']);
         }
 
         // This redirect is theoretically not used
@@ -458,6 +458,6 @@ class AccountEntityController extends Controller implements HasMiddleware
             self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
-        return redirect()->route('account-entity.index', ['type' => 'payee']);
+        return to_route('account-entity.index', ['type' => 'payee']);
     }
 }
