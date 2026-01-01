@@ -122,7 +122,7 @@ class RegisterTest extends TestCase
         // When opening the registration page, the user should be redirected to the login page with an error message,
         // instead of opening the registration page.
         $response = $this->get($this->registerGetRoute());
-        $response->assertRedirect(route('login'));
+        $response->assertRedirectToRoute('login');
 
         // The notification_collection session key should contain a message about the user limit being reached.
         $this->assertTrue(session()->has('notification_collection'));
@@ -165,7 +165,7 @@ class RegisterTest extends TestCase
         $this->assertNotNull($user->email_verified_at);
 
         // The user is redirected to the home page after registering, but instead, the verification page should be shown.
-        $response->assertRedirect(route('home'));
+        $response->assertRedirectToRoute('home');
     }
 
     public function test_user_receives_verification_email_if_feature_is_enabled(): void

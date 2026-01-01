@@ -23,17 +23,17 @@ class TagTest extends TestCase
 
     public function test_guest_cannot_access_resource(): void
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
 
 
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
-        $this->get(route("{$this->base_route}.edit", $tag))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", $tag))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", $tag))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.edit", $tag))->assertRedirectToRoute('login');
+        $this->patch(route("{$this->base_route}.update", $tag))->assertRedirectToRoute('login');
+        $this->delete(route("{$this->base_route}.destroy", $tag))->assertRedirectToRoute('login');
     }
 
     public function test_unverified_user_cannot_access_resource(): void
@@ -43,17 +43,17 @@ class TagTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.index"))->assertRedirectToRoute('verification.notice');
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.create"))->assertRedirectToRoute('verification.notice');
+        $this->actingAs($user_unverified)->post(route("{$this->base_route}.store"))->assertRedirectToRoute('verification.notice');
 
 
         $user = User::factory()->create();
         $tag = $this->createForUser($user, $this->base_model);
 
-        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $tag))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $tag))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $tag))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user_unverified)->get(route("{$this->base_route}.edit", $tag))->assertRedirectToRoute('verification.notice');
+        $this->actingAs($user_unverified)->patch(route("{$this->base_route}.update", $tag))->assertRedirectToRoute('verification.notice');
+        $this->actingAs($user_unverified)->delete(route("{$this->base_route}.destroy", $tag))->assertRedirectToRoute('verification.notice');
     }
 
     public function test_user_cannot_access_other_users_resource(): void

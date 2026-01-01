@@ -13,7 +13,7 @@ class VerificationController extends Controller
         // TODO: can this be achieved with middlewares?
         $user = $request->user();
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('home');
+            return to_route('home');
         }
 
         return view('auth.verify');

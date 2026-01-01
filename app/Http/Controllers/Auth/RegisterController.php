@@ -82,7 +82,7 @@ class RegisterController extends Controller implements HasMiddleware
                 'exclamation-triangle'
             );
 
-            return redirect()->route('login');
+            return to_route('login');
         }
 
         return view(
@@ -196,7 +196,7 @@ class RegisterController extends Controller implements HasMiddleware
                 __('User limit reached'),
                 'exclamation-triangle'
             );
-            return redirect()->route('login');
+            return to_route('login');
         }
 
         $this->validator($request->all())->validate();

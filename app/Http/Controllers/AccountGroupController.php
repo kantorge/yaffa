@@ -85,7 +85,7 @@ class AccountGroupController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Account group added'));
 
-        return redirect()->route('account-group.index');
+        return to_route('account-group.index');
     }
 
     public function update(AccountGroupRequest $request, AccountGroup $accountGroup): RedirectResponse
@@ -103,7 +103,7 @@ class AccountGroupController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Account group updated'));
 
-        return redirect()->route('account-group.index');
+        return to_route('account-group.index');
     }
 
     /**
@@ -120,7 +120,7 @@ class AccountGroupController extends Controller implements HasMiddleware
             $accountGroup->delete();
             self::addSimpleSuccessMessage(__('Account group deleted'));
 
-            return redirect()->route('account-group.index');
+            return to_route('account-group.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Account group is in use, cannot be deleted'));

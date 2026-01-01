@@ -108,7 +108,7 @@ class CategoryController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Category added'));
 
-        return redirect()->route('categories.index');
+        return to_route('categories.index');
     }
 
     /**
@@ -145,7 +145,7 @@ class CategoryController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Category updated'));
 
-        return redirect()->route('categories.index');
+        return to_route('categories.index');
     }
 
     /**
@@ -162,7 +162,7 @@ class CategoryController extends Controller implements HasMiddleware
             $category->delete();
             self::addSimpleSuccessMessage(__('Category deleted'));
 
-            return redirect()->route('categories.index');
+            return to_route('categories.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Category is in use, cannot be deleted'));
@@ -240,6 +240,6 @@ class CategoryController extends Controller implements HasMiddleware
             self::addSimpleErrorMessage(__('Database error:') . ' ' . $e->getMessage());
         }
 
-        return redirect()->route('categories.index');
+        return to_route('categories.index');
     }
 }

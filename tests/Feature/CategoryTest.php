@@ -22,18 +22,18 @@ class CategoryTest extends TestCase
 
     public function test_guest_cannot_access_resource(): void
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
 
         /** @var User $user */
         $user = User::factory()->create();
         /** @var Category $category */
         $category = Category::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $category))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", $category))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.edit", $category))->assertRedirectToRoute('login');
+        $this->patch(route("{$this->base_route}.update", $category))->assertRedirectToRoute('login');
+        $this->delete(route("{$this->base_route}.destroy", $category))->assertRedirectToRoute('login');
     }
 
     public function test_user_cannot_access_other_users_resource(): void
@@ -162,7 +162,7 @@ class CategoryTest extends TestCase
                 ]
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index"));
+        $response->assertRedirectToRoute("{$this->base_route}.index");
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
