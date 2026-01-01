@@ -25,7 +25,7 @@ class LoginEventTest extends TestCase
             'password' => $password,
         ]);
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirectToRoute('home');
 
         Event::assertDispatched(Login::class, fn ($event) => $event->user->id === $user->id);
     }

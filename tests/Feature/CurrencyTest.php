@@ -22,18 +22,18 @@ class CurrencyTest extends TestCase
 
     public function test_guest_cannot_access_resource(): void
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
 
         /** @var User $user */
         $user = User::factory()->create();
         /** @var Currency $currency */
         $currency = Currency::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $currency))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", $currency))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", $currency))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.edit", $currency))->assertRedirectToRoute('login');
+        $this->patch(route("{$this->base_route}.update", $currency))->assertRedirectToRoute('login');
+        $this->delete(route("{$this->base_route}.destroy", $currency))->assertRedirectToRoute('login');
     }
 
     public function test_user_cannot_access_other_users_resource(): void

@@ -68,7 +68,7 @@ class CurrencyRateTest extends TestCase
             'from' => $otherCurrency,
             'to' => $baseCurrency
         ]))
-            ->assertRedirect(route('login'));
+            ->assertRedirectToRoute('login');
     }
 
     public function test_user_can_access_their_own_resources(): void
