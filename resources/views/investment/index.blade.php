@@ -7,71 +7,70 @@
 @section('content_header', __('Investments'))
 
 @section('content')
-    <div class="row">
-        <div class="col-12 col-lg-3">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <div
-                            class="card-title collapse-control"
-                            data-coreui-toggle="collapse"
-                            data-coreui-target="#cardActions"
-                    >
-                        <i class="fa fa-angle-down"></i>
-                        {{ __('Actions') }}
-                    </div>
+<div class="row">
+    <div class="col-12 col-lg-3">
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-title collapse-control" data-coreui-toggle="collapse"
+                    data-coreui-target="#cardActions">
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Actions') }}
                 </div>
-                <ul
-                        class="list-group list-group-flush collapse show"
-                        aria-expanded="true"
-                        id="cardActions"
-                >
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ __('New investment') }}
-                        <a class="btn btn-sm btn-success"
-                           dusk="button-new-investment"
-                           href="{{ route('investment.create') }}"
-                           title="{{ __('New investment') }}"
-                        >
-                            <i class="fa fa-plus"></i>
-                        </a>
-                    </li>
-                </ul>
             </div>
+            <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardActions">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{ route('investment.create') }}">{{ __('New investment') }}</a>
+                    <a class="btn btn-sm btn-success" dusk="button-new-investment"
+                        href="{{ route('investment.create') }}" title="{{ __('New investment') }}">
+                        <i class="fa fa-fw fa-plus"></i>
+                    </a>
+                </li>
 
-            <div class="card mb-3">
-                <div class="card-header">
-                    <div
-                            class="card-title collapse-control"
-                            data-coreui-toggle="collapse"
-                            data-coreui-target="#cardFilters"
-                    >
-                        <i class="fa fa-angle-down"></i>
-                        {{ __('Filters') }}
-                    </div>
-                </div>
-                <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
-                    <x-tablefilter-sidebar-switch
-                            label=" {{ __('Active') }}"
-                            property="active"
-                    />
-                    @include('template.components.tablefilter-sidebar-search')
-                    <li class="list-group-item">
-                        <div id="investment-group-tree-container"></div>
-                    </li>
-                </ul>
-            </div>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{  route('transaction.create', ['type' => 'investment']) }}">
+                        {{ __('New investment transaction') }}
+                    </a>
+                    <a class="btn btn-sm btn-success" dusk="button-new-investment-transaction"
+                        href="{{  route('transaction.create', ['type' => 'investment']) }}"
+                        title="{{ __('New investment transaction') }}">
+                        <i class="fa fa-fw fa-line-chart"></i>
+                    </a>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{  route('investment-group.index') }}">{{ __('Manage investment groups') }}</a>
+                    <a class="btn btn-sm btn-outline-primary" dusk="button-manage-investment-groups"
+                        href="{{  route('investment-group.index') }}" title="{{ __('Manage investment groups') }}">
+                        <i class="fa fa-fw fa-layer-group"></i>
+                    </a>
+                </li>
+            </ul>
         </div>
-        <div class="col-12 col-lg-9">
-            <div class="card mb-3">
-                <div class="card-body no-datatable-search">
-                    <table
-                            class="table table-striped table-bordered table-hover"
-                            id="investmentSummary"
-                            role="grid"
-                            aria-label="{{ __('List of investments') }}"
-                    ></table>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-title collapse-control" data-coreui-toggle="collapse"
+                    data-coreui-target="#cardFilters">
+                    <i class="fa fa-angle-down"></i>
+                    {{ __('Filters') }}
                 </div>
+            </div>
+            <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardFilters">
+                <x-tablefilter-sidebar-switch label=" {{ __('Active') }}" property="active" />
+                @include('template.components.tablefilter-sidebar-search')
+                <li class="list-group-item">
+                    <div id="investment-group-tree-container"></div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-12 col-lg-9">
+        <div class="card mb-3">
+            <div class="card-body no-datatable-search">
+                <table class="table table-striped table-bordered table-hover" id="investmentSummary" role="grid"
+                    aria-label="{{ __('List of investments') }}"></table>
             </div>
         </div>
     </div>
+</div>
 @stop
