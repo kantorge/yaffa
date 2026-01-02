@@ -95,6 +95,7 @@
       series.dataFields.valueY = 'price';
       series.dataFields.dateX = 'date';
       series.strokeWidth = 3;
+      minBulletDistance = 15;
 
       let bullet = series.bullets.push(new am4charts.Bullet());
       let square = bullet.createChild(am4core.Rectangle);
