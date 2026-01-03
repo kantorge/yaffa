@@ -399,4 +399,129 @@ class InvestmentApiControllerTest extends TestCase
         $this->assertEquals(1, count($response->json()));
         $response->assertJsonPath('0.name', 'Active USD Investment');
     }
+
+    public function test_investment_list_supports_sorting_with_validation(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->createForUser($user, Currency::class);
+
+        // Create investments with different values for sorting
+        Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create([
+                'active' => true,
+                'name' => 'Zebra Corp',
+                'symbol' => 'ZZZ',
+                'isin' => 'US9999999999',
+            ]);
+
+        Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create([
+                'active' => false,
+                'name' => 'Apple Inc',
+                'symbol' => 'AAA',
+                'isin' => 'US1111111111',
+            ]);
+
+        Investment::factory()
+            ->for($user)
+            ->withUser($user)
+            ->create([
+                'active' => true,
+                'name' => 'Microsoft Corp',
+                'symbol' => 'MMM',
+                'isin' => 'US5555555555',
+            ]);
+
+        // Default sorting: by name, ascending
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT);
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('Apple Inc', $json[0]['name']);
+        $this->assertEquals('Microsoft Corp', $json[1]['name']);
+        $this->assertEquals('Zebra Corp', $json[2]['name']);
+
+        // Sort by name descending
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=name&sort_order=desc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('Zebra Corp', $json[0]['name']);
+        $this->assertEquals('Microsoft Corp', $json[1]['name']);
+        $this->assertEquals('Apple Inc', $json[2]['name']);
+
+        // Sort by symbol ascending
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=symbol&sort_order=asc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('AAA', $json[0]['symbol']);
+        $this->assertEquals('MMM', $json[1]['symbol']);
+        $this->assertEquals('ZZZ', $json[2]['symbol']);
+
+        // Sort by symbol descending
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=symbol&sort_order=desc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('ZZZ', $json[0]['symbol']);
+        $this->assertEquals('MMM', $json[1]['symbol']);
+        $this->assertEquals('AAA', $json[2]['symbol']);
+
+        // Sort by ISIN ascending
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=isin&sort_order=asc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('US1111111111', $json[0]['isin']);
+        $this->assertEquals('US5555555555', $json[1]['isin']);
+        $this->assertEquals('US9999999999', $json[2]['isin']);
+
+        // Sort by active status ascending (false first, then true)
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=active&sort_order=asc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals(false, $json[0]['active']);
+        $this->assertEquals(true, $json[1]['active']);
+        $this->assertEquals(true, $json[2]['active']);
+
+        // Sort by active status descending (true first, then false)
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=active&sort_order=desc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals(true, $json[0]['active']);
+        $this->assertEquals(true, $json[1]['active']);
+        $this->assertEquals(false, $json[2]['active']);
+
+        // Invalid sort_by falls back to 'name'
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=invalid_column&sort_order=asc');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('Apple Inc', $json[0]['name']);
+        $this->assertEquals('Microsoft Corp', $json[1]['name']);
+        $this->assertEquals('Zebra Corp', $json[2]['name']);
+
+        // Invalid sort_order falls back to 'asc'
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=name&sort_order=invalid');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('Apple Inc', $json[0]['name']);
+        $this->assertEquals('Microsoft Corp', $json[1]['name']);
+        $this->assertEquals('Zebra Corp', $json[2]['name']);
+
+        // Case-insensitive sort_order (DESC)
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=name&sort_order=DESC');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals('Zebra Corp', $json[0]['name']);
+        $this->assertEquals('Microsoft Corp', $json[1]['name']);
+        $this->assertEquals('Apple Inc', $json[2]['name']);
+
+        // SQL injection attempt in sort_by should fall back to default
+        $response = $this->actingAs($user)->getJson(self::BASE_API_ENDPOINT . '?sort_by=name;DROP TABLE investments--');
+        $response->assertStatus(Response::HTTP_OK);
+        $json = $response->json();
+        $this->assertEquals(3, count($json));
+        $this->assertEquals('Apple Inc', $json[0]['name']);
+    }
 }

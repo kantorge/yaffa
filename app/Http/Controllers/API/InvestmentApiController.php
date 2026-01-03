@@ -45,7 +45,24 @@ class InvestmentApiController extends Controller implements HasMiddleware
          * - query: search string to match against name, symbol, or ISIN
          * - currency_id: filter by currency ID
          * - limit: maximum number of results to return (default 10)
+         * - sort_by: field to sort by (name, symbol, isin, active, created_at), default is name
+         * - sort_order: asc or desc, default is asc
          */
+        // Whitelist of valid sortable columns
+        $validSortColumns = ['name', 'symbol', 'isin', 'active', 'created_at'];
+        $sortBy = $request->get('sort_by', 'name');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        // Validate sort_by parameter
+        if (!in_array($sortBy, $validSortColumns, true)) {
+            $sortBy = 'name';
+        }
+
+        // Validate sort_order parameter
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'], true)) {
+            $sortOrder = 'asc';
+        }
+
         $investments = $request->user()
             ->investments()
             ->when($request->has('active'), fn($query) =>
@@ -71,6 +88,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
             ->when($request->get('currency_id'), fn ($query) =>
                 $query->where('currency_id', '=', $request->get('currency_id'))
             )
+            ->orderBy($sortBy, $sortOrder)
             ->take($request->get('limit', 10))
             ->get();
 
