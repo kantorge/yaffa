@@ -29,7 +29,7 @@ let table = $(tableSelector).DataTable({
             data: "transaction_schedule.rule",
             title: __("Schedule settings"),
             render: function (data) {
-                // Return human readable format of RRule
+                // Return human readable format of RRule AND the contextual action trigger icon
                 // TODO: translation of rrule strings
                 return `<div class="d-flex justify-content-start align-items-center">
                     <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i><span>${data.toText()}</span>
@@ -241,7 +241,7 @@ table.contextualActions({
                     icon: "warning",
                     showCancelButton: true,
                     cancelButtonText: __('Cancel'),
-                    confirmButtonText: __('Confirm'),
+                    confirmButtonText: __('Delete'),
                     buttonsStyling: false,
                     customClass: {
                         confirmButton: 'btn btn-danger',
@@ -300,7 +300,7 @@ table.contextualActions({
                             setTimeout(function () {
                                 let toastElement = document.querySelector(`.toast-transaction-${id}`);
                                 let toastInstance = new window.bootstrap.Toast(toastElement);
-                                toastInstance.hide();
+                                toastInstance.remove();
                             }, 250);
                         });
                 });

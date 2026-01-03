@@ -9,6 +9,11 @@
 @section('content')
 <div class="row">
     <div class="col-12 col-lg-3">
+        <div id="onboarding-card">
+            <onboarding-card card-title="{{ __('Guided tour') }}"
+                completed-message="{{ __('You can dismiss this widget to hide it forever.') }}"
+                topic="Investments"></onboarding-card>
+        </div>
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-title collapse-control" data-coreui-toggle="collapse"
@@ -20,8 +25,10 @@
             <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardActions">
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a href="{{ route('investment.create') }}">{{ __('New investment') }}</a>
-                    <a class="btn btn-sm btn-success" dusk="button-new-investment"
-                        href="{{ route('investment.create') }}" title="{{ __('New investment') }}">
+                    <a class="btn btn-sm btn-success"
+                        id="button-new-investment"
+                        href="{{ route('investment.create') }}"
+                        title="{{ __('New investment') }}">
                         <i class="fa fa-fw fa-plus"></i>
                     </a>
                 </li>
@@ -30,7 +37,8 @@
                     <a href="{{  route('transaction.create', ['type' => 'investment']) }}">
                         {{ __('New investment transaction') }}
                     </a>
-                    <a class="btn btn-sm btn-success" dusk="button-new-investment-transaction"
+                    <a class="btn btn-sm btn-success"
+                        id="button-new-investment-transaction"
                         href="{{  route('transaction.create', ['type' => 'investment']) }}"
                         title="{{ __('New investment transaction') }}">
                         <i class="fa fa-fw fa-line-chart"></i>
@@ -39,7 +47,8 @@
 
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a href="{{  route('investment-group.index') }}">{{ __('Manage investment groups') }}</a>
-                    <a class="btn btn-sm btn-outline-primary" dusk="button-manage-investment-groups"
+                    <a class="btn btn-sm btn-outline-primary"
+                        id="button-manage-investment-groups"
                         href="{{  route('investment-group.index') }}" title="{{ __('Manage investment groups') }}">
                         <i class="fa fa-fw fa-layer-group"></i>
                     </a>

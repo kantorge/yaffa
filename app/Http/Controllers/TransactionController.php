@@ -31,7 +31,7 @@ class TransactionController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified')
          */
 
-        // Sanity check for necessary assets
+        // Sanity check for necessary assets: account is needed for any transactions
         if ($request->user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
@@ -41,6 +41,19 @@ class TransactionController extends Controller implements HasMiddleware
             );
 
             return to_route('account-entity.create', ['type' => 'account']);
+        }
+
+        // Sanity check: an investment is needed for investment transactions
+        // (Note, we don't check that the investment is in the right currency etc. here,)
+        if ($type === 'investment' && $request->user()->investments()->active()->count() === 0) {
+            $this->addMessage(
+                __('transaction.requirement.investment'),
+                'info',
+                __('No investments found'),
+                'info-circle'
+            );
+
+            return to_route('investment.create');
         }
 
         return view('transactions.form', [
