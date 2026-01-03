@@ -471,4 +471,35 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         });
 
     }
+
+    public function test_default_values_are_loaded_from_url(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute(
+                    'transaction.create',
+                    [
+                        'type' => 'investment',
+                        'account' => $this->user->accounts()->firstWhere('name', self::TEST_ACCOUNT_NAME_USD)->id,
+                        'investment' => $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_USD)->id,
+                    ]
+                )
+                // Wait for the form and the Select2 elements to load
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+
+                // Verify that the account is selected
+                ->assertSeeIn(
+                    self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_ACCOUNT_NAME_USD
+                )
+
+                // Verify that the investment is selected
+                ->assertSeeIn(
+                    self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_INVESTMENT_NAME_USD
+                );
+        });
+    }
 }

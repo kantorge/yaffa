@@ -691,19 +691,39 @@
             url: '/api/assets/investment',
             data: function (params) {
               return {
-                q: params.term,
+                query: params.term,
+                active: 1,
                 currency_id: $vm.account_currency?.id,
+                limit: 10,
+                // We rely on server-side sorting, so let's set it here
+                sort_by: 'name',
+                sort_order: 'asc',
                 _token: $vm.csrfToken,
               };
             },
             dataType: 'json',
             delay: 150,
             processResults: function (data) {
+              // Let's format the results to a format used by Select2
               return {
-                results: data,
+                results: data.map((item) => ({
+                  id: item.id,
+                  text: item.name,
+                  html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
+                  title: item.name,
+                })),
               };
             },
             cache: true,
+          },
+          escapeMarkup: function (markup) {
+            return markup;
+          },
+          templateResult: function (data) {
+            return data.html;
+          },
+          templateSelection: function (data) {
+            return data.text;
           },
           selectOnClose: false,
           placeholder: __('Select investment'),

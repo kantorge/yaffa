@@ -108,6 +108,7 @@ table.dataTable tr.table-warning {
 :root {
     --dt-row-selected: 235, 237, 239;
     --dt-row-selected-text: 0, 0, 0;
+    --dt-row-selected-link: var(--cui-link-color-rgb);
 }
 
 // Sidebar form settings

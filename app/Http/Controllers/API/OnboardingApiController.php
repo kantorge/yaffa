@@ -128,4 +128,14 @@ class OnboardingApiController extends Controller implements HasMiddleware
             ])
             ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-InvestmentGroups'));
     }
+
+    private function onboardingTopicDataInvestments(): void
+    {
+        Onboard::addStep(__('View the guided tour for this page'))
+            ->attributes([
+                'tour' => true,
+                'icon' => 'fa fa-fw fa-info',
+            ])
+            ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-Investments'));
+    }
 }
