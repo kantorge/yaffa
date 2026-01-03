@@ -300,7 +300,7 @@ table.contextualActions({
                             setTimeout(function () {
                                 let toastElement = document.querySelector(`.toast-transaction-${id}`);
                                 let toastInstance = new window.bootstrap.Toast(toastElement);
-                                toastInstance.remove();
+                                toastInstance.dispose();
                             }, 250);
                         });
                 });
