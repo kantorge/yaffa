@@ -34,24 +34,42 @@ class InvestmentApiController extends Controller implements HasMiddleware
         ];
     }
 
-    public function getList(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment')
          * @middlewares('api', 'auth:sanctum')
+         *
+         * Currently supported query parameters:
+         * - active: filter by active status (1 or 0)
+         * - query: search string to match against name, symbol, or ISIN
+         * - currency_id: filter by currency ID
+         * - limit: maximum number of results to return (default 10)
          */
         $investments = $request->user()
             ->investments()
-            ->where('active', true)
-            ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
-            })
-            ->when($request->get('currency_id'), function ($query) use ($request) {
-                $query->where('currency_id', '=', $request->get('currency_id'));
-            })
-            ->orderBy('name')
-            ->take(10)
+            ->when($request->get('active'), fn($query) =>
+                $query->where('active', $request->get('active'))
+            )
+            ->when($request->get('query'), fn ($query) =>
+                // The query string is searched in: name, symbol, ISIN
+                $query->whereRaw(
+                    'LOWER(name) LIKE ?',
+                     ['%' . strtolower($request->get('query')) . '%']
+                )
+                ->orWhereRaw(
+                    'LOWER(symbol) LIKE ?',
+                     ['%' . strtolower($request->get('query')) . '%']
+                )
+                ->orWhereRaw(
+                    'LOWER(isin) LIKE ?',
+                     ['%' . strtolower($request->get('query')) . '%']
+                )
+            )
+            ->when($request->get('currency_id'), fn ($query) =>
+                $query->where('currency_id', '=', $request->get('currency_id'))
+            )
+            ->take($request->get('limit', 10))
             ->get();
 
         return response()->json($investments, Response::HTTP_OK);

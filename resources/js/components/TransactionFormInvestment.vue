@@ -691,19 +691,38 @@
             url: '/api/assets/investment',
             data: function (params) {
               return {
-                q: params.term,
+                query: params.term,
+                active: 1,
                 currency_id: $vm.account_currency?.id,
+                limit: 10,
                 _token: $vm.csrfToken,
               };
             },
             dataType: 'json',
             delay: 150,
             processResults: function (data) {
+              // data contain an unordered list of investments
               return {
-                results: data,
+                results: data
+                  .map((item) => ({
+                    id: item.id,
+                    text: item.name,
+                    html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
+                    title: item.name,
+                  }))
+                  .sort((a, b) => a.text.localeCompare(b.text)),
               };
             },
             cache: true,
+          },
+          escapeMarkup: function (markup) {
+            return markup;
+          },
+          templateResult: function (data) {
+            return data.html;
+          },
+          templateSelection: function (data) {
+            return data.text;
           },
           selectOnClose: false,
           placeholder: __('Select investment'),
