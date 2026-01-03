@@ -21,17 +21,23 @@ class InvestmentFactory extends Factory
 
         $name = $this->faker->unique()->company();
 
-        return [
+        $baseAttributes = [
             'name' => $name,
             'symbol' => Str::slug($name),
             'isin' => $this->faker->asciify(str_repeat('*', 12)),
             'comment' => $this->faker->boolean(25) ? $this->faker->text(191) : null,
             'active' => $this->faker->boolean(80),
             'auto_update' => false,
-            'investment_group_id' => $user->investmentGroups()->inRandomOrder()->first()->id,
-            'currency_id' => $user->currencies()->inRandomOrder()->first()->id,
-            'user_id' => $user->id,
         ];
+
+        // If a user with investment groups and currencies exists, use it
+        if ($user) {
+            $baseAttributes['investment_group_id'] = $user->investmentGroups()->inRandomOrder()->first()->id;
+            $baseAttributes['currency_id'] = $user->currencies()->inRandomOrder()->first()->id;
+            $baseAttributes['user_id'] = $user->id;
+        }
+
+        return $baseAttributes;
     }
 
     /**
@@ -40,6 +46,11 @@ class InvestmentFactory extends Factory
     public function withUser(User $user): self
     {
         return $this->state(function (array $attributes) use ($user) {
+            // Set the user_id if not already set
+            if (!isset($attributes['user_id'])) {
+                $attributes['user_id'] = $user->id;
+            }
+
             // If the investment group is not set, get one, or create a new one for the user
             if (!isset($attributes['investment_group_id'])) {
                 $attributes['investment_group_id'] = $user->investmentGroups()

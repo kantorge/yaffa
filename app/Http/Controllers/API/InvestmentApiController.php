@@ -48,23 +48,25 @@ class InvestmentApiController extends Controller implements HasMiddleware
          */
         $investments = $request->user()
             ->investments()
-            ->when($request->get('active'), fn($query) =>
+            ->when($request->has('active'), fn($query) =>
                 $query->where('active', $request->get('active'))
             )
             ->when($request->get('query'), fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
-                $query->whereRaw(
-                    'LOWER(name) LIKE ?',
-                     ['%' . strtolower($request->get('query')) . '%']
-                )
-                ->orWhereRaw(
-                    'LOWER(symbol) LIKE ?',
-                     ['%' . strtolower($request->get('query')) . '%']
-                )
-                ->orWhereRaw(
-                    'LOWER(isin) LIKE ?',
-                     ['%' . strtolower($request->get('query')) . '%']
-                )
+                $query->where(function ($q) use ($request) {
+                    $q->whereRaw(
+                        'LOWER(name) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    )
+                    ->orWhereRaw(
+                        'LOWER(symbol) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    )
+                    ->orWhereRaw(
+                        'LOWER(isin) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    );
+                })
             )
             ->when($request->get('currency_id'), fn ($query) =>
                 $query->where('currency_id', '=', $request->get('currency_id'))
