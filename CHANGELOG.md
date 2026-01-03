@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.1.0](https://github.com/kantorge/yaffa/compare/v2.0.0...v2.1.0) (2026-01-03)
+
+
+### 🛠️ Chores
+
+* **deps-dev:** bump node-forge ([#361](https://github.com/kantorge/yaffa/issues/361)) ([54e73e8](https://github.com/kantorge/yaffa/commit/54e73e83dee6d9f6be60f550bcec012871c51600))
+
+
+### 📚 Documentation
+
+* extend the upgrade guide ([250bf18](https://github.com/kantorge/yaffa/commit/250bf1815e70f54722700a49e354909bd48186a8))
+* remove unused setting from .env example ([31379ce](https://github.com/kantorge/yaffa/commit/31379ce2230531700ab6bcc497d14ff6d5b1125b))
+
+
+### ✨ Features
+
+* investment usability improvements ([#377](https://github.com/kantorge/yaffa/issues/377)) ([a901a71](https://github.com/kantorge/yaffa/commit/a901a7177198831eba278023366eb7c5461883a9))
+
+
+### 🐛 Bug Fixes
+
+* investment transaction modal dialog UI issues ([360a609](https://github.com/kantorge/yaffa/commit/360a609e7c5cf0a8ecb71d85e56d8d86d3d2d7d0))
+* risky Dusk test ([386996f](https://github.com/kantorge/yaffa/commit/386996fe77024205b58d448f3e8c283674ebbc90))
+
 ## [2.0.0](https://github.com/kantorge/yaffa/compare/v1.15.1...v2.0.0) (2025-12-19)
 
 
