@@ -1,1 +1,0 @@
-const e=document.getElementById("loginWithDemoCredentials");e&&e.addEventListener("click",function(){document.getElementById("email").value="demo@yaffa.cc",document.getElementById("password").value="demo",document.getElementById("login").click()});

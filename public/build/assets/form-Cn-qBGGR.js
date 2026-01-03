@@ -1,1 +1,0 @@
-import{D as t}from"./Datepicker-CU1wOnOT.js";$(function(){new t(document.getElementById("date"),{weekStart:1,todayBtn:!0,todayBtnMode:1,todayHighlight:!0,format:"yyyy-mm-dd",autohide:!0,buttonClass:"btn"})});
