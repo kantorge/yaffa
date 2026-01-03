@@ -695,22 +695,23 @@
                 active: 1,
                 currency_id: $vm.account_currency?.id,
                 limit: 10,
+                // We rely on server-side sorting, so let's set it here
+                sort_by: 'name',
+                sort_order: 'asc',
                 _token: $vm.csrfToken,
               };
             },
             dataType: 'json',
             delay: 150,
             processResults: function (data) {
-              // data contain an unordered list of investments
+              // Let's format the results to a format used by Select2
               return {
-                results: data
-                  .map((item) => ({
-                    id: item.id,
-                    text: item.name,
-                    html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
-                    title: item.name,
-                  }))
-                  .sort((a, b) => a.text.localeCompare(b.text)),
+                results: data.map((item) => ({
+                  id: item.id,
+                  text: item.name,
+                  html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
+                  title: item.name,
+                })),
               };
             },
             cache: true,
