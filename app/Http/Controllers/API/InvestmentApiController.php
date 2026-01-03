@@ -14,7 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
@@ -35,24 +34,62 @@ class InvestmentApiController extends Controller implements HasMiddleware
         ];
     }
 
-    public function getList(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         /**
          * @get('/api/assets/investment')
          * @middlewares('api', 'auth:sanctum')
+         *
+         * Currently supported query parameters:
+         * - active: filter by active status (1 or 0)
+         * - query: search string to match against name, symbol, or ISIN
+         * - currency_id: filter by currency ID
+         * - limit: maximum number of results to return (default 10)
+         * - sort_by: field to sort by (name, symbol, isin, active, created_at), default is name
+         * - sort_order: asc or desc, default is asc
          */
+        // Whitelist of valid sortable columns
+        $validSortColumns = ['name', 'symbol', 'isin', 'active', 'created_at'];
+        $sortBy = $request->get('sort_by', 'name');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        // Validate sort_by parameter
+        if (!in_array($sortBy, $validSortColumns, true)) {
+            $sortBy = 'name';
+        }
+
+        // Validate sort_order parameter
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'], true)) {
+            $sortOrder = 'asc';
+        }
+
         $investments = $request->user()
             ->investments()
-            ->where('active', true)
-            ->select(['id', 'name AS text'])
-            ->when($request->get('q'), function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->get('q') . '%');
-            })
-            ->when($request->get('currency_id'), function ($query) use ($request) {
-                $query->where('currency_id', '=', $request->get('currency_id'));
-            })
-            ->orderBy('name')
-            ->take(10)
+            ->when($request->has('active'), fn($query) =>
+                $query->where('active', $request->get('active'))
+            )
+            ->when($request->get('query'), fn ($query) =>
+                // The query string is searched in: name, symbol, ISIN
+                $query->where(function ($q) use ($request) {
+                    $q->whereRaw(
+                        'LOWER(name) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    )
+                    ->orWhereRaw(
+                        'LOWER(symbol) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    )
+                    ->orWhereRaw(
+                        'LOWER(isin) LIKE ?',
+                        ['%' . strtolower($request->get('query')) . '%']
+                    );
+                })
+            )
+            ->when($request->get('currency_id'), fn ($query) =>
+                $query->where('currency_id', '=', $request->get('currency_id'))
+            )
+            ->orderBy($sortBy, $sortOrder)
+            ->take($request->get('limit', 10))
             ->get();
 
         return response()->json($investments, Response::HTTP_OK);

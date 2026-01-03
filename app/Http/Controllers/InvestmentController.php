@@ -11,7 +11,6 @@ use App\Models\Investment;
 use App\Models\InvestmentPrice;
 use App\Services\InvestmentService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -109,7 +108,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment updated'));
 
-        return redirect()->route('investment.index');
+        return to_route('investment.index');
     }
 
     /**
@@ -133,7 +132,7 @@ class InvestmentController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('investment-group.create');
+            return to_route('investment-group.create');
         }
 
         // Redirect to currency form, if empty
@@ -145,7 +144,7 @@ class InvestmentController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('currency.create');
+            return to_route('currency.create');
         }
 
         return view('investment.form');
@@ -164,7 +163,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment added'));
 
-        return redirect()->route('investment.index');
+        return to_route('investment.index');
     }
 
     /**
@@ -182,7 +181,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
         if ($result['success']) {
             self::addSimpleSuccessMessage(__('Investment deleted'));
-            return redirect()->route('investment.index');
+            return to_route('investment.index');
         }
 
         self::addSimpleErrorMessage($result['error']);

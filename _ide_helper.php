@@ -16927,42 +16927,6 @@ namespace Illuminate\Support\Facades {
      */
     class Route {
         /**
-         * @static
-         */
-        public static function spyRouteConflict()
-        {
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
-            return $instance->spyRouteConflict();
-        }
-
-        /**
-         * @static
-         */
-        public static function updateGroupStack($attributes)
-        {
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
-            return $instance->updateGroupStack($attributes);
-        }
-
-        /**
-         * @static
-         */
-        public static function routeError($info, $err, $msg)
-        {
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
-            return $instance->routeError($info, $err, $msg);
-        }
-
-        /**
-         * @static
-         */
-        public static function addRoute($methods, $uri, $action)
-        {
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
-            return $instance->addRoute($methods, $uri, $action);
-        }
-
-        /**
          * Register a new GET route with the router.
          *
          * @param string $uri
@@ -16972,8 +16936,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function get($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->get($uri, $action);
         }
 
@@ -16987,8 +16950,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function post($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->post($uri, $action);
         }
 
@@ -17002,8 +16964,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function put($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->put($uri, $action);
         }
 
@@ -17017,8 +16978,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function patch($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->patch($uri, $action);
         }
 
@@ -17032,8 +16992,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function delete($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->delete($uri, $action);
         }
 
@@ -17047,8 +17006,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function options($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->options($uri, $action);
         }
 
@@ -17062,8 +17020,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function any($uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->any($uri, $action);
         }
 
@@ -17076,8 +17033,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function fallback($action)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->fallback($action);
         }
 
@@ -17092,8 +17048,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function redirect($uri, $destination, $status = 302)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->redirect($uri, $destination, $status);
         }
 
@@ -17107,8 +17062,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function permanentRedirect($uri, $destination)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->permanentRedirect($uri, $destination);
         }
 
@@ -17125,8 +17079,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function view($uri, $view, $data = [], $status = 200, $headers = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->view($uri, $view, $data, $status, $headers);
         }
 
@@ -17141,8 +17094,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function match($methods, $uri, $action = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->match($methods, $uri, $action);
         }
 
@@ -17156,8 +17108,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resources($resources, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->resources($resources, $options);
         }
 
@@ -17171,8 +17122,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function softDeletableResources($resources, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->softDeletableResources($resources, $options);
         }
 
@@ -17187,8 +17137,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resource($name, $controller, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->resource($name, $controller, $options);
         }
 
@@ -17202,8 +17151,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiResources($resources, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->apiResources($resources, $options);
         }
 
@@ -17218,8 +17166,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiResource($name, $controller, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->apiResource($name, $controller, $options);
         }
 
@@ -17233,8 +17180,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singletons($singletons, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->singletons($singletons, $options);
         }
 
@@ -17249,8 +17195,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singleton($name, $controller, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->singleton($name, $controller, $options);
         }
 
@@ -17264,8 +17209,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiSingletons($singletons, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->apiSingletons($singletons, $options);
         }
 
@@ -17280,8 +17224,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function apiSingleton($name, $controller, $options = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->apiSingleton($name, $controller, $options);
         }
 
@@ -17290,13 +17233,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param array $attributes
          * @param \Closure|array|string $routes
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function group($attributes, $routes)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->group($attributes, $routes);
         }
 
@@ -17310,8 +17252,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function mergeWithLastGroup($new, $prependExistingPrefix = true)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->mergeWithLastGroup($new, $prependExistingPrefix);
         }
 
@@ -17323,9 +17264,23 @@ namespace Illuminate\Support\Facades {
          */
         public static function getLastGroupPrefix()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getLastGroupPrefix();
+        }
+
+        /**
+         * Add a route to the underlying route collection.
+         *
+         * @param array|string $methods
+         * @param string $uri
+         * @param array|string|callable|null $action
+         * @return \Illuminate\Routing\Route
+         * @static
+         */
+        public static function addRoute($methods, $uri, $action)
+        {
+            /** @var \Illuminate\Routing\Router $instance */
+            return $instance->addRoute($methods, $uri, $action);
         }
 
         /**
@@ -17339,8 +17294,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function newRoute($methods, $uri, $action)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->newRoute($methods, $uri, $action);
         }
 
@@ -17353,8 +17307,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function respondWithRoute($name)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->respondWithRoute($name);
         }
 
@@ -17367,8 +17320,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function dispatch($request)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->dispatch($request);
         }
 
@@ -17381,8 +17333,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function dispatchToRoute($request)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->dispatchToRoute($request);
         }
 
@@ -17395,8 +17346,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function gatherRouteMiddleware($route)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->gatherRouteMiddleware($route);
         }
 
@@ -17410,8 +17360,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resolveMiddleware($middleware, $excluded = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->resolveMiddleware($middleware, $excluded);
         }
 
@@ -17425,8 +17374,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function prepareResponse($request, $response)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->prepareResponse($request, $response);
         }
 
@@ -17440,8 +17388,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function toResponse($request, $response)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::toResponse($request, $response);
+            return \Illuminate\Routing\Router::toResponse($request, $response);
         }
 
         /**
@@ -17455,8 +17402,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function substituteBindings($route)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->substituteBindings($route);
         }
 
@@ -17471,8 +17417,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function substituteImplicitBindings($route)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->substituteImplicitBindings($route);
         }
 
@@ -17480,13 +17425,12 @@ namespace Illuminate\Support\Facades {
          * Register a callback to run after implicit bindings are substituted.
          *
          * @param callable $callback
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function substituteImplicitBindingsUsing($callback)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->substituteImplicitBindingsUsing($callback);
         }
 
@@ -17499,8 +17443,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function matched($callback)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->matched($callback);
         }
 
@@ -17512,8 +17455,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getMiddleware()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getMiddleware();
         }
 
@@ -17522,13 +17464,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $name
          * @param string $class
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function aliasMiddleware($name, $class)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->aliasMiddleware($name, $class);
         }
 
@@ -17541,8 +17482,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasMiddlewareGroup($name)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->hasMiddlewareGroup($name);
         }
 
@@ -17554,8 +17494,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getMiddlewareGroups()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getMiddlewareGroups();
         }
 
@@ -17564,13 +17503,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $name
          * @param array $middleware
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function middlewareGroup($name, $middleware)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->middlewareGroup($name, $middleware);
         }
 
@@ -17581,13 +17519,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function prependMiddlewareToGroup($group, $middleware)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->prependMiddlewareToGroup($group, $middleware);
         }
 
@@ -17598,13 +17535,12 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function pushMiddlewareToGroup($group, $middleware)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->pushMiddlewareToGroup($group, $middleware);
         }
 
@@ -17613,26 +17549,24 @@ namespace Illuminate\Support\Facades {
          *
          * @param string $group
          * @param string $middleware
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function removeMiddlewareFromGroup($group, $middleware)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->removeMiddlewareFromGroup($group, $middleware);
         }
 
         /**
          * Flush the router's middleware groups.
          *
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function flushMiddlewareGroups()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->flushMiddlewareGroups();
         }
 
@@ -17646,8 +17580,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function bind($key, $binder)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->bind($key, $binder);
         }
 
@@ -17662,8 +17595,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function model($key, $class, $callback = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->model($key, $class, $callback);
         }
 
@@ -17676,8 +17608,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getBindingCallback($key)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getBindingCallback($key);
         }
 
@@ -17689,8 +17620,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getPatterns()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getPatterns();
         }
 
@@ -17704,8 +17634,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function pattern($key, $pattern)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->pattern($key, $pattern);
         }
 
@@ -17718,8 +17647,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function patterns($patterns)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->patterns($patterns);
         }
 
@@ -17731,8 +17659,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasGroupStack()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->hasGroupStack();
         }
 
@@ -17744,8 +17671,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getGroupStack()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getGroupStack();
         }
 
@@ -17759,8 +17685,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function input($key, $default = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->input($key, $default);
         }
 
@@ -17772,8 +17697,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getCurrentRequest()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getCurrentRequest();
         }
 
@@ -17785,8 +17709,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getCurrentRoute()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getCurrentRoute();
         }
 
@@ -17798,8 +17721,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function current()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->current();
         }
 
@@ -17812,8 +17734,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function has($name)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->has($name);
         }
 
@@ -17825,8 +17746,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteName()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->currentRouteName();
         }
 
@@ -17839,8 +17759,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function is(...$patterns)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->is(...$patterns);
         }
 
@@ -17853,8 +17772,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteNamed(...$patterns)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->currentRouteNamed(...$patterns);
         }
 
@@ -17866,8 +17784,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteAction()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->currentRouteAction();
         }
 
@@ -17880,8 +17797,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function uses(...$patterns)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->uses(...$patterns);
         }
 
@@ -17894,8 +17810,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function currentRouteUses($action)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->currentRouteUses($action);
         }
 
@@ -17908,8 +17823,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function singularResourceParameters($singular = true)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->singularResourceParameters($singular);
         }
 
@@ -17922,8 +17836,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resourceParameters($parameters = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->resourceParameters($parameters);
         }
 
@@ -17936,8 +17849,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function resourceVerbs($verbs = [])
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->resourceVerbs($verbs);
         }
 
@@ -17949,8 +17861,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function getRoutes()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->getRoutes();
         }
 
@@ -17963,8 +17874,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function setRoutes($routes)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->setRoutes($routes);
         }
 
@@ -17977,8 +17887,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function setCompiledRoutes($routes)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             $instance->setCompiledRoutes($routes);
         }
 
@@ -17991,21 +17900,19 @@ namespace Illuminate\Support\Facades {
          */
         public static function uniqueMiddleware($middleware)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::uniqueMiddleware($middleware);
+            return \Illuminate\Routing\Router::uniqueMiddleware($middleware);
         }
 
         /**
          * Set the container instance used by the router.
          *
          * @param \Illuminate\Container\Container $container
-         * @return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter
+         * @return \Illuminate\Routing\Router
          * @static
          */
         public static function setContainer($container)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->setContainer($container);
         }
 
@@ -18020,8 +17927,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function macro($name, $macro)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::macro($name, $macro);
+            \Illuminate\Routing\Router::macro($name, $macro);
         }
 
         /**
@@ -18035,8 +17941,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function mixin($mixin, $replace = true)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::mixin($mixin, $replace);
+            \Illuminate\Routing\Router::mixin($mixin, $replace);
         }
 
         /**
@@ -18048,8 +17953,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function hasMacro($name)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            return \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::hasMacro($name);
+            return \Illuminate\Routing\Router::hasMacro($name);
         }
 
         /**
@@ -18060,8 +17964,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function flushMacros()
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter::flushMacros();
+            \Illuminate\Routing\Router::flushMacros();
         }
 
         /**
@@ -18075,8 +17978,7 @@ namespace Illuminate\Support\Facades {
          */
         public static function macroCall($method, $parameters)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->macroCall($method, $parameters);
         }
 
@@ -18089,9 +17991,45 @@ namespace Illuminate\Support\Facades {
          */
         public static function tap($callback = null)
         {
-            //Method inherited from \Illuminate\Routing\Router 
-            /** @var \Imanghafoori\LaravelMicroscope\Features\CheckRoutes\SpyRouter $instance */
+            /** @var \Illuminate\Routing\Router $instance */
             return $instance->tap($callback);
+        }
+
+        /**
+         * @see \Laravel\Ui\AuthRouteMethods::auth()
+         * @param mixed $options
+         * @static
+         */
+        public static function auth($options = [])
+        {
+            return \Illuminate\Routing\Router::auth($options);
+        }
+
+        /**
+         * @see \Laravel\Ui\AuthRouteMethods::resetPassword()
+         * @static
+         */
+        public static function resetPassword()
+        {
+            return \Illuminate\Routing\Router::resetPassword();
+        }
+
+        /**
+         * @see \Laravel\Ui\AuthRouteMethods::confirmPassword()
+         * @static
+         */
+        public static function confirmPassword()
+        {
+            return \Illuminate\Routing\Router::confirmPassword();
+        }
+
+        /**
+         * @see \Laravel\Ui\AuthRouteMethods::emailVerification()
+         * @static
+         */
+        public static function emailVerification()
+        {
+            return \Illuminate\Routing\Router::emailVerification();
         }
 
             }
@@ -25259,10 +25197,25 @@ namespace Illuminate\Http {
             }
     }
 
-namespace Imanghafoori\LaravelMicroscope\Features\CheckRoutes {
+namespace Illuminate\Console\Scheduling {
     /**
      */
-    class SpyRouter extends \Illuminate\Routing\Router {
+    class Event {
+        /**
+         * @see \Sentry\Laravel\Features\ConsoleSchedulingIntegration::register()
+         * @param string|null $monitorSlug
+         * @param int|null $checkInMargin
+         * @param int|null $maxRuntime
+         * @param bool $updateMonitorConfig
+         * @param int|null $failureIssueThreshold
+         * @param int|null $recoveryThreshold
+         * @static
+         */
+        public static function sentryMonitor($monitorSlug = null, $checkInMargin = null, $maxRuntime = null, $updateMonitorConfig = true, $failureIssueThreshold = null, $recoveryThreshold = null)
+        {
+            return \Illuminate\Console\Scheduling\Event::sentryMonitor($monitorSlug, $checkInMargin, $maxRuntime, $updateMonitorConfig, $failureIssueThreshold, $recoveryThreshold);
+        }
+
             }
     }
 
@@ -25306,28 +25259,6 @@ namespace Illuminate\Routing {
         public static function emailVerification()
         {
             return \Illuminate\Routing\Router::emailVerification();
-        }
-
-            }
-    }
-
-namespace Illuminate\Console\Scheduling {
-    /**
-     */
-    class Event {
-        /**
-         * @see \Sentry\Laravel\Features\ConsoleSchedulingIntegration::register()
-         * @param string|null $monitorSlug
-         * @param int|null $checkInMargin
-         * @param int|null $maxRuntime
-         * @param bool $updateMonitorConfig
-         * @param int|null $failureIssueThreshold
-         * @param int|null $recoveryThreshold
-         * @static
-         */
-        public static function sentryMonitor($monitorSlug = null, $checkInMargin = null, $maxRuntime = null, $updateMonitorConfig = true, $failureIssueThreshold = null, $recoveryThreshold = null)
-        {
-            return \Illuminate\Console\Scheduling\Event::sentryMonitor($monitorSlug, $checkInMargin, $maxRuntime, $updateMonitorConfig, $failureIssueThreshold, $recoveryThreshold);
         }
 
             }

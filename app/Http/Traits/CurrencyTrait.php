@@ -4,7 +4,6 @@ namespace App\Http\Traits;
 
 use App\Models\Currency;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -69,14 +68,14 @@ trait CurrencyTrait
         $cacheKey = "baseCurrency_forUser_{$userId}";
 
         // The base currency is not expected to change often, so it is cached for a month
-        return Cache::remember($cacheKey, now()->addMonth(), fn () => Auth::user()
+        return Cache::remember($cacheKey, now()->addMonth(), fn() => Auth::user()
             ->currencies()
             ->where('base', 1)
             ->firstOr(
-                fn () => Auth::user()
+                fn() => Auth::user()
                     ->currencies()
                     ->orderBy('id')
-                    ->firstOr(fn () => null)
+                    ->firstOr(fn() => null)
             ));
     }
 
@@ -97,9 +96,11 @@ trait CurrencyTrait
     public function getLatestRateFromMap(?int $currencyId, Carbon $date, array $allRatesMap, int $baseCurrencyID): ?float
     {
         // If the currency is the base currency or not present in the rates map, return null
-        if ($currencyId === null ||
+        if (
+            $currencyId === null ||
             $currencyId === $baseCurrencyID ||
-            !array_key_exists($currencyId, $allRatesMap)) {
+            !array_key_exists($currencyId, $allRatesMap)
+        ) {
             return null;
         }
 

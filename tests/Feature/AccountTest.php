@@ -50,7 +50,7 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         // User is redirected to create an account group first
-        $response->assertRedirect(route('account-group.create'));
+        $response->assertRedirectToRoute('account-group.create');
     }
 
     public function test_user_cannot_create_new_account_without_a_currency(): void
@@ -63,23 +63,23 @@ class AccountTest extends TestCase
         $response = $this->actingAs($user)->get(route("{$this->base_route}.create", ['type' => 'account']));
 
         // User is redirected to create a currency first
-        $response->assertRedirect(route('currency.create'));
+        $response->assertRedirectToRoute('currency.create');
     }
 
     public function test_guest_cannot_access_resource(): void
     {
         // Unauthenticated user cannot access any actions of the resource
-        $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create", ['type' => 'account']))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store", ['type' => 'account']))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index", ['type' => 'account']))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create", ['type' => 'account']))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store", ['type' => 'account']))->assertRedirectToRoute('login');
 
         // Create a user and the related resources
         $account = $this->createAccountAndUser();
 
         $this->get(route("{$this->base_route}.edit", ['type' => 'account', 'account_entity' => $account->id]))
-            ->assertRedirect(route('login'));
+            ->assertRedirectToRoute('login');
         $this->patch(route("{$this->base_route}.update", ['type' => 'account', 'account_entity' => $account->id]))
-            ->assertRedirect(route('login'));
+            ->assertRedirectToRoute('login');
     }
 
     public function test_user_cannot_access_other_users_resource(): void
@@ -178,7 +178,7 @@ class AccountTest extends TestCase
                 $attributes
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'account']);
 
         $model = new $this->base_model();
 
@@ -254,7 +254,7 @@ class AccountTest extends TestCase
                 ]
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'account']);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');
@@ -301,7 +301,7 @@ class AccountTest extends TestCase
                 $attributes
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'account']));
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'account']);
 
         $this->assertDatabaseHas('accounts', $attributes['config']);
     }

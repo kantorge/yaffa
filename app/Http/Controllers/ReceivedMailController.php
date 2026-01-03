@@ -68,7 +68,7 @@ class ReceivedMailController extends Controller implements HasMiddleware
 
         if ($result['success']) {
             self::addSimpleSuccessMessage(__('Email deleted'));
-            return redirect()->route('received-mail.index');
+            return to_route('received-mail.index');
         }
 
         self::addSimpleErrorMessage($result['error']);

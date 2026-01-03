@@ -93,7 +93,7 @@ npm run dev                    # ~30-40 seconds
 
 # Production build (optimized, minified - use for deployment)
 # This is used only for the `main` branch as part of releasing new versions.
-npm run production             # ~32 seconds
+npm run build             # ~32 seconds
 ```
 
 **Build Output:** Generated files go to `public/js/` and `public/css/` - these are Git-tracked.
@@ -275,7 +275,7 @@ Before submitting changes:
 - [ ] Run `./vendor/bin/pint` to fix PHP code style
 - [ ] Run `./vendor/bin/phpstan analyse` to catch type errors
 - [ ] Run `npx eslint resources/js --ext .js,.vue` for frontend linting
-- [ ] Build assets: `npm run production` or `npm run dev`
+- [ ] Build assets: `npm run build` or `npm run dev`
 - [ ] Run PHPUnit tests: `vendor/bin/phpunit --testsuite AllNonDusk`
 - [ ] If UI changes, consider running Dusk tests: `php artisan dusk`
 - [ ] Check `.gitignore` - don't commit `vendor/`, `node_modules/`, `.env`, or `storage/` (except structure)

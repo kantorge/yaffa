@@ -24,9 +24,9 @@ class PayeeTest extends TestCase
 
     public function test_guest_cannot_access_resource(): void
     {
-        $this->get(route("{$this->base_route}.index", ['type' => 'payee']))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store", ['type' => 'payee']))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index", ['type' => 'payee']))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create", ['type' => 'payee']))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store", ['type' => 'payee']))->assertRedirectToRoute('login');
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -35,9 +35,9 @@ class PayeeTest extends TestCase
         $payee = AccountEntity::factory()->for($user)->for(Payee::factory()->withUser($user), 'config')->create();
 
         $this->get(route("{$this->base_route}.edit", ['account_entity' => $payee->id]))
-            ->assertRedirect(route('login'));
+            ->assertRedirectToRoute('login');
         $this->patch(route("{$this->base_route}.update", ['account_entity' => $payee->id]))
-            ->assertRedirect(route('login'));
+            ->assertRedirectToRoute('login');
     }
 
     public function test_user_cannot_access_other_users_resource(): void
@@ -125,7 +125,7 @@ class PayeeTest extends TestCase
                 $attributes
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'payee']));
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'payee']);
 
         $model = new $this->base_model();
 
@@ -203,7 +203,7 @@ class PayeeTest extends TestCase
                 ]
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index", ['type' => 'payee']));
+        $response->assertRedirectToRoute("{$this->base_route}.index", ['type' => 'payee']);
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');

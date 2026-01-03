@@ -8,7 +8,6 @@ use Illuminate\Routing\Controllers\Middleware;
 use App\Http\Requests\TagRequest;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 
@@ -85,7 +84,7 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag added'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 
     public function update(TagRequest $request, Tag $tag): RedirectResponse
@@ -104,7 +103,7 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag updated'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 
     /**
@@ -121,6 +120,6 @@ class TagController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Tag deleted'));
 
-        return redirect()->route('tag.index');
+        return to_route('tag.index');
     }
 }

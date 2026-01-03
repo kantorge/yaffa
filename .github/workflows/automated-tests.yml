@@ -67,6 +67,19 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
+      - name: Cache NPM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build Assets
+        run: npm run build
+
       - name: Prepare Laravel Application
         run: ln -f -s .env.ci .env
 
@@ -135,7 +148,7 @@ jobs:
         run: npm ci
 
       - name: Build Assets
-        run: npm run dev
+        run: npm run build
 
       - name: Run Laravel Server
         run: php artisan serve --no-reload &

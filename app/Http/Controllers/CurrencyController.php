@@ -14,7 +14,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -91,7 +90,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency added'));
 
-        return redirect()->route('currency.index');
+        return to_route('currency.index');
     }
 
     /**
@@ -130,7 +129,7 @@ class CurrencyController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Currency updated'));
 
-        return redirect()->route('currency.index');
+        return to_route('currency.index');
     }
 
     /**
@@ -156,7 +155,7 @@ class CurrencyController extends Controller implements HasMiddleware
             $currency->delete();
             self::addSimpleSuccessMessage(__('Currency deleted'));
 
-            return redirect()->route('currency.index');
+            return to_route('currency.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Currency is in use, cannot be deleted'));

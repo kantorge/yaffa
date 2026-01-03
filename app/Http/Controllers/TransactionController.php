@@ -11,7 +11,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
 use Exception;
 
@@ -32,7 +31,7 @@ class TransactionController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified')
          */
 
-        // Sanity check for necessary assets
+        // Sanity check for necessary assets: account is needed for any transactions
         if ($request->user()->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
@@ -41,7 +40,20 @@ class TransactionController extends Controller implements HasMiddleware
                 'info-circle'
             );
 
-            return redirect()->route('account-entity.create', ['type' => 'account']);
+            return to_route('account-entity.create', ['type' => 'account']);
+        }
+
+        // Sanity check: an investment is needed for investment transactions
+        // (Note, we don't check that the investment is in the right currency etc. here,)
+        if ($type === 'investment' && $request->user()->investments()->active()->count() === 0) {
+            $this->addMessage(
+                __('transaction.requirement.investment'),
+                'info',
+                __('No investments found'),
+                'info-circle'
+            );
+
+            return to_route('investment.create');
         }
 
         return view('transactions.form', [
@@ -70,7 +82,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Validate if action is supported
         $availableActions = ['clone', 'create', 'edit', 'enter', 'finalize', 'replace', 'show'];
-        if (! in_array($action, $availableActions)) {
+        if (!in_array($action, $availableActions)) {
             abort(404);
         }
 
@@ -170,7 +182,7 @@ class TransactionController extends Controller implements HasMiddleware
         }
 
         // Ensure that a config relation exists, even if it's empty
-        if (! array_key_exists('config', $transactionData)) {
+        if (!array_key_exists('config', $transactionData)) {
             $transactionData['config'] = [];
         }
         $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
@@ -188,11 +200,13 @@ class TransactionController extends Controller implements HasMiddleware
         $transaction->budget = false;
         $transaction->reconciled = false;
 
+        $sourceId = $request->input('mail_id');
+
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
             'type' => 'standard',
-            'source_id' => $request->input('mail_id'),
+            'source_id' => $sourceId,
         ]);
     }
 }

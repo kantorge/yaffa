@@ -24,9 +24,9 @@ class InvestmentTest extends TestCase
 
     public function test_guest_cannot_access_resource(): void
     {
-        $this->get(route("{$this->base_route}.index"))->assertRedirect(route('login'));
-        $this->get(route("{$this->base_route}.create"))->assertRedirect(route('login'));
-        $this->post(route("{$this->base_route}.store"))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.index"))->assertRedirectToRoute('login');
+        $this->get(route("{$this->base_route}.create"))->assertRedirectToRoute('login');
+        $this->post(route("{$this->base_route}.store"))->assertRedirectToRoute('login');
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -34,9 +34,9 @@ class InvestmentTest extends TestCase
         /** @var Investment $investment */
         $investment = Investment::factory()->for($user)->create();
 
-        $this->get(route("{$this->base_route}.edit", $investment->id))->assertRedirect(route('login'));
-        $this->patch(route("{$this->base_route}.update", $investment->id))->assertRedirect(route('login'));
-        $this->delete(route("{$this->base_route}.destroy", $investment->id))->assertRedirect(route('login'));
+        $this->get(route("{$this->base_route}.edit", $investment->id))->assertRedirectToRoute('login');
+        $this->patch(route("{$this->base_route}.update", $investment->id))->assertRedirectToRoute('login');
+        $this->delete(route("{$this->base_route}.destroy", $investment->id))->assertRedirectToRoute('login');
     }
 
     public function test_user_cannot_access_other_users_resource(): void
@@ -98,7 +98,7 @@ class InvestmentTest extends TestCase
             ->get(route("{$this->base_route}.create"));
 
         // Assert that the user is redirected to the investment group creation page
-        $response->assertRedirect(route('investment-group.create'));
+        $response->assertRedirectToRoute('investment-group.create');
 
         // Create the investment group
         InvestmentGroup::factory()->for($user)->create();
@@ -108,7 +108,7 @@ class InvestmentTest extends TestCase
             ->actingAs($user)
             ->get(route("{$this->base_route}.create"));
 
-        $response->assertRedirect(route('currency.create'));
+        $response->assertRedirectToRoute('currency.create');
 
         // Create the currency
         Currency::factory()->for($user)->create();
@@ -252,7 +252,7 @@ class InvestmentTest extends TestCase
                 ]
             );
 
-        $response->assertRedirect(route("{$this->base_route}.index"));
+        $response->assertRedirectToRoute("{$this->base_route}.index");
         $notifications = session('notification_collection');
         $successNotificationExists = collect($notifications)
             ->contains(fn ($notification) => $notification['type'] === 'success');

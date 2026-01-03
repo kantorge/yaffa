@@ -39,25 +39,26 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return retry(3, fn () => $browser
+        return retry(3, fn() => $browser
             ->visitRoute('transaction.create', ['type' => 'investment'])
-                // Wait for the form and key elements to be present
+
+            // Wait for the form and key elements to be present
             ->waitFor(self::MAIN_FORM_SELECTOR)
             ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
             ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
-                // Select type
+            // Select type
             ->select('#transaction_type', 'Buy')
-                // Add quantity
+            // Add quantity
             ->type('#transaction_quantity', '10')
-                // Add price
+            // Add price
             ->type('#transaction_price', '20')
-                // Add commission
+            // Add commission
             ->type('#transaction_commission', '30')
-                // Add taxes
+            // Add taxes
             ->type('#transaction_tax', '40')
-                // Select account
+            // Select account
             ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                // Select investment
+            // Select investment
             ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10));
     }
 
@@ -66,6 +67,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
                 ->assertPresent(self::MAIN_FORM_SELECTOR);
         });
     }
@@ -75,6 +77,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Try to save form without any data
                 ->pressAndWaitFor(self::SUBMIT_BUTTON_SELECTOR)
                 // The page should no have changed
@@ -90,6 +94,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->browse(function (Browser $browser) {
                 $browser->loginAs($this->user)
                     ->visitRoute('transaction.create', ['type' => 'investment'])
+                    ->waitFor(self::MAIN_FORM_SELECTOR)
+
                     // Select account
                     ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                     ->assertSeeIn(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_ACCOUNT_NAME_USD)
@@ -116,6 +122,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // As a preparation, select an investment with known currency
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 ->assertSeeIn(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2', self::TEST_INVESTMENT_NAME_USD)
@@ -138,7 +146,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
@@ -172,7 +180,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 // Open transaction investment form
                 ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->assertPresent(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::MAIN_FORM_SELECTOR)
 
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
@@ -221,6 +229,9 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(
+                    self::MAIN_FORM_SELECTOR
+                )
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
@@ -249,6 +260,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
@@ -286,6 +299,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $this->browse(function (Browser $browser) {
                 $browser->loginAs($this->user)
                     ->visitRoute('transaction.create', ['type' => 'investment'])
+                    ->waitFor(self::MAIN_FORM_SELECTOR)
+
                     // Select account
                     ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                     // Select investment
@@ -432,7 +447,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             // Fill form with standard data
             $this->fillStandardBuyForm($browser)
                 // Click the date field to open the date picker
-                ->click('#date')
+                ->click('#investment-date')
                 // Wait for the date picker to open
                 ->waitFor('.vc-pane-container', 10)
                 // Click the first day of the previous month, which is in the first column
@@ -455,5 +470,36 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             );
         });
 
+    }
+
+    public function test_default_values_are_loaded_from_url(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute(
+                    'transaction.create',
+                    [
+                        'type' => 'investment',
+                        'account' => $this->user->accounts()->firstWhere('name', self::TEST_ACCOUNT_NAME_USD)->id,
+                        'investment' => $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_USD)->id,
+                    ]
+                )
+                // Wait for the form and the Select2 elements to load
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered', 10)
+
+                // Verify that the account is selected
+                ->assertSeeIn(
+                    self::ACCOUNT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_ACCOUNT_NAME_USD
+                )
+
+                // Verify that the investment is selected
+                ->assertSeeIn(
+                    self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
+                    self::TEST_INVESTMENT_NAME_USD
+                );
+        });
     }
 }

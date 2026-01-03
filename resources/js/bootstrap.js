@@ -1,11 +1,15 @@
-window.$ = window.jQuery = require('jquery');
-window.bootstrap = require('bootstrap')
+import $ from 'jquery';
+window.$ = window.jQuery = $;
+
+import * as bootstrap from 'bootstrap';
+window.bootstrap = bootstrap;
 
 // Get CSRF Token from meta tag
 window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 // Axios
-window.axios = require('axios');
+import axios from 'axios';
+window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 if (window.csrfToken) {
@@ -109,7 +113,8 @@ window.__ = function (key, replace) {
         return toastElement
     }
 
-    bootstrap.showToast = function (props) {
+    // Export as a separate global function instead of extending bootstrap
+    window.showToast = function (props) {
         return new Toast(props)
     }
 
@@ -118,5 +123,5 @@ window.__ = function (key, replace) {
 // Set up a global event listener for the 'toast' event
 window.addEventListener('toast', function (event) {
     // Create the toast
-    window.bootstrap.showToast(event.detail);
+    window.showToast(event.detail);
 }.bind(this));

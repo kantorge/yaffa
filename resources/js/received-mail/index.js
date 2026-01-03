@@ -1,4 +1,4 @@
-require("datatables.net-responsive-bs5");
+import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 

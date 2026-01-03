@@ -132,7 +132,7 @@ class AccountShowTest extends DuskTestCase
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 4)
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 4)
                 // Verify the currency and amount in the table for each transaction
                 ->assertSeeIn('#historyTable tbody', '€1.11')
                 ->assertSeeIn('#historyTable tbody', '€2')
@@ -260,7 +260,7 @@ class AccountShowTest extends DuskTestCase
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 4)
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 4)
                 // Verify the currency and amount in the table for each transaction
                 ->assertSeeIn('#historyTable tbody', '-$1,150')
                 ->assertSeeIn('#historyTable tbody', '$0')
@@ -322,7 +322,7 @@ class AccountShowTest extends DuskTestCase
                 ])
                 // Wait for the page to load, including the table content
                 ->waitFor('#historyTable')
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') === 1)
+                ->waitUsing(5, 75, fn() => $this->getTableRowCount($browser, '#historyTable') === 1)
                 // Verify the transaction is shown
                 ->assertSeeIn('#historyTable tbody', '€1.11')
                 // Additionally, verify that the date range selector shows the default "Select preset" option, as we used explicit date parameters
@@ -508,7 +508,7 @@ class AccountShowTest extends DuskTestCase
                 // Click the Update button to trigger table reload
                 ->click('#reload')
                 // Wait for table to reload with the transaction
-                ->waitUsing(5, 75, fn () => $this->getTableRowCount($browser, '#historyTable') >= 1)
+                ->waitUsing(10, 75, fn() => $this->getTableRowCount($browser, '#historyTable') >= 1)
                 // Verify the transaction is shown
                 ->assertPresent(('button.transaction-quickview[data-id="' . $transaction->id . '"]'));
         });

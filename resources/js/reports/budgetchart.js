@@ -7,8 +7,8 @@ import * as helpers from "../helpers";
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
 
-require('datatables.net-bs5');
-require('select2');
+import 'datatables.net-bs5';
+import 'select2';
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
@@ -187,7 +187,7 @@ let reloadData = function () {
     // We need to reload the table content, too
     window.table.ajax.reload(function () {
         // (Re-)initialize tooltips in table, once data is reloaded
-        $('[data-toggle="tooltip"]').tooltip();
+        helpers.initializeBootstrapTooltips();
     });
 }
 

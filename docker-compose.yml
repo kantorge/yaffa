@@ -1,95 +1,74 @@
 services:
-    nginx:
-        image: 'nginx:latest'
-        ports:
-            - '${HTTP_PORT:-8000}:80'
-            - '${SSL_PORT:-443}:443'
-        environment:
-            - SSL_PORT=${SSL_PORT:-443}
-            - APP_SERVICE=${APP_SERVICE:-laravel.test}
-            - SERVER_NAME=${SERVER_NAME:-localhost}
-            - SSL_DOMAIN=${SSL_DOMAIN:-localhost}
-            - SSL_ALT_NAME=${SSL_ALT_NAME:-DNS:localhost}
-        volumes:
-            - 'sail-nginx:/etc/nginx/certs'
-            - './vendor/ryoluo/sail-ssl/nginx/templates:/etc/nginx/templates'
-            - './vendor/ryoluo/sail-ssl/nginx/generate-ssl-cert.sh:/docker-entrypoint.d/99-generate-ssl-cert.sh'
-        depends_on:
-            - ${APP_SERVICE:-laravel.test}
-        networks:
-            - sail
-    yaffa.test:
-        build:
-            context: ./vendor/laravel/sail/runtimes/8.3
-            dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: sail-8.3/app
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-            IGNITION_LOCAL_SITES_PATH: '${PWD}'
-        volumes:
-            - '.:/var/www/html'
-        networks:
-            - sail
-        depends_on:
-            - mysql
-            - mailhog
-            - selenium
-    mysql:
-        image: 'mysql/mysql-server:8.0'
-        ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
-        environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        volumes:
-            - 'sail-mysql:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-        networks:
-            - sail
-        healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
-            retries: 3
-            timeout: 5s
-    mailhog:
-        image: 'mailhog/mailhog:latest'
-        ports:
-            - '${FORWARD_MAILHOG_PORT:-1025}:1025'
-            - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
-        networks:
-            - sail
-    selenium:
-        image: selenium/standalone-chrome
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        volumes:
-            - '/dev/shm:/dev/shm'
-        ports:
-            - '4444:4444'
-        networks:
-            - sail
+  yaffa.test:
+    build:
+      context: ./vendor/laravel/sail/runtimes/8.3
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP}'
+    image: sail-8.3/app
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - '${APP_PORT:-80}:80'
+      - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+    environment:
+      WWWUSER: '${WWWUSER}'
+      LARAVEL_SAIL: 1
+      XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+      XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+      IGNITION_LOCAL_SITES_PATH: '${PWD}'
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+    depends_on:
+      - mysql
+      - mailhog
+      - selenium
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - '${FORWARD_DB_PORT:-3306}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+    networks:
+      - sail
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+      retries: 3
+      timeout: 5s
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - '${FORWARD_MAILHOG_PORT:-1025}:1025'
+      - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
+    networks:
+      - sail
+  selenium:
+    image: selenium/standalone-chrome:140.0
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - '/dev/shm:/dev/shm'
+    ports:
+      - '4444:4444'
+    networks:
+      - sail
 networks:
-    sail:
-        driver: bridge
-        ipam:
-            driver: default
-            config:
-                - subnet: 172.120.19.0/24
+  sail:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.120.19.0/24
 volumes:
-    sail-nginx:
-        driver: local
-    sail-mysql:
-        driver: local
+  sail-mysql:
+    driver: local

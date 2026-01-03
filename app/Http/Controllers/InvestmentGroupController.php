@@ -9,7 +9,6 @@ use App\Http\Requests\InvestmentGroupRequest;
 use App\Models\InvestmentGroup;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -86,7 +85,7 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment group added'));
 
-        return redirect()->route('investment-group.index');
+        return to_route('investment-group.index');
     }
 
     public function update(InvestmentGroupRequest $request, InvestmentGroup $investmentGroup): RedirectResponse
@@ -105,7 +104,7 @@ class InvestmentGroupController extends Controller implements HasMiddleware
 
         self::addSimpleSuccessMessage(__('Investment group updated'));
 
-        return redirect()->route('investment-group.index');
+        return to_route('investment-group.index');
     }
 
     /**
@@ -122,7 +121,7 @@ class InvestmentGroupController extends Controller implements HasMiddleware
             $investmentGroup->delete();
             self::addSimpleSuccessMessage(__('Investment group deleted'));
 
-            return redirect()->route('investment-group.index');
+            return to_route('investment-group.index');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 self::addSimpleErrorMessage(__('Investment group is in use, cannot be deleted'));
