@@ -8,6 +8,7 @@ return [
         "name" => "név",
         "tos" => "felhasználási feltételek"
     ],
+    "confirmed" => "A(z) :attribute megerősítése hibás.",
     "min" => [
         "string" => "A(z) :attribute mezőnek legalább :min karakter hosszúságúnak kell lennie."
     ],
