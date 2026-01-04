@@ -31,3 +31,8 @@ $fa-font-path: '@fortawesome/fontawesome-free/webfonts';
 @import '@fortawesome/fontawesome-free/scss/solid';
 @import '@fortawesome/fontawesome-free/scss/regular';
 @import '@fortawesome/fontawesome-free/scss/brands';
+
+// Flags
+$flag-icons-included-countries: ("gb", "hu", "fr");
+$flag-icons-path: "flag-icons/flags";
+@import "flag-icons/sass/flag-icons.scss";
