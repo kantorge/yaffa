@@ -43,7 +43,7 @@ class ProfileTest extends DuskTestCase
                 ->press('@button-change-password')
                 ->waitForTextIn('div.toast-container div.toast.bg-danger.show', 'Validation failed. Please check the form for errors.', 30)
                 ->waitForTextIn('#current_password + div.invalid-feedback', 'The password is incorrect.')
-                ->waitForTextIn('#password + div.invalid-feedback', 'The password must be at least 8 characters.')
+                ->waitForTextIn('#password + div.invalid-feedback', 'The password field must be at least 8 characters.')
 
                 // Set the correct password, a valid new password with a non-matching confirmation
                 ->waitUntilMissing('div.toast-container div.toast.bg-danger.show', 30)
