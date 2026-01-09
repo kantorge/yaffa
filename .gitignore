@@ -5,6 +5,7 @@
 /.phpunit.cache
 /node_modules
 /public/build
+/public/coverage
 /public/hot
 /public/storage
 /public/css
