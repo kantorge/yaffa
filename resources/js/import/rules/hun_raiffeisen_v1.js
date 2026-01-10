@@ -482,4 +482,4 @@ engine.addRule({
     }
 });
 
-module.exports = engine;
+export default engine;

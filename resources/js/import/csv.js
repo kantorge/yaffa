@@ -38,7 +38,7 @@ function storeNestedObjectValue(base, names, value) {
 
 // Require the rule engine
 // TODO: make this selectable from a list of available rules
-let engine = require('./rules/hun_raiffeisen_v1.js');
+import engine from './rules/hun_raiffeisen_v1.js';
 
 // The following variable is used to store the current transaction being created.
 let recentTransactionDraftId;
