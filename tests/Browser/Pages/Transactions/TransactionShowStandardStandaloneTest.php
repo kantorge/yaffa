@@ -40,8 +40,7 @@ class TransactionShowStandardStandaloneTest extends DuskTestCase
             $browser->loginAs($user)
                 // Load the transaction page
                 ->visitRoute('transaction.open', ['transaction' => $transaction->id, 'action' => 'show'])
-                // Check the details container is present
-                ->assertPresent('#transactionShowStandard')
+                ->waitFor('#transactionShowStandard')
 
                 // TODO: Check the details are correct
 
