@@ -66,6 +66,7 @@ class ReportApiController extends Controller implements HasMiddleware
         } else {
             $standardTransactions = TransactionItem::with([
                 'transaction',
+                'transaction.currency',
             ])
                 ->whereIn('category_id', $categories->pluck('id'))
                 ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
@@ -255,6 +256,7 @@ class ReportApiController extends Controller implements HasMiddleware
             $standardTransactions = TransactionItem::with([
                 'category',
                 'transaction',
+                'transaction.currency',
                 'transaction.config.accountFrom.config',
                 'transaction.config.accountTo.config',
             ])
@@ -304,6 +306,7 @@ class ReportApiController extends Controller implements HasMiddleware
         if ($transactionType === 'all' || $transactionType === 'investment') {
             // Add investment transaction results
             $investmentTransactions = Transaction::with([
+                'currency',
                 'transactionType',
             ])
                 ->byType('investment')

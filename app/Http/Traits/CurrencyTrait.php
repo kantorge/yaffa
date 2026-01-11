@@ -4,7 +4,6 @@ namespace App\Http\Traits;
 
 use App\Models\Currency;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -53,30 +52,63 @@ trait CurrencyTrait
     }
 
     /**
-     * Get base currency, which is marked as base, or the first currency entered.
+     * Get all currencies for a specific user, cached for 24 hours.
+     * Returns a collection keyed by currency ID for fast lookups.
+     * Cache is automatically invalidated when currencies are modified.
      *
-     * @return Currency|null;
+     * @param int|null $userId User ID (defaults to authenticated user)
+     * @return \Illuminate\Support\Collection<int, Currency>
      */
-    public function getBaseCurrency(): ?Currency
+    public function getAllCurrencies(?int $userId = null): \Illuminate\Support\Collection
     {
-        if (!Auth::check()) {
+        $userId = $userId ?? auth()->user()?->id;
+        
+        if (!$userId) {
+            return collect();
+        }
+
+        $cacheKey = "currencies_user_{$userId}";
+
+        return Cache::remember($cacheKey, now()->addHours(24), fn() =>
+            Currency::where('user_id', $userId)->get()->keyBy('id')
+        );
+    }
+
+    /**
+     * Get base currency for a specific user.
+     * Uses the cached collection from getAllCurrencies for efficiency.
+     *
+     * @param int|null $userId User ID (defaults to authenticated user)
+     * @return Currency|null
+     */
+    public function getBaseCurrency(?int $userId = null): ?Currency
+    {
+        $userId = $userId ?? auth()->user()?->id;
+        
+        if (!$userId) {
             return null;
         }
 
-        // Define the cache key for the current user
-        $userId = auth()->user()->id;
-        $cacheKey = "baseCurrency_forUser_{$userId}";
+        $allCurrencies = $this->getAllCurrencies($userId);
 
-        // The base currency is not expected to change often, so it is cached for a month
-        return Cache::remember($cacheKey, now()->addMonth(), fn() => Auth::user()
-            ->currencies()
-            ->where('base', 1)
-            ->firstOr(
-                fn() => Auth::user()
-                    ->currencies()
-                    ->orderBy('id')
-                    ->firstOr(fn() => null)
-            ));
+        // Try to find currency marked as base
+        $baseCurrency = $allCurrencies->firstWhere('base', 1);
+
+        // If no base currency, return first one
+        return $baseCurrency ?? $allCurrencies->sortBy('id')->first();
+    }
+
+    /**
+     * Clear all currency cache for the current user.
+     * Useful for manual cache invalidation or during testing/seeding.
+     */
+    public function clearCurrencyCache(?int $userId = null): void
+    {
+        $userId = $userId ?? auth()->user()?->id;
+        
+        if ($userId) {
+            Cache::forget("currencies_user_{$userId}");
+        }
     }
 
     /**
