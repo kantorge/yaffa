@@ -97,8 +97,8 @@ class CurrencyTraitTest extends TestCase
         $user = User::factory()->create();
 
         /** @var Currency $currency1 */
-        $currency1 = Currency::factory()->for($user)->create(['name' => 'EUR']);
-        Currency::factory()->for($user)->create(['name' => 'USD']);
+        $currency1 = Currency::factory()->for($user)->fromIsoCodes(['EUR'])->create();
+        Currency::factory()->for($user)->fromIsoCodes(['USD'])->create();
 
         $result = $this->getBaseCurrency($user->id);
 
