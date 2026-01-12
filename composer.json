@@ -100,7 +100,7 @@
         ],
         "coverage": [
             "@putenv SAIL_XDEBUG_MODE=coverage",
-            "./vendor/bin/sail artisan test --coverage-html public/coverage"
+            "bash -c './vendor/bin/sail artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
         ]
     },
     "repositories": [

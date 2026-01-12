@@ -139,6 +139,11 @@ class Transaction extends Model
         return $this->hasOne(TransactionSchedule::class);
     }
 
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
+    }
+
     public function tags()
     {
         return $this->transactionItems
@@ -215,6 +220,7 @@ class Transaction extends Model
             'config',
             'config.accountFrom',
             'config.accountTo',
+            'currency',
             'transactionSchedule',
             'transactionType',
             'transactionItems',
@@ -256,6 +262,7 @@ class Transaction extends Model
             'config.account.config',
             'config.account.config.currency',
             'config.investment',
+            'currency',
             'transactionSchedule',
             'transactionType',
         ]);
@@ -263,7 +270,22 @@ class Transaction extends Model
 
     public function getTransactionCurrencyAttribute(): ?Currency
     {
-        return Currency::findOr($this->currency_id, fn () => $this->getBaseCurrency());
+        // First try to use the loaded relationship (from eager loading)
+        if ($this->relationLoaded('currency') && $this->currency) {
+            return $this->currency;
+        }
+
+        // If currency_id is null, return base currency
+        if ($this->currency_id === null) {
+            return $this->getBaseCurrency($this->user_id);
+        }
+
+        // Use cached collection for lookup
+        $allCurrencies = $this->getAllCurrencies($this->user_id);
+        $currency = $allCurrencies->get($this->currency_id);
+
+        // If not found in cache, fall back to base currency
+        return $currency ?? $this->getBaseCurrency($this->user_id);
     }
 
     /**
