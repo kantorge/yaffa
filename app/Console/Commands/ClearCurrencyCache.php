@@ -32,13 +32,11 @@ class ClearCurrencyCache extends Command
         } else {
             // Clear for all users
             $count = 0;
-            User::chunk(100, function ($users) use (&$count) {
-                foreach ($users as $user) {
-                    Cache::forget("currencies_user_{$user->id}");
-                    $count++;
-                }
-            });
-            
+            foreach (User::lazy() as $user) {
+                Cache::forget("currencies_user_{$user->id}");
+                $count++;
+            }
+
             $this->info("Currency cache cleared for {$count} users");
         }
 
