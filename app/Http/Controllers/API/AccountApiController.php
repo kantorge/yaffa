@@ -446,7 +446,7 @@ class AccountApiController extends Controller implements HasMiddleware
             ->json(
                 [
                     'result' => 'success',
-                    'message' => __('The monthly summary for this account entity is being updated.'),
+                    'message' => __('The monthly summary for this account is being updated.'),
                 ],
                 Response::HTTP_OK
             );
