@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.2.0](https://github.com/kantorge/yaffa/compare/v2.1.0...v2.2.0) (2026-01-18)
+
+
+### 🛠️ Chores
+
+* add a helper to deal with Bootstrap breakpoints ([359315c](https://github.com/kantorge/yaffa/commit/359315c053a053647ecbb040cf22aa78a8902ada))
+* Laravel 12.47.0 Shift ([#385](https://github.com/kantorge/yaffa/issues/385)) ([f10fcc0](https://github.com/kantorge/yaffa/commit/f10fcc068cc4b4523b329e9dde51707799a8b77f))
+* remove unused Codacy code coverage in favor of a local command ([689ffd8](https://github.com/kantorge/yaffa/commit/689ffd8b85451e7781771687f6539cb7d1dd86fa))
+
+
+### ✨ Features
+
+* Adds French language support and improves translation handling ([#386](https://github.com/kantorge/yaffa/issues/386)) ([c4ca825](https://github.com/kantorge/yaffa/commit/c4ca825ee04423c586f16edce6549e870cd298ce))
+
+
+### 🐛 Bug Fixes
+
+* adjust Bootstrap breakpoints for transaction forms ([5ca7c51](https://github.com/kantorge/yaffa/commit/5ca7c51b93735e0d61bc3796a0d38cdb8ac4473e))
+* broken CSV import page ([53f30bc](https://github.com/kantorge/yaffa/commit/53f30bcfd59f088995fd513add1fc54eed688ac9))
+* new transaction button behavior on account detail page ([146384a](https://github.com/kantorge/yaffa/commit/146384ab2ef42cddf1693ab8eb7ec5df93353434))
+* payee default category properly saved ([6b81735](https://github.com/kantorge/yaffa/commit/6b81735969dd29489d1192119b3bbb3898ebd726))
+* various missing translations ([e84b05d](https://github.com/kantorge/yaffa/commit/e84b05de90f7afa7d05ec33f3f788254cc52e1bc))
+
+
+### 🚀 Performance Improvements
+
+* Improves currency caching and transaction currency loading ([#384](https://github.com/kantorge/yaffa/issues/384)) ([b0cf9a5](https://github.com/kantorge/yaffa/commit/b0cf9a58613bfe26ff87c7d5c6cbc7c4d5566cb8))
+
 ## [2.1.0](https://github.com/kantorge/yaffa/compare/v2.0.0...v2.1.0) (2026-01-03)
 
 

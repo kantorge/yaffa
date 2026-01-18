@@ -1,7 +1,7 @@
 {
     "name": "kantorge/yaffa",
     "description": "Yet Another Free Financial Application: a free, self-hosted personal finance app",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "type": "project",
     "keywords": [
         "personal finance",
