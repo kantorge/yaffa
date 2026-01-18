@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\CurrencyRateConversionException;
+use App\Http\Traits\CurrencyTrait;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Carbon\Carbon;
 use Database\Factories\CurrencyFactory;
@@ -51,6 +52,7 @@ class Currency extends Model
 {
     use HasFactory;
     use ModelOwnedByUserTrait;
+    use CurrencyTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -75,6 +77,22 @@ class Currency extends Model
             'base' => 'boolean',
             'auto_update' => 'boolean',
         ];
+    }
+
+    /**
+     * The "booted" method of the model.
+     * Automatically invalidate user currency cache when currencies change.
+     */
+    protected static function booted(): void
+    {
+        // Invalidate cache when currency is created, updated, or deleted
+        static::saved(function ($currency) {
+            Cache::forget("currencies_user_{$currency->user_id}");
+        });
+
+        static::deleted(function ($currency) {
+            Cache::forget("currencies_user_{$currency->user_id}");
+        });
     }
 
     /**
@@ -133,14 +151,12 @@ class Currency extends Model
     }
 
     /**
-     * Get the base currency of the same user, who owns this currency.
+     * Get the base currency of the same user who owns this currency.
+     * Delegates to CurrencyTrait for cached lookup.
      */
     public function baseCurrency(): ?Currency
     {
-        return static::query()
-            ->base()
-            ->where('user_id', $this->user_id)
-            ->firstOr(fn () => static::query()->where('user_id', $this->user_id)->orderBy('id')->firstOr(fn () => null));
+        return $this->getBaseCurrency($this->user_id);
     }
 
     /**
@@ -253,13 +269,20 @@ class Currency extends Model
         try {
             DB::beginTransaction();
 
+            // Update all currencies for this user to not be base
             Currency::where('user_id', $this->user->id)
                 ->update(['base' => null]);
+
+            // Set this currency as base
             $this->base = true;
             $this->save();
 
             DB::commit();
 
+            // Clear currency cache (bulk update doesn't trigger model events)
+            Cache::forget("currencies_user_{$this->user->id}");
+
+            // Clear currency rates cache
             Cache::forget("allCurrencyRatesByMonth_forUser_{$this->user->id}");
         } catch (Exception $e) {
             DB::rollback();

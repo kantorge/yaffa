@@ -1,6 +1,17 @@
 <?php
 
 return [
+    "accepted" => "A(z) :attribútumot el kell fogadni.",
+    "accepted_if" => "Az :attribute mezőt el kell fogadni, ha az :other értéke :value.",
+    "active_url" => "A(z) :attribute nem érvényes URL-cím.",
+    "after" => "A(z) :attribute értékének a :date utáni dátumnak kell lennie.",
+    "after_or_equal" => "A(z) :attribute dátumának a :date paraméternél későbbinek vagy azzal egyenlőnek kell lennie.",
+    "alpha" => "Az :attribútum csak betűket tartalmazhat.",
+    "alpha_dash" => "Az :attribute csak betűket, számokat, kötőjeleket és aláhúzásjeleket tartalmazhat.",
+    "alpha_num" => "Az :attribútum csak betűket és számokat tartalmazhat.",
+    "any_of" => "A(z) :attribute mező érvénytelen.",
+    "array" => "A :attribute-nak tömbnek kell lennie.",
+    "ascii" => "Az :attribute mező csak egybájtos alfanumerikus karaktereket és szimbólumokat tartalmazhat.",
     "attributes" => [
         "config" => [
             "opening_balance" => "nyitó egyenleg"
@@ -10,7 +21,58 @@ return [
     ],
     "confirmed" => "A(z) :attribute megerősítése hibás.",
     "min" => [
+        "array" => "A(z) :attribute tulajdonságnak legalább :min elemet kell tartalmaznia.",
+        "file" => "A(z) :attribute tulajdonságnak legalább :min kilobájt méretűnek kell lennie.",
+        "numeric" => "A(z) :attribute tulajdonságnak legalább :min értékűnek kell lennie.",
         "string" => "A(z) :attribute mezőnek legalább :min karakter hosszúságúnak kell lennie."
     ],
-    "required" => "A(z) :attribute mező kitöltése kötelező."
+    "min_digits" => "Az :attribute mezőnek legalább :min számjegyet kell tartalmaznia.",
+    "missing" => "A(z) :attribute mezőnek hiányoznia kell.",
+    "missing_if" => "A(z) :attribute mezőnek hiányoznia kell, ha a :other értéke :value.",
+    "missing_unless" => "Az :attribute mezőnek hiányoznia kell, kivéve, ha az :other nem :value.",
+    "missing_with" => "A(z) :attribute mezőnek hiányoznia kell, ha a(z) :values ​​jelen van.",
+    "missing_with_all" => "Az :attribute mezőnek hiányoznia kell, ha :values ​​értékek vannak jelen.",
+    "multiple_of" => "Az :attribute mezőnek a :value többszörösének kell lennie.",
+    "not_in" => "A kiválasztott :attribute érvénytelen.",
+    "not_regex" => "A(z) :attribute formátuma érvénytelen.",
+    "numeric" => "A :attribute-nak számnak kell lennie.",
+    "password" => "A jelszó helytelen.",
+    "present" => "A :attribute mezőnek jelen kell lennie.",
+    "present_if" => "Az :attribute mezőnek jelen kell lennie, ha az :other értéke :value.",
+    "present_unless" => "Az :attribute mezőnek jelen kell lennie, kivéve, ha az :other nem :value.",
+    "present_with" => "Az :attribute mezőnek jelen kell lennie, ha a :values ​​is jelen van.",
+    "present_with_all" => "Az :attribute mezőnek jelen kell lennie, ha a :values ​​értékek jelen vannak.",
+    "prohibited" => "A :attribute mező használata tiltott.",
+    "prohibited_if" => "Az :attribute mező használata tilos, ha az :other értéke :value.",
+    "prohibited_if_accepted" => "Az :attribute mező tiltott, ha az :other elfogadott.",
+    "prohibited_if_declined" => "Az :attribute mező tiltott, ha az :other elutasításra kerül.",
+    "prohibited_unless" => "Az :attribute mező használata tiltott, kivéve, ha az :other szerepel a :values ​​változóban.",
+    "prohibits" => "Az :attribute mező tiltja a :other jelenlétét.",
+    "regex" => "A(z) :attribute formátuma érvénytelen.",
+    "required" => "A(z) :attribute mező kitöltése kötelező.",
+    "required_array_keys" => "Az :attribute mezőnek a következő bejegyzéseket kell tartalmaznia: :values.",
+    "required_if" => "Az :attribute mező kitöltése kötelező, ha az :other értéke :value.",
+    "required_if_accepted" => "Az :attribute mező kitöltése kötelező, ha az :other elfogadott.",
+    "required_if_declined" => "A :attribute mező kitöltése kötelező, ha a :other mezőt elutasítják.",
+    "required_unless" => "Az :attribute mező kitöltése kötelező, kivéve, ha az :other szerepel a :values ​​változóban.",
+    "required_with" => "Az :attribute mező kitöltése kötelező, ha a :values ​​jelen van.",
+    "required_with_all" => "Az :attribute mező kitöltése kötelező, ha :values ​​értékek vannak jelen.",
+    "required_without" => "Az :attribute mező kitöltése kötelező, ha a :values ​​nincs jelen.",
+    "required_without_all" => "Az :attribute mező kitöltése kötelező, ha a :values ​​egyik értéke sem található meg.",
+    "same" => "A(z) :attribute és a(z) :other paramétereknek egyezniük kell.",
+    "size" => [
+        "array" => "Az :attribute tulajdonságnak :size elemeket kell tartalmaznia.",
+        "file" => "A(z) :attribute értékének :size kilobájtnak kell lennie.",
+        "numeric" => "A(z) :attribute értékének :size-nek kell lennie.",
+        "string" => "A(z) :attribute karaktereknek kell lenniük: :size."
+    ],
+    "starts_with" => "A(z) :attribute tulajdonságnak a következők egyikével kell kezdődnie: :values.",
+    "string" => "A :attribute-nak karakterláncnak kell lennie.",
+    "timezone" => "A(z) :attribute tulajdonságnak érvényes zónának kell lennie.",
+    "ulid" => "Az :attribute mezőnek érvényes ULID-nak kell lennie.",
+    "unique" => "A(z) :attribute már foglalt.",
+    "uploaded" => "A(z) :attribute feltöltése sikertelen.",
+    "uppercase" => "Az :attribute mezőnek nagybetűsnek kell lennie.",
+    "url" => "A(z) :attribute formátuma érvénytelen.",
+    "uuid" => "A(z) :attribute tulajdonságnak érvényes UUID-nak kell lennie."
 ];

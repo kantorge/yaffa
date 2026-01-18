@@ -41,6 +41,7 @@ return [
     "doesnt_end_with" => "The :attribute field must not end with one of the following: :values.",
     "doesnt_start_with" => "The :attribute field must not start with one of the following: :values.",
     "email" => "The :attribute must be a valid email address.",
+    "encoding" => "The :attribute field must be encoded in :encoding.",
     "ends_with" => "The :attribute must end with one of the following: :values.",
     "exists" => "The selected :attribute is invalid.",
     "filled" => "The :attribute field must have a value.",
