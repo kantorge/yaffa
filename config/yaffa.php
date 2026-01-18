@@ -30,6 +30,9 @@ return [
     'nlp_service_url' => env('NLP_SERVICE_URL', 'http://nlp-service:8083'),
     'nlp_service_timeout' => env('NLP_SERVICE_TIMEOUT', 30),
 
+    // Balance checkpoint and reconciliation settings
+    'balance_checkpoint_enabled' => env('BALANCE_CHECKPOINT_ENABLED', true),
+
     // These are not actual config values, but a list of supported date presets for account details.
     // The default / empty value is not added, as it behaves differently in various places.
     // Translations for the labels are handled in the view.
@@ -66,4 +69,3 @@ return [
         ]
     ]
 ];
-

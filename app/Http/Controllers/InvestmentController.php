@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\InvestmentRequest;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\Investment;
@@ -49,36 +50,10 @@ class InvestmentController extends Controller implements HasMiddleware
          * @name('investment.index')
          * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
          */
-<<<<<<< Updated upstream
-        // Show all investments from the database and return to view
-        $investments = $request->user()
-            ->investments()
-            ->withCount('transactions')
-            ->withCount('transactionsBasic')
-            ->withCount('transactionsScheduled')
-            ->with([
-                'currency',
-                'investmentGroup',
-            ])
-            ->get();
-
-        $investments->map(function ($investment) {
-            $investment['price'] = $investment->getLatestPrice();
-            $investment['quantity'] = $investment->getCurrentQuantity();
-
-            return $investment;
-        });
-
-        // Pass data for DataTables
-        JavaScriptFacade::put([
-            'investments' => $investments,
-            'investmentGroups' => $request->user()->investmentGroups,
-=======
         // Don't load investments on initial page load to avoid timeout
         // JavaScript will fetch via AJAX based on filter state
         JavaScriptFacade::put([
             'investmentGroups' => Auth::user()->investmentGroups,
->>>>>>> Stashed changes
         ]);
 
         return view('investment.index');
@@ -270,7 +245,7 @@ class InvestmentController extends Controller implements HasMiddleware
         // Group transactions by month
         foreach ($transactions as $transaction) {
             $period = $transaction->date->format('Y-m');
-            
+
             if (!isset($monthlyData[$period])) {
                 $monthlyData[$period] = [
                     'period' => $period,
@@ -311,7 +286,7 @@ class InvestmentController extends Controller implements HasMiddleware
                 if ($transaction->date->format('Y-m') === $period) {
                     $config = $transaction->config;
                     $typeId = $transaction->transaction_type_id;
-                    
+
                     if (in_array($typeId, [4, 6]) && $config) { // Buy or Add shares
                         $quantityChange += $config->quantity ?? 0;
                     } elseif (in_array($typeId, [5, 7]) && $config) { // Sell or Remove shares
@@ -326,7 +301,7 @@ class InvestmentController extends Controller implements HasMiddleware
 
             // Get current month price or use previous month's price
             $currentPrice = $pricesByMonth[$period] ?? $previousPrice;
-            
+
             // Calculate price change impact on value
             $priceChange = 0;
             if ($previousPrice !== null && $currentPrice !== null && $data['quantity_start'] > 0) {
@@ -334,20 +309,20 @@ class InvestmentController extends Controller implements HasMiddleware
             }
 
             $data['priceChange'] = round($priceChange, 2);
-            
+
             // Calculate running total (waterfall cumulative)
             // Start with buys (increases total)
             $runningTotal += $data['buys'];
-            
+
             // Then apply price changes (can increase or decrease)
             $runningTotal += $data['priceChange'];
-            
+
             // Then apply sells (decreases total, already negative)
             $runningTotal += $data['sells'];
-            
+
             // Set the final running total after all adjustments
             $data['runningTotal'] = round($runningTotal, 2);
-            
+
             $previousPrice = $currentPrice;
 
             $waterfall[] = $data;

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
-use Illuminate\Http\Request;
 
 class ImportController extends Controller
 {
@@ -16,7 +16,7 @@ class ImportController extends Controller
     {
         return view('import.moneyhub');
     }
-    
+
     /**
      * Handle MoneyHub CSV upload, store file and dispatch background job.
      */
@@ -58,8 +58,8 @@ class ImportController extends Controller
             'payees' => $payees,
         ]);
 
-    $parsedRows = session('parsedRows', null);
-    return view('import.csv', compact('parsedRows'));
+        $parsedRows = session('parsedRows', null);
+        return view('import.csv', compact('parsedRows'));
     }
 
     /**
@@ -141,14 +141,14 @@ class ImportController extends Controller
 
         $file = $request->file('file');
         $path = $file->storeAs('csv-imports', $request->user()->id . '_' . time() . '_' . $file->getClientOriginalName(), 'local');
-        $fullPath = \Storage::disk('local')->path($path);
+        $fullPath = Storage::disk('local')->path($path);
 
         $rows = [];
         if (($handle = fopen($fullPath, 'r')) !== false) {
             $header = fgetcsv($handle);
             // Normalize Hungarian 'Típus' to 'Type' for compatibility
             foreach ($header as &$h) {
-                if (trim(mb_strtolower($h)) === 'típus') {
+                if (mb_trim(mb_strtolower($h)) === 'típus') {
                     $h = 'Type';
                 }
             }
@@ -159,7 +159,7 @@ class ImportController extends Controller
             fclose($handle);
         }
 
-        \Storage::disk('local')->delete($path);
+        Storage::disk('local')->delete($path);
 
         // Redirect back to import.csv with parsed rows in session
         return redirect()->route('import.csv')->with('parsedRows', $rows);

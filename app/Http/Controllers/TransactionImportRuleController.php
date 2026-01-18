@@ -5,14 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\TransactionImportRule;
 use App\Models\AccountEntity;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
-class TransactionImportRuleController extends Controller
+class TransactionImportRuleController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('auth');
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**
@@ -79,7 +83,7 @@ class TransactionImportRuleController extends Controller
         $accounts = Auth::user()->accounts()->orderBy('name')->get();
         $payees = Auth::user()->payees()->orderBy('name')->get();
         $rule = $transactionImportRule;
-        
+
         return view('transaction-import-rules.form', compact('rule', 'accounts', 'payees'));
     }
 
@@ -180,11 +184,11 @@ class TransactionImportRuleController extends Controller
             // Get transaction description - prioritize payee name for import rule matching
             $description = null;
             $config = $transaction->config;
-            
+
             if ($config) {
                 $accountFrom = $config->accountFrom;
                 $accountTo = $config->accountTo;
-                
+
                 // First try to get payee name (the non-account side) - this is what imports typically use
                 if ($accountFrom && $accountFrom->config_type === 'payee') {
                     $description = $accountFrom->name;
@@ -192,12 +196,12 @@ class TransactionImportRuleController extends Controller
                     $description = $accountTo->name;
                 }
             }
-            
+
             // Fallback to transaction comment
             if (empty($description)) {
                 $description = $transaction->comment;
             }
-            
+
             // Fallback to first transaction item's comment
             if (empty($description) && $transaction->transactionItems->isNotEmpty()) {
                 $description = $transaction->transactionItems->first()->comment;
@@ -214,8 +218,8 @@ class TransactionImportRuleController extends Controller
                     $config = $transaction->config;
                     $accountFrom = $config->account_from_id ?? null;
                     $accountTo = $config->account_to_id ?? null;
-                    
-                    if ($accountFrom != $rule->account_id && $accountTo != $rule->account_id) {
+
+                    if ($accountFrom !== $rule->account_id && $accountTo !== $rule->account_id) {
                         continue;
                     }
                 }
@@ -257,7 +261,7 @@ class TransactionImportRuleController extends Controller
             if (!isset($correction['apply'])) {
                 continue;
             }
-            
+
             try {
                 $transaction = Auth::user()
                     ->transactions()
@@ -270,7 +274,7 @@ class TransactionImportRuleController extends Controller
                 // Apply the rule action
                 $this->applyRuleToTransaction($transaction, $rule);
                 $corrected++;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[] = "Transaction {$correction['transaction_id']}: {$e->getMessage()}";
             }
         }
@@ -294,29 +298,29 @@ class TransactionImportRuleController extends Controller
     private function applyRuleToTransaction($transaction, $rule)
     {
         if (!$transaction->isStandard()) {
-            throw new \Exception('Can only apply rules to standard transactions');
+            throw new Exception('Can only apply rules to standard transactions');
         }
 
         switch ($rule->action) {
             case 'convert_to_transfer':
                 if (!$rule->transfer_account_id) {
-                    throw new \Exception('Transfer account not specified');
+                    throw new Exception('Transfer account not specified');
                 }
 
                 // Validate transfer account exists and is an account entity
                 $transferAccount = AccountEntity::find($rule->transfer_account_id);
                 if (! $transferAccount) {
-                    throw new \Exception('Transfer account entity not found');
+                    throw new Exception('Transfer account entity not found');
                 }
                 if ($transferAccount->config_type !== 'account') {
-                    throw new \Exception('Transfer account must be an account entity');
+                    throw new Exception('Transfer account must be an account entity');
                 }
 
                 // Determine which side is the payee that needs replacing
                 $config = $transaction->config;
                 $accountFromIsPayee = $config->accountFrom && $config->accountFrom->config_type === 'payee';
                 $accountToIsPayee = $config->accountTo && $config->accountTo->config_type === 'payee';
-                
+
                 if ($accountFromIsPayee) {
                     // Withdrawal: payee is FROM, real account is TO
                     // Replace the payee with the transfer account
@@ -340,7 +344,7 @@ class TransactionImportRuleController extends Controller
                 }
 
                 // Save config and transaction together
-                DB::transaction(function() use ($config, $transaction) {
+                DB::transaction(function () use ($config, $transaction) {
                     $config->save();
                     $transaction->save();
                 });
@@ -365,23 +369,23 @@ class TransactionImportRuleController extends Controller
 
             case 'merge_payee':
                 if (!$rule->merge_payee_id) {
-                    throw new \Exception('Merge payee not specified');
+                    throw new Exception('Merge payee not specified');
                 }
 
                 // Validate merge payee exists and is a payee entity
                 $mergePayee = AccountEntity::find($rule->merge_payee_id);
                 if (!$mergePayee) {
-                    throw new \Exception('Merge payee entity not found');
+                    throw new Exception('Merge payee entity not found');
                 }
                 if ($mergePayee->config_type !== 'payee') {
-                    throw new \Exception('Merge payee must be a payee entity');
+                    throw new Exception('Merge payee must be a payee entity');
                 }
 
                 // Get the current payee and check if it already matches the target
                 $config = $transaction->config;
                 $originalPayeeName = null;
                 $currentPayeeId = null;
-                
+
                 if ($config->accountFrom && $config->accountFrom->config_type === 'payee') {
                     $currentPayeeId = $config->account_from_id;
                     $originalPayeeName = $config->accountFrom->name;
@@ -391,7 +395,7 @@ class TransactionImportRuleController extends Controller
                 }
 
                 // Skip if payee already matches the target
-                if ($currentPayeeId == $rule->merge_payee_id) {
+                if ($currentPayeeId === $rule->merge_payee_id) {
                     break;
                 }
 
@@ -406,7 +410,7 @@ class TransactionImportRuleController extends Controller
                 if ($rule->append_original_to_comment && $originalPayeeName) {
                     $currentComment = $transaction->comment ?? '';
                     $appendText = "Original: {$originalPayeeName}";
-                    
+
                     if (empty($currentComment)) {
                         $transaction->comment = $appendText;
                     } else {
@@ -415,7 +419,7 @@ class TransactionImportRuleController extends Controller
                 }
 
                 // Save config and transaction together
-                DB::transaction(function() use ($config, $transaction) {
+                DB::transaction(function () use ($config, $transaction) {
                     $config->save();
                     $transaction->save();
                 });

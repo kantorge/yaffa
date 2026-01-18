@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Components\MailHandler;
 use App\Models\Account;
 use App\Models\Payee;
+use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
+use App\Observers\TransactionObserver;
 use BeyondCode\Mailbox\Facades\Mailbox;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
@@ -90,6 +92,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function bootEvent(): void
     {
-
+        Transaction::observe(TransactionObserver::class);
     }
 }

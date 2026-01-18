@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Exception;
+use InvalidArgumentException;
 
 class InvestmentUploadController extends Controller
 {
@@ -18,7 +20,7 @@ class InvestmentUploadController extends Controller
         if (is_string($configData)) {
             $configData = json_decode($configData, true);
         }
-        
+
         $validator = Validator::make(array_merge($request->all(), ['config' => $configData]), [
             'source' => 'required|string|in:WiseAlpha,Trading212,MoneyHub,CompanyJSON',
             'file' => 'required|file|mimes:csv,xlsx,json,yaml,yml|max:10240', // 10MB max
@@ -67,7 +69,7 @@ class InvestmentUploadController extends Controller
                 'import_id' => $import->id
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Clean up the temporary file if it exists
             if (isset($path)) {
                 Storage::disk('local')->delete($path);
@@ -83,7 +85,7 @@ class InvestmentUploadController extends Controller
     public function getMapping(Request $request): JsonResponse
     {
         $source = $request->query('source');
-        
+
         if (!$source) {
             return response()->json([
                 'success' => false,
@@ -135,7 +137,7 @@ class InvestmentUploadController extends Controller
                 'preview' => $preview
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if (isset($path)) {
                 Storage::disk('local')->delete($path);
             }
@@ -168,16 +170,16 @@ class InvestmentUploadController extends Controller
                 'preview_' . $request->user()->id . '_' . time() . '_' . $file->getClientOriginalName(),
                 'local'
             );
-            $fullPath = \Storage::disk('local')->path($path);
+            $fullPath = Storage::disk('local')->path($path);
 
-            $uploader = new \App\Services\InvestmentTransactionUploader($request->user(), []);
+            $uploader = new InvestmentTransactionUploader($request->user(), []);
             $extension = pathinfo($fullPath, PATHINFO_EXTENSION);
             $data = match($extension) {
                 'csv' => $uploader->parseCsv($fullPath),
                 'xlsx' => $uploader->parseExcel($fullPath),
                 'json' => $uploader->parseJson($fullPath),
                 'yaml', 'yml' => $uploader->parseYaml($fullPath),
-                default => throw new \InvalidArgumentException("Unsupported file type: {$extension}")
+                default => throw new InvalidArgumentException("Unsupported file type: {$extension}")
             };
 
             $mapping = $uploader->getDefaultMapping($request->input('source'));
@@ -189,12 +191,12 @@ class InvestmentUploadController extends Controller
                     'mapped' => $mapped,
                 ];
             }
-            \Storage::disk('local')->delete($path);
+            Storage::disk('local')->delete($path);
             return response()->json([
                 'success' => true,
                 'preview' => $preview
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -209,9 +211,9 @@ class InvestmentUploadController extends Controller
 
         switch ($extension) {
             case 'csv':
-                if (($handle = fopen($filePath, "r")) !== FALSE) {
+                if (($handle = fopen($filePath, "r")) !== false) {
                     $preview['headers'] = fgetcsv($handle);
-                    for ($i = 0; $i < 5 && ($row = fgetcsv($handle)) !== FALSE; $i++) {
+                    for ($i = 0; $i < 5 && ($row = fgetcsv($handle)) !== false; $i++) {
                         $preview['rows'][] = array_combine($preview['headers'], $row);
                     }
                     fclose($handle);

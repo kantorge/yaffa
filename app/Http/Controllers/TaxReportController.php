@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controllers\HasMiddleware;
 use App\Http\Traits\UkTaxYearTrait;
 use App\Services\TaxReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class TaxReportController extends Controller
+class TaxReportController extends Controller implements HasMiddleware
 {
     use UkTaxYearTrait;
 
     protected TaxReportService $taxReportService;
 
+    public static function middleware(): array
+    {
+        return [
+            'auth',
+        ];
+    }
+
     public function __construct(TaxReportService $taxReportService)
     {
-        $this->middleware('auth');
         $this->taxReportService = $taxReportService;
     }
 
@@ -26,10 +33,10 @@ class TaxReportController extends Controller
     public function index(Request $request)
     {
         $userId = Auth::id();
-        
+
         // Get requested tax year or default to current
         $taxYearParam = $request->get('tax_year');
-        
+
         if ($taxYearParam) {
             $taxYear = $this->parseTaxYearString($taxYearParam);
         } else {
@@ -89,7 +96,7 @@ class TaxReportController extends Controller
     {
         $userId = Auth::id();
         $taxYearParam = $request->get('tax_year');
-        
+
         if ($taxYearParam) {
             $taxYear = $this->parseTaxYearString($taxYearParam);
         } else {
@@ -123,17 +130,17 @@ class TaxReportController extends Controller
         $filename = "tax-report-{$taxYear['label']}.csv";
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($dividends, $capitalGains, $summary, $taxYear) {
+        $callback = function () use ($dividends, $capitalGains, $summary, $taxYear) {
             $file = fopen('php://output', 'w');
-            
+
             // Tax year header
             fputcsv($file, ['UK Tax Report', $taxYear['label']]);
             fputcsv($file, ['Report Generated', Carbon::now()->toDateTimeString()]);
             fputcsv($file, []);
-            
+
             // Dividend section
             fputcsv($file, ['DIVIDEND INCOME']);
             fputcsv($file, ['Account', 'Investment', 'Investment Group', 'Tax Exempt', 'Total Dividend', 'Taxable Amount', 'Transaction Count']);
@@ -149,7 +156,7 @@ class TaxReportController extends Controller
                 ]);
             }
             fputcsv($file, []);
-            
+
             // Capital gains section
             fputcsv($file, ['CAPITAL GAINS']);
             fputcsv($file, ['Account', 'Investment', 'Tax Exempt', 'Shares Sold', 'Avg Buy Price', 'Avg Sell Price', 'Cost Basis', 'Net Proceeds', 'Gain/Loss', 'Taxable Gain']);
@@ -168,7 +175,7 @@ class TaxReportController extends Controller
                 ]);
             }
             fputcsv($file, []);
-            
+
             // Summary
             fputcsv($file, ['SUMMARY']);
             fputcsv($file, ['Total Dividends', number_format($summary['total_dividends'], 2)]);
@@ -178,7 +185,7 @@ class TaxReportController extends Controller
             fputcsv($file, ['Total Capital Gains', number_format($summary['total_gains'], 2)]);
             fputcsv($file, ['Taxable Capital Gains', number_format($summary['taxable_gains'], 2)]);
             fputcsv($file, ['Tax-Exempt Capital Gains', number_format($summary['tax_exempt_gains'], 2)]);
-            
+
             fclose($file);
         };
 

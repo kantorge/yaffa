@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\InvestmentPriceRequest;
@@ -15,9 +16,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
+use Exception;
 
 class InvestmentPriceController extends Controller implements HasMiddleware
 {
+    use AuthorizesRequests;
     public static function middleware(): array
     {
         return [
@@ -183,16 +186,16 @@ class InvestmentPriceController extends Controller implements HasMiddleware
 
             self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Sanitize error message to remove API keys and sensitive data
             $errorMessage = $e->getMessage();
-            
+
             // Remove API key from URL if present
             $errorMessage = preg_replace('/apikey=[A-Za-z0-9]+/', 'apikey=***', $errorMessage);
-            
+
             // Remove file paths
             $errorMessage = preg_replace('/[A-Z]:\\\\[^\\s]+/', '***', $errorMessage);
-            
+
             self::addSimpleErrorMessage(__('Failed to retrieve investment prices: :error', ['error' => $errorMessage]));
         }
 
@@ -203,7 +206,7 @@ class InvestmentPriceController extends Controller implements HasMiddleware
      * Import price history from Buy/Sell transactions for an investment
      *
      * @param Investment $investment
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function importFromTrades(Investment $investment)
     {
@@ -217,4 +220,3 @@ class InvestmentPriceController extends Controller implements HasMiddleware
         return redirect()->route('investment-price.list', $investment);
     }
 }
-

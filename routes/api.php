@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
+use App\Http\Controllers\API\BalanceCheckpointApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\InvestmentApiController;
@@ -41,7 +42,7 @@ Route::get('/assets/category/{category}', [CategoryApiController::class, 'getIte
 Route::delete('/assets/category/{category}', [CategoryApiController::class, 'destroy'])
     ->name('api.category.destroy');
 
-<<<<<<< Updated upstream
+
 Route::get('/currency-rates/{from}/{to}', [CurrencyRateApiController::class, 'index'])
     ->name('api.currency-rate.index');
 Route::post('/currency-rates', [CurrencyRateApiController::class, 'store'])
@@ -53,9 +54,9 @@ Route::delete('/currency-rates/{currency_rate}', [CurrencyRateApiController::cla
 Route::get('/currencyrates/missing/{currency}', [CurrencyRateApiController::class, 'retrieveMissingCurrencyRateToBase'])
     ->name('api.currency-rate.retrieveMissing');
 
-=======
+
 Route::get('/investments', [InvestmentApiController::class, 'index']);
->>>>>>> Stashed changes
+
 Route::get('/assets/investment', [InvestmentApiController::class, 'getList']);
 Route::get('/assets/investment/timeline', [InvestmentApiController::class, 'getInvestmentsWithTimeline']);
 Route::get('/assets/investment/{investment}', [InvestmentApiController::class, 'getInvestmentDetails'])
@@ -124,10 +125,10 @@ Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiCo
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
     ->name('api.transactions.destroy');
 
-Route::post('/investment-upload/wisealpha', [\App\Http\Controllers\API\InvestmentUploadWiseAlphaController::class, 'upload']);
-Route::post('/investment-upload', [\App\Http\Controllers\API\InvestmentUploadController::class, 'upload']);
-Route::post('/investment-upload/validate', [\App\Http\Controllers\API\InvestmentUploadController::class, 'validateFile']);
-Route::get('/investment-upload/mapping', [\App\Http\Controllers\API\InvestmentUploadController::class, 'getMapping']);
+Route::post('/investment-upload/wisealpha', [App\Http\Controllers\API\InvestmentUploadWiseAlphaController::class, 'upload']);
+Route::post('/investment-upload', [InvestmentUploadController::class, 'upload']);
+Route::post('/investment-upload/validate', [InvestmentUploadController::class, 'validateFile']);
+Route::get('/investment-upload/mapping', [InvestmentUploadController::class, 'getMapping']);
 
 Route::get('/transaction-upload/accounts', [TransactionUploadController::class, 'getAccounts']);
 Route::post('/transaction-upload/moneyhub', [TransactionUploadController::class, 'upload']);
@@ -142,3 +143,19 @@ Route::patch('/user/settings', [UserApiController::class, 'updateSettings'])
     ->name('user.settings.update');
 Route::patch('/user/change_password', [UserApiController::class, 'changePassword'])
     ->name('user.change_password');
+
+// Balance checkpoints and reconciliation
+Route::get('/balance-checkpoints', [BalanceCheckpointApiController::class, 'index'])
+    ->name('api.balance-checkpoints.index');
+Route::post('/balance-checkpoints', [BalanceCheckpointApiController::class, 'store'])
+    ->name('api.balance-checkpoints.store');
+Route::get('/balance-checkpoints/{checkpoint}', [BalanceCheckpointApiController::class, 'show'])
+    ->name('api.balance-checkpoints.show');
+Route::put('/balance-checkpoints/{checkpoint}', [BalanceCheckpointApiController::class, 'update'])
+    ->name('api.balance-checkpoints.update');
+Route::delete('/balance-checkpoints/{checkpoint}', [BalanceCheckpointApiController::class, 'destroy'])
+    ->name('api.balance-checkpoints.destroy');
+Route::post('/balance-checkpoints/toggle-reconciliation', [BalanceCheckpointApiController::class, 'toggleReconciliation'])
+    ->name('api.balance-checkpoints.toggle-reconciliation');
+Route::post('/balance-checkpoints/check-integrity', [BalanceCheckpointApiController::class, 'checkIntegrity'])
+    ->name('api.balance-checkpoints.check-integrity');

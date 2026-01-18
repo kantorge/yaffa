@@ -8,6 +8,7 @@ use App\Http\Traits\ScheduleTrait;
 use App\Http\Traits\UkTaxYearTrait;
 use App\Services\UnrealisedInterestService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Carbon\Carbon;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
@@ -110,10 +111,10 @@ class ReportController extends Controller implements HasMiddleware
          * @middlewares('web', 'auth', 'verified')
          */
         $service = new UnrealisedInterestService();
-        
+
         // Get tax year from request or use current
         $taxYear = $request->get('tax_year');
-        
+
         if ($taxYear) {
             // Parse tax year like "2024/25"
             $dates = $this->parseTaxYearString($taxYear);

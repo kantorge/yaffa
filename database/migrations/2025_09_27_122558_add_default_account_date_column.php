@@ -11,11 +11,15 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('account_details_date_range')->default('none')->after('end_date');
+            if (!Schema::hasColumn('users', 'account_details_date_range')) {
+                $table->string('account_details_date_range')->default('none')->after('end_date');
+            }
         });
 
         Schema::table('accounts', function (Blueprint $table) {
-            $table->string('default_date_range')->nullable()->default(null)->after('currency_id');
+            if (!Schema::hasColumn('accounts', 'default_date_range')) {
+                $table->string('default_date_range')->nullable()->default(null)->after('currency_id');
+            }
         });
     }
 

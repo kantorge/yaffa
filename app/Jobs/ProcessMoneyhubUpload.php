@@ -9,20 +9,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProcessMoneyhubUpload implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public int $importJobId;
     public ?int $accountId;
 
     public int $timeout = 1800;
-    
+
     private array $affectedAccounts = [];
 
     public function __construct(int $importJobId, ?int $accountId = null)
@@ -34,7 +36,9 @@ class ProcessMoneyhubUpload implements ShouldQueue
     public function handle()
     {
         $import = ImportJob::find($this->importJobId);
-        if (! $import) return;
+        if (! $import) {
+            return;
+        }
 
         $import->update(['status' => 'started', 'started_at' => now()]);
 
@@ -58,7 +62,7 @@ class ProcessMoneyhubUpload implements ShouldQueue
 
             foreach ($rows as $index => $row) {
                 try {
-                    if (empty($row['amount']) || $row['amount'] == 0) {
+                    if (empty($row['amount']) || $row['amount'] === 0) {
                         $skipped++;
                         continue;
                     }
@@ -102,11 +106,11 @@ class ProcessMoneyhubUpload implements ShouldQueue
                             // Merge to specified payee - use the payee's default category
                             $amount = (float) $row['amount'];
                             $payeeId = $rule->merge_payee_id;
-                            
+
                             // Get the merge payee's default category instead of creating from CSV
                             $mergePayee = \App\Models\AccountEntity::with('config')->find($payeeId);
                             $categoryId = $mergePayee?->config?->category_id;
-                            
+
                             if ($amount > 0) {
                                 // Money coming in: from payee to account (deposit)
                                 $accountFromId = $payeeId;
@@ -119,8 +123,8 @@ class ProcessMoneyhubUpload implements ShouldQueue
                                 $amount = abs($amount);
                                 $transactionTypeId = 1; // withdrawal
                             }
-                            
-                            Log::info("Applied merge payee rule in job: {$row['description']} -> Payee ID {$payeeId}" . 
+
+                            Log::info("Applied merge payee rule in job: {$row['description']} -> Payee ID {$payeeId}" .
                                      ($categoryId ? " (Category ID: {$categoryId})" : " (no default category)"));
                         } else {
                             // fallback to default handling
@@ -147,9 +151,9 @@ class ProcessMoneyhubUpload implements ShouldQueue
 
                     // Duplicate check similar to API controller
                     $existing = DB::table('transactions')
-                        ->join('transaction_details_standard', function($join) {
+                        ->join('transaction_details_standard', function ($join) {
                             $join->on('transactions.config_id', '=', 'transaction_details_standard.id')
-                                 ->where('transactions.config_type', '=', 'standard');
+                                ->where('transactions.config_type', '=', 'standard');
                         })
                         ->where('transactions.user_id', $user->id)
                         ->where('transactions.date', $date)
@@ -179,9 +183,10 @@ class ProcessMoneyhubUpload implements ShouldQueue
                         'config_id' => $config->id,
                         'transaction_type_id' => $transactionTypeId,
                         'user_id' => $user->id,
+                        'import_job_id' => $this->importJobId,
                     ]);
                     $transaction->saveQuietly();
-                    
+
                     // Track affected accounts for later recalculation
                     if ($accountFromId && !in_array($accountFromId, $this->affectedAccounts)) {
                         $this->affectedAccounts[] = $accountFromId;
@@ -193,7 +198,7 @@ class ProcessMoneyhubUpload implements ShouldQueue
                     // Create transaction item with the category and amount
                     // For standard transactions, we need to use the payee's default category
                     $itemCategoryId = null;
-                    
+
                     // Determine the payee to get its default category
                     if ($transactionTypeId === 1) {
                         // Withdrawal: payee is account_to
@@ -202,7 +207,7 @@ class ProcessMoneyhubUpload implements ShouldQueue
                         // Deposit: payee is account_from
                         $payeeEntity = \App\Models\AccountEntity::find($accountFromId);
                     }
-                    
+
                     // Get the payee's default category if it exists
                     if (isset($payeeEntity) && $payeeEntity->config_type === 'payee') {
                         $payeeEntity->load('config');
@@ -210,12 +215,12 @@ class ProcessMoneyhubUpload implements ShouldQueue
                             $itemCategoryId = $payeeEntity->config->category_id;
                         }
                     }
-                    
+
                     // Fall back to the matched/created category if no payee default
                     if (!$itemCategoryId && $categoryId) {
                         $itemCategoryId = $categoryId;
                     }
-                    
+
                     // Create the transaction item if we have a category
                     if ($itemCategoryId) {
                         \App\Models\TransactionItem::create([
@@ -224,16 +229,6 @@ class ProcessMoneyhubUpload implements ShouldQueue
                             'category_id' => $itemCategoryId,
                             'comment' => null,
                         ]);
-                    }
-
-                    // Still attach to old categories relationship for backward compatibility
-                    // Only for non-transfer transactions (type 1 and 2)
-                    if ($categoryId && $transactionTypeId != 3) {
-                        // After saveQuietly(), we need to fresh() the transaction to get relationships loaded
-                        $transaction = $transaction->fresh();
-                        if ($transaction && method_exists($transaction, 'categories')) {
-                            $transaction->categories()->attach($categoryId);
-                        }
                     }
 
                     $created++;
@@ -250,12 +245,12 @@ class ProcessMoneyhubUpload implements ShouldQueue
             }
 
             DB::commit();
-            
+
             // After all transactions are imported, trigger recalculation for affected accounts
             foreach ($this->affectedAccounts as $accountId) {
                 $accountEntity = \App\Models\AccountEntity::find($accountId);
                 if ($accountEntity && $accountEntity->config_type === 'account') {
-                    dispatch(new \App\Jobs\CalculateAccountMonthlySummary($user, 'account_balance-fact', $accountEntity));
+                    dispatch(new CalculateAccountMonthlySummary($user, 'account_balance-fact', $accountEntity));
                 }
             }
 

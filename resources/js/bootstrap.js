@@ -4,11 +4,9 @@ window.$ = window.jQuery = $;
 import * as bootstrap from 'bootstrap';
 window.bootstrap = bootstrap;
 
-// Load jquery-ui (required by pivottable)
-require('jquery-ui-dist/jquery-ui');
-
-// Load pivottable
-require('pivottable');
+// Import jquery-ui and pivottable after jQuery is globally available
+import('jquery-ui-dist/jquery-ui');
+import('pivottable');
 
 // Get CSRF Token from meta tag
 window.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

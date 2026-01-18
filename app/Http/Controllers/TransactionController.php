@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
@@ -226,7 +227,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Get all investments currently held in this account with their quantities
         $investmentData = $account->config->getAssociatedInvestmentsAndQuantity();
-        
+
         // Load full investment models with latest prices and last commission
         $investments = collect();
         foreach ($investmentData as $data) {
@@ -235,23 +236,23 @@ class TransactionController extends Controller implements HasMiddleware
                 if ($investment) {
                     $investment->current_quantity = $data->quantity;
                     $investment->latest_price = $investment->getLatestPrice();
-                    
+
                     // Get last commission for this investment in this account
-                    $lastTransaction = \App\Models\Transaction::whereHasMorph(
+                    $lastTransaction = Transaction::whereHasMorph(
                         'config',
                         [\App\Models\TransactionDetailInvestment::class],
                         function ($query) use ($account, $investment) {
                             $query->where('account_id', $account->id)
-                                  ->where('investment_id', $investment->id)
-                                  ->whereNotNull('commission');
+                                ->where('investment_id', $investment->id)
+                                ->whereNotNull('commission');
                         }
                     )
-                    ->where('schedule', false)
-                    ->latest('date')
-                    ->first();
-                    
+                        ->where('schedule', false)
+                        ->latest('date')
+                        ->first();
+
                     $investment->last_commission = $lastTransaction?->config->commission ?? 0;
-                    
+
                     $investments->push($investment);
                 }
             }
@@ -294,7 +295,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         foreach ($validated['transactions'] as $transactionData) {
             // Skip if quantity is 0
-            if ($transactionData['quantity'] == 0) {
+            if ($transactionData['quantity'] === 0) {
                 continue;
             }
 
@@ -455,20 +456,20 @@ class TransactionController extends Controller implements HasMiddleware
             }
 
             // Check if quantities match
-            if ($currentQty == $statementQty) {
+            if ($currentQty === $statementQty) {
                 // Mark all Buy/Sell transactions as reconciled
-                $updated = \App\Models\Transaction::whereHasMorph(
+                $updated = Transaction::whereHasMorph(
                     'config',
                     [\App\Models\TransactionDetailInvestment::class],
-                    function ($query) use ($account, $investment, $validated) {
+                    function ($query) use ($account, $investment) {
                         $query->where('account_id', $account->id)
-                              ->where('investment_id', $investment->id);
+                            ->where('investment_id', $investment->id);
                     }
                 )
-                ->whereIn('transaction_type_id', [4, 5]) // Buy or Sell
-                ->where('date', '<=', $validated['date'])
-                ->where('reconciled', false)
-                ->update(['reconciled' => true]);
+                    ->whereIn('transaction_type_id', [4, 5]) // Buy or Sell
+                    ->where('date', '<=', $validated['date'])
+                    ->where('reconciled', false)
+                    ->update(['reconciled' => true]);
 
                 if ($updated > 0) {
                     $reconciledCount++;
@@ -477,7 +478,7 @@ class TransactionController extends Controller implements HasMiddleware
                 // Create adjustment transaction
                 $difference = $statementQty - $currentQty;
                 $transactionTypeName = $difference > 0 ? 'Add shares' : 'Remove shares';
-                
+
                 $transactionType = \App\Models\TransactionType::where('name', $transactionTypeName)->first();
                 if (!$transactionType) {
                     continue;
@@ -569,4 +570,5 @@ class TransactionController extends Controller implements HasMiddleware
             'success' => true,
             'quantities' => $quantities,
         ]);
-    }}
+    }
+}

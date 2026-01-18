@@ -14,11 +14,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-<<<<<<< Updated upstream
-=======
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
->>>>>>> Stashed changes
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
@@ -90,20 +87,20 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
         // Apply active filter if specified
         if ($request->has('active') && $request->get('active') !== null) {
-            $query->where('active', $request->get('active') == 1);
+            $query->where('active', $request->get('active') === 1);
         }
 
         $investments = $query->get();
 
         // Bulk calculate quantities for all investments in ONE query
         $investmentIds = $investments->pluck('id');
-        
+
         if ($investmentIds->isNotEmpty()) {
             // Get quantities for all investments at once
-            $quantities = \DB::table('transactions')
+            $quantities = DB::table('transactions')
                 ->select(
                     'transaction_details_investment.investment_id',
-                    \DB::raw('SUM(
+                    DB::raw('SUM(
                         IFNULL(transaction_types.quantity_multiplier, 0)
                         * IFNULL(transaction_details_investment.quantity, 0)
                     ) AS quantity')
@@ -117,13 +114,13 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 ->pluck('quantity', 'investment_id');
 
             // Get latest transaction prices for all investments at once
-            $latestTransactionPrices = \DB::table('transactions')
+            $latestTransactionPrices = DB::table('transactions')
                 ->select(
                     'transaction_details_investment.investment_id',
                     'transactions.date',
                     'transaction_details_investment.price'
                 )
-                ->join('transaction_details_investment', function($join) {
+                ->join('transaction_details_investment', function ($join) {
                     $join->on('transactions.config_id', '=', 'transaction_details_investment.id')
                         ->where('transactions.config_type', '=', 'investment');
                 })
@@ -133,7 +130,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 ->orderBy('transactions.date', 'desc')
                 ->get()
                 ->groupBy('investment_id')
-                ->map(fn($group) => $group->first());
+                ->map(fn ($group) => $group->first());
 
             // Apply calculated values to each investment
             $investments->each(function ($investment) use ($quantities, $latestTransactionPrices) {
@@ -247,7 +244,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
             ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];

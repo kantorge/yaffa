@@ -36,6 +36,14 @@
                     title="{{ $withForecast ? __('Without forecast') : __('With forecast') }}">
                     <i class="fa fa-calendar"></i>
                 </a>
+                <button 
+                    type="button" 
+                    class="btn btn-warning" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#balanceCheckpointModal"
+                    title="{{ __('Balance Checkpoints') }}">
+                    <i class="fa fa-flag-checkered"></i>
+                </button>
                 <a href="{{ route('transaction.create', ['type' => 'standard', 'account_from' => $account->id ]) }}" class="btn btn-success" title="{{ __('New transaction') }}"><i class="fa fa-cart-plus"></i></a>
                 <a href="{{ route('transaction.create', ['type' => 'investment', 'account' => $account->id ]) }}" class="btn btn-success" title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
                 @if($account->config_type === 'account')
@@ -66,6 +74,11 @@
 
 <div id="app">
     <transaction-show-modal></transaction-show-modal>
+    <balance-checkpoint-modal 
+        :account-entity-id="{{ $account->id }}"
+        :current-balance="{{ $account->balance ?? 0 }}"
+        currency-code="{{ $account->config->currency->iso_code ?? 'USD' }}"
+    ></balance-checkpoint-modal>
 </div>
 
 @include('template.components.model-delete-form')

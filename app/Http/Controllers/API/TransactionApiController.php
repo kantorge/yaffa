@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -412,7 +413,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             $transaction->push();
 
             // Transfer transactions (type 3) should NOT have transaction items
-            if ($transaction->transaction_type_id != 3) {
+            if ($transaction->transaction_type_id !== 3) {
                 $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
                 // Handle default payee amount, if present, by adding amount as an item
@@ -476,11 +477,11 @@ class TransactionApiController extends Controller implements HasMiddleware
          */
         $validated = $request->validated();
 
-        \Log::info('storeInvestment called', ['transaction_type_id' => $validated['transaction_type_id']]);
+        Log::info('storeInvestment called', ['transaction_type_id' => $validated['transaction_type_id']]);
 
         // Special handling for Interest ReInvest (transaction_type_id = 13)
-        if ($validated['transaction_type_id'] == 13) {
-            \Log::info('Redirecting to handleInterestReInvestTransaction');
+        if ($validated['transaction_type_id'] === 13) {
+            Log::info('Redirecting to handleInterestReInvestTransaction');
             return $this->handleInterestReInvestTransaction($validated, $request);
         }
 
@@ -577,7 +578,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         $transaction->transactionItems()->delete();
 
         // Transfer transactions (type 3) should NOT have transaction items
-        if ($transaction->transaction_type_id != 3) {
+        if ($transaction->transaction_type_id !== 3) {
             $transactionItems = $this->processTransactionItem($validated['items'], $transaction->id);
 
             // Handle default payee amount, if present, by adding amount as an item
@@ -809,16 +810,16 @@ class TransactionApiController extends Controller implements HasMiddleware
     private function handleInterestReInvestTransaction(array $validated, $request): JsonResponse
     {
         $transactionService = new TransactionService();
-        
-        \Log::info('handleInterestReInvestTransaction called', ['validated' => $validated]);
-        
-        return DB::transaction(function () use ($validated, $request, $transactionService) {
+
+        Log::info('handleInterestReInvestTransaction called', ['validated' => $validated]);
+
+        return DB::transaction(function () use ($validated, $request) {
             // Get the currency from the account
-            $account = \App\Models\Account::find($validated['config']['account_id']);
+            $account = Account::find($validated['config']['account_id']);
             $currencyId = $account->config->currency_id;
-            
-            \Log::info('Creating Interest transaction', ['currencyId' => $currencyId]);
-            
+
+            Log::info('Creating Interest transaction', ['currencyId' => $currencyId]);
+
             // 1. Create Interest Yield transaction
             $interestConfig = TransactionDetailInvestment::create([
                 'account_id' => $validated['config']['account_id'],
@@ -829,14 +830,14 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'tax' => $validated['config']['tax'] ?? 0,
                 'dividend' => $validated['config']['dividend'],
             ]);
-            
+
             // Calculate cashflow: dividend - tax - commission
-            $interestCashflow = $validated['config']['dividend'] 
-                - ($validated['config']['tax'] ?? 0) 
+            $interestCashflow = $validated['config']['dividend']
+                - ($validated['config']['tax'] ?? 0)
                 - ($validated['config']['commission'] ?? 0);
-            
-            \Log::info('Interest cashflow calculated', ['cashflow' => $interestCashflow]);
-            
+
+            Log::info('Interest cashflow calculated', ['cashflow' => $interestCashflow]);
+
             $interestTransaction = new Transaction([
                 'user_id' => $request->user()->id,
                 'date' => $validated['date'],
@@ -849,21 +850,21 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'comment' => ($validated['comment'] ?? '') . ' (Interest)',
             ]);
             $interestTransaction->push();
-            
+
             // Set cashflow after push since these fields aren't fillable
             $interestTransaction->currency_id = $currencyId;
             $interestTransaction->cashflow_value = $interestCashflow;
             $interestTransaction->saveQuietly();
-            
-            \Log::info('Interest transaction created', ['id' => $interestTransaction->id, 'cashflow' => $interestCashflow]);
-            
+
+            Log::info('Interest transaction created', ['id' => $interestTransaction->id, 'cashflow' => $interestCashflow]);
+
             // Don't fire event - we already set cashflow manually
             // event(new TransactionCreated($interestTransaction));
-            
+
             // Recalculate monthly summaries once for both transactions at the end
-            
-            \Log::info('Creating Buy transaction');
-            
+
+            Log::info('Creating Buy transaction');
+
             // 2. Create Buy transaction
             $buyConfig = TransactionDetailInvestment::create([
                 'account_id' => $validated['config']['account_id'],
@@ -874,12 +875,12 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'tax' => null,
                 'dividend' => null,
             ]);
-            
+
             // Calculate cashflow: -1 * price * quantity
             $buyCashflow = -1 * 1 * $validated['config']['dividend'];
-            
-            \Log::info('Buy cashflow calculated', ['cashflow' => $buyCashflow]);
-            
+
+            Log::info('Buy cashflow calculated', ['cashflow' => $buyCashflow]);
+
             $buyTransaction = new Transaction([
                 'user_id' => $request->user()->id,
                 'date' => $validated['date'],
@@ -892,24 +893,24 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'comment' => ($validated['comment'] ?? '') . ' (Buy)',
             ]);
             $buyTransaction->push();
-            
+
             // Set cashflow after push since these fields aren't fillable
             $buyTransaction->currency_id = $currencyId;
             $buyTransaction->cashflow_value = $buyCashflow;
             $buyTransaction->saveQuietly();
-            
-            \Log::info('Buy transaction created', ['id' => $buyTransaction->id, 'cashflow' => $buyCashflow]);
-            
+
+            Log::info('Buy transaction created', ['id' => $buyTransaction->id, 'cashflow' => $buyCashflow]);
+
             // Don't fire event - we already set cashflow manually
             // event(new TransactionCreated($buyTransaction));
-            
+
             // Skip recalculateMonthlySummaries for now - it's causing timeouts
             // The summaries will be recalculated by the normal flow later
             // $transactionService->recalculateMonthlySummaries($interestTransaction);
             // $transactionService->recalculateMonthlySummaries($buyTransaction);
-            
-            \Log::info('Skipping monthly summary recalculation to avoid timeout');
-            
+
+            Log::info('Skipping monthly summary recalculation to avoid timeout');
+
             // Create notification
             if (!$validated['fromModal']) {
                 self::addMessage(
@@ -920,12 +921,12 @@ class TransactionApiController extends Controller implements HasMiddleware
                     true
                 );
             }
-            
-            \Log::info('Handler complete', [
+
+            Log::info('Handler complete', [
                 'interest_id' => $interestTransaction->id,
                 'buy_id' => $buyTransaction->id,
             ]);
-            
+
             // Return the Buy transaction as the "main" one (it has the shares)
             $buyTransaction->loadDetails();
             return response()->json([

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Spiders\InvestmentPriceScraper;
-use App\Spiders\WisealphaInvestmentPriceScraper;
 use Carbon\Carbon;
 use Database\Factories\InvestmentFactory;
 use Eloquent;
@@ -22,6 +21,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RoachPHP\Roach;
 use RoachPHP\Spider\Configuration\Overrides;
+use Exception;
+use Log;
 
 /**
  * App\Models\Investment
@@ -103,6 +104,7 @@ class Investment extends Model
         'scrape_selector',
         'interest_rate',
         'maturity_date',
+        'alias',
         'last_interest_payment_date',
     ];
 
@@ -208,7 +210,7 @@ class Investment extends Model
 
     /**
      * Calculate pending interest for this investment in a specific account
-     * 
+     *
      * @param AccountEntity $account The account to calculate interest for
      * @param Carbon|null $asOfDate Calculate interest up to this date (default: today)
      * @return array ['amount' => float, 'days' => int, 'from_date' => Carbon, 'to_date' => Carbon]
@@ -216,7 +218,7 @@ class Investment extends Model
     public function calculatePendingInterest(AccountEntity $account, Carbon $asOfDate = null): array
     {
         // Return zero if no interest rate set
-        if (!$this->interest_rate || $this->interest_rate == 0) {
+        if (!$this->interest_rate || $this->interest_rate === 0) {
             return [
                 'amount' => 0,
                 'days' => 0,
@@ -227,7 +229,7 @@ class Investment extends Model
         }
 
         $asOfDate = $asOfDate ?? Carbon::today();
-        
+
         // If there's a maturity date and we're past it, cap at maturity date
         if ($this->maturity_date && $asOfDate->gt($this->maturity_date)) {
             $asOfDate = $this->maturity_date;
@@ -236,19 +238,19 @@ class Investment extends Model
         // Determine the start date for interest calculation
         // Use the later of: last interest payment date or first transaction date
         $fromDate = $this->last_interest_payment_date ?? Carbon::today()->subYears(10);
-        
+
         // Get the first transaction date for this investment in this account
         $firstTransaction = Transaction::whereHasMorph(
             'config',
             [TransactionDetailInvestment::class],
             function ($query) use ($account) {
                 $query->where('account_id', $account->id)
-                      ->where('investment_id', $this->id);
+                    ->where('investment_id', $this->id);
             }
         )
-        ->where('schedule', false)
-        ->orderBy('date')
-        ->first();
+            ->where('schedule', false)
+            ->orderBy('date')
+            ->first();
 
         if ($firstTransaction && $firstTransaction->date->gt($fromDate)) {
             $fromDate = $firstTransaction->date;
@@ -435,14 +437,6 @@ class Investment extends Model
         ],
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'active' => 'boolean',
-            'auto_update' => 'boolean',
-        ];
-    }
-
     public function getInvestmentPriceProviderNameAttribute(): ?string
     {
         // If the price provider is not set, return null
@@ -479,11 +473,11 @@ class Investment extends Model
     public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
     {
         $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
-        
+
         if (!method_exists($this, $providerSuffix)) {
-            throw new \Exception("Investment price provider method '{$providerSuffix}' not found for provider '{$this->investment_price_provider}'");
+            throw new Exception("Investment price provider method '{$providerSuffix}' not found for provider '{$this->investment_price_provider}'");
         }
-        
+
         $this->{$providerSuffix}($from, $refill);
     }
 
@@ -536,7 +530,7 @@ class Investment extends Model
                     'date' => $date,
                 ]
             );
-            
+
             // Apply price factor (e.g., divide by 100 for pence to pounds conversion)
             $rawPrice = $daily_data->{'4. close'};
             $investmentPrice->price = $rawPrice * ($this->price_factor ?? 1);
@@ -602,7 +596,7 @@ class Investment extends Model
 
         // Use Guzzle directly to handle SSL issues in development
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new GuzzleClient();
             $response = $client->get($this->scrape_url, [
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
@@ -610,9 +604,9 @@ class Investment extends Model
                 'timeout' => 30,
                 'verify' => false  // Disable SSL verification for development
             ]);
-            
+
             $html = $response->getBody()->getContents();
-            
+
             // Use the same parsing logic as the spider
             $patterns = [
                 '/buyPrice\s*:\s*"(\d+(?:\.\d+)?)"/i',  // JSON format: buyPrice: "96.0"
@@ -623,10 +617,10 @@ class Investment extends Model
                 '/const\s+buyPrice\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
                 '/let\s+buyPrice\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i',
             ];
-            
+
             $priceValue = null;
             $matchedPattern = null;
-            
+
             foreach ($patterns as $index => $pattern) {
                 if (preg_match($pattern, $html, $matches)) {
                     $priceValue = (float) $matches[1];
@@ -634,7 +628,7 @@ class Investment extends Model
                     break;
                 }
             }
-            
+
             // If no buyPrice found, try to find price in data attributes or other locations
             if ($priceValue === null) {
                 if (preg_match('/data-price\s*=\s*["\']?(\d+(?:\.\d+)?)["\']?/i', $html, $matches)) {
@@ -642,21 +636,21 @@ class Investment extends Model
                     $matchedPattern = 'data-price attribute';
                 }
             }
-            
+
             if ($priceValue === null) {
-                \Log::warning('WiseAlpha direct scrape could not find buyPrice', [
+                Log::warning('WiseAlpha direct scrape could not find buyPrice', [
                     'url' => $this->scrape_url,
-                    'html_length' => strlen($html),
+                    'html_length' => mb_strlen($html),
                     'contains_buyPrice' => str_contains($html, 'buyPrice'),
                 ]);
                 return;
             }
-            
+
             // Apply price factor (e.g., divide by 100 for pence to pounds conversion)
             $finalPrice = $priceValue * ($this->price_factor ?? 1);
-            
+
             // Log successful price extraction
-            \Log::info('WiseAlpha direct scrape extracted price', [
+            Log::info('WiseAlpha direct scrape extracted price', [
                 'url' => $this->scrape_url,
                 'raw_price' => $priceValue,
                 'price_factor' => $this->price_factor ?? 1,
@@ -676,9 +670,9 @@ class Investment extends Model
             // We are intentionally not triggering the observer here, as there can be multiple similar operations
             // It means, that it's the responsibility of the caller to trigger the observer or any related actions
             $investmentPrice->saveQuietly();
-            
-        } catch (\Exception $e) {
-            \Log::error('WiseAlpha direct scrape failed', [
+
+        } catch (Exception $e) {
+            Log::error('WiseAlpha direct scrape failed', [
                 'url' => $this->scrape_url,
                 'error' => $e->getMessage()
             ]);

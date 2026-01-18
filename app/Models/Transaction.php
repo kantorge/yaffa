@@ -77,6 +77,8 @@ class Transaction extends Model
         'date',
         'transaction_type_id',
         'reconciled',
+        'reconciled_at',
+        'reconciled_by',
         'schedule',
         'budget',
         'comment',
@@ -84,6 +86,7 @@ class Transaction extends Model
         'config_id',
         'user_id',
         'cashflow_value',
+        'import_job_id',
     ];
 
     protected $hidden = [
@@ -109,6 +112,7 @@ class Transaction extends Model
         return [
             'date' => 'date',
             'reconciled' => 'boolean',
+            'reconciled_at' => 'datetime',
             'schedule' => 'boolean',
             'budget' => 'boolean',
             'cashflow_value' => 'float',
@@ -138,6 +142,11 @@ class Transaction extends Model
     public function transactionSchedule(): HasOne
     {
         return $this->hasOne(TransactionSchedule::class);
+    }
+
+    public function reconciledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reconciled_by');
     }
 
     public function tags()

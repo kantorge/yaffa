@@ -78,6 +78,7 @@ class Account extends Model
         'account_group_id',
         'currency_id',
         'default_date_range',
+        'alias',
     ];
 
     protected function casts(): array

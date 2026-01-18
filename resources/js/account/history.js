@@ -283,4 +283,7 @@ app.config.globalProperties.__ = window.__;
 import TransactionShowModal from './../components/TransactionDisplay/Modal.vue'
 app.component('transaction-show-modal', TransactionShowModal)
 
+import BalanceCheckpointModal from './../components/BalanceCheckpointModal.vue'
+app.component('balance-checkpoint-modal', BalanceCheckpointModal)
+
 app.mount('#app')

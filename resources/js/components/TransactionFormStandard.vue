@@ -1244,7 +1244,7 @@
                 results: data.map(function (account) {
                   return {
                     id: account.id,
-                    text: account.name,
+                    text: account.text || account.name, // API returns 'text' for payees, 'name' for accounts
                   };
                 }),
               };
@@ -1255,7 +1255,7 @@
           // Set placeholder based on type parameter and transaction type
           placeholder: this.getPlaceholder(type),
           allowClear: true,
-          width: 'resolve',
+          width: '100%',
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
             document.getElementById('modal-transaction-form-standard') ||

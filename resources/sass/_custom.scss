@@ -259,3 +259,17 @@ div.card-header > div.card-title {
         }
     }
 }
+
+// Ensure Select2 dropdowns are visible and positioned correctly
+.select2-container {
+    z-index: 9999 !important;
+}
+
+.select2-dropdown {
+    z-index: 10000 !important;
+}
+
+// Ensure card bodies don't clip select2 dropdowns
+#transactionFormStandard .card-body {
+    overflow: visible !important;
+}

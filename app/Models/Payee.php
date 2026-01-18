@@ -75,6 +75,7 @@ class Payee extends Model
     protected $fillable = [
         'category_id',
         'category_suggestion_dismissed',
+        'alias',
     ];
 
     /**

@@ -6,8 +6,8 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\TransactionImportRule;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Exception;
 
 class TransactionUploadService
 {
@@ -34,9 +34,9 @@ class TransactionUploadService
 
             if ($accountId) {
                 // Get rules for this specific account OR global rules (null account_id)
-                $query->where(function($q) use ($accountId) {
+                $query->where(function ($q) use ($accountId) {
                     $q->whereNull('account_id')
-                      ->orWhere('account_id', $accountId);
+                        ->orWhere('account_id', $accountId);
                 });
             } else {
                 // Only global rules
@@ -45,7 +45,7 @@ class TransactionUploadService
 
             $this->rules = $query->get();
         }
-        
+
         return $this->rules;
     }
 
@@ -55,13 +55,13 @@ class TransactionUploadService
     public function findMatchingRule(string $description, $accountId = null)
     {
         $rules = $this->loadRules($accountId);
-        
+
         foreach ($rules as $rule) {
             if ($rule->matches($description)) {
                 return $rule;
             }
         }
-        
+
         return null;
     }
 
@@ -74,14 +74,12 @@ class TransactionUploadService
         return $this->user->accounts()
             ->with('config.accountGroup')
             ->get()
-            ->map(function ($account) {
-                return [
-                    'id' => $account->id,
-                    'name' => $account->name,
-                    'alias' => $account->alias,
-                    'group' => $account->config->accountGroup->name ?? null,
-                ];
-            });
+            ->map(fn ($account) => [
+                'id' => $account->id,
+                'name' => $account->name,
+                'alias' => $account->alias,
+                'group' => $account->config->accountGroup->name ?? null,
+            ]);
     }
 
     /**
@@ -96,19 +94,19 @@ class TransactionUploadService
             return null;
         }
 
-        // Get all user accounts
-        $accounts = $this->user->accounts()->get();
+        // Query AccountEntity directly (which has the alias field) for both accounts and investments
+        $accountEntities = AccountEntity::where('user_id', $this->user->id)
+            ->whereIn('config_type', ['account', 'investment'])
+            ->whereNotNull('alias')
+            ->where('alias', '!=', '')
+            ->get();
 
-        foreach ($accounts as $account) {
-            if (empty($account->alias)) {
-                continue;
-            }
-
+        foreach ($accountEntities as $entity) {
             // Check if the MoneyHub account name matches any alias (aliases are separated by newlines)
-            $aliases = array_map('trim', explode("\n", $account->alias));
+            $aliases = array_map('trim', explode("\n", $entity->alias));
             foreach ($aliases as $alias) {
-                if (strcasecmp($alias, trim($moneyHubAccountName)) === 0) {
-                    return $account->id;
+                if (strcasecmp($alias, mb_trim($moneyHubAccountName)) === 0) {
+                    return $entity->id;
                 }
             }
         }
@@ -129,7 +127,7 @@ class TransactionUploadService
             $description = 'Unknown';
         }
 
-        $description = trim($description);
+        $description = mb_trim($description);
 
         // First try to match against existing payee import_alias
         $payees = $this->user->payees()->get();
@@ -188,13 +186,13 @@ class TransactionUploadService
             return null;
         }
 
-        $categoryName = trim($categoryName);
+        $categoryName = mb_trim($categoryName);
         $parentId = null;
 
         // If we have a category group, find or create the parent category first
         if (!empty($categoryGroupName)) {
-            $categoryGroupName = trim($categoryGroupName);
-            
+            $categoryGroupName = mb_trim($categoryGroupName);
+
             // Try to find existing parent category
             $parentCategory = $this->user->categories()
                 ->where('name', $categoryGroupName)
@@ -237,8 +235,8 @@ class TransactionUploadService
             'user_id' => $this->user->id,
         ]);
 
-        Log::info("Created new category: {$categoryName}" . 
-                  ($categoryGroupName ? " (Parent: {$categoryGroupName})" : "") . 
+        Log::info("Created new category: {$categoryName}" .
+                  ($categoryGroupName ? " (Parent: {$categoryGroupName})" : "") .
                   " (ID: {$category->id})");
 
         return $category->id;
@@ -271,8 +269,33 @@ class TransactionUploadService
     {
         $mapped = [];
         foreach ($rows as $row) {
+            // Parse date - MoneyHub may export in different formats
+            $date = null;
+            if (isset($row['DATE'])) {
+                // Try ISO format first (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $row['DATE'])) {
+                    $date = $row['DATE'];
+                }
+                // Try d/m/Y format (04/01/2026)
+                elseif (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $row['DATE'])) {
+                    $date = Carbon::createFromFormat('d/m/Y', $row['DATE'])->format('Y-m-d');
+                }
+                // Try m/d/Y format (01/04/2026)
+                elseif (preg_match('/^\d{1,2}\/\d{1,2}\/\d{2,4}$/', $row['DATE'])) {
+                    $date = Carbon::createFromFormat('m/d/Y', $row['DATE'])->format('Y-m-d');
+                }
+                // Fallback: let Carbon try to parse it
+                else {
+                    try {
+                        $date = Carbon::parse($row['DATE'])->format('Y-m-d');
+                    } catch (Exception $e) {
+                        Log::warning('Failed to parse date: ' . $row['DATE']);
+                    }
+                }
+            }
+
             $mapped[] = [
-                'date' => isset($row['DATE']) ? Carbon::createFromFormat('d/m/Y', $row['DATE'])->format('Y-m-d') : null,
+                'date' => $date,
                 'amount' => $row['AMOUNT'] ?? null,
                 'description' => $row['DESCRIPTION'] ?? null,
                 'category' => $row['CATEGORY'] ?? null,

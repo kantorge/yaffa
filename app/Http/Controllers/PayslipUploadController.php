@@ -6,13 +6,15 @@ use App\Jobs\ProcessMoneyhubImport;
 use App\Models\AccountEntity;
 use App\Models\ImportJob;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Routing\Controllers\HasMiddleware;
 
-class PayslipUploadController extends Controller
+class PayslipUploadController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware(['auth', 'verified']);
+        return [
+            ['auth', 'verified'],
+        ];
     }
 
     /**
@@ -45,7 +47,7 @@ class PayslipUploadController extends Controller
         ]);
 
         $accountEntityId = $validated['account_entity_id'];
-        
+
         // Verify the account belongs to the user and is an employment account
         $account = AccountEntity::where('id', $accountEntityId)
             ->where('user_id', auth()->id())
@@ -81,7 +83,7 @@ class PayslipUploadController extends Controller
 
             // Dispatch job to process the file
             ProcessMoneyhubImport::dispatch($import->id);
-            
+
             $uploadedCount++;
         }
 

@@ -2,11 +2,12 @@
 
 namespace App\Observers;
 
-use App\Events\TransactionCreated;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionType;
 use App\Services\TransactionService;
+use App\Services\BalanceCheckpointService;
+use Illuminate\Validation\ValidationException;
 
 class TransactionObserver
 {
@@ -20,14 +21,47 @@ class TransactionObserver
      */
     public function creating(Transaction $transaction): bool
     {
+        \Log::info('TransactionObserver creating fired', [
+            'id' => $transaction->id,
+            'date' => $transaction->date,
+            'has_config' => $transaction->config !== null,
+            'config_type' => $transaction->config ? get_class($transaction->config) : null,
+        ]);
+
+        // Check reconciliation status - transactions cannot be created if they affect reconciled balances
+        $balanceService = new BalanceCheckpointService();
+        $modifyCheck = $balanceService->canModifyTransaction($transaction);
+
+        if (!$modifyCheck['can_modify']) {
+            \Log::warning('Transaction creation blocked: reconciled');
+            throw ValidationException::withMessages([
+                'transaction' => [$modifyCheck['reason']]
+            ]);
+        }
+
+        // Validate against balance checkpoints
+        $validationResult = $balanceService->validateTransaction($transaction, false);
+
+        \Log::info('Balance checkpoint validation result', [
+            'valid' => $validationResult['valid'],
+            'message' => $validationResult['message'] ?? 'none',
+        ]);
+
+        if (!$validationResult['valid']) {
+            \Log::warning('Transaction creation blocked: checkpoint violation');
+            throw ValidationException::withMessages([
+                'date' => [$validationResult['message']]
+            ]);
+        }
+
         // Auto-remap negative Dividend (type 8) transactions based on account
-        if ($transaction->transaction_type_id == 8 && $transaction->cashflow_value < 0) {
+        if ($transaction->transaction_type_id === 8 && $transaction->cashflow_value < 0) {
             // Load the config relationship to get the account
             $transaction->loadMissing('config.account');
-            
+
             if ($transaction->config && method_exists($transaction->config, 'account')) {
                 $account = $transaction->config->account;
-                
+
                 if ($account) {
                     // If account name contains "WiseAlpha", use type 12 (Purchased Interest)
                     // Otherwise use type 14 (Product Fee)
@@ -35,7 +69,7 @@ class TransactionObserver
                 }
             }
         }
-        
+
         // Observer not needed for Interest ReInvest anymore - handled in API controller
         return true; // Allow all transactions to proceed
     }
@@ -49,6 +83,41 @@ class TransactionObserver
     }
 
     /**
+     * Handle the Transaction "updating" event (before save).
+     */
+    public function updating(Transaction $transaction): bool
+    {
+        // Check if transaction was previously reconciled
+        if ($transaction->getOriginal('reconciled')) {
+            // Allow ONLY unreconciling (changing reconciled from true to false)
+            // Get all changed attributes
+            $dirty = $transaction->getDirty();
+            
+            // If the only change is reconciled flag going to false, allow it
+            if (count($dirty) === 1 && isset($dirty['reconciled']) && $dirty['reconciled'] == false) {
+                return true;
+            }
+            
+            // Any other changes are blocked
+            throw ValidationException::withMessages([
+                'transaction' => ['Cannot modify reconciled transaction']
+            ]);
+        }
+
+        // Validate against balance checkpoints
+        $balanceService = new BalanceCheckpointService();
+        $validationResult = $balanceService->validateTransaction($transaction, true);
+
+        if (!$validationResult['valid']) {
+            throw ValidationException::withMessages([
+                'date' => [$validationResult['message']]
+            ]);
+        }
+
+        return true;
+    }
+
+    /**
      * Handle the Transaction "updated" event.
      */
     public function updated(Transaction $transaction): void
@@ -56,18 +125,45 @@ class TransactionObserver
         // If cashflow_value is null after update, recalculate it
         // BUT only if the transaction type is supposed to have a cashflow
         // (Skip types with amount_multiplier = null, like "Add shares" or "Interest ReInvest")
-        if ($transaction->cashflow_value === null 
-            && $transaction->transactionType 
+        if ($transaction->cashflow_value === null
+            && $transaction->transactionType
             && $transaction->transactionType->amount_multiplier !== null) {
-            
+
             $transactionService = new TransactionService();
             $transaction->currency_id = $transactionService->getTransactionCurrencyId($transaction);
             $transaction->cashflow_value = $transactionService->getTransactionCashFlow($transaction);
             $transaction->saveQuietly();
-            
+
             // Also recalculate monthly summaries
             $transactionService->recalculateMonthlySummaries($transaction);
         }
+    }
+
+    /**
+     * Handle the Transaction "deleting" event (before delete).
+     */
+    public function deleting(Transaction $transaction): bool
+    {
+        // Check if transaction is reconciled
+        $balanceService = new BalanceCheckpointService();
+        $modifyCheck = $balanceService->canModifyTransaction($transaction, 'delete');
+
+        if (!$modifyCheck['can_modify']) {
+            throw ValidationException::withMessages([
+                'transaction' => [$modifyCheck['reason']]
+            ]);
+        }
+
+        // Validate that deletion won't violate balance checkpoints
+        $validationResult = $balanceService->validateDeletion($transaction);
+
+        if (!$validationResult['valid']) {
+            throw ValidationException::withMessages([
+                'transaction' => [$validationResult['message']]
+            ]);
+        }
+
+        return true;
     }
 
     /**
@@ -75,7 +171,7 @@ class TransactionObserver
      */
     public function deleted(Transaction $transaction): void
     {
-        //
+
     }
 
     /**
@@ -83,7 +179,7 @@ class TransactionObserver
      */
     public function restored(Transaction $transaction): void
     {
-        //
+
     }
 
     /**
@@ -91,14 +187,14 @@ class TransactionObserver
      */
     public function forceDeleted(Transaction $transaction): void
     {
-        //
+
     }
 
     /**
      * When an "Interest ReInvest" transaction is being created, intercept it and create two transactions instead:
      * 1. Interest yield transaction (for the dividend/interest income)
      * 2. Buy transaction (for reinvesting at price 1)
-     * 
+     *
      * The original Interest ReInvest transaction is NOT saved.
      */
     private function handleInterestReInvest(Transaction $transaction): void
@@ -118,7 +214,7 @@ class TransactionObserver
 
         try {
             $transactionService = new TransactionService();
-            
+
             // Create the Interest Yield transaction config
             $interestYieldConfig = TransactionDetailInvestment::create([
                 'account_id' => $config->account_id,
@@ -133,7 +229,7 @@ class TransactionObserver
             // Get the currency_id from the account
             $account = \App\Models\Account::find($config->account_id);
             $currencyId = $account->config->currency_id;
-            
+
             // Calculate Interest Yield cashflow manually
             // For Interest yield: cashflow = dividend - tax - commission
             $interestCashflow = $config->dividend - ($config->tax ?? 0) - ($config->commission ?? 0);

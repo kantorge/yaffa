@@ -73,7 +73,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
         $this->task = $task;
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
-        
+
         // Set this job to run on the 'calculations' queue
         $this->onQueue('calculations');
     }
@@ -85,7 +85,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
     {
         // Increase memory limit for accounts with many transactions
         ini_set('memory_limit', '256M');
-        
+
         $this->performWithTracking(function () {
             switch ($this->task) {
                 case 'account_balance-fact':
@@ -391,16 +391,14 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
         $results = new Collection();
 
         // Preload investments to avoid repeated DB lookups
-        // The transactionsInvestment() relationship already joins the table
         $investmentIds = $this->accountEntity->transactionsInvestment()
             ->distinct()
             ->pluck('investment_id')
             ->toArray();
         $investments = Investment::whereIn('id', $investmentIds)->get()->keyBy('id');
-        $priceCache = [];
-        
+
         // Preload ALL transaction data at once to calculate running quantities
-        // This eliminates the N+1 query problem (was 185k queries for large accounts)
+        // This eliminates the N+1 query problem
         $allTransactions = DB::table('transactions')
             ->select(
                 'transactions.date',
@@ -417,20 +415,72 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
             ->get()
             ->groupBy('investment_id');
 
+        // Preload ALL investment prices at once
+        $allInvestmentPrices = DB::table('investment_prices')
+            ->whereIn('investment_id', $investmentIds)
+            ->where('date', '<=', $lastTransactionDate)
+            ->orderBy('investment_id')
+            ->orderBy('date')
+            ->get()
+            ->groupBy('investment_id');
+
+        // Preload ALL transaction prices at once
+        $allTransactionPrices = DB::table('transactions')
+            ->select('transactions.date', 'transaction_details_investment.investment_id', 'transaction_details_investment.price')
+            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->where('transactions.config_type', 'investment')
+            ->where('transactions.schedule', 0)
+            ->whereIn('transaction_details_investment.investment_id', $investmentIds)
+            ->whereNotNull('transaction_details_investment.price')
+            ->where('transactions.date', '<=', $lastTransactionDate)
+            ->orderBy('transaction_details_investment.investment_id')
+            ->orderBy('transactions.date')
+            ->get()
+            ->groupBy('investment_id');
+
+        // Build a price lookup cache for all investments and all months
+        $priceCache = [];
+        foreach ($investmentIds as $invId) {
+            $storedPrices = $allInvestmentPrices[$invId] ?? collect();
+            $txPrices = $allTransactionPrices[$invId] ?? collect();
+
+            foreach ($period as $month) {
+                $monthEnd = Carbon::instance($month)->endOfMonth();
+                $monthKey = $month->format('Y-m');
+
+                // Get latest stored price on or before month end
+                $latestStored = $storedPrices->where('date', '<=', $monthEnd)->last();
+                $latestTx = $txPrices->where('date', '<=', $monthEnd)->last();
+
+                // Use whichever is more recent
+                $price = 0;
+                if ($latestStored && $latestTx) {
+                    $price = ($latestStored->date > $latestTx->date) ? $latestStored->price : $latestTx->price;
+                } elseif ($latestStored) {
+                    $price = $latestStored->price;
+                } elseif ($latestTx) {
+                    $price = $latestTx->price;
+                }
+
+                $priceCache[$invId][$monthKey] = $price;
+            }
+        }
+
         foreach ($period as $month) {
             // Create a Carbon instance of the month
             $carbonMonth = Carbon::instance($month);
             $monthEnd = $carbonMonth->endOfMonth();
+            $monthKey = $carbonMonth->format('Y-m');
 
             // Calculate the amount by summing quantity * latest price per investment
             $amount = 0;
-            
+
             // Calculate quantities for each investment up to this month
             foreach ($investmentIds as $invId) {
                 if (! isset($investments[$invId])) {
                     continue;
                 }
-                
+
                 // Sum all transaction quantity changes up to this month
                 $quantity = 0;
                 if (isset($allTransactions[$invId])) {
@@ -438,14 +488,11 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
                         ->where('date', '<=', $monthEnd)
                         ->sum('qty_change');
                 }
-                
-                // Get price (with caching)
-                $monthKey = $carbonMonth->format('Y-m');
-                if (! isset($priceCache[$invId][$monthKey])) {
-                    $priceCache[$invId][$monthKey] = $investments[$invId]->getLatestPrice('combined', $carbonMonth);
-                }
-                
-                $amount += $quantity * $priceCache[$invId][$monthKey];
+
+                // Get price from pre-built cache (no DB queries!)
+                $price = $priceCache[$invId][$monthKey] ?? 0;
+
+                $amount += $quantity * $price;
             }
 
             // Here we intentionally store zero values, as it's valid to have a zero value for a month
@@ -538,9 +585,70 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
         $results = new Collection();
         $currentTransactionCount = 0;
 
+        // Preload all investment IDs from transactions
+        $investmentIds = $allTransactionsInstances
+            ->pluck('config.investment_id')
+            ->unique()
+            ->toArray();
+
+        // Preload all investments at once
+        $investmentsCache = Investment::whereIn('id', $investmentIds)->get()->keyBy('id');
+
+        // Preload ALL investment prices at once for the forecast period
+        $allInvestmentPrices = DB::table('investment_prices')
+            ->whereIn('investment_id', $investmentIds)
+            ->where('date', '<=', $lastForecastDate)
+            ->orderBy('investment_id')
+            ->orderBy('date')
+            ->get()
+            ->groupBy('investment_id');
+
+        // Preload ALL transaction prices at once
+        $allTransactionPrices = DB::table('transactions')
+            ->select('transactions.date', 'transaction_details_investment.investment_id', 'transaction_details_investment.price')
+            ->join('transaction_details_investment', 'transactions.config_id', '=', 'transaction_details_investment.id')
+            ->where('transactions.config_type', 'investment')
+            ->where('transactions.schedule', 0)
+            ->whereIn('transaction_details_investment.investment_id', $investmentIds)
+            ->whereNotNull('transaction_details_investment.price')
+            ->where('transactions.date', '<=', $lastForecastDate)
+            ->orderBy('transaction_details_investment.investment_id')
+            ->orderBy('transactions.date')
+            ->get()
+            ->groupBy('investment_id');
+
+        // Build a complete price lookup cache for all investments and all forecast months
+        $priceCache = [];
+        foreach ($investmentIds as $invId) {
+            $storedPrices = $allInvestmentPrices[$invId] ?? collect();
+            $txPrices = $allTransactionPrices[$invId] ?? collect();
+
+            foreach ($period as $month) {
+                $monthEnd = Carbon::instance($month)->endOfMonth();
+                $monthKey = $monthEnd->format('Y-m');
+
+                // Get latest stored price on or before month end
+                $latestStored = $storedPrices->where('date', '<=', $monthEnd)->last();
+                $latestTx = $txPrices->where('date', '<=', $monthEnd)->last();
+
+                // Use whichever is more recent
+                $price = 0;
+                if ($latestStored && $latestTx) {
+                    $price = ($latestStored->date > $latestTx->date) ? $latestStored->price : $latestTx->price;
+                } elseif ($latestStored) {
+                    $price = $latestStored->price;
+                } elseif ($latestTx) {
+                    $price = $latestTx->price;
+                }
+
+                $priceCache[$invId][$monthKey] = $price;
+            }
+        }
+
         foreach ($period as $month) {
             // Create a Carbon instance of the month
             $carbonEndOfMonth = Carbon::instance($month)->endOfMonth();
+            $monthKey = $carbonEndOfMonth->format('Y-m');
 
             // This loop reproduces the functionality of the calculateInvestmentValueFact method,
             // and that of the getAssociatedInvestmentsAndQuantity method in the Account model,
@@ -563,29 +671,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue, ShouldBeUnique
                 );
             }
 
-            $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth, $quantities) {
-                // Get the latest known price up to this date. Use a local cache and preloaded investments
-                static $priceCache = null;
-                static $investmentsCache = null;
-
-                if ($investmentsCache === null) {
-                    $investmentIds = $quantities->keys()->toArray();
-                    $investmentsCache = Investment::whereIn('id', $investmentIds)->get()->keyBy('id');
-                }
-
-                $monthKey = $carbonEndOfMonth->format('Y-m');
-                $priceCache = $priceCache ?? [];
-                if (! isset($priceCache[$investmentId][$monthKey])) {
-                    $inv = $investmentsCache[$investmentId] ?? null;
-                    if (! $inv) {
-                        $price = 0;
-                    } else {
-                        $price = $inv->getLatestPrice('combined', $carbonEndOfMonth);
-                    }
-                    $priceCache[$investmentId][$monthKey] = $price;
-                }
-
-                return $quantity * $priceCache[$investmentId][$monthKey];
+            $amount = $quantities->map(function ($quantity, $investmentId) use ($monthKey, $priceCache) {
+                // Use pre-built price cache (no DB queries!)
+                $price = $priceCache[$investmentId][$monthKey] ?? 0;
+                return $quantity * $price;
             })
                 ->sum();
 
