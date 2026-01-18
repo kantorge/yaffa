@@ -29,7 +29,7 @@ return [
         "debt_repayment" => "Remboursement de la dette",
         "dining_out" => "Dîner au restaurant",
         "disability_insurance" => "Assurance invalidité",
-        "doctor_visits" => "visites chez le médecin",
+        "doctor_visits" => "Visites chez le médecin",
         "education_and_development" => "Éducation et développement",
         "electricity" => "Électricité",
         "entertainment" => "Divertissement",
