@@ -19,7 +19,92 @@ return [
         "name" => "név",
         "tos" => "felhasználási feltételek"
     ],
-    "confirmed" => "A(z) :attribute megerősítése hibás.",
+    "before" => "A(z) :attribute paraméternek a(z) :date előtti dátumnak kell lennie.",
+    "before_or_equal" => "A(z) :attribute dátumának a :date paraméternél korábbinak vagy azzal egyenlőnek kell lennie.",
+    "between" => [
+        "array" => "Az :attribute tulajdonságnak :min és :max közötti számú elemet kell tartalmaznia.",
+        "file" => "A(z) :attribute méretének :min és :max kilobájt között kell lennie.",
+        "numeric" => "A(z) :attribute értékének :min és :max között kell lennie.",
+        "string" => "A(z) :attribute paraméternek :min és :max karakterek között kell lennie."
+    ],
+    "boolean" => "Az :attribute mezőnek igaznak vagy hamisnak kell lennie.",
+    "can" => "A(z) :attribute mező nem engedélyezett értéket tartalmaz.",
+    "confirmed" => "A(z) :attribute megerősítése nem egyezik.",
+    "contains" => "A(z) :attribute mezőből hiányzik egy kötelező érték.",
+    "current_password" => "A jelszó helytelen.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "egyéni üzenet"
+        ]
+    ],
+    "date" => "A(z) :attribute nem érvényes dátum.",
+    "date_equals" => "A(z) :attribute paraméternek egy :date paraméterrel megegyező dátumnak kell lennie.",
+    "date_format" => "A(z) :attribute nem egyezik a(z) :format formátummal.",
+    "decimal" => "Az :attribute mezőben :decimal tizedesjegyeknek kell lenniük.",
+    "declined" => "Az :attribute mezőt el kell utasítani.",
+    "declined_if" => "Az :attribute mezőt el kell utasítani, ha az :other értéke :value.",
+    "different" => "A(z) :attribute és a(z) :other paramétereknek eltérőnek kell lenniük.",
+    "digits" => "A(z) :attribute értékének :digits számjegyből kell állnia.",
+    "digits_between" => "A(z) :attribute paraméternek :min és :max számjegyek között kell lennie.",
+    "dimensions" => "A(z) :attribute érvénytelen képméretekkel rendelkezik.",
+    "distinct" => "A(z) :attribute mezőben ismétlődő érték található.",
+    "doesnt_contain" => "Az :attribute mező nem tartalmazhatja a következők egyikét sem: :values.",
+    "doesnt_end_with" => "Az :attribute mező nem végződhet a következők egyikével: :values.",
+    "doesnt_start_with" => "Az :attribute mező nem kezdődhet a következők egyikével: :values.",
+    "email" => "A(z) :attribútumnak érvényes e-mail címnek kell lennie.",
+    "encoding" => "Az :attribute mezőt :encoding formátumban kell kódolni.",
+    "ends_with" => "Az :attribute tulajdonságnak a következők egyikével kell végződnie: :values.",
+    "enum" => "A kiválasztott :attribute érvénytelen.",
+    "exists" => "A kiválasztott :attribute érvénytelen.",
+    "extensions" => "Az :attribute mezőnek a következő kiterjesztések egyikével kell rendelkeznie: :values.",
+    "file" => "A :attribútumnak egy fájlnak kell lennie.",
+    "filled" => "Az :attribute mezőnek tartalmaznia kell egy értéket.",
+    "gt" => [
+        "array" => "Az :attribute tulajdonságnak több mint :value elemmel kell rendelkeznie.",
+        "file" => "A(z) :attribute értékének nagyobbnak kell lennie, mint :value kilobájt.",
+        "numeric" => "A(z) :attribute értékének nagyobbnak kell lennie, mint a(z) :value érték.",
+        "string" => "A(z) :attribute karakternek nagyobbnak kell lennie, mint :value karakter."
+    ],
+    "gte" => [
+        "array" => "A(z) :attribute tulajdonságnak legalább :value elemmel kell rendelkeznie.",
+        "file" => "A(z) :attribute értékének nagyobbnak vagy egyenlőnek kell lennie, mint :value kilobájt.",
+        "numeric" => "A(z) :attribute értékének nagyobbnak vagy egyenlőnek kell lennie, mint a :value.",
+        "string" => "A(z) :attribute karakternek nagyobbnak vagy egyenlőnek kell lennie, mint :value karakter."
+    ],
+    "hex_color" => "Az :attribute mezőnek érvényes hexadecimális színnek kell lennie.",
+    "image" => "A(z) :attribútumnak képnek kell lennie.",
+    "in" => "A kiválasztott :attribute érvénytelen.",
+    "in_array" => "A(z) :attribute mező nem létezik az :other paraméterben.",
+    "in_array_keys" => "Az :attribute mezőnek a következő kulcsok közül legalább egyet tartalmaznia kell: :values.",
+    "integer" => "A :attribútumnak egész számnak kell lennie.",
+    "ip" => "A(z) :attribútumnak érvényes IP-címnek kell lennie.",
+    "ipv4" => "A(z) :attribútumnak érvényes IPv4-címnek kell lennie.",
+    "ipv6" => "A(z) :attribútumnak érvényes IPv6-címnek kell lennie.",
+    "json" => "A(z) :attribute tulajdonságnak érvényes JSON karakterláncnak kell lennie.",
+    "list" => "Az :attribute mezőnek listának kell lennie.",
+    "lowercase" => "Az :attribute mezőnek kisbetűsnek kell lennie.",
+    "lt" => [
+        "array" => "A(z) :attribute tulajdonságnak kevesebb, mint :value elemet kell tartalmaznia.",
+        "file" => "A(z) :attribute értékének kisebbnek kell lennie, mint :value kilobájt.",
+        "numeric" => "A(z) :attribute értékének kisebbnek kell lennie, mint a(z) :value.",
+        "string" => "A(z) :attribute karakterszámának kevesebbnek kell lennie, mint :value karakter."
+    ],
+    "lte" => [
+        "array" => "Az :attribute nem tartalmazhat több mint :value elemet.",
+        "file" => "A(z) :attribute értékének kisebbnek vagy egyenlőnek kell lennie, mint :value kilobájt.",
+        "numeric" => "A(z) :attribute értékének kisebbnek vagy egyenlőnek kell lennie, mint :value.",
+        "string" => "A(z) :attribute karakterszámának kisebbnek vagy egyenlőnek kell lennie, mint :value karakter."
+    ],
+    "mac_address" => "Az :attribute mezőnek érvényes MAC-címnek kell lennie.",
+    "max" => [
+        "array" => "Az :attribute nem tartalmazhat :max-nál több elemet.",
+        "file" => "Az :attribute nem lehet nagyobb, mint :max kilobájt.",
+        "numeric" => "Az :attribute nem lehet nagyobb, mint :max.",
+        "string" => "A(z) :attribute nem lehet hosszabb, mint :max karakter."
+    ],
+    "max_digits" => "Az :attribute mező nem tartalmazhat :max számjegynél többet.",
+    "mimes" => "A(z) :attribute tulajdonságnak egy :values ​​típusú fájlnak kell lennie.",
+    "mimetypes" => "A(z) :attribute tulajdonságnak egy :values ​​típusú fájlnak kell lennie.",
     "min" => [
         "array" => "A(z) :attribute tulajdonságnak legalább :min elemet kell tartalmaznia.",
         "file" => "A(z) :attribute tulajdonságnak legalább :min kilobájt méretűnek kell lennie.",

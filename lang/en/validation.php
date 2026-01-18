@@ -2,8 +2,13 @@
 
 return [
     "accepted" => "The :attribute must be accepted.",
+    "accepted_if" => "The :attribute field must be accepted when :other is :value.",
+    "active_url" => "The :attribute is not a valid URL.",
     "after" => "The :attribute must be a date after :date.",
     "after_or_equal" => "The :attribute must be a date after or equal to :date.",
+    "alpha" => "The :attribute may only contain letters.",
+    "alpha_dash" => "The :attribute may only contain letters, numbers, dashes and underscores.",
+    "alpha_num" => "The :attribute may only contain letters and numbers.",
     "any_of" => "The :attribute field is invalid.",
     "array" => "The :attribute must be an array.",
     "ascii" => "The :attribute field must only contain single-byte alphanumeric characters and symbols.",
@@ -18,6 +23,7 @@ return [
     "before_or_equal" => "The :attribute must be a date before or equal to :date.",
     "between" => [
         "array" => "The :attribute must have between :min and :max items.",
+        "file" => "The :attribute must be between :min and :max kilobytes.",
         "numeric" => "The :attribute must be between :min and :max.",
         "string" => "The :attribute must be between :min and :max characters."
     ],
@@ -26,6 +32,11 @@ return [
     "confirmed" => "The :attribute confirmation does not match.",
     "contains" => "The :attribute field is missing a required value.",
     "current_password" => "The password is incorrect.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "custom-message"
+        ]
+    ],
     "date" => "The :attribute is not a valid date.",
     "date_equals" => "The :attribute must be a date equal to :date.",
     "date_format" => "The :attribute does not match the format :format.",
@@ -43,44 +54,62 @@ return [
     "email" => "The :attribute must be a valid email address.",
     "encoding" => "The :attribute field must be encoded in :encoding.",
     "ends_with" => "The :attribute must end with one of the following: :values.",
+    "enum" => "The selected :attribute is invalid.",
     "exists" => "The selected :attribute is invalid.",
+    "extensions" => "The :attribute field must have one of the following extensions: :values.",
+    "file" => "The :attribute must be a file.",
     "filled" => "The :attribute field must have a value.",
     "gt" => [
         "array" => "The :attribute must have more than :value items.",
+        "file" => "The :attribute must be greater than :value kilobytes.",
         "numeric" => "The :attribute must be greater than :value.",
         "string" => "The :attribute must be greater than :value characters."
     ],
     "gte" => [
         "array" => "The :attribute must have :value items or more.",
+        "file" => "The :attribute must be greater than or equal :value kilobytes.",
         "numeric" => "The :attribute must be greater than or equal :value.",
         "string" => "The :attribute must be greater than or equal :value characters."
     ],
+    "hex_color" => "The :attribute field must be a valid hexadecimal color.",
+    "image" => "The :attribute must be an image.",
     "in" => "The selected :attribute is invalid.",
     "in_array" => "The :attribute field does not exist in :other.",
     "in_array_keys" => "The :attribute field must contain at least one of the following keys: :values.",
     "integer" => "The :attribute must be an integer.",
+    "ip" => "The :attribute must be a valid IP address.",
+    "ipv4" => "The :attribute must be a valid IPv4 address.",
+    "ipv6" => "The :attribute must be a valid IPv6 address.",
     "json" => "The :attribute must be a valid JSON string.",
     "list" => "The :attribute field must be a list.",
     "lowercase" => "The :attribute field must be lowercase.",
     "lt" => [
         "array" => "The :attribute must have less than :value items.",
+        "file" => "The :attribute must be less than :value kilobytes.",
         "numeric" => "The :attribute must be less than :value.",
         "string" => "The :attribute must be less than :value characters."
     ],
     "lte" => [
         "array" => "The :attribute must not have more than :value items.",
+        "file" => "The :attribute must be less than or equal :value kilobytes.",
         "numeric" => "The :attribute must be less than or equal :value.",
         "string" => "The :attribute must be less than or equal :value characters."
     ],
+    "mac_address" => "The :attribute field must be a valid MAC address.",
     "max" => [
         "array" => "The :attribute may not have more than :max items.",
+        "file" => "The :attribute may not be greater than :max kilobytes.",
         "numeric" => "The :attribute may not be greater than :max.",
         "string" => "The :attribute may not be greater than :max characters."
     ],
     "max_digits" => "The :attribute field must not have more than :max digits.",
+    "mimes" => "The :attribute must be a file of type: :values.",
+    "mimetypes" => "The :attribute must be a file of type: :values.",
     "min" => [
         "array" => "The :attribute must have at least :min items.",
-        "numeric" => "The :attribute must be at least :min."
+        "file" => "The :attribute must be at least :min kilobytes.",
+        "numeric" => "The :attribute must be at least :min.",
+        "string" => "The :attribute must be at least :min characters."
     ],
     "min_digits" => "The :attribute field must have at least :min digits.",
     "missing" => "The :attribute field must be missing.",
@@ -118,10 +147,17 @@ return [
     "same" => "The :attribute and :other must match.",
     "size" => [
         "array" => "The :attribute must contain :size items.",
+        "file" => "The :attribute must be :size kilobytes.",
         "numeric" => "The :attribute must be :size.",
         "string" => "The :attribute must be :size characters."
     ],
     "starts_with" => "The :attribute must start with one of the following: :values.",
     "string" => "The :attribute must be a string.",
-    "timezone" => "The :attribute must be a valid zone."
+    "timezone" => "The :attribute must be a valid zone.",
+    "ulid" => "The :attribute field must be a valid ULID.",
+    "unique" => "The :attribute has already been taken.",
+    "uploaded" => "The :attribute failed to upload.",
+    "uppercase" => "The :attribute field must be uppercase.",
+    "url" => "The :attribute format is invalid.",
+    "uuid" => "The :attribute must be a valid UUID."
 ];
