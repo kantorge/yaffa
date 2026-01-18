@@ -230,3 +230,10 @@ div.card-header > div.card-title {
     color: var(--cui-secondary-color);
     font-size: 18px;
 }
+
+// Small shadow for language flag icons
+.fi-custom {
+    box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.4);
+    border-radius: 0.125rem;
+    font-size: 1.25rem;
+}
