@@ -61,13 +61,13 @@ return [
     "gt" => [
         "array" => "L'attribut :attribute doit avoir plus d'éléments :value.",
         "file" => "La valeur de l'attribut (:attribute) doit être supérieure à celle de la valeur (:value) en kilo-octets.",
-        "numeric" => "L'attribut doit être supérieur à la valeur.",
+        "numeric" => "L'attribut :attribute doit être supérieur à :value.",
         "string" => "L'attribut doit comporter plus de caractères que la valeur."
     ],
     "gte" => [
         "array" => "L'attribut :attribute doit avoir au moins deux éléments :value.",
         "file" => "L'attribut :attribute doit être supérieur ou égal à :value kilobytes.",
-        "numeric" => "L'attribut :attribut doit être supérieur ou égal à :valeur.",
+        "numeric" => "L'attribut :attribute doit être supérieur ou égal à :value.",
         "string" => "L'attribut :attribute doit avoir une valeur supérieure ou égale à :value."
     ],
     "hex_color" => "Le champ :attribute doit être une couleur hexadécimale valide.",
@@ -151,7 +151,7 @@ return [
     "timezone" => "L'attribut :attribute doit correspondre à une zone valide.",
     "ulid" => "Le champ :attribute doit être un ULID valide.",
     "unique" => "L'attribut :attribute a déjà été utilisé.",
-    "uploaded" => "L'attribut :a échoué lors du chargement.",
+    "uploaded" => "Le fichier :attribute n'a pas pu être téléversé.",
     "uppercase" => "Le champ :attribute doit être en majuscules.",
     "url" => "Le format :attribute est invalide.",
     "uuid" => "L'attribut :attribute doit être un UUID valide."
