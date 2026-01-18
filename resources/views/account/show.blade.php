@@ -151,7 +151,13 @@
                 <div class="card-title">
                     {{ __('Transaction history') }}
                 </div>
-                <div>
+                <div class="d-lg-none">
+                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'standard', 'callback' => 'back']) }}"
+                        title="{{ __('New standard transaction') }}"><i class="fa fa-cart-plus"></i></a>
+                    <a class="btn btn-sm btn-success" href="{{ route('transaction.create', ['type' => 'investment', 'callback' => 'back']) }}"
+                        title="{{ __('New investment transaction') }}"><i class="fa fa-line-chart"></i></a>
+                </div>
+                <div class="d-none d-lg-block">
                     <button type="button" id="create-standard-transaction-button" class="btn btn-sm btn-success"
                         title="{{ __('New standard transaction') }}"><i class="fa fa-cart-plus"></i></button>
                     <button type="button" id="create-investment-transaction-button" class="btn btn-sm btn-success"

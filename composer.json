@@ -18,7 +18,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "kantorge/laravel-currency-exchange-rates": "^0.0.3",
         "laracasts/utilities": "^3.2",
-        "laravel/framework": "^12.43",
+        "laravel/framework": "^12.47",
         "laravel/sanctum": "^4.2",
         "laravel/telescope": "^5.16",
         "laravel/ui": "^4.6",
@@ -97,6 +97,10 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+        ],
+        "coverage": [
+            "@putenv SAIL_XDEBUG_MODE=coverage",
+            "bash -c './vendor/bin/sail artisan test --coverage-html public/coverage/$(date +%Y-%m-%d-%H-%M)'"
         ]
     },
     "repositories": [

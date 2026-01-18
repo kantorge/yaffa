@@ -145,7 +145,7 @@
             <div class="card-body">
               <div class="row">
                 <div
-                  class="col-6 col-sm-2 mb-3 mb-sm-0 d-flex justify-content-center"
+                  class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
                     class="btn-check"
@@ -165,10 +165,10 @@
                   </label>
                 </div>
                 <div
-                  class="col-6 col-sm-2 mb-3 mb-sm-0"
+                  class="col-8 col-sm-4 col-md-8 col-lg-4 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                   :class="{ 'has-error': form.errors.has('date') }"
                 >
-                  <label class="block-label" for="standard-date">
+                  <label class="form-label" for="standard-date">
                     {{ __('Date') }}
                   </label>
                   <DatePicker
@@ -199,10 +199,10 @@
                   </DatePicker>
                 </div>
                 <div
-                  class="col-12 col-sm-8 mb-0"
+                  class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
                   :class="form.errors.has('comment') ? 'has-error' : ''"
                 >
-                  <label for="standard-comment" class="block-label">
+                  <label for="standard-comment" class="form-label">
                     {{ __('Comment') }}
                   </label>
                   <input
@@ -473,68 +473,70 @@
       <div class="card mb-3">
         <div class="card-body">
           <div class="row">
-            <div class="d-none d-md-block col-md-10">
+            <div
+              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
+              v-show="!fromModal"
+              dusk="action-after-save-desktop-button-group"
+            >
+              <label class="form-label">
+                {{ __('Action after saving') }}
+              </label>
               <div
-                v-show="!fromModal"
-                dusk="action-after-save-desktop-button-group"
+                class="btn-group"
+                role="group"
+                aria-label="{{ __('Action after saving') }}"
               >
-                <div class="btn-group">
-                  <button class="btn btn-secondary" disabled>
-                    {{ __('Action after saving') }}
-                  </button>
-                  <button
-                    v-for="item in activeCallbackOptions"
-                    :key="item.id"
-                    class="btn btn-outline-dark"
-                    :class="{ active: callback === item.value }"
-                    type="button"
-                    :value="item.value"
-                    @click="
-                      callback = $event.currentTarget.getAttribute('value')
-                    "
-                  >
-                    {{ item.label }}
-                  </button>
-                </div>
+                <button
+                  v-for="item in activeCallbackOptions"
+                  :key="item.id"
+                  class="btn btn-outline-dark"
+                  :class="{ active: callback === item.value }"
+                  type="button"
+                  :value="item.value"
+                  @click="callback = $event.currentTarget.getAttribute('value')"
+                >
+                  {{ item.label }}
+                </button>
               </div>
             </div>
-            <div class="col-12 d-block d-md-none">
-              <div v-show="!fromModal">
-                <label
-                  class="form-label block-label"
-                  for="callback-selector-mobile-standard"
+            <div
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
+              v-show="!fromModal"
+            >
+              <label class="form-label" for="callback-selector-mobile-standard">
+                {{ __('Action after saving') }}
+              </label>
+              <select
+                class="form-control"
+                v-model="callback"
+                id="callback-selector-mobile-standard"
+              >
+                <option
+                  v-for="item in activeCallbackOptions"
+                  :key="item.id"
+                  :value="item.value"
                 >
-                  {{ __('Action after saving') }}
-                </label>
-                <select
-                  class="form-control"
-                  v-model="callback"
-                  id="callback-selector-mobile-standard"
-                >
-                  <option
-                    v-for="item in activeCallbackOptions"
-                    :key="item.id"
-                    :value="item.value"
-                  >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </div>
+                  {{ item.label }}
+                </option>
+              </select>
             </div>
-            <div class="col-12 col-md-2 text-end align-self-end">
+            <div
+              class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
+            >
               <button
-                class="btn btn-sm btn-default"
+                class="btn btn-sm btn-outline-dark align-bottom"
                 @click="onCancel"
                 type="button"
               >
                 {{ __('Cancel') }}
               </button>
               <Button
-                class="btn btn-primary ms-2"
+                class="btn btn-lg btn-primary ms-3 mt-2"
                 :disabled="form.busy"
                 :form="form"
                 id="transactionFormStandard-Save"
               >
+                <span class="fa fa-floppy-disk me-1"></span>
                 {{ __('Save') }}
               </Button>
             </div>
@@ -660,37 +662,37 @@
       data.callbackOptions = [
         {
           value: 'create',
-          label: __('Add an other transaction'),
+          label: __('callback.newTransaction'),
           enabled: true,
         },
         {
           value: 'clone',
-          label: __('Clone this transaction'),
+          label: __('callback.cloneTransaction'),
           enabled: true,
         },
         {
           value: 'show',
-          label: __('Show this transaction'),
+          label: __('callback.showTransaction'),
           enabled: true,
         },
         {
           value: 'returnToPrimaryAccount',
-          label: __('Return to selected account'),
+          label: __('callback.returnToPrimaryAccount'),
           enabled: true,
         },
         {
           value: 'returnToSecondaryAccount',
-          label: __('Return to target account'),
+          label: __('callback.returnToSecondaryAccount'),
           enabled: false,
         },
         {
           value: 'returnToDashboard',
-          label: __('Return to dashboard'),
+          label: __('callback.returnToDashboard'),
           enabled: true,
         },
         {
           value: 'back',
-          label: __('Return to previous page'),
+          label: __('callback.returnToPreviousPage'),
           enabled: true,
         },
       ];
