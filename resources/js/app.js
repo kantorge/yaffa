@@ -98,6 +98,35 @@ $(function () {
 });
 
 /**
+ * Display current Bootstrap breakpoint in local environment
+ */
+if (import.meta.env.DEV) {
+    (function () {
+        const breakpointLabel = document.getElementById('breakpoint-label');
+        if (!breakpointLabel) {
+            return;
+        }
+
+        const getBreakpoint = () => {
+            const width = window.innerWidth;
+            if (width < 576) return 'xs';
+            if (width < 768) return 'sm';
+            if (width < 992) return 'md';
+            if (width < 1200) return 'lg';
+            if (width < 1400) return 'xl';
+            return 'xxl';
+        };
+
+        const updateBreakpoint = () => {
+            breakpointLabel.textContent = getBreakpoint();
+        };
+
+        updateBreakpoint();
+        window.addEventListener('resize', updateBreakpoint);
+    })();
+}
+
+/**
  * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
  */
 if (window.sandbox_mode) {
