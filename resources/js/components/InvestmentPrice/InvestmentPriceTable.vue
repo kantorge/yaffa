@@ -7,7 +7,7 @@
       <table
         class="table table-bordered table-hover"
         role="grid"
-        id="pricesTable"
+        id="table-investment-prices"
       ></table>
     </div>
   </div>
@@ -70,7 +70,7 @@
       initializeTable() {
         const self = this;
 
-        this.table = $('#pricesTable').DataTable({
+        this.table = $('#table-investment-prices').DataTable({
           data: this.investmentPrices,
           columns: [
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
@@ -86,7 +86,9 @@
                   type,
                   data,
                   window.YAFFA.locale,
-                  self.investment.currency,
+                  {
+                    iso_code: self.investment.currency.iso_code,
+                  },
                 );
               },
             },
@@ -96,10 +98,10 @@
               render: function (data, _type, row, _meta) {
                 return `
                                 <button class="btn btn-xs btn-primary edit-price" data-id="${data}" title="${self.__('Edit')}">
-                                    <span class="fa fa-edit"></span>
+                                    <span class="fa fa-fw fa-edit"></span>
                                 </button>
                                 <button class="btn btn-xs btn-danger delete-price" data-id="${data}" title="${self.__('Delete')}">
-                                    <span class="fa fa-trash"></span>
+                                    <span class="fa fa-fw fa-trash"></span>
                                 </button>
                             `;
               },
@@ -119,7 +121,7 @@
         });
 
         // Edit button click handler
-        $('#pricesTable').on('click', '.edit-price', function () {
+        $('#table-investment-prices').on('click', '.edit-price', function () {
           const priceId = $(this).data('id');
           const price = self.investmentPrices.find((p) => p.id === priceId);
           if (price) {
@@ -128,7 +130,7 @@
         });
 
         // Delete button click handler
-        $('#pricesTable').on('click', '.delete-price', function () {
+        $('#table-investment-prices').on('click', '.delete-price', function () {
           const priceId = $(this).data('id');
           const price = self.investmentPrices.find((p) => p.id === priceId);
           if (price) {

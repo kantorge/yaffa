@@ -84,8 +84,21 @@
       const thirtyDaysAgo = new Date(today);
       thirtyDaysAgo.setDate(today.getDate() - 30);
 
+      // Parse initial prices to avoid mutating prop
+      // * Convert date strings to Date objects for easier comparison
+      // * Parse price to float
+      // * Sort by date ascending so that components can assume sorted data
+      let rawPrices = JSON.parse(JSON.stringify(this.initialPrices));
+      let parsedPrices = rawPrices
+        .map((price) => ({
+          ...price,
+          date: new Date(price.date),
+          price: parseFloat(price.price),
+        }))
+        .sort((a, b) => a.date - b.date);
+
       return {
-        allPrices: JSON.parse(JSON.stringify(this.initialPrices)),
+        allPrices: parsedPrices,
         displayPrices: null,
         dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
         dateTo: today.toISOString().split('T')[0],

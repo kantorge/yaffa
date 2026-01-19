@@ -84,6 +84,7 @@
       chart.numberFormatter.numberFormat = {
         style: 'currency',
         currency: this.investment.currency.iso_code,
+        currencyDisplay: 'narrowSymbol',
         minimumFractionDigits: 0,
       };
 
@@ -95,7 +96,7 @@
       series.dataFields.valueY = 'price';
       series.dataFields.dateX = 'date';
       series.strokeWidth = 3;
-      minBulletDistance = 15;
+      series.minBulletDistance = 15;
 
       let bullet = series.bullets.push(new am4charts.Bullet());
       let square = bullet.createChild(am4core.Rectangle);

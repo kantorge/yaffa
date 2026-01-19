@@ -20,9 +20,7 @@
         <div class="modal-body">
           <form @submit.prevent="submitForm">
             <div class="mb-3">
-              <label for="priceDate" class="form-label">{{
-                __('Date')
-              }}</label>
+              <label for="priceDate" class="form-label">{{ __('Date') }}</label>
               <input
                 type="date"
                 class="form-control"
@@ -84,6 +82,7 @@
           <button
             type="button"
             class="btn btn-primary"
+            id="priceSubmit"
             @click="submitForm"
             :disabled="isSubmitting"
           >

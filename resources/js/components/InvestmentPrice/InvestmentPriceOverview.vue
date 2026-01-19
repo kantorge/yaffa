@@ -36,7 +36,9 @@
             toFormattedCurrency(
               investmentPrices[investmentPrices.length - 1].price,
               locale,
-              investment.currency,
+              {
+                iso_code: investment.currency.iso_code,
+              },
             )
           }}
         </dd>
@@ -58,6 +60,7 @@
         type: Object,
         required: true,
       },
+      // Note, that we assume that investmentPrices are sorted by date ascending
       investmentPrices: {
         type: Array,
         required: true,

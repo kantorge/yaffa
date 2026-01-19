@@ -75,9 +75,6 @@ Route::get('/investment-price/list/{investment}', [InvestmentPriceController::cl
 Route::get('/investment-price/get/{investment}/{from?}', [InvestmentPriceController::class, 'retrieveInvestmentPrice'])
     ->name('investment-price.retrieve');
 
-Route::resource('investment-price', InvestmentPriceController::class)
-    ->except(['index', 'show']);
-
 /*********************
  * Tag related routes
  ********************/
