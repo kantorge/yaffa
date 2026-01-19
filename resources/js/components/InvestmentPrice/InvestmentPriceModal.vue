@@ -134,8 +134,17 @@
         immediate: true,
         handler(price) {
           if (price) {
-            this.formData.date = price.date;
-            this.formData.price = price.price;
+            // Convert Date object to YYYY-MM-DD string format for input type="date"
+            if (price.date instanceof Date) {
+              this.formData.date = price.date.toISOString().split('T')[0];
+            } else {
+              this.formData.date = price.date;
+            }
+            // Ensure price is a number
+            this.formData.price =
+              typeof price.price === 'string'
+                ? parseFloat(price.price)
+                : price.price;
           } else {
             this.resetForm();
           }
@@ -190,6 +199,11 @@
           date: this.formData.date,
           price: this.formData.price,
         };
+
+        // Include id when updating for validation rule to work
+        if (this.isEditMode) {
+          data.id = this.editPrice.id;
+        }
 
         try {
           let response;

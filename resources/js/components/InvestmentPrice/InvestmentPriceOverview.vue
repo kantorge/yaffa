@@ -73,7 +73,10 @@
     },
     methods: {
       formatDate(date) {
-        date = new Date(date);
+        // Handle both Date objects and date strings
+        if (!(date instanceof Date)) {
+          date = new Date(date);
+        }
         return date.toLocaleDateString(this.locale);
       },
       toFormattedCurrency,
