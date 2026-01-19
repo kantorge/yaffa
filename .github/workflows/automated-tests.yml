@@ -67,6 +67,19 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
 
+      - name: Cache NPM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build Assets
+        run: npm run build
+
       - name: Prepare Laravel Application
         run: ln -f -s .env.ci .env
 
@@ -82,11 +95,6 @@ jobs:
         run: vendor/bin/phpunit --colors=never --coverage-clover=coverage.xml --testsuite AllNonDusk
         env:
           DB_PORT: ${{ job.services.mysql.ports['3306'] }}
-
-      - name: Upload coverage to Codacy
-        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml -t "$CODACY_PROJECT_TOKEN"
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   dusk-php:
     runs-on: ubuntu-latest

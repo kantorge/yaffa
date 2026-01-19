@@ -26,7 +26,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col-md-8 mb-2">
+                <div class="col-12 col-md-8 col-lg-12 col-xl-8 mb-2 mb-xl-0">
                   <div class="form-group">
                     <label for="transaction_type" class="form-label">
                       {{ __('Transaction type') }}
@@ -49,7 +49,7 @@
                   </div>
                 </div>
                 <div
-                  class="col d-flex justify-content-between gap-2 mb-0"
+                  class="col col-xl-4 d-flex justify-content-center"
                   v-if="!simplified"
                 >
                   <input
@@ -93,7 +93,7 @@
             <div class="card-body">
               <div class="row">
                 <div
-                  class="col-6 col-sm-2 mb-3 mb-sm-0 d-flex justify-content-center"
+                  class="col-4 col-sm-2 col-md-4 col-lg-2 mb-3 mb-sm-0 mb-md-3 mb-lg-0 d-flex justify-content-center"
                 >
                   <input
                     class="btn-check"
@@ -113,10 +113,10 @@
                   </label>
                 </div>
                 <div
-                  class="col-6 col-sm-2 mb-3 mb-sm-0"
+                  class="col-8 col-sm-4 col-md-8 col-lg-4 mb-3 mb-sm-0 mb-md-3 mb-lg-0"
                   :class="{ 'has-error': form.errors.has('date') }"
                 >
-                  <label class="block-label" for="investment-date">
+                  <label class="form-label" for="investment-date">
                     {{ __('Date') }}
                   </label>
                   <DatePicker
@@ -146,10 +146,10 @@
                   </DatePicker>
                 </div>
                 <div
-                  class="col-12 col-sm-8 mb-0"
+                  class="col-12 col-sm-6 col-md-12 col-lg-6 col-sm-6 mb-0"
                   :class="form.errors.has('comment') ? 'has-error' : ''"
                 >
-                  <label for="investment-comment" class="block-label">
+                  <label for="investment-comment" class="form-label">
                     {{ __('Comment') }}
                   </label>
                   <input
@@ -168,13 +168,23 @@
       <div class="row">
         <div class="col-md-4">
           <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between">
               <div class="card-title">
                 {{ __('Details') }}
               </div>
+              <span
+                class="fa fa-info-circle text-primary"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
+                :title="
+                  __(
+                    'The currency of the account and the investment must be the same.',
+                  )
+                "
+              ></span>
             </div>
             <div class="card-body">
-              <div class="row mb-3">
+              <div class="row">
                 <div class="col-12 mb-3">
                   <div class="form-group">
                     <label for="account" class="form-label">
@@ -202,23 +212,6 @@
                   </div>
                 </div>
               </div>
-              <dl class="row">
-                <dt class="col-8">
-                  {{ __('Total cashflow value') }}
-                </dt>
-                <dd class="col-4">
-                  <span
-                    class="me-1"
-                    v-if="currency"
-                    dusk="transaction-total-value"
-                  >
-                    {{ toFormattedCurrency(total, this.locale, currency) }}
-                  </span>
-                  <span v-else>
-                    {{ total }}
-                  </span>
-                </dd>
-              </dl>
             </div>
           </div>
         </div>
@@ -231,7 +224,7 @@
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <div class="form-group">
                     <label for="transaction_quantity" class="form-label">
                       {{ __('Quantity') }}
@@ -244,7 +237,7 @@
                     ></MathInput>
                   </div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <div class="form-group">
                     <label for="transaction_price" class="form-label">
                       {{ __('Price') }}
@@ -290,35 +283,7 @@
                     </small>
                   </div>
                 </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <div class="form-group">
-                    <label for="transaction_commission" class="form-label">
-                      {{ __('Commission') }}
-                    </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_commission"
-                      v-model="form.config.commission"
-                    ></MathInput>
-                  </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <div class="form-group">
-                    <label for="transaction_tax" class="form-label">
-                      {{ __('Tax') }}
-                    </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_tax"
-                      v-model="form.config.tax"
-                    ></MathInput>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label for="transaction_dividend" class="form-label">
                       {{ __('Dividend') }}
@@ -330,6 +295,51 @@
                       :disabled="!transactionTypeSettings.dividend"
                     ></MathInput>
                   </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <div class="form-group">
+                    <label for="transaction_commission" class="form-label">
+                      {{ __('Commission') }}
+                    </label>
+                    <MathInput
+                      class="form-control"
+                      id="transaction_commission"
+                      v-model="form.config.commission"
+                    ></MathInput>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <div class="form-group">
+                    <label for="transaction_tax" class="form-label">
+                      {{ __('Tax') }}
+                    </label>
+                    <MathInput
+                      class="form-control"
+                      id="transaction_tax"
+                      v-model="form.config.tax"
+                    ></MathInput>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <dl class="row">
+                    <dt class="col-12 form-label">
+                      {{ __('Total cashflow value') }}
+                    </dt>
+                    <dd class="col-12">
+                      <span
+                        class="me-1"
+                        v-if="currency"
+                        dusk="transaction-total-value"
+                      >
+                        {{ toFormattedCurrency(total, this.locale, currency) }}
+                      </span>
+                      <span v-else>
+                        {{ total }}
+                      </span>
+                    </dd>
+                  </dl>
                 </div>
               </div>
             </div>
@@ -360,68 +370,73 @@
       <div class="card mb-3">
         <div class="card-body">
           <div class="row">
-            <div class="d-none d-md-block col-md-10">
+            <div
+              class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
+              v-show="!fromModal"
+              dusk="action-after-save-desktop-button-group"
+            >
+              <label class="form-label">
+                {{ __('Action after saving') }}
+              </label>
               <div
-                v-show="!fromModal"
-                dusk="action-after-save-desktop-button-group"
+                class="btn-group"
+                role="group"
+                aria-label="{{ __('Action after saving') }}"
               >
-                <div class="btn-group">
-                  <button class="btn btn-secondary" disabled>
-                    {{ __('Action after saving') }}
-                  </button>
-                  <button
-                    v-for="item in activeCallbackOptions"
-                    :key="item.id"
-                    class="btn btn-outline-dark"
-                    :class="{ active: callback === item.value }"
-                    type="button"
-                    :value="item.value"
-                    @click="
-                      callback = $event.currentTarget.getAttribute('value')
-                    "
-                  >
-                    {{ item.label }}
-                  </button>
-                </div>
+                <button
+                  v-for="item in activeCallbackOptions"
+                  :key="item.id"
+                  class="btn btn-outline-dark"
+                  :class="{ active: callback === item.value }"
+                  type="button"
+                  :value="item.value"
+                  @click="callback = $event.currentTarget.getAttribute('value')"
+                >
+                  {{ item.label }}
+                </button>
               </div>
             </div>
-            <div class="col-12 d-block d-md-none">
-              <div v-show="!fromModal">
-                <label
-                  class="form-label block-label"
-                  for="callback-selector-mobile-investment"
+            <div
+              class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
+              v-show="!fromModal"
+            >
+              <label
+                class="form-label"
+                for="callback-selector-mobile-investment"
+              >
+                {{ __('Action after saving') }}
+              </label>
+              <select
+                class="form-control"
+                v-model="callback"
+                id="callback-selector-mobile-investment"
+              >
+                <option
+                  v-for="item in activeCallbackOptions"
+                  :key="item.id"
+                  :value="item.value"
                 >
-                  {{ __('Action after saving') }}
-                </label>
-                <select
-                  class="form-control"
-                  v-model="callback"
-                  id="callback-selector-mobile-investment"
-                >
-                  <option
-                    v-for="item in activeCallbackOptions"
-                    :key="item.id"
-                    :value="item.value"
-                  >
-                    {{ item.label }}
-                  </option>
-                </select>
-              </div>
+                  {{ item.label }}
+                </option>
+              </select>
             </div>
-            <div class="col-12 col-md-2 text-end align-self-end">
+            <div
+              class="col-12 col-sm-4 col-lg-12 col-xl-3 text-end align-self-end"
+            >
               <button
-                class="btn btn-sm btn-default"
+                class="btn btn-sm btn-outline-dark align-bottom"
                 @click="onCancel"
                 type="button"
               >
                 {{ __('Cancel') }}
               </button>
               <Button
-                class="btn btn-primary ms-2"
+                class="btn btn-lg btn-primary ms-3 mt-2"
                 :disabled="form.busy"
                 :form="form"
                 id="transactionFormInvestment-Save"
               >
+                <span class="fa fa-floppy-disk me-1"></span>
                 {{ __('Save') }}
               </Button>
             </div>
@@ -521,32 +536,32 @@
       data.callbackOptions = [
         {
           value: 'create',
-          label: __('Add an other transaction'),
+          label: __('callback.newTransaction'),
           enabled: true,
         },
         {
           value: 'clone',
-          label: __('Clone this transaction'),
+          label: __('callback.cloneTransaction'),
           enabled: true,
         },
         {
           value: 'show',
-          label: __('Show this transaction'),
+          label: __('callback.showTransaction'),
           enabled: true,
         },
         {
           value: 'returnToPrimaryAccount',
-          label: __('Return to selected account'),
+          label: __('callback.returnToPrimaryAccount'),
           enabled: true,
         },
         {
           value: 'returnToDashboard',
-          label: __('Return to dashboard'),
+          label: __('callback.returnToDashboard'),
           enabled: true,
         },
         {
           value: 'back',
-          label: __('Return to previous page'),
+          label: __('callback.returnToPreviousPage'),
           enabled: true,
         },
       ];
@@ -739,19 +754,39 @@
             url: '/api/assets/investment',
             data: function (params) {
               return {
-                q: params.term,
+                query: params.term,
+                active: 1,
                 currency_id: $vm.account_currency?.id,
+                limit: 10,
+                // We rely on server-side sorting, so let's set it here
+                sort_by: 'name',
+                sort_order: 'asc',
                 _token: $vm.csrfToken,
               };
             },
             dataType: 'json',
             delay: 150,
             processResults: function (data) {
+              // Let's format the results to a format used by Select2
               return {
-                results: data,
+                results: data.map((item) => ({
+                  id: item.id,
+                  text: item.name,
+                  html: `${item.name} <span class="text-muted">(${item.symbol})</span>`,
+                  title: item.name,
+                })),
               };
             },
             cache: true,
+          },
+          escapeMarkup: function (markup) {
+            return markup;
+          },
+          templateResult: function (data) {
+            return data.html;
+          },
+          templateSelection: function (data) {
+            return data.text;
           },
           selectOnClose: false,
           placeholder: __('Select investment'),
@@ -1258,17 +1293,3 @@
     },
   };
 </script>
-
-<style scoped>
-  @media (min-width: 576px) {
-    .block-label {
-      display: block;
-    }
-  }
-
-  @media (max-width: 575.98px) {
-    .block-label {
-      margin-right: 10px;
-    }
-  }
-</style>

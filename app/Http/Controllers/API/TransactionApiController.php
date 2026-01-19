@@ -107,6 +107,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             'config',
             'config.accountFrom',
             'config.accountTo',
+            'currency',
             'transactionType',
             'transactionSchedule',
             'transactionItems',
@@ -169,6 +170,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config',
                 'config.account',
                 'config.investment',
+                'currency',
                 'transactionType',
                 'transactionSchedule',
             ])
@@ -316,6 +318,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config',
                 'config.accountFrom',
                 'config.accountTo',
+                'currency',
                 'transactionType',
                 'transactionItems',
                 'transactionItems.tags',
@@ -342,6 +345,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.account.config',
                 'config.account.config.currency',
                 'config.investment',
+                'currency',
                 'transactionType',
                 'transactionSchedule',
             ])

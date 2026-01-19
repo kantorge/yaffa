@@ -183,10 +183,6 @@ class CurrencyController extends Controller implements HasMiddleware
         if ($currency->setToBase()) {
             self::addSimpleSuccessMessage(__('Base currency changed'));
 
-            // Invalidate the cache for the base currency for the current user
-            $cacheKey = "baseCurrency_forUser_{$currency->user_id}";
-            Cache::forget($cacheKey);
-
             // Get all non-base, updatable currencies of the user, and dispatch the currency rate retrieval job
             $currencies = $currency->user
                 ->currencies()

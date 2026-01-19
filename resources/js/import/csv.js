@@ -38,7 +38,7 @@ function storeNestedObjectValue(base, names, value) {
 
 // Require the rule engine
 // TODO: make this selectable from a list of available rules
-let engine = require('./rules/hun_raiffeisen_v1.js');
+import engine from './rules/hun_raiffeisen_v1.js';
 
 // The following variable is used to store the current transaction being created.
 let recentTransactionDraftId;
@@ -486,7 +486,7 @@ window.table = $(tableSelector).DataTable({
             orderable: false,
             render: function (data, _type, row) {
                 return '<button class="btn btn-xs btn-primary create-transaction-from-draft" data-draft="' + data + '" type="button" title="' + __('Quick create') + '"><i class="fa fa-fw fa-plus"></i></button> ' +
-                    (row.quickRecordingPossible ? '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button" title="' + __('Crete from existing values') + '"><i class="fa fa-fw fa-bolt"></i></button> ' : '') +
+                    (row.quickRecordingPossible ? '<button class="btn btn-xs btn-success record" data-draft="' + data + '" type="button" title="' + __('Create from existing values') + '"><i class="fa fa-fw fa-bolt"></i></button> ' : '') +
                     '<button class="btn btn-xs btn-info handled" data-draft="' + data + '" type="button" title="' + __('Mark as handled') + '"><i class="fa fa-fw fa-check"></i></button> ';
             }
         }
