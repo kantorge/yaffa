@@ -108,6 +108,7 @@ table.dataTable tr.table-warning {
 :root {
     --dt-row-selected: 235, 237, 239;
     --dt-row-selected-text: 0, 0, 0;
+    --dt-row-selected-link: var(--cui-link-color-rgb);
 }
 
 // Sidebar form settings
@@ -228,4 +229,11 @@ div.card-header > div.card-title {
     background-color: var(--cui-secondary-bg);
     color: var(--cui-secondary-color);
     font-size: 18px;
+}
+
+// Small shadow for language flag icons
+.fi-custom {
+    box-shadow: 0 0 0.3rem rgba(0, 0, 0, 0.4);
+    border-radius: 0.125rem;
+    font-size: 1.25rem;
 }
