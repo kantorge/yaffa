@@ -177,7 +177,7 @@ export default {
             let $vm = this;
             this.state = 'loading';
 
-            axios.get('/api/account/balance/')
+            axios.get('/api/account/balance')
                 .then(function (response) {
                     // Check if the response is valid data
                     if (response.data.result === 'busy') {
