@@ -40,7 +40,7 @@
             </div>
             <div class="mb-3">
               <label for="priceValue" class="form-label">
-                {{ __('Price') }}
+                {{ __('Investment price') }}
                 <small class="text-muted" v-if="investment.currency"
                   >({{ investment.currency.iso_code }})</small
                 >

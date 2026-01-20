@@ -2,21 +2,15 @@
   <div class="card mb-3">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        {{ __('Price history') }}
+        {{ __('Investment price history') }}
       </div>
       <div>
         <template v-if="!hideActions">
-          <template v-if="investment.investment_price_provider">
-            <a
-              :href="priceProviderUrl"
-              class="btn btn-sm btn-success me-2"
-              :title="__('Load new price data')"
-            >
-              <span class="fa fa-cloud-download"></span>
-            </a>
-          </template>
           <a :href="priceListUrl" class="btn btn-sm btn-primary">
-            <span class="fa fa-search" :title="__('List prices')"></span>
+            <span
+              class="fa fa-search"
+              :title="__('List and manage investment prices')"
+            ></span>
           </a>
         </template>
       </div>
@@ -56,13 +50,6 @@
     computed: {
       hasData() {
         return this.prices && this.prices.length > 0;
-      },
-      priceProviderUrl() {
-        return window.route
-          ? window.route('investment-price.retrieve', {
-              investment: this.investment.id,
-            })
-          : '#';
       },
       priceListUrl() {
         return window.route

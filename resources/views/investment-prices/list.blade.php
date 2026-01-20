@@ -5,7 +5,7 @@
 @section('content_container_classes', 'container-fluid')
 
 @section('content_header')
-    {{ __('Investment prices') }} of {{$investment->name}}
+    {{ __('Investment prices of :name', ['name' => $investment->name]) }}
 @stop
 
 @section('content')

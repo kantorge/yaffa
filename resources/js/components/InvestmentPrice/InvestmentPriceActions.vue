@@ -21,14 +21,14 @@
         <button
           class="btn btn-link text-decoration-none p-0 add-investment-price-button"
           @click="addNewPrice"
-          :title="__('Add new price')"
+          :title="__('Add new investment price')"
         >
-          {{ __('Add new price') }}
+          {{ __('Add new investment price') }}
         </button>
         <button
           class="btn btn-xs btn-primary add-investment-price-button"
           @click="addNewPrice"
-          :title="__('Add new price')"
+          :title="__('Add new investment price')"
         >
           <span class="fa fa-fw fa-plus"></span>
         </button>
@@ -46,7 +46,7 @@
           "
           :disabled="!canLoadPrices || isLoadingMissing"
         >
-          {{ __('Load missing prices') }}
+          {{ __('Load missing investment prices') }}
         </button>
         <button
           class="btn btn-xs btn-success"
@@ -54,7 +54,7 @@
           :title="
             !canLoadPrices
               ? __('No price provider configured for this investment')
-              : __('Load missing prices')
+              : __('Load missing investment prices')
           "
           :disabled="!canLoadPrices || isLoadingMissing"
         >

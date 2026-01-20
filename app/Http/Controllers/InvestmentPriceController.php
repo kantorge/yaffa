@@ -65,27 +65,4 @@ class InvestmentPriceController extends Controller implements HasMiddleware
             ]
         );
     }
-
-    public function retrieveInvestmentPrice(Investment $investment): RedirectResponse
-    {
-        /**
-         * @get('/investment-price/get/{investment}/{from?}')
-         * @name('investment-price.retrieve')
-         * @middlewares('web', 'auth', 'verified')
-         */
-
-        // Get latest known date of price date, so we can retrieve missing values
-        $lastPrice = $investment->investmentPrices->last('date');
-        $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
-
-        $investment->getInvestmentPriceFromProvider($date);
-
-        // Use the InvestmentService to recalculate the related accounts
-        $investmentService = new InvestmentService();
-        $investmentService->recalculateRelatedAccounts($investment);
-
-        self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
-
-        return redirect()->back();
-    }
 }
