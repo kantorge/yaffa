@@ -181,16 +181,22 @@
         });
         window.dispatchEvent(successEvent);
 
+        // Create a new price object with the date converted to a Date object
+        const newPrice = {
+          ...price,
+          date: new Date(price.date),
+        };
+
         // Update or add the price in allPrices
         const existingIndex = this.allPrices.findIndex(
           (p) => p.id === price.id,
         );
         if (existingIndex !== -1) {
           // Update existing price
-          this.allPrices.splice(existingIndex, 1, price);
+          this.allPrices.splice(existingIndex, 1, newPrice);
         } else {
           // Add new price
-          this.allPrices.push(price);
+          this.allPrices.push(newPrice);
         }
 
         // Sort prices by date

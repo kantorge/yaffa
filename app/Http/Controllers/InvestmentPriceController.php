@@ -26,9 +26,6 @@ class InvestmentPriceController extends Controller implements HasMiddleware
     }
 
     /**
-     * @throws AuthorizationException
-     */
-    /**
      * Display the investment price list using Vue component manager.
      *
      * @throws AuthorizationException

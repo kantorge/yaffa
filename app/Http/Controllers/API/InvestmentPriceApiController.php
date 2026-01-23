@@ -133,7 +133,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
         Gate::authorize('view', $investment);
 
         // Get latest known date of price date, so we can retrieve missing values
-        $lastPrice = $investment->investmentPrices->last();
+        $lastPrice = $investment->investmentPrices()->latest('date')->first();
         $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
         $investment->getInvestmentPriceFromProvider($date);
