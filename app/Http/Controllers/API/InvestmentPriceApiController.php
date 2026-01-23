@@ -65,7 +65,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      */
     public function store(InvestmentPriceRequest $request): JsonResponse
     {
-        $investment = Investment::find($request->investment_id);
+        $investment = Investment::findOrFail($request->investment_id);
         Gate::authorize('view', $investment);
 
         $validated = $request->validated();
