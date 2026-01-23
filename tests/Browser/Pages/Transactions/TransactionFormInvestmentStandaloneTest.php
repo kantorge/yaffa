@@ -368,7 +368,10 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
     public function test_callback_show_transaction(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user);
+            retry(3, fn() => $browser
+                ->loginAs($this->user)
+                ->assertAuthenticatedAs($this->user)
+            );
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="show"]')
                 // Submit form
