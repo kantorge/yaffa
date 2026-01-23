@@ -449,6 +449,7 @@
 
 <script>
   import MathInput from './MathInput.vue';
+  import * as toastHelpers from '../toast';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
@@ -1064,14 +1065,7 @@
             .then((response) => {
               // Show success toast if not in modal context
               if (!this.fromModal) {
-                const successEvent = new CustomEvent('toast', {
-                  detail: {
-                    header: this.__('Success'),
-                    body: this.__('Transaction updated'),
-                    toastClass: 'bg-success',
-                  },
-                });
-                window.dispatchEvent(successEvent);
+                toastHelpers.showSuccessToast(this.__('Transaction updated'));
               }
 
               this.$emit(
@@ -1091,14 +1085,7 @@
           .then((response) => {
             // Show success toast if not in modal context
             if (!this.fromModal) {
-              const successEvent = new CustomEvent('toast', {
-                detail: {
-                  header: this.__('Success'),
-                  body: this.__('Transaction created'),
-                  toastClass: 'bg-success',
-                },
-              });
-              window.dispatchEvent(successEvent);
+              toastHelpers.showSuccessToast(this.__('Transaction created'));
             }
 
             // Store price if enabled
@@ -1219,37 +1206,17 @@
           });
 
           // Show success toast
-          const successEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Success'),
-              body: this.__('Investment price stored'),
-              toastClass: 'bg-success',
-            },
-          });
-          window.dispatchEvent(successEvent);
+          toastHelpers.showSuccessToast(this.__('Investment price stored'));
         } catch (error) {
           // If duplicate (422), show warning instead of error
           if (error.response && error.response.status === 422) {
-            const warningEvent = new CustomEvent('toast', {
-              detail: {
-                header: this.__('Warning'),
-                body: this.__(
-                  'Price for this date already exists and was not updated',
-                ),
-                toastClass: 'bg-warning',
-              },
-            });
-            window.dispatchEvent(warningEvent);
+            toastHelpers.showWarningToast(
+              this.__('Price for this date already exists and was not updated'),
+            );
           } else {
-            // Show error toast for other errors
-            const errorEvent = new CustomEvent('toast', {
-              detail: {
-                header: this.__('Error'),
-                body: this.__('Failed to store investment price'),
-                toastClass: 'bg-danger',
-              },
-            });
-            window.dispatchEvent(errorEvent);
+            toastHelpers.showErrorToast(
+              this.__('Failed to store investment price'),
+            );
           }
         }
       },

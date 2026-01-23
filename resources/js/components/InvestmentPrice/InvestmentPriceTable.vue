@@ -18,6 +18,7 @@
   import * as dataTableHelpers from '../dataTableHelper';
   import Swal from 'sweetalert2';
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'InvestmentPriceTable',
@@ -158,15 +159,10 @@
         });
       },
       async deletePrice(price) {
-        // Show loading toast
-        const loadingEvent = new CustomEvent('toast', {
-          detail: {
-            body: this.__('Deleting price...'),
-            toastClass: `bg-info toast-price-${price.id}`,
-            delay: Infinity,
-          },
-        });
-        window.dispatchEvent(loadingEvent);
+        toastHelpers.showLoaderToast(
+          this.__('Deleting price...'),
+          `toast-price-${price.id}`,
+        );
 
         try {
           await window.axios.delete(
@@ -175,41 +171,16 @@
             }),
           );
 
-          // Show success toast
-          const successEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Success'),
-              body: this.__('Investment price deleted'),
-              toastClass: 'bg-success',
-            },
-          });
-          window.dispatchEvent(successEvent);
+          toastHelpers.showSuccessToast(this.__('Investment price deleted'));
 
           // Emit delete event
           this.$emit('delete-price', price.id);
         } catch (error) {
-          // Show error toast
-          const errorEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Error'),
-              body:
-                error.response?.data?.message ||
-                this.__('Failed to delete price'),
-              toastClass: 'bg-danger',
-            },
-          });
-          window.dispatchEvent(errorEvent);
+          toastHelpers.showErrorToast(
+            error.response?.data?.message || this.__('Failed to delete price'),
+          );
         } finally {
-          // Close loading toast
-          setTimeout(() => {
-            const toastElement = document.querySelector(
-              `.toast-price-${price.id}`,
-            );
-            if (toastElement) {
-              const toastInstance = new window.bootstrap.Toast(toastElement);
-              toastInstance.dispose();
-            }
-          }, 250);
+          toastHelpers.hideToast(`.toast-price-${price.id}`);
         }
       },
       updateTableData(prices) {

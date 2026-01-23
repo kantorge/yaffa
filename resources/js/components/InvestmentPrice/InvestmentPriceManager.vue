@@ -58,6 +58,7 @@
   import PriceHistoryCard from '../InvestmentDisplay/PriceHistoryCard.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'InvestmentPriceManager',
@@ -172,14 +173,7 @@
       },
       onPriceSaved(price, message) {
         // Show success toast
-        const successEvent = new CustomEvent('toast', {
-          detail: {
-            header: this.__('Success'),
-            body: message,
-            toastClass: 'bg-success',
-          },
-        });
-        window.dispatchEvent(successEvent);
+        toastHelpers.showSuccessToast(message);
 
         // Create a new price object with the date converted to a Date object
         const newPrice = {

@@ -1,3 +1,6 @@
+import { __ } from '../helpers';
+import * as toastHelpers from '../toast';
+
 // Initialize the finalize transaction button
 let finalizeTransactionButton = document.querySelector('.finalizeIcon');
 if (finalizeTransactionButton) {
@@ -75,14 +78,7 @@ if (reprocessIcon) {
             })
             .catch(function (error) {
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Error'),
-                        body: __('Error reseting email processed status: ' + error),
-                        toastClass: "bg-danger",
-                    }
-                });
-                window.dispatchEvent(notificationEvent);
+                toastHelpers.showErrorToast(__('Error reseting email processed status: :error', {error: error.error}));
 
                 $(".busy[data-delete]").removeClass('busy')
             });

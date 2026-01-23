@@ -647,5 +647,7 @@
     "tax": "tax",
     "transaction": "transaction",
     "transaction.requirement.account": "Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.",
-    "transactions": "transactions"
+    "transactions": "transactions",
+    "Error while evaluating the input as a mathematical expression": "Error while evaluating the input as a mathematical expression",
+    "Error reseting email processed status: :error": "Error reseting email processed status: :error"
 }

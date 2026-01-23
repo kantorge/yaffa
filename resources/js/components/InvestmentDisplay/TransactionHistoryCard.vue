@@ -76,7 +76,7 @@
             return;
           }
 
-          toastHelpersshowLoaderToast(
+          toastHelpers.showLoaderToast(
             this.__('Deleting transaction #:transactionId', {
               transactionId: id,
             }),

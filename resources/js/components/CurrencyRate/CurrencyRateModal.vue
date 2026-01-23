@@ -215,16 +215,9 @@
             // Validation errors
             this.errors = error.response.data.errors;
           } else {
-            // Show generic error toast
-            const notificationEvent = new CustomEvent('toast', {
-              detail: {
-                header: this.__('Error'),
-                body:
-                  error.response?.data?.message || this.__('An error occurred'),
-                toastClass: 'bg-danger',
-              },
-            });
-            window.dispatchEvent(notificationEvent);
+            toastHelpers.showErrorToast(
+              error.response?.data?.message || this.__('An error occurred'),
+            );
           }
         } finally {
           this.isSubmitting = false;

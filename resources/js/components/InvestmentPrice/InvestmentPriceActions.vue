@@ -71,6 +71,7 @@
 
 <script>
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'InvestmentPriceActions',
@@ -103,14 +104,10 @@
         this.isLoadingMissing = true;
 
         // Show loading toast
-        const loadingEvent = new CustomEvent('toast', {
-          detail: {
-            body: this.__('Loading missing prices...'),
-            toastClass: 'bg-info toast-loading-missing-prices',
-            delay: Infinity,
-          },
-        });
-        window.dispatchEvent(loadingEvent);
+        toastHelpers.showLoaderToast(
+          this.__('Loading missing prices...'),
+          'toast-loading-missing-prices',
+        );
 
         try {
           // Call the API endpoint to retrieve missing prices
@@ -121,45 +118,19 @@
           );
 
           // Show success toast
-          const successEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Success'),
-              body: response.data.message,
-              toastClass: 'bg-success',
-            },
-          });
-          window.dispatchEvent(successEvent);
+          toastHelpers.showSuccessToast(response.data.message);
 
           // Emit event to parent to reload data
           this.$emit('prices-loaded');
         } catch (error) {
-          // Show error toast
-          const errorEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Error'),
-              body:
-                error.response?.data?.message ||
-                this.__('Failed to load missing prices'),
-              toastClass: 'bg-danger',
-            },
-          });
-          window.dispatchEvent(errorEvent);
+          toastHelpers.showErrorToast(
+            error.response?.data?.message ||
+              this.__('Failed to load missing prices'),
+          );
         } finally {
           this.isLoadingMissing = false;
 
-          // Close loading toast
-          setTimeout(() => {
-            const toastElements = document.querySelectorAll(
-              '.toast-loading-missing-prices',
-            );
-
-            if (toastElements.length > 0) {
-              toastElements.forEach((toastElement) => {
-                const toastInstance = new window.bootstrap.Toast(toastElement);
-                toastInstance.dispose();
-              });
-            }
-          }, 250);
+          toastHelpers.hideToast('.toast-loading-missing-prices');
         }
       },
       __,

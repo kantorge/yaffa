@@ -3,6 +3,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
+import * as toastHelpers from '../toast';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
 
@@ -321,31 +322,26 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
                 data.transaction_schedule.next_date = new Date(newNextDate);
                 row.data(data).draw();
 
-                // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Success'),
+                toastHelpers.showToast(
+                    __('Error'),
+                    __('Error while changing account active state.'),
+                    'bg-danger',
+                    {
                         headerSmall: helpers.transactionLink(id, __('Go to transaction')),
-                        body: __('Schedule instance skipped.'),
-                        toastClass: "bg-success",
                     }
-                });
-                window.dispatchEvent(notificationEvent);
+                );
             } else {
                 row.remove().draw();
 
-                // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Success'),
+                toastHelpers.showToast(
+                    __('Success'),
+                    __('Schedule instance skipped. This schedule has ended.'),
+                    'bg-success',
+                    {
                         headerSmall: helpers.transactionLink(id, __('Go to transaction')),
-                        body: __('Schedule instance skipped. This schedule has ended.'),
-                        toastClass: "bg-success",
                     }
-                });
-                window.dispatchEvent(notificationEvent);
+                );
             }
-
             // The redraw will also remove the busy class
         });
 });
@@ -423,15 +419,8 @@ let getAccountBalance = function () {
                                  title="${__('Error while retrieving data')}"
                          ></i>`;
 
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: __('Error while fetching account balance data'),
-                    body: error.message,
-                    toastClass: "bg-danger",
-                }
-            });
-            window.dispatchEvent(notificationEvent);
-        })
+            toastHelpers.showErrorToast(error.message);
+        });
 }
 getAccountBalance();
 
@@ -723,29 +712,13 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
     ))
         .then(function (response) {
             const data = response.data;
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: data.result === 'success' ? __('Success') : __('Error'),
-                    body: data.message,
-                    toastClass: data.result === 'success' ? 'bg-success' : 'bg-danger',
-                }
-            });
-            window.dispatchEvent(notificationEvent);
+            toastHelpers.showSuccessToast(data.message);
 
             // Reload the account balance with a static delay
             setTimeout(getAccountBalance, 5000);
         })
         .catch(function (error) {
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                    header: __('Error'),
-                    body: error.message,
-                    toastClass: 'bg-danger'
-                }
-            });
-            window.dispatchEvent(notificationEvent);
+            toastHelpers.showErrorToast(error.message);
         })
         .finally(function () {
             button.classList.remove('busy');

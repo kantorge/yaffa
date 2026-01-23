@@ -6,7 +6,8 @@ import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
-import { __, initializeBootstrapTooltips } from '../helpers';
+import * as toastHelpers from '../toast';
+import { __ } from '../helpers';
 
 let ajaxIsBusy = true;
 
@@ -66,7 +67,7 @@ let table = $(tableSelector).DataTable({
         }
     },
     drawCallback: function () {
-        initializeBootstrapTooltips();
+        helpers.initializeBootstrapTooltips();
     },
     order: [
         // Start date, which is the second column
@@ -124,14 +125,10 @@ table.contextualActions({
                 ajaxIsBusy = true;
 
                 // Emit a custom event to global scope to indicate that a background task is running
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        body: __('Skipping schedule instance for transaction #:transactionId', {transactionId: id}),
-                        toastClass: `bg-info toast-transaction-${id}`,
-                        delay: Infinity,
-                    }
-                });
-                window.dispatchEvent(notificationEvent);
+                toastHelpers.showLoaderToast(
+                    __('Skipping schedule instance for transaction #:transactionId', {transactionId: id}),
+                    `toast-transaction-${id}`
+                );
 
                 window.axios.patch(window.route('api.transactions.skipScheduleInstance', {transaction: id}))
                     .then(function(response) {
@@ -147,35 +144,21 @@ table.contextualActions({
                         row.data(transaction).draw();
 
                         // Emit a custom event to global scope about the result
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Success'),
-                                body: __('Transaction instance skipped (#:transactionId)', {transactionId: id}),
-                                toastClass: "bg-success",
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
+                        toastHelpers.showSuccessToast(
+                            __('Transaction instance skipped (#:transactionId)', {transactionId: id})
+                        );
                     })
                     .catch(function (error) {
                         // Emit a custom event to global scope about the result
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Error'),
-                                body: __('Error skipping transaction (#:transactionId): :error', {transactionId: id, error: error}),
-                                toastClass: "bg-danger"
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
+                        toastHelpers.showErrorToast(
+                            __('Error skipping transaction (#:transactionId): :error', {transactionId: id, error: error})
+                        );
                     })
                     .finally(function () {
                         ajaxIsBusy = false;
 
                         // Close the toast with a small delay
-                        setTimeout(function () {
-                            let toastElement = document.querySelector(`.toast-transaction-${id}`);
-                            let toastInstance = new window.bootstrap.Toast(toastElement);
-                            toastInstance.hide();
-                        }, 250);
+                        toastHelpers.hideToast(`.toast-transaction-${id}`);
                     });
             },
             isHidden: function (row) {
@@ -254,14 +237,10 @@ table.contextualActions({
                     }
 
                     // Emit a custom event to global scope to indicate that a transaction is being deleted
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            body: __('Deleting transaction #:transactionId', {transactionId: id}),
-                            toastClass: `bg-info toast-transaction-${id}`,
-                            delay: Infinity,
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showLoaderToast(
+                        __('Deleting transaction #:transactionId', {transactionId: id}),
+                        `toast-transaction-${id}`
+                    );
 
                     window.axios.delete(window.route('api.transactions.destroy', {transaction: id}))
                         .then(function () {
@@ -273,35 +252,21 @@ table.contextualActions({
                             row.remove().draw();
 
                             // Emit a custom event to global scope about the result
-                            let notificationEvent = new CustomEvent('toast', {
-                                detail: {
-                                    header: __('Success'),
-                                    body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
-                                    toastClass: "bg-success",
-                                }
-                            });
-                            window.dispatchEvent(notificationEvent);
+                            toastHelpers.showSuccessToast(
+                                __('Transaction deleted (#:transactionId)', {transactionId: id})
+                            );
                         })
                         .catch(function (error) {
                             // Emit a custom event to global scope about the result
-                            let notificationEvent = new CustomEvent('toast', {
-                                detail: {
-                                    header: __('Error'),
-                                    body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
-                                    toastClass: "bg-danger"
-                                }
-                            });
-                            window.dispatchEvent(notificationEvent);
+                            toastHelpers.showErrorToast(
+                                __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error})
+                            );
                         })
                         .finally(function () {
                             ajaxIsBusy = false;
 
                             // Close the toast with a small delay
-                            setTimeout(function () {
-                                let toastElement = document.querySelector(`.toast-transaction-${id}`);
-                                let toastInstance = new window.bootstrap.Toast(toastElement);
-                                toastInstance.dispose();
-                            }, 250);
+                            toastHelpers.hideToast(`.toast-transaction-${id}`);
                         });
                 });
             }
