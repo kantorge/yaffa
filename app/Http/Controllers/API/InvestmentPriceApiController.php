@@ -155,17 +155,12 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('view', $investment);
 
-        $date = $request->query('date');
-
-        if (!$date) {
-            return response()->json([
-                'exists' => false,
-                'price' => null,
-            ]);
-        }
+        $validated = $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
 
         $existingPrice = InvestmentPrice::where('investment_id', $investment->id)
-            ->where('date', $date)
+            ->where('date', $validated['date'])
             ->first();
 
         return response()->json([
