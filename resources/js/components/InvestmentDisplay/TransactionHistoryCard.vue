@@ -38,6 +38,7 @@
 
   import * as dataTableHelpers from '../../components/dataTableHelper';
   import { __, toIsoDateString } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'TransactionHistoryCard',
@@ -75,73 +76,46 @@
             return;
           }
 
-          // Show deleting toast
-          let notificationEvent = new CustomEvent('toast', {
-            detail: {
-              body: this.__('Deleting transaction #:transactionId', {
-                transactionId: id,
-              }),
-              toastClass: `bg-info toast-transaction-${id}`,
-              delay: Infinity,
-            },
-          });
-          window.dispatchEvent(notificationEvent);
+          toastHelpersshowLoaderToast(
+            this.__('Deleting transaction #:transactionId', {
+              transactionId: id,
+            }),
+            `toast-transaction-${id}`,
+          );
 
           window.axios
             .delete(
-              window.route('api.transactions.destroy', { transaction: id })
+              window.route('api.transactions.destroy', { transaction: id }),
             )
             .then(() => {
-              // Success toast
-              let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                  header: this.__('Success'),
-                  body: this.__('Transaction deleted (#:transactionId)', {
-                    transactionId: id,
-                  }),
-                  toastClass: 'bg-success',
-                },
-              });
-              window.dispatchEvent(notificationEvent);
+              toastHelpers.showSuccessToast(
+                this.__('Transaction deleted (#:transactionId)', {
+                  transactionId: id,
+                }),
+              );
+
               // Remove from UI
               this.$emit('delete-transaction', id);
             })
             .catch((error) => {
-              // Error toast
-              let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                  header: this.__('Error'),
-                  body: this.__(
-                    'Error deleting transaction (#:transactionId): :error',
-                    { transactionId: id, error: error }
-                  ),
-                  toastClass: 'bg-danger',
-                },
-              });
-              window.dispatchEvent(notificationEvent);
+              toastHelpers.showErrorToast(
+                this.__(
+                  'Error deleting transaction (#:transactionId): :error',
+                  { transactionId: id, error: error },
+                ),
+              );
             })
             .finally(() => {
-              // Close the toast with a small delay
-              setTimeout(() => {
-                let toastElement = document.querySelector(
-                  `.toast-transaction-${id}`
-                );
-                if (
-                  toastElement &&
-                  window.bootstrap &&
-                  window.bootstrap.Toast
-                ) {
-                  let toastInstance = new window.bootstrap.Toast(toastElement);
-                  toastInstance.hide();
-                }
-              }, 250);
+              toastHelpers.hideToast(`.toast-transaction-${id}`);
             });
         });
       },
       confirmSkipScheduledInstance(id) {
         Swal.fire({
           animation: false,
-          text: this.__('Are you sure you want to skip this scheduled instance?'),
+          text: this.__(
+            'Are you sure you want to skip this scheduled instance?',
+          ),
           icon: 'warning',
           showCancelButton: true,
           cancelButtonText: this.__('Cancel'),
@@ -157,63 +131,39 @@
           }
 
           // Show skipping toast
-          let notificationEvent = new CustomEvent('toast', {
-            detail: {
-              body: this.__('Skipping scheduled instance...'),
-              toastClass: `bg-info toast-transaction-${id}`,
-              delay: Infinity,
-            },
-          });
-          window.dispatchEvent(notificationEvent);
+          toastHelpers.showLoaderToast(
+            this.__('Skipping scheduled instance #:transactionId', {
+              transactionId: id,
+            }),
+            `toast-transaction-${id}`,
+          );
 
           window.axios
             .patch(
               window.route('api.transactions.skipScheduleInstance', {
                 transaction: id,
-              })
+              }),
             )
             .then(() => {
-              // Success toast
-              let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                  header: this.__('Success'),
-                  body: this.__('Scheduled instance skipped'),
-                  toastClass: 'bg-success',
-                },
-              });
-              window.dispatchEvent(notificationEvent);
+              toastHelpers.showSuccessToast(
+                this.__('Scheduled instance skipped (#:transactionId)', {
+                  transactionId: id,
+                }),
+              );
+
               // Remove from UI
               this.$emit('delete-transaction', id);
             })
             .catch((error) => {
-              // Error toast
-              let notificationEvent = new CustomEvent('toast', {
-                detail: {
-                  header: this.__('Error'),
-                  body: this.__(
-                    'Error skipping scheduled instance: :error',
-                    { error: error }
-                  ),
-                  toastClass: 'bg-danger',
-                },
-              });
-              window.dispatchEvent(notificationEvent);
+              toastHelpers.showErrorToast(
+                this.__(
+                  'Error skipping scheduled instance (#:transactionId): :error',
+                  { transactionId: id, error: error },
+                ),
+              );
             })
             .finally(() => {
-              // Close the toast with a small delay
-              setTimeout(() => {
-                let toastElement = document.querySelector(
-                  `.toast-transaction-${id}`
-                );
-                if (
-                  toastElement &&
-                  window.bootstrap &&
-                  window.bootstrap.Toast
-                ) {
-                  let toastInstance = new window.bootstrap.Toast(toastElement);
-                  toastInstance.hide();
-                }
-              }, 250);
+              toastHelpers.hideToast(`.toast-transaction-${id}`);
             });
         });
       },
@@ -271,7 +221,7 @@
           dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
             'date',
             __('Date'),
-            this.locale
+            this.locale,
           ),
           { data: 'transaction_type.name', title: __('Transaction') },
           {
@@ -291,7 +241,7 @@
                 type,
                 data,
                 vm.locale,
-                vm.investment.currency
+                vm.investment.currency,
               );
             },
           },
@@ -303,7 +253,7 @@
                 type,
                 data,
                 vm.locale,
-                vm.investment.currency
+                vm.investment.currency,
               );
             },
           },
@@ -315,7 +265,7 @@
                 type,
                 data,
                 vm.locale,
-                vm.investment.currency
+                vm.investment.currency,
               );
             },
           },
@@ -327,7 +277,7 @@
                 type,
                 data,
                 vm.locale,
-                vm.investment.currency
+                vm.investment.currency,
               );
             },
           },
@@ -341,7 +291,7 @@
                     type,
                     data,
                     vm.locale,
-                    vm.investment.currency
+                    vm.investment.currency,
                   );
             },
           },
@@ -352,14 +302,14 @@
             render: function (_data, _type, row) {
               let actions =
                 `<button class="btn btn-xs btn-outline-dark set-date" data-type="from" data-date="${toIsoDateString(
-                  row.date
+                  row.date,
                 )}" title="${vm.__(
-                  'Make this the start date'
+                  'Make this the start date',
                 )}"><i class="fa fa-fw fa-caret-left"></i></button> ` +
                 `<button class="btn btn-xs btn-outline-dark set-date" data-type="to" data-date="${toIsoDateString(
-                  row.date
+                  row.date,
                 )}" title="${vm.__(
-                  'Make this the end date'
+                  'Make this the end date',
                 )}"><i class="fa fa-fw fa-caret-right"></i></button> `;
               if (!row.schedule) {
                 const id = row.id;
@@ -368,16 +318,16 @@
                     transaction: id,
                     action: 'edit',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit'
+                    'Edit',
                   )}"><i class="fa fa-fw fa-edit"></i></a> ` +
                   `<a href="${window.route('transaction.open', {
                     transaction: id,
                     action: 'clone',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Clone'
+                    'Clone',
                   )}"><i class="fa fa-fw fa-clone"></i></a> ` +
                   `<button class="btn btn-xs btn-danger data-delete" data-id="${id}" type="button" title="${vm.__(
-                    'Delete'
+                    'Delete',
                   )}"><i class="fa fa-fw fa-trash"></i></button> `;
               } else {
                 // Scheduled transaction actions
@@ -388,16 +338,16 @@
                     transaction: id,
                     action: 'enter',
                   })}" class="btn btn-xs btn-success" title="${vm.__(
-                    'Enter/Finalize'
+                    'Enter/Finalize',
                   )}"><i class="fa fa-fw fa-calendar-check"></i></a> ` +
                   `<a href="${window.route('transaction.open', {
                     transaction: id,
                     action: 'replace',
                   })}" class="btn btn-xs btn-primary" title="${vm.__(
-                    'Edit schedule'
+                    'Edit schedule',
                   )}"><i class="fa fa-fw fa-edit"></i></a> ` +
                   `<button class="btn btn-xs btn-warning data-skip" data-id="${id}" type="button" title="${vm.__(
-                    'Skip this instance'
+                    'Skip this instance',
                   )}"><i class="fa fa-fw fa-forward"></i></button> `;
               }
               return actions;

@@ -18,6 +18,9 @@
   import * as dataTableHelpers from '../dataTableHelper';
   import Swal from 'sweetalert2';
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
+
+  const selectorRatesTable = '#ratesTable';
 
   export default {
     name: 'CurrencyRateTable',
@@ -74,7 +77,7 @@
       initializeTable() {
         const self = this;
 
-        this.table = $('#ratesTable').DataTable({
+        this.table = $(selectorRatesTable).DataTable({
           data: this.currencyRates,
           columns: [
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
@@ -97,7 +100,7 @@
             {
               data: 'id',
               title: this.__('Actions'),
-              render: function (data, _type, row, _meta) {
+              render: function (data, _type, _row, _meta) {
                 return `
                                 <button class="btn btn-xs btn-primary edit-rate" data-id="${data}" title="${self.__('Edit')}">
                                     <span class="fa fa-edit"></span>
@@ -123,7 +126,7 @@
         });
 
         // Edit button click handler
-        $('#ratesTable').on('click', '.edit-rate', function () {
+        $(selectorRatesTable).on('click', '.edit-rate', function () {
           const rateId = $(this).data('id');
           const rate = self.currencyRates.find((r) => r.id === rateId);
           if (rate) {
@@ -132,7 +135,7 @@
         });
 
         // Delete button click handler
-        $('#ratesTable').on('click', '.delete-rate', function () {
+        $(selectorRatesTable).on('click', '.delete-rate', function () {
           const rateId = $(this).data('id');
           const rate = self.currencyRates.find((r) => r.id === rateId);
           if (rate) {
@@ -160,15 +163,10 @@
         });
       },
       async deleteRate(rate) {
-        // Show loading toast
-        const loadingEvent = new CustomEvent('toast', {
-          detail: {
-            body: this.__('Deleting rate...'),
-            toastClass: `bg-info toast-rate-${rate.id}`,
-            delay: Infinity,
-          },
-        });
-        window.dispatchEvent(loadingEvent);
+        toastHelpers.showLoaderToast(
+          this.__('Deleting rate...'),
+          `toast-rate-${rate.id}`,
+        );
 
         try {
           await window.axios.delete(
@@ -177,49 +175,25 @@
             }),
           );
 
-          // Show success toast
-          const successEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Success'),
-              body: this.__('Currency rate deleted'),
-              toastClass: 'bg-success',
-            },
-          });
-          window.dispatchEvent(successEvent);
+          toastHelpers.showSuccessToast(this.__('Currency rate deleted'));
 
           // Emit delete event
           this.$emit('delete-rate', rate.id);
         } catch (error) {
-          // Show error toast
-          const errorEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Error'),
-              body:
-                error.response?.data?.message ||
-                this.__('Failed to delete rate'),
-              toastClass: 'bg-danger',
-            },
-          });
-          window.dispatchEvent(errorEvent);
+          toastHelpers.showErrorToast(
+            error.response?.data?.message || this.__('Failed to delete rate'),
+          );
         } finally {
-          // Close loading toast
-          setTimeout(() => {
-            const toastElement = document.querySelector(
-              `.toast-rate-${rate.id}`,
-            );
-            if (toastElement) {
-              const toastInstance = new window.bootstrap.Toast(toastElement);
-              toastInstance.dispose();
-            }
-          }, 250);
+          toastHelpers.hideToast(`.toast-rate-${rate.id}`);
         }
       },
       updateTableData(rates) {
-        if (this.table) {
-          this.table.clear();
-          this.table.rows.add(rates);
-          this.table.draw();
+        if (!this.table) {
+          return;
         }
+        this.table.clear();
+        this.table.rows.add(rates);
+        this.table.draw();
       },
       __,
     },

@@ -83,9 +83,10 @@
 </template>
 
 <script>
-  import * as helpers from '../helpers';
+  import { __ } from '../helpers';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import * as toastHelpers from '../toast';
 
   export default {
     name: 'ChangePassword',
@@ -110,11 +111,7 @@
         this.form
           .patch(window.route('user.change_password'), this.form)
           .then(function () {
-            _vue.showToast(
-              __('Success'),
-              __('Password changed successfully.'),
-              'bg-success',
-            );
+            toastHelpers.showSuccessToast(__('Password changed successfully.'));
 
             // Clear the form
             _vue.form.reset();
@@ -122,17 +119,13 @@
           })
           .catch(function (error) {
             if (error.response.status === 422) {
-              _vue.showToast(
-                __('Error'),
+              toastHelpers.showErrorToast(
                 __('Validation failed. Please check the form for errors.'),
-                'bg-danger',
               );
             } else {
               console.error(error);
-              _vue.showToast(
-                __('Error'),
+              toastHelpers.showErrorToast(
                 __('An error occurred. Please try again later.'),
-                'bg-danger',
               );
             }
           })
@@ -140,20 +133,7 @@
             _vue.form.busy = false;
           });
       },
-
-      /**
-       * Import the translation helper function.
-       */
-      __: function (string, replace) {
-        return helpers.__(string, replace);
-      },
-
-      /**
-       * Import the toast display helper function.
-       */
-      showToast: function (header, body, toastClass, otherProperties) {
-        return helpers.showToast(header, body, toastClass, otherProperties);
-      },
+      __,
     },
   };
 </script>

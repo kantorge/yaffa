@@ -173,33 +173,6 @@ export function transactionLink(id, text) {
     return `<a href="${url}">${text}</a>`;
 }
 
-/**
- * Function to display a Toast notification.
- *
- * @param {string} header The header of the toast.
- * @param {string} body The body of the toast.
- * @param {string} toastClass The class of the toast.
- * @param {Object} otherProperties Other properties to pass to the toast.
- *
- * @returns {void}
- */
-export function showToast(header, body, toastClass, otherProperties ) {
-    otherProperties = otherProperties || {};
-
-    // Emit a custom event to global scope to display the Toast
-    let notificationEvent = new CustomEvent('toast', {
-        detail: {
-            ...otherProperties,
-            ...{
-                header: header,
-                body: body,
-                toastClass: toastClass,
-            }
-        }
-    });
-    window.dispatchEvent(notificationEvent);
-}
-
 export function initializeBootstrapTooltips() {
     const tooltipTriggerList = document.querySelectorAll(
       '[data-bs-toggle="tooltip"]',
@@ -212,6 +185,7 @@ export function initializeBootstrapTooltips() {
 // Helper to load Select2 i18n files in a Vite-friendly way
 const select2I18nLoaders = {
     en: () => import('select2/dist/js/i18n/en.js'),
+    fr: () => import('select2/dist/js/i18n/fr.js'),
     hu: () => import('select2/dist/js/i18n/hu.js'),
 };
 
