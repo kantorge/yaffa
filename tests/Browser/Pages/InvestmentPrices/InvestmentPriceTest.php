@@ -7,11 +7,11 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-const TABLESELECTOR = '#table-investment-prices';
-
 class InvestmentPriceTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
+
+    const TABLESELECTOR = '#table-investment-prices';
 
     protected function setUp(): void
     {
@@ -43,14 +43,14 @@ class InvestmentPriceTest extends DuskTestCase
                 // Load the investment prices list
                 ->visitRoute('investment-price.list', $investment)
                 // Wait for the table to load
-                ->waitFor('#table-investment-prices')
+                ->waitFor(self::TABLESELECTOR)
                 // Check that the investment prices list is visible
-                ->assertPresent('#table-investment-prices');
+                ->assertPresent(self::TABLESELECTOR);
 
             // The table should be empty, as no investment prices are created yet
             $this->assertEquals(
                 0,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, self::TABLESELECTOR)
             );
 
             // The user can open the create investment price page with the related form
@@ -72,12 +72,12 @@ class InvestmentPriceTest extends DuskTestCase
             // The table should now have one row
             $this->assertEquals(
                 1,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, self::TABLESELECTOR)
             );
 
             // The user can open the modal dialog to edit investment price
             $browser
-                ->click(TABLESELECTOR . ' button.edit-price')
+                ->click(self::TABLESELECTOR . ' button.edit-price')
                 ->waitFor('#investmentPriceModal')
                 ->assertPresent('#investmentPriceModal')
                 // Change the price field
@@ -91,23 +91,19 @@ class InvestmentPriceTest extends DuskTestCase
             // The table should still have one row
             $this->assertEquals(
                 1,
-                $this->getTableRowCount($browser, TABLESELECTOR)
+                $this->getTableRowCount($browser, self::TABLESELECTOR)
             );
 
             // The user can delete the investment price
             $browser
-                ->click(TABLESELECTOR . ' button.delete-price')
+                ->click(self::TABLESELECTOR . ' button.delete-price')
                 // Confirm the deletion via the SweetAlert dialog
                 ->waitFor('.swal2-container')
                 ->click('.swal2-container button.swal2-confirm')
                 // Wait for the success notification
-                ->waitFor('div.toast-container .toast.bg-success');
-
-            // The table should now be empty again
-            $this->assertEquals(
-                0,
-                $this->getTableRowCount($browser, TABLESELECTOR)
-            );
+                ->waitFor('div.toast-container .toast.bg-success')
+                // Wait for the table row to actually be removed from the DOM - no assertion is made for the same check
+                ->waitUntil('document.querySelectorAll("' . self::TABLESELECTOR . ' tbody tr:not(tr:has(td.dt-empty))").length === 0', 5);
         });
     }
 }
