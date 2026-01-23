@@ -323,9 +323,9 @@ $(selectorScheduleTable).on("click", "[data-skip]", function () {
                 row.data(data).draw();
 
                 toastHelpers.showToast(
-                    __('Error'),
-                    __('Error while changing account active state.'),
-                    'bg-danger',
+                    __('Success'),
+                    __('Schedule instance skipped.'),
+                    'bg-success',
                     {
                         headerSmall: helpers.transactionLink(id, __('Go to transaction')),
                     }
