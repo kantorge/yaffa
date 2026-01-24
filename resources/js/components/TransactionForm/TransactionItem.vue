@@ -84,8 +84,8 @@
 </template>
 
 <script>
-  import MathInput from './MathInput.vue';
-  import { __, loadSelect2Language } from '../helpers';
+  import MathInput from '@components/MathInput.vue';
+  import { __, loadSelect2Language } from '@/helpers';
 
   import select2 from 'select2';
   select2();

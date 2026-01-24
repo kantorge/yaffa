@@ -62,6 +62,7 @@
   import CurrencyRateModal from './CurrencyRateModal.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'CurrencyRateManager',
@@ -161,14 +162,7 @@
       },
       onRateSaved(rate, message) {
         // Show success toast
-        const successEvent = new CustomEvent('toast', {
-          detail: {
-            header: this.__('Success'),
-            body: message,
-            toastClass: 'bg-success',
-          },
-        });
-        window.dispatchEvent(successEvent);
+        toastHelpers.showSuccessToast(message);
 
         // Update or add the rate in allRates
         const existingIndex = this.allRates.findIndex((r) => r.id === rate.id);

@@ -6,7 +6,8 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { toFormattedCurrency } from "../helpers";
+import { __, toFormattedCurrency } from "../helpers";
+import * as toastHelpers from '../toast';
 import { investmentGroupTree } from "../components/dataTableHelper";
 
 window.chartData = [];
@@ -169,13 +170,7 @@ fetch('/api/assets/investment/timeline')
         document.getElementById('chart').style.display = 'block';
     })
     .catch(error => {
-        // Emit a custom event to global scope about the result
-        let notificationEvent = new CustomEvent('toast', {
-            detail: {
-                header: __('Error'),
-                body: error.message,
-                toastClass: 'bg-danger'
-            }
-        });
-        window.dispatchEvent(notificationEvent);
+        toastHelpers.showErrorToast(
+            __('Error: :error', {error: error.message})
+        );
     });

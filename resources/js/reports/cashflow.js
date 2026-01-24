@@ -5,6 +5,8 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 am4core.useTheme(am4themes_animated);
 import 'select2';
 
+import * as toastHelpers from '../toast';
+
 window.chartData = [];
 let chart;
 
@@ -109,15 +111,7 @@ function reloadData() {
                 document.getElementById('placeholder').classList.remove('hidden');
                 document.getElementById('chartdiv').classList.add('hidden');
 
-                // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Warning'),
-                        body: data.message,
-                        toastClass: "bg-warning",
-                    }
-                });
-                window.dispatchEvent(notificationEvent);
+                toastHelpers.showWarningToast(data.message);
 
                 return;
             }

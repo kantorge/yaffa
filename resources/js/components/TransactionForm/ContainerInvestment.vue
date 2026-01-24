@@ -10,7 +10,8 @@
 </template>
 
 <script>
-  import TransactionFormInvestment from './../TransactionFormInvestment.vue';
+  import { storeNotification } from '../../handle_notifications';
+  import TransactionFormInvestment from './TransactionFormInvestment.vue';
 
   export default {
     name: 'TransactionContainerInvestment',
@@ -119,6 +120,13 @@
           return;
         }
 
+        if (this.callback === 'returnToInvestment') {
+          location.href = window.route('investment.show', {
+            investment: transaction.config.investment_id,
+          });
+          return;
+        }
+
         // Default, return back
         if (document.referrer) {
           location.href = document.referrer;
@@ -132,8 +140,51 @@
         window.history.back();
       },
 
-      // Actual form was submitted. We need to return to proceed as selected by user.
+      // Actual form was submitted. We need to proceed to the screen selected by the user.
       onSuccess(transaction, options) {
+        if (['create', 'clone', 'enter', 'finalize'].includes(this.action)) {
+          storeNotification(
+            'success',
+            __('Transaction added (#:id)', { id: transaction.id }),
+            {
+              dismissible: true,
+            },
+          );
+
+          // Check if investment price was stored
+          if (options.investmentPriceStoredResult) {
+            if (options.investmentPriceStoredResult === 'success') {
+              storeNotification('success', __('Investment price stored'), {
+                dismissible: true,
+              });
+            } else if (options.investmentPriceStoredResult === 'skipped') {
+              storeNotification(
+                'warning',
+                __('Price for this date already exists and was not updated'),
+                {
+                  dismissible: true,
+                },
+              );
+            } else if (options.investmentPriceStoredResult === 'error') {
+              storeNotification(
+                'error',
+                __('Failed to store investment price'),
+                {
+                  dismissible: true,
+                },
+              );
+            }
+          }
+        } else {
+          storeNotification(
+            'success',
+            __('Transaction updated (#:id)', { id: transaction.id }),
+            {
+              dismissible: true,
+            },
+          );
+        }
+
         this.callback = options.callback;
         this.loadCallbackUrl(transaction);
       },

@@ -63,6 +63,7 @@
 
 <script>
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'CurrencyRateActions',
@@ -97,15 +98,10 @@
 
         this.isLoadingMissing = true;
 
-        // Show loading toast
-        const loadingEvent = new CustomEvent('toast', {
-          detail: {
-            body: this.__('Loading missing rates...'),
-            toastClass: 'bg-info toast-loading-missing-rates',
-            delay: Infinity,
-          },
-        });
-        window.dispatchEvent(loadingEvent);
+        toastHelpers.showLoaderToast(
+          this.__('Loading missing rates...'),
+          'toast-loading-missing-rates',
+        );
 
         try {
           // Call the existing endpoint to retrieve missing rates
@@ -115,47 +111,20 @@
             }),
           );
 
-          // Show success toast
-          const successEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Success'),
-              body: this.__('Missing rates loaded successfully'),
-              toastClass: 'bg-success',
-            },
-          });
-          window.dispatchEvent(successEvent);
+          toastHelpers.showSuccessToast(
+            this.__('Missing rates loaded successfully'),
+          );
 
           // Emit event to parent to reload data
           this.$emit('rates-loaded');
         } catch (error) {
-          // Show error toast
-          const errorEvent = new CustomEvent('toast', {
-            detail: {
-              header: this.__('Error'),
-              body:
-                error.response?.data?.message ||
-                this.__('Failed to load missing rates'),
-              toastClass: 'bg-danger',
-            },
-          });
-          window.dispatchEvent(errorEvent);
+          toastHelpers.showErrorToast(
+            error.response?.data?.message ||
+              this.__('Failed to load missing rates'),
+          );
         } finally {
           this.isLoadingMissing = false;
-
-          // Close loading toast
-          setTimeout(() => {
-            // Theorteically, there should be only one toast with this class, but let's make sure to remove all
-            const toastElements = document.querySelectorAll(
-              '.toast-loading-missing-rates',
-            );
-
-            if (toastElements.length > 0) {
-              toastElements.forEach((toastElement) => {
-                const toastInstance = new window.bootstrap.Toast(toastElement);
-                toastInstance.dispose();
-              });
-            }
-          }, 250);
+          toastHelpers.hideToast('.toast-loading-missing-rates');
         }
       },
       __,

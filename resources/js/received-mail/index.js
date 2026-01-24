@@ -1,6 +1,8 @@
 import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
+import * as toastHelpers from '../toast';
+import { __ } from '../helpers';
 
 const dataTableSelector = '#table';
 
@@ -161,25 +163,11 @@ window.table = $(dataTableSelector).DataTable({
                     window.mails = window.mails.filter(mail => mail.id !== data.receivedMail.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Email deleted'),
-                            toastClass: 'bg-success',
-                            delay: 2000,
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
+
+                    toastHelpers.showSuccessToast(__('Email deleted'));
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete email'),
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(__('Error while trying to delete email'));
                 }
             });
         });
