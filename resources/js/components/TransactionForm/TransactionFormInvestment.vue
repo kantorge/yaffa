@@ -1106,11 +1106,6 @@
               this.form,
             )
             .then((response) => {
-              // Show success toast if not in modal context
-              if (!this.fromModal) {
-                toastHelpers.showSuccessToast(this.__('Transaction updated'));
-              }
-
               this.$emit(
                 'success',
                 processTransaction(response.data.transaction),
@@ -1127,7 +1122,7 @@
           .post(window.route('api.transactions.storeInvestment'), this.form)
           .then((response) => {
             // Store price if enabled
-            this.storePriceIfEnabled(response.data.transaction);
+            this.storePriceIfEnabled();
 
             this.$emit(
               'success',
@@ -1220,7 +1215,7 @@
         }, 500);
       },
 
-      async storePriceIfEnabled(transaction) {
+      async storePriceIfEnabled() {
         if (!this.storePriceEnabled || !this.form.config.price) {
           return;
         }
