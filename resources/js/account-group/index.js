@@ -7,6 +7,7 @@ import {
 } from '../components/dataTableHelper';
 
 import { __ } from '../helpers';
+import * as toastHelpers from '../toast';
 
 const dataTableSelector = '#table';
 
@@ -80,24 +81,11 @@ window.table = $(dataTableSelector).DataTable({
                         .filter(accountGroup => accountGroup.id !== data.accountGroup.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Account group deleted'),
-                            toastClass: 'bg-success',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+
+                    toastHelpers.showSuccessToast(__('Account group deleted'));
                 },
                 error: function (data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete account group: ') + data.responseJSON.error,
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(__('Error while trying to delete account group: ') + data.responseJSON.error);
                 },
                 complete: function (_data) {
                     // Restore button icon

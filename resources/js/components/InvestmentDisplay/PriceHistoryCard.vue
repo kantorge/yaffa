@@ -2,24 +2,17 @@
   <div class="card mb-3">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        {{ __('Price history') }}
+        {{ __('Investment price history') }}
       </div>
       <div>
-        <span class="badge text-bg-warning me-2" v-if="!hasData">{{
-          __('No data available')
-        }}</span>
-        <template v-if="investment.investment_price_provider">
-          <a
-            :href="priceProviderUrl"
-            class="btn btn-sm btn-success me-2"
-            :title="__('Load new price data')"
-          >
-            <span class="fa fa-cloud-download"></span>
+        <template v-if="!hideActions">
+          <a :href="priceListUrl" class="btn btn-sm btn-primary">
+            <span
+              class="fa fa-search"
+              :title="__('List and manage investment prices')"
+            ></span>
           </a>
         </template>
-        <a :href="priceListUrl" class="btn btn-sm btn-primary">
-          <span class="fa fa-search" :title="__('List prices')"></span>
-        </a>
       </div>
     </div>
     <div class="card-body">
@@ -37,6 +30,7 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+  import { __ } from '../../helpers';
 
   export default {
     name: 'PriceHistoryCard',
@@ -48,17 +42,14 @@
         default: () =>
           window.YAFFA ? window.YAFFA.locale : navigator.language,
       },
+      hideActions: {
+        type: Boolean,
+        default: false,
+      },
     },
     computed: {
       hasData() {
         return this.prices && this.prices.length > 0;
-      },
-      priceProviderUrl() {
-        return window.route
-          ? window.route('investment-price.retrieve', {
-              investment: this.investment.id,
-            })
-          : '#';
       },
       priceListUrl() {
         return window.route
@@ -80,6 +71,7 @@
       chart.numberFormatter.numberFormat = {
         style: 'currency',
         currency: this.investment.currency.iso_code,
+        currencyDisplay: 'narrowSymbol',
         minimumFractionDigits: 0,
       };
 
@@ -91,6 +83,7 @@
       series.dataFields.valueY = 'price';
       series.dataFields.dateX = 'date';
       series.strokeWidth = 3;
+      series.minBulletDistance = 15;
 
       let bullet = series.bullets.push(new am4charts.Bullet());
       let square = bullet.createChild(am4core.Rectangle);
@@ -110,6 +103,8 @@
         this.chart.dispose();
       }
     },
-    methods: {},
+    methods: {
+      __,
+    },
   };
 </script>

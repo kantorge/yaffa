@@ -1,4 +1,6 @@
 import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../helpers';
+import * as toastHelpers from '../toast.js';
+
 const route = window.route;
 
 export function dataTablesActionButton(id, action) {
@@ -486,14 +488,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
                 row.remove().draw();
 
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Success'),
-                        body: __('Transaction deleted (#:transactionId)', {transactionId: id}),
-                        toastClass: "bg-success",
-                    }
-                });
-                window.dispatchEvent(notificationEvent);
+                toastHelpers.showSuccessToast(__('Transaction deleted (#:transactionId)', {transactionId: id}));
 
                 // Execute callback if provided
                 if (typeof successCallback === 'function') {
@@ -502,14 +497,7 @@ export function initializeAjaxDeleteButton(selector, successCallback) {
             })
             .catch(function (error) {
                 // Emit a custom event to global scope about the result
-                let notificationEvent = new CustomEvent('toast', {
-                    detail: {
-                        header: __('Error'),
-                        body: __('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}),
-                        toastClass: "bg-danger"
-                    }
-                });
-                window.dispatchEvent(notificationEvent);
+                toastHelpers.showErrorToast(__('Error deleting transaction (#:transactionId): :error', {transactionId: id, error: error}));
 
                 $(selector).find(".busy[data-delete]").removeClass('busy')
             });

@@ -450,12 +450,6 @@ class TransactionApiController extends Controller implements HasMiddleware
             $mail->save();
         }
 
-        // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way, so that the controller is not aware of the caller context?
-        if (!$validated['fromModal']) {
-            self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
-        }
-
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
 
@@ -500,12 +494,6 @@ class TransactionApiController extends Controller implements HasMiddleware
         });
 
         $this->handleSourceTransactionUpdates($validated);
-
-        // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
-        if (!$validated['fromModal']) {
-            self::addMessage('Transaction added (#' . $transaction->id . ')', 'success', '', '', true);
-        }
 
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
@@ -589,12 +577,6 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Save entire transaction
         $transaction->push();
 
-        // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
-        if (!$validated['fromModal']) {
-            self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
-        }
-
         // Generate an event for the updated transaction
         event(new TransactionUpdated($transaction, $attributeChanges));
 
@@ -650,12 +632,6 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Save entire transaction
         $transaction->push();
-
-        // Create notification only if invoked from standalone view (not modal)
-        // TODO: can this be done in a better way, so that the Controller is not aware of the caller context?
-        if (!$validated['fromModal']) {
-            self::addMessage('Transaction updated (#' . $transaction->id . ')', 'success', '', '', true);
-        }
 
         // Generate an event for the updated transaction
         event(new TransactionUpdated($transaction, $attributeChanges));

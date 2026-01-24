@@ -29,8 +29,9 @@
 </template>
 
 <script>
-  import TransactionFormStandard from './../TransactionFormStandard.vue';
-  import * as helpers from '../../helpers';
+  import TransactionFormStandard from './TransactionFormStandard.vue';
+  import { transactionLink } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'CreateStandardTransactionModal',
@@ -71,18 +72,17 @@
       },
       onSuccess(transaction) {
         // Emit a custom event to global scope about the new transaction to be displayed as a notification
-        let notificationEvent = new CustomEvent('toast', {
-          detail: {
-            header: __('Success'),
-            headerSmall: helpers.transactionLink(
+        toastHelpers.showToast(
+          __('Success'),
+          __('Transaction added.'),
+          'bg-success',
+          {
+            headerSmall: transactionLink(
               transaction.id,
               __('Go to transaction'),
             ),
-            body: __('Transaction added.'),
-            toastClass: 'bg-success',
           },
-        });
-        window.dispatchEvent(notificationEvent);
+        );
 
         // Emit a custom event about the new transaction to be displayed
         let transactionEvent = new CustomEvent('transaction-created', {

@@ -7,6 +7,7 @@ import {
 } from '../components/dataTableHelper';
 
 import { __ } from '../helpers';
+import * as toastHelpers from '../toast';
 
 const dataTableSelector = '#table';
 
@@ -80,24 +81,11 @@ let table = $(dataTableSelector).DataTable({
                         .filter(investmentGroup => investmentGroup.id !== data.investmentGroup.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Investment group deleted'),
-                            toastClass: 'bg-success',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+
+                    toastHelpers.showSuccessToast(__('Investment group deleted'));
                 },
                 error: function (data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete investment group: ') + data.responseJSON.error,
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(__('Error while trying to delete investment group: ') + data.responseJSON.error);
                 },
                 complete: function (_data) {
                     // Restore button icon

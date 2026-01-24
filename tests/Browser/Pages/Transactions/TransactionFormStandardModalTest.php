@@ -44,9 +44,8 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 ->assertVisible('#transactionFormStandard')
                 // The save button should be visible
                 ->assertVisible('#transactionFormStandard-Save')
-                // The "after save" button group should not be visible
-                ->assertPresent('@action-after-save-desktop-button-group')
-                ->assertAttribute('@action-after-save-desktop-button-group', 'style', 'display: none;');
+                // The "after save" button group should not be present
+                ->assertNotPresent('@action-after-save-desktop-button-group');
         });
     }
 

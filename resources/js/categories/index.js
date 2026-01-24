@@ -8,6 +8,7 @@ import {
 } from '../components/dataTableHelper';
 
 import { __ } from '../helpers';
+import * as toastHelpers from '../toast';
 
 const dataTableSelector = '#table';
 
@@ -186,26 +187,14 @@ window.table = $(dataTableSelector).DataTable({
                     // Update row in table data source
                     categories.filter(category => category.id === data.id)[0].active = data.active;
 
-                    // Emit a custom event to global scope about the change
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Category active state changed'),
-                            toastClass: "bg-success",
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showSuccessToast(
+                        __('Category active state changed')
+                    );
                 },
                 error: function (_data) {
-                    // Emit a custom event to global scope about the problem
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while changing category active state.'),
-                            toastClass: "bg-danger",
-                        },
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(
+                        __('Error while changing category active state.')
+                    );
                 },
                 complete: function(_data) {
                     // Re-render row
@@ -241,24 +230,14 @@ window.table = $(dataTableSelector).DataTable({
                     window.categories = window.categories.filter(category => category.id !== data.category.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Category deleted'),
-                            toastClass: 'bg-success',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showSuccessToast(
+                        __('Category deleted')
+                    );
                 },
                 error: function (data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete category: ') + data.responseJSON.error,
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(
+                        __('Error while trying to delete category: ') + data.responseJSON.error
+                    );
                 },
                 complete: function (_data) {
                     // Restore button icon

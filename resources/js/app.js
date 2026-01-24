@@ -79,7 +79,7 @@ if (current === 'transaction.open' && ['show'].includes(route().params.action)) 
 }
 
 // Notifications
-import './notifications';
+import './display_notifications';
 
 // jQuery handlers...
 $(function () {

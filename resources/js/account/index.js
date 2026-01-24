@@ -4,8 +4,8 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import * as helpers from "../helpers";
-import { toFormattedCurrency } from '../helpers';
+import { __, toFormattedCurrency, transactionLink } from '../helpers';
+import * as toastHelpers from '../toast';
 
 import {
     booleanToTableIcon,
@@ -131,16 +131,14 @@ window.table = $(dataTableSelector).DataTable({
                     window.accounts.filter(account => account.id === data.id)[0].active = data.active;
                 },
                 error: function (_data) {
-                    // Emit a custom event to global scope about the problem
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            headerSmall: helpers.transactionLink(row.data().id, __('Go to transaction')),
-                            body: __('Error while changing account active state.'),
-                            toastClass: "bg-danger",
+                    toastHelpers.showToast(
+                        __('Error'),
+                        __('Error while changing account active state.'),
+                        'bg-danger',
+                        {
+                            headerSmall: transactionLink(row.data().id, __('Go to transaction')),
                         }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    );
                 },
                 complete: function(_data) {
                     // Re-render row
@@ -200,7 +198,7 @@ table.contextualActions({
         },
         {
             type: 'option',
-            title: helpers.__('Delete'),
+            title: __('Delete'),
             iconClass: 'fa fa-trash',
             contextMenuClasses: ['text-danger'],
             isDisabled: function (row) {
@@ -241,24 +239,10 @@ table.contextualActions({
                             .remove()
                             .draw();
 
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Success'),
-                                body: __('Account deleted'),
-                                toastClass: "bg-success",
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
+                        toastHelpers.showSuccessToast(__('Account deleted'));
                     })
-                    .catch((error) => {
-                        let notificationEvent = new CustomEvent('toast', {
-                            detail: {
-                                header: __('Error'),
-                                body: __('Error while trying to delete account'),
-                                toastClass: "bg-danger",
-                            }
-                        });
-                        window.dispatchEvent(notificationEvent);
+                    .catch((_) => {
+                        toastHelpers.showErrorToast(__('Error while trying to delete account'));
                     })
                     .finally(() => {
                         ajaxIsBusy = false;

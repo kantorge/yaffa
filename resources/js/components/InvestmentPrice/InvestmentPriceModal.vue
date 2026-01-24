@@ -1,11 +1,13 @@
 <template>
-  <div class="modal fade" id="currencyRateModal" tabindex="-1">
+  <div class="modal fade" id="investmentPriceModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
             {{
-              isEditMode ? __('Edit Currency Rate') : __('Add Currency Rate')
+              isEditMode
+                ? __('Edit Investment Price')
+                : __('Add Investment Price')
             }}
           </h5>
           <button
@@ -18,11 +20,11 @@
         <div class="modal-body">
           <form @submit.prevent="submitForm">
             <div class="mb-3">
-              <label for="rateDate" class="form-label">{{ __('Date') }}</label>
+              <label for="priceDate" class="form-label">{{ __('Date') }}</label>
               <input
                 type="date"
                 class="form-control"
-                id="rateDate"
+                id="priceDate"
                 v-model="formData.date"
                 :class="{ 'is-invalid': errors.date }"
                 required
@@ -37,11 +39,10 @@
               </div>
             </div>
             <div class="mb-3">
-              <label for="rateValue" class="form-label">
-                {{ __('Rate') }}
-                <small class="text-muted"
-                  >({{ fromCurrency.iso_code }} →
-                  {{ toCurrency.iso_code }})</small
+              <label for="priceValue" class="form-label">
+                {{ __('Investment price') }}
+                <small class="text-muted" v-if="investment.currency"
+                  >({{ investment.currency.iso_code }})</small
                 >
               </label>
               <input
@@ -49,18 +50,18 @@
                 step="0.0001"
                 min="0.0000000001"
                 class="form-control"
-                id="rateValue"
-                v-model.number="formData.rate"
-                :class="{ 'is-invalid': errors.rate }"
+                id="priceValue"
+                v-model.number="formData.price"
+                :class="{ 'is-invalid': errors.price }"
                 required
               />
-              <div class="invalid-feedback" v-if="errors.rate">
-                <div v-if="Array.isArray(errors.rate)">
-                  <div v-for="error in errors.rate" :key="error">
+              <div class="invalid-feedback" v-if="errors.price">
+                <div v-if="Array.isArray(errors.price)">
+                  <div v-for="error in errors.price" :key="error">
                     {{ error }}
                   </div>
                 </div>
-                <div v-else>{{ errors.rate }}</div>
+                <div v-else>{{ errors.price }}</div>
               </div>
             </div>
           </form>
@@ -70,12 +71,18 @@
             type="button"
             class="btn btn-secondary"
             data-coreui-dismiss="modal"
+            :disabled="isSubmitting"
           >
+            <span
+              v-if="isSubmitting"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
             {{ __('Cancel') }}
           </button>
           <button
             type="button"
             class="btn btn-primary"
+            id="priceSubmit"
             @click="submitForm"
             :disabled="isSubmitting"
           >
@@ -93,18 +100,16 @@
 
 <script>
   import { __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
+
   export default {
-    name: 'CurrencyRateModal',
+    name: 'InvestmentPriceModal',
     props: {
-      fromCurrency: {
+      investment: {
         type: Object,
         required: true,
       },
-      toCurrency: {
-        type: Object,
-        required: true,
-      },
-      editRate: {
+      editPrice: {
         type: Object,
         default: null,
       },
@@ -114,7 +119,7 @@
       return {
         formData: {
           date: '',
-          rate: null,
+          price: null,
         },
         errors: {},
         isSubmitting: false,
@@ -123,16 +128,25 @@
     },
     computed: {
       isEditMode() {
-        return this.editRate !== null;
+        return this.editPrice !== null;
       },
     },
     watch: {
-      editRate: {
+      editPrice: {
         immediate: true,
-        handler(rate) {
-          if (rate) {
-            this.formData.date = rate.date;
-            this.formData.rate = rate.rate;
+        handler(price) {
+          if (price) {
+            // Convert Date object to YYYY-MM-DD string format for input type="date"
+            if (price.date instanceof Date) {
+              this.formData.date = price.date.toISOString().split('T')[0];
+            } else {
+              this.formData.date = price.date;
+            }
+            // Ensure price is a number
+            this.formData.price =
+              typeof price.price === 'string'
+                ? parseFloat(price.price)
+                : price.price;
           } else {
             this.resetForm();
           }
@@ -140,7 +154,7 @@
       },
     },
     mounted() {
-      const modalElement = document.getElementById('currencyRateModal');
+      const modalElement = document.getElementById('investmentPriceModal');
 
       // Use CoreUI Modal instead of Bootstrap Modal
       if (window.coreui && window.coreui.Modal) {
@@ -170,7 +184,7 @@
       resetForm() {
         this.formData = {
           date: '',
-          rate: null,
+          price: null,
         };
         this.errors = {};
       },
@@ -183,30 +197,34 @@
         this.isSubmitting = true;
 
         const data = {
-          from_id: this.fromCurrency.id,
-          to_id: this.toCurrency.id,
+          investment_id: this.investment.id,
           date: this.formData.date,
-          rate: this.formData.rate,
+          price: this.formData.price,
         };
+
+        // Include id when updating for validation rule to work
+        if (this.isEditMode) {
+          data.id = this.editPrice.id;
+        }
 
         try {
           let response;
           if (this.isEditMode) {
             response = await window.axios.put(
-              window.route('api.currency-rate.update', {
-                currency_rate: this.editRate.id,
+              window.route('api.investment-price.update', {
+                investment_price: this.editPrice.id,
               }),
               data,
             );
           } else {
             response = await window.axios.post(
-              window.route('api.currency-rate.store'),
+              window.route('api.investment-price.store'),
               data,
             );
           }
 
-          // Emit success event with the rate data
-          this.$emit('saved', response.data.rate, response.data.message);
+          // Emit success event with the price data
+          this.$emit('saved', response.data.price, response.data.message);
 
           // Hide modal
           this.hide();
@@ -215,6 +233,7 @@
             // Validation errors
             this.errors = error.response.data.errors;
           } else {
+            // Show generic error toast
             toastHelpers.showErrorToast(
               error.response?.data?.message || this.__('An error occurred'),
             );

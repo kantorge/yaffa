@@ -428,7 +428,6 @@ class AccountApiController extends Controller implements HasMiddleware
             return response()
                 ->json(
                     [
-                        'result' => 'error',
                         'message' => __('This account entity is not an account.'),
                     ],
                     Response::HTTP_BAD_REQUEST
@@ -445,7 +444,6 @@ class AccountApiController extends Controller implements HasMiddleware
         return response()
             ->json(
                 [
-                    'result' => 'success',
                     'message' => __('The monthly summary for this account is being updated.'),
                 ],
                 Response::HTTP_OK
