@@ -30,8 +30,8 @@
 
 <script>
   import TransactionFormInvestment from './TransactionFormInvestment.vue';
-  import * as helpers from '../../helpers';
-  import * as toastHelpers from '../../toast';
+  import * as helpers from '@/helpers';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'CreateInvestmentTransactionModal',
