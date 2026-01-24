@@ -150,6 +150,31 @@
               dismissible: true,
             },
           );
+
+          // Check if investment price was stored
+          if (options.investmentPriceStoredResult) {
+            if (options.investmentPriceStoredResult === 'success') {
+              storeNotification('success', __('Investment price stored'), {
+                dismissible: true,
+              });
+            } else if (options.investmentPriceStoredResult === 'skipped') {
+              storeNotification(
+                'warning',
+                __('Price for this date already exists and was not updated'),
+                {
+                  dismissible: true,
+                },
+              );
+            } else if (options.investmentPriceStoredResult === 'error') {
+              storeNotification(
+                'error',
+                __('Failed to store investment price'),
+                {
+                  dismissible: true,
+                },
+              );
+            }
+          }
         } else {
           storeNotification(
             'success',

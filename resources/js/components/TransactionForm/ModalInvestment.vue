@@ -73,7 +73,7 @@
       onCancel() {
         this.modal.hide();
       },
-      onSuccess(transaction) {
+      onSuccess(transaction, options) {
         toastHelpers.showToast(
           __('Success'),
           __('Transaction added.'),
@@ -85,6 +85,21 @@
             ),
           },
         );
+
+        // Check if investment price was stored
+        if (options.investmentPriceStoredResult) {
+          if (options.investmentPriceStoredResult === 'success') {
+            toastHelpers.showSuccessToast(this.__('Investment price stored'));
+          } else if (options.investmentPriceStoredResult === 'skipped') {
+            toastHelpers.showWarningToast(
+              this.__('Price for this date already exists and was not updated'),
+            );
+          } else if (options.investmentPriceStoredResult === 'error') {
+            toastHelpers.showErrorToast(
+              this.__('Failed to store investment price'),
+            );
+          }
+        }
 
         // Emit a custom event about the new transaction to be displayed
         let transactionEvent = new CustomEvent('transaction-created', {

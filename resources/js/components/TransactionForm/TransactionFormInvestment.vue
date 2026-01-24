@@ -254,7 +254,7 @@
                         @input="onPriceChange"
                       ></MathInput>
                       <span
-                        class="input-group-text"
+                        class="input-group-text existing-price-label"
                         v-if="existingPriceForDate !== null"
                         :title="
                           __('Existing price for this date. Click to apply.')
@@ -554,7 +554,15 @@
         schedule: false,
         budget: false,
         reconciled: false,
-        config: {},
+        config: {
+          account_id: null,
+          investment_id: null,
+          quantity: null,
+          price: null,
+          commission: null,
+          tax: null,
+          dividend: null,
+        },
         schedule_config: {
           frequency: 'DAILY',
           interval: 1,
@@ -1120,15 +1128,18 @@
         // Any type of new transaction needs POST method
         this.form
           .post(window.route('api.transactions.storeInvestment'), this.form)
-          .then((response) => {
+          .then(async (response) => {
             // Store price if enabled
-            this.storePriceIfEnabled();
+            const investmentPriceStoredResult = await this.storePriceIfEnabled(
+              response.data.transaction,
+            );
 
             this.$emit(
               'success',
               processTransaction(response.data.transaction),
               {
                 callback: this.callback,
+                investmentPriceStoredResult: investmentPriceStoredResult,
               },
             );
           });
@@ -1215,30 +1226,26 @@
         }, 500);
       },
 
-      async storePriceIfEnabled() {
-        if (!this.storePriceEnabled || !this.form.config.price) {
+      async storePriceIfEnabled(transaction) {
+        if (!this.storePriceEnabled || !transaction.config.price) {
           return;
         }
 
         try {
           await window.axios.post(window.route('api.investment-price.store'), {
-            investment_id: this.form.config.investment_id,
-            date: toIsoDateString(this.form.date),
-            price: this.form.config.price,
+            investment_id: transaction.config.investment_id,
+            date: transaction.date.split('T')[0], // At this point, date is in ISO format with time
+            price: transaction.config.price,
           });
 
           // Show success toast
-          toastHelpers.showSuccessToast(this.__('Investment price stored'));
+          return 'success';
         } catch (error) {
           // If duplicate (422), show warning instead of error
           if (error.response && error.response.status === 422) {
-            toastHelpers.showWarningToast(
-              this.__('Price for this date already exists and was not updated'),
-            );
+            return 'skipped';
           } else {
-            toastHelpers.showErrorToast(
-              this.__('Failed to store investment price'),
-            );
+            return 'error';
           }
         }
       },
