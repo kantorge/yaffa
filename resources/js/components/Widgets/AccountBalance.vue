@@ -114,14 +114,10 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '../../helpers';
-  import * as toastHelpers from '../../toast';
+  import { __, toFormattedCurrency } from '@/helpers';
+  import * as toastHelpers from '@/toast';
 
   export default {
-    components: {
-      helpers,
-    },
-
     props: {
       locale: {
         type: String,

@@ -47,9 +47,8 @@ class TransactionFormInvestmentModalTest extends DuskTestCase
                 ->assertVisible('#transactionFormInvestment')
                 // The save button should be visible
                 ->assertVisible('#transactionFormInvestment-Save')
-                // The "after save" button group should not be visible
-                ->assertPresent('@action-after-save-desktop-button-group')
-                ->assertAttribute('@action-after-save-desktop-button-group', 'style', 'display: none;');
+                // The "after save" button group should not be present
+                ->assertNotPresent('@action-after-save-desktop-button-group');
         });
     }
 

@@ -472,15 +472,15 @@
 
       <div class="card mb-3">
         <div class="card-body">
-          <div class="row">
+          <div class="row justify-content-end">
             <div
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
-              v-show="!fromModal"
+              v-if="!fromModal"
               dusk="action-after-save-desktop-button-group"
             >
-              <label class="form-label">
+              <span class="form-label block-label">
                 {{ __('Action after saving') }}
-              </label>
+              </span>
               <div
                 class="btn-group"
                 role="group"
@@ -501,7 +501,7 @@
             </div>
             <div
               class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
-              v-show="!fromModal"
+              v-if="!fromModal"
             >
               <label class="form-label" for="callback-selector-mobile-standard">
                 {{ __('Action after saving') }}
@@ -549,19 +549,20 @@
 
 <script>
   import {
+    __,
     todayInUTC,
     getCurrencySymbol,
     processTransaction,
     toFormattedCurrency,
     loadSelect2Language,
     initializeBootstrapTooltips,
-  } from '../helpers';
+  } from '@/helpers';
 
   import select2 from 'select2';
   select2();
   loadSelect2Language(window.YAFFA.language);
 
-  import MathInput from './MathInput.vue';
+  import MathInput from '@components/MathInput.vue';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
@@ -571,8 +572,7 @@
   import TransactionItemContainer from './TransactionItemContainer.vue';
   import TransactionSchedule from './TransactionSchedule.vue';
 
-  import PayeeForm from './../components/PayeeForm.vue';
-  import * as helpers from '../helpers';
+  import PayeeForm from '@components/PayeeForm.vue';
 
   export default {
     components: {
@@ -634,7 +634,6 @@
 
       // Main form data
       data.form = new Form({
-        fromModal: this.fromModal,
         transaction_type: 'withdrawal',
         config_type: 'standard',
         date: todayInUTC(),
@@ -1393,13 +1392,7 @@
           date.getTime() - 24 * 60 * 60 * 1000,
         );
       },
-
-      /**
-       * Import the translation helper function.
-       */
-      __: function (string, replace) {
-        return helpers.__(string, replace);
-      },
+      __,
 
       transactionTypeBaseClass(transactionType) {
         // Are edits allowed?

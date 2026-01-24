@@ -9,8 +9,8 @@
 
 <script>
   import { evaluate } from 'mathjs';
-  import { __ } from '../helpers';
-  import * as toastHelpers from '../toast';
+  import { __ } from '@/helpers';
+  import * as toastHelpers from '@/toast';
 
   export default {
     name: 'MathInput',

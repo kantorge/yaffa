@@ -29,7 +29,7 @@
 </template>
 
 <script>
-  import TransactionFormInvestment from '../TransactionFormInvestment.vue';
+  import TransactionFormInvestment from './TransactionFormInvestment.vue';
   import * as helpers from '../../helpers';
   import * as toastHelpers from '../../toast';
 

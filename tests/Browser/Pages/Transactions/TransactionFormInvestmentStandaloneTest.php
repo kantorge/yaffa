@@ -414,7 +414,23 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     public function test_callback_return_to_selected_investment(): void
     {
-        $this->markTestIncomplete('This function is not implemented yet');
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+            $this->fillStandardBuyForm($browser)
+                ->click('button[value="returnToInvestment"]')
+                // Submit form
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
+
+            // Get the last transaction from the database
+            $transaction = Transaction::orderByDesc('id')
+                ->with(['config'])
+                ->first();
+
+            $browser->assertRouteIs(
+                'investment.show',
+                ['investment' => $transaction->config->investment_id]
+            );
+        });
     }
 
     public function test_callback_return_to_dashboard(): void

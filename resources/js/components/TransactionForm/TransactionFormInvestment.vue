@@ -178,7 +178,7 @@
                 data-bs-placement="right"
                 :title="
                   __(
-                    'The currency of the account and the investment must be the same.',
+                    'The currency of the account and the investment must be the same. This will limit the account and investment options available in the dropdowns.',
                   )
                 "
               ></span>
@@ -238,49 +238,69 @@
                   </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                  <div class="form-group">
+                  <div class="form-group focus-zoom">
                     <label for="transaction_price" class="form-label">
                       {{ __('Price') }}
                     </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_price"
-                      v-model="form.config.price"
-                      :disabled="!transactionTypeSettings.price"
-                      @input="onPriceChange"
-                    ></MathInput>
-                    <div
-                      v-if="shouldShowStorePriceCheckbox"
-                      class="form-check mt-2"
-                    >
-                      <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="store_price_checkbox"
-                        v-model="storePriceEnabled"
-                        :disabled="existingPriceForDate !== null"
-                      />
-                      <label
-                        class="form-check-label"
-                        for="store_price_checkbox"
-                      >
-                        {{ __('Store this as a price for this date') }}
-                      </label>
-                    </div>
-                    <small
-                      v-if="existingPriceForDate !== null"
-                      class="form-text text-muted"
-                    >
-                      {{
-                        __('Existing price for this date: :price', {
-                          price: toFormattedCurrency(
+                    <div class="input-group">
+                      <span class="input-group-text" v-if="currency">
+                        {{ getCurrencySymbol(locale, currency.iso_code) }}
+                      </span>
+                      <MathInput
+                        class="form-control"
+                        id="transaction_price"
+                        v-model="form.config.price"
+                        :disabled="!transactionTypeSettings.price"
+                        @input="onPriceChange"
+                      ></MathInput>
+                      <span
+                        class="input-group-text"
+                        v-if="existingPriceForDate !== null"
+                        :title="
+                          __('Existing price for this date. Click to apply.')
+                        "
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        @click="form.config.price = existingPriceForDate"
+                        >{{
+                          toFormattedCurrency(
                             existingPriceForDate,
                             locale,
                             investment_currency,
-                          ),
-                        })
-                      }}
-                    </small>
+                          )
+                        }}</span
+                      >
+                      <!-- Toggle checkbox as button addon -->
+                      <input
+                        class="btn-check"
+                        type="checkbox"
+                        id="store_price_checkbox"
+                        autocomplete="off"
+                        v-model="storePriceEnabled"
+                        v-if="
+                          shouldShowStorePriceCheckbox &&
+                          existingPriceForDate === null
+                        "
+                      />
+                      <label
+                        class="btn btn-outline-dark"
+                        :class="{ active: storePriceEnabled }"
+                        for="store_price_checkbox"
+                        :title="
+                          __(
+                            'Store this value as the investment price for this date',
+                          )
+                        "
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        v-if="
+                          shouldShowStorePriceCheckbox &&
+                          existingPriceForDate === null
+                        "
+                      >
+                        {{ __('Store') }}
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -288,12 +308,17 @@
                     <label for="transaction_dividend" class="form-label">
                       {{ __('Dividend') }}
                     </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_dividend"
-                      v-model="form.config.dividend"
-                      :disabled="!transactionTypeSettings.dividend"
-                    ></MathInput>
+                    <div class="input-group">
+                      <span class="input-group-text" v-if="currency">
+                        {{ getCurrencySymbol(locale, currency.iso_code) }}
+                      </span>
+                      <MathInput
+                        class="form-control"
+                        id="transaction_dividend"
+                        v-model="form.config.dividend"
+                        :disabled="!transactionTypeSettings.dividend"
+                      ></MathInput>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -303,11 +328,16 @@
                     <label for="transaction_commission" class="form-label">
                       {{ __('Commission') }}
                     </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_commission"
-                      v-model="form.config.commission"
-                    ></MathInput>
+                    <div class="input-group">
+                      <span class="input-group-text" v-if="currency">
+                        {{ getCurrencySymbol(locale, currency.iso_code) }}
+                      </span>
+                      <MathInput
+                        class="form-control"
+                        id="transaction_commission"
+                        v-model="form.config.commission"
+                      ></MathInput>
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-4 mb-3">
@@ -315,11 +345,16 @@
                     <label for="transaction_tax" class="form-label">
                       {{ __('Tax') }}
                     </label>
-                    <MathInput
-                      class="form-control"
-                      id="transaction_tax"
-                      v-model="form.config.tax"
-                    ></MathInput>
+                    <div class="input-group">
+                      <span class="input-group-text" v-if="currency">
+                        {{ getCurrencySymbol(locale, currency.iso_code) }}
+                      </span>
+                      <MathInput
+                        class="form-control"
+                        id="transaction_tax"
+                        v-model="form.config.tax"
+                      ></MathInput>
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -369,15 +404,15 @@
 
       <div class="card mb-3">
         <div class="card-body">
-          <div class="row">
+          <div class="row justify-content-end">
             <div
               class="d-none d-lg-block col-lg-12 col-xl-9 mb-3 mb-lg-3 mb-xl-0"
-              v-show="!fromModal"
+              v-if="!fromModal"
               dusk="action-after-save-desktop-button-group"
             >
-              <label class="form-label">
+              <span class="form-label block-label">
                 {{ __('Action after saving') }}
-              </label>
+              </span>
               <div
                 class="btn-group"
                 role="group"
@@ -398,7 +433,7 @@
             </div>
             <div
               class="col-12 col-sm-8 d-block d-lg-none mb-3 mb-sm-0"
-              v-show="!fromModal"
+              v-if="!fromModal"
             >
               <label
                 class="form-label"
@@ -436,7 +471,7 @@
                 :form="form"
                 id="transactionFormInvestment-Save"
               >
-                <span class="fa fa-floppy-disk me-1"></span>
+                <span class="fa fa-floppy-disk me-1" v-show="!form.busy"></span>
                 {{ __('Save') }}
               </Button>
             </div>
@@ -448,8 +483,8 @@
 </template>
 
 <script>
-  import MathInput from './MathInput.vue';
-  import * as toastHelpers from '../toast';
+  import MathInput from '@components/MathInput.vue';
+  import * as toastHelpers from '@/toast';
 
   import Form from 'vform';
   import { Button, AlertErrors } from 'vform/src/components/bootstrap5';
@@ -459,13 +494,15 @@
   import TransactionSchedule from './TransactionSchedule.vue';
 
   import {
+    getCurrencySymbol,
     toFormattedCurrency,
     processTransaction,
     todayInUTC,
     toIsoDateString,
     initializeBootstrapTooltips,
     loadSelect2Language,
-  } from '../helpers';
+    __,
+  } from '@/helpers';
 
   import select2 from 'select2';
   select2();
@@ -499,6 +536,10 @@
         type: Boolean,
         default: false,
       },
+      locale: {
+        type: String,
+        default: window.YAFFA.locale,
+      },
     },
 
     data() {
@@ -506,7 +547,6 @@
 
       // Main form data
       data.form = new Form({
-        fromModal: this.fromModal,
         transaction_type: 'Buy',
         config_type: 'investment',
         date: toIsoDateString(),
@@ -528,7 +568,7 @@
       data.csrfToken = window.csrfToken;
       data.callback = this.initialCallback;
 
-      // Store price feature
+      // Store price feature related data
       data.storePriceEnabled = false;
       data.existingPriceForDate = null;
       data.priceCheckTimeout = null;
@@ -556,6 +596,11 @@
           enabled: true,
         },
         {
+          value: 'returnToInvestment',
+          label: __('callback.returnToInvestment'),
+          enabled: true,
+        },
+        {
           value: 'returnToDashboard',
           label: __('callback.returnToDashboard'),
           enabled: true,
@@ -566,9 +611,6 @@
           enabled: true,
         },
       ];
-
-      // Some other settings
-      data.locale = window.YAFFA.locale;
 
       return data;
     },
@@ -622,7 +664,8 @@
           ['create', 'clone', 'finalize'].includes(this.action) &&
           !this.form.schedule &&
           this.transactionTypeSettings.price &&
-          this.form.config.investment_id
+          // At the moment, overwriting is not supported
+          !this.existingPriceForDate
         );
       },
     },
@@ -1083,11 +1126,6 @@
         this.form
           .post(window.route('api.transactions.storeInvestment'), this.form)
           .then((response) => {
-            // Show success toast if not in modal context
-            if (!this.fromModal) {
-              toastHelpers.showSuccessToast(this.__('Transaction created'));
-            }
-
             // Store price if enabled
             this.storePriceIfEnabled(response.data.transaction);
 
@@ -1187,21 +1225,10 @@
           return;
         }
 
-        // Use the transaction's date from the response, not form.date
-        let transactionDate;
-        if (transaction.date instanceof Date) {
-          transactionDate = toIsoDateString(transaction.date);
-        } else if (typeof transaction.date === 'string') {
-          transactionDate = transaction.date;
-        } else {
-          // Fallback to form date if transaction date is invalid
-          transactionDate = toIsoDateString(this.form.date);
-        }
-
         try {
           await window.axios.post(window.route('api.investment-price.store'), {
             investment_id: this.form.config.investment_id,
-            date: transactionDate,
+            date: toIsoDateString(this.form.date),
             price: this.form.config.price,
           });
 
@@ -1220,7 +1247,7 @@
           }
         }
       },
-
+      getCurrencySymbol,
       toFormattedCurrency,
     },
 
@@ -1257,6 +1284,28 @@
           this.clearInvestmentDropdown();
         }
       },
+
+      existingPriceForDate(value) {
+        if (value !== null) {
+          this.$nextTick(() => {
+            initializeBootstrapTooltips();
+          });
+        }
+      },
     },
   };
 </script>
+
+<style scoped>
+  @media (min-width: 576px) {
+    .block-label {
+      display: block;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .block-label {
+      margin-right: 10px;
+    }
+  }
+</style>

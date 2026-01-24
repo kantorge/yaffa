@@ -29,7 +29,7 @@
 </template>
 
 <script>
-  import TransactionFormStandard from './../TransactionFormStandard.vue';
+  import TransactionFormStandard from './TransactionFormStandard.vue';
   import { transactionLink } from '../../helpers';
   import * as toastHelpers from '../../toast';
 

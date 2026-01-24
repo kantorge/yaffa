@@ -649,5 +649,11 @@
     "transaction.requirement.account": "Before creating a transaction, please add at least one account. This can be a bank account, a wallet, etc.",
     "transactions": "transactions",
     "Error while evaluating the input as a mathematical expression": "Error while evaluating the input as a mathematical expression",
-    "Error reseting email processed status: :error": "Error reseting email processed status: :error"
+    "Error reseting email processed status: :error": "Error reseting email processed status: :error",
+    "The currency of the account and the investment must be the same. This will limit the account and investment options available in the dropdowns.": "The currency of the account and the investment must be the same. This will limit the account and investment options available in the dropdowns.",
+    "Existing price for this date. Click to apply.": "Existing price for this date. Click to apply.",
+    "Store this value as the investment price for this date": "Store this value as the investment price for this date",
+    "Transaction added (#:id)": "Transaction added (#:id)",
+    "Transaction updated (#:id)": "Transaction updated (#:id)",
+    "callback.returnToInvestment": "Go to investment details"
 }

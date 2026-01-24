@@ -34,6 +34,14 @@ export function toFormattedCurrency(input, locale, currencySettings) {
     );
 }
 
+/**
+ * Gets the currency symbol for a given locale and ISO currency code.
+ *
+ * @param {string} locale - The locale string (e.g., 'en-US', 'de-DE')
+ * @param {string} iso_code - The ISO 4217 currency code (e.g., 'USD', 'EUR')
+ *
+ * @returns {string} The currency symbol for the specified locale and currency
+ */
 export function getCurrencySymbol(locale, iso_code) {
     const numberFormat = new Intl.NumberFormat(locale, {
         style: 'currency',
