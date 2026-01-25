@@ -35,6 +35,28 @@ class InvestmentService
         ];
     }
 
+    /**
+     * Recalculate monthly summaries for all accounts related to this investment.
+     *
+     * This method is called after investment price changes to ensure that:
+     * - The current value of investment holdings is accurate
+     * - Account balance displays reflect updated investment valuations
+     * - Monthly summaries show correct investment values based on latest prices
+     *
+     * The recalculation process:
+     * 1. Finds all transactions associated with this investment
+     * 2. Identifies all unique accounts that hold this investment
+     * 3. Triggers a recalculation of monthly summaries for each account
+     *
+     * This ensures that the 'investment_value' portion of account monthly summaries
+     * is updated to reflect current investment prices, which affects:
+     * - Account balance charts
+     * - Historical value tracking
+     * - Net worth calculations
+     *
+     * @param Investment $investment The investment whose related accounts need recalculation
+     * @return void
+     */
     public function recalculateRelatedAccounts(Investment $investment): void
     {
         // Get all transactions related to this investment

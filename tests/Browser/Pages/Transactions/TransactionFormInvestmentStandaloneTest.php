@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Pages\Transactions;
 
+use App\Models\InvestmentPrice;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
@@ -39,7 +40,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     private function fillStandardBuyForm(Browser $browser): Browser
     {
-        return retry(3, fn() => $browser
+        return retry(3, fn () => $browser
             ->visitRoute('transaction.create', ['type' => 'investment'])
 
             // Wait for the form and key elements to be present
@@ -368,7 +369,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
     public function test_callback_show_transaction(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user);
+            retry(
+                3,
+                fn () => $browser
+                    ->loginAs($this->user)
+                    ->assertAuthenticatedAs($this->user)
+            );
             $this->fillStandardBuyForm($browser)
                 ->click('button[value="show"]')
                 // Submit form
@@ -411,7 +417,23 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 
     public function test_callback_return_to_selected_investment(): void
     {
-        $this->markTestIncomplete('This function is not implemented yet');
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user);
+            $this->fillStandardBuyForm($browser)
+                ->click('button[value="returnToInvestment"]')
+                // Submit form
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR);
+
+            // Get the last transaction from the database
+            $transaction = Transaction::orderByDesc('id')
+                ->with(['config'])
+                ->first();
+
+            $browser->assertRouteIs(
+                'investment.show',
+                ['investment' => $transaction->config->investment_id]
+            );
+        });
     }
 
     public function test_callback_return_to_dashboard(): void
@@ -500,6 +522,201 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                     self::INVESTMENT_DROPDOWN_SELECTOR . ' + .select2 span.select2-selection__rendered',
                     self::TEST_INVESTMENT_NAME_USD
                 );
+        });
+    }
+
+    public function test_store_price_checkbox_is_visible_when_no_existing_price(): void
+    {
+        // Get an investment
+        $investment = $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_USD);
+
+        // Ensure no price exists for today
+        InvestmentPrice::where('investment_id', $investment->id)
+            ->where('date', now()->format('Y-m-d'))
+            ->delete();
+
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+
+                // Select account and investment
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
+                // Select transaction type
+                ->select('#transaction_type', 'Buy')
+                // Add quantity
+                ->type('#transaction_quantity', '10')
+                // Add price - this should trigger the price check
+                ->type('#transaction_price', '25.50')
+                // Wait for the store price checkbox to appear
+                ->waitFor('#store_price_checkbox', 10)
+                // Verify the checkbox is visible
+                ->assertVisible('#store_price_checkbox')
+                ->assertVisible('label[for="store_price_checkbox"]');
+        });
+    }
+
+    public function test_store_price_checkbox_is_not_visible_when_price_exists(): void
+    {
+        // Get an investment and create a price for today
+        $investment = $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_USD);
+        InvestmentPrice::updateOrCreate(
+            [
+                'investment_id' => $investment->id,
+                'date' => now()->format('Y-m-d'),
+            ],
+            [
+                'price' => 100.00,
+            ]
+        );
+
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+
+                // Select transaction type
+                ->select('#transaction_type', 'Buy')
+                // Select account and investment
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
+                // Add quantity
+                ->type('#transaction_quantity', '10')
+                // Add price - this should trigger the price check
+                ->type('#transaction_price', '25.50')
+                // Wait a bit for the API call to complete, the price info should be visible now
+                ->waitFor('span.existing-price-label', 10)
+                // Verify the store price checkbox is NOT visible
+                ->assertMissing('#store_price_checkbox');
+        });
+    }
+
+    public function test_user_can_save_transaction_with_price_storage_enabled(): void
+    {
+        // Get an investment
+        $investment = $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_USD);
+
+        // Ensure no price exists for today
+        InvestmentPrice::where('investment_id', $investment->id)
+            ->where('date', now()->format('Y-m-d'))
+            ->delete();
+
+        $this->browse(function (Browser $browser) use ($investment) {
+            $browser->loginAs($this->user)
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+
+                // Fill the form
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
+                ->select('#transaction_type', 'Buy')
+                ->type('#transaction_quantity', '10')
+                ->type('#transaction_price', '35.75')
+                ->type('#transaction_commission', '5')
+                ->type('#transaction_tax', '2')
+
+                // Wait for store price checkbox to appear and enable it
+                ->waitFor('#store_price_checkbox', 10)
+                ->click('label[for="store_price_checkbox"]')
+                ->assertChecked('#store_price_checkbox')
+
+                // Submit form
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
+                // A success message should be available for the transaction
+                ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10)
+                // A success notification should also appear for the price storage
+                ->waitForTextIn('#BootstrapNotificationContainer', 'Investment price stored', 10);
+
+            // Verify the transaction was saved in the database
+            $transaction = Transaction::orderByDesc('id')->first();
+            $this->assertNotNull($transaction);
+            $this->assertEquals(10, $transaction->config->quantity);
+            $this->assertEquals(35.75, $transaction->config->price);
+
+            // Verify the investment price was saved in the database
+            $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)
+                ->where('date', now()->format('Y-m-d'))
+                ->first();
+            $this->assertNotNull($investmentPrice);
+            $this->assertEquals(35.75, $investmentPrice->price);
+        });
+    }
+
+    public function test_user_can_save_transaction_without_price_storage(): void
+    {
+        // Get an investment
+        $investment = $this->user->investments()->firstWhere('name', self::TEST_INVESTMENT_NAME_EUR);
+
+        // Ensure no price exists for today
+        InvestmentPrice::where('investment_id', $investment->id)
+            ->where('date', now()->format('Y-m-d'))
+            ->delete();
+
+        $this->browse(function (Browser $browser) use ($investment) {
+            $browser->loginAs($this->user)
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+
+                // Fill the form
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_EUR, 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
+                ->select('#transaction_type', 'Buy')
+                ->type('#transaction_quantity', '5')
+                ->type('#transaction_price', '42.25')
+                ->type('#transaction_commission', '3')
+
+                // Wait for store price checkbox to appear but DO NOT enable it
+                ->waitFor('#store_price_checkbox', 10)
+                ->assertNotChecked('#store_price_checkbox')
+
+                // Submit form
+                ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR)
+                // A success message should be available for the transaction
+                ->waitForTextIn('#BootstrapNotificationContainer', 'Transaction added', 10);
+
+            // Verify the transaction was saved
+            $transaction = Transaction::orderByDesc('id')->first();
+            $this->assertNotNull($transaction);
+            $this->assertEquals(5, $transaction->config->quantity);
+            $this->assertEquals(42.25, $transaction->config->price);
+
+            // Verify the investment price was NOT saved in the database
+            $investmentPrice = InvestmentPrice::where('investment_id', $investment->id)
+                ->where('date', now()->format('Y-m-d'))
+                ->first();
+            $this->assertNull($investmentPrice);
+        });
+    }
+
+    public function test_store_price_checkbox_not_visible_for_dividend_transactions(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs($this->user)
+                ->visitRoute('transaction.create', ['type' => 'investment'])
+                ->waitFor(self::MAIN_FORM_SELECTOR)
+                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
+                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
+
+                // Select account and investment
+                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
+                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
+                // Select dividend transaction type
+                ->select('#transaction_type', 'Dividend')
+                // Add dividend amount
+                ->type('#transaction_dividend', '50')
+                // Wait a bit
+                ->pause(1000)
+                // Verify the store price checkbox is not visible for dividend transactions
+                ->assertMissing('#store_price_checkbox');
         });
     }
 }

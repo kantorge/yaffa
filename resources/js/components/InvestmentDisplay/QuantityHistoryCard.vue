@@ -4,11 +4,6 @@
       <div class="card-title">
         {{ __('Quantity history') }}
       </div>
-      <div>
-        <span class="badge text-bg-warning me-2" v-if="!hasData">{{
-          __('No data available')
-        }}</span>
-      </div>
     </div>
     <div class="card-body">
       <div v-if="hasData">

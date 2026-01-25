@@ -6,6 +6,8 @@ import {
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
+import * as toastHelpers from '../toast';
+
 const dataTableSelector = '#table';
 
 /**
@@ -214,24 +216,11 @@ window.table = $(dataTableSelector).DataTable({
                     window.payees = window.payees.filter(payee => payee.id !== data.accountEntity.id);
 
                     row.remove().draw();
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Payee deleted'),
-                            toastClass: 'bg-success',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+
+                    toastHelpers.showSuccessToast(__('Payee deleted'));
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete payee'),
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(__('Error while trying to delete payee'));
                 },
                 complete: function (_data) {
                     // Restore button icon

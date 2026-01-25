@@ -6,7 +6,7 @@ import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from './../components/dataTableHelper';
 import { __, toFormattedCurrency } from '../helpers';
-import { type } from 'jquery';
+import * as toastHelpers from '../toast';
 
 let ajaxIsBusy = false;
 
@@ -169,24 +169,10 @@ let table = $('#investmentSummary').DataTable({
                     // Remove row from table
                     $(settings.nTable).DataTable().row($(this).parents('tr')).remove().draw();
 
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Success'),
-                            body: __('Investment deleted'),
-                            toastClass: 'bg-success',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showSuccessToast(__('Investment deleted'));
                 },
                 error: function (_data) {
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            header: __('Error'),
-                            body: __('Error while trying to delete investment'),
-                            toastClass: 'bg-danger',
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showErrorToast(__('Error while trying to delete investment'));
                 },
                 complete: function (_data) {
                     // Restore button icon
@@ -314,14 +300,10 @@ table.contextualActions({
                     }
 
                     // Emit a custom event to global scope to indicate that an investment delete is in progress
-                    let notificationEvent = new CustomEvent('toast', {
-                        detail: {
-                            body: __('Deleting investment: :investmentName', {investmentName: name}),
-                            toastClass: `bg-info toast-investment-${id}`,
-                            delay: Infinity,
-                        }
-                    });
-                    window.dispatchEvent(notificationEvent);
+                    toastHelpers.showLoaderToast(
+                        __('Deleting investment: :investmentName', {investmentName: name}),
+                        `toast-investment-${id}`
+                    );
 
                     window.axios.delete(window.route('api.investment.destroy', {investment: id}))
                         .then(response => {
@@ -334,35 +316,18 @@ table.contextualActions({
                             }).remove().draw();
 
                             // Emit success toast
-                            let successEvent = new CustomEvent('toast', {
-                                detail: {
-                                    header: __('Success'),
-                                    body: __('Investment deleted'),
-                                    toastClass: 'bg-success',
-                                }
-                            });
-                            window.dispatchEvent(successEvent);
+                            toastHelpers.showSuccessToast(__('Investment deleted'));
                         })
                         .catch(error => {
-                            // Emit error toast
-                            let errorEvent = new CustomEvent('toast', {
-                                detail: {
-                                    header: __('Error'),
-                                    body: __('Error while trying to delete investment: :errorMessage', {errorMessage: error.response.data.message || error.message}),
-                                    toastClass: 'bg-danger',
-                                }
-                            });
-                            window.dispatchEvent(errorEvent);
+                            toastHelpers.showErrorToast(
+                                __('Error while trying to delete investment: :errorMessage', {errorMessage: error.response.data.message || error.message})
+                            );
                         })
                         .finally(() => {
                             ajaxIsBusy = false;
 
                             // Close the toast with a small delay
-                            setTimeout(function () {
-                                let toastElement = document.querySelector(`.toast-investment-${id}`);
-                                let toastInstance = new window.bootstrap.Toast(toastElement);
-                                toastInstance.dispose();
-                            }, 250);
+                            toastHelpers.hideToast(`.toast-investment-${id}`);
                         });
                 });
             }

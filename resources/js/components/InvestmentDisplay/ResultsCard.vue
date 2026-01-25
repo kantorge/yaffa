@@ -54,7 +54,7 @@
                 toFormattedCurrency(
                   summary.Selling,
                   locale,
-                  investment.currency
+                  investment.currency,
                 )
               }}
             </dd>
@@ -64,7 +64,7 @@
                 toFormattedCurrency(
                   summary.Dividend,
                   locale,
-                  investment.currency
+                  investment.currency,
                 )
               }}
             </dd>
@@ -74,7 +74,7 @@
                 toFormattedCurrency(
                   summary.Commission,
                   locale,
-                  investment.currency
+                  investment.currency,
                 )
               }}
             </dd>
@@ -114,7 +114,8 @@
 </template>
 
 <script>
-  import { toFormattedCurrency, showToast, __ } from '../../helpers';
+  import { toFormattedCurrency, __ } from '../../helpers';
+  import * as toastHelpers from '../../toast';
 
   export default {
     name: 'ResultsCard',
@@ -157,11 +158,10 @@
           !isNaN(this.internalDateTo) &&
           val > this.internalDateTo
         ) {
-          this.showToast(
-            __('Warning'),
+          toastHelpers.showWarningToast(
             this.__('The start date cannot be after the end date.'),
-            'bg-warning'
           );
+
           // Only auto-correct if internalDateTo is valid
           this.internalDateFrom = new Date(this.internalDateTo);
           this.$emit('update:date-from', this.internalDateTo);
@@ -177,11 +177,10 @@
           !isNaN(this.internalDateFrom) &&
           val < this.internalDateFrom
         ) {
-          this.showToast(
-            __('Warning'),
+          toastHelpers.showWarningToast(
             this.__('The end date cannot be before the start date.'),
-            'bg-warning'
           );
+
           // Only auto-correct if internalDateFrom is valid
           this.internalDateTo = new Date(this.internalDateFrom);
           this.$emit('update:date-to', this.internalDateFrom);
@@ -200,11 +199,10 @@
           const d = new Date(val);
           // If the new date is after internalDateTo, revert to previous valid value and show warning
           if (this.internalDateTo && d > this.internalDateTo) {
-            this.showToast(
-              this.__('Warning'),
+            toastHelpers.showWarningToast(
               this.__('The start date cannot be after the end date.'),
-              'bg-warning'
             );
+
             // Force the input value to revert to the last valid value
             this.$nextTick(() => {
               // Find the input and set its value back to the valid one
@@ -226,13 +224,13 @@
         },
         set(val) {
           if (!val) return;
+
           const d = new Date(val);
           if (this.internalDateFrom && d < this.internalDateFrom) {
-            this.showToast(
-              this.__('Warning'),
+            toastHelpers.showWarningToast(
               this.__('The end date cannot be before the start date.'),
-              'bg-warning'
             );
+
             this.$nextTick(() => {
               // Find the second input and set its value back to the valid one
               const inputs = this.$el.querySelectorAll('input[type="date"]');
@@ -259,12 +257,12 @@
         const getQty = (arr, type) =>
           getSum(
             arr.filter((trx) => trx.transaction_type.name === type),
-            (trx) => trx.config.quantity || 0
+            (trx) => trx.config.quantity || 0,
           );
         const getVal = (arr, type) =>
           getSum(
             arr.filter((trx) => trx.transaction_type.name === type),
-            (trx) => (trx.config.price || 0) * (trx.config.quantity || 0)
+            (trx) => (trx.config.price || 0) * (trx.config.quantity || 0),
           );
         const getField = (arr, field) =>
           getSum(arr, (trx) => trx.config[field] || 0);
@@ -273,7 +271,7 @@
             arr,
             (trx) =>
               (trx.transaction_type.quantity_multiplier || 0) *
-              (trx.config.quantity || 0)
+              (trx.config.quantity || 0),
           );
         let lastPrice = 1;
         if (this.prices.length > 0) {
@@ -294,6 +292,7 @@
         const commission = getField(filtered, 'commission');
         const taxes = getField(filtered, 'tax');
         const result = selling + dividend + value - buying - commission - taxes;
+
         return {
           Buying: buying,
           Selling: selling,
@@ -318,7 +317,7 @@
       aroi() {
         const years = this.calculateYears(
           this.internalDateTo,
-          this.internalDateFrom
+          this.internalDateFrom,
         );
         return years > 0 ? Math.pow(1 + this.roi, 1 / years) - 1 : 0;
       },
@@ -328,7 +327,6 @@
     },
     methods: {
       toFormattedCurrency,
-      showToast,
       formatQuantity(value) {
         if (value === 0) return '0';
         return value.toLocaleString(this.locale, {

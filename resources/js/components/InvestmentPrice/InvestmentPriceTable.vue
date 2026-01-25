@@ -1,13 +1,13 @@
 <template>
   <div class="card">
     <div class="card-header">
-      <div class="card-title">{{ __('Currency rate values') }}</div>
+      <div class="card-title">{{ __('Investment price values') }}</div>
     </div>
     <div class="card-body no-datatable-search">
       <table
         class="table table-bordered table-hover"
         role="grid"
-        id="ratesTable"
+        id="table-investment-prices"
       ></table>
     </div>
   </div>
@@ -20,44 +20,38 @@
   import { __ } from '../../helpers';
   import * as toastHelpers from '../../toast';
 
-  const selectorRatesTable = '#ratesTable';
-
   export default {
-    name: 'CurrencyRateTable',
+    name: 'InvestmentPriceTable',
     props: {
-      currencyRates: {
+      investmentPrices: {
         type: Array,
         required: true,
       },
-      fromCurrency: {
+      investment: {
         type: Object,
         required: true,
       },
-      toCurrency: {
-        type: Object,
-        required: true,
-      },
-      filteredRates: {
+      filteredPrices: {
         type: Array,
         default: null,
       },
     },
-    emits: ['edit-rate', 'delete-rate', 'data-updated'],
+    emits: ['edit-price', 'delete-price', 'data-updated'],
     data() {
       return {
         table: null,
       };
     },
     watch: {
-      filteredRates: {
-        handler(newRates) {
+      filteredPrices: {
+        handler(newPrices) {
           if (this.table) {
             this.table.clear();
-            if (newRates) {
-              this.table.rows.add(newRates);
+            if (newPrices) {
+              this.table.rows.add(newPrices);
             } else {
-              // If no filtered rates, show all rates
-              this.table.rows.add(this.currencyRates);
+              // If no filtered prices, show all prices
+              this.table.rows.add(this.investmentPrices);
             }
             this.table.draw();
           }
@@ -77,8 +71,8 @@
       initializeTable() {
         const self = this;
 
-        this.table = $(selectorRatesTable).DataTable({
-          data: this.currencyRates,
+        this.table = $('#table-investment-prices').DataTable({
+          data: this.investmentPrices,
           columns: [
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
               'date',
@@ -86,27 +80,29 @@
               window.YAFFA.locale,
             ),
             {
-              data: 'rate',
-              title: this.__('Rate'),
+              data: 'price',
+              title: this.__('Price'),
               render: function (data, type) {
                 return dataTableHelpers.toFormattedCurrency(
                   type,
                   data,
                   window.YAFFA.locale,
-                  Object.assign({}, self.toCurrency, { max_digits: 4 }),
+                  {
+                    iso_code: self.investment.currency.iso_code,
+                  },
                 );
               },
             },
             {
               data: 'id',
               title: this.__('Actions'),
-              render: function (data, _type, _row, _meta) {
+              render: function (data, _type, row, _meta) {
                 return `
-                                <button class="btn btn-xs btn-primary edit-rate" data-id="${data}" title="${self.__('Edit')}">
-                                    <span class="fa fa-edit"></span>
+                                <button class="btn btn-xs btn-primary edit-price" data-id="${data}" title="${self.__('Edit')}">
+                                    <span class="fa fa-fw fa-edit"></span>
                                 </button>
-                                <button class="btn btn-xs btn-danger delete-rate" data-id="${data}" title="${self.__('Delete')}">
-                                    <span class="fa fa-trash"></span>
+                                <button class="btn btn-xs btn-danger delete-price" data-id="${data}" title="${self.__('Delete')}">
+                                    <span class="fa fa-fw fa-trash"></span>
                                 </button>
                             `;
               },
@@ -126,24 +122,24 @@
         });
 
         // Edit button click handler
-        $(selectorRatesTable).on('click', '.edit-rate', function () {
-          const rateId = $(this).data('id');
-          const rate = self.currencyRates.find((r) => r.id === rateId);
-          if (rate) {
-            self.$emit('edit-rate', rate);
+        $('#table-investment-prices').on('click', '.edit-price', function () {
+          const priceId = $(this).data('id');
+          const price = self.investmentPrices.find((p) => p.id === priceId);
+          if (price) {
+            self.$emit('edit-price', price);
           }
         });
 
         // Delete button click handler
-        $(selectorRatesTable).on('click', '.delete-rate', function () {
-          const rateId = $(this).data('id');
-          const rate = self.currencyRates.find((r) => r.id === rateId);
-          if (rate) {
-            self.confirmDelete(rate);
+        $('#table-investment-prices').on('click', '.delete-price', function () {
+          const priceId = $(this).data('id');
+          const price = self.investmentPrices.find((p) => p.id === priceId);
+          if (price) {
+            self.confirmDelete(price);
           }
         });
       },
-      confirmDelete(rate) {
+      confirmDelete(price) {
         Swal.fire({
           animation: false,
           text: this.__('Are you sure to want to delete this item?'),
@@ -158,42 +154,41 @@
           },
         }).then((result) => {
           if (result.isConfirmed) {
-            this.deleteRate(rate);
+            this.deletePrice(price);
           }
         });
       },
-      async deleteRate(rate) {
+      async deletePrice(price) {
         toastHelpers.showLoaderToast(
-          this.__('Deleting rate...'),
-          `toast-rate-${rate.id}`,
+          this.__('Deleting price...'),
+          `toast-price-${price.id}`,
         );
 
         try {
           await window.axios.delete(
-            window.route('api.currency-rate.destroy', {
-              currency_rate: rate.id,
+            window.route('api.investment-price.destroy', {
+              investment_price: price.id,
             }),
           );
 
-          toastHelpers.showSuccessToast(this.__('Currency rate deleted'));
+          toastHelpers.showSuccessToast(this.__('Investment price deleted'));
 
           // Emit delete event
-          this.$emit('delete-rate', rate.id);
+          this.$emit('delete-price', price.id);
         } catch (error) {
           toastHelpers.showErrorToast(
-            error.response?.data?.message || this.__('Failed to delete rate'),
+            error.response?.data?.message || this.__('Failed to delete price'),
           );
         } finally {
-          toastHelpers.hideToast(`.toast-rate-${rate.id}`);
+          toastHelpers.hideToast(`.toast-price-${price.id}`);
         }
       },
-      updateTableData(rates) {
-        if (!this.table) {
-          return;
+      updateTableData(prices) {
+        if (this.table) {
+          this.table.clear();
+          this.table.rows.add(prices);
+          this.table.draw();
         }
-        this.table.clear();
-        this.table.rows.add(rates);
-        this.table.draw();
       },
       __,
     },

@@ -3,6 +3,12 @@ name: Deploy to Private Server
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      ref_name:
+        description: 'Reference name to simulate github.ref_name'
+        required: true
+        default: 'test'
 
 jobs:
   deploy:
@@ -11,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event.release.tag_name || github.event.inputs.ref_name }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

@@ -7,6 +7,7 @@ use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
+use App\Http\Controllers\API\InvestmentPriceApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\ReceivedMailApiController;
@@ -62,6 +63,19 @@ Route::put('/assets/investment/{investment}/active/{active}', [InvestmentApiCont
 
 Route::delete('/assets/investmentgroup/{investmentGroup}', [InvestmentGroupApiController::class, 'destroy'])
     ->name('api.investmentgroup.destroy');
+
+Route::get('/investment-prices/{investment}', [InvestmentPriceApiController::class, 'index'])
+    ->name('api.investment-price.index');
+Route::post('/investment-prices', [InvestmentPriceApiController::class, 'store'])
+    ->name('api.investment-price.store');
+Route::put('/investment-prices/{investment_price}', [InvestmentPriceApiController::class, 'update'])
+    ->name('api.investment-price.update');
+Route::delete('/investment-prices/{investment_price}', [InvestmentPriceApiController::class, 'destroy'])
+    ->name('api.investment-price.destroy');
+Route::get('/investment-prices/missing/{investment}', [InvestmentPriceApiController::class, 'retrieveMissingPrices'])
+    ->name('api.investment-price.retrieveMissing');
+Route::get('/investment-prices/check/{investment}', [InvestmentPriceApiController::class, 'checkPrice'])
+    ->name('api.investment-price.checkPrice');
 
 Route::get('/assets/payee', [PayeeApiController::class, 'getList']);
 Route::post('/assets/payee', [PayeeApiController::class, 'storePayee'])->name('api.payee.store');

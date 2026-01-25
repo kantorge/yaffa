@@ -204,6 +204,7 @@
 
 <script>
   import { __, processTransaction } from '../helpers';
+  import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
   import DateRangeSelector from './DateRangeSelector.vue';
@@ -340,17 +341,11 @@
             this.dataTable.draw();
           })
           .catch((error) => {
-            // Emit a custom event to global scope about the result
-            let notificationEvent = new CustomEvent('toast', {
-              detail: {
-                header: __('Error'),
-                body: __('Error getting transactions: :error', {
-                  error: error,
-                }),
-                toastClass: 'bg-danger',
-              },
-            });
-            window.dispatchEvent(notificationEvent);
+            toastHelpers.showErrorToast(
+              __('Error getting transactions: :error', {
+                error: error,
+              }),
+            );
           })
           .finally(() => {
             this.busy = false;

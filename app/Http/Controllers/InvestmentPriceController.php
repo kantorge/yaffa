@@ -26,6 +26,8 @@ class InvestmentPriceController extends Controller implements HasMiddleware
     }
 
     /**
+     * Display the investment price list using Vue component manager.
+     *
      * @throws AuthorizationException
      */
     public function list(Investment $investment): View
@@ -46,7 +48,7 @@ class InvestmentPriceController extends Controller implements HasMiddleware
             ->orderBy('date')
             ->get();
 
-        // Pass data for DataTables
+        // Pass data for Vue components
         JavaScriptFacade::put([
             'investment' => $investment,
             'prices' => $pricesOrdered,
@@ -59,120 +61,5 @@ class InvestmentPriceController extends Controller implements HasMiddleware
                 'prices' => $pricesOrdered,
             ]
         );
-    }
-
-    public function create(Request $request): View
-    {
-        /**
-         * @get('/investment-price/create')
-         * @name('investment-price.create')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $investment = Investment::find($request->get('investment'));
-        Gate::authorize('view', $investment);
-
-        return view(
-            'investment-prices.form',
-            [
-                'investment' => $investment,
-            ]
-        );
-    }
-
-    public function store(InvestmentPriceRequest $request): RedirectResponse
-    {
-        /**
-         * @post('/investment-price')
-         * @name('investment-price.store')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $investment = Investment::find($request->investment_id);
-        Gate::authorize('view', $investment);
-
-        $validated = $request->validated();
-
-        InvestmentPrice::create($validated);
-
-        self::addSimpleSuccessMessage(__('Investment price added'));
-
-        return to_route('investment-price.list', $investment);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(InvestmentPrice $investmentPrice): View
-    {
-        /**
-         * @get('/investment-price/{investment_price}/edit')
-         * @name('investment-price.edit')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        return view(
-            'investment-prices.form',
-            [
-                'investment' => $investmentPrice->investment,
-                'investmentPrice' => $investmentPrice,
-            ]
-        );
-    }
-
-    public function update(InvestmentPriceRequest $request): RedirectResponse
-    {
-        /**
-         * @methods('PUT', PATCH')
-         * @uri('/investment-price/{investment_price}')
-         * @name('investment-price.update')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $validated = $request->validated();
-
-        InvestmentPrice::find($request->input('id'))
-            ->fill($validated)
-            ->save();
-
-        self::addSimpleSuccessMessage(__('Investment price updated'));
-
-        return to_route('investment-price.list', $request->investment_id);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(InvestmentPrice $investmentPrice): RedirectResponse
-    {
-        /**
-         * @delete('/investment-price/{investment_price}')
-         * @name('investment-price.destroy')
-         * @middlewares('web', 'auth', 'verified')
-         */
-        $investmentPrice->delete();
-
-        self::addSimpleSuccessMessage(__('Investment price deleted'));
-
-        return redirect()->back();
-    }
-
-    public function retrieveInvestmentPrice(Investment $investment): RedirectResponse
-    {
-        /**
-         * @get('/investment-price/get/{investment}/{from?}')
-         * @name('investment-price.retrieve')
-         * @middlewares('web', 'auth', 'verified')
-         */
-
-        // Get latest known date of price date, so we can retrieve missing values
-        $lastPrice = $investment->investmentPrices->last('date');
-        $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
-
-        $investment->getInvestmentPriceFromProvider($date);
-
-        // Use the InvestmentService to recalculate the related accounts
-        $investmentService = new InvestmentService();
-        $investmentService->recalculateRelatedAccounts($investment);
-
-        self::addSimpleSuccessMessage(__('Investment prices successfully downloaded from :date', ['date' => $date->toFormattedDateString()]));
-
-        return redirect()->back();
     }
 }
