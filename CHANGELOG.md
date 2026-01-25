@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.3.0](https://github.com/kantorge/yaffa/compare/v2.2.0...v2.3.0) (2026-01-25)
+
+
+### 🛠️ Chores
+
+* **deps:** bump lodash in the npm_and_yarn group across 1 directory ([bf19b78](https://github.com/kantorge/yaffa/commit/bf19b78927004a5ebea71e53b29ca4f15bb76f0b))
+
+
+### 🎡 Continuous Integration
+
+* improve release workflow ([3fcc0c4](https://github.com/kantorge/yaffa/commit/3fcc0c47431f35ab97d9f1273b155f11a753ebe0))
+
+
+### ✨ Features
+
+* Implement improvements to investment price list view and related components ([#369](https://github.com/kantorge/yaffa/issues/369)) ([e702713](https://github.com/kantorge/yaffa/commit/e702713f8dde52a93318897690051429fb38f02b))
+
 ## [2.2.0](https://github.com/kantorge/yaffa/compare/v2.1.0...v2.2.0) (2026-01-18)
 
 
