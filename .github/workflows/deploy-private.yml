@@ -9,11 +9,22 @@ on:
         description: 'Reference name to simulate github.ref_name'
         required: true
         default: 'test'
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - Private
+          - Sandbox
+        default: 'Private'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: Private
+    strategy:
+      matrix:
+        environment: ${{ github.event_name == 'release' && fromJSON('["Private", "Sandbox"]') || fromJSON(format('["{0}"]', github.event.inputs.environment)) }}
+    environment: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,7 +61,7 @@ jobs:
               StrictHostKeyChecking no
           END
 
-      - name: Deploy Yaffa
+      - name: Deploy Yaffa to ${{ matrix.environment }}
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
