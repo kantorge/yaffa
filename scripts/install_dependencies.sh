@@ -1,8 +1,8 @@
 #!/bin/bash
 cd /var/www/html/
-sudo chown ubuntu:ubuntu -R daverson_treasurer
-sudo cp /var/www/html/daverson_treasurer_old/.env  /var/www/html/daverson_treasurer/.env
-cd /var/www/html/daverson_treasurer/
+sudo chown ubuntu:ubuntu -R yaffa
+sudo cp /var/www/html/yaffa_old/.env  /var/www/html/yaffa/.env
+cd /var/www/html/yaffa/
 sudo chown www-data:www-data -R storage
 composer install --no-dev --prefer-dist --optimize-autoloader
 composer update

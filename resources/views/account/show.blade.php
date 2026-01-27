@@ -51,6 +51,11 @@
             </div>
             <ul class="list-group list-group-flush collapse" aria-expanded="false" id="cardActions">
                 <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a class="nav-link" href="{{ route('account.reconcile', ['account' => $account]) }}">
+                        <i class="fa fa-check-square text-success"></i> {{ __('Reconcile account') }}
+                    </a>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
                     <a class="nav-link" href="{{ route('account.history', ['account' => $account]) }}">
                         {{ __('Load account transaction history') }}
                     </a>

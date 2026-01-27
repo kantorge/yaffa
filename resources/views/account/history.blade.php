@@ -36,6 +36,12 @@
                     title="{{ $withForecast ? __('Without forecast') : __('With forecast') }}">
                     <i class="fa fa-calendar"></i>
                 </a>
+                <a 
+                    href="{{ route('account.reconcile', $account) }}" 
+                    class="btn btn-success" 
+                    title="{{ __('Reconcile Account') }}">
+                    <i class="fa fa-check-square"></i>
+                </a>
                 <button 
                     type="button" 
                     class="btn btn-warning" 

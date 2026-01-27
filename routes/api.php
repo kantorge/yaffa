@@ -122,6 +122,7 @@ Route::patch('/transactions/{transaction}/skip', [TransactionApiController::clas
     ->name('api.transactions.skipScheduleInstance');
 Route::get('/transaction/{transaction}', [TransactionApiController::class, 'getItem']);
 Route::put('/transaction/{transaction}/reconciled/{newState}', [TransactionApiController::class, 'reconcile']);
+Route::post('/transactions/bulk-reconcile', [TransactionApiController::class, 'bulkReconcile']);
 Route::delete('/transaction/{transaction}', [TransactionApiController::class, 'destroy'])
     ->name('api.transactions.destroy');
 

@@ -28,6 +28,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -934,5 +935,64 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'interest_transaction' => $interestTransaction,
             ]);
         });
+    }
+
+    /**
+     * Bulk reconcile multiple transactions at once.
+     */
+    public function bulkReconcile(Request $request): JsonResponse
+    {
+        /**
+         * @post('/api/transactions/bulk-reconcile')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        $validated = $request->validate([
+            'transaction_ids' => 'required|array',
+            'transaction_ids.*' => 'required|integer|exists:transactions,id',
+        ]);
+
+        $user = $request->user();
+        $transactionIds = $validated['transaction_ids'];
+        $reconciledCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($transactionIds as $transactionId) {
+                $transaction = Transaction::where('id', $transactionId)
+                    ->where('user_id', $user->id)
+                    ->first();
+
+                if ($transaction && !$transaction->reconciled) {
+                    Gate::authorize('update', $transaction);
+
+                    $transaction->reconciled = true;
+                    $transaction->reconciled_at = now();
+                    $transaction->reconciled_by = $user->id;
+                    $transaction->save();
+
+                    $reconciledCount++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully reconciled {$reconciledCount} transaction(s).",
+                'reconciled_count' => $reconciledCount,
+            ], Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk reconcile failed', [
+                'error' => $e->getMessage(),
+                'transaction_ids' => $transactionIds,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reconcile transactions: ' . $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

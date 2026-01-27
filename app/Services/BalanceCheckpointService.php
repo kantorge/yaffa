@@ -31,6 +31,20 @@ class BalanceCheckpointService
             return ['valid' => true, 'message' => null, 'checkpoint' => null];
         }
 
+        // Skip validation for scheduled or budget transactions
+        if ($transaction->schedule || $transaction->budget) {
+            \Log::info('Balance checkpoint validation: skipping scheduled/budget transaction', ['transaction_id' => $transaction->id]);
+            return ['valid' => true, 'message' => null, 'checkpoint' => null];
+        }
+
+        // Ensure transaction date is present and a Carbon instance
+        if (! $transaction->date) {
+            \Log::info('Balance checkpoint validation: transaction has no date, skipping', ['transaction_id' => $transaction->id]);
+            return ['valid' => true, 'message' => null, 'checkpoint' => null];
+        }
+
+        $transactionDate = $transaction->date instanceof Carbon ? $transaction->date : Carbon::parse($transaction->date);
+
         // Get affected accounts
         $accountIds = $this->getAffectedAccounts($transaction);
 
@@ -48,7 +62,7 @@ class BalanceCheckpointService
 
         // Check each affected account
         foreach ($accountIds as $accountId) {
-            $result = $this->validateAccountBalance($accountId, $transaction->date, $transaction, $isUpdate);
+            $result = $this->validateAccountBalance($accountId, $transactionDate, $transaction, $isUpdate);
 
             \Log::info('Account validation result', [
                 'account_id' => $accountId,
@@ -73,6 +87,18 @@ class BalanceCheckpointService
             return ['valid' => true, 'message' => null, 'checkpoint' => null];
         }
 
+        if ($transaction->schedule || $transaction->budget) {
+            \Log::info('Balance checkpoint deletion validation: skipping scheduled/budget transaction', ['transaction_id' => $transaction->id]);
+            return ['valid' => true, 'message' => null, 'checkpoint' => null];
+        }
+
+        if (! $transaction->date) {
+            \Log::info('Balance checkpoint deletion validation: transaction has no date, skipping', ['transaction_id' => $transaction->id]);
+            return ['valid' => true, 'message' => null, 'checkpoint' => null];
+        }
+
+        $transactionDate = $transaction->date instanceof Carbon ? $transaction->date : Carbon::parse($transaction->date);
+
         // Get affected accounts
         $accountIds = $this->getAffectedAccounts($transaction);
 
@@ -85,7 +111,7 @@ class BalanceCheckpointService
             // Get checkpoints on or before the transaction date
             $checkpoint = AccountBalanceCheckpoint::active()
                 ->forAccount($accountId)
-                ->where('checkpoint_date', '<=', $transaction->date)
+                ->where('checkpoint_date', '<=', $transactionDate)
                 ->orderBy('checkpoint_date', 'desc')
                 ->first();
 
@@ -179,8 +205,22 @@ class BalanceCheckpointService
             'difference' => abs($currentBalance - $checkpoint->balance),
         ]);
 
-        // If balances match currently, we need to ensure this transaction doesn't break it
-        // Calculate what the balance would be WITH this transaction
+        // Determine whether the checkpoint currently matches the computed balance
+        $matched = abs($currentBalance - $checkpoint->balance) < 0.01;
+
+        if (! $matched) {
+            // If the checkpoint does not match the computed balance, allow changes
+            \Log::warning('Checkpoint mismatch: allowing modifications to try to resolve', [
+                'checkpoint_date' => $checkpoint->checkpoint_date->format('Y-m-d'),
+                'checkpoint_balance' => $checkpoint->balance,
+                'current_balance' => $currentBalance,
+                'difference' => abs($currentBalance - $checkpoint->balance),
+            ]);
+
+            return ['valid' => true, 'message' => null, 'checkpoint' => $checkpoint];
+        }
+
+        // Check what the balance would be WITH this transaction (only matters when checkpoint is matched)
         $newBalance = $this->calculateBalanceWithTransaction($accountId, $checkpoint->checkpoint_date, $transaction, $isUpdate);
 
         \Log::info('New balance with transaction', [
@@ -199,7 +239,7 @@ class BalanceCheckpointService
         }
 
         \Log::info('Transaction passes validation');
-        return ['valid' => true, 'message' => null, 'checkpoint' => null];
+        return ['valid' => true, 'message' => null, 'checkpoint' => $checkpoint];
     }
 
     /**

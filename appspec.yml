@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: .
-    destination: /var/www/html/daverson_treasurer/
+    destination: /var/www/html/yaffa/
 hooks:
   ApplicationStop:
     - location: scripts/beforeinstall.sh

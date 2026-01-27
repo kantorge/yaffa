@@ -64,6 +64,12 @@ Breadcrumbs::for('account.history', function (BreadcrumbTrail $trail, $accountEn
     $trail->push(__('History'), route('account.history', $accountEntity));
 });
 
+// Account > Reconcile
+Breadcrumbs::for('account.reconcile', function (BreadcrumbTrail $trail, $accountEntity) {
+    $trail->parent('account-entity.show', $accountEntity);
+    $trail->push(__('Reconcile'), route('account.reconcile', $accountEntity));
+});
+
 // Account > Batch Entry > Investment
 Breadcrumbs::for('account.batch-entry.investment', function (BreadcrumbTrail $trail, $accountEntity) {
     $trail->parent('account.history', $accountEntity);

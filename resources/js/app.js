@@ -18,6 +18,7 @@ const routeMap = new Map([
     ['account-group.index', 'account-group/index'],
     ['payees.merge.form', 'payee/merge'],
     ['account.history', 'account/history'],
+    ['account.reconcile', 'account/reconcile'],
     ['categories.index', 'categories/index'],
     ['categories.merge.form', 'categories/merge'],
     ['currency.index', 'currency/index'],
