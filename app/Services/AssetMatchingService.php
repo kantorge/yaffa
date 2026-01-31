@@ -14,8 +14,11 @@ class AssetMatchingService
 
     public const MAX_SUGGESTIONS = 10;
 
-    public function __construct(private User $user)
+    private ?User $user = null;
+
+    public function __construct(?User $user = null)
     {
+        $this->user = $user;
     }
 
     /**
@@ -25,7 +28,7 @@ class AssetMatchingService
      */
     public function matchAccounts(?string $accountName): array
     {
-        if (! $accountName) {
+        if (! $accountName || ! $this->user) {
             return [];
         }
 
@@ -35,13 +38,38 @@ class AssetMatchingService
     }
 
     /**
+     * Format accounts for AI prompt (ID: Name|Aliases)
+     */
+    public function formatAccountsForPrompt(User $user): string
+    {
+        $accounts = $user->accounts()
+            ->select('id', 'name', 'import_alias')
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            return 'No accounts configured.';
+        }
+
+        $formatted = $accounts->map(function ($account) {
+            $aliases = trim($account->import_alias ?? '');
+            if ($aliases) {
+                return "{$account->id}: {$account->name}|{$aliases}";
+            }
+
+            return "{$account->id}: {$account->name}";
+        })->join("\n");
+
+        return $formatted;
+    }
+
+    /**
      * Find matching payees based on similarity
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
     public function matchPayees(?string $payeeName): array
     {
-        if (! $payeeName) {
+        if (! $payeeName || ! $this->user) {
             return [];
         }
 
@@ -51,19 +79,63 @@ class AssetMatchingService
     }
 
     /**
+     * Format payees for AI prompt (ID: Name)
+     */
+    public function formatPayeesForPrompt(User $user): string
+    {
+        $payees = $user->payees()
+            ->select('id', 'name')
+            ->get();
+
+        if ($payees->isEmpty()) {
+            return 'No payees configured.';
+        }
+
+        return $payees->map(fn ($payee) => "{$payee->id}: {$payee->name}")->join("\n");
+    }
+
+    /**
      * Find matching investments based on similarity
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
     public function matchInvestments(?string $investmentName): array
     {
-        if (! $investmentName) {
+        if (! $investmentName || ! $this->user) {
             return [];
         }
 
         $investments = $this->user->investments()->get();
 
         return $this->calculateMatches($investmentName, $investments, fn (Investment $investment) => $investment->name . ' ' . $investment->code . ' ' . $investment->isin);
+    }
+
+    /**
+     * Format investments for AI prompt (ID: Name|Code|ISIN)
+     */
+    public function formatInvestmentsForPrompt(User $user): string
+    {
+        $investments = $user->investments()
+            ->select('id', 'name', 'code', 'isin')
+            ->get();
+
+        if ($investments->isEmpty()) {
+            return 'No investments configured.';
+        }
+
+        $formatted = $investments->map(function ($investment) {
+            $parts = [$investment->name];
+            if ($investment->code) {
+                $parts[] = $investment->code;
+            }
+            if ($investment->isin) {
+                $parts[] = $investment->isin;
+            }
+
+            return "{$investment->id}: " . implode('|', $parts);
+        })->join("\n");
+
+        return $formatted;
     }
 
     /**
