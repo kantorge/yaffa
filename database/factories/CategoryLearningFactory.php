@@ -13,10 +13,12 @@ class CategoryLearningFactory extends Factory
 {
     public function definition(): array
     {
+        $user = User::factory()->create();
+
         return [
-            'user_id' => User::factory(),
+            'user_id' => $user->id,
             'item_description' => fake()->word(),
-            'category_id' => Category::factory(),
+            'category_id' => Category::factory()->create(['user_id' => $user->id])->id,
             'usage_count' => $this->faker->numberBetween(0, 100),
         ];
     }

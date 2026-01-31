@@ -17,15 +17,7 @@ class AiDocumentFile extends Model
         'file_path',
         'file_name',
         'file_type',
-        'created_at',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'datetime',
-        ];
-    }
 
     public function aiDocument(): BelongsTo
     {

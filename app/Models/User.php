@@ -115,10 +115,6 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         'remember_token',
     ];
 
-    protected $withCount = [
-        'unhandledReceivedMail',
-    ];
-
     /**
      * Get the attributes that should be cast.
      *

@@ -12,11 +12,16 @@ class AiDocumentFileFactory extends Factory
 {
     public function definition(): array
     {
+        $fileType = $this->faker->randomElement(['pdf', 'jpg', 'png', 'txt']);
+        $fileName = fake()->word().'.'.$fileType;
+        $filePath = 'ai_documents/'.fake()->uuid().'/'.$fileName;
+
         return [
             'ai_document_id' => AiDocument::factory(),
-            'file_path' => 'ai_documents/' . fake()->uuid() . '/' . fake()->slug() . '.pdf',
-            'file_name' => fake()->word() . '.pdf',
-            'file_type' => $this->faker->randomElement(['pdf', 'jpg', 'png', 'txt']),
+            'file_path' => $filePath,
+            'file_name' => $fileName,
+            'file_type' => $fileType,
         ];
     }
 }
+

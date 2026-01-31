@@ -5,16 +5,16 @@ return [
      * File upload configuration
      */
     'file_upload' => [
-        'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 10),
-        'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 50),
-        'max_total_size_mb' => env('AI_DOCUMENT_MAX_TOTAL_SIZE_MB', 500),
+        'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 3),
+        'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 20),
+        'max_total_size_mb' => env('AI_DOCUMENT_MAX_TOTAL_SIZE_MB', 100),
         'allowed_types' => ['pdf', 'jpg', 'jpeg', 'png', 'txt'],
     ],
 
     /*
      * File retention and cleanup
      */
-    'file_retention' => [
+    'local_storage_file_retention' => [
         'retention_days' => env('AI_DOCUMENT_FILE_RETENTION_DAYS', 90),
     ],
 
@@ -71,7 +71,6 @@ return [
                 'gpt-4o-mini',
                 'gpt-3.5-turbo-instruct',
             ],
-            'default_model' => 'gpt-4o-mini',
         ],
         'gemini' => [
             'name' => 'Google Gemini',
@@ -79,7 +78,6 @@ return [
                 'gemini-1.5-pro',
                 'gemini-1.5-flash',
             ],
-            'default_model' => 'gemini-1.5-flash',
         ],
     ],
 

@@ -18,7 +18,6 @@ return new class () extends Migration {
             $table->string('file_path', 500);
             $table->string('file_name', 255);
             $table->string('file_type', 10);
-            $table->timestamp('created_at');
 
             $table->index('ai_document_id');
         });
