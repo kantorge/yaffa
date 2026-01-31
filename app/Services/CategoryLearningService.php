@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Models\CategoryLearning;
 use App\Models\User;
+use Exception;
 
 class CategoryLearningService
 {
-    public function __construct(private User $user)
+    private ?User $user = null;
+
+    public function __construct(?User $user = null)
     {
-        // Nothing to initialize
+        $this->user = $user;
     }
 
     /**
@@ -34,6 +37,10 @@ class CategoryLearningService
      */
     public function recordLearning(string $itemDescription, int $categoryId): CategoryLearning
     {
+        if (! $this->user) {
+            throw new Exception('User not set for CategoryLearningService');
+        }
+
         $normalized = $this->normalize($itemDescription);
 
         $learning = CategoryLearning::query()
@@ -62,6 +69,10 @@ class CategoryLearningService
      */
     public function getLearningData(): array
     {
+        if (! $this->user) {
+            return [];
+        }
+
         return $this->user->categoryLearning()
             ->orderByDesc('usage_count')
             ->limit(50)
@@ -75,10 +86,32 @@ class CategoryLearningService
     }
 
     /**
+     * Get category learning data formatted for AI prompt
+     */
+    public function getLearningDataForPrompt(User $user): string
+    {
+        $learnings = $user->categoryLearning()
+            ->select('item_description', 'category_id')
+            ->orderByDesc('usage_count')
+            ->limit(50)
+            ->get();
+
+        if ($learnings->isEmpty()) {
+            return 'No category learning data available.';
+        }
+
+        return $learnings->map(fn ($learning) => "{$learning->item_description} → Category ID: {$learning->category_id}")->join("\n");
+    }
+
+    /**
      * Increment usage count for category learning records
      */
     public function incrementUsageCount(int $categoryLearningId): void
     {
+        if (! $this->user) {
+            return;
+        }
+
         CategoryLearning::query()
             ->where('id', $categoryLearningId)
             ->where('user_id', $this->user->id)

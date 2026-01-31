@@ -3,13 +3,17 @@
 use App\Http\Controllers\API\AccountApiController;
 use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
+use App\Http\Controllers\API\AiDocumentApiController;
+use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
+use App\Http\Controllers\API\GoogleDriveApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
+use App\Http\Controllers\API\PayeeStatsApiController;
 use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
@@ -141,3 +145,48 @@ Route::patch('/user/settings', [UserApiController::class, 'updateSettings'])
     ->name('user.settings.update');
 Route::patch('/user/change_password', [UserApiController::class, 'changePassword'])
     ->name('user.change_password');
+// AI Document routes
+Route::post('/documents', [AiDocumentApiController::class, 'store'])
+    ->name('api.documents.store');
+Route::get('/documents', [AiDocumentApiController::class, 'index'])
+    ->name('api.documents.index');
+Route::get('/documents/{aiDocument}', [AiDocumentApiController::class, 'show'])
+    ->name('api.documents.show');
+Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update'])
+    ->name('api.documents.update');
+Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
+    ->name('api.documents.reprocess');
+Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
+    ->name('api.documents.destroy');
+
+// AI Provider Config routes
+Route::get('/ai/config', [AiProviderConfigApiController::class, 'show'])
+    ->name('api.ai.config.show');
+Route::post('/ai/config', [AiProviderConfigApiController::class, 'store'])
+    ->name('api.ai.config.store');
+Route::patch('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'update'])
+    ->name('api.ai.config.update');
+Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'destroy'])
+    ->name('api.ai.config.destroy');
+Route::post('/ai/test', [AiProviderConfigApiController::class, 'test'])
+    ->name('api.ai.test');
+
+// Google Drive routes
+Route::get('/ai/google/auth-url', [GoogleDriveApiController::class, 'getAuthUrl'])
+    ->name('api.google-drive.auth-url');
+Route::post('/ai/google/callback', [GoogleDriveApiController::class, 'handleCallback'])
+    ->name('api.google-drive.callback');
+Route::post('/ai/google/connect', [GoogleDriveApiController::class, 'connect'])
+    ->name('api.google-drive.connect');
+Route::post('/ai/google/disconnect', [GoogleDriveApiController::class, 'disconnect'])
+    ->name('api.google-drive.disconnect');
+Route::post('/ai/google/sync', [GoogleDriveApiController::class, 'sync'])
+    ->name('api.google-drive.sync');
+Route::post('/ai/google/toggle', [GoogleDriveApiController::class, 'toggle'])
+    ->name('api.google-drive.toggle');
+Route::get('/ai/google/status', [GoogleDriveApiController::class, 'status'])
+    ->name('api.google-drive.status');
+
+// Payee stats routes
+Route::get('/ai/payees/{payee}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
+    ->name('api.payee-stats.category-stats');

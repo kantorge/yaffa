@@ -90,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function bootEvent(): void
     {
-
+        // Register AI document listeners
+        $this->app['events']->subscribe(\App\Listeners\CreateAiDocumentFromSource::class);
     }
 }
