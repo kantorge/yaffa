@@ -24679,6 +24679,33 @@ namespace Laracasts\Utilities\JavaScript {
             }
     }
 
+namespace Prism\Prism\Facades {
+    /**
+     */
+    class PrismServer {
+        /**
+         * @param \Closure():PendingRequest|callable():PendingRequest $prism
+         * @static
+         */
+        public static function register($name, $prism)
+        {
+            /** @var \Prism\Prism\PrismServer $instance */
+            return $instance->register($name, $prism);
+        }
+
+        /**
+         * @return \Prism\Prism\Collection<int, array{name: string, prism: Closure():PendingRequest|callable():PendingRequest}>
+         * @static
+         */
+        public static function prisms()
+        {
+            /** @var \Prism\Prism\PrismServer $instance */
+            return $instance->prisms();
+        }
+
+            }
+    }
+
 namespace Riverskies\Laravel\MobileDetect\Facades {
     /**
      */
@@ -30611,6 +30638,7 @@ namespace  {
     class Debugbar extends \Fruitcake\LaravelDebugbar\Facades\Debugbar {}
     class CurrencyExchangeRates extends \Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates {}
     class JavaScript extends \Laracasts\Utilities\JavaScript\JavaScriptFacade {}
+    class PrismServer extends \Prism\Prism\Facades\PrismServer {}
     class MobileDetect extends \Riverskies\Laravel\MobileDetect\Facades\MobileDetect {}
     class Sentry extends \Sentry\Laravel\Facade {}
 }

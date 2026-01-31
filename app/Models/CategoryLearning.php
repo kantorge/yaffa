@@ -2,35 +2,28 @@
 
 namespace App\Models;
 
-use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * App\Models\ReceivedMail
- *
- * @property int $id
- * @property string $subject
- * @property string $html
- * @property string $text
- * @mixin Eloquent
- */
-class ReceivedMail extends Model
+class CategoryLearning extends Model
 {
     use HasFactory;
 
+    protected $table = 'category_learning';
+
     protected $fillable = [
-        'message_id',
         'user_id',
-        'subject',
-        'html',
-        'text',
+        'item_description',
+        'category_id',
+        'usage_count',
     ];
 
     protected function casts(): array
     {
-        return [];
+        return [
+            'usage_count' => 'integer',
+        ];
     }
 
     public function user(): BelongsTo
@@ -38,8 +31,8 @@ class ReceivedMail extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function aiDocument(): BelongsTo
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(AiDocument::class);
+        return $this->belongsTo(Category::class);
     }
 }

@@ -195,8 +195,18 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(ReceivedMail::class);
     }
 
-    public function unhandledReceivedMail(): HasMany
+    public function aiDocuments(): HasMany
     {
-        return $this->hasMany(ReceivedMail::class)->unhandled();
+        return $this->hasMany(AiDocument::class);
+    }
+
+    public function aiProviderConfig()
+    {
+        return $this->hasOne(AiProviderConfig::class);
+    }
+
+    public function categoryLearning(): HasMany
+    {
+        return $this->hasMany(CategoryLearning::class);
     }
 }
