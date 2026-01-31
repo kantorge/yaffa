@@ -12,11 +12,16 @@ class AiProviderConfigFactory extends Factory
 {
     public function definition(): array
     {
+        $providers = array_keys(config('ai-documents.providers', []));
+        $provider = $this->faker->randomElement($providers);
+        $models = config('ai-documents.providers.'.$provider.'.models', []);
+        $model = $this->faker->randomElement($models);
+
         return [
             'user_id' => User::factory(),
-            'provider' => $this->faker->randomElement(['openai', 'gemini']),
-            'model' => 'gpt-4o-mini',
-            'api_key' => 'sk-' . fake()->sha256(),
+            'provider' => $provider,
+            'model' => $model,
+            'api_key' => 'sk-'.fake()->sha256(),
         ];
     }
 }

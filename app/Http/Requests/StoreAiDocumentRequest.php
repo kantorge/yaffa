@@ -6,9 +6,9 @@ class StoreAiDocumentRequest extends FormRequest
 {
     public function rules(): array
     {
-        $maxFilesPerSubmission = config('ai-documents.file_upload.max_files_per_submission', 10);
-        $maxFileSize = config('ai-documents.file_upload.max_file_size_mb', 50);
-        $allowedTypes = config('ai-documents.file_upload.allowed_types', ['pdf', 'jpg', 'jpeg', 'png', 'txt']);
+        $maxFilesPerSubmission = config('ai-documents.file_upload.max_files_per_submission');
+        $maxFileSize = config('ai-documents.file_upload.max_file_size_mb');
+        $allowedTypes = config('ai-documents.file_upload.allowed_types');
 
         return [
             'files' => [
@@ -39,10 +39,10 @@ class StoreAiDocumentRequest extends FormRequest
     {
         return [
             'files.required_if' => 'You must provide either files or text input.',
-            'files.max' => 'You can upload a maximum of ' . config('ai-documents.file_upload.max_files_per_submission', 10) . ' files.',
+            'files.max' => 'You can upload a maximum of ' . config('ai-documents.file_upload.max_files_per_submission') . ' files.',
             'files.*.file' => 'Each file must be a valid file.',
-            'files.*.max' => 'Each file must not exceed ' . config('ai-documents.file_upload.max_file_size_mb', 50) . 'MB.',
-            'files.*.mimes' => 'Files must be of type: ' . implode(', ', config('ai-documents.file_upload.allowed_types', ['pdf', 'jpg', 'jpeg', 'png', 'txt'])),
+            'files.*.max' => 'Each file must not exceed ' . config('ai-documents.file_upload.max_file_size_mb') . 'MB.',
+            'files.*.mimes' => 'Files must be of type: ' . implode(', ', config('ai-documents.file_upload.allowed_types')),
         ];
     }
 

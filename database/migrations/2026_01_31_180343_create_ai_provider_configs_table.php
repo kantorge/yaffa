@@ -16,8 +16,8 @@ return new class () extends Migration {
                 ->constrained('users')
                 ->cascadeOnDelete()
                 ->unique();
-            $table->string('provider', 50);
-            $table->string('model', 100);
+            $table->string('provider');
+            $table->string('model');
             $table->text('api_key');
             $table->timestamps();
         });

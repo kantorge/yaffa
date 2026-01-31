@@ -1231,7 +1231,7 @@ namespace PHPSTORM_META {
             'ai-documents.file_upload.max_file_size_mb' => 'integer',
             'ai-documents.file_upload.max_total_size_mb' => 'integer',
             'ai-documents.file_upload.allowed_types' => 'array',
-            'ai-documents.file_retention.retention_days' => 'integer',
+            'ai-documents.local_storage_file_retention.retention_days' => 'integer',
             'ai-documents.processing.max_retries' => 'integer',
             'ai-documents.processing.retry_delay_seconds' => 'integer',
             'ai-documents.processing.processing_timeout_seconds' => 'integer',
@@ -1249,10 +1249,8 @@ namespace PHPSTORM_META {
             'ai-documents.google_drive.scopes' => 'array',
             'ai-documents.providers.openai.name' => 'string',
             'ai-documents.providers.openai.models' => 'array',
-            'ai-documents.providers.openai.default_model' => 'string',
             'ai-documents.providers.gemini.name' => 'string',
             'ai-documents.providers.gemini.models' => 'array',
-            'ai-documents.providers.gemini.default_model' => 'string',
             'ai-documents.image_processing.max_width' => 'integer',
             'ai-documents.image_processing.max_height' => 'integer',
             'ai-documents.image_processing.quality' => 'integer',
@@ -2036,7 +2034,7 @@ namespace PHPSTORM_META {
             'ai-documents.file_upload.max_file_size_mb' => 'integer',
             'ai-documents.file_upload.max_total_size_mb' => 'integer',
             'ai-documents.file_upload.allowed_types' => 'array',
-            'ai-documents.file_retention.retention_days' => 'integer',
+            'ai-documents.local_storage_file_retention.retention_days' => 'integer',
             'ai-documents.processing.max_retries' => 'integer',
             'ai-documents.processing.retry_delay_seconds' => 'integer',
             'ai-documents.processing.processing_timeout_seconds' => 'integer',
@@ -2054,10 +2052,8 @@ namespace PHPSTORM_META {
             'ai-documents.google_drive.scopes' => 'array',
             'ai-documents.providers.openai.name' => 'string',
             'ai-documents.providers.openai.models' => 'array',
-            'ai-documents.providers.openai.default_model' => 'string',
             'ai-documents.providers.gemini.name' => 'string',
             'ai-documents.providers.gemini.models' => 'array',
-            'ai-documents.providers.gemini.default_model' => 'string',
             'ai-documents.image_processing.max_width' => 'integer',
             'ai-documents.image_processing.max_height' => 'integer',
             'ai-documents.image_processing.quality' => 'integer',
@@ -2841,7 +2837,7 @@ namespace PHPSTORM_META {
             'ai-documents.file_upload.max_file_size_mb' => 'integer',
             'ai-documents.file_upload.max_total_size_mb' => 'integer',
             'ai-documents.file_upload.allowed_types' => 'array',
-            'ai-documents.file_retention.retention_days' => 'integer',
+            'ai-documents.local_storage_file_retention.retention_days' => 'integer',
             'ai-documents.processing.max_retries' => 'integer',
             'ai-documents.processing.retry_delay_seconds' => 'integer',
             'ai-documents.processing.processing_timeout_seconds' => 'integer',
@@ -2859,10 +2855,8 @@ namespace PHPSTORM_META {
             'ai-documents.google_drive.scopes' => 'array',
             'ai-documents.providers.openai.name' => 'string',
             'ai-documents.providers.openai.models' => 'array',
-            'ai-documents.providers.openai.default_model' => 'string',
             'ai-documents.providers.gemini.name' => 'string',
             'ai-documents.providers.gemini.models' => 'array',
-            'ai-documents.providers.gemini.default_model' => 'string',
             'ai-documents.image_processing.max_width' => 'integer',
             'ai-documents.image_processing.max_height' => 'integer',
             'ai-documents.image_processing.quality' => 'integer',
@@ -3495,9 +3489,9 @@ namespace PHPSTORM_META {
     override(\tap(0), type(0));
     override(\optional(0), type(0));
 
-            registerArgumentsSet('auth', 
+            registerArgumentsSet('auth',
 'viewTelescope',);
-        registerArgumentsSet('configs', 
+        registerArgumentsSet('configs',
 'broadcasting.default','broadcasting.connections.reverb.driver','broadcasting.connections.reverb.key','broadcasting.connections.reverb.secret','broadcasting.connections.reverb.app_id',
 'broadcasting.connections.reverb.options.host','broadcasting.connections.reverb.options.port','broadcasting.connections.reverb.options.scheme','broadcasting.connections.reverb.options.useTLS','broadcasting.connections.reverb.client_options',
 'broadcasting.connections.pusher.driver','broadcasting.connections.pusher.key','broadcasting.connections.pusher.secret','broadcasting.connections.pusher.app_id','broadcasting.connections.pusher.options.cluster',
@@ -3659,11 +3653,11 @@ namespace PHPSTORM_META {
 'ide-helper.enforce_nullable_relationships','ide-helper.post_migrate','breadcrumbs.view','breadcrumbs.files','breadcrumbs.unnamed-route-exception',
 'breadcrumbs.missing-route-bound-breadcrumb-exception','breadcrumbs.invalid-named-breadcrumb-exception','breadcrumbs.manager-class','breadcrumbs.generator-class','tinker.commands',
 'tinker.alias','tinker.dont_alias','tinker.trust_project',);
-        registerArgumentsSet('middleware', 
+        registerArgumentsSet('middleware',
 'web','api','auth','auth.basic','auth.session',
 'cache.headers','can','guest','password.confirm','precognitive',
 'signed','throttle','verified','bindings',);
-        registerArgumentsSet('routes', 
+        registerArgumentsSet('routes',
 'duskapiconf.get','duskapiconf.set','duskapiconf.reset','debugbar.openhandler',
 'debugbar.cache.delete','debugbar.queries.explain','debugbar.clockwork','debugbar.assets','debugbar.telescope',
 'boost.browser-logs','dusk.login','dusk.logout','dusk.user','sanctum.csrf-cookie','telescope','api.account.updateMonthlySummary','api.accountentity.updateActive',
@@ -3688,7 +3682,7 @@ namespace PHPSTORM_META {
 'received-mail.show','received-mail.destroy','search','import.csv','user.settings',
 'login','logout','register',
 'password.request','password.email','password.reset','password.update','password.confirm','verification.notice','verification.verify','verification.send','storage.local',);
-        registerArgumentsSet('views', 
+        registerArgumentsSet('views',
 'account-group.form','account-group.index','account.form','account.history','account.index',
 'account.show','auth.components.email','auth.components.password','auth.components.password_confirmation','auth.login',
 'auth.passwords.confirm','auth.passwords.email','auth.passwords.reset','auth.register','auth.verify',
@@ -3717,7 +3711,7 @@ namespace PHPSTORM_META {
 'laravel-exceptions::layout','laravel-exceptions::minimal','notifications::email','pagination::bootstrap-4','pagination::bootstrap-5',
 'pagination::default','pagination::semantic-ui','pagination::simple-bootstrap-4','pagination::simple-bootstrap-5','pagination::simple-default',
 'pagination::simple-tailwind','pagination::tailwind','telescope::layout',);
-        registerArgumentsSet('translations', 
+        registerArgumentsSet('translations',
 'auth.failed','auth.password','auth.throttle','pagination.previous','pagination.next',
 'passwords.reset','passwords.sent','passwords.throttled','passwords.token','passwords.user',
 'validation.accepted','validation.accepted_if','validation.active_url','validation.after','validation.after_or_equal',
@@ -3765,7 +3759,7 @@ namespace PHPSTORM_META {
 'default_assets.categories.vehicle_maintenance','default_assets.categories.vision_and_dental_care','default_assets.categories.water','default_assets.categories.water_sewer','default_assets.investment_groups.bonds',
 'default_assets.investment_groups.other','default_assets.investment_groups.stocks','default_assets.tags.todo','validation.attributes.config.opening_balance','validation.attributes.name',
 'validation.attributes.tos','validation.password',);
-        registerArgumentsSet('env', 
+        registerArgumentsSet('env',
 'APP_NAME','APP_ENV','APP_KEY','APP_DEBUG','APP_URL',
 'APP_SERVICE','APP_LOCALE','APP_FALLBACK_LOCALE','APP_FAKER_LOCALE','APP_MAINTENANCE_DRIVER',
 'APP_MAINTENANCE_STORE','BCRYPT_ROUNDS','ALPHA_VANTAGE_KEY','LOG_CHANNEL','LOG_STACK',
@@ -3783,7 +3777,7 @@ namespace PHPSTORM_META {
 'RECAPTCHA_SECRET_KEY','GTM_CONTAINER_ID','COOKIEYES_ID','SANDBOX_MODE','DEMO_AI_PROVIDER',
 'DEMO_AI_MODEL','DEMO_AI_API_KEY','DEMO_GOOGLE_DRIVE_FOLDER_ID','DEMO_GOOGLE_DRIVE_JSON_KEY_FILE','SERVER_NAME',
 'SSL_DOMAIN','TRUSTED_PROXIES',);
-        
+
                 expectedArguments(\Illuminate\Support\Facades\Gate::has(), 0, argumentsSet('auth'));
     expectedArguments(\Illuminate\Support\Facades\Gate::allows(), 0, argumentsSet('auth'));
     expectedArguments(\Illuminate\Support\Facades\Gate::denies(), 0, argumentsSet('auth'));
@@ -3847,5 +3841,5 @@ namespace PHPSTORM_META {
                 expectedArguments(\Illuminate\Contracts\Translation\Translator::get(), 0, argumentsSet('translations'));
                 expectedArguments(\env(), 0, argumentsSet('env'));
                 expectedArguments(\Illuminate\Support\Env::get(), 0, argumentsSet('env'));
-            
+
 }
