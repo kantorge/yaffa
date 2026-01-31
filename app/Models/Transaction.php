@@ -74,6 +74,7 @@ class Transaction extends Model
      * @var array<string>
      */
     protected $fillable = [
+        'ai_document_id',
         'date',
         'transaction_type',
         'reconciled',
@@ -138,6 +139,11 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function aiDocument(): BelongsTo
+    {
+        return $this->belongsTo(AiDocument::class);
     }
 
     public function tags()
