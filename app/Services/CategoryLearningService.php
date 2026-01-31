@@ -9,6 +9,7 @@ class CategoryLearningService
 {
     public function __construct(private User $user)
     {
+        // Nothing to initialize
     }
 
     /**
