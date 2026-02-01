@@ -6,22 +6,25 @@
       @keydown="form.onKeydown($event)"
       autocomplete="off"
     >
-      <div class="card-header">
+      <div class="card-header d-flex justify-content-between">
         <div class="card-title">
           {{ __('AI Provider Configuration') }}
         </div>
+        <div>
+          <span
+            class="fa fa-info-circle text-info"
+            :title="
+              __(
+                'Configure your AI provider to enable document processing. Your API key is encrypted and stored securely.',
+              )
+            "
+            data-coreui-toggle="tooltip"
+            data-coreui-placement="top"
+          ></span>
+        </div>
       </div>
       <div class="card-body" v-if="!sandbox_mode">
-        <div class="alert alert-info" role="alert">
-          <i class="me-1 icon fa fa-info-circle"></i>
-          {{
-            __(
-              'Configure your AI provider to enable document processing. Your API key is encrypted and stored securely.',
-            )
-          }}
-        </div>
-
-        <div v-if="!hasConfig && !showForm" class="text-center py-4">
+        <div v-if="!hasConfig && !showForm" class="text-center py-2">
           <p class="mb-3">{{ __('No AI provider configured yet.') }}</p>
           <button
             type="button"
@@ -57,7 +60,7 @@
                   </option>
                 </select>
                 <span
-                  class="input-group-text btn btn-info"
+                  class="input-group-text btn btn-outline-input-info"
                   data-coreui-toggle="tooltip"
                   data-coreui-placement="top"
                   :title="__('Select the AI provider for document processing.')"
@@ -91,7 +94,7 @@
                   </option>
                 </select>
                 <span
-                  class="input-group-text btn btn-info"
+                  class="input-group-text btn btn-outline-input-info"
                   data-coreui-toggle="tooltip"
                   data-coreui-placement="top"
                   :title="
@@ -126,7 +129,7 @@
                   "
                 />
                 <span
-                  class="input-group-text btn btn-info"
+                  class="input-group-text btn btn-outline-input-info"
                   data-coreui-toggle="tooltip"
                   data-coreui-placement="top"
                   :title="
@@ -245,7 +248,7 @@
 </script>
 
 <script>
-  import { __ } from '../helpers';
+  import { __, initializeBootstrapTooltips } from '../helpers';
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
@@ -288,12 +291,7 @@
       this.loadConfig();
 
       // Initialize tooltips
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-coreui-toggle="tooltip"]',
-      );
-      [...tooltipTriggerList].map(
-        (tooltipTriggerEl) => new coreui.Tooltip(tooltipTriggerEl),
-      );
+      initializeBootstrapTooltips(this.$el);
     },
     methods: {
       loadConfig() {
@@ -379,7 +377,7 @@
         const testData = {
           provider: this.form.provider,
           model: this.form.model,
-          api_key: this.form.api_key || 'existing', // Use placeholder if using existing key
+          api_key: this.form.api_key || '__existing__', // Use placeholder if using existing key
         };
 
         axios
