@@ -31,14 +31,14 @@
     @vite(['resources/js/app.js'])
 
     {{-- Disable animations during testing --}}
-    @if (app()->environment('testing'))
+    @env('testing')
         <style>
             * {
                 transition: none !important;
                 animation: none !important;
             }
         </style>
-    @endif
+    @endenv
 </head>
 
 <body @yield('classes_body')>
