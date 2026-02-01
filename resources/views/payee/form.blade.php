@@ -8,14 +8,14 @@
 
 @section('content')
 <h2>
-    @if(isset($payee->id))
+    @isset($payee->id)
         {{ __('Modify payee') }}
     @else
         {{ __('Add new payee') }}
-    @endif
+    @endisset
 </h2>
 
-@if(isset($payee))
+@isset($payee)
 <form
     accept-charset="UTF-8"
     action="{{ route('account-entity.update', ['type' => 'payee', 'account_entity' => $payee->id]) }}"
@@ -30,7 +30,7 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
 <div class="row">
         <div class="col-md-6">

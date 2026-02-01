@@ -8,7 +8,7 @@
 
 @section('content')
 
-@if(isset($currency))
+@isset($currency)
 <form
     accept-charset="UTF-8"
     action="{{ route('currency.update', $currency->id) }}"
@@ -23,16 +23,16 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($currency->id))
+                @isset($currency->id)
                     {{ __('Modify currency') }}
                 @else
                     {{ __('Add currency') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">

@@ -7,7 +7,7 @@
 @section('content_header', __('Investments'))
 
 @section('content')
-@if(isset($investment))
+@isset($investment)
 <form
     accept-charset="UTF-8"
     action="{{ route('investment.update', $investment->id) }}"
@@ -22,16 +22,16 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
     <div class="card mb-3">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($investment->id))
+                @isset($investment->id)
                     {{ __('Modify investment') }}
                 @else
                     {{ __('Add new investment') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">
