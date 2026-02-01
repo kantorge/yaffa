@@ -40,7 +40,7 @@
         "fruitcake/laravel-debugbar": "^4.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.23",
         "larastan/larastan": "^3.1",
-        "laravel/boost": "^1.6",
+        "laravel/boost": "^2.0",
         "laravel/dusk": "^8.3",
         "laravel/pint": "^1.25",
         "laravel/sail": "^1.41",
