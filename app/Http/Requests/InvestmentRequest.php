@@ -49,6 +49,19 @@ class InvestmentRequest extends FormRequest
                 'nullable',
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
             ],
+            'manual_balance' => [
+                'nullable',
+                'numeric',
+                // Fit in signed DECIMAL(30,10) range
+                'min:-999999999999999999999.9999999999',
+                'max:999999999999999999999.9999999999',
+            ],
+            'manual_trend' => [
+                'nullable',
+                'numeric',
+                'min:-1000',
+                'max:1000',
+            ],
             'active' => [
                 'boolean',
             ],

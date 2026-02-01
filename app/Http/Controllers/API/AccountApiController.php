@@ -367,16 +367,22 @@ class AccountApiController extends Controller implements HasMiddleware
                 $account['account_group_name'] = $account->config->accountGroup->name;
                 $account['account_group_id'] = $account->config->accountGroup->id;
 
-                // Summarize the standard value and investment value for this account
-                $account['cash'] = ($standardSummary->where('account_entity_id', $account->id)
-                    ->first()
-                    ->total_amount ?? 0) * 1;
+                if ($account->config->manual_balance !== null) {
+                    $account['cash'] = $account->config->manual_balance * 1;
+                    $account['investments'] = 0;
+                    $account['sum'] = $account['cash'];
+                } else {
+                    // Summarize the standard value and investment value for this account
+                    $account['cash'] = ($standardSummary->where('account_entity_id', $account->id)
+                        ->first()
+                        ->total_amount ?? 0) * 1;
 
-                $account['investments'] = ($investmentSummary->where('account_entity_id', $account->id)
-                    ->first()
-                    ->total_amount ?? 0) * 1;
+                    $account['investments'] = ($investmentSummary->where('account_entity_id', $account->id)
+                        ->first()
+                        ->total_amount ?? 0) * 1;
 
-                $account['sum'] = $account['cash'] + $account['investments'];
+                    $account['sum'] = $account['cash'] + $account['investments'];
+                }
 
                 $account['currency'] = $account->config->currency;
 

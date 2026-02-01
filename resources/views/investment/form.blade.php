@@ -122,6 +122,39 @@
             </div>
 
             <div class="row mb-3">
+                <label for="manual_balance" class="col-form-label col-sm-3">
+                    {{ __('Manual balance') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="manual_balance"
+                        name="manual_balance"
+                        type="text"
+                        value="{{old('manual_balance', $investment->manual_balance ?? '' )}}"
+                    >
+                    <small class="form-text text-muted">
+                        {{ __('Use this for manually tracked ETF/ETN positions when you only want to enter the total balance.') }}
+                    </small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="manual_trend" class="col-form-label col-sm-3">
+                    {{ __('Manual trend (%)') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="manual_trend"
+                        name="manual_trend"
+                        type="text"
+                        value="{{old('manual_trend', $investment->manual_trend ?? '' )}}"
+                    >
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="investment_group_id" class="col-form-label col-sm-3">
                     {{ __('Investment group') }}
                 </label>
