@@ -113,7 +113,7 @@
         }
       },
       refreshTooltip: function () {
-        helpers.initializeBootstrapTooltips();
+        helpers.initializeBootstrapTooltips(this.$el);
       },
       toFormattedCurrency(input, locale, currencySettings) {
         return helpers.toFormattedCurrency(input, locale, currencySettings);

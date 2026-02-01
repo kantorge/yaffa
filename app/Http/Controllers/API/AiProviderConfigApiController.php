@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use Prism\Prism\Facades\Prism;
-use Prism\Prism\Enums\Provider;
 use Symfony\Component\HttpFoundation\Response;
 use Log;
 
@@ -30,8 +29,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      */
     public function show(Request $request): JsonResponse
     {
+        // For MVP, we assume one config per user
         $user = $request->user();
-        $config = $user->aiProviderConfig;
+        $config = $user->aiProviderConfig()->first();
 
         if (! $config) {
             return response()->json([
@@ -63,7 +63,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         $user = $request->user();
 
         // Delete existing config if present (enforce one per user)
-        $user->aiProviderConfig?->delete();
+        $user->aiProviderConfig()->delete();
 
         // Create new config
         $config = AiProviderConfig::create([
@@ -105,15 +105,18 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * DELETE /api/ai/config/{id} - Delete AI provider config
-     *
      * @throws AuthorizationException
      */
-    public function destroy(AiProviderConfig $config): JsonResponse
+    public function destroy(AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        Gate::authorize('delete', $config);
+        /**
+         * @delete('/api/ai/config/{config}')
+         * @name('api.ai.config.destroy')
+         * @middlewares('api', 'auth:sanctum', 'verified')
+         */
+        Gate::authorize('delete', $aiProviderConfig);
 
-        $config->delete();
+        $aiProviderConfig->delete();
 
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
@@ -126,9 +129,19 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         // Basic validation is already done by AiProviderConfigRequest
         $validated = $request->validated();
 
-        try {
-            $provider = Prism::provider($validated['provider']);
+        // If the API key is indicated as existing, fetch the stored key
+        if ($request->input('api_key') === '__existing__') {
+            $user = $request->user();
+            $existingConfig = $user->aiProviderConfig()->first();
+            if (! $existingConfig) {
+                return response()->json([
+                    'message' => __('No existing AI provider configuration found'),
+                ], Response::HTTP_BAD_REQUEST);
+            }
+            $validated['api_key'] = $existingConfig->api_key;
+        }
 
+        try {
             // Try a simple completion to test the connection
             $response = Prism::text()
                 ->using($validated['provider'], $validated['model'])
