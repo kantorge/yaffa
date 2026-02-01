@@ -14,6 +14,7 @@
         topic="dashboard"
       ></onboarding-card>
       <account-balance></account-balance>
+      <manual-asset-overview></manual-asset-overview>
       <payee-category-recommendation></payee-category-recommendation>
     </div>
     <!-- /.col -->
@@ -29,6 +30,7 @@
 
 <script>
   import AccountBalance from './Widgets/AccountBalance.vue';
+  import ManualAssetOverview from './Widgets/ManualAssetOverview.vue';
   import CategoryWaterfall from './Widgets/CategoryWaterfall.vue';
   import ScheduleCalendar from './Widgets/ScheduleCalendar.vue';
   import PayeeCategoryRecommendation from './Widgets/PayeeCategoryRecommendation.vue';
@@ -37,6 +39,7 @@
   export default {
     components: {
       'account-balance': AccountBalance,
+      'manual-asset-overview': ManualAssetOverview,
       'category-waterfall': CategoryWaterfall,
       'schedule-calendar': ScheduleCalendar,
       'payee-category-recommendation': PayeeCategoryRecommendation,

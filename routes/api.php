@@ -5,6 +5,7 @@ use App\Http\Controllers\API\AccountEntityApiController;
 use App\Http\Controllers\API\AccountGroupApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
+use App\Http\Controllers\API\DashboardApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
@@ -23,6 +24,7 @@ Route::get('/assets/account/{accountEntity}', [AccountApiController::class, 'get
 Route::get('/account/balance/{accountEntity?}', [AccountApiController::class, 'getAccountBalance']);
 Route::put('/account/monthlySummary/{accountEntity}', [AccountApiController::class, 'updateMonthlySummary'])
     ->name('api.account.updateMonthlySummary');
+Route::get('/dashboard/manual-assets', [DashboardApiController::class, 'getManualAssetOverview']);
 
 Route::put('/assets/accountentity/{accountEntity}/active/{active}', [AccountEntityApiController::class, 'updateActive'])
     ->name('api.accountentity.updateActive');

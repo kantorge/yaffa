@@ -41,6 +41,25 @@ class AccountEntityRequest extends FormRequest
                     'min:-999999999999999999999.9999999999',
                     'max:999999999999999999999.9999999999',
                 ],
+                'config.manual_balance' => [
+                    'nullable',
+                    'numeric',
+                    // Fit in signed DECIMAL(30,10) range
+                    'min:-999999999999999999999.9999999999',
+                    'max:999999999999999999999.9999999999',
+                ],
+                'config.manual_interest_rate' => [
+                    'nullable',
+                    'numeric',
+                    'min:-1000',
+                    'max:1000',
+                ],
+                'config.manual_trend' => [
+                    'nullable',
+                    'numeric',
+                    'min:-1000',
+                    'max:1000',
+                ],
                 'config.account_group_id' => [
                     'required',
                     Rule::exists('account_groups', 'id')

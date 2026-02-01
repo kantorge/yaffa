@@ -92,6 +92,57 @@
             </div>
 
             <div class="row mb-3">
+                <label for="manual_balance" class="col-form-label col-sm-3">
+                    {{ __('Manual balance') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="manual_balance"
+                        name="config[manual_balance]"
+                        type="text"
+                        value="{{ old('config.manual_balance', $account['config']['manual_balance'] ?? '' ) }}"
+                    >
+                    <small class="form-text text-muted">
+                        {{ __('Use this when you want to track the current balance manually (e.g., bank or savings accounts).') }}
+                    </small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="manual_interest_rate" class="col-form-label col-sm-3">
+                    {{ __('Manual interest rate (%)') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="manual_interest_rate"
+                        name="config[manual_interest_rate]"
+                        type="text"
+                        value="{{ old('config.manual_interest_rate', $account['config']['manual_interest_rate'] ?? '' ) }}"
+                    >
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="manual_trend" class="col-form-label col-sm-3">
+                    {{ __('Manual trend (%)') }}
+                </label>
+                <div class="col-sm-9">
+                    <input
+                        class="form-control"
+                        id="manual_trend"
+                        name="config[manual_trend]"
+                        type="text"
+                        value="{{ old('config.manual_trend', $account['config']['manual_trend'] ?? '' ) }}"
+                    >
+                    <small class="form-text text-muted">
+                        {{ __('Use positive or negative percentages to describe recent trend changes.') }}
+                    </small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="account_group_id" class="col-form-label col-sm-3">
                     {{ __('Account group') }}
                 </label>

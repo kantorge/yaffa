@@ -75,6 +75,9 @@ class Account extends Model
      */
     protected $fillable = [
         'opening_balance',
+        'manual_balance',
+        'manual_interest_rate',
+        'manual_trend',
         'account_group_id',
         'currency_id',
         'default_date_range',
@@ -84,6 +87,9 @@ class Account extends Model
     {
         return [
             'opening_balance' => 'float',
+            'manual_balance' => 'float',
+            'manual_interest_rate' => 'float',
+            'manual_trend' => 'float',
         ];
     }
 

@@ -91,6 +91,8 @@ class Investment extends Model
         'symbol',
         'isin',
         'comment',
+        'manual_balance',
+        'manual_trend',
         'active',
         'auto_update',
         'investment_group_id',
@@ -103,6 +105,14 @@ class Investment extends Model
     protected $appends = [
         'investment_price_provider_name',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'manual_balance' => 'float',
+            'manual_trend' => 'float',
+        ];
+    }
 
     /**
      * Scope a query to only include active investments.
