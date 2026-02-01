@@ -198,7 +198,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
 
     public function aiProviderConfig()
     {
-        return $this->hasOne(AiProviderConfig::class);
+        return $this->hasMany(AiProviderConfig::class);
     }
 
     public function categoryLearning(): HasMany

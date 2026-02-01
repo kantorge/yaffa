@@ -176,9 +176,9 @@ export function transactionLink(id, text) {
     return `<a href="${url}">${text}</a>`;
 }
 
-export function initializeBootstrapTooltips() {
-    const tooltipTriggerList = document.querySelectorAll(
-      '[data-bs-toggle="tooltip"]',
+export function initializeBootstrapTooltips(parent = document) {
+    const tooltipTriggerList = parent.querySelectorAll(
+      '[data-bs-toggle="tooltip"], [data-coreui-toggle="tooltip"]',
     );
     [...tooltipTriggerList].map(
       (tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl),

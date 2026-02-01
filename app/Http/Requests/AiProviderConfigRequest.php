@@ -43,9 +43,9 @@ class AiProviderConfigRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Enforce business rule: only one provider config per user
-            // Skip this check if we're updating an existing config
-            if (!$this->route('aiProviderConfig') && auth()->check()) {
+        // Enforce business rule: only one provider config per user
+            // Skip this check if we're updating an existing config or running a test
+            if (!$this->route('aiProviderConfig') && !$this->routeIs('api.ai.config.test')) {
                 $existingConfig = AiProviderConfig::where('user_id', auth()->id())->exists();
 
                 if ($existingConfig) {

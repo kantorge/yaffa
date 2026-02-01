@@ -33,7 +33,7 @@
                 </option>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="__('Controls the language used in YAFFA.')"
@@ -65,14 +65,14 @@
                 </option>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
                   __('Controls how numbers, dates, currencies are formatted.')
                 "
               >
-                <i class="fa fa-info-circle"></i>
+                <i class="fa fa-info-circle text-info"></i>
               </span>
             </div>
             <HasError field="locale" :form="form" />
@@ -108,7 +108,7 @@
                 </template>
               </DatePicker>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -153,7 +153,7 @@
                 </template>
               </DatePicker>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -191,7 +191,7 @@
                 </optgroup>
               </select>
               <span
-                class="input-group-text btn btn-info"
+                class="input-group-text btn btn-outline-input-info"
                 data-coreui-toggle="tooltip"
                 data-coreui-placement="top"
                 :title="
@@ -238,6 +238,7 @@
 <script>
   import { DatePicker } from 'v-calendar';
   import { __ } from '../i18n';
+  import { initializeBootstrapTooltips } from '../helpers';
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
@@ -261,12 +262,7 @@
     }),
     mounted() {
       // Finally, initialize tooltips
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-coreui-toggle="tooltip"]',
-      );
-      [...tooltipTriggerList].map(
-        (tooltipTriggerEl) => new coreui.Tooltip(tooltipTriggerEl),
-      );
+      initializeBootstrapTooltips(this.$el);
     },
     methods: {
       onSubmit: function () {

@@ -955,7 +955,7 @@
       this.syncScheduleStartDate(this.form.schedule_config.start_date);
 
       // Initialize tooltips
-      initializeBootstrapTooltips();
+      initializeBootstrapTooltips(this.$el);
     },
 
     methods: {

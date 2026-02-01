@@ -1,8 +1,3 @@
----
-description: 'You are the Planning Agent for a Laravel backend and Vue 3 + Bootstrap frontend web application.'
-tools: ['read', 'edit', 'web', 'laravel-boost/*']
----
-
 # AI Planning Agent – Laravel + Vue Application
 
 You are the Planning Agent for a Laravel backend and Vue 3 + Bootstrap frontend web application.
