@@ -11,7 +11,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
-use srmklive\Prism\Facades\Prism;
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
 use Symfony\Component\HttpFoundation\Response;
 use Log;
 
@@ -122,33 +123,35 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      */
     public function test(AiProviderConfigRequest $request): JsonResponse
     {
+        // Basic validation is already done by AiProviderConfigRequest
+        $validated = $request->validated();
+
         try {
-            $provider = Prism::provider($request->input('provider'));
-            $model = $request->input('model');
-            $apiKey = $request->input('api_key');
+            $provider = Prism::provider($validated['provider']);
 
             // Try a simple completion to test the connection
-            $response = $provider
-                ->usingModel($model)
-                ->complete('Hello, this is a test. Reply with "OK".');
+            $response = Prism::text()
+                ->using($validated['provider'], $validated['model'])
+                ->usingProviderConfig([
+                    'api_key' => $validated['api_key'],
+                ])
+                ->withPrompt('Hello, this is a test. Reply with "OK".')
+                ->asText();
 
-            if ($response && isset($response['content'])) {
+            if ($response && $response->text) {
                 return response()->json([
-                    'success' => true,
                     'message' => __('Connection successful'),
                 ], Response::HTTP_OK);
             }
 
             return response()->json([
-                'success' => false,
-                'error' => __('No response from AI provider'),
+                'message' => __('No response from AI provider'),
             ], Response::HTTP_BAD_REQUEST);
         } catch (Exception $e) {
             Log::error("AI provider test failed: {$e->getMessage()}");
 
             return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
     }
