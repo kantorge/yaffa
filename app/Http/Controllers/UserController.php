@@ -27,6 +27,8 @@ class UserController extends Controller implements HasMiddleware
             'languages' => config('app.available_languages'),
             'locales' => config('app.available_locales'),
             'datePresets' => config('yaffa.account_date_presets'),
+            // AI providers configuration for document processing
+            'aiProviders' => config('ai-documents.providers'),
         ]);
         return view('user.settings');
     }

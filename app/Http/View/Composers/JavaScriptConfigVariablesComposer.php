@@ -16,7 +16,7 @@ class JavaScriptConfigVariablesComposer
     public function compose(): void
     {
         JavaScriptFacade::put([
-            // This type of restrictions must be implemented primarily on server-side, but the UI can also adapt in some cases
+            // This type of restriction is implemented primarily on server-side, but the UI can also adapt in some cases
             'sandbox_mode' => config('yaffa.sandbox_mode'),
             // Transaction types for frontend usage
             'transactionTypes' => TransactionType::all(),
