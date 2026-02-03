@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Events\EmailReceived;
 use App\Mail\TransactionCreatedFromEmail;
 use App\Mail\TransactionErrorFromEmail;
 use App\Models\ReceivedMail;
@@ -122,6 +123,9 @@ EOF;
      */
     public function handle(): void
     {
+        event(new EmailReceived($this->mail));
+        return;
+
         logger()->info('Processing incoming email', [
             'message_id' => $this->mail->message_id,
             'sender' => $this->mail->sender,

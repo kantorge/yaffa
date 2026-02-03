@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\DocumentImported;
 use App\Events\EmailReceived;
-use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,8 +26,7 @@ class CreateAiDocumentFromSource implements ShouldQueue
             $user = $receivedMail->user;
 
             // Create AI document
-            $document = AiDocument::create([
-                'user_id' => $user->id,
+            $document = $user->aiDocuments()->create([
                 'source_type' => 'received_email',
                 'status' => 'ready_for_processing',
                 'received_mail_id' => $receivedMail->id,
@@ -38,10 +36,9 @@ class CreateAiDocumentFromSource implements ShouldQueue
             $emailContent = $this->formatEmailContent($receivedMail);
             $filename = 'email_' . now()->timestamp . '.txt';
 
-            $path = Storage::disk('local')->put(
-                "ai_documents/{$user->id}/{$document->id}/{$filename}",
-                $emailContent
-            );
+            $path = "ai_documents/{$user->id}/{$document->id}/{$filename}";
+
+            Storage::disk('local')->put($path, $emailContent);
 
             AiDocumentFile::create([
                 'ai_document_id' => $document->id,
