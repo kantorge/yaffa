@@ -70,12 +70,12 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `category_id`
     - `usage_count`
     - `created_at`, `updated_at`
-  - `AiProviderConfig` (new, one per user as a business rule)
+  - `AiProviderConfig` (✅ implemented)
     - `id`
-    - `user_id`
+    - `user_id` (unique, enforces one config per user)
     - `provider` (`openai`, `gemini`)
-    - `model`
-    - `api_key` (encrypted)
+    - `model` (validated against provider’s model list)
+    - `api_key` (encrypted cast)
     - `created_at`, `updated_at`
   - Update existing `ReceivedMail` model to reflect new app behavior.
     - Remove `transaction_data`, `processed`, and `handled` flags, as AIdocument processing supersedes them.
@@ -112,11 +112,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `created_at`, `updated_at` - timestamps
     - Indexes: `user_id`, `category_id`
     - Unique constraint: (`user_id`, `item_description`)
-  - `ai_provider_configs`
+  - `ai_provider_configs` (✅ implemented)
     - `id` - bigint unsigned, primary key
     - `user_id` - bigint unsigned, foreign key to users, cascade on delete, unique
-    - `provider` - varchar(50), not null
-    - `model` - varchar(100), not null
+    - `provider` - varchar(255), not null
+    - `model` - varchar(255), not null
     - `api_key` - text, not null (encrypted)
     - `created_at`, `updated_at` - timestamps
   - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions`
@@ -147,21 +147,21 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Response: `{"message": "Reprocessing queued", "status": "ready_for_processing"}`
     - `DELETE /api/documents/{id}` - Delete document and files
       - Response: 204 No Content
-  - `AiProviderConfigController`
+  - `AiProviderConfigApiController` (✅ implemented)
     - `GET /api/ai/config` - Get user's config (only one exists)
-      - Response: `{"id": 1, "provider": "openai", "model": "gpt-4o-mini", "api_key": "***"}`
+      - Response: `{"id": 1, "provider": "openai", "model": "gpt-4o-mini", "created_at": "...", "updated_at": "..."}` (API key never returned)
     - `POST /api/ai/config` - Create config (enforced: one per user)
       - Request: `{"provider": "openai|gemini", "model": "...", "api_key": "..."}`
       - Validation: provider required, model required, api_key required; rejects if config exists
-      - Response: `{"id": 1, "provider": "...", "model": "...", "created_at": "..."}`
-    - `PATCH /api/ai/config/{id}` - Update config
-      - Request: `{"provider": "...", "model": "...", "api_key": "..."}`
+      - Response: `{"id": 1, "provider": "...", "model": "...", "message": "AI provider configured successfully"}`
+    - `PATCH /api/ai/config/{aiProviderConfig}` - Update config
+      - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be omitted or `__existing__`)
       - Response: `{"id": 1, "provider": "...", "model": "...", "updated_at": "..."}`
-    - `DELETE /api/ai/config/{id}` - Delete config
+    - `DELETE /api/ai/config/{aiProviderConfig}` - Delete config
       - Response: 204 No Content
     - `POST /api/ai/test` - Test connection
-      - Request: `{"provider": "...", "model": "...", "api_key": "..."}`
-      - Response: `{"success": true, "message": "Connection successful"}` OR `{"success": false, "error": "..."}`
+      - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be `__existing__`)
+      - Response: `{"message": "Connection successful"}` OR `{"message": "..."}` (400)
   - `GoogleDriveController` under `/api/ai/*`
     - `GET /api/ai/google/auth-url` - Get OAuth URL
       - Response: `{"auth_url": "https://..."}`
@@ -267,11 +267,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Layout: extends `layouts.app`
     - Vue components: `AiDocumentViewer.vue`, `TransactionPreview.vue` (existing)
     - Features: file preview, draft transaction display, finalize button, reprocess button
-  - `AI Provider Settings` - `/settings/ai-provider`
-    - Blade view: `resources/views/settings/ai-provider.blade.php`
+  - `AI Provider Settings` - `/user/settings` (✅ integrated into existing settings page)
+    - Blade view: `resources/views/user/settings.blade.php`
     - Layout: extends `layouts.app`
-    - Vue component: `AiProviderConfigForm.vue`
-      - Features: provider/model selection, API key input, test connection button
+    - Vue component: `AiProviderSettings.vue`
+      - Features: provider/model selection, API key input, test connection button, add/update/delete
     - `Google Drive Settings` - `/settings/google-drive`
       - Blade view: `resources/views/settings/google-drive.blade.php`
       - Layout: extends `layouts.app`
@@ -540,7 +540,7 @@ A few notes on the statuses
   - `AiDocumentFactory` - All statuses, source types
   - `AiDocumentFileFactory` - All file types
   - `CategoryLearningFactory` - Various item descriptions
-  - `AiProviderConfigFactory` - Both providers, multiple models
+  - `AiProviderConfigFactory` (✅ implemented) - Providers/models derived from config
 
 - **Backend Unit Tests:**
   - `AssetMatchingServiceTest`
@@ -590,11 +590,11 @@ A few notes on the statuses
     - Link document to transaction (ai_document_id)
     - Status change to finalized
     - Authorization (own documents only)
-  - `AiProviderConfigTest`
+  - `AiProviderConfigTest` (✅ implemented)
     - Create config (one per user enforcement)
-    - Update config
+    - Update config (supports `__existing__` placeholder)
     - Delete config
-    - Test connection (mock AI)
+    - Test connection
     - API key encryption
   - `GoogleDriveIntegrationTest`
     - OAuth flow
@@ -643,7 +643,7 @@ A few notes on the statuses
 
 - `gpt-4o` - GPT-4 Omni (vision support, structured outputs, best for complex receipts)
 - `gpt-4o-mini` - GPT-4 Omni Mini (cheaper, faster, recommended for MVP testing)
-- `gpt-3.5-turbo-instruct` - Legacy model (no vision, compatibility fallback)
+- `gpt-5-mini` - GPT-5 Mini (configured in app)
 
 **Gemini:**
 
