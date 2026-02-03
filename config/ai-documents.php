@@ -69,7 +69,7 @@ return [
             'models' => [
                 'gpt-4o',
                 'gpt-4o-mini',
-                'gpt-3.5-turbo-instruct',
+                'gpt-5-mini',
             ],
         ],
         'gemini' => [

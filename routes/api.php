@@ -14,7 +14,6 @@ use App\Http\Controllers\API\InvestmentPriceApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\PayeeStatsApiController;
-use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
@@ -111,11 +110,6 @@ Route::get(
     ->where('type', 'budget|result|all');
 Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])->name('api.reports.cashflow');
 
-Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiController::class, 'resetProcessed'])
-    ->name('api.received-mail.reset-processed');
-Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class, 'destroy'])
-    ->name('api.received-mail.destroy');
-
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 
 Route::get('/transactions/get_scheduled_items/{type}', [TransactionApiController::class, 'getScheduledItems'])
@@ -169,7 +163,7 @@ Route::patch('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::cl
 Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::class, 'destroy'])
     ->name('api.ai.config.destroy');
 Route::post('/ai/test', [AiProviderConfigApiController::class, 'test'])
-    ->name('api.ai.test');
+    ->name('api.ai.config.test');
 
 // Google Drive routes
 Route::get('/ai/google/auth-url', [GoogleDriveApiController::class, 'getAuthUrl'])

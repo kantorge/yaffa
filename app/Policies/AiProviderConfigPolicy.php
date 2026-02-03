@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\AiProviderConfig;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AiProviderConfigPolicy
 {
+    use HandlesAuthorization;
+
     private function isOwnItem(User $user, AiProviderConfig $config): bool
     {
         return $user->id === $config->user_id;

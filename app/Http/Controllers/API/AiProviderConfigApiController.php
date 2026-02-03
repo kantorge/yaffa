@@ -86,21 +86,30 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function update(AiProviderConfigRequest $request, AiProviderConfig $config): JsonResponse
+    public function update(AiProviderConfigRequest $request, AiProviderConfig $aiProviderConfig): JsonResponse
     {
-        Gate::authorize('update', $config);
+        Gate::authorize('update', $aiProviderConfig);
 
-        $config->update([
-            'provider' => $request->input('provider'),
-            'model' => $request->input('model'),
-            'api_key' => $request->input('api_key'),
-        ]);
+        $validated = $request->validated();
+
+        // Prepare update data
+        $updateData = [
+            'provider' => $validated['provider'],
+            'model' => $validated['model'],
+        ];
+
+        // Only update API key if provided (and not the empty string)
+        if (!empty($validated['api_key']) && $validated['api_key'] !== '__existing__') {
+            $updateData['api_key'] = $validated['api_key'];
+        }
+
+        $aiProviderConfig->update($updateData);
 
         return response()->json([
-            'id' => $config->id,
-            'provider' => $config->provider,
-            'model' => $config->model,
-            'updated_at' => $config->updated_at,
+            'id' => $aiProviderConfig->id,
+            'provider' => $aiProviderConfig->provider,
+            'model' => $aiProviderConfig->model,
+            'updated_at' => $aiProviderConfig->updated_at,
         ], Response::HTTP_OK);
     }
 
@@ -130,10 +139,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         $validated = $request->validated();
 
         // If the API key is indicated as existing, fetch the stored key
-        if ($request->input('api_key') === '__existing__') {
+        if ($validated['api_key'] === '__existing__') {
             $user = $request->user();
             $existingConfig = $user->aiProviderConfig()->first();
-            if (! $existingConfig) {
+            if (!$existingConfig) {
                 return response()->json([
                     'message' => __('No existing AI provider configuration found'),
                 ], Response::HTTP_BAD_REQUEST);
