@@ -23,8 +23,6 @@ class AiProcessingJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $delay = 30;
-
     public int $timeout = 300;
 
     public function __construct(

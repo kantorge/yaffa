@@ -45,9 +45,9 @@ class CalculateAccountMonthlySummaries extends Command
             return;
         }
 
-        // Get all accounts of all users (active and inactive)
+        // Get all accounts (active and inactive) of requested / all users
         if ($userId !== null) {
-            $user = User::findOrFail($userId, 'Invalid userId');
+            $user = User::findOrFail($userId);
             $users = collect([$user]);
         } else {
             $users = User::all();

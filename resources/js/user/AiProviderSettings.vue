@@ -29,6 +29,7 @@
           <button
             type="button"
             class="btn btn-primary"
+            dusk="button-add-ai-provider"
             @click="showForm = true"
           >
             <i class="fa fa-plus"></i>
@@ -142,7 +143,11 @@
                 </span>
               </div>
               <HasError field="api_key" :form="form" />
-              <small class="form-text text-muted" v-if="hasConfig">
+              <small
+                class="form-text text-muted"
+                v-if="hasConfig"
+                dusk="api-key-hint"
+              >
                 {{
                   __(
                     'Current key is hidden. Enter a new key only if you want to change it.',
@@ -216,6 +221,7 @@
               type="button"
               class="btn btn-outline-secondary"
               @click="cancelAdd"
+              dusk="button-cancel-add-ai-provider"
             >
               <i class="fa fa-times"></i>
               {{ __('Cancel') }}
@@ -252,6 +258,7 @@
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
+  import Swal from 'sweetalert2';
 
   export default {
     name: 'AiProviderSettings',
@@ -342,16 +349,16 @@
         this.form[method](url, formData)
           .then((response) => {
             if (response.status === 200 || response.status === 201) {
-              this.configId = response.data.id;
-              this.hasConfig = true;
-              this.showForm = true;
-              this.form.api_key = ''; // Clear API key field after save
-
               toastHelpers.showSuccessToast(
                 this.hasConfig
                   ? __('AI provider configuration updated')
                   : __('AI provider configuration created'),
               );
+
+              this.configId = response.data.id;
+              this.hasConfig = true;
+              this.showForm = true;
+              this.form.api_key = ''; // Clear API key field after save
             }
           })
           .catch((error) => {
@@ -400,31 +407,41 @@
           });
       },
       deleteConfig() {
-        if (
-          !confirm(__('Are you sure you want to delete this configuration?'))
-        ) {
-          return;
-        }
+        Swal.fire({
+          animation: false,
+          text: this.__('Are you sure you want to delete this configuration?'),
+          icon: 'warning',
+          showCancelButton: true,
+          cancelButtonText: this.__('Cancel'),
+          confirmButtonText: this.__('Confirm'),
+          buttonsStyling: false,
+          customClass: {
+            confirmButton: 'btn btn-danger',
+            cancelButton: 'btn btn-outline-secondary ms-3',
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            axios
+              .delete(`/api/ai/config/${this.configId}`)
+              .then(() => {
+                this.configId = null;
+                this.hasConfig = false;
+                this.showForm = false;
+                this.form.reset();
+                this.testResult = null;
 
-        axios
-          .delete(`/api/ai/config/${this.configId}`)
-          .then(() => {
-            this.configId = null;
-            this.hasConfig = false;
-            this.showForm = false;
-            this.form.reset();
-            this.testResult = null;
-
-            toastHelpers.showSuccessToast(
-              __('AI provider configuration deleted'),
-            );
-          })
-          .catch((error) => {
-            console.error(error);
-            toastHelpers.showErrorToast(
-              __('Failed to delete configuration. Please try again.'),
-            );
-          });
+                toastHelpers.showSuccessToast(
+                  __('AI provider configuration deleted'),
+                );
+              })
+              .catch((error) => {
+                console.error(error);
+                toastHelpers.showErrorToast(
+                  __('Failed to delete configuration. Please try again.'),
+                );
+              });
+          }
+        });
       },
       cancelAdd() {
         this.showForm = false;
