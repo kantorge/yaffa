@@ -28,8 +28,6 @@ const routeMap = new Map([
     ['investment-price.create', 'investment-price/form'],
     ['investment-price.edit', 'investment-price/form'],
     ['investment-price.list', 'investment-price/list'],
-    ['received-mail.index', 'received-mail/index'],
-    ['received-mail.show', 'received-mail/show'],
     ['report.schedules', 'reports/schedules'],
     ['reports.cashflow', 'reports/cashflow'],
     ['reports.budgetchart', 'reports/budgetchart'],

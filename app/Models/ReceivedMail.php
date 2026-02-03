@@ -6,6 +6,7 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\ReceivedMail
@@ -28,18 +29,13 @@ class ReceivedMail extends Model
         'text',
     ];
 
-    protected function casts(): array
-    {
-        return [];
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function aiDocument(): BelongsTo
+    public function aiDocument(): HasOne
     {
-        return $this->belongsTo(AiDocument::class);
+        return $this->hasOne(AiDocument::class);
     }
 }

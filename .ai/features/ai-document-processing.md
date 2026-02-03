@@ -77,10 +77,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `model` (validated against provider’s model list)
     - `api_key` (encrypted cast)
     - `created_at`, `updated_at`
-  - Update existing `ReceivedMail` model to reflect new app behavior.
-    - Remove `transaction_data`, `processed`, and `handled` flags, as AIdocument processing supersedes them.
-    - Remove `transaction_id` FK, as transactions are now linked via AiDocument.
-    - `ReceivedMail` is no longer a standalone entity in the UI; it is linked to `AiDocument` only.
+  - Update existing `ReceivedMail` model to reflect new app behavior. (✅ implemented)
+    - Remove `transaction_data`, `processed`, and `handled` flags, as AIdocument processing supersedes them. (✅ implemented)
+    - Remove `transaction_id` FK, as transactions are now linked via AiDocument. (✅ implemented)
+    - `ReceivedMail` is no longer a standalone entity in the UI; it is linked to `AiDocument` only. (✅ implemented)
+    - **Deviation:** ReceivedMail relationship to AiDocument changed from `belongsTo` to `hasOne` (one email can create one document, not the reverse)
 
 - Migrations:
   - `ai_documents`
@@ -120,14 +121,15 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `api_key` - text, not null (encrypted)
     - `created_at`, `updated_at` - timestamps
   - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions`
-  - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails`
-    - During the migration, create AiDocument records for existing processed received mails to preserve data integrity.
-    - With a best effort, update linked transactions to reference the new AiDocument records. (Don't try to fix broken, inconsistent data.)
-    - Status mapping:
+  - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails` (✅ implemented - Migration 2026_01_31_180343 and 2026_02_03_185934)
+    - During the migration, create AiDocument records for existing processed received mails to preserve data integrity. (✅ implemented)
+    - With a best effort, update linked transactions to reference the new AiDocument records. (Don't try to fix broken, inconsistent data.) (✅ implemented)
+    - Status mapping: (✅ implemented)
       - If `processed` = true and `transaction_id` is set → `finalized`
       - If `processed` = true and no `transaction_id` → `ready_for_review`
       - If `processed` = false → `draft`
-    - The 'down' migration does not attempt to restore removed fields or data. It only drops the AiDocument records created during the 'up' migration.
+    - The 'down' migration does not attempt to restore removed fields or data. It only drops the AiDocument records created during the 'up' migration. (✅ implemented)
+    - **Note:** Migration 2026_02_03_185934 became a no-op since columns were already removed in prior migration
 
 - Controllers / APIs:
   - `AiDocumentController`
@@ -184,9 +186,13 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Query params: `months` (default 6)
       - Response: `{"payee_id": 123, "months": 6, "categories": [{"category_id": 7, "count": 14, "percent": 0.7}]}`
       - Stats basis: transaction items linked to transactions for this payee within the time window; percent is based on total item count. (Handle if the same category appears multiple times in one transaction.)
-  - **ReceivedMail controllers/services:**
-    - `ReceivedMailController` is removed from user-facing routes (no direct view/edit/delete).
-    - `ReceivedMailService` is trimmed to only support ingestion and linking to `AiDocument`.
+  - **ReceivedMail controllers/services:** (✅ implemented)
+    - `ReceivedMailController` is removed from user-facing routes (no direct view/edit/delete). (✅ implemented)
+    - `ReceivedMailService` is removed becoming obsolete. (✅ implemented)
+    - `ReceivedMailPolicy` is removed. (✅ implemented)
+    - All received mail routes removed from web.php and breadcrumbs.php (✅ implemented)
+    - Navigation menu entry for "Received emails" removed (✅ implemented)
+    - Vue route loader for received-mail removed from app.js (✅ implemented)
 
 - Services / Jobs:
   - `ProcessDocumentService`
@@ -231,17 +237,25 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Extracts attachments
     - Creates AiDocument with source_type=received_email
     - Triggers AiProcessingJob
+    - **Deviation:** Email processing refactored to use event-driven architecture instead of a dedicated service. MailHandler now fires EmailReceived event, CreateAiDocumentFromSource listener creates AiDocument. (✅ implemented)
 
 - Policies / Auth:
   - `AiDocumentPolicy` (view, create, delete, reprocess)
   - `AiProviderConfigPolicy` (view, create, update, delete)
 
 - Events / Notifications:
-  - **Ingestion Events:**
-    - `EmailReceived` event fired when an email is captured
-    - `DocumentImported` event fired when a file is imported from Google Drive
-    - Listener `CreateAiDocumentFromSource` creates the AiDocument and related files
+  - **Ingestion Events:** (✅ implemented)
+    - `EmailReceived` event fired when an email is captured (✅ implemented - replaces IncomingEmailReceived)
+    - `DocumentImported` event fired when a file is imported from Google Drive (✅ implemented)
+    - Listener `CreateAiDocumentFromSource` creates the AiDocument and related files (✅ implemented)
     - Rationale: keeps ingestion concerns separate from AI processing pipeline
+    - **Implementation details:**
+      - MailHandler fires EmailReceived event with ReceivedMail instance
+      - CreateAiDocumentFromSource is auto-discovered by Laravel (not manually subscribed)
+      - Listener handles both EmailReceived and DocumentImported events
+      - Creates AiDocument with status 'ready_for_processing' and stores email content as text file
+      - Legacy ProcessIncomingEmail listener and IncomingEmailReceived event removed (Feb 3, 2026)
+      - Fixed duplicate AiDocument creation by relying on auto-discovery instead of manual Event::subscribe()
   - Email notifications on:
     - **Processing success (ready for review)**
       - Mailable: `App\Mail\AiDocumentProcessed`
@@ -275,9 +289,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `Google Drive Settings` - `/settings/google-drive`
       - Blade view: `resources/views/settings/google-drive.blade.php`
       - Layout: extends `layouts.app`
-      - Vue component: `GoogleDriveSettings.vue`
-      - Features: connect/disconnect, enable monitoring, folder selection (Picker or manual ID), delete-after-import toggle
-  - `Document Upload` - `/ai-documents/create`
+      - Vue component: ` (✅ implemented)
+    - No user-facing pages or CRUD actions for `ReceivedMail` (✅ implemented)
+    - Any existing ReceivedMail views/routes should be removed or hidden (✅ implemented)
+    - All ReceivedMail views, controllers, policies, and routes removed
+    - Mail templates updated (TransactionCreatedFromEmail simplified, TransactionErrorFromEmail removed)
     - Blade view: `resources/views/ai-documents/create.blade.php`
     - Layout: extends `layouts.app`
     - Vue component: `DocumentUploadForm.vue`
@@ -521,17 +537,56 @@ A few notes on the statuses
 - **Delete After Import:**
   - User setting: `google_drive_delete_after_import` (boolean, default false)
   - Requires expanded OAuth scope and re-authentication when enabled
-  - Files deleted from Drive after successful AiDocument creation and file copying, regardless of processing outcome
-
-## Email Cleanup
+  - Files delete (✅ implemented)
 
 - To optimize AI token usage, implement email content cleanup before AI processing.
 - Extend existing cleanup from `ProcessIncomingEmailByAi::cleanUpText()`:
   - Remove image references: `[image:.*?]`
   - Remove link references: `<http[^>]+>`
-  - **New for MVP:** Remove inline styles (style attributes, `<style>` tags)
-  - **New for MVP:** Remove inline SVG elements
-  - **New for MVP:** Remove base64-encoded data URIs
+  - **New for MVP:** Remove inline styles (style attributes, `<style>` tags) (✅ implemented in CreateAiDocumentFromSource::cleanHtmlContent)
+  - **New for MVP:** Remove inline SVG elements (✅ implemented)
+  - **New for MVP:** Remove base64-encoded data URIs (✅ implemented)
+  - **New for MVP:** Strip unnecessary HTML tags while preserving text structure (✅ implemented)
+  - HTML cleanup now performed in CreateAiDocumentFromSource listener before storing email content
+
+## Testing & Development Tools (✅ implemented)
+
+- **Email Simulation Command:** `php artisan ai:simulate-incoming-email` (✅ implemented)
+  - Purpose: Test email reception and AI document creation locally without actual SMTP/mailbox setup
+  - Options:
+    - `--from=EMAIL` - Sender email address (creates user if --create-user enabled)
+    - `--subject=TEXT` - Email subject line
+    - `--text=TEXT` - Plain text email body
+    - `--html=HTML` - HTML email body
+    - `--sync` - Process synchronously (skip queue, for debugging)
+    - `--create-user` - Auto-create user if sender doesn't exist
+    - `--use-demo` - Shortcut: sets --from=demo@yaffa.cc and enables --create-user (✅ implemented)
+  - Implementation:
+    - Builds proper MIME multipart/alternative messages compatible with beyondcode/laravel-mailbox
+    - Uses InboundEmail::fromMessage() to create mailbox-compatible objects
+    - Invokes MailHandler directly
+    - Supports text-only, HTML-only, or multipart messages
+    - Event::fake() used when --sync to prevent duplicate processing
+  - Test coverage: SimulateIncomingEmailCommandTest.php (2 tests, 11 assertions)
+  - Usage examples:
+
+    ````bash
+    # Quick test with demo user
+    sail artisan ai:simulate-incoming-email --use-demo
+
+    # Custom email with text and HTML
+    sail artisan ai:simulate-incoming-email \
+      --from=user@example.com \
+      --subject="Receipt from Coffee Shop" \
+      --text="Coffee: $4.50" \
+      --html="<p>Coffee: <strong>$4.50</strong></p>" \
+      --create-user
+
+    # Synchronous processing for debugging
+    sail artisan ai:simulate-incoming-email --use-demo --sync
+    ```  - **New for MVP:** Remove base64-encoded data URIs
+    ````
+
   - **New for MVP:** Strip unnecessary HTML tags while preserving text structure
 
 ## Testing Strategy
@@ -733,3 +788,86 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - User uploads 5 documents simultaneously → all queued, processed sequentially
   - User clicks Reprocess while already processing → reject with error message
   - Two users with same Google Drive folder → each imports separately (no conflict)
+
+---
+
+## Implementation Status & Deviations (Updated Feb 3, 2026)
+
+### Completed Components
+
+**Email Processing Migration (✅ Completed):**
+
+- ReceivedMail model updated: removed transaction_data, processed, handled, transaction_id columns
+- Database migrations created (2026_01_31_180343)
+- Existing ReceivedMails migrated to AiDocuments with proper status mapping
+- ReceivedMail now has `hasOne` relationship to AiDocument (not `belongsTo`)
+- MailHandler refactored to fire EmailReceived event
+- CreateAiDocumentFromSource listener handles EmailReceived and DocumentImported events
+- Email content cleaned via cleanHtmlContent() method (removes styles, scripts, SVGs, base64 images)
+- Email content stored as text file in ai_documents/{user_id}/{document_id}/
+- ProcessIncomingEmailByAi job kept as compatibility layer (short-circuits to EmailReceived event)
+
+**UI Cleanup (✅ Completed):**
+
+- ReceivedMailController removed from routes
+- ReceivedMailService deleted
+- ReceivedMailPolicy deleted
+- All ReceivedMail views deleted (index, show, etc.)
+- Navigation menu entry removed
+- Vue route loader removed from app.js
+- Breadcrumbs removed
+- Mail templates updated (TransactionCreatedFromEmail simplified, TransactionErrorFromEmail removed)
+
+**Event Architecture (✅ Completed):**
+
+- EmailReceived event created (replaces IncomingEmailReceived)
+- IncomingEmailReceived event deleted (Feb 3, 2026)
+- ProcessIncomingEmail listener deleted (Feb 3, 2026)
+- CreateAiDocumentFromSource auto-discovered by Laravel (no manual Event::subscribe needed)
+- Fixed duplicate AiDocument creation bug by removing manual subscription in AppServiceProvider
+
+**Testing Infrastructure (✅ Completed):**
+
+- IncomingEmailTest updated for new flow (7 tests passing)
+- SimulateIncomingEmailCommandTest created (2 tests, 11 assertions)
+- ProcessIncomingEmailByAiTest renamed to test HTML cleanup in CreateAiDocumentFromSource
+- ai:simulate-incoming-email command created with full MIME message support
+- --use-demo flag added for simplified testing
+
+**AI Provider Configuration (✅ Completed):**
+
+- AiProviderConfig model implemented
+- AiProviderConfigApiController with full CRUD + test endpoint
+- API key encryption via encrypted cast
+- One config per user enforcement
+- Integration into user settings page
+
+### Key Deviations from Original Plan
+
+1. **Event-Driven Architecture:** Original plan mentioned "EmailProcessingService (extend existing)" but implementation uses event-driven architecture instead. MailHandler fires EmailReceived event, CreateAiDocumentFromSource listener creates AiDocument. This is cleaner and more maintainable.
+
+2. **ReceivedMail Relationship Direction:** Changed from `belongsTo` to `hasOne` relationship to AiDocument. One ReceivedMail creates one AiDocument, not the reverse. This aligns with the flow: email → document → transaction.
+
+3. **Listener Registration:** Original plan didn't specify how CreateAiDocumentFromSource would be registered. Implementation relies on Laravel 12's auto-discovery instead of manual Event::subscribe(). This prevents duplicate registrations.
+
+4. **Legacy Compatibility:** ProcessIncomingEmailByAi job kept as short-circuit to EmailReceived event for backward compatibility, though it could be fully removed in future.
+
+5. **Testing Command:** Created ai:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
+
+### Pending/Not Yet Implemented
+
+- AiDocument model and migrations
+- AiDocumentFile model and migrations
+- CategoryLearning model and migrations
+- AiDocumentController and API endpoints
+- ProcessDocumentService and AiProcessingJob
+- AssetMatchingService
+- DuplicateDetectionService
+- CategoryLearningService
+- GoogleDriveMonitorService
+- Frontend Vue components (DocumentUploadForm, AiDocumentViewer, etc.)
+- Transaction finalization flow
+- Email notifications (AiDocumentProcessed, AiDocumentProcessingFailed)
+- Google Drive integration
+- Attachment handling in email processing
+- File retention and cleanup job

@@ -2,69 +2,35 @@
 
 namespace Tests\Unit\Jobs;
 
-use App\Jobs\ProcessIncomingEmailByAi;
-use App\Models\ReceivedMail;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use App\Listeners\CreateAiDocumentFromSource;
 use ReflectionClass;
+use Tests\TestCase;
 
 class ProcessIncomingEmailByAiTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function test_cleanup_helper_removes_image_blocks(): void
+    public function test_clean_html_content_removes_styles_svg_and_base64(): void
     {
-        // Create a string with image blocks
-        $inputText = "
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            [image: Image Block 1]
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            [image: Image Block 2]
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            [Not an image block]
-        ";
+        $listener = new CreateAiDocumentFromSource();
 
-        // Create a new received mail to invoke the cleanup helper
-        $mail = new ReceivedMail();
-        $processIncomingEmailByAi = new ProcessIncomingEmailByAi($mail);
-
-        $reflection = new ReflectionClass(get_class($processIncomingEmailByAi));
-        $method = $reflection->getMethod("cleanUpText");
+        $reflection = new ReflectionClass($listener);
+        $method = $reflection->getMethod('cleanHtmlContent');
         $method->setAccessible(true);
-        $outputText = $method->invokeArgs($processIncomingEmailByAi, ['text' => $inputText]);
 
-        // Assert that the output text does not contain any image blocks
-        $this->assertStringNotContainsString('[image:', $outputText);
+        $html = '<div style="color:red"><style>.x{}</style>'
+            . '<svg><circle /></svg>'
+            . '<img src="data:image/png;base64,AAA" />'
+            . '<img src="https://example.com/image.png" />'
+            . '<script>alert(1)</script>'
+            . 'Hello</div>';
 
-        // Assert that the custom block in brackets is not removed
-        $this->assertStringContainsString('[Not an image block]', $outputText);
-    }
+        $cleaned = $method->invoke($listener, $html);
 
-    public function test_cleanup_helper_removes_link_tags(): void
-    {
-        // Create a string with link tags
-        $inputText = "
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            <https://some.link/?some=parameter>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            <https://some.other.link/?some=otherparam>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            <Not a link tag>
-        ";
-
-        // Create a new received mail to invoke the cleanup helper
-        $mail = new ReceivedMail();
-        $processIncomingEmailByAi = new ProcessIncomingEmailByAi($mail);
-
-        $reflection = new ReflectionClass(get_class($processIncomingEmailByAi));
-        $method = $reflection->getMethod("cleanUpText");
-        $method->setAccessible(true);
-        $outputText = $method->invokeArgs($processIncomingEmailByAi, ['text' => $inputText]);
-
-        // Assert that the output text does not contain any link tags
-        $this->assertStringNotContainsString('<http', $outputText);
-
-        // Assert that the custom block in brackets is not removed
-        $this->assertStringContainsString('<Not a link tag>', $outputText);
+        $this->assertStringNotContainsString('style=', $cleaned);
+        $this->assertStringNotContainsString('<style', $cleaned);
+        $this->assertStringNotContainsString('<svg', $cleaned);
+        $this->assertStringNotContainsString('data:image', $cleaned);
+        $this->assertStringNotContainsString('<script', $cleaned);
+        $this->assertStringContainsString('Image: https://example.com/image.png', $cleaned);
+        $this->assertStringContainsString('Hello', $cleaned);
     }
 }

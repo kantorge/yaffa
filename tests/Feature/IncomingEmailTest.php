@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Events\IncomingEmailReceived;
-use App\Listeners\ProcessIncomingEmail;
+use App\Events\EmailReceived;
+use App\Listeners\CreateAiDocumentFromSource;
 use App\Mail\TestMail;
+use App\Models\AiDocument;
+use App\Models\AiDocumentFile;
 use App\Models\ReceivedMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class IncomingEmailTest extends TestCase
@@ -26,9 +29,6 @@ class IncomingEmailTest extends TestCase
 
     public function test_email_sent_by_an_existing_user_to_mailbox_is_stored_in_database(): void
     {
-        // The related job is not executed in the test environment
-        Queue::fake();
-
         $user = User::factory()->create();
 
         $email = new TestMail(
@@ -72,7 +72,7 @@ class IncomingEmailTest extends TestCase
 
     public function test_received_email_generates_event(): void
     {
-        Event::fake(IncomingEmailReceived::class);
+        Event::fake(EmailReceived::class);
 
         $user = User::factory()->create();
 
@@ -85,21 +85,62 @@ class IncomingEmailTest extends TestCase
         Mail::to(config('yaffa.incoming_receipts_email'))->send($email);
 
         Event::assertDispatched(
-            IncomingEmailReceived::class,
-            fn (IncomingEmailReceived $event) => $event->mail->user_id === $user->id
+            EmailReceived::class,
+            fn (EmailReceived $event) => $event->receivedMail->user_id === $user->id
+        );
+    }
+
+    public function test_received_email_does_not_queue_ai_processing_job(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+
+        $email = new TestMail(
+            $user->email,
+            'Test E-mail',
+            'Some example text in the body',
         );
 
-        Event::assertListening(
-            IncomingEmailReceived::class,
-            ProcessIncomingEmail::class
-        );
+        Mail::to(config('yaffa.incoming_receipts_email'))->send($email);
+
+        Queue::assertNotPushed(\App\Jobs\AiProcessingJob::class);
+    }
+
+    public function test_received_email_creates_ai_document_and_file(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+
+        $mail = ReceivedMail::factory()
+            ->for($user)
+            ->create([
+                'subject' => 'Test Subject',
+                'html' => '<p>Hello</p>',
+                'text' => 'Hello',
+            ]);
+
+        $listener = new CreateAiDocumentFromSource();
+        $listener->handleEmailReceived(new EmailReceived($mail));
+
+        $document = AiDocument::first();
+
+        $this->assertNotNull($document);
+        $this->assertSame($user->id, $document->user_id);
+        $this->assertSame('received_email', $document->source_type);
+        $this->assertSame('ready_for_processing', $document->status);
+        $this->assertSame($mail->id, $document->received_mail_id);
+
+        $file = AiDocumentFile::first();
+
+        $this->assertNotNull($file);
+        Storage::disk('local')->assertExists($file->file_path);
+        $this->assertSame('txt', $file->file_type);
     }
 
     public function test_email_without_subject_is_stored_with_default_subject(): void
     {
-        // The related job is not executed in the test environment
-        Queue::fake();
-
         $user = User::factory()->create();
 
         $email = new TestMail(
