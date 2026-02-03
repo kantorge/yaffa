@@ -21,10 +21,6 @@ class ReceivedMailFactory extends Factory
             'subject' => $this->faker->sentence(),
             'html' => $this->faker->randomHtml(),
             'text' => $this->faker->text(),
-            'processed' => false,
-            'handled' => false,
-            'transaction_data' => null,
-            'transaction_id' => null,
         ];
     }
 

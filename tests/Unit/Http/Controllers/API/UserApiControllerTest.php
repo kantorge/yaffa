@@ -20,6 +20,7 @@ class UserApiControllerTest extends TestCase
             'end_date' => '2020-12-31',
             'account_details_date_range' => 'none',
         ]);
+
         $this->actingAs($user);
 
         $response = $this->json('PATCH', '/api/user/settings', [

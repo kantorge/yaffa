@@ -12,7 +12,7 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="row mb-3">
+        <div class="row">
           <label for="language" class="col-form-label col-sm-3">
             {{ __('Language') }}
           </label>
@@ -44,7 +44,7 @@
             <HasError field="language" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="locale" class="col-form-label col-sm-3">
             {{ __('Locale') }}
           </label>
@@ -78,7 +78,7 @@
             <HasError field="locale" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="start_date" class="col-form-label col-sm-3">
             {{ __('Start date for YAFFA') }}
           </label>
@@ -123,7 +123,7 @@
             <HasError field="start_date" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="end_date" class="col-form-label col-sm-3">
             {{ __('End date for YAFFA') }}
           </label>
@@ -166,7 +166,7 @@
             <HasError field="end_date" :form="form" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label
             for="account_details_date_range"
             class="col-form-label col-sm-3"
@@ -310,3 +310,10 @@
     },
   };
 </script>
+
+<style scoped>
+  form div.row:not(:last-child) {
+    /* Apply mb-3 margin only to rows except the last one */
+    margin-bottom: 1rem !important;
+  }
+</style>
