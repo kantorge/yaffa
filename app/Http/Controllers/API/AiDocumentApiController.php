@@ -213,7 +213,11 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             Storage::disk('local')->delete($file->file_path);
         }
 
-        $aiDocument->delete();
+        if ($aiDocument->receivedMail) {
+            $aiDocument->receivedMail->delete();
+        } else {
+            $aiDocument->delete();
+        }
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Components;
 
-use App\Events\IncomingEmailReceived;
+use App\Events\EmailReceived;
 use App\Models\ReceivedMail;
 use App\Models\User;
 use BeyondCode\Mailbox\InboundEmail;
@@ -43,7 +43,6 @@ class MailHandler
 
         $receivedMail->save();
 
-        // Generate an event to process the email
-        event(new IncomingEmailReceived($receivedMail));
+        event(new EmailReceived($receivedMail));
     }
 }

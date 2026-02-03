@@ -17,7 +17,6 @@ class TransactionCreatedFromEmail extends Mailable
     use SerializesModels;
 
     public ReceivedMail $mail;
-    public array $transaction;
     public User $user;
 
     /**
@@ -27,7 +26,6 @@ class TransactionCreatedFromEmail extends Mailable
     public function __construct(ReceivedMail $mail)
     {
         $this->mail = $mail;
-        $this->transaction = $mail->transaction_data;
         $this->user = $mail->user;
     }
 
@@ -53,8 +51,8 @@ class TransactionCreatedFromEmail extends Mailable
         return new Content(
             markdown: 'emails.transaction-created-from-email',
             with: [
-                'transaction' => $this->transaction,
                 'user' => $this->user,
+                'mail' => $this->mail,
             ],
         );
     }
