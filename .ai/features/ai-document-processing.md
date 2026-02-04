@@ -77,6 +77,18 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `model` (validated against provider’s model list)
     - `api_key` (encrypted cast)
     - `created_at`, `updated_at`
+  - `GoogleDriveConfig` (new)
+    - `id`
+    - `user_id` (foreign key, NO unique constraint - allows multiple configs in future, MVP enforces one per user at application level)
+    - `service_account_email` (extracted from JSON, displayed in UI)
+    - `service_account_json` (encrypted cast, full JSON credentials)
+    - `folder_id` (Google Drive folder ID)
+    - `delete_after_import` (boolean, default false)
+    - `enabled` (boolean, default true)
+    - `last_sync_at` (timestamp, nullable)
+    - `last_error` (text, nullable - stores last error message)
+    - `error_count` (integer, default 0 - future use for tracking failures)
+    - `created_at`, `updated_at`
   - Update existing `ReceivedMail` model to reflect new app behavior. (✅ implemented)
     - Remove `transaction_data`, `processed`, and `handled` flags, as AIdocument processing supersedes them. (✅ implemented)
     - Remove `transaction_id` FK, as transactions are now linked via AiDocument. (✅ implemented)
@@ -120,6 +132,19 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `model` - varchar(255), not null
     - `api_key` - text, not null (encrypted)
     - `created_at`, `updated_at` - timestamps
+  - `google_drive_configs` (new)
+    - `id` - bigint unsigned, primary key
+    - `user_id` - bigint unsigned, foreign key to users, cascade on delete (NO unique constraint)
+    - `service_account_email` - varchar(255), not null
+    - `service_account_json` - text, not null (encrypted)
+    - `folder_id` - varchar(191), not null
+    - `delete_after_import` - boolean, not null, default false
+    - `enabled` - boolean, not null, default true
+    - `last_sync_at` - timestamp, nullable
+    - `last_error` - text, nullable
+    - `error_count` - integer unsigned, not null, default 0
+    - `created_at`, `updated_at` - timestamps
+    - Indexes: `user_id`, `enabled`
   - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions`
   - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails` (✅ implemented - Migration 2026_01_31_180343 and 2026_02_03_185934)
     - During the migration, create AiDocument records for existing processed received mails to preserve data integrity. (✅ implemented)
@@ -164,23 +189,23 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `POST /api/ai/test` - Test connection
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be `__existing__`)
       - Response: `{"message": "Connection successful"}` OR `{"message": "..."}` (400)
-  - `GoogleDriveController` under `/api/ai/*`
-    - `GET /api/ai/google/auth-url` - Get OAuth URL
-      - Response: `{"auth_url": "https://..."}`
-    - `POST /api/ai/google/callback` - Handle OAuth callback
-      - Request: `{"code": "..."}`
-      - Response: `{"success": true, "message": "Connected"}`
-    - `POST /api/ai/google/connect` - Manually trigger connection
-      - Response: redirects to OAuth flow
-    - `POST /api/ai/google/disconnect` - Remove OAuth tokens
-      - Response: `{"message": "Disconnected"}`
-    - `POST /api/ai/google/sync` - Manually trigger sync
-      - Response: `{"message": "Sync queued", "documents_created": 3}`
-    - `POST /api/ai/google/toggle` - Enable/disable monitoring
-      - Request: `{"enabled": true|false}`
-      - Response: `{"enabled": true|false}`
-    - `GET /api/ai/google/status` - Get monitoring status
-      - Response: `{"enabled": true, "folder_id": "...", "last_sync": "..."}`
+  - `GoogleDriveConfigApiController` (new)
+    - `GET /api/google-drive/config` - Get user's configs (MVP returns first only)
+      - Response: `{"id": 1, "service_account_email": "...", "folder_id": "...", "delete_after_import": false, "enabled": true, "last_sync_at": "...", "created_at": "...", "updated_at": "..."}` (service_account_json never returned)
+    - `POST /api/google-drive/config` - Create config (MVP enforces one per user at app level)
+      - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}`
+      - Validation: service_account_json required (valid JSON with required Google keys), folder_id required
+      - Response: 201 with config details (no service_account_json)
+    - `PATCH /api/google-drive/config/{id}` - Update config
+      - Request: `{"service_account_json": "...", "folder_id": "...", "delete_after_import": false, "enabled": true}` (service_account_json can be omitted or `__existing__`)
+      - Response: 200 with updated config (no service_account_json)
+    - `DELETE /api/google-drive/config/{id}` - Delete config
+      - Response: 204 No Content
+    - `POST /api/google-drive/test` - Test connection
+      - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
+      - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
+    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger
+      - Response: `{"message": "Sync queued"}`
   - `PayeeStatsController`
     - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
       - Query params: `months` (default 6)
@@ -225,13 +250,33 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Saves/updates learning records on transaction save
     - Retrieves learning data for AI prompt context
     - Increments usage_count on match
-  - `GoogleDriveMonitorService` (scheduled job, runs every 15 min if enabled)
-    - Fetches new files from configured folder
-    - When multiple new files are detected, each file imported generates a dedicated new AiDocument
-    - Checks for duplicates via google_drive_file_id and ignores already imported items
-    - Downloads files to storage
-    - Creates AiDocument records
-    - Optionally deletes files from Drive after import
+  - `GoogleDriveService` (new)
+    - Methods:
+      - `testConnection(array $credentials, string $folderId): array` - Tests connection, returns file count and delete permission status
+      - `listNewFiles(GoogleDriveConfig $config): array` - Gets files since last_sync_at (or all if null)
+      - `downloadFile(string $fileId, array $credentials, string $destination): void` - Downloads file
+      - `deleteFile(string $fileId, array $credentials): void` - Deletes file from Drive
+    - Uses `google/apiclient` package (already in composer.json)
+    - Error handling:
+      - Authentication/permission errors: Throw specific exception (triggers config disable)
+      - Other errors: Log and continue (silent fail for MVP)
+  - `GoogleDriveMonitorJob` (scheduled job, frequency via .env `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`, default 15)
+    - Runs for all users with `enabled = true` in `google_drive_configs`
+    - For each enabled config:
+      - Call `GoogleDriveService::listNewFiles()`
+      - For each new file (one file = one AiDocument):
+        - **Step 1:** Download file to `storage/app/ai_documents/{user_id}/{document_id}/{filename}` (create folder structure)
+        - **Step 2:** Only if file copy successful, create AiDocument record with `google_drive_file_id`
+        - **Step 3:** Fire `DocumentImported` event (listener creates final structure)
+        - **Step 4:** If `delete_after_import = true`, delete from Drive
+        - **Step 5:** Update `last_sync_at` timestamp on config
+      - On authentication/permission error:
+        - Set `enabled = false` on config
+        - Store error in `last_error` field
+        - Send email notification to user
+      - On other errors: Log and continue (silent fail)
+    - Duplicate prevention: Check `google_drive_file_id` exists in `ai_documents` before processing
+    - Deleted AiDocument handling: If AiDocument with same `google_drive_file_id` was deleted, re-import the file
   - `EmailProcessingService` (extend existing)
     - Parses incoming email (text/HTML cleanup)
     - Extracts attachments
@@ -242,6 +287,9 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 - Policies / Auth:
   - `AiDocumentPolicy` (view, create, delete, reprocess)
   - `AiProviderConfigPolicy` (view, create, update, delete)
+  - `GoogleDriveConfigPolicy` (new) - view, create, update, delete, sync
+    - Simple ownership check: `$user->id === $config->user_id`
+    - MVP: Only one config per user enforced at application level (not database)
 
 - Events / Notifications:
   - **Ingestion Events:** (✅ implemented)
@@ -267,6 +315,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Subject: "Document processing failed"
       - Content: Document ID, error type (auth/quota/model/network), suggested action, link to AI config settings
       - View: `resources/views/emails/ai-document-processing-failed.blade.php`
+    - **Google Drive config disabled (auth/permission error)**
+      - Mailable: `App\Mail\GoogleDriveConfigDisabled`
+      - Subject: "Google Drive monitoring disabled"
+      - Content: Config ID, error message, instructions to fix (re-share folder, update service account), link to settings
+      - View: `resources/views/emails/google-drive-config-disabled.blade.php`
 
 ## Frontend Scope (Vue + Bootstrap)
 
@@ -286,14 +339,21 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Layout: extends `layouts.app`
     - Vue component: `AiProviderSettings.vue`
       - Features: provider/model selection, API key input, test connection button, add/update/delete
-    - `Google Drive Settings` - `/settings/google-drive`
-      - Blade view: `resources/views/settings/google-drive.blade.php`
-      - Layout: extends `layouts.app`
-      - Vue component: ` (✅ implemented)
-    - No user-facing pages or CRUD actions for `ReceivedMail` (✅ implemented)
-    - Any existing ReceivedMail views/routes should be removed or hidden (✅ implemented)
-    - All ReceivedMail views, controllers, policies, and routes removed
-    - Mail templates updated (TransactionCreatedFromEmail simplified, TransactionErrorFromEmail removed)
+  - `Google Drive Settings` - `/user/settings` (integrated into existing settings page)
+    - Vue component: `GoogleDriveSettings.vue` (new)
+      - Loaded in `MyProfile.vue` component (same parent as AiProviderSettings)
+      - Features:
+        - Service account email display (extracted from JSON)
+        - Service account JSON input (password type with show/hide toggle button - Vue best practice)
+        - Folder ID input with smart URL parsing (extracts ID from full Drive URL)
+        - Tooltip helper text (example: `https://drive.google.com/drive/folders/{FOLDER_ID}` - copy the part after `/folders/`)
+        - Delete after import checkbox
+        - Enabled/disabled toggle
+        - Test connection button (shows file count and delete permission status)
+        - Manual sync trigger button
+        - Last sync timestamp display
+        - Add/update/delete configuration
+        - MVP: Only one config per user enforced at UI level (hide "Add" button if config exists)
     - Blade view: `resources/views/ai-documents/create.blade.php`
     - Layout: extends `layouts.app`
     - Vue component: `DocumentUploadForm.vue`
@@ -304,6 +364,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 
 - Components:
   - `DocumentUploadForm`
+  - `GoogleDriveSettings` (new)
+    - Service account JSON field: password type with show/hide toggle (use Vue best practice pattern)
+    - Folder ID field: Smart parsing to extract ID from full Drive URL
+    - Test connection: Display file count and delete permission check results
+    - Manual sync: Trigger one-time import
   - Reuse existing transaction view component for preview
   - Use existing transaction form and modal container for finalization
 
@@ -516,28 +581,110 @@ A few notes on the statuses
 
 ## Google Drive Monitoring
 
-- **OAuth2 Configuration:**
-  - Credentials stored in user settings table: `google_drive_access_token`, `google_drive_refresh_token`, `google_drive_folder_id`
-  - OAuth scopes: `https://www.googleapis.com/auth/drive.file` (read/write to app-created files), `https://www.googleapis.com/auth/drive.readonly` (read existing files)
-  - If delete-after-import enabled: requires `https://www.googleapis.com/auth/drive` (full drive access)
-  - Client ID/Secret stored in `.env`: `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`
-- **Folder Selection (MVP):**
-  - Preferred: Google Drive Picker dialog to select a folder after OAuth connection
-  - Fallback: Manual folder ID input with a “Validate” action
-  - Store selected `google_drive_folder_id` in user settings
-  - Picker is optional for self-hosted setups where it may be blocked
+- **Service Account Configuration (MVP):**
+  - Uses Google Cloud Service Account for authentication (no OAuth flow required)
+  - Credentials stored in `google_drive_configs` table (one per user for MVP, database allows multiple for future)
+  - Service account JSON key uploaded by user and stored encrypted
+  - Service account email extracted from JSON and displayed in UI (non-sensitive identifier)
+  - User must manually share target Google Drive folder with service account email
+  - **MVP Enforcement:** Application-level check prevents multiple configs per user (database allows it for future expansion)
+- **Folder Selection:**
+  - Manual folder ID input in settings UI
+  - Smart URL parsing: UI extracts folder ID from full Drive URL automatically
+    - Example: `https://drive.google.com/drive/folders/1a2b3c4d5e6f` → extracts `1a2b3c4d5e6f`
+  - Tooltip with example URL format and extraction instructions
+  - Validation during test connection
+
+- **Service Account JSON Validation:**
+  - Must be valid JSON format
+  - Required Google service account keys validated:
+    - `type` (must be "service_account")
+    - `project_id`
+    - `private_key_id`
+    - `private_key`
+    - `client_email`
+    - `client_id`
+    - `auth_uri`
+    - `token_uri`
+  - Extract `client_email` and store separately for UI display
+  - Full JSON stored encrypted (never exposed in API responses)
+
+- **UI Security:**
+  - Service account JSON field: password type with show/hide toggle button
+  - Follow Vue best practice for password visibility toggle
+  - Placeholder text changes based on create/update mode:
+    - Create: "Paste your Google Cloud Service Account JSON key"
+    - Update: "Leave blank to keep existing credentials"
+  - Never populate field from backend (always empty on load)
+  - Support `__existing__` placeholder for test connection
 - **File Tracking:**
-  - Store `google_drive_file_id` in `ai_documents` table
-  - Unique constraint prevents duplicate imports
-  - Track last sync timestamp in user settings
+  - Store `google_drive_file_id` in `ai_documents` table (varchar 255, nullable, indexed)
+  - Duplicate prevention: Check if `google_drive_file_id` exists before importing
+  - Deleted AiDocument handling: If user deletes AiDocument but file still exists in Drive, re-import on next sync (no permanent skip list)
+  - Track `last_sync_at` timestamp in `google_drive_configs` table
 - **Monitoring Schedule:**
   - Job: `App\Jobs\GoogleDriveMonitorJob`
-  - Frequency: every 15 minutes (configurable via `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`)
-  - Only runs if user has `google_drive_enabled = true` in settings
+  - Frequency: Configurable via `.env` variable `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default: 15)
+  - NOT a user-configurable setting (global system setting)
+  - Only processes configs with `enabled = true`
+  - Manual trigger: User can request one-time sync via UI button (queues job immediately)
+
+- **File Import Flow:**
+  1. List files from folder (filter by modified date > last_sync_at)
+  2. For each file:
+     - Check if `google_drive_file_id` exists in `ai_documents` (skip if duplicate)
+     - **Download file first** to `storage/app/ai_documents/{user_id}/{temp_id}/{filename}`
+     - **Only if download succeeds**, create AiDocument record with `google_drive_file_id`
+     - Fire `DocumentImported` event (existing listener handles rest)
+     - If `delete_after_import = true`, delete file from Drive
+  3. Update `last_sync_at` on config
+  4. One file = one AiDocument (no grouping)
 - **Delete After Import:**
-  - User setting: `google_drive_delete_after_import` (boolean, default false)
-  - Requires expanded OAuth scope and re-authentication when enabled
-  - Files delete (✅ implemented)
+  - User setting: `delete_after_import` (boolean, default false) in `google_drive_configs`
+  - Requires service account to have delete permissions on folder
+  - Test connection checks delete permission (without actually deleting)
+  - Files deleted after successful import and AiDocument creation
+
+- **Error Handling:**
+  - **Authentication/Permission Errors** (fail-fast):
+    - Invalid service account JSON
+    - Service account not shared the folder
+    - Insufficient permissions
+    - **Action:** Set `enabled = false`, store error in `last_error`, send email notification to user
+  - **Other Errors** (silent fail for MVP):
+    - Network timeouts
+    - API rate limits
+    - Individual file download failures
+    - **Action:** Log error, continue processing remaining files
+  - **Future Enhancement:** Track `error_count`, notify user after N consecutive failures
+
+- **Connection Testing:**
+  - Endpoint: `POST /api/google-drive/test`
+  - Tests performed:
+    - Authenticate with service account JSON
+    - Access specified folder (verify read permission)
+    - List files (return count)
+    - Check delete permission (without actually deleting - use Drive API permissions check)
+  - Response on success: `{"success": true, "file_count": 5, "has_delete_permission": true}`
+  - Response on failure: `{"success": false, "message": "Folder not accessible. Ensure service account email is shared the folder."}`
+
+- **Service Account Setup Instructions (for users):**
+  1. Create Google Cloud Project
+  2. Enable Google Drive API
+  3. Create Service Account
+  4. Download JSON key file
+  5. Share target Google Drive folder with service account email (visible in key file as `client_email`)
+  6. Paste folder ID (or full URL) and JSON contents into YAFFA settings
+  7. Test connection before saving
+
+- **Non-MVP (Future Improvements):**
+  - OAuth2 flow for end-user authentication (easier UX, no service account sharing needed)
+  - Google Drive Picker dialog for folder selection
+  - Multiple folder monitoring per user (database already supports it)
+  - Track consecutive error count, auto-disable after threshold
+  - Permanent skip list for user-deleted documents
+
+## Email Content Cleanup
 
 - To optimize AI token usage, implement email content cleanup before AI processing.
 - Extend existing cleanup from `ProcessIncomingEmailByAi::cleanUpText()`:
@@ -651,12 +798,40 @@ A few notes on the statuses
     - Delete config
     - Test connection
     - API key encryption
-  - `GoogleDriveIntegrationTest`
-    - OAuth flow
-    - File fetch from Drive
-    - Duplicate prevention (google_drive_file_id)
-    - Document creation
-    - Optional file deletion after import
+  - `GoogleDriveConfigApiControllerTest` (new)
+    - Authorization tests (own configs only)
+    - Show endpoint (no service_account_json in response)
+    - Store endpoint (one per user enforcement at app level)
+    - Update endpoint (supports `__existing__` placeholder)
+    - Destroy endpoint
+    - Test connection endpoint (file count, delete permission check)
+    - Manual sync trigger
+  - `GoogleDriveConfigRequestTest` (new)
+    - Validation: service_account_json required (create), optional (update)
+    - Validation: valid JSON structure
+    - Validation: required Google service account keys present
+    - Validation: folder_id required
+    - `__existing__` placeholder handling
+  - `GoogleDriveConfigTest` (Unit)
+    - service_account_json encryption at rest
+    - service_account_json decryption on access
+    - service_account_email extraction from JSON
+  - `GoogleDriveServiceTest` (new)
+    - Mock Google Drive API client
+    - Test connection (file listing)
+    - Delete permission check (without deleting)
+    - File download
+    - File deletion
+    - Authentication error handling
+  - `GoogleDriveMonitorJobTest` (new)
+    - Only processes enabled configs
+    - File download → database record creation order
+    - Duplicate prevention (google_drive_file_id check)
+    - Deleted AiDocument re-import
+    - Delete after import logic
+    - Authentication error disables config
+    - Error notification email sent
+    - last_sync_at update
   - `DuplicateDetectionIntegrationTest`
     - Multiple duplicate warnings
     - Soft warning display
@@ -686,6 +861,15 @@ A few notes on the statuses
     - API key masking
     - Test connection button
     - Success/error toast display
+  - `GoogleDriveSettingsTest.php` (Browser/Dusk - new)
+    - Add configuration workflow
+    - Service account JSON show/hide toggle
+    - Folder ID extraction from full URL
+    - Update configuration (preserve existing credentials)
+    - Test connection (file count display)
+    - Manual sync trigger
+    - Delete configuration
+    - One config per user enforcement (UI level)
 
 ## AI Provider Configuration
 
@@ -772,11 +956,16 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Very long item description (>255 chars) → truncate
 
 - **Google Drive:**
-  - OAuth token expired → refresh automatically or prompt re-auth
-  - Folder deleted → fail gracefully, notify user
-  - File deleted before download → skip, log warning
-  - Network timeout → retry
+  - Invalid service account JSON → fail fast, show validation error
+  - Service account not shared folder → test connection fails with clear message
+  - Service account lacks delete permission → test shows `has_delete_permission: false`, warn user if delete_after_import enabled
+  - Folder deleted → disable config, notify user via email
+  - File deleted before download → skip, log warning, continue processing
+  - Network timeout → log error, continue (silent fail for MVP)
   - Duplicate file (same google_drive_file_id) → skip silently
+  - User deletes AiDocument, file still in Drive → re-import on next sync
+  - File download fails → log error, do NOT create database record, continue processing
+  - Multiple configs per user → MVP prevents in UI and controller, database allows for future
 
 - **Transaction Finalization:**
   - User clicks Finalize before processing complete → disable button, show error
