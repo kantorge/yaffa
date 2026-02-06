@@ -4,6 +4,8 @@
 
 Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
 
+**Current Implementation Status (Feb 6, 2026):** This feature is 40-50% implemented. See [Implementation Status & Deviations](#implementation-status--deviations-updated-feb-6-2026) section for detailed breakdown of completed and pending components.
+
 ## Goals / Non-Goals
 
 - Goals:
@@ -1097,18 +1099,42 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - GoogleDriveSettingsTest.php (Dusk): Manual sync test updated for 202 response and "queued" message (✅ implemented)
 - Total: 48 backend tests passing, 124+ assertions (Feb 6, 2026) (✅ implemented)
 
+**Additional Backend Components Completed (✅ Feb 6, 2026 - After Google Drive Integration):**
+
+- AiDocument model and migrations (✅ implemented)
+- AiDocumentFile model and migrations (✅ implemented)
+- CategoryLearning model and migrations (✅ implemented)
+- AiDocumentApiController and all API endpoints (✅ implemented)
+- ProcessDocumentService with full AI orchestration (✅ implemented)
+- AiProcessingJob with retry logic (✅ implemented)
+- AssetMatchingService with similarity scoring (✅ implemented)
+- DuplicateDetectionService with threshold logic (✅ implemented)
+- CategoryLearningService for item normalization (✅ implemented)
+- PayeeStatsApiController for category stats (✅ implemented)
+- AiDocumentPolicy with authorization checks (✅ implemented)
+- Comprehensive test coverage for all services and controllers (✅ 50+ tests passing)
+
 ### Pending/Not Yet Implemented
 
-- AiDocument model and migrations
-- AiDocumentFile model and migrations
-- CategoryLearning model and migrations
-- AiDocumentController and API endpoints
-- ProcessDocumentService and AiProcessingJob
-- AssetMatchingService
-- DuplicateDetectionService
-- CategoryLearningService
-- Frontend Vue components (DocumentUploadForm, AiDocumentViewer, etc.)
-- Transaction finalization flow
-- Email notifications (AiDocumentProcessed, AiDocumentProcessingFailed, GoogleDriveImportSuccess, GoogleDriveImportFailed)
-- Attachment handling in email processing
-- File retention and cleanup job
+**Frontend Components (Ready for Implementation):**
+
+- `DocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support
+- `AiDocumentIndex.vue` - Document list with filters (status, source_type, pagination)
+- `AiDocumentShow.vue` - Document detail view with file preview and draft data
+- `DocumentReviewModal.vue` - Modal for transaction form integration
+- Pages: `/ai-documents` (index), `/ai-documents/{id}` (detail)
+
+**Processing & Transaction Flow:**
+
+- Transaction finalization flow (form pre-population and submission)
+- Duplicate transaction detection UI warning (backend service ready, frontend integration pending)
+- API endpoint documentation for `GET /api/ai/payees/{id}/category-stats`
+
+**Notifications & Jobs:**
+
+- Wire `AiDocumentProcessingSuccessNotification` in ProcessDocumentService (class exists, needs invocation)
+- File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+
+**Other:**
+
+- Email attachment extraction and storage in AiDocumentFile (email content currently stored as text file)
