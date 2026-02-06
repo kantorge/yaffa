@@ -189,7 +189,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `POST /api/ai/test` - Test connection
       - Request: `{"provider": "...", "model": "...", "api_key": "..."}` (api_key can be `__existing__`)
       - Response: `{"message": "Connection successful"}` OR `{"message": "..."}` (400)
-  - `GoogleDriveConfigApiController` (new)
+  - `GoogleDriveConfigApiController` (✅ implemented)
     - `GET /api/google-drive/config` - Get user's configs (MVP returns first only)
       - Response: `{"id": 1, "service_account_email": "...", "folder_id": "...", "delete_after_import": false, "enabled": true, "last_sync_at": "...", "created_at": "...", "updated_at": "..."}` (service_account_json never returned)
     - `POST /api/google-drive/config` - Create config (MVP enforces one per user at app level)
@@ -205,7 +205,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
       - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
     - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger
-      - Response: `{"message": "Sync queued"}`
+      - Response: `{"message": "Sync job not implemented yet"}`
   - `PayeeStatsController`
     - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
       - Query params: `months` (default 6)
@@ -861,7 +861,7 @@ A few notes on the statuses
     - API key masking
     - Test connection button
     - Success/error toast display
-  - `GoogleDriveSettingsTest.php` (Browser/Dusk - new)
+  - `GoogleDriveSettingsTest.php` (Browser/Dusk - ✅ implemented)
     - Add configuration workflow
     - Service account JSON show/hide toggle
     - Folder ID extraction from full URL
@@ -980,7 +980,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ---
 
-## Implementation Status & Deviations (Updated Feb 3, 2026)
+## Implementation Status & Deviations (Updated Feb 6, 2026)
 
 ### Completed Components
 
@@ -1031,6 +1031,11 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - One config per user enforcement
 - Integration into user settings page
 
+**Google Drive Settings (✅ Completed):**
+
+- Google Drive settings UI and API flow covered by Dusk tests
+- Manual sync endpoint returns an informational message for UI toast handling
+
 ### Key Deviations from Original Plan
 
 1. **Event-Driven Architecture:** Original plan mentioned "EmailProcessingService (extend existing)" but implementation uses event-driven architecture instead. MailHandler fires EmailReceived event, CreateAiDocumentFromSource listener creates AiDocument. This is cleaner and more maintainable.
@@ -1042,6 +1047,8 @@ All prompts require JSON responses with strict schemas to ensure validation.
 4. **Legacy Compatibility:** ProcessIncomingEmailByAi job kept as short-circuit to EmailReceived event for backward compatibility, though it could be fully removed in future.
 
 5. **Testing Command:** Created ai:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
+
+6. **Manual Sync Response:** The manual sync endpoint returns HTTP 200 with `"Sync job not implemented yet"` to allow an info toast instead of an error toast.
 
 ### Pending/Not Yet Implemented
 
