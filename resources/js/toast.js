@@ -26,6 +26,21 @@ export function showToast(header, body, toastClass, otherProperties ) {
 }
 
 /**
+ * Function to display an info Toast notification, where only the body is needed.
+ *
+ * @param {string} body The body of the toast.
+ *
+ * @returns {void}
+ */
+export function showInfoToast(body) {
+    showToast(
+        __('Info'),
+        body,
+        'bg-info',
+    );
+}
+
+/**
  * Function to display a success Toast notification, where only the body is needed.
  *
  * @param {string} body The body of the toast.

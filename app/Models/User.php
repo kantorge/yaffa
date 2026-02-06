@@ -196,9 +196,14 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(AiDocument::class);
     }
 
-    public function aiProviderConfig()
+    public function aiProviderConfigs(): HasMany
     {
         return $this->hasMany(AiProviderConfig::class);
+    }
+
+    public function googleDriveConfigs(): HasMany
+    {
+        return $this->hasMany(GoogleDriveConfig::class);
     }
 
     public function categoryLearning(): HasMany
