@@ -14,7 +14,7 @@ class AiDocumentFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'status' => $this->faker->randomElement(['draft', 'ready_for_processing', 'processing', 'processing_failed', 'ready_for_review', 'finalized']),
+            'status' => $this->faker->randomElement(['ready_for_processing', 'processing', 'processing_failed', 'ready_for_review', 'finalized']),
             'source_type' => $this->faker->randomElement(['manual_upload', 'received_email', 'google_drive']),
             'processed_transaction_data' => null,
             'google_drive_file_id' => null,
