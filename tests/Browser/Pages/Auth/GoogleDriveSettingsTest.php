@@ -361,7 +361,7 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->waitFor('@button-sync-google-drive', 10)
                 ->click('@button-sync-google-drive')
                 ->waitFor('.toast-container div.toast.bg-info.show', 10)
-                ->assertSee('Sync job not implemented yet');
+                ->assertSee('Google Drive sync has been queued');
         });
     }
 

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 use DB;
 
@@ -506,16 +508,35 @@ class GoogleDriveConfigApiControllerTest extends TestCase
 
     // ===== SYNC ENDPOINT (POST /api/google-drive/sync/{id}) =====
 
-    public function test_sync_returns_not_implemented(): void
+    public function test_sync_queues_job_successfully(): void
     {
-        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+        config(['ai-documents.google_drive.enabled' => true]);
+
+        Queue::fake();
+
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id, 'enabled' => true]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson("/api/google-drive/sync/{$config->id}");
 
-        $response->assertStatus(200);
+        $response->assertStatus(202);
         $response->assertJsonStructure(['message']);
-        $response->assertJson(['message' => __('Sync job not implemented yet')]);
+        $response->assertJson(['message' => __('Google Drive sync has been queued')]);
+
+        Queue::assertPushed(ProcessGoogleDriveConfigJob::class);
+    }
+
+    public function test_sync_cannot_trigger_disabled_config(): void
+    {
+        config(['ai-documents.google_drive.enabled' => true]);
+
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id, 'enabled' => false]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/google-drive/sync/{$config->id}");
+
+        $response->assertStatus(400);
+        $response->assertJson(['message' => __('Cannot sync disabled Google Drive configuration')]);
     }
 
     public function test_sync_cannot_trigger_for_other_users_config(): void
