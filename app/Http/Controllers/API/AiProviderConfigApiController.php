@@ -31,7 +31,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     {
         // For MVP, we assume one config per user
         $user = $request->user();
-        $config = $user->aiProviderConfig()->first();
+        $config = $user->aiProviderConfigs()->first();
 
         if (! $config) {
             return response()->json([
@@ -62,8 +62,8 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         $user = $request->user();
 
-        // Delete existing config if present (enforce one per user)
-        $user->aiProviderConfig()->delete();
+        // Delete existing config(s) if present (enforce one per user)
+        $user->aiProviderConfigs()->delete();
 
         // Create new config
         $config = AiProviderConfig::create([
@@ -141,7 +141,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
         // If the API key is indicated as existing, fetch the stored key
         if ($validated['api_key'] === '__existing__') {
             $user = $request->user();
-            $existingConfig = $user->aiProviderConfig()->first();
+            $existingConfig = $user->aiProviderConfigs()->first();
             if (!$existingConfig) {
                 return response()->json([
                     'message' => __('No existing AI provider configuration found'),
