@@ -45,7 +45,7 @@ class ProcessDocumentService
 
             // Get user and their provider config
             $user = $document->user;
-            $config = $user->aiProviderConfig;
+            $config = $user->aiProviderConfigs()->first();
 
             if (! $config) {
                 throw new Exception('No AI provider configured for user');
