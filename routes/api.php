@@ -7,7 +7,7 @@ use App\Http\Controllers\API\AiDocumentApiController;
 use App\Http\Controllers\API\AiProviderConfigApiController;
 use App\Http\Controllers\API\CategoryApiController;
 use App\Http\Controllers\API\CurrencyRateApiController;
-use App\Http\Controllers\API\GoogleDriveApiController;
+use App\Http\Controllers\API\GoogleDriveConfigApiController;
 use App\Http\Controllers\API\InvestmentApiController;
 use App\Http\Controllers\API\InvestmentGroupApiController;
 use App\Http\Controllers\API\InvestmentPriceApiController;
@@ -164,21 +164,19 @@ Route::delete('/ai/config/{aiProviderConfig}', [AiProviderConfigApiController::c
 Route::post('/ai/test', [AiProviderConfigApiController::class, 'test'])
     ->name('api.ai.config.test');
 
-// Google Drive routes
-Route::get('/ai/google/auth-url', [GoogleDriveApiController::class, 'getAuthUrl'])
-    ->name('api.google-drive.auth-url');
-Route::post('/ai/google/callback', [GoogleDriveApiController::class, 'handleCallback'])
-    ->name('api.google-drive.callback');
-Route::post('/ai/google/connect', [GoogleDriveApiController::class, 'connect'])
-    ->name('api.google-drive.connect');
-Route::post('/ai/google/disconnect', [GoogleDriveApiController::class, 'disconnect'])
-    ->name('api.google-drive.disconnect');
-Route::post('/ai/google/sync', [GoogleDriveApiController::class, 'sync'])
-    ->name('api.google-drive.sync');
-Route::post('/ai/google/toggle', [GoogleDriveApiController::class, 'toggle'])
-    ->name('api.google-drive.toggle');
-Route::get('/ai/google/status', [GoogleDriveApiController::class, 'status'])
-    ->name('api.google-drive.status');
+// Google Drive Config routes
+Route::get('/google-drive/config', [GoogleDriveConfigApiController::class, 'show'])
+    ->name('api.google-drive.config.show');
+Route::post('/google-drive/config', [GoogleDriveConfigApiController::class, 'store'])
+    ->name('api.google-drive.config.store');
+Route::patch('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'update'])
+    ->name('api.google-drive.config.update');
+Route::delete('/google-drive/config/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'destroy'])
+    ->name('api.google-drive.config.destroy');
+Route::post('/google-drive/test', [GoogleDriveConfigApiController::class, 'test'])
+    ->name('api.google-drive.config.test');
+Route::post('/google-drive/sync/{googleDriveConfig}', [GoogleDriveConfigApiController::class, 'sync'])
+    ->name('api.google-drive.config.sync');
 
 // Payee stats routes
 Route::get('/ai/payees/{payee}/category-stats', [PayeeStatsApiController::class, 'categoryStats'])
