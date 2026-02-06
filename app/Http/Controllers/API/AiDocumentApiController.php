@@ -39,7 +39,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         // Create the document
         $document = AiDocument::create([
             'user_id' => $user->id,
-            'status' => 'draft',
+            'status' => 'ready_for_processing',
             'source_type' => 'manual_upload',
             'custom_prompt' => $request->input('custom_prompt'),
         ]);
@@ -55,10 +55,6 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         if ($request->input('text_input')) {
             $this->storeTextFile($document, $request->input('text_input'));
         }
-
-        // Move document to ready_for_processing
-        $document->status = 'ready_for_processing';
-        $document->save();
 
         // Dispatch processing job
         AiProcessingJob::dispatch($document);
