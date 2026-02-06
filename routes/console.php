@@ -5,6 +5,7 @@ use App\Console\Commands\CalculateTransactionScheduleActiveFlags;
 use App\Console\Commands\GetCurrencyRates;
 use App\Console\Commands\GetInvestmentPrices;
 use App\Console\Commands\RecordScheduledTransactions;
+use App\Jobs\GoogleDriveMonitorJob;
 use Illuminate\Support\Facades\Schedule;
 
 // Potentially, the app can be separated into a main container and a worker container
@@ -36,6 +37,11 @@ if (config('yaffa.runs_scheduler')) {
 
     // Redis cache cleanup
     Schedule::command('cache:prune-stale-tags')->hourly();
+
+    // Google Drive scheduled import (AI Document Processing)
+    if (config('ai-documents.google_drive.enabled')) {
+        Schedule::job(new GoogleDriveMonitorJob)->everyMinutes(config('ai-documents.google_drive.sync_interval_minutes', 15));
+    }
 
     // Batch job cleanup
     Schedule::command('queue:prune-batches')->daily();

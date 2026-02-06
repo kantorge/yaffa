@@ -10,6 +10,77 @@ use Exception;
 class GoogleDriveService
 {
     /**
+     * List new files in the Google Drive folder since last_sync_at.
+     *
+     * @param \App\Models\GoogleDriveConfig $config
+     * @return array
+     */
+    public function listNewFiles($config): array
+    {
+        $credentials = json_decode($config->service_account_json, true);
+        $client = $this->createClient($credentials);
+        $service = new Drive($client);
+        $folderId = $config->folder_id;
+        $q = "'{$folderId}' in parents and trashed=false";
+        if ($config->last_sync_at) {
+            $q .= " and modifiedTime > '" . $config->last_sync_at->toRfc3339String() . "'";
+        }
+        $files = [];
+        $pageToken = null;
+        do {
+            $params = [
+                'q' => $q,
+                'fields' => 'nextPageToken, files(id, name, mimeType, modifiedTime)',
+                'pageSize' => 50,
+            ];
+            if ($pageToken) {
+                $params['pageToken'] = $pageToken;
+            }
+            $response = $service->files->listFiles($params);
+            foreach ($response->getFiles() as $file) {
+                $files[] = [
+                    'id' => $file->getId(),
+                    'name' => $file->getName(),
+                    'mimeType' => $file->getMimeType(),
+                    'modifiedTime' => $file->getModifiedTime(),
+                ];
+            }
+            $pageToken = $response->getNextPageToken();
+        } while ($pageToken);
+        return $files;
+    }
+
+    /**
+     * Download a file from Google Drive to the given destination path.
+     *
+     * @param string $fileId
+     * @param array $credentials
+     * @param string $destination
+     * @return void
+     */
+    public function downloadFile(string $fileId, array $credentials, string $destination): void
+    {
+        $client = $this->createClient($credentials);
+        $service = new Drive($client);
+        $content = $service->files->get($fileId, ['alt' => 'media']);
+        file_put_contents($destination, $content->getBody()->getContents());
+    }
+
+    /**
+     * Delete a file from Google Drive.
+     *
+     * @param string $fileId
+     * @param array $credentials
+     * @return void
+     */
+    public function deleteFile(string $fileId, array $credentials): void
+    {
+        $client = $this->createClient($credentials);
+        $service = new Drive($client);
+        $service->files->delete($fileId);
+    }
+
+    /**
      * Test connection to Google Drive and return file count and delete permission status
      *
      * @param array $credentials Decoded service account JSON

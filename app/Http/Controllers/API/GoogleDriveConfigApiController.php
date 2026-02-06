@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GoogleDriveConfigRequest;
+use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\GoogleDriveConfig;
 use App\Services\GoogleDriveService;
 use Exception;
@@ -214,10 +215,23 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('sync', $googleDriveConfig);
 
-        // Note: The actual sync job is not implemented yet
-        // This endpoint is just a placeholder for future implementation
+        if (! config('ai-documents.google_drive.enabled')) {
+            return response()->json([
+                'message' => __('Google Drive integration is disabled in configuration'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (! $googleDriveConfig->enabled) {
+            return response()->json([
+                'message' => __('Cannot sync disabled Google Drive configuration'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Dispatch the config-specific job to process this config
+        ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id);
+
         return response()->json([
-            'message' => __('Sync job not implemented yet'),
-        ], Response::HTTP_OK);
+            'message' => __('Google Drive sync has been queued'),
+        ], Response::HTTP_ACCEPTED);
     }
 }
