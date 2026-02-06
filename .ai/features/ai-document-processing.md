@@ -42,9 +42,8 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `AiDocument` (new)
     - `id`
     - `user_id`
-    - `status` (enum: `draft`, `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`)
-      - `draft` - Initial state, created or imported, not yet submitted for processing
-      - `ready_for_processing` - Queued for AI processing, all minimum required data present
+    - `status` (enum: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`)
+      - `ready_for_processing` - Initial state after document submission/import, queued for AI processing, all minimum required data present
       - `processing` - Currently being processed by AI
       - `processing_failed` - AI processing failed after configured retries
       - `ready_for_review` - Processing complete, awaiting user review
@@ -99,7 +98,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `ai_documents`
     - `id` - bigint unsigned, primary key
     - `user_id` - bigint unsigned, foreign key to users, cascade on delete
-    - `status` - varchar(50), not null, default 'draft'
+    - `status` - varchar(50), not null, default 'ready_for_processing'
     - `source_type` - varchar(50), not null
     - `processed_transaction_data` - json, nullable
     - `google_drive_file_id` - varchar(255), nullable, unique
@@ -503,7 +502,7 @@ If not determined or used, it must be set to NULL, but never omitted.
 1. User submits document (web, email, or Google Drive).
    - When a submission contains multiple files, it is still considered to be one AiDocument.
    - E.g. a longer receipt could be attached using multiple photos
-2. `AiDocument` record created with status `ready_for_processing`.
+2. `AiDocument` record created with status `ready_for_processing` (initial state).
 3. `AiProcessingJob` runs:
    - Extracts text/vision data from all attached files, treating them as one input
    - Builds AI prompt with normalized assets and category learning data.
