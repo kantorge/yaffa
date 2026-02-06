@@ -732,7 +732,7 @@ A few notes on the statuses
   - Test coverage: SimulateIncomingEmailCommandTest.php (2 tests, 11 assertions)
   - Usage examples:
 
-    ````bash
+    ```bash
     # Quick test with demo user
     sail artisan ai:simulate-incoming-email --use-demo
 
@@ -746,10 +746,8 @@ A few notes on the statuses
 
     # Synchronous processing for debugging
     sail artisan ai:simulate-incoming-email --use-demo --sync
-    ```  - **New for MVP:** Remove base64-encoded data URIs
-    ````
 
-  - **New for MVP:** Strip unnecessary HTML tags while preserving text structure
+    ```
 
 ## Testing Strategy
 
