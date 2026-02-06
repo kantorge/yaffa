@@ -204,8 +204,10 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `POST /api/google-drive/test` - Test connection
       - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
       - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
-    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger
-      - Response: `{"message": "Sync job not implemented yet"}`
+    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger (✅ implemented)
+      - Dispatches `ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id)` to queue (✅ implemented)
+      - Response: **202 ACCEPTED** with `{"message": "Google Drive sync has been queued"}` (✅ implemented)
+      - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint) (✅ implemented)
   - `PayeeStatsController`
     - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
       - Query params: `months` (default 6)
@@ -250,18 +252,27 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Saves/updates learning records on transaction save
     - Retrieves learning data for AI prompt context
     - Increments usage_count on match
-  - `GoogleDriveService` (new)
+  - `GoogleDriveService` (✅ implemented)
     - Methods:
-      - `testConnection(array $credentials, string $folderId): array` - Tests connection, returns file count and delete permission status
-      - `listNewFiles(GoogleDriveConfig $config): array` - Gets files since last_sync_at (or all if null)
-      - `downloadFile(string $fileId, array $credentials, string $destination): void` - Downloads file
-      - `deleteFile(string $fileId, array $credentials): void` - Deletes file from Drive
+      - `testConnection(array $credentials, string $folderId): array` - Tests connection, returns file count and delete permission status (✅ implemented)
+      - `listNewFiles(GoogleDriveConfig $config): array` - Gets files since last_sync_at (or all if null) (✅ implemented)
+      - `downloadFile(string $fileId, array $credentials, string $destination): void` - Downloads file (✅ implemented)
+      - `deleteFile(string $fileId, array $credentials): void` - Deletes file from Drive (✅ implemented)
     - Uses `google/apiclient` package (already in composer.json)
     - Error handling:
       - Authentication/permission errors: Throw specific exception (triggers config disable)
       - Other errors: Log and continue (silent fail for MVP)
-  - `GoogleDriveMonitorJob` (scheduled job, frequency via .env `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`, default 15)
+  - `GoogleDriveMonitorJob` (✅ implemented - Orchestrator)
+    - Simplified orchestrator (28 lines) that queries enabled configs and dispatches per-config jobs (✅ implemented)
+    - Scheduled frequency via .env `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES` (default 15)
     - Runs for all users with `enabled = true` in `google_drive_configs`
+    - For each enabled config:
+      - Dispatches `ProcessGoogleDriveConfigJob($config->id)` to queue (✅ implemented)
+    - Traits: Dispatchable, InteractsWithQueue, Queueable, SerializesModels
+    - Properties: $tries = 1, $timeout = 60
+  - `ProcessGoogleDriveConfigJob` (✅ implemented - Worker)
+    - Processes file import for a single config (138 lines) (✅ implemented)
+    - Constructor: `public function __construct(public int $configId)` (✅ implemented)
     - For each enabled config:
       - Call `GoogleDriveService::listNewFiles()`
       - For each new file (one file = one AiDocument):
@@ -273,10 +284,13 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - On authentication/permission error:
         - Set `enabled = false` on config
         - Store error in `last_error` field
-        - Send email notification to user
+        - Send `GoogleDriveConfigDisabled` email notification to user (✅ implemented)
       - On other errors: Log and continue (silent fail)
-    - Duplicate prevention: Check `google_drive_file_id` exists in `ai_documents` before processing
-    - Deleted AiDocument handling: If AiDocument with same `google_drive_file_id` was deleted, re-import the file
+    - Duplicate prevention: Check `google_drive_file_id` exists in `ai_documents` before processing (✅ implemented)
+    - Deleted AiDocument handling: If AiDocument with same `google_drive_file_id` was deleted, re-import the file (✅ implemented)
+    - Traits: Dispatchable, InteractsWithQueue, Queueable, SerializesModels
+    - Properties: $tries = 3, $timeout = 300
+    - Test coverage: ProcessGoogleDriveConfigJobTest.php (14 tests, 35+ assertions) (✅ implemented)
   - `EmailProcessingService` (extend existing)
     - Parses incoming email (text/HTML cleanup)
     - Extracts attachments
@@ -823,15 +837,28 @@ A few notes on the statuses
     - File download
     - File deletion
     - Authentication error handling
-  - `GoogleDriveMonitorJobTest` (new)
+  - `GoogleDriveMonitorJobTest` (✅ implemented)
     - Only processes enabled configs
+    - Dispatches ProcessGoogleDriveConfigJob for each enabled config
+    - Skips disabled feature flag
+    - Test coverage: 3 tests, 9 assertions
+  - `ProcessGoogleDriveConfigJobTest` (✅ implemented)
     - File download → database record creation order
     - Duplicate prevention (google_drive_file_id check)
     - Deleted AiDocument re-import
     - Delete after import logic
+    - Individual file download failure handling (continues processing)
     - Authentication error disables config
     - Error notification email sent
     - last_sync_at update
+    - Config status filtering (enabled/disabled)
+    - Test coverage: 14 tests, 35+ assertions
+  - `GoogleDriveConfigApiControllerTest` (✅ implemented)
+    - Authorization tests (own configs only)
+    - CRUD endpoint tests (show, store, update, destroy)
+    - Test connection with file count and delete permission
+    - Manual sync trigger (202 ACCEPTED response)
+    - Test coverage: 31 tests, 79+ assertions
   - `DuplicateDetectionIntegrationTest`
     - Multiple duplicate warnings
     - Soft warning display
@@ -1031,10 +1058,16 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - One config per user enforcement
 - Integration into user settings page
 
-**Google Drive Settings (✅ Completed):**
+**Google Drive Settings (✅ Completed - Feb 6, 2026):**
 
-- Google Drive settings UI and API flow covered by Dusk tests
-- Manual sync endpoint returns an informational message for UI toast handling
+- GoogleDriveConfig model implemented with encrypted service_account_json cast (✅ implemented)
+- GoogleDriveConfigApiController with full CRUD endpoints (GET, POST, PATCH, DELETE) (✅ implemented)
+- GoogleDriveService with listNewFiles(), downloadFile(), deleteFile() methods (✅ implemented)
+- GoogleDriveMonitorJob (orchestrator) dispatches ProcessGoogleDriveConfigJob per config (✅ implemented)
+- ProcessGoogleDriveConfigJob (worker) processes single config independently with retry logic (✅ implemented)
+- Manual sync endpoint returns HTTP 202 ACCEPTED with "Google Drive sync has been queued" message (✅ implemented)
+- Dusk test updated to verify queued message in info toast (✅ implemented)
+- Total test coverage: GoogleDriveMonitorJobTest (3) + ProcessGoogleDriveConfigJobTest (14) + GoogleDriveConfigApiControllerTest (31) = 48 tests, 124+ assertions (✅ implemented)
 
 ### Key Deviations from Original Plan
 
@@ -1048,7 +1081,22 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 5. **Testing Command:** Created ai:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
 
-6. **Manual Sync Response:** The manual sync endpoint returns HTTP 200 with `"Sync job not implemented yet"` to allow an info toast instead of an error toast.
+6. **Manual Sync Response & Two-Tier Job Architecture (✅ Feb 6, 2026):** The manual sync endpoint now returns HTTP 202 ACCEPTED with `"Google Drive sync has been queued"`. Backend refactored from monolithic GoogleDriveMonitorJob into two-tier architecture: GoogleDriveMonitorJob (orchestrator) queries enabled configs and dispatches ProcessGoogleDriveConfigJob (worker) for each, enabling parallel processing and fault isolation. Each worker processes single config independently with 3 retries, 5-minute timeout. Orchestrator has 1 retry, 1-minute timeout (fast, just dispatches).
+
+### Completed in Feb 2026 Session
+
+**Google Drive Integration (✅ Fully Implemented - Feb 6, 2026):**
+
+- GoogleDriveMonitorJob: Simplified orchestrator (28 lines) that dispatches ProcessGoogleDriveConfigJob per enabled config (✅ implemented)
+- ProcessGoogleDriveConfigJob: Full worker (138 lines) with file download, AiDocument creation, event firing, delete-after-import, error handling (✅ implemented)
+- GoogleDriveConfigApiController: Complete CRUD + test + sync endpoints (31 API tests passing) (✅ implemented)
+- GoogleDriveService: Extended with listNewFiles, downloadFile, deleteFile methods (✅ implemented)
+- GoogleDriveConfigRequestTest: Validation for JSON structure and required keys (✅ implemented)
+- GoogleDriveMonitorJobTest: 3 orchestrator tests validating dispatch logic (✅ implemented)
+- ProcessGoogleDriveConfigJobTest: 14 comprehensive worker tests (✅ implemented)
+- GoogleDriveConfigApiControllerTest: 31 API endpoint tests (✅ implemented)
+- GoogleDriveSettingsTest.php (Dusk): Manual sync test updated for 202 response and "queued" message (✅ implemented)
+- Total: 48 backend tests passing, 124+ assertions (Feb 6, 2026) (✅ implemented)
 
 ### Pending/Not Yet Implemented
 
@@ -1060,10 +1108,8 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - AssetMatchingService
 - DuplicateDetectionService
 - CategoryLearningService
-- GoogleDriveMonitorService
 - Frontend Vue components (DocumentUploadForm, AiDocumentViewer, etc.)
 - Transaction finalization flow
-- Email notifications (AiDocumentProcessed, AiDocumentProcessingFailed)
-- Google Drive integration
+- Email notifications (AiDocumentProcessed, AiDocumentProcessingFailed, GoogleDriveImportSuccess, GoogleDriveImportFailed)
 - Attachment handling in email processing
 - File retention and cleanup job
