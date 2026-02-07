@@ -3,6 +3,7 @@
 use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\InvestmentPrice;
+use App\Models\AiDocument;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
@@ -232,6 +233,17 @@ Breadcrumbs::for('import.csv', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Automations'));
     $trail->push(__('Import transactions'), route('import.csv'));
+});
+
+// AI documents
+Breadcrumbs::for('ai-documents.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Automations'));
+    $trail->push(__('AI documents'), route('ai-documents.index'));
+});
+Breadcrumbs::for('ai-documents.show', function (BreadcrumbTrail $trail, AiDocument $aiDocument) {
+    $trail->parent('ai-documents.index');
+    $trail->push(__('Document #:id', ['id' => $aiDocument->id]), route('ai-documents.show', $aiDocument));
 });
 
 // User related routes

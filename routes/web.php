@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountGroupController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\AiDocumentController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
@@ -112,6 +113,14 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 // Route for the CSV import functionality
 Route::get('/import/csv', [ImportController::class, 'importCsv'])->middleware(['auth', 'verified'])->name('import.csv');
+
+// AI document routes
+Route::get('/ai-documents', [AiDocumentController::class, 'index'])
+    ->name('ai-documents.index');
+Route::get('/ai-documents/{aiDocument}', [AiDocumentController::class, 'show'])
+    ->name('ai-documents.show');
+Route::get('/ai-documents/{aiDocument}/files/{aiDocumentFile}', [AiDocumentController::class, 'file'])
+    ->name('ai-documents.files.show');
 
 // User related routes
 Route::get('/user/settings', [UserController::class, 'settings'])->name('user.settings');
