@@ -50,7 +50,7 @@ If API behavior or UI requirements are unclear, STOP and ask for clarification.
 ## Vue-Specific Guidelines
 
 - Vue 3 Composition API only
-- Prefer `<script setup>` if already used in the codebase
+- Prefer `<script>` over `<script setup>` for better readability and consistency
 - Keep components small and focused
 - Avoid business logic in components
 - Prefer computed properties over watchers
