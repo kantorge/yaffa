@@ -20,6 +20,8 @@ class JavaScriptConfigVariablesComposer
             'sandbox_mode' => config('yaffa.sandbox_mode'),
             // Transaction types for frontend usage
             'transactionTypes' => TransactionType::all(),
+            // Date presets for date range pickers
+            'datePresets' => config('yaffa.account_date_presets', []),
         ]);
     }
 }
