@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionType;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -12,7 +14,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade as JavaScript;
-use Exception;
 
 class TransactionController extends Controller implements HasMiddleware
 {
@@ -166,29 +167,39 @@ class TransactionController extends Controller implements HasMiddleware
          */
 
         $transactionData = json_decode($request->input('transaction'), true) ?? [];
+        $configType = $transactionData['config_type'] ?? 'standard';
+
+        $transactionTypeName = null;
+        if (array_key_exists('transaction_type_id', $transactionData)) {
+            $transactionType = TransactionType::find($transactionData['transaction_type_id']);
+            $transactionTypeName = $transactionType?->name;
+        }
 
         // Make a new transaction from the draft
         $transaction = new Transaction($transactionData);
 
-        // Try to add relation for transaction type, if it exists
-        try {
-            $transaction->transaction_type =  $transactionData['transaction_type']['name'];
-        } catch (Exception $e) {
-            $transaction->transaction_type = 'withdrawal';
-        }
+        $defaultTransactionType = $configType === 'investment' ? 'Buy' : 'withdrawal';
+        $transaction->transaction_type = [
+            'name' => $transactionTypeName
+                ?? ($transactionData['transaction_type']['name'] ?? $defaultTransactionType),
+        ];
 
         // Ensure that a config relation exists, even if it's empty
         if (!array_key_exists('config', $transactionData)) {
             $transactionData['config'] = [];
         }
-        $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
+        if ($configType === 'investment') {
+            $transaction->setRelation('config', new TransactionDetailInvestment($transactionData['config']));
+        } else {
+            $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
 
-        // Try to add relation for account and payee, if they exist
-        if ($transactionData['config']['account_from_id'] ?? null !== null) {
-            $transaction->config->setRelation('account_from', AccountEntity::find($transactionData['config']['account_from_id']));
-        }
-        if ($transactionData['config']['account_to_id'] ?? null !== null) {
-            $transaction->config->setRelation('account_to', AccountEntity::find($transactionData['config']['account_to_id']));
+            // Try to add relation for account and payee, if they exist
+            if ($transactionData['config']['account_from_id'] ?? null !== null) {
+                $transaction->config->setRelation('account_from', AccountEntity::find($transactionData['config']['account_from_id']));
+            }
+            if ($transactionData['config']['account_to_id'] ?? null !== null) {
+                $transaction->config->setRelation('account_to', AccountEntity::find($transactionData['config']['account_to_id']));
+            }
         }
 
         // Ensure that the transaction is basic
@@ -197,12 +208,14 @@ class TransactionController extends Controller implements HasMiddleware
         $transaction->reconciled = false;
 
         $sourceId = $request->input('mail_id');
+        $aiDocumentId = $request->input('ai_document_id');
 
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
-            'type' => 'standard',
+            'type' => $configType === 'investment' ? 'investment' : 'standard',
             'source_id' => $sourceId,
+            'ai_document_id' => $aiDocumentId,
         ]);
     }
 }
