@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
+use App\Models\AiDocument;
 use App\Models\ReceivedMail;
 use App\Models\Tag;
 use App\Models\Transaction;
@@ -27,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -440,6 +442,8 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->handleSourceTransactionUpdates($validated);
 
+        $this->finalizeAiDocument($validated, $transaction, $request->user());
+
         // Save reference to incoming mail, if finalizing a transaction from email
         if ($validated['action'] === 'finalize' && $validated['source_id']) {
             $mail = ReceivedMail::find($validated['source_id']);
@@ -492,6 +496,8 @@ class TransactionApiController extends Controller implements HasMiddleware
         });
 
         $this->handleSourceTransactionUpdates($validated);
+
+        $this->finalizeAiDocument($validated, $transaction, $request->user());
 
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
@@ -761,6 +767,36 @@ class TransactionApiController extends Controller implements HasMiddleware
             event(new TransactionUpdated($sourceTransaction, [
                 'schedule_config' => $originalScheduleConfig,
             ]));
+        }
+    }
+
+    /**
+     * Finalize an AI document after transaction creation.
+     */
+    private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): void
+    {
+        if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
+            return;
+        }
+
+        $aiDocument = AiDocument::query()
+            ->where('id', $validated['ai_document_id'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $aiDocument) {
+            return;
+        }
+
+        $aiDocument->status = 'finalized';
+        if (! $aiDocument->processed_at) {
+            $aiDocument->processed_at = now();
+        }
+        $aiDocument->save();
+
+        if ($transaction->ai_document_id !== $aiDocument->id) {
+            $transaction->ai_document_id = $aiDocument->id;
+            $transaction->save();
         }
     }
 }
