@@ -3,7 +3,12 @@ import './bootstrap';
 import { initializeDataTablesI18n } from './i18n/datatables';
 
 // One glob map for all .js files under resources/js
-const modules = import.meta.glob('./**/*.js');
+// Exclude files that are statically imported to avoid redundant dynamic imports
+const modules = import.meta.glob([
+    './**/*.js',
+    '!./bootstrap.js',
+    '!./display_notifications.js'
+]);
 
 const dataTablesI18nReady = initializeDataTablesI18n(window.YAFFA?.locale, window.YAFFA?.language)
     .catch(() => null);
@@ -41,6 +46,8 @@ const routeMap = new Map([
     ['reports.investment_timeline', 'reports/investment-timeline'],
     ['search', 'search/search'],
     ['import.csv', 'import/csv'],
+    ['ai-documents.index', 'ai-documents/index'],
+    ['ai-documents.show', 'ai-documents/show'],
     ['register', 'auth/register'],
     ['login', 'auth/login'],
     ['tag.index', 'tag/index'],
