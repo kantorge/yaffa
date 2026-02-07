@@ -19,6 +19,7 @@
             :transaction="transactionData"
             :simplified="true"
             :fromModal="true"
+            :ai-document-id="aiDocumentId"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-standard>
@@ -55,6 +56,10 @@
             amount_to: null,
           },
         },
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
       },
     },
     data() {

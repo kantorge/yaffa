@@ -540,6 +540,10 @@
         type: String,
         default: window.YAFFA.locale,
       },
+      aiDocumentId: {
+        type: Number,
+        default: null,
+      },
     },
 
     data() {
@@ -567,6 +571,7 @@
           frequency: 'DAILY',
           interval: 1,
         },
+        ai_document_id: null,
       });
 
       // Other values
@@ -707,6 +712,7 @@
 
       // Set form action
       this.form.action = this.action;
+      this.form.ai_document_id = this.aiDocumentId;
     },
 
     mounted() {
