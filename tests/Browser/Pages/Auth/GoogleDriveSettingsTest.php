@@ -26,6 +26,9 @@ class GoogleDriveSettingsTest extends DuskTestCase
 
             static::$migrationRun = true;
         }
+
+        // For all these tests, make sure to disable sandbox_mode environment settings so that these features are avialable on the UI
+        $this->setConfig('yaffa.sandbox_mode', false);
     }
 
     private function visitSettings(Browser $browser): Browser
@@ -349,19 +352,41 @@ class GoogleDriveSettingsTest extends DuskTestCase
         });
     }
 
-    public function test_manual_sync_shows_not_implemented_message(): void
+    public function test_manual_sync_queues_job_successfully(): void
     {
         $user = $this->createTestUser();
 
-        GoogleDriveConfig::factory()->create(['user_id' => $user->id]);
+        GoogleDriveConfig::factory()->create([
+            'user_id' => $user->id,
+            'enabled' => true,
+        ]);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user);
             $this->visitSettings($browser)
                 ->waitFor('@button-sync-google-drive', 10)
                 ->click('@button-sync-google-drive')
-                ->waitFor('.toast-container div.toast.bg-info.show', 10)
+                ->waitFor('.toast-container div.toast.show', 10)
                 ->assertSee('Google Drive sync has been queued');
+        });
+    }
+
+    public function test_manual_sync_fails_when_config_disabled(): void
+    {
+        $user = $this->createTestUser();
+
+        GoogleDriveConfig::factory()->create([
+            'user_id' => $user->id,
+            'enabled' => false,
+        ]);
+
+        $this->browse(function (Browser $browser) use ($user) {
+            $browser->loginAs($user);
+            $this->visitSettings($browser)
+                ->waitFor('@button-sync-google-drive', 10)
+                ->click('@button-sync-google-drive')
+                ->waitFor('.toast-container div.toast.bg-danger.show', 10)
+                ->assertSee('Failed to trigger sync. Please try again.');
         });
     }
 
