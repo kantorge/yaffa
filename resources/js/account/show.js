@@ -1,58 +1,25 @@
 import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
+import { createApp } from 'vue';
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 import * as toastHelpers from '../toast';
-
-import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
-
-import presetCalculators from '../presetDates';
+import DateRangeFilterCard from '../components/DateRangeFilterCard.vue';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
 
-// Initialize an object which checks if preset filters are populated. This is used to trigger initial dataTable content.
-let presetFilters = {
-    ready: function () {
-        for (let key in presetFilters) {
-            if (presetFilters[key] === false) {
-                return false;
-            }
-        }
-        return true;
-    }
+let currentDateFilters = {
+    dateFrom: window.filters?.date_from || null,
+    dateTo: window.filters?.date_to || null,
+    preset: window.filters?.date_preset || null,
 };
 
-// Loop filter object keys and populate presetFilters array
-for (let key in window.filters) {
-    // For the date range preset, treat 'none' as not preset
-    if (key === 'date_preset' && window.filters[key] === 'none') {
-        continue;
-    }
-    presetFilters[key] = false;
-}
-
-// Disable table refresh, if any filters are preset
-if (!presetFilters.ready()) {
-    document.getElementById('reload').setAttribute('disabled', 'disabled');
-}
-
-// Initialize date range picker
-const dateRangePicker = new DateRangePicker(
-    document.getElementById('dateRangePicker'),
-    {
-        allowOneSidedRange: true,
-        weekStart: 1,
-        todayBtn: true,
-        todayBtnMode: 1,
-        todayHighlight: true,
-        language: window.YAFFA.language,
-        format: 'yyyy-mm-dd',
-        autohide: true,
-        buttonClass: 'btn',
-    }
-);
+const hasInitialFilters =
+    !!currentDateFilters.dateFrom ||
+    !!currentDateFilters.dateTo ||
+    (!!currentDateFilters.preset && currentDateFilters.preset !== 'none');
 
 /**
  * Helper function to get adjusted cash flow in the context of the current account
@@ -81,7 +48,6 @@ const processTransaction = function (transaction) {
 };
 
 let initialLoad = true;
-let isPresetChange = false;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
     ajax: function (_data, callback, _settings) {
@@ -91,13 +57,12 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             return;
         }
 
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
         const params = new URLSearchParams();
-        if (dates[0]) {
-            params.append('date_from', dates[0]);
+        if (currentDateFilters.dateFrom) {
+            params.append('date_from', currentDateFilters.dateFrom);
         }
-        if (dates[1]) {
-            params.append('date_to', dates[1]);
+        if (currentDateFilters.dateTo) {
+            params.append('date_to', currentDateFilters.dateTo);
         }
         params.append('accounts[]', account.id);
 
@@ -467,123 +432,46 @@ $('input[name=reconciled]').on("change", function () {
 
 // Function to reload table data
 function reloadTable() {
-    document.getElementById('reload').setAttribute('disabled', 'disabled');
     dtHistory.ajax.reload(function () {
-        document.getElementById('reload').removeAttribute('disabled');
-
         // (Re-)Initialize tooltips in table
         helpers.initializeBootstrapTooltips();
     });
 }
 
-// Reload button functionality
-$("#reload").on('click', reloadTable);
+const handleDateRangeUpdated = ({dateFrom, dateTo, preset}) => {
+    currentDateFilters = {
+        dateFrom: dateFrom || null,
+        dateTo: dateTo || null,
+        preset: preset || null,
+    };
 
-$("#clear_dates").on('click', function () {
-    dateRangePicker.setDates(
-        {clear: true},
-        {clear: true}
-    );
-})
+    reloadTable();
+};
 
-// Listener for the date range presets
-document.getElementById('dateRangePickerPresets').addEventListener('change', function (_event) {
-    isPresetChange = true;
-    const preset = this.options[this.selectedIndex].value;
-    const date = new Date();
-    let start;
-    let end;
-
-    // Get the start and end dates based on the selected preset and the external calculator functions
-    const calculator = presetCalculators[preset];
-    if (calculator) {
-        const dates = calculator(date);
-        start = dates.start;
-        end = dates.end;
-    } else {
-        start = {clear: true};
-        end = {clear: true};
-    }
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-    isPresetChange = false;
+const dateRangeApp = createApp({
+    components: {
+        DateRangeFilterCard,
+    },
+    data() {
+        return {
+            initialDateFrom: currentDateFilters.dateFrom,
+            initialDateTo: currentDateFilters.dateTo,
+            initialPreset: currentDateFilters.preset,
+        };
+    },
+    methods: {
+        onDateRangeUpdated(payload) {
+            handleDateRangeUpdated(payload);
+        },
+    },
+    mounted() {
+        if (hasInitialFilters && this.$refs.dateFilter?.emitDates) {
+            this.$refs.dateFilter.emitDates();
+        }
+    },
 });
 
-let rebuildUrl = function () {
-    let params = [];
-
-    if (isPresetChange) {
-        const preset = document.getElementById('dateRangePickerPresets').value;
-        if (preset && preset !== 'none') {
-            params.push('date_preset=' + preset);
-        }
-    } else {
-
-        const dates = dateRangePicker.getDates('yyyy-mm-dd');
-        // Date from
-        if (dates[0]) {
-            params.push('date_from=' + dates[0]);
-        }
-
-        // Date to
-        if (dates[1]) {
-            params.push('date_to=' + dates[1]);
-        }
-    }
-
-    window.history.pushState('', '', window.location.origin + window.location.pathname + '?' + params.join('&'));
-}
-
-// Attach event listener to date pickers
-document.getElementById('date_from').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-document.getElementById('date_to').addEventListener('changeDate', function() {
-    if (!isPresetChange) {
-        document.getElementById('dateRangePickerPresets').value = 'none';
-    }
-    rebuildUrl();
-});
-
-// Set initial dates
-if (filters.date_from || filters.date_to) {
-    const start = (filters.date_from ? filters.date_from : {clear: true});
-    const end = (filters.date_to ? filters.date_to : {clear: true});
-
-    dateRangePicker.setDates(
-        start,
-        end
-    );
-
-    presetFilters.date_from = true;
-    presetFilters.date_to = true;
-
-    // If all preset filters are ready, reload table data
-    if (presetFilters.ready()) {
-        reloadTable();
-    }
-} else if (filters.date_preset && filters.date_preset !== 'none') {
-    // If date preset is set, apply it
-    document.getElementById('dateRangePickerPresets').value = filters.date_preset;
-    const event = new Event('change');
-    document.getElementById('dateRangePickerPresets').dispatchEvent(event);
-
-    presetFilters.date_preset = true;
-    // If all preset filters are ready, reload table data
-    if (presetFilters.ready()) {
-        reloadTable();
-    }
-} else if (filters.date_preset && filters.date_preset === 'none') {
-    presetFilters.date_preset = true;
-    // At the moment we don't expect any other filters, and the table does not need to be reloaded
-}
+dateRangeApp.mount('#account-date-range-filter');
 
 // Set up event listener for new standard transaction button
 $('#create-standard-transaction-button').on('click', function () {
@@ -722,8 +610,6 @@ document.getElementById('recalculateMonthlyCachedData').addEventListener('click'
 });
 
 // Initialize Vue for the quick view
-import {createApp} from 'vue'
-
 const app = createApp({})
 
 // Add global translator function
