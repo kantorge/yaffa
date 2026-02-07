@@ -22,6 +22,7 @@ class TransactionRequest extends FormRequest
             'config.tax' => __('tax'),
             // Standard fields
             'config.amount_to' => __('amount to'),
+            'ai_document_id' => __('AI document'),
             // Schedule fields
             'schedule_config.start_date' => __('schedule start date'),
             'schedule_config.next_date' => __('schedule next date'),
@@ -59,6 +60,7 @@ class TransactionRequest extends FormRequest
             'config_type' => 'required|in:standard,investment',
 
             'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
+            'ai_document_id' => 'nullable|exists:App\Models\AiDocument,id',
         ];
 
         // Basic transaction has no schedule at all, or has only schedule enabled

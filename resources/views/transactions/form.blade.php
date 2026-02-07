@@ -45,6 +45,9 @@
                     :source-id = "{{ $source_id }}"
                     data-source-id = "{{ $source_id }}"
                 @endif
+                @if (isset($ai_document_id))
+                    :ai-document-id = "{{ $ai_document_id }}"
+                @endif
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')
@@ -53,6 +56,9 @@
                 action = "{{ $action }}"
                 @if($transaction)
                     :transaction = "{{ $transaction }}"
+                @endif
+                @if (isset($ai_document_id))
+                    :ai-document-id = "{{ $ai_document_id }}"
                 @endif
             ></transaction-container-investment>
         </div>
