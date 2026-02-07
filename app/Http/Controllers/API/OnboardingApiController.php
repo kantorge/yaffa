@@ -55,6 +55,7 @@ class OnboardingApiController extends Controller implements HasMiddleware
      * @uses onboardingTopicDataReportsSchedules
      * @uses onboardingTopicDataAccountGroups
      * @uses onboardingTopicDataInvestmentGroups
+     * @uses onboardingTopicDataAiDocuments
      */
     private function loadOnboardingSteps(string $topic): void
     {
@@ -137,5 +138,15 @@ class OnboardingApiController extends Controller implements HasMiddleware
                 'icon' => 'fa fa-fw fa-info',
             ])
             ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-Investments'));
+    }
+
+    private function onboardingTopicDataAiDocuments(): void
+    {
+        Onboard::addStep(__('View the guided tour for this page'))
+            ->attributes([
+                'tour' => true,
+                'icon' => 'fa fa-fw fa-info',
+            ])
+            ->completeIf(fn (User $model) => $model->hasFlag('viewProductTour-AiDocuments'));
     }
 }

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\AiDocumentSource;
+use App\Enums\AiDocumentStatus;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AiDocument extends Model
 {
@@ -41,8 +44,28 @@ class AiDocument extends Model
         return $this->hasMany(AiDocumentFile::class);
     }
 
+    public function aiDocumentFiles(): HasMany
+    {
+        return $this->hasMany(AiDocumentFile::class);
+    }
+
     public function receivedMail(): BelongsTo
     {
         return $this->belongsTo(ReceivedMail::class);
+    }
+
+    public function transaction(): HasOne
+    {
+        return $this->hasOne(Transaction::class);
+    }
+
+    public static function statusLabels(): array
+    {
+        return AiDocumentStatus::labels();
+    }
+
+    public static function sourceLabels(): array
+    {
+        return AiDocumentSource::labels();
     }
 }
