@@ -28,6 +28,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - Token/cost tracking or limits for AI usage.
   - SPA architecture changes or global state on the frontend.
   - Iterative user-AI prompt refinement during document processing.
+  - Email attachment extraction and storage in AiDocumentFile (MVP only processes email body text, attachments are ignored).
 
 ## Assumptions
 
@@ -41,7 +42,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 ## Backend Scope (Laravel)
 
 - Models:
-  - `AiDocument` (new)
+  - `AiDocument` (✅ implemented)
     - `id`
     - `user_id`
     - `status` (enum: `ready_for_processing`, `processing`, `processing_failed`, `ready_for_review`, `finalized`)
@@ -57,7 +58,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `custom_prompt` (nullable)
     - `processed_at` (nullable)
     - `created_at`, `updated_at`
-  - `AiDocumentFile` (new)
+  - `AiDocumentFile` (✅ implemented)
     - `id`
     - `ai_document_id` (FK to AiDocument)
     - `file_path` (location in local storage)
@@ -78,7 +79,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `model` (validated against provider’s model list)
     - `api_key` (encrypted cast)
     - `created_at`, `updated_at`
-  - `GoogleDriveConfig` (new)
+  - `GoogleDriveConfig` (✅ implemented)
     - `id`
     - `user_id` (foreign key, NO unique constraint - allows multiple configs in future, MVP enforces one per user at application level)
     - `service_account_email` (extracted from JSON, displayed in UI)
@@ -97,7 +98,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - **Deviation:** ReceivedMail relationship to AiDocument changed from `belongsTo` to `hasOne` (one email can create one document, not the reverse)
 
 - Migrations:
-  - `ai_documents`
+  - `ai_documents` (✅ implemented)
     - `id` - bigint unsigned, primary key
     - `user_id` - bigint unsigned, foreign key to users, cascade on delete
     - `status` - varchar(50), not null, default 'ready_for_processing'
@@ -109,7 +110,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `processed_at` - timestamp, nullable
     - `created_at`, `updated_at` - timestamps
     - Indexes: `user_id`, `status`, `source_type`, `google_drive_file_id`
-  - `ai_document_files`
+  - `ai_document_files` (✅ implemented)
     - `id` - bigint unsigned, primary key
     - `ai_document_id` - bigint unsigned, foreign key to ai_documents, cascade on delete
     - `file_path` - varchar(500), not null
@@ -117,7 +118,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `file_type` - varchar(10), not null (pdf, jpg, png, txt)
     - `created_at` - timestamp
     - Indexes: `ai_document_id`
-  - `category_learning`
+  - `category_learning` (✅ implemented)
     - `id` - bigint unsigned, primary key
     - `user_id` - bigint unsigned, foreign key to users, cascade on delete
     - `item_description` - varchar(255), not null
@@ -133,7 +134,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `model` - varchar(255), not null
     - `api_key` - text, not null (encrypted)
     - `created_at`, `updated_at` - timestamps
-  - `google_drive_configs` (new)
+  - `google_drive_configs` (✅ implemented)
     - `id` - bigint unsigned, primary key
     - `user_id` - bigint unsigned, foreign key to users, cascade on delete (NO unique constraint)
     - `service_account_email` - varchar(255), not null
@@ -146,19 +147,18 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `error_count` - integer unsigned, not null, default 0
     - `created_at`, `updated_at` - timestamps
     - Indexes: `user_id`, `enabled`
-  - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions`
-  - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails` (✅ implemented - Migration 2026_01_31_180343 and 2026_02_03_185934)
+  - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions` table (✅ implemente)
+  - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails` (✅ implemented)
     - During the migration, create AiDocument records for existing processed received mails to preserve data integrity. (✅ implemented)
     - With a best effort, update linked transactions to reference the new AiDocument records. (Don't try to fix broken, inconsistent data.) (✅ implemented)
     - Status mapping: (✅ implemented)
       - If `processed` = true and `transaction_id` is set → `finalized`
       - If `processed` = true and no `transaction_id` → `ready_for_review`
       - If `processed` = false → `draft`
-    - The 'down' migration does not attempt to restore removed fields or data. It only drops the AiDocument records created during the 'up' migration. (✅ implemented)
-    - **Note:** Migration 2026_02_03_185934 became a no-op since columns were already removed in prior migration
+    - The 'down' migration does not attempt to restore removed fields or data. It only drops the AiDocument records created during the 'up' migration.
 
 - Controllers / APIs:
-  - `AiDocumentController`
+  - `AiDocumentApiController` (✅ implemented)
     - `POST /api/documents` - Upload document
       - Request: multipart/form-data with `files[]`, `text_input`, `custom_prompt`
       - Validation: at least one file OR text_input required; max 10 files; max 50MB per file; allowed types: pdf,jpg,png,txt
@@ -205,11 +205,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `POST /api/google-drive/test` - Test connection
       - Request: `{"service_account_json": "...", "folder_id": "..."}` (service_account_json can be `__existing__`)
       - Response: `{"success": true, "file_count": 5, "has_delete_permission": true, "message": "Connection successful"}` OR `{"message": "..."}` (400)
-    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger (✅ implemented)
-      - Dispatches `ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id)` to queue (✅ implemented)
-      - Response: **202 ACCEPTED** with `{"message": "Google Drive sync has been queued"}` (✅ implemented)
-      - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint) (✅ implemented)
-  - `PayeeStatsController`
+    - `POST /api/google-drive/sync/{id}` - Manual one-time sync trigger
+      - Dispatches `ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id)` to queue
+      - Response: **202 ACCEPTED** with `{"message": "Google Drive sync has been queued"}`
+      - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint)
+  - `PayeeStatsApiController` (✅ implemented)
     - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
       - Query params: `months` (default 6)
       - Response: `{"payee_id": 123, "months": 6, "categories": [{"category_id": 7, "count": 14, "percent": 0.7}]}`
@@ -1132,7 +1132,3 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 - Wire `AiDocumentProcessingSuccessNotification` in ProcessDocumentService (class exists, needs invocation)
 - File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
-
-**Other:**
-
-- Email attachment extraction and storage in AiDocumentFile (email content currently stored as text file)
