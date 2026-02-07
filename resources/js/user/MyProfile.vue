@@ -1,19 +1,17 @@
 <template>
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-lg-6 mb-3">
       <change-password></change-password>
     </div>
-    <div class="col-md-6">
+    <div class="col-lg-6 mb-3">
       <user-settings></user-settings>
     </div>
   </div>
-  <div class="row mt-4">
-    <div class="col-12">
+  <div class="row">
+    <div class="col-lg-6 mb-3">
       <ai-provider-settings></ai-provider-settings>
     </div>
-  </div>
-  <div class="row mt-4">
-    <div class="col-12">
+    <div class="col-lg-6 mb-3">
       <google-drive-settings></google-drive-settings>
     </div>
   </div>
