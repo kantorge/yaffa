@@ -11,7 +11,7 @@ RUN npm ci
 RUN npm run build
 
 # Stage 2: Base PHP + Apache setup (this part won't change often)
-FROM php:8.3-apache AS base
+FROM php:8.4-apache AS base
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \

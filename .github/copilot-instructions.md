@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-**YAFFA (Yet Another Free Financial Application)** is a self-hosted personal finance web application built with **Laravel 12** (PHP 8.3) and **Vue 3**. It helps users track income/expenses, manage multiple currencies, handle investments, and perform long-term financial planning. The application includes ~7,700 lines of PHP code across Controllers, Models, Services, and more.
+**YAFFA (Yet Another Free Financial Application)** is a self-hosted personal finance web application built with **Laravel 12** (PHP 8.4) and **Vue 3**. It helps users track income/expenses, manage multiple currencies, handle investments, and perform long-term financial planning. The application includes ~7,700 lines of PHP code across Controllers, Models, Services, and more.
 
 **Key Technologies:**
 
-- Backend: PHP 8.3, Laravel 12 Framework
+- Backend: PHP 8.4, Laravel 12 Framework
 - Frontend: Vue 3, Bootstrap 5, CoreUI, jQuery, DataTables
 - Build: Laravel Mix (Webpack), NPM
 - Testing: PHPUnit (Unit/Feature tests), Laravel Dusk (Browser tests)
@@ -158,7 +158,7 @@ The repository has CI/CD configured in `.github/workflows/`:
 **Jobs:**
 
 - **phpunit**: Runs PHPUnit tests against MySQL 8
-  - PHP 8.3 with extensions: mbstring, dom, fileinfo, mysql, xdebug
+  - PHP 8.4 with extensions: mbstring, dom, fileinfo, mysql, xdebug
   - Uses `.env.ci` for configuration
   - Runs migrations before tests
   - Uploads coverage to Codacy
@@ -294,7 +294,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.3.6
+- php - 8.4
 - laravel/framework (LARAVEL) - v12
 - laravel/prompts (PROMPTS) - v0
 - laravel/sanctum (SANCTUM) - v4
