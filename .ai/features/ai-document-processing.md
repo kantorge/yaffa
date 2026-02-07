@@ -4,7 +4,7 @@
 
 Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
 
-**Current Implementation Status (Feb 6, 2026):** This feature is 40-50% implemented. See [Implementation Status & Deviations](#implementation-status--deviations-updated-feb-6-2026) section for detailed breakdown of completed and pending components.
+**Current Implementation Status (Feb 7, 2026):** This feature is 60-65% implemented. See [Implementation Status & Deviations](#implementation-status--deviations-updated-feb-7-2026) section for detailed breakdown of completed and pending components.
 
 ## Goals / Non-Goals
 
@@ -339,12 +339,12 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 ## Frontend Scope (Vue + Bootstrap)
 
 - Pages / Routes:
-  - `Documents Index` - `/ai-documents`
+  - `Documents Index` - `/ai-documents` (✅ implemented)
     - Blade view: `resources/views/ai-documents/index.blade.php`
     - Layout: extends `layouts.app`
     - Vue component: `AiDocumentList.vue`
     - Features: DataTable with filters (status, source_type), pagination, search
-  - `Document Review` - `/ai-documents/{id}`
+  - `Document Review` - `/ai-documents/{id}` (✅ implemented)
     - Blade view: `resources/views/ai-documents/show.blade.php`
     - Layout: extends `layouts.app`
     - Vue components: `AiDocumentViewer.vue`, `TransactionPreview.vue` (existing)
@@ -354,7 +354,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Layout: extends `layouts.app`
     - Vue component: `AiProviderSettings.vue`
       - Features: provider/model selection, API key input, test connection button, add/update/delete
-  - `Google Drive Settings` - `/user/settings` (integrated into existing settings page)
+  - `Google Drive Settings` - `/user/settings` (✅ integrated into existing settings page)
     - Vue component: `GoogleDriveSettings.vue` (new)
       - Loaded in `MyProfile.vue` component (same parent as AiProviderSettings)
       - Features:
@@ -373,7 +373,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Layout: extends `layouts.app`
     - Vue component: `DocumentUploadForm.vue`
     - Features: drag-drop file upload, text input, custom prompt textarea
-  - **ReceivedMail UI:**
+  - **ReceivedMail UI:** (✅ implemented)
     - No user-facing pages or CRUD actions for `ReceivedMail`
     - Any existing ReceivedMail views/routes should be removed or hidden
 
@@ -713,7 +713,7 @@ A few notes on the statuses
 
 ## Testing & Development Tools (✅ implemented)
 
-- **Email Simulation Command:** `php artisan ai:simulate-incoming-email` (✅ implemented)
+- **Email Simulation Command:** `php artisan app:simulate-incoming-email` (✅ implemented)
   - Purpose: Test email reception and AI document creation locally without actual SMTP/mailbox setup
   - Options:
     - `--from=EMAIL` - Sender email address (creates user if --create-user enabled)
@@ -734,10 +734,10 @@ A few notes on the statuses
 
     ```bash
     # Quick test with demo user
-    sail artisan ai:simulate-incoming-email --use-demo
+    sail artisan app:simulate-incoming-email --use-demo
 
     # Custom email with text and HTML
-    sail artisan ai:simulate-incoming-email \
+    sail artisan app:simulate-incoming-email \
       --from=user@example.com \
       --subject="Receipt from Coffee Shop" \
       --text="Coffee: $4.50" \
@@ -745,7 +745,7 @@ A few notes on the statuses
       --create-user
 
     # Synchronous processing for debugging
-    sail artisan ai:simulate-incoming-email --use-demo --sync
+    sail artisan app:simulate-incoming-email --use-demo --sync
 
     ```
 
@@ -1006,7 +1006,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ---
 
-## Implementation Status & Deviations (Updated Feb 6, 2026)
+## Implementation Status & Deviations (Updated Feb 7, 2026)
 
 ### Completed Components
 
@@ -1046,7 +1046,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - IncomingEmailTest updated for new flow (7 tests passing)
 - SimulateIncomingEmailCommandTest created (2 tests, 11 assertions)
 - ProcessIncomingEmailByAiTest renamed to test HTML cleanup in CreateAiDocumentFromSource
-- ai:simulate-incoming-email command created with full MIME message support
+- app:simulate-incoming-email command created with full MIME message support
 - --use-demo flag added for simplified testing
 
 **AI Provider Configuration (✅ Completed):**
@@ -1078,9 +1078,11 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 4. **Legacy Compatibility:** ProcessIncomingEmailByAi job kept as short-circuit to EmailReceived event for backward compatibility, though it could be fully removed in future.
 
-5. **Testing Command:** Created ai:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
+5. **Testing Command:** Created app:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
 
 6. **Manual Sync Response & Two-Tier Job Architecture (✅ Feb 6, 2026):** The manual sync endpoint now returns HTTP 202 ACCEPTED with `"Google Drive sync has been queued"`. Backend refactored from monolithic GoogleDriveMonitorJob into two-tier architecture: GoogleDriveMonitorJob (orchestrator) queries enabled configs and dispatches ProcessGoogleDriveConfigJob (worker) for each, enabling parallel processing and fault isolation. Each worker processes single config independently with 3 retries, 5-minute timeout. Orchestrator has 1 retry, 1-minute timeout (fast, just dispatches).
+
+7. **AI Documents Date Filter Behavior (✅ Feb 7, 2026):** DateRangeFilterCard component for AI documents configured with `show-update-button="false"` per AiDocumentManager implementation. Filters update automatically as user types (modern refresh-on-input UX pattern) rather than requiring explicit button click. This differs from the Account Show feature which uses a button-based workflow, but both use the same reusable DateRangeFilterCard component with different configurations. Spec did not mandate specific update interaction pattern, so this is an implementation choice rather than deviation.
 
 ### Completed in Feb 2026 Session
 
@@ -1111,6 +1113,27 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - PayeeStatsApiController for category stats (✅ implemented)
 - AiDocumentPolicy with authorization checks (✅ implemented)
 - Comprehensive test coverage for all services and controllers (✅ 50+ tests passing)
+
+**HIGH PRIORITY Test Coverage (✅ Completed - Feb 7, 2026):**
+
+- [AiDocumentsIndexTest.php](tests/Browser/Pages/AiDocuments/AiDocumentsIndexTest.php) (Dusk Browser Tests): 4 comprehensive tests for AI documents date filtering UI workflows (✅ implemented)
+  - `test_ai_documents_applies_date_preset_on_load` - Verifies date preset parameter from URL applies to form
+  - `test_ai_documents_applies_date_range_on_load` - Verifies explicit date_from/date_to parameters populate fields
+  - `test_ai_documents_date_filter_updates_table` - Verifies manual date entry updates filter state
+  - `test_ai_documents_preset_dropdown_populated_correctly` - Verifies preset dropdown shows selected value
+  - Status: ✅ All 4 tests passing
+
+- [AiDocumentFilterTest.php](tests/Feature/AiDocumentFilterTest.php) (Feature Tests): 6 comprehensive endpoint tests for filter robustness (✅ implemented)
+  - `test_ai_document_status_filter_endpoint_loads` - Verifies status filter parameter accepted (HTTP 200)
+  - `test_ai_document_source_filter_endpoint_loads` - Verifies source_type filter parameter accepted
+  - `test_ai_document_filters_handle_special_characters_safely` - Regex special chars like `()[]|` don't crash endpoint
+  - `test_ai_document_combined_filters_endpoint_loads` - Multiple filter parameters work together
+  - `test_guest_cannot_access_ai_documents_index` - Authorization enforcement (guests rejected)
+  - `test_user_sees_only_own_documents` - Data isolation verified (users see only own documents)
+  - Status: ✅ All 6 tests passing
+
+- **Summary:** 10 new tests, 28 assertions, 100% passing rate
+- **Test Coverage Impact:** Full test suite now 395 tests passing (no regressions, tests from previous sessions still passing)
 
 ### Pending/Not Yet Implemented
 
