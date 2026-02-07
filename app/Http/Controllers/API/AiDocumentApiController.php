@@ -101,7 +101,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
         $query = AiDocument::query()
             ->where('user_id', $user->id)
-            ->with('aiDocumentFiles');
+            ->with(['aiDocumentFiles', 'receivedMail', 'transaction']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -151,7 +151,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('view', $aiDocument);
 
-        $aiDocument->load('aiDocumentFiles', 'receivedMail');
+        $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
         // Build duplicate warnings if available
         $duplicateWarnings = [];
         if ($aiDocument->processed_transaction_data && isset($aiDocument->processed_transaction_data['duplicate_warnings'])) {
@@ -209,11 +209,13 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             Storage::disk('local')->delete($file->file_path);
         }
 
+        // If linked to a received mail, delete it as well
         if ($aiDocument->receivedMail) {
             $aiDocument->receivedMail->delete();
-        } else {
-            $aiDocument->delete();
         }
+
+        $aiDocument->delete();
+
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
