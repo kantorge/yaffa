@@ -16,8 +16,9 @@ class ResetDemoDatabase extends Command
      *
      * @var string
      */
-    protected $signature = 'app:sandbox:reset-database '
-        . '{--skip-date-adjustment : Skip adjusting dates in the database}';
+    protected $signature = 'app:sandbox:reset-database
+        {--skip-date-adjustment : Skip adjusting dates in the database}
+        {--force-sandbox : Allow running this command even if sandbox mode is not enabled}';
 
     /**
      * The console command description.
@@ -32,7 +33,7 @@ class ResetDemoDatabase extends Command
     public function handle(): int
     {
         // This command cannot be run if sandbox mode is not enabled
-        if (!config('yaffa.sandbox_mode')) {
+        if (!config('yaffa.sandbox_mode') && ! $this->option('force-sandbox')) {
             $this->error('This command can only be run in sandbox mode.');
             return Command::FAILURE;
         }
@@ -72,6 +73,10 @@ class ResetDemoDatabase extends Command
         $file = base_path('database/seeders/demo.sql');
         DB::unprepared(file_get_contents($file));
         $this->info('Demo data loaded.');
+
+        // Create a set of sample received mails for the demo user, which can be used to test the email processing features of the app.
+        $this->info('Creating sample received mails...');
+        $this->createSampleReceivedMails();
 
         /**
          * Unless explicitly disabled, we need to adjust ALL dates in the database to be the current date.
@@ -119,5 +124,48 @@ class ResetDemoDatabase extends Command
         Artisan::call('up');
 
         return Command::SUCCESS;
+    }
+
+    private function createSampleReceivedMails(): void
+    {
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - HTML and Text',
+            'text' => 'This is a sample plain text body of the email.',
+            'html' => '<p>This is a sample <strong>HTML</strong> body of the email.</p>',
+        ]);
+
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Text Only',
+            'text' => 'This is a sample plain text body of the email without HTML version.',
+            'html' => '',
+        ]);
+
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - HTML Only',
+            'text' => '',
+            'html' => '<p>This is a sample <strong>HTML</strong> body of the email without plain text version.</p>',
+        ]);
+
+        // TODO: read account and payee from actual demo assets
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Easy to Process by AI',
+            'text' => 'Date: ' . Carbon::now()->format('Y-m-d') . "\n" .
+                'Amount: 123.45 USD' . "\n" .
+                'Account: Bank Account - John' . "\n" .
+                'Payee: AquaFlow Utilities' . "\n",
+            'html' => '',
+        ]);
+    }
+
+    private function createSampleReceivedMailsForDemoUser(array $mailParams): void
+    {
+        Artisan::call('app:simulate-incoming-email', [
+            '--from' => 'demo@yaffa.cc',
+            '--subject' => $mailParams['subject'] ?? 'Sample Incoming Email',
+            '--text' => $mailParams['text'] ?? null,
+            '--html' => $mailParams['html'] ?? null,
+            '--message-id' => $mailParams['message_id'] ?? 'sample-email-' . uniqid(),
+            '--user-id' => 1,
+        ]);
     }
 }
