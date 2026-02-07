@@ -89,4 +89,5 @@ return [
         'max_height' => 2048,
         'quality' => 85,
     ],
+
 ];
