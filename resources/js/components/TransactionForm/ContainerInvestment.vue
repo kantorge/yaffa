@@ -3,6 +3,7 @@
     :action="action"
     :initial-callback="callback"
     :transaction="transactionData"
+    :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
     @cancel="onCancel"
     @success="onSuccess"
@@ -40,6 +41,10 @@
             tax: null,
           },
         },
+      },
+      aiDocumentId: {
+        type: Number,
+        default: null,
       },
     },
 

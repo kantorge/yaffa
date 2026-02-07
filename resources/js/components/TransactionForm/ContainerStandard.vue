@@ -4,6 +4,7 @@
     :initial-callback="callback"
     :transaction="transactionData"
     :source-id="sourceId"
+    :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
     @cancel="onCancel"
     @success="onSuccess"
@@ -43,6 +44,10 @@
         },
       },
       sourceId: {
+        type: Number,
+        default: null,
+      },
+      aiDocumentId: {
         type: Number,
         default: null,
       },
