@@ -24,6 +24,9 @@ class AiProviderSettingsTest extends DuskTestCase
 
             static::$migrationRun = true;
         }
+
+        // For all these tests, make sure to disable sandbox_mode environment settings so that these features are avialable on the UI
+        $this->setConfig('yaffa.sandbox_mode', false);
     }
 
     private function visitSettings(Browser $browser): Browser
