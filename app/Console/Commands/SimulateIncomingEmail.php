@@ -19,16 +19,15 @@ class SimulateIncomingEmail extends Command
      *
      * @var string
      */
-    protected $signature = 'ai:simulate-incoming-email
-        {--from= : Sender email address (must belong to an existing user unless --create-user is used)}
+    protected $signature = 'app:simulate-incoming-email
+        {--from= : Sender email address (must belong to an existing user)}
         {--subject= : Email subject}
         {--text= : Plain-text body}
         {--html= : HTML body}
         {--message-id= : Message ID override}
         {--user-id= : User ID to associate the email with}
-        {--create-user : Create the user if it does not exist}
         {--sync : Also run the AI document creation listener synchronously}
-        {--use-demo : Use demo@yaffa.cc and create the user if missing}';
+        {--use-demo : Use demo@yaffa.cc (user must exist)}';
 
     /**
      * The console command description.
@@ -48,17 +47,17 @@ class SimulateIncomingEmail extends Command
         $html = $this->option('html');
 
         if ($text === null && $html === null) {
-            $text = 'Plain text body';
+            $this->error('At least one of --text or --html options must be provided.');
+            return self::FAILURE;
         }
 
         if ($this->option('use-demo')) {
             $this->input->setOption('from', 'demo@yaffa.cc');
-            $this->input->setOption('create-user', true);
         }
 
         $user = $this->resolveUser();
         if (! $user) {
-            $this->error('User not found. Provide --from or --user-id, or use --create-user.');
+            $this->error('User not found. Provide --from or --user-id with an existing user.');
             return self::FAILURE;
         }
 
@@ -111,21 +110,7 @@ class SimulateIncomingEmail extends Command
             return null;
         }
 
-        $user = User::where('email', $from)->first();
-        if ($user) {
-            return $user;
-        }
-
-        if (! $this->option('create-user')) {
-            return null;
-        }
-
-        $name = Str::before((string) $from, '@');
-
-        return User::factory()->create([
-            'name' => $name ?: 'Mailbox User',
-            'email' => $from,
-        ]);
+        return User::where('email', $from)->first();
     }
 
     private function buildRawMessage(
