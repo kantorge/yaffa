@@ -98,6 +98,11 @@
         </a>
         <ul class="nav-group-items">
             <x-nav-link
+                href="{{ route('ai-documents.index') }}"
+                iconClasses="fa-solid fa-file-lines"
+                text="{{ __('AI documents') }}"
+            />
+            <x-nav-link
                     href="{{ route('import.csv') }}"
                     iconClasses="fa-solid fa-upload"
                     text="{{ __('Import transactions') }}"
