@@ -45,6 +45,11 @@ class AiDocumentController extends Controller implements HasMiddleware
             'aiDocuments' => $documents,
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
             'aiDocumentSourceLabels' => AiDocument::sourceLabels(),
+            'aiDocumentConfig' => [
+                'maxFilesPerSubmission' => config('ai-documents.file_upload.max_files_per_submission'),
+                'maxFileSize' => config('ai-documents.file_upload.max_file_size_mb'),
+                'allowedTypes' => config('ai-documents.file_upload.allowed_types'),
+            ],
         ]);
 
         return view('ai-documents.index');
