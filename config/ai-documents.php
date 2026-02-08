@@ -5,7 +5,7 @@ return [
      * File upload configuration
      */
     'file_upload' => [
-        'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 3),
+        'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 5),
         'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 20),
         'max_total_size_mb' => env('AI_DOCUMENT_MAX_TOTAL_SIZE_MB', 100),
         'allowed_types' => ['pdf', 'jpg', 'jpeg', 'png', 'txt'],
