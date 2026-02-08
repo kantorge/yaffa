@@ -8,7 +8,8 @@ return [
         'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 5),
         'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 20),
         'max_total_size_mb' => env('AI_DOCUMENT_MAX_TOTAL_SIZE_MB', 100),
-        'allowed_types' => ['pdf', 'jpg', 'jpeg', 'png', 'txt'],
+        // This is a restrictive default. Adjust as needed, but be cautious about allowing too many types for security reasons.
+        'allowed_types' => explode(',', env('AI_DOCUMENT_ALLOWED_TYPES', 'txt'))
     ],
 
     /*
