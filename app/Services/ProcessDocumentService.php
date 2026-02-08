@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\OcrUnavailableException;
 use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
 use App\Models\User;
@@ -11,24 +12,15 @@ use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
 use srmklive\Prism\Contracts\Provider;
 use srmklive\Prism\Facades\Prism;
-use Smalot\PdfParser\Parser as PdfParser;
-use Symfony\Component\Process\Process;
 use Log;
 
 class ProcessDocumentService
 {
-    private AssetMatchingService $assetMatchingService;
-
-    private CategoryLearningService $categoryLearningService;
-
-    private DuplicateDetectionService $duplicateDetectionService;
-
-    public function __construct()
-    {
-        $this->assetMatchingService = new AssetMatchingService();
-        $this->categoryLearningService = new CategoryLearningService();
-        $this->duplicateDetectionService = new DuplicateDetectionService();
-    }
+    public function __construct(
+        private TextExtractionService $textExtractor,
+        private AssetMatchingService $assetMatchingService,
+        private CategoryLearningService $categoryLearningService
+    ) {}
 
     /**
      * Process a document and extract transaction data
@@ -67,14 +59,6 @@ class ProcessDocumentService
             // Validate and parse response
             $transactionData = $this->validateAndParseResponse($aiResponse);
 
-            // Detect potential duplicates
-            $duplicates = $this->duplicateDetectionService->findDuplicates(
-                $user,
-                $transactionData['date'] ?? null,
-                $transactionData['config']['amount_to'] ?? null,
-                $transactionData['config']['account_from_id'] ?? null
-            );
-
             // Store processed data and update document
             $document->processed_transaction_data = $transactionData;
             $document->processed_at = now();
@@ -84,7 +68,6 @@ class ProcessDocumentService
             return [
                 'success' => true,
                 'transaction_data' => $transactionData,
-                'duplicate_warnings' => $duplicates,
             ];
         } catch (Exception $e) {
             $document->status = 'processing_failed';
@@ -100,13 +83,24 @@ class ProcessDocumentService
     private function extractTextFromFiles(AiDocument $document): string
     {
         $texts = [];
+        $visionConfig = $document->user->aiProviderConfigs()->first();
 
         foreach ($document->aiDocumentFiles as $file) {
             try {
-                $text = $this->extractTextFromFile($file->file_path, $file->file_type);
+                $fullPath = Storage::disk('local')->path($file->file_path);
+
+                $text = $this->textExtractor->extractFromFile(
+                    filePath: $fullPath,
+                    fileType: $file->file_type,
+                    visionConfig: $visionConfig
+                );
+
                 if ($text) {
                     $texts[] = $text;
                 }
+            } catch (OcrUnavailableException $e) {
+                // OCR required but unavailable - log and continue
+                Log::warning("OCR unavailable for {$file->file_path}: {$e->getMessage()}");
             } catch (Exception $e) {
                 // Log error but continue with other files
                 Log::warning("Failed to extract text from file {$file->file_path}: {$e->getMessage()}");
@@ -114,88 +108,6 @@ class ProcessDocumentService
         }
 
         return implode("\n\n---\n\n", $texts);
-    }
-
-    /**
-     * Extract text from a single file based on its type
-     */
-    private function extractTextFromFile(string $filePath, string $fileType): string
-    {
-        $fullPath = Storage::disk('local')->path($filePath);
-
-        return match ($fileType) {
-            'pdf' => $this->extractTextFromPdf($fullPath),
-            'txt' => $this->extractTextFromTxt($fullPath),
-            'jpg', 'jpeg', 'png' => $this->extractTextFromImage($fullPath),
-            default => '',
-        };
-    }
-
-    /**
-     * Extract text from PDF using pdfparser
-     */
-    private function extractTextFromPdf(string $filePath): string
-    {
-        try {
-            $parser = new PdfParser();
-            $document = $parser->parseFile($filePath);
-            $pages = $document->getPages();
-
-            $texts = [];
-            foreach ($pages as $page) {
-                $text = $page->getText();
-                if ($text) {
-                    $texts[] = $text;
-                }
-            }
-
-            return implode("\n", $texts);
-        } catch (Exception $e) {
-            Log::error("PDF extraction failed: {$e->getMessage()}");
-
-            return '';
-        }
-    }
-
-    /**
-     * Extract text from plain text file
-     */
-    private function extractTextFromTxt(string $filePath): string
-    {
-        try {
-            return file_get_contents($filePath) ?: '';
-        } catch (Exception $e) {
-            Log::error("Text file extraction failed: {$e->getMessage()}");
-
-            return '';
-        }
-    }
-
-    /**
-     * Extract text from image using OCR (tesseract) or Vision API
-     */
-    private function extractTextFromImage(string $filePath): string
-    {
-        // For MVP, we'll use Tesseract if available, otherwise return empty
-        // In production, this could use Google Vision API or another OCR service
-        try {
-            if (! command_exists('tesseract')) {
-                return '';
-            }
-
-            $process = new Process(['tesseract', $filePath, 'stdout']);
-            $process->run();
-
-            if ($process->isSuccessful()) {
-                return $process->getOutput();
-            }
-
-            return '';
-        } catch (Exception $e) {
-            Log::warning("Image OCR extraction failed: {$e->getMessage()}");
-
-            return '';
-        }
     }
 
     /**

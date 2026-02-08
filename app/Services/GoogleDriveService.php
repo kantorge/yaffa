@@ -10,19 +10,19 @@ use Exception;
 class GoogleDriveService
 {
     /**
-     * List new files in the Google Drive folder since last_sync_at.
+     * List files in the Google Drive folder, by default since last_sync_at.
      *
      * @param \App\Models\GoogleDriveConfig $config
      * @return array
      */
-    public function listNewFiles($config): array
+    public function listNewFiles($config, bool $sinceLastSync = true): array
     {
         $credentials = json_decode($config->service_account_json, true);
         $client = $this->createClient($credentials);
         $service = new Drive($client);
         $folderId = $config->folder_id;
         $q = "'{$folderId}' in parents and trashed=false";
-        if ($config->last_sync_at) {
+        if ($sinceLastSync && $config->last_sync_at) {
             $q .= " and modifiedTime > '" . $config->last_sync_at->toRfc3339String() . "'";
         }
         $files = [];

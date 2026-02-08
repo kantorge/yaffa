@@ -32,7 +32,8 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
     public $timeout = 300;
 
     public function __construct(
-        public int $configId
+        public int $configId,
+        public bool $isManual = false
     ) {
     }
 
@@ -51,32 +52,37 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
         $maxFileSizeBytes = $maxFileSizeMb * 1024 * 1024;
 
         try {
-            $newFiles = $driveService->listNewFiles($config);
+            $newFiles = $driveService->listNewFiles($config, !$this->isManual);
 
             foreach ($newFiles as $file) {
                 // Skip if already imported
                 if (AiDocument::where('google_drive_file_id', $file['id'])->exists()) {
+                    Log::debug('File already imported, skipping', ['file_id' => $file['id']]);
                     continue;
                 }
 
                 // Skip unsupported file types
                 $ext = mb_strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                 if (! in_array($ext, $allowedTypes)) {
+                    Log::debug('File type not allowed, skipping', ['file_id' => $file['id'], 'file_type' => $ext]);
                     continue;
                 }
 
                 // Download file
                 $storagePath = "ai_documents/{$user->id}/" . Str::uuid() . "/{$file['name']}";
+                $fullPath = storage_path('app/' . $storagePath);
 
                 try {
-                    $driveService->downloadFile($file['id'], $credentials, storage_path('app/' . $storagePath));
+                    // Ensure directory exists before downloading
+                    mkdir(dirname($fullPath), 0755, true);
+                    $driveService->downloadFile($file['id'], $credentials, $fullPath);
                 } catch (Exception $e) {
                     Log::error('Failed to download file from Google Drive', ['file_id' => $file['id'], 'error' => $e->getMessage()]);
                     continue;
                 }
 
                 // Check file size
-                if (filesize(storage_path('app/' . $storagePath)) > $maxFileSizeBytes) {
+                if (filesize($fullPath) > $maxFileSizeBytes) {
                     Storage::delete($storagePath);
                     continue;
                 }

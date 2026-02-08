@@ -29,6 +29,7 @@
         "roach-php/laravel": "^3.2",
         "sentry/sentry-laravel": "^4.20",
         "simshaun/recurr": "^5.0",
+        "smalot/pdfparser": "^2.0",
         "spatie/laravel-model-flags": "^1.4",
         "spatie/laravel-onboard": "^2.6",
         "symfony/http-client": "^7.2",
@@ -67,7 +68,10 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/"
-        }
+        },
+        "files": [
+            "app/Helpers/OcrHelpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
