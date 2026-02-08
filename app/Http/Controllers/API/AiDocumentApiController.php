@@ -266,6 +266,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
     /**
      * Get file type from extension
+     * TODO: how to support custmo added types from config?
      */
     private function getFileType(string $extension): string
     {
