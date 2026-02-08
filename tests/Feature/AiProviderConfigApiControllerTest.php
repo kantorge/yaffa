@@ -142,11 +142,12 @@ class AiProviderConfigApiControllerTest extends TestCase
             ->getJson('/api/ai/config');
 
         $response->assertStatus(200);
-        $response->assertJsonStructure(['id', 'provider', 'model', 'created_at', 'updated_at']);
+        $response->assertJsonStructure(['id', 'provider', 'model', 'vision_enabled', 'created_at', 'updated_at']);
         $response->assertJson([
             'id' => $config->id,
             'provider' => $config->provider,
             'model' => $config->model,
+            'vision_enabled' => $config->vision_enabled,
         ]);
         $response->assertJsonMissing(['api_key']);
     }
@@ -160,19 +161,22 @@ class AiProviderConfigApiControllerTest extends TestCase
                 'provider' => 'openai',
                 'model' => 'gpt-4o-mini',
                 'api_key' => 'sk-test-1234567890abcdefghij',
+                'vision_enabled' => true,
             ]);
 
         $response->assertStatus(201);
-        $response->assertJsonStructure(['id', 'provider', 'model', 'message']);
+        $response->assertJsonStructure(['id', 'provider', 'model', 'vision_enabled', 'message']);
         $response->assertJson([
             'provider' => 'openai',
             'model' => 'gpt-4o-mini',
+            'vision_enabled' => true,
         ]);
 
         $this->assertDatabaseHas('ai_provider_configs', [
             'user_id' => $this->user->id,
             'provider' => 'openai',
             'model' => 'gpt-4o-mini',
+            'vision_enabled' => true,
         ]);
     }
 
@@ -256,6 +260,31 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config->refresh();
         $this->assertEquals('gemini', $config->provider);
         $this->assertEquals('gemini-1.5-flash', $config->model);
+    }
+
+    public function test_update_changes_vision_enabled(): void
+    {
+        $config = AiProviderConfig::factory()->create([
+            'user_id' => $this->user->id,
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'vision_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson("/api/ai/config/{$config->id}", [
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'vision_enabled' => true,
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'vision_enabled' => true,
+        ]);
+
+        $config->refresh();
+        $this->assertTrue($config->vision_enabled);
     }
 
     public function test_update_preserves_api_key_when_not_provided(): void

@@ -16,12 +16,14 @@ class AiProviderConfig extends Model
         'provider',
         'model',
         'api_key',
+        'vision_enabled',
     ];
 
     protected function casts(): array
     {
         return [
             'api_key' => 'encrypted',
+            'vision_enabled' => 'boolean',
         ];
     }
 
