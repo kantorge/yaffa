@@ -36,8 +36,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
 - AI providers require user-supplied API keys and billing setup.
 - Storage limits are managed by self-hosted users.
 - For MVP, AI providers are OpenAI and Gemini, configured via static list.
-- Original uploaded and imported files are stored by the application; resized images are generated on-the-fly for AI input and not persisted.
+- Original uploaded and imported files are stored by the application; resized images are generated on-the-fly for Vision AI and not persisted.
 - AI processing is always asynchronous; email notifications are used for failures and completion.
+- PDF text extraction using smalot/pdfparser is always available (no OCR required for text-based PDFs).
+- OCR for images is optional and requires either Tesseract (self-hosted) or Vision AI (cloud-based) to be enabled and available.
+- If a document contains images but no OCR method is available/enabled, processing fails with clear user notification.
 
 ## Backend Scope (Laravel)
 
@@ -133,6 +136,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `provider` - varchar(255), not null
     - `model` - varchar(255), not null
     - `api_key` - text, not null (encrypted)
+    - `vision_enabled` - boolean, not null, default false - NEW! Needs to be added.
     - `created_at`, `updated_at` - timestamps
   - `google_drive_configs` (✅ implemented)
     - `id` - bigint unsigned, primary key
@@ -226,10 +230,18 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - `ProcessDocumentService`
     - Orchestrates full document processing pipeline
     - Validates files (type, size)
-    - Extracts text/content from files
+    - Extracts text/content from files using:
+      - **PDF files:** smalot/pdfparser (always available, extracts text from text-based PDFs)
+      - **Images (JPG/PNG):** Requires OCR capability
+        - **Option 1:** Tesseract OCR (if `TESSERACT_ENABLED=true` AND binary available at configured path)
+        - **Option 2:** Vision AI (if user's AiProviderConfig has `vision_enabled=true` AND model supports vision)
+        - **Failure:** If image present but no OCR available, throw exception to mark processing_failed
+    - Image preprocessing:
+      - For Tesseract: use original resolution (better accuracy)
+      - For Vision AI: resize to max 2048px using intervention/image (reduce token costs)
     - Prepares AI prompts with user assets and learning data
     - Fetches payee category statistics (last X months) to optimize item categorization
-    - Calls AI provider via Prism
+    - Calls AI provider via Prism (text completion or vision completion based on file types)
     - Validates AI response against schema
     - Updates document status
   - `AiProcessingJob` (queued on 'default' queue)
@@ -328,8 +340,14 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - **Processing failure (AI error, after depleting retries)**
       - Mailable: `App\Mail\AiDocumentProcessingFailed`
       - Subject: "Document processing failed"
-      - Content: Document ID, error type (auth/quota/model/network), suggested action, link to AI config settings
+      - Content: Document ID, error type (auth/quota/model/network/ocr_unavailable), suggested action, link to AI config settings
       - View: `resources/views/emails/ai-document-processing-failed.blade.php`
+      - **OCR Unavailable Error:** If document contains images but neither Tesseract nor Vision AI is available/enabled:
+        - Error type: `ocr_unavailable`
+        - Suggested actions:
+          - Enable Tesseract OCR (see Docker setup instructions)
+          - Enable Vision AI in AI Provider settings (requires vision-capable model like gpt-4o or gemini-1.5-pro)
+          - Upload text-based PDF instead of images
     - **Google Drive config disabled (auth/permission error)**
       - Mailable: `App\Mail\GoogleDriveConfigDisabled`
       - Subject: "Google Drive monitoring disabled"
@@ -581,8 +599,9 @@ A few notes on the statuses
   - File naming: preserve original filename, prepend timestamp if duplicate
 - **Image resizing:**
   - Performed on-the-fly using **intervention/image** package
-  - Max dimensions: 2048x2048 pixels
-  - Resized images not persisted (memory only)
+  - **Only for Vision AI:** Resize to max 2048x2048 pixels before sending to AI provider
+  - **For Tesseract OCR:** Use original resolution (better OCR accuracy)
+  - Resized images not persisted (memory only, temporary for Vision API call)
   - Original files always retained
 - **Retention:**
   - Environment variable: `AI_DOCUMENT_FILE_RETENTION_DAYS=90` (default)
@@ -899,6 +918,123 @@ A few notes on the statuses
     - Delete configuration
     - One config per user enforcement (UI level)
 
+## OCR & Vision Processing Strategy
+
+### Overview
+
+YAFFA supports three methods for extracting text from documents, with automatic fallback based on file type and configuration:
+
+1. **PDF Text Extraction** (always available)
+   - Library: `smalot/pdfparser`
+   - Use case: Text-based PDFs (invoices, statements, emails saved as PDF)
+   - No OCR required, fastest method
+   - Automatically used for all PDF files
+
+2. **Tesseract OCR** (optional, self-hosted)
+   - Library: Command-line `tesseract` via Symfony Process
+   - Use case: Scanned documents, photo receipts, images
+   - Requires: System installation OR Docker container
+   - Configuration: `TESSERACT_ENABLED=true` + `TESSERACT_PATH=/usr/bin/tesseract`
+   - Cost: Free (compute only)
+   - Accuracy: Good for high-resolution images
+
+3. **Vision AI** (optional, cloud-based)
+   - Library: Prism integration with OpenAI/Gemini vision models
+   - Use case: Complex receipts, handwritten notes, low-quality scans
+   - Requires: User's AiProviderConfig with `vision_enabled=true` AND vision-capable model
+   - Cost: API token usage (~$0.01-0.05 per image depending on model)
+   - Accuracy: Excellent, especially for complex layouts
+
+### Processing Logic
+
+**For PDF files:**
+
+- Always attempt text extraction with smalot/pdfparser first
+- If successful (text extracted), proceed with AI text completion
+- If unsuccessful (scanned PDF, returns empty), treat as image and require OCR
+
+**For image files (JPG, PNG):**
+
+- Check if Tesseract is enabled AND available:
+  - If yes: Run Tesseract OCR on original resolution image
+  - If no: Check if Vision AI is enabled AND selected model supports vision
+    - If yes: Resize image to 2048px max, send to Vision AI via Prism
+    - If no: **Fail processing** with `ocr_unavailable` error, notify user
+
+**For text files (TXT):**
+
+- Direct `file_get_contents()`, no OCR needed
+
+### Configuration
+
+**Environment Variables:**
+
+```env
+# Tesseract OCR Configuration
+TESSERACT_ENABLED=false        # Enable Tesseract OCR for image processing
+TESSERACT_PATH=/usr/bin/tesseract  # Path to tesseract binary (system or Docker)
+TESSERACT_LANGUAGE=eng         # Default language for OCR (eng, fra, deu, etc.)
+```
+
+**Database (ai_provider_configs table):**
+
+- `vision_enabled` (boolean, default false) - Whether to use Vision API for images when Tesseract unavailable
+
+**User Workflow:**
+
+1. User configures AI provider (OpenAI/Gemini) in settings
+2. User selects vision-capable model (gpt-4o, gemini-1.5-pro) if they want Vision AI
+3. User enables "Use Vision AI for images" checkbox (sets `vision_enabled=true`)
+4. If neither Tesseract nor Vision AI configured, user warned that image uploads will fail
+
+### Docker Deployment
+
+**Optional Tesseract Service (docker-compose.yml):**
+
+Add to `docker/docker-compose.yml`:
+
+```yaml
+services:
+  # Optional: Tesseract OCR service for image processing
+  # Uncomment to enable OCR for scanned documents and photo receipts
+  # tesseract:
+  #   image: franky1/tesseract:latest  # Actively maintained OCR image
+  #   container_name: yaffa_tesseract
+  #   volumes:
+  #     - yaffa_storage:/var/www/html/storage  # Shared storage with app
+  #   networks:
+  #     - yaffa-network
+  #   restart: unless-stopped
+
+  app:
+    # ... existing config ...
+    environment:
+      # Enable Tesseract if service is running
+      TESSERACT_ENABLED: '${TESSERACT_ENABLED:-false}'
+      TESSERACT_PATH: '${TESSERACT_PATH:-/usr/bin/tesseract}'
+    # Uncomment to enable Tesseract dependency
+    # depends_on:
+    #   tesseract:
+    #     condition: service_started
+```
+
+**User Instructions (Documentation):**
+
+1. **With Docker (Recommended):**
+   - Uncomment `tesseract` service in `docker-compose.yml`
+   - Set `TESSERACT_ENABLED=true` in `.env`
+   - Restart containers: `docker compose up -d`
+
+2. **System Install (Advanced):**
+   - Install Tesseract: `apt-get install tesseract-ocr tesseract-ocr-eng`
+   - Set `TESSERACT_ENABLED=true` and `TESSERACT_PATH=/usr/bin/tesseract` in `.env`
+
+3. **Vision AI Only (Cloud):**
+   - Configure AI provider in YAFFA settings
+   - Select vision model (gpt-4o, gemini-1.5-pro)
+   - Enable "Use Vision AI for images"
+   - Higher cost but no server setup required
+
 ## AI Provider Configuration
 
 ### Supported Providers & Models (MVP)
@@ -908,14 +1044,36 @@ A few notes on the statuses
 
 **OpenAI:**
 
-- `gpt-4o` - GPT-4 Omni (vision support, structured outputs, best for complex receipts)
-- `gpt-4o-mini` - GPT-4 Omni Mini (cheaper, faster, recommended for MVP testing)
-- `gpt-5-mini` - GPT-5 Mini (configured in app)
+- `gpt-4o` - GPT-4 Omni (**vision support**, structured outputs, best for complex receipts)
+- `gpt-4o-mini` - GPT-4 Omni Mini (**vision support**, cheaper, faster, recommended for MVP testing)
+- `gpt-5-mini` - GPT-5 Mini (text-only, no vision)
 
 **Gemini:**
 
-- `gemini-1.5-pro` - Gemini 1.5 Pro (vision support, long context, best for complex receipts)
-- `gemini-1.5-flash` - Gemini 1.5 Flash (faster, cheaper, recommended for MVP testing)
+- `gemini-1.5-pro` - Gemini 1.5 Pro (**vision support**, long context, best for complex receipts)
+- `gemini-1.5-flash` - Gemini 1.5 Flash (**vision support**, faster, cheaper, recommended for MVP testing)
+
+**Model Capabilities (config/ai-documents.php):**
+
+```php
+'providers' => [
+    'openai' => [
+        'name' => 'OpenAI',
+        'models' => [
+            'gpt-4o' => ['vision' => true],
+            'gpt-4o-mini' => ['vision' => true],
+            'gpt-5-mini' => ['vision' => false],
+        ],
+    ],
+    'gemini' => [
+        'name' => 'Google Gemini',
+        'models' => [
+            'gemini-1.5-pro' => ['vision' => true],
+            'gemini-1.5-flash' => ['vision' => true],
+        ],
+    ],
+],
+```
 
 ### Default Configuration
 
@@ -954,6 +1112,17 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Total size > 500MB → reject
   - Unsupported file type (.exe, .zip) → reject
   - Corrupted PDF → graceful failure with error message
+
+- **OCR & Text Extraction:**
+  - **Image uploaded, Tesseract disabled, Vision AI disabled** → mark processing_failed, email user with `ocr_unavailable` error
+  - **Image uploaded, Tesseract enabled but binary not found** → mark processing_failed, email user (check TESSERACT_PATH)
+  - **Image uploaded, Vision AI enabled but model doesn't support vision** → mark processing_failed, email user (suggest vision-capable model)
+  - **Scanned PDF (no extractable text), no OCR available** → mark processing_failed, email user
+  - **Text PDF with smalot/pdfparser** → extract successfully, no OCR needed
+  - **Mixed document (text + images), partial OCR failure** → extract what's possible, continue processing
+  - **Tesseract returns empty string** → mark processing_failed (unreadable image)
+  - **Vision API image too large (>20MB after resize)** → reject during validation
+  - **Multi-page scanned PDF** → extract each page with smalot/pdfparser (treat as one text blob), if empty use OCR fallback per page
 
 - **AI Processing:**
   - AI response missing required fields → mark processing_failed
@@ -1086,6 +1255,72 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 7. **AI Documents Date Filter Behavior (✅ Feb 7, 2026):** DateRangeFilterCard component for AI documents configured with `show-update-button="false"` per AiDocumentManager implementation. Filters update automatically as user types (modern refresh-on-input UX pattern) rather than requiring explicit button click. This differs from the Account Show feature which uses a button-based workflow, but both use the same reusable DateRangeFilterCard component with different configurations. Spec did not mandate specific update interaction pattern, so this is an implementation choice rather than deviation.
 
+### Required Composer Dependencies
+
+**PDF Processing:**
+
+- `"smalot/pdfparser": "^2.0"` - Extract text from PDF files (required, not yet added)
+
+**Image Processing:**
+
+- `"intervention/image": "^3.11"` - Image resizing for Vision AI (✅ already installed)
+
+**AI Integration:**
+
+- `"prism-php/prism": "^0.99.19"` - Unified AI provider abstraction (✅ already installed)
+- Note: Verify Prism supports vision/multimodal in this version for `->attachMedia()` or similar
+
+**OCR (Optional):**
+
+- Tesseract OCR: No Composer package needed, uses command-line binary via Symfony Process
+
+### Tesseract Availability Detection
+
+**Helper Function (app/Helpers/system.php or equivalent):**
+
+```php
+if (!function_exists('tesseract_is_available')) {
+    /**
+     * Check if Tesseract OCR binary is available at configured path
+     */
+    function tesseract_is_available(): bool
+    {
+        if (!config('ai-documents.ocr.tesseract_enabled')) {
+            return false;
+        }
+
+        $path = config('ai-documents.ocr.tesseract_path');
+
+        // Check if binary exists and is executable
+        if (!file_exists($path) || !is_executable($path)) {
+            return false;
+        }
+
+        // Verify it actually works by checking version
+        try {
+            $process = new \Symfony\Component\Process\Process([$path, '--version']);
+            $process->run();
+            return $process->isSuccessful();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}
+```
+
+**Config Addition (config/ai-documents.php):**
+
+```php
+/*
+ * OCR Configuration
+ */
+'ocr' => [
+    'tesseract_enabled' => env('TESSERACT_ENABLED', false),
+    'tesseract_path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+    'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
+],
+```
+
 ### Completed in Feb 2026 Session
 
 **Google Drive Integration (✅ Fully Implemented - Feb 6, 2026):**
@@ -1139,13 +1374,32 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ### Pending/Not Yet Implemented
 
+**OCR Implementation (New Requirements):**
+
+- Add `vision_enabled` column to `ai_provider_configs` migration
+- Add `smalot/pdfparser` to composer.json dependencies
+- Create `tesseract_is_available()` helper function
+- Add OCR config section to config/ai-documents.php
+- Update ProcessDocumentService with OCR routing logic:
+  - `extractTextFromPdf()` using smalot/pdfparser
+  - `extractTextFromImage()` with Tesseract/Vision AI fallback
+  - `resizeImageForVisionApi()` using intervention/image (2048px max)
+  - Throw `OcrUnavailableException` when images present but no OCR enabled
+- Update AiProcessingJob to catch OcrUnavailableException and send specific email
+- Add `ocr_unavailable` error type to AiDocumentProcessingFailed mailable
+- Update `config/ai-documents.php` providers array with vision capability flags
+- Verify Prism vision API integration pattern (->attachMedia() or equivalent for GPT-4o/Gemini vision)
+- Add Docker compose configuration for optional franky1/tesseract service
+- Update AiProviderSettings.vue to show vision toggle (only for vision-capable models)
+
 **Frontend Components (Ready for Implementation):**
 
-- `DocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support
+- `DocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support (warning if OCR unavailable)
 - `AiDocumentIndex.vue` - Document list with filters (status, source_type, pagination)
 - `AiDocumentShow.vue` - Document detail view with file preview and draft data
 - `DocumentReviewModal.vue` - Modal for transaction form integration
 - Pages: `/ai-documents` (index), `/ai-documents/{id}` (detail)
+- `AiProviderSettings.vue` - Add vision_enabled checkbox (conditional on model capabilities)
 
 **Processing & Transaction Flow:**
 
