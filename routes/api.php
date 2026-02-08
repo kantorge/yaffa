@@ -139,6 +139,10 @@ Route::patch('/user/settings', [UserApiController::class, 'updateSettings'])
     ->name('user.settings.update');
 Route::patch('/user/change_password', [UserApiController::class, 'changePassword'])
     ->name('user.change_password');
+Route::get('/user/preference/{key}', [UserApiController::class, 'getPreference'])
+    ->name('api.user.preference.get');
+Route::put('/user/preference/{key}', [UserApiController::class, 'setPreference'])
+    ->name('api.user.preference.set');
 // AI Document routes
 Route::post('/documents', [AiDocumentApiController::class, 'store'])
     ->name('api.documents.store');

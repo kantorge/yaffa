@@ -89,4 +89,28 @@ class UserApiController extends Controller implements HasMiddleware
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
     }
+
+    /**
+     * Get a user preference flag
+     */
+    public function getPreference(Request $request, string $key): JsonResponse
+    {
+        $hasFlag = $request->user()->hasFlag($key);
+
+        return response()->json([
+            'value' => $hasFlag,
+        ]);
+    }
+
+    /**
+     * Set a user preference flag
+     */
+    public function setPreference(Request $request, string $key): JsonResponse
+    {
+        $request->user()->flag($key);
+
+        return response()->json([
+            'value' => true,
+        ]);
+    }
 }
