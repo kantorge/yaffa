@@ -97,8 +97,21 @@ return [
      */
     'ocr' => [
         'tesseract_enabled' => env('TESSERACT_ENABLED', false),
-        'tesseract_path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        'tesseract_mode' => env('TESSERACT_MODE', 'binary'), // 'binary' or 'http'
         'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
+
+        // Binary mode (local execution on same container)
+        'tesseract_binary' => [
+            'path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        ],
+
+        // HTTP mode (separate Tesseract container/service)
+        'tesseract_http' => [
+            'host' => env('TESSERACT_HTTP_HOST', 'localhost'),
+            'port' => env('TESSERACT_HTTP_PORT', 8888),
+            'timeout' => env('TESSERACT_HTTP_TIMEOUT', 30),
+            'endpoint' => '/api/v1/ocr', // Path to OCR endpoint on HTTP server
+        ],
     ],
 
     /*

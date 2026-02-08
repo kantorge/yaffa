@@ -228,7 +228,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
         }
 
         // Dispatch the config-specific job to process this config
-        ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id);
+        ProcessGoogleDriveConfigJob::dispatch($googleDriveConfig->id, true);
 
         return response()->json([
             'message' => __('Google Drive sync has been queued'),

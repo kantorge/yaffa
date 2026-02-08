@@ -69,17 +69,10 @@ class AiDocumentController extends Controller implements HasMiddleware
          */
         $aiDocument->load(['files', 'receivedMail', 'transaction']);
 
-        $duplicateWarnings = [];
-        if ($aiDocument->processed_transaction_data
-            && array_key_exists('duplicate_warnings', $aiDocument->processed_transaction_data)) {
-            $duplicateWarnings = $aiDocument->processed_transaction_data['duplicate_warnings'];
-        }
-
         JavaScriptFacade::put([
             'aiDocument' => $aiDocument,
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
-            'aiDocumentSourceLabels' => AiDocument::sourceLabels(),
-            'aiDocumentDuplicateWarnings' => $duplicateWarnings,
+            'aiDocumentSourceLabels' => AiDocument::sourceLabels()
         ]);
 
         return view('ai-documents.show', [
