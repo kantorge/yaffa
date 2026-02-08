@@ -152,15 +152,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         Gate::authorize('view', $aiDocument);
 
         $aiDocument->load('aiDocumentFiles', 'receivedMail', 'transaction');
-        // Build duplicate warnings if available
-        $duplicateWarnings = [];
-        if ($aiDocument->processed_transaction_data && isset($aiDocument->processed_transaction_data['duplicate_warnings'])) {
-            $duplicateWarnings = $aiDocument->processed_transaction_data['duplicate_warnings'];
-        }
 
         return response()->json([
-            'document' => $aiDocument,
-            'duplicate_warnings' => $duplicateWarnings,
+            'document' => $aiDocument
         ], Response::HTTP_OK);
     }
 

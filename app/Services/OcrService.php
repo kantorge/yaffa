@@ -1,0 +1,301 @@
+<?php
+
+namespace App\Services;
+
+use App\Exceptions\OcrUnavailableException;
+use App\Models\AiProviderConfig;
+use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
+use Psr\Http\Client\ClientExceptionInterface;
+use srmklive\Prism\Contracts\Provider;
+use srmklive\Prism\Facades\Prism;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
+
+class OcrService
+{
+    private ImagePreprocessingService $imagePreprocessingService;
+
+    public function __construct()
+    {
+        $this->imagePreprocessingService = new ImagePreprocessingService();
+    }
+
+    /**
+     * Extract text from an image using OCR
+     *
+     * Attempts extraction in order of preference:
+     * 1. Tesseract OCR (if enabled and available) - uses original resolution
+     * 2. Vision AI (if enabled and model supports vision) - uses resized image
+     * 3. Throws OcrUnavailableException if neither is available
+     *
+     * @param string $filePath Full file path to the image
+     * @param AiProviderConfig|null $visionConfig User's AI config for Vision API fallback
+     * @return string Extracted text from the image
+     *
+     * @throws OcrUnavailableException if no OCR method is available
+     * @throws Exception if OCR processing fails
+     */
+    public function extract(string $filePath, ?AiProviderConfig $visionConfig = null): string
+    {
+        // Try Tesseract first (local, cheapest)
+        if (tesseract_is_available()) {
+            try {
+                $text = $this->extractWithTesseract($filePath);
+                if ($text) {
+                    return $text;
+                }
+            } catch (Exception $e) {
+                Log::warning("Tesseract extraction failed: {$e->getMessage()}, falling back to Vision API if available");
+            }
+        }
+
+        // Fall back to Vision AI
+        if ($visionConfig?->vision_enabled && $this->modelSupportsVision($visionConfig)) {
+            try {
+                $text = $this->extractWithVisionApi($filePath, $visionConfig);
+
+                return $text;
+            } catch (Exception $e) {
+                Log::error("Vision API extraction failed: {$e->getMessage()}");
+                throw $e;
+            }
+        }
+
+        // No OCR method available
+        throw new OcrUnavailableException(
+            'Document contains images that require OCR processing, but no OCR method is available. '
+            . 'Please enable Tesseract (via Docker) or Vision AI in your provider settings.'
+        );
+    }
+
+    /**
+     * Extract text from image using Tesseract OCR
+     *
+     * Routes to binary or HTTP implementation based on configuration.
+     * Uses original image resolution for best accuracy.
+     *
+     * @param string $filePath Full file path to the image
+     * @return string Extracted text
+     *
+     * @throws Exception if Tesseract fails
+     */
+    private function extractWithTesseract(string $filePath): string
+    {
+        $mode = config('ai-documents.ocr.tesseract_mode', 'binary');
+
+        return match ($mode) {
+            'http' => $this->extractWithTesseractHttp($filePath),
+            'binary' => $this->extractWithTesseractBinary($filePath),
+            default => throw new Exception("Unknown Tesseract mode: {$mode}"),
+        };
+    }
+
+    /**
+     * Extract text from image using local Tesseract binary
+     *
+     * @param string $filePath Full file path to the image
+     * @return string Extracted text
+     *
+     * @throws Exception if Tesseract fails
+     */
+    private function extractWithTesseractBinary(string $filePath): string
+    {
+        try {
+            $tesseractPath = config('ai-documents.ocr.tesseract_binary.path');
+            $language = config('ai-documents.ocr.tesseract_language', 'eng');
+
+            $process = new Process([$tesseractPath, $filePath, 'stdout', '-l', $language]);
+            $process->setTimeout(30); // Tesseract can take time on large images
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+
+            $output = $process->getOutput();
+
+            Log::info("Tesseract binary extracted " . mb_strlen($output) . " characters from image");
+
+            return $output;
+        } catch (ProcessFailedException $e) {
+            Log::error("Tesseract process failed: {$e->getMessage()}");
+            throw new Exception("Tesseract OCR extraction failed: {$e->getMessage()}", 0, $e);
+        } catch (Exception $e) {
+            Log::error("Tesseract binary extraction error: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    /**
+     * Extract text from image using remote Tesseract HTTP service
+     *
+     * Communicates with Tesseract running in a separate Docker container
+     * via HTTP API.
+     *
+     * @param string $filePath Full file path to the image
+     * @return string Extracted text
+     *
+     * @throws Exception if Tesseract HTTP service fails
+     */
+    private function extractWithTesseractHttp(string $filePath): string
+    {
+        try {
+            $host = config('ai-documents.ocr.tesseract_http.host');
+            $port = config('ai-documents.ocr.tesseract_http.port');
+            $timeout = (int) config('ai-documents.ocr.tesseract_http.timeout', 30);
+            $endpoint = config('ai-documents.ocr.tesseract_http.endpoint', '/api/v1/ocr');
+            $language = config('ai-documents.ocr.tesseract_language', 'eng');
+
+            $url = "http://{$host}:{$port}{$endpoint}";
+
+            // Read image and convert to base64
+            $imageData = file_get_contents($filePath);
+            if ($imageData === false) {
+                throw new Exception("Failed to read image file: {$filePath}");
+            }
+
+            $imageBase64 = base64_encode($imageData);
+
+            // Make HTTP request to Tesseract server
+            $client = new HttpClient(['timeout' => $timeout]);
+
+            $response = $client->post($url, [
+                'json' => [
+                    'image_base64' => $imageBase64,
+                    'language' => $language,
+                ],
+            ]);
+
+            $result = json_decode((string) $response->getBody(), true);
+
+            if (!is_array($result)) {
+                throw new Exception('Invalid response from Tesseract server');
+            }
+
+            if (($result['status'] ?? null) === 'success') {
+                $text = $result['text'] ?? '';
+                Log::info("Tesseract HTTP extracted " . mb_strlen($text) . " characters from image");
+
+                return $text;
+            }
+
+            $errorMsg = $result['message'] ?? 'Unknown OCR error';
+            throw new Exception("Tesseract OCR error: {$errorMsg}");
+        } catch (ConnectException $e) {
+            Log::error("Tesseract HTTP connection failed: {$e->getMessage()}");
+            throw new Exception("Tesseract server unreachable at http://{$host}:{$port}", 0, $e);
+        } catch (RequestException $e) {
+            Log::error("Tesseract HTTP request failed: {$e->getMessage()}");
+            throw new Exception("Tesseract HTTP request failed: {$e->getMessage()}", 0, $e);
+        } catch (Exception $e) {
+            Log::error("Tesseract HTTP extraction error: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    /**
+     * Extract text from image using Vision AI (OpenAI/Gemini)
+     *
+     * Resizes image to maximum 2048px dimension to reduce API token costs.
+     *
+     * @param string $filePath Full file path to the image
+     * @param AiProviderConfig $config User's AI provider configuration
+     * @return string Extracted text from image
+     *
+     * @throws Exception if Vision API call fails
+     * @throws ClientExceptionInterface if HTTP request fails
+     */
+    private function extractWithVisionApi(string $filePath, AiProviderConfig $config): string
+    {
+        $resizedPath = $filePath;
+
+        try {
+            // Resize image for Vision API (reduces token costs)
+            $resizedPath = $this->imagePreprocessingService->resizeForVisionApi($filePath);
+
+            // Get image as base64
+            $imageBase64 = base64_encode(file_get_contents($resizedPath));
+            $mimeType = mime_content_type($resizedPath);
+
+            // Build vision prompt
+            $prompt = 'Please extract all text from this image. Return ONLY the extracted text, nothing else.';
+
+            // Call Vision AI provider
+            $provider = Prism::via($config->provider)
+                ->withApiKey($config->api_key)
+                ->withModel($config->model);
+
+            $response = $provider->vision(
+                messages: [
+                    [
+                        'role' => 'user',
+                        'content' => $prompt,
+                        'image' => [
+                            'data' => $imageBase64,
+                            'media_type' => $mimeType,
+                        ],
+                    ],
+                ],
+                temperature: 0.1,
+                topP: 1,
+            );
+
+            $text = $response['choices'][0]['message']['content'] ?? '';
+
+            Log::info("Vision API extracted " . mb_strlen($text) . " characters from image");
+
+            return $text;
+        } catch (ClientExceptionInterface $e) {
+            Log::error("Vision API HTTP request failed: {$e->getMessage()}");
+            throw new Exception("Vision API request failed: {$e->getMessage()}", 0, $e);
+        } catch (Exception $e) {
+            Log::error("Vision API extraction failed: {$e->getMessage()}");
+            throw $e;
+        } finally {
+            // Clean up temporary resized image
+            if ($resizedPath !== $filePath) {
+                $this->imagePreprocessingService->cleanup($resizedPath);
+            }
+        }
+    }
+
+    /**
+     * Check if a model supports vision capabilities
+     *
+     * Vision capability is defined in the config for each model.
+     *
+     * @param AiProviderConfig $config
+     * @return bool
+     */
+    private function modelSupportsVision(AiProviderConfig $config): bool
+    {
+        $modelsConfig = config('ai-documents.providers.' . $config->provider . '.models', []);
+
+        // Handle both list and associative array formats
+        if (is_array($modelsConfig) && !array_is_list($modelsConfig)) {
+            // Associative format with metadata
+            return (bool) ($modelsConfig[$config->model]['vision'] ?? false);
+        }
+
+        // List format - assume no vision support
+        return false;
+    }
+
+    /**
+     * Check if OCR is available for this document
+     *
+     * @param AiProviderConfig|null $visionConfig
+     * @return bool
+     */
+    public function isAvailable(?AiProviderConfig $visionConfig = null): bool
+    {
+        $tesseractAvailable = tesseract_is_available();
+        $visionAvailable = $visionConfig?->vision_enabled && $this->modelSupportsVision($visionConfig);
+
+        return $tesseractAvailable || $visionAvailable;
+    }
+}
