@@ -594,7 +594,7 @@ A few notes on the statuses
   - Max files per submission: 5
   - Max file size: 20MB per file (configurable via `AI_DOCUMENT_MAX_FILE_SIZE_MB`)
   - Max total submission size: 500MB (configurable via `AI_DOCUMENT_MAX_TOTAL_SIZE_MB`)
-  - Allowed types: pdf, jpg, jpeg, png, txt
+  - Allowed types (configurable via `AI_DOCUMENT_ALLOWED_TYPES`): pdf, jpg, jpeg, png, txt
 
 ## Google Drive Monitoring
 

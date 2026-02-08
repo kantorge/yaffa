@@ -239,13 +239,8 @@
   const maxFilesPerSubmission =
     window.aiDocumentConfig?.maxFilesPerSubmission || 5;
   const maxFileSize = window.aiDocumentConfig?.maxFileSize || 20;
-  const allowedTypes = window.aiDocumentConfig?.allowedTypes || [
-    'pdf',
-    'jpg',
-    'jpeg',
-    'png',
-    'txt',
-  ];
+  // Restrictive default for security reasons.
+  const allowedTypes = window.aiDocumentConfig?.allowedTypes || ['txt'];
 
   const allowedMimeTypes = computed(() => {
     const mimeMap = {
