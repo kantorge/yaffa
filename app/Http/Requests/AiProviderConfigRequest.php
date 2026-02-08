@@ -50,12 +50,17 @@ class AiProviderConfigRequest extends FormRequest
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH, // Not really needed but for consistency
                 function ($attribute, $value, $fail) {
                     $provider = $this->input('provider');
-                    $models = config('ai-documents.providers.' . $provider . '.models', []);
+                    $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
+                    $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
 
                     if (!in_array($value, $models, true)) {
                         $fail(__('The :attribute is invalid.', ['attribute' => $attribute]));
                     }
                 },
+            ],
+            'vision_enabled' => [
+                'sometimes',
+                'boolean',
             ],
             'api_key' => $apiKeyRules,
         ];

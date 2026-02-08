@@ -94,7 +94,8 @@ class AiProviderSettingsTest extends DuskTestCase
 
             // Get the first provider's models and assert model dropdown behavior
             $firstProviderKey = $providers[0];
-            $models = config("ai-documents.providers.$firstProviderKey.models");
+            $modelsConfig = config("ai-documents.providers.$firstProviderKey.models");
+            $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
 
             // Model dropdown is not visible until provider selected
             $browser->assertMissing('#model')
@@ -107,9 +108,25 @@ class AiProviderSettingsTest extends DuskTestCase
                 $browser->assertSeeIn('#model', $model);
             }
 
+            $visionModel = null;
+            if (!array_is_list($modelsConfig)) {
+                foreach ($modelsConfig as $modelName => $meta) {
+                    if (!empty($meta['vision'])) {
+                        $visionModel = $modelName;
+                        break;
+                    }
+                }
+            }
+
             // API Key input visibility and default state
             $browser->assertVisible('#api_key')
                 ->assertInputValue('#api_key', '');
+
+            if ($visionModel !== null) {
+                $browser->select('#model', $visionModel)
+                    ->waitFor('#vision_enabled', 10)
+                    ->assertVisible('#vision_enabled');
+            }
 
             // Cancel button functionality
             $browser->click('@button-cancel-add-ai-provider')
