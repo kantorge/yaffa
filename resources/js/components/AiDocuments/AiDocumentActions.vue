@@ -18,6 +18,18 @@
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
+        {{ __('Upload document') }}
+        <button
+          class="btn btn-sm btn-outline-primary"
+          @click="$emit('open-upload-form')"
+          :title="__('Upload a new document')"
+        >
+          <i class="fa fa-fw fa-upload"></i>
+        </button>
+      </li>
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
         {{ __('AI provider settings') }}
         <a
           class="btn btn-sm btn-outline-primary"
@@ -45,6 +57,8 @@
 
 <script setup>
   import { __ } from '../../helpers';
+
+  defineEmits(['open-upload-form']);
 
   const settingsUrl = window.route('user.settings');
 </script>

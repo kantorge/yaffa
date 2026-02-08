@@ -9,7 +9,9 @@
         topic="AiDocuments"
       ></onboarding-card>
 
-      <ai-document-actions></ai-document-actions>
+      <ai-document-actions
+        @open-upload-form="openUploadForm"
+      ></ai-document-actions>
 
       <ai-document-filters
         :status-options="statusLabels"
@@ -38,6 +40,12 @@
 
       <transaction-show-modal></transaction-show-modal>
     </div>
+
+    <!-- Upload Form Modal -->
+    <ai-document-upload-form
+      ref="uploadFormRef"
+      @document-created="onDocumentCreated"
+    ></ai-document-upload-form>
   </div>
 </template>
 
@@ -48,6 +56,7 @@
   import AiDocumentActions from './AiDocumentActions.vue';
   import AiDocumentFilters from './AiDocumentFilters.vue';
   import AiDocumentTable from './AiDocumentTable.vue';
+  import AiDocumentUploadForm from './AiDocumentUploadForm.vue';
   import DateRangeFilterCard from '../DateRangeFilterCard.vue';
   import { __ } from '../../helpers';
 
@@ -55,6 +64,7 @@
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
   const sourceLabels = ref(window.aiDocumentSourceLabels || {});
   const tableRef = ref(null);
+  const uploadFormRef = ref(null);
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -79,5 +89,14 @@
     currentFilters.value.dateFrom = dateFrom;
     currentFilters.value.dateTo = dateTo;
     tableRef.value?.applyFilters(currentFilters.value);
+  };
+
+  const openUploadForm = () => {
+    uploadFormRef.value?.show?.();
+  };
+
+  const onDocumentCreated = (data) => {
+    // Refresh the documents list
+    location.reload();
   };
 </script>
