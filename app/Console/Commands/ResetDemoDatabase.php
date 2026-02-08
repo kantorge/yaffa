@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,6 +42,16 @@ class ResetDemoDatabase extends Command
         $this->info('Putting site in maintenance mode...');
         Artisan::call('down');
 
+        // As part of the reset process, we also need to clear all caches to avoid any issues with stale data after the reset.
+        $this->info('Clearing caches...');
+        Artisan::call('cache:clear');
+
+        // Additionally, remove the AI Document files from storage. We can safely remove all files
+        $this->info('Removing AI Document files from storage...');
+        $file = new Filesystem;
+        $file->cleanDirectory(storage_path('app/ai_documents'));
+
+        // Actually rebuild the database
         $this->info('Resetting database...');
         Artisan::call('migrate:fresh', ['--force' => true]);
 
