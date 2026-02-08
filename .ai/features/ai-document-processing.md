@@ -591,8 +591,8 @@ A few notes on the statuses
   - Scheduled daily via Laravel scheduler
   - Only deletes files, not database records
 - **File upload limits:**
-  - Max files per submission: 10
-  - Max file size: 50MB per file (configurable via `AI_DOCUMENT_MAX_FILE_SIZE_MB`)
+  - Max files per submission: 5
+  - Max file size: 20MB per file (configurable via `AI_DOCUMENT_MAX_FILE_SIZE_MB`)
   - Max total submission size: 500MB (configurable via `AI_DOCUMENT_MAX_TOTAL_SIZE_MB`)
   - Allowed types: pdf, jpg, jpeg, png, txt
 
