@@ -1411,3 +1411,20 @@ if (!function_exists('tesseract_is_available')) {
 
 - Wire `AiDocumentProcessingSuccessNotification` in ProcessDocumentService (class exists, needs invocation)
 - File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+
+**Testing Requirements:**
+
+- ProcessDocumentServiceTest:
+  - Test PDF text extraction with smalot/pdfparser
+  - Test Tesseract OCR (mock Process output)
+  - Test Vision AI integration (mock Prism vision call)
+  - Test OCR unavailable exception for images
+  - Test image resizing for Vision AI (not for Tesseract)
+- OcrAvailabilityTest:
+  - Test tesseract_is_available() helper with various configs
+  - Test TESSERACT_ENABLED=false returns false
+  - Test missing binary returns false
+  - Test invalid binary path returns false
+- AiProviderConfigTest:
+  - Test vision_enabled flag
+  - Test vision capability detection per model
