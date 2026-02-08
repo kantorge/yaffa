@@ -19,6 +19,7 @@ return new class () extends Migration {
             $table->string('provider');
             $table->string('model');
             $table->text('api_key');
+            $table->boolean('vision_enabled')->default(false);
             $table->timestamps();
         });
     }

@@ -111,6 +111,20 @@ class AiProviderConfigRequestTest extends TestCase
         $response->assertJsonValidationErrors(['api_key']);
     }
 
+    public function test_create_rejects_invalid_vision_enabled(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/ai/config', [
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'api_key' => 'sk-test-1234567890abcdefghij',
+                'vision_enabled' => 'yes',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['vision_enabled']);
+    }
+
     public function test_create_prevents_multiple_configs_per_user(): void
     {
         // Create first config
@@ -244,6 +258,21 @@ class AiProviderConfigRequestTest extends TestCase
         // Verify key was not changed
         $config->refresh();
         $this->assertEquals($originalKey, $config->api_key);
+    }
+
+    public function test_update_rejects_invalid_vision_enabled(): void
+    {
+        $config = AiProviderConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson("/api/ai/config/{$config->id}", [
+                'provider' => 'openai',
+                'model' => 'gpt-4o',
+                'vision_enabled' => 'invalid',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['vision_enabled']);
     }
 
     // ===== TEST CONNECTION (POST /api/ai/test) =====

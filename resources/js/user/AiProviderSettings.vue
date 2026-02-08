@@ -84,14 +84,15 @@
                   id="model"
                   name="model"
                   v-model="form.model"
+                  @change="onModelChange"
                 >
                   <option value="">{{ __('Select model...') }}</option>
                   <option
                     v-for="model in availableModels"
-                    :key="model"
-                    :value="model"
+                    :key="model.name"
+                    :value="model.name"
                   >
-                    {{ model }}
+                    {{ model.name }}
                   </option>
                 </select>
                 <span
@@ -108,6 +109,33 @@
                 </span>
               </div>
               <HasError field="model" :form="form" />
+            </div>
+          </div>
+
+          <div class="row mb-3" v-if="modelSupportsVision">
+            <label for="vision_enabled" class="col-form-label col-sm-3">
+              {{ __('Vision AI') }}
+            </label>
+            <div class="col-sm-9">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="vision_enabled"
+                  name="vision_enabled"
+                  v-model="form.vision_enabled"
+                />
+                <label class="form-check-label" for="vision_enabled">
+                  {{ __('Enable Vision AI for images') }}
+                </label>
+              </div>
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Uses the selected model to process image-based documents. Additional AI costs apply.',
+                  )
+                }}
+              </small>
             </div>
           </div>
 
@@ -271,6 +299,7 @@
         provider: '',
         model: '',
         api_key: '',
+        vision_enabled: false,
       }),
       configId: null,
       hasConfig: false,
@@ -284,7 +313,27 @@
         if (!this.form.provider || !this.providers[this.form.provider]) {
           return [];
         }
-        return this.providers[this.form.provider].models || [];
+        const models = this.providers[this.form.provider].models || [];
+        if (Array.isArray(models)) {
+          return models.map((model) => ({
+            name: model,
+            vision: false,
+          }));
+        }
+        return Object.entries(models).map(([name, meta]) => ({
+          name,
+          vision: Boolean(meta?.vision),
+        }));
+      },
+      modelSupportsVision() {
+        if (!this.form.provider || !this.form.model) {
+          return false;
+        }
+        const models = this.providers[this.form.provider]?.models || {};
+        if (Array.isArray(models)) {
+          return false;
+        }
+        return Boolean(models[this.form.model]?.vision);
       },
       canTest() {
         return (
@@ -310,6 +359,7 @@
               this.configId = response.data.id;
               this.form.provider = response.data.provider;
               this.form.model = response.data.model;
+              this.form.vision_enabled = Boolean(response.data.vision_enabled);
               this.form.api_key = ''; // Don't populate API key for security
               this.hasConfig = true;
               this.showForm = true;
@@ -328,6 +378,13 @@
       onProviderChange() {
         // Reset model when provider changes
         this.form.model = '';
+        this.form.vision_enabled = false;
+        this.testResult = null;
+      },
+      onModelChange() {
+        if (!this.modelSupportsVision) {
+          this.form.vision_enabled = false;
+        }
         this.testResult = null;
       },
       onSubmit() {

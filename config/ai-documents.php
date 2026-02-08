@@ -68,18 +68,37 @@ return [
         'openai' => [
             'name' => 'OpenAI',
             'models' => [
-                'gpt-4o',
-                'gpt-4o-mini',
-                'gpt-5-mini',
+                'gpt-4o' => [
+                    'vision' => true,
+                ],
+                'gpt-4o-mini' => [
+                    'vision' => true,
+                ],
+                'gpt-5-mini' => [
+                    'vision' => false,
+                ],
             ],
         ],
         'gemini' => [
             'name' => 'Google Gemini',
             'models' => [
-                'gemini-1.5-pro',
-                'gemini-1.5-flash',
+                'gemini-1.5-pro' => [
+                    'vision' => true,
+                ],
+                'gemini-1.5-flash' => [
+                    'vision' => true,
+                ],
             ],
         ],
+    ],
+
+    /*
+     * OCR configuration
+     */
+    'ocr' => [
+        'tesseract_enabled' => env('TESSERACT_ENABLED', false),
+        'tesseract_path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        'tesseract_language' => env('TESSERACT_LANGUAGE', 'eng'),
     ],
 
     /*

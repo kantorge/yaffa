@@ -46,6 +46,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             'id' => $config->id,
             'provider' => $config->provider,
             'model' => $config->model,
+            'vision_enabled' => $config->vision_enabled,
             'created_at' => $config->created_at,
             'updated_at' => $config->updated_at,
         ], Response::HTTP_OK);
@@ -71,12 +72,14 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             'provider' => $request->input('provider'),
             'model' => $request->input('model'),
             'api_key' => $request->input('api_key'),
+            'vision_enabled' => (bool) $request->input('vision_enabled', false),
         ]);
 
         return response()->json([
             'id' => $config->id,
             'provider' => $config->provider,
             'model' => $config->model,
+            'vision_enabled' => $config->vision_enabled,
             'message' => __('AI provider configured successfully'),
         ], Response::HTTP_CREATED);
     }
@@ -98,6 +101,10 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             'model' => $validated['model'],
         ];
 
+        if (array_key_exists('vision_enabled', $validated)) {
+            $updateData['vision_enabled'] = $validated['vision_enabled'];
+        }
+
         // Only update API key if provided (and not the empty string)
         if (!empty($validated['api_key']) && $validated['api_key'] !== '__existing__') {
             $updateData['api_key'] = $validated['api_key'];
@@ -109,6 +116,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
             'id' => $aiProviderConfig->id,
             'provider' => $aiProviderConfig->provider,
             'model' => $aiProviderConfig->model,
+            'vision_enabled' => $aiProviderConfig->vision_enabled,
             'updated_at' => $aiProviderConfig->updated_at,
         ], Response::HTTP_OK);
     }
