@@ -4,7 +4,7 @@
 
 Introduce AI-powered document processing to convert user-submitted documents (text, PDF, images, email receipts, Google Drive uploads) into draft transaction data aligned with YAFFA’s transaction model. Processing is autonomous, asynchronous, and supports multi-item receipt categorization. Drafts are reviewed by the end-user in a modal transaction form and finalized into actual transactions, linking back to the original AI document.
 
-**Current Implementation Status (Feb 7, 2026):** This feature is 60-65% implemented. See [Implementation Status & Deviations](#implementation-status--deviations-updated-feb-7-2026) section for detailed breakdown of completed and pending components.
+**Current Implementation Status (Feb 8, 2026):** This feature is 60-65% implemented. See [Implementation Status & Deviations](#implementation-status--deviations-updated-feb-7-2026) section for detailed breakdown of completed and pending components.
 
 ## Goals / Non-Goals
 
@@ -371,15 +371,17 @@ Introduce AI-powered document processing to convert user-submitted documents (te
         - MVP: Only one config per user enforced at UI level (hide "Add" button if config exists)
     - Blade view: `resources/views/ai-documents/create.blade.php`
     - Layout: extends `layouts.app`
-    - Vue component: `DocumentUploadForm.vue`
-    - Features: drag-drop file upload, text input, custom prompt textarea
+    - Vue component: `DocumentUploadForm.vue` (✅ implemented)
+      - Features: drag-drop file upload, text input, custom prompt textarea
   - **ReceivedMail UI:** (✅ implemented)
     - No user-facing pages or CRUD actions for `ReceivedMail`
     - Any existing ReceivedMail views/routes should be removed or hidden
 
 - Components:
-  - `DocumentUploadForm`
-  - `GoogleDriveSettings` (new)
+  - `DocumentUploadForm` (✅ implemented)
+    - Reusable component for uploading documents (used on index page and can be triggered from other pages)
+    - Features: drag-and-drop file upload, text input, custom prompt textarea, submit button
+  - `GoogleDriveSettings` (✅ implemented)
     - Service account JSON field: password type with show/hide toggle (use Vue best practice pattern)
     - Folder ID field: Smart parsing to extract ID from full Drive URL
     - Test connection: Display file count and delete permission check results
