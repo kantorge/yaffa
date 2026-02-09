@@ -23,6 +23,11 @@ class PdfExtractionService
             $document = $parser->parseFile($filePath);
             $pages = $document->getPages();
 
+            Log::debug("PDF info", [
+                'pages' => $document->getPages(),
+                'details' => $document->getDetails(),
+            ]);
+
             $texts = [];
             foreach ($pages as $page) {
                 try {
@@ -35,6 +40,8 @@ class PdfExtractionService
                     Log::warning("Failed to extract text from PDF page: {$e->getMessage()}");
                 }
             }
+
+            Log::debug("Extracted text from PDF: " . implode("\n", $texts));
 
             return implode("\n", $texts);
         } catch (Exception $e) {

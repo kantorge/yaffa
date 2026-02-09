@@ -82,6 +82,16 @@
             <dd class="col-6">{{ __('Amount') }}</dd>
             <dt class="col-6">{{ draftData.raw?.amount || __('Not set') }}</dt>
           </dl>
+          <div class="mt-3">
+            <button
+              class="btn btn-sm btn-outline-primary"
+              type="button"
+              @click="showExtractedDetailsTab"
+              v-if="canFinalize"
+            >
+              {{ __('More details') }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -149,19 +159,6 @@
     </div>
 
     <div class="col-12 col-lg-9">
-      <div class="card mb-3" v-if="duplicateWarnings.length">
-        <div class="card-body">
-          <div class="alert alert-warning mb-0">
-            <strong>{{ __('Possible duplicates found') }}</strong>
-            <ul class="mb-0">
-              <li v-for="(warning, index) in duplicateWarnings" :key="index">
-                {{ warning.message || warning }}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
       <div class="card mb-3">
         <div class="card-header">
           <ul class="nav nav-tabs card-header-tabs">
@@ -205,6 +202,20 @@
                 aria-selected="false"
               >
                 {{ __('Custom prompt') }}
+              </button>
+            </li>
+            <li class="nav-item" v-if="canFinalize">
+              <button
+                class="nav-link"
+                id="nav-document-tab-extracted"
+                data-coreui-toggle="tab"
+                data-coreui-target="#document-tab-extracted"
+                type="button"
+                role="tab"
+                aria-controls="document-tab-extracted"
+                aria-selected="false"
+              >
+                {{ __('Extracted details') }}
               </button>
             </li>
           </ul>
@@ -398,6 +409,123 @@
             >
               <pre class="mb-0">{{ aiDocument.custom_prompt }}</pre>
             </div>
+
+            <div
+              v-if="canFinalize"
+              class="tab-pane fade"
+              id="document-tab-extracted"
+              role="tabpanel"
+              aria-labelledby="nav-document-tab-extracted"
+              tabindex="0"
+            >
+              <div class="container-fluid">
+                <div class="row mb-4">
+                  <div class="col-12 col-md-6">
+                    <h6 class="text-muted">{{ __('Transaction Type') }}</h6>
+                    <p class="mb-3">{{ draftTypeLabel }}</p>
+
+                    <h6 class="text-muted">{{ __('Date') }}</h6>
+                    <p class="mb-3">{{ draftData.date || __('Not set') }}</p>
+
+                    <h6 class="text-muted">{{ __('Currency') }}</h6>
+                    <p class="mb-3">
+                      {{ draftData.raw?.currency || __('Not set') }}
+                    </p>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div v-if="draftData.config_type === 'standard'">
+                      <h6 class="text-muted">{{ __('Account') }}</h6>
+                      <p class="mb-3">
+                        {{ draftData.raw?.account || __('Not set') }}
+                      </p>
+
+                      <h6 class="text-muted">{{ __('Payee') }}</h6>
+                      <p class="mb-3">
+                        {{ draftData.raw?.payee || __('Not set') }}
+                      </p>
+
+                      <h6 class="text-muted">{{ __('Amount') }}</h6>
+                      <p class="mb-3">
+                        {{ draftData.raw?.amount || __('Not set') }}
+                      </p>
+                    </div>
+
+                    <div v-else>
+                      <h6 class="text-muted">{{ __('Account') }}</h6>
+                      <p class="mb-3">
+                        {{ draftData.raw?.account || __('Not set') }}
+                      </p>
+
+                      <h6 class="text-muted">{{ __('Investment') }}</h6>
+                      <p class="mb-3">
+                        {{ draftData.raw?.investment || __('Not set') }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  v-if="draftData.config_type === 'investment'"
+                  class="row mb-4"
+                >
+                  <div class="col-12 col-md-6">
+                    <h6 class="text-muted">{{ __('Quantity') }}</h6>
+                    <p class="mb-3">
+                      {{ draftData.raw?.quantity || __('Not set') }}
+                    </p>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <h6 class="text-muted">{{ __('Price') }}</h6>
+                    <p class="mb-3">
+                      {{ draftData.raw?.price || __('Not set') }}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  v-if="draftData.items && draftData.items.length > 0"
+                  class="row"
+                >
+                  <div class="col-12">
+                    <h6 class="text-muted mb-3">{{ __('Line Items') }}</h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                          <tr>
+                            <th>{{ __('Description') }}</th>
+                            <th class="text-end" style="width: 120px">
+                              {{ __('Amount') }}
+                            </th>
+                            <th class="text-center" style="width: 100px">
+                              {{ __('Category') }}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(item, index) in draftData.items"
+                            :key="index"
+                          >
+                            <td>{{ item.description || __('N/A') }}</td>
+                            <td class="text-end">{{ item.amount || 0 }}</td>
+                            <td class="text-center">
+                              <span
+                                v-if="item.category_id"
+                                class="badge bg-info"
+                              >
+                                {{ item.category_id }}
+                              </span>
+                              <span v-else class="text-muted">—</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -420,7 +548,6 @@
   const aiDocument = ref(window.aiDocument || {});
   const statusLabels = window.aiDocumentStatusLabels || {};
   const sourceLabels = window.aiDocumentSourceLabels || {};
-  const duplicateWarnings = ref(window.aiDocumentDuplicateWarnings || []);
   const selectedFile = ref(aiDocument.value.files?.[0] || null);
   const isBusy = ref(false);
 
@@ -678,5 +805,12 @@
           isBusy.value = false;
         });
     });
+  };
+
+  const showExtractedDetailsTab = () => {
+    const tab = new window.coreui.Tab(
+      window.document.getElementById('nav-document-tab-extracted'),
+    );
+    tab.show();
   };
 </script>
