@@ -39,7 +39,15 @@ class TransactionRequest extends FormRequest
             'fromModal' => 'nullable|boolean',
 
             'id' => 'nullable|exists:transactions,id',
-            'transaction_type_id' => 'required|exists:transaction_types,id',
+            'transaction_type' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (TransactionTypeEnum::tryFrom($value) === null) {
+                        $fail('The ' . $attribute . ' is invalid.');
+                    }
+                },
+            ],
             'comment' => [
                 'nullable',
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
@@ -217,16 +225,22 @@ class TransactionRequest extends FormRequest
 
             //TODO: validate currency of account and investment
 
-            $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type_id));
+            $rules = array_merge($rules, $this->getInvestmentAmountRules($this->transaction_type));
         }
 
         return $rules;
     }
 
-    private function getInvestmentAmountRules($transactionTypeId): array
+    private function getInvestmentAmountRules($transactionType): array
     {
+        $transactionTypeEnum = TransactionTypeEnum::tryFrom($transactionType);
+
+        if ($transactionTypeEnum === null) {
+            return [];
+        }
+
         // Buy OR Sell
-        if ($transactionTypeId === 4 || $transactionTypeId === 5) {
+        if ($transactionTypeEnum === TransactionTypeEnum::BUY || $transactionTypeEnum === TransactionTypeEnum::SELL) {
             return [
                 'config.price' => 'required|numeric|gt:0',
                 'config.quantity' => 'required|numeric|gt:0',
@@ -234,14 +248,14 @@ class TransactionRequest extends FormRequest
         }
 
         // Add shares OR Remove shares
-        if ($transactionTypeId === 6 || $transactionTypeId === 7) {
+        if ($transactionTypeEnum === TransactionTypeEnum::ADD_SHARES || $transactionTypeEnum === TransactionTypeEnum::REMOVE_SHARES) {
             return [
                 'config.quantity' => 'required|numeric|gt:0',
             ];
         }
 
         // Dividend OR Interest yield
-        if ($transactionTypeId === 8 || $transactionTypeId === 11) {
+        if ($transactionTypeEnum === TransactionTypeEnum::DIVIDEND || $transactionTypeEnum === TransactionTypeEnum::INTEREST_YIELD) {
             return [
                 'config.dividend' => 'required|numeric|gt:0',
             ];
@@ -258,13 +272,6 @@ class TransactionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Get transaction type enum value by name
-        if ($this->transaction_type && TransactionTypeEnum::tryFrom($this->transaction_type) !== null) {
-            $this->merge([
-                'transaction_type_id' => $this->transaction_type
-            ]);
-        }
-
         // Ensure that flags are set to false if not provided
         $this->merge([
             'reconciled' => $this->reconciled ?? 0,
