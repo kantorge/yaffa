@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AiProviderConfig;
+use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
@@ -58,14 +60,15 @@ class ResetDemoDatabase extends Command
         // Create the demo user without using factory, which is not autoloaded in production
         // The generated user ID is expected to be 1
         $this->info('Creating demo user...');
-        User::create([
+        $demoUser = User::create([
             'id' => 1,
             'name' => 'Demo User',
             'email' => 'demo@yaffa.cc',
             'password' => Hash::make('demo'),
             'language' => 'en',
             'locale' => 'en-US',
-        ])->markEmailAsVerified();
+        ]);
+        $demoUser->markEmailAsVerified();
 
         // There are assets in the database for a test user with ID 2
         User::create([
@@ -88,6 +91,37 @@ class ResetDemoDatabase extends Command
         // Create a set of sample received mails for the demo user, which can be used to test the email processing features of the app.
         $this->info('Creating sample received mails...');
         $this->createSampleReceivedMails();
+
+        // Create AI Provider Config for demo user, if provided
+        if (config('demo.ai_api_key')) {
+            // Ensure we don't have multiple configs for the demo user, until this constraint is active
+            $demoUser->aiProviderConfigs()->delete();
+            $demoUser->aiProviderConfigs()->create([
+                'provider' => config('demo.ai_provider', 'openai'),
+                'model' => config('demo.ai_model', 'gpt-4o-mini'),
+                'api_key' => config('demo.ai_api_key'),
+                'vision_enabled' => true,
+            ]);
+            $this->info('AI Provider Config created.');
+        } else {
+            $this->warn('Skipping AI Provider Config - DEMO_AI_API_KEY not set');
+        }
+
+        // Create Google Drive Config for demo user, if provided
+        if (config('demo.google_drive_json_key_file')) {
+            $demoUser->googleDriveConfigs()->delete();
+
+            $keyFileContent = file_get_contents(config('demo.google_drive_json_key_file'));
+            $credentials = json_decode($keyFileContent, true);
+            $demoUser->googleDriveConfigs()->create([
+                'service_account_email' => $credentials['client_email'] ?? null,
+                'folder_id' => config('demo.google_drive_folder_id'),
+                'service_account_json' => $keyFileContent,
+            ]);
+            $this->info('Google Drive Config created.');
+        } else {
+            $this->warn('Skipping Google Drive Config - DEMO_GOOGLE_DRIVE_JSON_KEY not set');
+        }
 
         /**
          * Unless explicitly disabled, we need to adjust ALL dates in the database to be the current date.
