@@ -156,8 +156,13 @@ class MainController extends Controller implements HasMiddleware
                 $transaction->transactionGroup === 'history'
                 || $transaction->transactionGroup === 'forecast'
             )
-            ->sortByDesc('transaction_type')
-            ->sortBy('date')
+            ->sortBy(function ($transaction) {
+                // Sort by date first, then by amount multiplier for consistent ordering
+                return [
+                    $transaction->date->timestamp,
+                    $transaction->transaction_type->amountMultiplier() ?? 0,
+                ];
+            })
             // Add the opening balance dummy item to the beginning of transaction list
             ->prepend($account->config->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
