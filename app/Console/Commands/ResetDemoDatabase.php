@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AiProviderConfig;
-use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
@@ -50,7 +48,7 @@ class ResetDemoDatabase extends Command
 
         // Additionally, remove the AI Document files from storage. We can safely remove all files
         $this->info('Removing AI Document files from storage...');
-        $file = new Filesystem;
+        $file = new Filesystem();
         $file->cleanDirectory(storage_path('app/ai_documents'));
 
         // Actually rebuild the database
@@ -198,6 +196,17 @@ class ResetDemoDatabase extends Command
                 'Amount: 123.45 USD' . "\n" .
                 'Account: Bank Account - John' . "\n" .
                 'Payee: AquaFlow Utilities' . "\n",
+            'html' => '',
+        ]);
+
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Easy to Process by AI with known and unknown item categories',
+            'text' => 'Total amount 100 USD, paid with "Credit Card - John" at "DIY Depot" on 2026-02-01.' . "\n" .
+                'The amount is for the following items:' . "\n" .
+                '- Hammer: 25 USD' . "\n" .  // Should be categorizes as Household / Generic household equipment (learning available)
+                '- Coca Cola .5 litres: 5 USD' . "\n" . // Ideally, this should be categorized as Food / Beverages (no learning available)
+                '- Absolutely Unknown Item 1: 30 USD' . "\n" .
+                '- Absolutely Unknown Item 2: 40 USD' . "\n",
             'html' => '',
         ]);
     }

@@ -13,6 +13,7 @@ use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
+use App\Models\CategoryLearning;
 use App\Models\ReceivedMail;
 use App\Models\Tag;
 use App\Models\Transaction;
@@ -21,6 +22,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Services\CategoryService;
+use App\Services\CategoryLearningService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -797,6 +799,64 @@ class TransactionApiController extends Controller implements HasMiddleware
         if ($transaction->ai_document_id !== $aiDocument->id) {
             $transaction->ai_document_id = $aiDocument->id;
             $transaction->save();
+        }
+
+        // Update CategoryLearning for accepted recommendations
+        $this->updateCategoryLearning($aiDocument, $transaction, $user);
+    }
+
+    /**
+     * Update CategoryLearning usage counts for accepted AI recommendations.
+     */
+    private function updateCategoryLearning(AiDocument $aiDocument, Transaction $transaction, User $user): void
+    {
+        // Only applicable for standard transactions with items
+        if ($transaction->config_type !== 'standard') {
+            return;
+        }
+
+        $draftData = $aiDocument->processed_transaction_data;
+        if (! $draftData || ! isset($draftData['items']) || ! is_array($draftData['items'])) {
+            return;
+        }
+
+        $learningService = new CategoryLearningService($user);
+
+        // Load transaction items with categories
+        $transaction->load('transactionItems.category');
+
+        // Build a map of draft items by their description (normalized)
+        $draftItemsMap = [];
+        foreach ($draftData['items'] as $draftItem) {
+            if (isset($draftItem['recommended_category_id']) && isset($draftItem['comment'])) {
+                $normalizedDescription = $learningService->normalize($draftItem['comment']);
+                $draftItemsMap[$normalizedDescription] = $draftItem['recommended_category_id'];
+            }
+        }
+
+        // Check each transaction item against the draft
+        foreach ($transaction->transactionItems as $item) {
+            if (! $item->category_id || ! $item->comment) {
+                continue;
+            }
+
+            $normalizedDescription = $learningService->normalize($item->comment);
+
+            // Skip if no recommendation exists for this item
+            if (! isset($draftItemsMap[$normalizedDescription])) {
+                continue;
+            }
+
+            $recommendedCategoryId = $draftItemsMap[$normalizedDescription];
+
+            // If the user accepted the recommendation, increment usage count
+            if ($item->category_id === $recommendedCategoryId) {
+                CategoryLearning::query()
+                    ->where('user_id', $user->id)
+                    ->where('item_description', $normalizedDescription)
+                    ->where('category_id', $recommendedCategoryId)
+                    ->increment('usage_count');
+            }
         }
     }
 }

@@ -154,6 +154,8 @@ Route::patch('/documents/{aiDocument}', [AiDocumentApiController::class, 'update
     ->name('api.documents.update');
 Route::post('/documents/{aiDocument}/reprocess', [AiDocumentApiController::class, 'reprocess'])
     ->name('api.documents.reprocess');
+Route::post('/documents/{aiDocument}/check-duplicates', [AiDocumentApiController::class, 'checkDuplicates'])
+    ->name('api.documents.checkDuplicates');
 Route::delete('/documents/{aiDocument}', [AiDocumentApiController::class, 'destroy'])
     ->name('api.documents.destroy');
 
