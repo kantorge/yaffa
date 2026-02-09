@@ -399,7 +399,6 @@ class CalculateAccountMonthlySummary implements ShouldQueue
         // Get all active scheduled investment transactions for this account
         $scheduledTransactions = Transaction::with([
             'config',
-            'transactionType',
             'transactionSchedule',
         ])
             ->byType('investment')
@@ -413,17 +412,13 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            // Additionally, exclude items where the transactiontype is not associated with a quantity operator
-            ->whereHas(
-                'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_multiplier')
-            )
-            ->get();
+            ->get()
+            // Filter items where the transaction type has a quantity operator
+            ->filter(fn ($transaction) => $transaction->transaction_type->quantityMultiplier() !== null);
 
         // Get all fact transactions for this account, as it is used as a baseline for the forecast
         $factTransactions = Transaction::with([
             'config',
-            'transactionType',
             'transactionSchedule',
         ])
             ->byType('investment')
@@ -433,12 +428,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            // Additionally, exclude items where the transactiontype is not associated with a quantity operator
-            ->whereHas(
-                'transactionType',
-                fn ($query) => $query->whereNotNull('quantity_multiplier')
-            )
-            ->get();
+            ->get()
+            // Filter items where the transaction type has a quantity operator
+            ->filter(fn ($transaction) => $transaction->transaction_type->quantityMultiplier() !== null);
 
         // Get all instances of the schedules, added to a new transactions collection
         $scheduledTransactionInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
@@ -481,7 +473,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 $quantities = $groupedTransactions->map(
                     fn ($group) => $group->sum(
                         fn ($transaction) => $transaction->config->quantity *
-                            $transaction->transactionType->quantity_multiplier
+                            $transaction->transaction_type->quantityMultiplier()
                     )
                 );
             }
@@ -555,7 +547,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                         fn ($query) => $query->where(
                             // Withdrawals without an account_from_id
                             fn ($query) => $query
-                                ->whereHas('transactionType', fn ($query) => $query->where('name', 'withdrawal'))
+                                ->where('transaction_type', 'withdrawal')
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -566,7 +558,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                             // Deposits without an account_to_id
                             ->orWhere(
                                 fn ($query) => $query
-                                    ->whereHas('transactionType', fn ($query) => $query->where('name', 'deposit'))
+                                    ->where('transaction_type', 'deposit')
                                     ->orWhereHasMorph(
                                         'config',
                                         TransactionDetailStandard::class,

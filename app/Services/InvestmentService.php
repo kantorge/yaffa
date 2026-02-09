@@ -55,7 +55,6 @@ class InvestmentService
      * - Net worth calculations
      *
      * @param Investment $investment The investment whose related accounts need recalculation
-     * @return void
      */
     public function recalculateRelatedAccounts(Investment $investment): void
     {
@@ -94,7 +93,7 @@ class InvestmentService
             ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
                 // Quantity operator can be 1, -1 or null.
                 // It's the expected behavior to set the quantity to 0 if the operator is null.
-                $quantity = $transaction->transactionType->quantity_multiplier * $transaction->config->quantity;
+                $quantity = $transaction->transaction_type->quantityMultiplier() * $transaction->config->quantity;
 
                 $runningSchedule += $quantity;
                 if (!$transaction->schedule) {

@@ -115,7 +115,7 @@ class TransactionController extends Controller implements HasMiddleware
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => $action,
-            'type' => $transaction->transactionType->type,
+            'type' => $transaction->transaction_type->category(),
         ]);
     }
 

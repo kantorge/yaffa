@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\AccountEntity;
 use App\Models\Transaction;
@@ -57,13 +58,12 @@ class TransactionService
             'config.accountTo',
             'config.accountFrom.config',
             'config.accountTo.config',
-            'transactionType'
         ]);
 
-        if ($transaction->transactionType->name === 'deposit') {
+        if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT) {
             return $transaction->config->accountTo?->config->currency_id;
         }
-        if ($transaction->transactionType->name === 'withdrawal') {
+        if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
             return $transaction->config->accountFrom?->config->currency_id;
         }
 
@@ -99,13 +99,12 @@ class TransactionService
     {
         $transaction->loadMissing([
             'config',
-            'transactionType'
         ]);
 
-        if ($transaction->transactionType->name === 'deposit') {
+        if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT) {
             return $transaction->config->amount_from;
         }
-        if ($transaction->transactionType->name === 'withdrawal') {
+        if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
             return $transaction->config->amount_from * -1;
         }
 
@@ -116,11 +115,10 @@ class TransactionService
     {
         $transaction->loadMissing([
             'config',
-            'transactionType'
         ]);
 
-        if ($transaction->transactionType->amount_multiplier !== null) {
-            return $transaction->transactionType->amount_multiplier
+        if ($transaction->transaction_type->amountMultiplier() !== null) {
+            return $transaction->transaction_type->amountMultiplier()
                 * $transaction->config->price
                 * $transaction->config->quantity
 

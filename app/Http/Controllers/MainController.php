@@ -67,7 +67,6 @@ class MainController extends Controller implements HasMiddleware
             )
             ->with([
                 'config',
-                'transactionType',
                 'transactionItems',
                 'transactionItems.category',
                 'transactionItems.tags',
@@ -92,7 +91,6 @@ class MainController extends Controller implements HasMiddleware
             ->with([
                 'config',
                 'config.investment',
-                'transactionType',
             ])
             ->get();
 
@@ -110,7 +108,7 @@ class MainController extends Controller implements HasMiddleware
                 }
 
                 if ($transaction->isStandard()) {
-                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier
+                    $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier()
                         ?? ($transaction->config->account_from_id === $this->currentAccount->id ? -1 : 1);
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_from_id];
                     $transaction->account_to_name = $this->allAccounts[$transaction->config->account_to_id];
@@ -121,7 +119,7 @@ class MainController extends Controller implements HasMiddleware
                 } elseif ($transaction->isInvestment()) {
                     $amount = $transaction->cashflow_value ?? 0;
 
-                    $transaction->transactionOperator = $transaction->transactionType->amount_multiplier;
+                    $transaction->transactionOperator = $transaction->transaction_type->amountMultiplier();
                     $transaction->account_from_name = $this->allAccounts[$transaction->config->account_id];
                     $transaction->account_to_name = $transaction->config->investment->name;
                     $transaction->amount_from = ($amount < 0 ? -$amount : null);
@@ -136,14 +134,14 @@ class MainController extends Controller implements HasMiddleware
                 return $transaction;
             })
             // Drop scheduled transactions, which are not active (next date is empty)
-            ->filter(fn($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
+            ->filter(fn ($transaction) => !$transaction->schedule || $transaction->transactionSchedule->next_date !== null);
 
         // Add schedule to history items, if needeed
         if ($withForecast) {
             $transactions = $transactions->concat(
                 $this->getScheduleInstances(
                     $transactions
-                        ->filter(fn($transaction) => $transaction->schedule),
+                        ->filter(fn ($transaction) => $transaction->schedule),
                     'next',
                 )
             );
@@ -154,12 +152,12 @@ class MainController extends Controller implements HasMiddleware
 
         $data = $transactions
             ->filter(
-                fn($transaction) =>
+                fn ($transaction) =>
                 $transaction->transactionGroup === 'history'
                 || $transaction->transactionGroup === 'forecast'
             )
-            ->sortByDesc('transactionType')
-            ->sortBy(['date', 'transactionType.amount_multiplier'])
+            ->sortByDesc('transaction_type')
+            ->sortBy('date')
             // Add the opening balance dummy item to the beginning of transaction list
             ->prepend($account->config->openingBalance())
             ->map(function ($transaction) use (&$subTotal) {
@@ -176,7 +174,7 @@ class MainController extends Controller implements HasMiddleware
             'currency' => $account->config->currency,
             'transactionData' => $data,
             'scheduleData' => $transactions
-                ->filter(fn($transaction) => $transaction->transactionGroup === 'schedule')
+                ->filter(fn ($transaction) => $transaction->transactionGroup === 'schedule')
                 ->values(),
         ]);
 
