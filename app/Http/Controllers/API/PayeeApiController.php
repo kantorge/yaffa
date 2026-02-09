@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Requests\AccountEntityRequest;
 use App\Models\AccountEntity;
 use App\Models\Category;
@@ -52,7 +53,7 @@ class PayeeApiController extends Controller implements HasMiddleware
             $payeeDirection = ($request->get('account_type') === 'from' ? 'from' : 'to');
 
             $transactionType = $request->get('transaction_type', null);
-            if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+            if ($transactionType !== null && TransactionTypeEnum::tryFrom($transactionType) === null) {
                 // If transaction type is provided but not valid, return a bad request response
                 return response()->json(
                     [
@@ -83,9 +84,9 @@ class PayeeApiController extends Controller implements HasMiddleware
                 ->where('account_entities.user_id', $request->user()->id)
                 ->where(
                     // TODO: fallback to query without this, if no results are found
-                    'transaction_type_id',
+                    'transaction_type',
                     '=',
-                    config('transaction_types')[$transactionType]['id']
+                    $transactionType
                 )
                 ->when($accountId, fn ($query) => $query->where(
                     "transaction_details_standard.account_{$accountDirection}_id",

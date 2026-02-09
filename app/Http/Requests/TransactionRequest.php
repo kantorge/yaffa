@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Rules\IsFalsy;
 use Illuminate\Validation\Rule;
 
@@ -257,10 +258,10 @@ class TransactionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Get transaction type ID by name
-        if ($this->transaction_type) {
+        // Get transaction type enum value by name
+        if ($this->transaction_type && TransactionTypeEnum::tryFrom($this->transaction_type) !== null) {
             $this->merge([
-                'transaction_type_id' => config('transaction_types')[$this->transaction_type]['id']
+                'transaction_type_id' => $this->transaction_type
             ]);
         }
 
