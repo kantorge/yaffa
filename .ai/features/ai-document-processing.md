@@ -227,7 +227,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Vue route loader for received-mail removed from app.js (✅ implemented)
 
 - Services / Jobs:
-  - `ProcessDocumentService` (✅ Updated Feb 8, 2026)
+  - `ProcessDocumentService` (✅ Completed)
     - Orchestrates full document processing pipeline
     - Validates files (type, size)
     - ✅ Extracts text/content via injected `TextExtractionService` for all file types:
@@ -235,28 +235,29 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - **Images (JPG/PNG):** Tesseract binary/HTTP mode → Vision API fallback
       - **Text files (TXT):** Direct read
     - ✅ Automatically handles mode selection (binary/http/cloud) based on configuration
-    - Prepares AI prompts with user assets and learning data
-    - Fetches payee category statistics (last X months) to optimize item categorization
-    - Calls AI provider via Prism (text or vision-enhanced completion)
-    - Validates AI response against schema
-    - Updates document status
-  - `AiProcessingJob` (queued on 'default' queue)
+    - ✅ Prepares AI prompts with transaction type-specific schemas (standard vs investment)
+    - ✅ Fetches payee category statistics to optimize item categorization
+    - ✅ Calls AI provider via Prism (text or vision-enhanced completion)
+    - ✅ Validates AI response against schema
+    - ✅ Updates document status (centralized status management)
+  - `AiProcessingJob` (✅ Completed - queued on 'default' queue)
     - Wraps ProcessDocumentService for async execution
     - Implements retry logic (3 attempts, 30s delay)
-    - Sends email notifications on success/failure (once per final outcome, including retries)
-    - Updates document status on completion/failure
-  - `AssetMatchingService`
+    - ✅ Event-driven: dispatches success/failure events, no duplicate status updates
+    - ✅ shouldNotRetry() for fail-fast on auth/quota errors
+  - `AssetMatchingService` (✅ Completed)
     - Calculates similarity scores using `similar_text()`
     - Ignores similarity < threshold (0.5, to be finalized), to avoid polluting the AI prompt
     - Filters and ranks accounts/payees/investments
     - Returns top 10 matches if >10 exist, else all
     - Formats asset list for AI prompt (ID: Name|Alias)
-  - `DuplicateDetectionService`
+    - ✅ Type compatibility: accepts iterable for Collection support
+  - `DuplicateDetectionService` (✅ Completed)
     - Queries transactions within date window (3 days)
     - Calculates similarity scores for matches
     - Returns array of transaction IDs with scores > threshold
     - Checks: type, date, amount (10%), account/payee/investment
-  - `CategoryLearningService`
+  - `CategoryLearningService` (✅ Completed)
     - Normalizes item descriptions (lowercase, trim, punctuation)
     - Saves/updates learning records on transaction save
     - Retrieves learning data for AI prompt context
@@ -307,10 +308,10 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Triggers AiProcessingJob
     - **Deviation:** Email processing refactored to use event-driven architecture instead of a dedicated service. MailHandler now fires EmailReceived event, CreateAiDocumentFromSource listener creates AiDocument. (✅ implemented)
 
-- Policies / Auth:
-  - `AiDocumentPolicy` (view, create, delete, reprocess)
-  - `AiProviderConfigPolicy` (view, create, update, delete)
-  - `GoogleDriveConfigPolicy` (new) - view, create, update, delete, sync
+- Policies / Auth: (✅ Fully Implemented)
+  - `AiDocumentPolicy` (✅ implemented - view, create, delete, reprocess)
+  - `AiProviderConfigPolicy` (✅ implemented - view, create, update, delete)
+  - `GoogleDriveConfigPolicy` (✅ implemented - view, create, update, delete, sync)
     - Simple ownership check: `$user->id === $config->user_id`
     - MVP: Only one config per user enforced at application level (not database)
 
@@ -326,14 +327,19 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Listener handles both EmailReceived and DocumentImported events
       - Creates AiDocument with status 'ready_for_processing' and stores email content as text file
       - Legacy ProcessIncomingEmail listener and IncomingEmailReceived event removed (Feb 3, 2026)
-      - Fixed duplicate AiDocument creation by relying on auto-discovery instead of manual Event::subscribe()
-  - Email notifications on:
-    - **Processing success (ready for review)**
+  - **Processing Events:** (✅ implemented Feb 8-9, 2026)
+    - `AiDocumentProcessedEvent` - Fired on successful processing (status → ready_for_review)
+    - `AiDocumentProcessingFailedEvent` - Fired on processing failure (status → processing_failed)
+  - **Email Notifications:** (✅ implemented Feb 8-9, 2026)
+    - `SendAiDocumentProcessedNotification` - Queued listener for success emails
+    - `SendAiDocumentProcessingFailedNotification` - Queued listener for failure emails with error details
+  - **Notification Details:**
+    - **Processing success (ready for review)** ✅
       - Mailable: `App\Mail\AiDocumentProcessed`
       - Subject: "Document processed - Review your transaction"
       - Content: Document ID, source type, extracted amount/payee, link to review page
       - View: `resources/views/emails/ai-document-processed.blade.php`
-    - **Processing failure (AI error, after depleting retries)**
+    - **Processing failure (AI error, after depleting retries)** ✅
       - Mailable: `App\Mail\AiDocumentProcessingFailed`
       - Subject: "Document processing failed"
       - Content: Document ID, error type (auth/quota/model/network/ocr_unavailable), suggested action, link to AI config settings
@@ -344,7 +350,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
           - Enable Tesseract OCR (see Docker setup instructions)
           - Enable Vision AI in AI Provider settings (requires vision-capable model like gpt-4o or gemini-1.5-pro)
           - Upload text-based PDF instead of images
-    - **Google Drive config disabled (auth/permission error)**
+    - **Google Drive config disabled (auth/permission error)** ✅
       - Mailable: `App\Mail\GoogleDriveConfigDisabled`
       - Subject: "Google Drive monitoring disabled"
       - Content: Config ID, error message, instructions to fix (re-share folder, update service account), link to settings
@@ -392,6 +398,11 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Any existing ReceivedMail views/routes should be removed or hidden
 
 - Components:
+  - `AiDocumentViewer.vue` (✅ implemented)
+    - Enhanced with "Extracted details" tab for comprehensive transaction data review
+    - Features: file preview, draft transaction display, finalize button, reprocess button
+    - Line items table with description, amount, category badges
+    - "More details" button for programmatic tab switching
   - `DocumentUploadForm` (✅ implemented)
     - Reusable component for uploading documents (used on index page and can be triggered from other pages)
     - Features: drag-and-drop file upload, text input, custom prompt textarea, submit button
@@ -400,8 +411,8 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Folder ID field: Smart parsing to extract ID from full Drive URL
     - Test connection: Display file count and delete permission check results
     - Manual sync: Trigger one-time import
-  - Reuse existing transaction view component for preview
-  - Use existing transaction form and modal container for finalization
+  - ⏳ Reuse existing transaction view component for finalization preview (pending)
+  - ⏳ Use existing transaction form and modal container for finalization (pending)
 
 - State management:
   - No global store. Page-level component state only.
@@ -517,20 +528,23 @@ If not determined or used, it must be set to NULL, but never omitted.
 
 ## Processing Flow
 
-1. User submits document (web, email, or Google Drive).
+1. User submits document (web, email, or Google Drive). ✅
    - When a submission contains multiple files, it is still considered to be one AiDocument.
    - E.g. a longer receipt could be attached using multiple photos
-2. `AiDocument` record created with status `ready_for_processing` (initial state).
-3. `AiProcessingJob` runs:
+2. `AiDocument` record created with status `ready_for_processing` (initial state). ✅
+3. `AiProcessingJob` runs: ✅
    - ✅ Uses `TextExtractionService` to extract text from all file types
    - ✅ Tesseract (binary or HTTP) or Vision API invoked automatically per configuration
-   - Builds AI prompt with normalized assets and category learning data.
-   - Calls AI provider (OpenAI/Gemini).
-   - Validates output schema.
-   - Stores JSON draft in `processed_transaction_data`.
-4. Status set to `ready_for_review` and email notification sent.
-5. User opens document review (`/ai-documents/{id}`) and clicks Finalize.
-6. Transaction Form Integration:
+   - ✅ Builds AI prompt with transaction type-specific schemas (standard vs investment)
+   - ✅ Includes normalized assets and category learning data
+   - ✅ Calls AI provider (OpenAI/Gemini) via Prism
+   - ✅ Validates output schema
+   - ✅ Stores JSON draft in `processed_transaction_data`
+4. Status set to `ready_for_review` and email notification sent. ✅
+5. User opens document review (`/ai-documents/{id}`) and can view extracted details. ✅ (Feb 9, 2026)
+   - ✅ "Extracted details" tab displays all transaction data comprehensively
+   - ⏳ Finalize button triggers transaction form (pending implementation)
+6. Transaction Form Integration: ⏳ (Pending)
    - Frontend calls existing transaction form component (reuse from transactions feature)
    - The form receives prepopulated data from `processed_transaction_data` JSON
    - If there are less than 5 line items, the form should be displayed in the modal container; otherwise, redirect to full page transaction form
@@ -729,7 +743,7 @@ A few notes on the statuses
   - **New for MVP:** Strip unnecessary HTML tags while preserving text structure (✅ implemented)
   - HTML cleanup now performed in CreateAiDocumentFromSource listener before storing email content
 
-## Testing & Development Tools (✅ implemented)
+## Testing & Development Tools
 
 - **Email Simulation Command:** `php artisan app:simulate-incoming-email` (✅ implemented)
   - Purpose: Test email reception and AI document creation locally without actual SMTP/mailbox setup
@@ -1141,8 +1155,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ---
 
-## Implementation Status & Deviations (Updated Feb 7, 2026)
-
 ### Completed Components
 
 **Email Processing Migration (✅ Completed):**
@@ -1192,7 +1204,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - One config per user enforcement
 - Integration into user settings page
 
-**Google Drive Settings (✅ Completed - Feb 6, 2026):**
+**Google Drive Settings (✅ Completed):**
 
 - GoogleDriveConfig model implemented with encrypted service_account_json cast (✅ implemented)
 - GoogleDriveConfigApiController with full CRUD endpoints (GET, POST, PATCH, DELETE) (✅ implemented)
@@ -1215,9 +1227,15 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 5. **Testing Command:** Created app:simulate-incoming-email command (not in original plan) to facilitate local testing without SMTP setup. Includes --use-demo flag for quick testing.
 
-6. **Manual Sync Response & Two-Tier Job Architecture (✅ Feb 6, 2026):** The manual sync endpoint now returns HTTP 202 ACCEPTED with `"Google Drive sync has been queued"`. Backend refactored from monolithic GoogleDriveMonitorJob into two-tier architecture: GoogleDriveMonitorJob (orchestrator) queries enabled configs and dispatches ProcessGoogleDriveConfigJob (worker) for each, enabling parallel processing and fault isolation. Each worker processes single config independently with 3 retries, 5-minute timeout. Orchestrator has 1 retry, 1-minute timeout (fast, just dispatches).
+6. **Manual Sync Response & Two-Tier Job Architecture (✅ Completed):** The manual sync endpoint now returns HTTP 202 ACCEPTED with `"Google Drive sync has been queued"`. Backend refactored from monolithic GoogleDriveMonitorJob into two-tier architecture: GoogleDriveMonitorJob (orchestrator) queries enabled configs and dispatches ProcessGoogleDriveConfigJob (worker) for each, enabling parallel processing and fault isolation. Each worker processes single config independently with 3 retries, 5-minute timeout. Orchestrator has 1 retry, 1-minute timeout (fast, just dispatches).
 
-7. **AI Documents Date Filter Behavior (✅ Feb 7, 2026):** DateRangeFilterCard component for AI documents configured with `show-update-button="false"` per AiDocumentManager implementation. Filters update automatically as user types (modern refresh-on-input UX pattern) rather than requiring explicit button click. This differs from the Account Show feature which uses a button-based workflow, but both use the same reusable DateRangeFilterCard component with different configurations. Spec did not mandate specific update interaction pattern, so this is an implementation choice rather than deviation.
+7. **AI Documents Date Filter Behavior (✅ Completed):** DateRangeFilterCard component for AI documents configured with `show-update-button="false"` per AiDocumentManager implementation. Filters update automatically as user types (modern refresh-on-input UX pattern) rather than requiring explicit button click. This differs from the Account Show feature which uses a button-based workflow, but both use the same reusable DateRangeFilterCard component with different configurations. Spec did not mandate specific update interaction pattern, so this is an implementation choice rather than deviation.
+
+8. **Status Management Centralization (✅ Completed):** Original plan suggested both job and service would handle status updates. Implementation centralizes all status management in ProcessDocumentService only. AiProcessingJob simplified to just call service and dispatch events. This eliminates circular dependencies and ensures single source of truth for document status.
+
+9. **Vision API Integration Pattern (✅ Completed):** Prism PHP integration uses `Image::fromLocalPath()` value objects instead of base64 strings or withImage() methods. Pattern: `Prism::text()->withPrompt($prompt, [Image::fromLocalPath($path)])`. This aligns with Prism PHP v0.99.19 API design.
+
+10. **Enhanced Document Review UI (✅ Completed):** Added "Extracted details" tab to AiDocumentViewer.vue (not in original spec). Provides comprehensive view of extracted transaction data, line items table, and category mappings before finalization. Improves UX by allowing users to review all extracted data in-context without immediately opening transaction form.
 
 ### Required Composer Dependencies
 
@@ -1240,7 +1258,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ### Completed in Feb 2026 Session
 
-**OCR & Text Extraction (✅ Fully Implemented - Feb 8, 2026):**
+**OCR & Text Extraction (✅ Fully Implemented):**
 
 - ✅ TextExtractionService created: Orchestrates PDF, OCR, and text extraction with intelligent routing
 - ✅ OcrService with triple-fallback: Tesseract binary → Tesseract HTTP → Vision API
@@ -1255,7 +1273,42 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - ✅ Docker Compose: Tesseract service merged into main compose with profile-based activation
 - ✅ Total: 23 OCR tests passing, 0 breaking changes, proper ServiceProvider registration
 
-**Documentation Consolidation (✅ Completed - Feb 8, 2026):**
+**AI Processing Pipeline (✅ Fully Implemented):**
+
+- ✅ ProcessDocumentService: Complete refactoring with transaction type-specific processing
+  - ✅ buildMainExtractionPrompt() - Separate JSON schemas for standard (withdrawal/deposit/transfer) vs investment (buy/sell/dividend)
+  - ✅ Asset matching branches by transaction type: transfer (2 accounts), withdrawal (account+payee), deposit (payee+account), investment (account+investment)
+  - ✅ matchInvestment() method for investment matching via similarity + AI
+  - ✅ buildTransactionData() accepts accountFromId/accountToId for proper transfer handling
+  - ✅ Status management: processing → ready_for_review (success) or processing_failed (error)
+- ✅ AssetMatchingService: Type compatibility fixes
+  - ✅ calculateMatches() signature changed from array to iterable for Collection compatibility
+  - ✅ matchInvestments() method working properly
+- ✅ AiProcessingJob: Event-driven architecture
+  - ✅ Simplified job dispatches events, no duplicate status setting
+  - ✅ Removed failed() method - service handles all status updates
+  - ✅ shouldNotRetry() for fail-fast on auth/quota errors
+- ✅ Events & Listeners:
+  - ✅ AiDocumentProcessedEvent - Success event with AiDocument instance
+  - ✅ AiDocumentProcessingFailedEvent - Failure event with AiDocument + Exception
+  - ✅ SendAiDocumentProcessedNotification - Queued listener sending success emails
+  - ✅ SendAiDocumentProcessingFailedNotification - Queued listener sending failure emails
+- ✅ Email Templates:
+  - ✅ ai-document-processed.blade.php - Success notification using <x-mail::message> components
+  - ✅ ai-document-processing-failed.blade.php - Failure notification with error details
+  - ✅ Proper Blade component syntax (fixed "No hint path defined for [mail]" errors)
+
+**Frontend Enhancements (✅ Implemented):**
+
+- ✅ AiDocumentViewer.vue: Enhanced with extracted details tab
+  - ✅ "Extracted details" tab visible when status='ready_for_review' (canFinalize)
+  - ✅ Comprehensive transaction data display: type, date, currency, accounts, payees, investments
+  - ✅ Line items table with description, amount, category badges
+  - ✅ Responsive layout distinguishing standard vs investment transaction fields
+  - ✅ showExtractedDetailsTab() method for programmatic tab switching via coreui.Tab API
+  - ✅ "More details" button in sidebar card linking to full details tab
+
+**Documentation Consolidation (✅ Completed):**
 
 - ✅ Consolidated 9 verbose files into 4 focused documents (.ai/docs/)
 - ✅ Removed redundancy: 3,620 → 1,213 lines
@@ -1265,7 +1318,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - ✅ Created USAGE.md (369 lines) - Code examples and error handling patterns
 - ✅ Created REFERENCE.md (383 lines) - Architecture, API reference, performance tips
 
-**Google Drive Integration (✅ Fully Implemented - Feb 6, 2026):**
+**Google Drive Integration (✅ Fully Implemented):**
 
 - GoogleDriveMonitorJob: Simplified orchestrator (28 lines) that dispatches ProcessGoogleDriveConfigJob per enabled config (✅ implemented)
 - ProcessGoogleDriveConfigJob: Full worker (138 lines) with file download, AiDocument creation, event firing, delete-after-import, error handling (✅ implemented)
@@ -1278,7 +1331,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - GoogleDriveSettingsTest.php (Dusk): Manual sync test updated for 202 response and "queued" message (✅ implemented)
 - Total: 48 backend tests passing, 124+ assertions (Feb 6, 2026) (✅ implemented)
 
-**Additional Backend Components Completed (✅ Feb 6, 2026 - After Google Drive Integration):**
+**Additional Backend Components Completed (✅ Completed):**
 
 - AiDocument model and migrations (✅ implemented)
 - AiDocumentFile model and migrations (✅ implemented)
@@ -1293,7 +1346,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - AiDocumentPolicy with authorization checks (✅ implemented)
 - Comprehensive test coverage for all services and controllers (✅ 50+ tests passing)
 
-**HIGH PRIORITY Test Coverage (✅ Completed - Feb 7, 2026):**
+**Test Coverage (✅ Completed):**
 
 - [AiDocumentsIndexTest.php](tests/Browser/Pages/AiDocuments/AiDocumentsIndexTest.php) (Dusk Browser Tests): 4 comprehensive tests for AI documents date filtering UI workflows (✅ implemented)
   - `test_ai_documents_applies_date_preset_on_load` - Verifies date preset parameter from URL applies to form
@@ -1316,26 +1369,35 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ### Pending/Not Yet Implemented
 
-**Outstanding OCR Items (Minor):**
+**Frontend Components (Partial Implementation):**
 
-- ⏳ Add `vision_enabled` column to `ai_provider_configs` migration (optional, toggles Vision API preference)
-- ⏳ Update AiProviderSettings.vue to show vision toggle (conditional on model capabilities)
-
-**Frontend Components (Ready for Implementation):**
-
-- `DocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support
-- `AiDocumentIndex.vue` - Document list with filters (status, source_type, pagination)
-- `AiDocumentShow.vue` - Document detail view with file preview and draft data
-- `DocumentReviewModal.vue` - Modal for transaction form integration
-- Pages: `/ai-documents` (index), `/ai-documents/{id}` (detail)
+- ✅ `AiDocumentViewer.vue` - Enhanced with extracted details tab
+- ✅ `DocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support
+- ✅ `AiDocumentIndex.vue` - Document list with filters (status, source_type, pagination)
 
 **Processing & Transaction Flow:**
 
-- Transaction finalization flow (form pre-population and submission)
-- Duplicate transaction detection UI warning (backend service ready, frontend integration pending)
-- API endpoint documentation for `GET /api/ai/payees/{id}/category-stats`
+- ⏳ Transaction finalization flow (form pre-population and submission)
+- ⏳ Duplicate transaction detection UI warning (backend DuplicateDetectionService ready, frontend integration pending)
+- ⏳ API endpoint documentation for `GET /api/ai/payees/{id}/category-stats` (backend implemented, docs pending)
 
 **Notifications & Jobs:**
 
-- Wire `AiDocumentProcessingSuccessNotification` in ProcessDocumentService
-- File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+- ✅ Email notifications wired (AiDocumentProcessedEvent/FailedEvent with queued listeners)
+- ⏳ File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task)
+
+**Other open items, tech debts, future improvements:**
+
+- Add an optional title field for AiDocument, as the manually uploaded documents are currently identified by the file name of the first uploaded file, which may not be user-friendly. This can be implemented as a simple text field in the database and form, allowing users to give their documents custom names for easier identification. As the optional Google Drive ID and received email reference are already in place, this could be a similar, small update.
+- As part of the document upload, or by using an almost identical modal dialog, allow the user to use the camera of the device to take a picture of a receipt and upload it directly. While YAFFA is primarily designed for desktop use, this feature would be very useful for mobile users who want to quickly capture and upload receipts on the go. The implementation could leverage the HTML5 `getUserMedia` API to access the camera and capture an image, which can then be processed like any other uploaded file. This would require some additional frontend work to create the camera interface and handle the captured image, but it would significantly enhance the mobile user experience.
+- In the list view of AI Documents, the list of documents should not be added as a global JavaScript variable, but instead be fetched via an API endpoint. This would allow for better performance and scalability, especially as the number of documents grows. The frontend can make an AJAX request to fetch the documents when the page loads, and then render them dynamically.
+- We allow the user to create a Google Drive configuration, even if the Drive import feature is globally disabled via the `.env` variable. While this is not a critical issue, it could lead to confusion if users create configurations that they cannot use. A simple improvement would be to check the feature flag in the GoogleDriveConfigApiController and display a warning for the user. As an alternative, the UI could also hide the option to create a Google Drive configuration when the feature is disabled, providing a clearer user experience.
+- For a given AiDocument, always one processing job instance is allowed to run at the same time. Though the UI and the API endpoints are designed to prevent multiple processing attempts, there is currently no backend enforcement of this rule. This should be handled at the level of the job settings.
+- At the moment, the Google Drive folder is stored only by the ID, which is sufficient for API interactions but not user-friendly. It would be beneficial to also store the folder name in the database and display it in the UI, so users can easily identify which folder is linked to their configuration without needing to look up the ID. This would require an additional API call to fetch the folder name when the configuration is created or updated, and a new column in the `google_drive_configs` table to store this information. (Maybe with the same approach as the optional title for AiDocument, this could be implemented as a simple text field that is populated automatically based on the folder ID, but can be edited by the user if needed.)
+- PDFs that contain scanned images instead of text are currently processed as text documents, which results in empty extracted content and failed processing. The mechanism of text extraction should have a fallback for this to either pass the PDF itself for OCR processing, or to extract the images from the PDF and process them individually. This would allow users to upload scanned documents without needing to manually convert them to images first, improving the overall user experience and reducing friction in the document upload process.
+- The mail notifications sent to the user are just clunky draft emails. The range of information, CTAs and links should be reviewed and enhanced.
+- There might be specific receipt formats for each payee, that could be used to improve the accuracy of the AI extraction for line items, or perhaps any other details. Would it make sense to add a "custom prompt" optional field to the Payee model, that would be used in the AI prompt when a transaction is extracted with that payee? Is the current flow sequential enough to allow for this kind of dynamic prompt injection? This would be a more advanced feature, but it could significantly improve the accuracy of the AI extraction for users who have recurring transactions with the same payees, such as regular bills or subscriptions. Additionally, the systems should try to recognize such patterns, and offer saving it as a custom prompt for the user after a successful extraction, to make it easier for users to take advantage of this feature without needing to manually configure it. (Note: it might even be helpful for the Vision AI processing.)
+- It might add value to have a side-by-side view of the receipt and the extracted values on the Ai Document review page, not just as tabs as currently. On the other hand, it needs to be designed, how to handle multiple files for a single document in this case, and how to display the extracted values in a way that is still clear and user-friendly. This would be a more complex UI change, but it could enhance the review process by allowing users to easily compare the original document with the extracted data, and make any necessary adjustments before finalizing the transaction.
+- What parameters are available for the Tessaract, that could be used to fine-tune and improve the OCR accuracy? The first results using the default settings are quite poor.
+- How to verify an enforce a minimum required Tesseract version for the binary mode, to ensure the best possible OCR performance and compatibility with the features we rely on?
+- When the user initiates reprocessing of a document from its own view, it would be nice to update the status, and even better to indicate completion. Would it be overengineering to introduce Echo and Reverb? Would polling be sufficient for this?

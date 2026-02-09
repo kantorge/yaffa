@@ -9,9 +9,8 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use Prism\Prism\ValueObjects\Media\Image;
 use Psr\Http\Client\ClientExceptionInterface;
-use srmklive\Prism\Contracts\Provider;
-use srmklive\Prism\Facades\Prism;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -119,6 +118,7 @@ class OcrService
             $output = $process->getOutput();
 
             Log::info("Tesseract binary extracted " . mb_strlen($output) . " characters from image");
+            Log::debug("Tesseract binary raw output: " . $output);
 
             return $output;
         } catch (ProcessFailedException $e) {
@@ -179,6 +179,8 @@ class OcrService
             if (($result['status'] ?? null) === 'success') {
                 $text = $result['text'] ?? '';
                 Log::info("Tesseract HTTP extracted " . mb_strlen($text) . " characters from image");
+                Log::debug("Tesseract HTTP raw response: " . json_encode($result));
+                Log::debug("Extracted text: " . $text);
 
                 return $text;
             }
@@ -217,36 +219,23 @@ class OcrService
             // Resize image for Vision API (reduces token costs)
             $resizedPath = $this->imagePreprocessingService->resizeForVisionApi($filePath);
 
-            // Get image as base64
-            $imageBase64 = base64_encode(file_get_contents($resizedPath));
-            $mimeType = mime_content_type($resizedPath);
-
             // Build vision prompt
             $prompt = 'Please extract all text from this image. Return ONLY the extracted text, nothing else.';
 
-            // Call Vision AI provider
-            $provider = Prism::via($config->provider)
-                ->withApiKey($config->api_key)
-                ->withModel($config->model);
+            // Call Vision AI provider using Prism with Image value object
+            $response = \Prism\Prism\Facades\Prism::text()
+                ->using($config->provider, $config->model)
+                ->usingProviderConfig([
+                    'api_key' => $config->api_key,
+                ])
+                ->withPrompt($prompt, [Image::fromLocalPath($resizedPath)])
+                ->asText();
 
-            $response = $provider->vision(
-                messages: [
-                    [
-                        'role' => 'user',
-                        'content' => $prompt,
-                        'image' => [
-                            'data' => $imageBase64,
-                            'media_type' => $mimeType,
-                        ],
-                    ],
-                ],
-                temperature: 0.1,
-                topP: 1,
-            );
-
-            $text = $response['choices'][0]['message']['content'] ?? '';
+            $text = $response->text ?? '';
 
             Log::info("Vision API extracted " . mb_strlen($text) . " characters from image");
+            Log::debug("Vision API raw response: " . json_encode($response));
+            Log::debug("Extracted text: " . $text);
 
             return $text;
         } catch (ClientExceptionInterface $e) {

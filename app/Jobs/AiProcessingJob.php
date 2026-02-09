@@ -2,7 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Mail\AiDocumentProcessingFailed;
+use App\Events\AiDocumentProcessedEvent;
+use App\Events\AiDocumentProcessingFailedEvent;
 use App\Models\AiDocument;
 use App\Services\ProcessDocumentService;
 use Exception;
@@ -11,7 +12,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Log;
 
 class AiProcessingJob implements ShouldQueue
@@ -37,24 +37,19 @@ class AiProcessingJob implements ShouldQueue
     public function handle(ProcessDocumentService $service): void
     {
         try {
-            // Mark as processing
-            $this->document->status = 'processing';
-            $this->document->save();
-
             // Process the document
             $result = $service->process($this->document);
 
             // Success - document status already updated to ready_for_review by service
             Log::info("Document {$this->document->id} processed successfully");
-        } catch (Exception $e) {
-            // Mark as failed
-            $this->document->status = 'processing_failed';
-            $this->document->save();
 
+            // Dispatch success event
+            AiDocumentProcessedEvent::dispatch($this->document);
+        } catch (Exception $e) {
             Log::error("Document {$this->document->id} processing failed: {$e->getMessage()}");
 
-            // Send failure email
-            $this->sendFailureEmail($e);
+            // Dispatch failure event
+            AiDocumentProcessingFailedEvent::dispatch($this->document, $e);
 
             // Don't retry on auth/quota errors
             if ($this->shouldNotRetry($e->getMessage())) {
@@ -63,19 +58,6 @@ class AiProcessingJob implements ShouldQueue
 
             // Otherwise, allow automatic retry
             throw $e;
-        }
-    }
-
-    /**
-     * Send email notification on failure
-     */
-    private function sendFailureEmail(Exception $exception): void
-    {
-        try {
-            Mail::to($this->document->user->email)
-                ->send(new AiDocumentProcessingFailed($this->document, $exception));
-        } catch (Exception $e) {
-            Log::error("Failed to send processing failure email: {$e->getMessage()}");
         }
     }
 
@@ -104,14 +86,5 @@ class AiProcessingJob implements ShouldQueue
         return false;
     }
 
-    /**
-     * Handle job failure
-     */
-    public function failed(Exception $exception): void
-    {
-        Log::error("Job failed for document {$this->document->id} after {$this->attempts()} attempts: {$exception->getMessage()}");
 
-        $this->document->status = 'processing_failed';
-        $this->document->save();
-    }
 }

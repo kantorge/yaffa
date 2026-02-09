@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Account;
+use App\Models\AccountEntity;
 use App\Models\Investment;
-use App\Models\Payee;
 use App\Models\User;
 use Closure;
 
@@ -34,7 +33,11 @@ class AssetMatchingService
 
         $accounts = $this->user->accounts()->get();
 
-        return $this->calculateMatches($accountName, $accounts, fn (Account $account) => $account->name . ' ' . $account->import_alias);
+        return $this->calculateMatches(
+            $accountName,
+            $accounts,
+            fn (AccountEntity $account) => $account->name . ($account->import_alias ? ' (' . $account->import_alias . ')' : '')
+            );
     }
 
     /**
@@ -75,7 +78,11 @@ class AssetMatchingService
 
         $payees = $this->user->payees()->get();
 
-        return $this->calculateMatches($payeeName, $payees, fn (Payee $payee) => $payee->name . ' ' . $payee->import_alias);
+        return $this->calculateMatches(
+            $payeeName,
+            $payees,
+            fn (AccountEntity $payee) => $payee->name . ($payee->import_alias ? ' (' . $payee->import_alias . ')' : '')
+        );
     }
 
     /**
@@ -107,7 +114,11 @@ class AssetMatchingService
 
         $investments = $this->user->investments()->get();
 
-        return $this->calculateMatches($investmentName, $investments, fn (Investment $investment) => $investment->name . ' ' . $investment->code . ' ' . $investment->isin);
+        return $this->calculateMatches(
+            $investmentName,
+            $investments,
+            fn (Investment $investment) => $investment->name . ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') . ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : '')
+        );
     }
 
     /**
@@ -143,11 +154,11 @@ class AssetMatchingService
      *
      * @template T
      *
-     * @param  T[]  $items
+     * @param  iterable<T>  $items
      * @param  Closure(T): string  $textExtractor
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
-    private function calculateMatches(string $searchText, array $items, Closure $textExtractor): array
+    private function calculateMatches(string $searchText, iterable $items, Closure $textExtractor): array
     {
         $matches = [];
 
