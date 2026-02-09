@@ -50,7 +50,7 @@ class ReceivedMailFactory extends Factory
 
             return [
                 'transaction_data' => [
-                    'transaction_type_id' => $transaction->transaction_type_id,
+                    'transaction_type' => $transaction->transaction_type->value,
                     'date' => $transaction->date->format('Y-m-d'),
                     'config_type' => $transaction->config_type,
                     'config' => [
@@ -60,7 +60,7 @@ class ReceivedMailFactory extends Factory
                         'account_to_id' => $transaction->config['account_to_id'],
                     ],
                     'transaction_type' => [
-                        'name' => $transaction->transactionType->name,
+                        'name' => $transaction->transaction_type->value,
                     ],
                     'raw' => [
                         "type" => "withdrawal",
