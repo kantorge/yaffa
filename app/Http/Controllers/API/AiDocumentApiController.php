@@ -214,6 +214,51 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     }
 
     /**
+     * POST /api/documents/{id}/check-duplicates - Check for duplicate transactions
+     *
+     * @throws AuthorizationException
+     */
+    public function checkDuplicates(AiDocument $aiDocument): JsonResponse
+    {
+        Gate::authorize('view', $aiDocument);
+
+        if (! $aiDocument->processed_transaction_data) {
+            return response()->json([
+                'duplicates' => [],
+            ], Response::HTTP_OK);
+        }
+
+        $extractedData = $aiDocument->processed_transaction_data['raw'] ?? [];
+
+        $duplicateService = new \App\Services\DuplicateDetectionService($aiDocument->user);
+        $duplicates = $duplicateService->findDuplicates($extractedData);
+
+        // Load full transaction details for frontend
+        $transactionIds = array_column($duplicates, 'id');
+        $transactions = \App\Models\Transaction::whereIn('id', $transactionIds)
+            ->with(['config', 'transactionItems.category'])
+            ->get()
+            ->keyBy('id');
+
+        $enrichedDuplicates = array_map(function ($duplicate) use ($transactions) {
+            $transaction = $transactions->get($duplicate['id']);
+
+            return [
+                'id' => $duplicate['id'],
+                'similarity' => $duplicate['similarity'],
+                'date' => $transaction->date,
+                'amount' => $transaction->transactionItems->sum('amount'),
+                'type' => $transaction->config_type,
+                'description' => $transaction->transactionItems->first()?->comment ?? '',
+            ];
+        }, $duplicates);
+
+        return response()->json([
+            'duplicates' => $enrichedDuplicates,
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * Store an uploaded file for the document
      */
     private function storeFile(AiDocument $aiDocument, $file): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\Category;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -69,6 +70,9 @@ class AiDocumentController extends Controller implements HasMiddleware
          */
         $aiDocument->load(['files', 'receivedMail', 'transaction']);
 
+        // Enrich processed transaction data with category full names
+        $this->enrichProcessedDataWithCategories($aiDocument);
+
         JavaScriptFacade::put([
             'aiDocument' => $aiDocument,
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
@@ -78,6 +82,65 @@ class AiDocumentController extends Controller implements HasMiddleware
         return view('ai-documents.show', [
             'aiDocument' => $aiDocument,
         ]);
+    }
+
+    /**
+     * Enrich processed transaction data with category full names
+     */
+    private function enrichProcessedDataWithCategories(AiDocument $aiDocument): void
+    {
+        $processedData = $aiDocument->processed_transaction_data;
+
+        if (!$processedData || !isset($processedData['items']) || !is_array($processedData['items'])) {
+            return;
+        }
+
+        // Collect all unique category IDs from items
+        $categoryIds = collect($processedData['items'])
+            ->map(fn ($item) => [
+                $item['category_id'] ?? null,
+                $item['recommended_category_id'] ?? null,
+            ])
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($categoryIds)) {
+            return;
+        }
+
+        // Load all categories in one query
+        $categories = Category::query()
+            ->whereIn('id', $categoryIds)
+            ->where('user_id', $aiDocument->user_id)
+            ->get()
+            ->keyBy('id');
+
+        // Enrich each item with category objects and full names
+        foreach ($processedData['items'] as &$item) {
+            if (isset($item['category_id']) && $categories->has($item['category_id'])) {
+                $category = $categories->get($item['category_id']);
+                $item['category_full_name'] = $category->full_name;
+                $item['category'] = [
+                    'id' => $category->id,
+                    'full_name' => $category->full_name,
+                ];
+            }
+
+            if (isset($item['recommended_category_id']) && $categories->has($item['recommended_category_id'])) {
+                $recommendedCategory = $categories->get($item['recommended_category_id']);
+                $item['recommended_category_full_name'] = $recommendedCategory->full_name;
+                $item['recommended_category'] = [
+                    'id' => $recommendedCategory->id,
+                    'full_name' => $recommendedCategory->full_name,
+                ];
+            }
+        }
+
+        // Update the model's attribute (this won't save to DB, just for this request)
+        $aiDocument->processed_transaction_data = $processedData;
     }
 
     /**

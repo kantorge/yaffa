@@ -95,6 +95,62 @@
         </div>
       </div>
 
+      <div class="card mb-3" v-if="canFinalize && duplicates.length > 0">
+        <div class="card-header bg-warning">
+          <div
+            class="card-title collapse-control"
+            data-coreui-toggle="collapse"
+            data-coreui-target="#cardDuplicates"
+          >
+            <i class="fa fa-angle-down"></i>
+            {{ __('Potential duplicates') }}
+          </div>
+        </div>
+        <div
+          class="collapse card-body show"
+          aria-expanded="true"
+          id="cardDuplicates"
+        >
+          <div class="alert alert-warning mb-3">
+            {{
+              __(
+                'The following transactions might be duplicates. Please review before finalizing.',
+              )
+            }}
+          </div>
+          <div class="list-group">
+            <a
+              v-for="duplicate in duplicates"
+              :key="duplicate.id"
+              :href="
+                window.route('transaction.open', {
+                  transaction: duplicate.id,
+                  action: 'show',
+                })
+              "
+              class="list-group-item list-group-item-action"
+              target="_blank"
+            >
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-bold">{{ duplicate.date }}</div>
+                  <div class="small">
+                    {{ duplicate.description || __('No description') }}
+                  </div>
+                </div>
+                <div class="text-end">
+                  <div>{{ duplicate.amount }}</div>
+                  <div class="badge bg-warning text-dark">
+                    {{ Math.round(duplicate.similarity * 100) }}%
+                    {{ __('match') }}
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div class="card mb-3">
         <div class="card-header">
           <div
@@ -490,14 +546,14 @@
                   <div class="col-12">
                     <h6 class="text-muted mb-3">{{ __('Line Items') }}</h6>
                     <div class="table-responsive">
-                      <table class="table table-sm table-bordered">
+                      <table class="table table-bordered">
                         <thead class="table-light">
                           <tr>
                             <th>{{ __('Description') }}</th>
-                            <th class="text-end" style="width: 120px">
+                            <th class="text-end">
                               {{ __('Amount') }}
                             </th>
-                            <th class="text-center" style="width: 100px">
+                            <th>
                               {{ __('Category') }}
                             </th>
                           </tr>
@@ -507,16 +563,33 @@
                             v-for="(item, index) in draftData.items"
                             :key="index"
                           >
-                            <td>{{ item.description || __('N/A') }}</td>
+                            <td>
+                              {{
+                                item.comment || item.description || __('N/A')
+                              }}
+                            </td>
                             <td class="text-end">{{ item.amount || 0 }}</td>
-                            <td class="text-center">
-                              <span
-                                v-if="item.category_id"
-                                class="badge bg-info"
+                            <td>
+                              <div
+                                v-if="item.category_full_name"
+                                class="d-flex align-items-center"
                               >
-                                {{ item.category_id }}
-                              </span>
-                              <span v-else class="text-muted">—</span>
+                                <span>{{ item.category_full_name }}</span>
+                              </div>
+                              <div
+                                v-else-if="item.recommended_category_full_name"
+                                class="d-flex align-items-center"
+                              >
+                                <span class="badge bg-info me-2">
+                                  <i class="fa fa-robot"></i>
+                                </span>
+                                <span class="text-muted">{{
+                                  item.recommended_category_full_name
+                                }}</span>
+                              </div>
+                              <span v-else class="text-muted">{{
+                                __('Not categorized')
+                              }}</span>
                             </td>
                           </tr>
                         </tbody>
@@ -550,6 +623,8 @@
   const sourceLabels = window.aiDocumentSourceLabels || {};
   const selectedFile = ref(aiDocument.value.files?.[0] || null);
   const isBusy = ref(false);
+  const duplicates = ref([]);
+  const duplicatesLoading = ref(false);
 
   const createdAtLabel = computed(() => {
     if (!aiDocument.value.created_at) {
@@ -647,6 +722,29 @@
       : '#',
   );
 
+  const loadDuplicates = async () => {
+    if (!hasDraftData.value || duplicatesLoading.value) {
+      return;
+    }
+
+    duplicatesLoading.value = true;
+
+    try {
+      const response = await window.axios.post(
+        window.route('api.documents.checkDuplicates', {
+          aiDocument: aiDocument.value.id,
+        }),
+      );
+
+      duplicates.value = response.data.duplicates || [];
+    } catch (error) {
+      console.error('Failed to load duplicates:', error);
+      duplicates.value = [];
+    } finally {
+      duplicatesLoading.value = false;
+    }
+  };
+
   const isImage = (file) => ['jpg', 'jpeg', 'png'].includes(file.file_type);
 
   const previewUrl = (file) =>
@@ -688,45 +786,20 @@
       return;
     }
 
+    // Load duplicates before opening modal
+    loadDuplicates();
+
     const draft = buildDraftTransaction();
-    const itemCount = Array.isArray(draft.items) ? draft.items.length : 0;
 
-    if (itemCount < 5) {
-      window.dispatchEvent(
-        new CustomEvent('initiateCreateFromDraft', {
-          detail: {
-            type: draft.config_type || 'standard',
-            transaction: draft,
-          },
-        }),
-      );
-      return;
-    }
-
-    const form = window.document.createElement('form');
-    form.setAttribute('method', 'POST');
-    form.setAttribute('action', window.route('transactions.createFromDraft'));
-
-    const csrfInput = window.document.createElement('input');
-    csrfInput.setAttribute('type', 'hidden');
-    csrfInput.setAttribute('name', '_token');
-    csrfInput.setAttribute('value', window.csrfToken);
-    form.appendChild(csrfInput);
-
-    const transactionInput = window.document.createElement('input');
-    transactionInput.setAttribute('type', 'hidden');
-    transactionInput.setAttribute('name', 'transaction');
-    transactionInput.setAttribute('value', JSON.stringify(draft));
-    form.appendChild(transactionInput);
-
-    const documentInput = window.document.createElement('input');
-    documentInput.setAttribute('type', 'hidden');
-    documentInput.setAttribute('name', 'ai_document_id');
-    documentInput.setAttribute('value', aiDocument.value.id);
-    form.appendChild(documentInput);
-
-    window.document.body.appendChild(form);
-    form.submit();
+    // Always dispatch event to modal (for both investment and standard transactions)
+    window.dispatchEvent(
+      new CustomEvent('initiateCreateFromDraft', {
+        detail: {
+          type: draft.config_type || 'standard',
+          transaction: draft,
+        },
+      }),
+    );
   };
 
   const reprocessDocument = () => {

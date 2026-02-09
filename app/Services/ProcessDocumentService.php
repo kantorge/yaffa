@@ -195,7 +195,7 @@ class ProcessDocumentService
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
 
-        // Get similar accounts
+        // Get similar accounts - this already limits to top N matches
         $similarAccounts = $matchingService->matchAccounts($accountName);
 
         if (empty($similarAccounts)) {
@@ -204,11 +204,8 @@ class ProcessDocumentService
             return null;
         }
 
-        // Take top 10 matches
-        $topMatches = array_slice($similarAccounts, 0, 10);
-
         // Format for AI prompt
-        $accountsList = collect($topMatches)
+        $accountsList = collect($similarAccounts)
             ->map(fn ($match) => "{$match['id']}: {$match['name']}")
             ->join("\n");
 
@@ -227,7 +224,11 @@ EOF;
 
         $result = mb_trim($response);
 
-        Log::debug('Account matching AI response', ['result' => $result]);
+        Log::debug('Account matching AI response', [
+            'prompt' => $prompt,
+            'account_list' => $accountsList,
+            'result' => $result
+        ]);
 
         return $result !== 'N/A' && is_numeric($result) ? (int) $result : null;
     }
@@ -272,7 +273,11 @@ EOF;
 
         $result = mb_trim($response);
 
-        Log::debug('Payee matching AI response', ['result' => $result]);
+        Log::debug('Payee matching AI response', [
+            'prompt' => $prompt,
+            'payee_list' => $payeesList,
+            'result' => $result
+        ]);
 
         return $result !== 'N/A' && is_numeric($result) ? (int) $result : null;
     }
@@ -317,7 +322,11 @@ EOF;
 
         $result = mb_trim($response);
 
-        Log::debug('Investment matching AI response', ['result' => $result]);
+        Log::debug('Investment matching AI response', [
+            'prompt' => $prompt,
+            'investment_list' => $investmentsList,
+            'result' => $result
+        ]);
 
         return $result !== 'N/A' && is_numeric($result) ? (int) $result : null;
     }
