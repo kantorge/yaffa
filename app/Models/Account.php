@@ -154,7 +154,6 @@ class Account extends Model
                 '=',
                 'transaction_details_investment.id'
             )
-
             ->when(
                 $untilDate,
                 function ($query, $untilDate) {
