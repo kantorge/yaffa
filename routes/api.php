@@ -14,6 +14,7 @@ use App\Http\Controllers\API\ReceivedMailApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\TagApiController;
 use App\Http\Controllers\API\TransactionApiController;
+use App\Http\Controllers\API\TransactionTypeApiController;
 use App\Http\Controllers\API\UserApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -110,6 +111,9 @@ Route::patch('/received-mail/{receivedMail}/reset-processed', [ReceivedMailApiCo
     ->name('api.received-mail.reset-processed');
 Route::delete('/received-mail/{receivedMail}', [ReceivedMailApiController::class, 'destroy'])
     ->name('api.received-mail.destroy');
+
+Route::get('/transaction-types', [TransactionTypeApiController::class, 'index'])
+    ->name('api.transaction-types.index');
 
 Route::get('/transactions', [TransactionApiController::class, 'findTransactions']);
 
