@@ -3,10 +3,39 @@
     class="list-group-item mb-2 transaction_item_row"
     :id="'transaction_item_' + id"
   >
+    <!-- Item description banner for AI recommendations -->
+    <div
+      v-if="recommended_category_id || description"
+      class="alert alert-info mb-2 py-2 px-3 d-flex justify-content-between align-items-center"
+    >
+      <div>
+        <i class="fa fa-receipt me-2"></i>
+        <strong>{{ __('Item') }}:</strong>
+        {{ description || recommended_category.full_name }}
+      </div>
+      <span class="badge bg-primary">
+        <i class="fa fa-robot me-1"></i>{{ __('AI suggested') }}
+      </span>
+    </div>
+
     <div class="row">
       <div class="col-12 col-sm-4 form-group">
         <span class="form-label">
           {{ __('Category') }}
+          <span
+            v-if="recommended_category_id && isRecommendationAccepted"
+            class="badge bg-success text-white ms-1"
+            :title="__('Using AI recommendation')"
+          >
+            <i class="fa fa-check me-1"></i>{{ __('AI') }}
+          </span>
+          <span
+            v-else-if="recommended_category_id && !isRecommendationAccepted"
+            class="badge bg-warning text-dark ms-1"
+            :title="__('AI recommendation overridden')"
+          >
+            <i class="fa fa-edit me-1"></i>{{ __('Modified') }}
+          </span>
         </span>
         <select
           class="form-select category"
@@ -48,19 +77,28 @@
         ></select>
       </div>
       <div
-        class="col-12 col-sm-3 form-group transaction_detail_container d-none d-md-block"
+        class="col-12 col-sm-3 form-group transaction_detail_container"
+        :class="{ 'd-none d-md-block': !recommended_category_id }"
       >
         <span class="form-label">
           {{ __('Comment') }}
+          <span v-if="recommended_category_id" class="text-muted small">
+            ({{ __('AI extracted') }})
+          </span>
         </span>
         <input
           class="form-control transaction_item_comment"
           v-model="commentData"
           @blur="$emit('update:comment', $event.target.value)"
           type="text"
+          :placeholder="
+            recommended_category_id
+              ? __('Edit item description')
+              : __('Add comment')
+          "
         />
       </div>
-      <div class="col-12 col-sm-1">
+      <div class="col-12 col-sm-1 justify-content-end d-flex align-items-start">
         <button
           type="button"
           class="btn btn-sm btn-info d-sm-none"
@@ -101,6 +139,9 @@
       amount: [Number, String],
       category_id: Number,
       category: Object,
+      recommended_category_id: Number,
+      recommended_category: Object,
+      description: String,
       currencySymbol: String,
       comment: String,
       tags: Array,
@@ -122,6 +163,7 @@
         amountData: this.amount,
         tagsData: this.tags,
         commentData: this.comment,
+        isRecommendationAccepted: false,
       };
     },
 
@@ -159,7 +201,7 @@
           allowClear: true,
           // Component should not be aware where it is used, but we need to hint Select2
           dropdownParent: $(
-            document.getElementById('modal-transaction-form-standard') ||
+            document.getElementById('transaction_item_container') ||
               document.querySelector('body'),
           ),
         })
@@ -170,12 +212,24 @@
           });
           e.target.dispatchEvent(event);
 
+          // Track if user is changing from recommendation
+          const newValue = event.target.value;
+          if ($vm.recommended_category_id) {
+            $vm.isRecommendationAccepted =
+              newValue == $vm.recommended_category_id;
+          }
+
           $vm.$emit('update:category_id', event.target.value);
         });
 
       // Load selected item for category select2
-      if (this.category_id) {
-        const data = this.category;
+      // Priority: explicit category_id > recommended_category_id
+      const effectiveCategoryId =
+        this.category_id || this.recommended_category_id;
+      const effectiveCategory = this.category || this.recommended_category;
+
+      if (effectiveCategoryId && effectiveCategory) {
+        const data = effectiveCategory;
 
         const option = new Option(data.full_name, data.id, true, true);
         elementCategory.append(option).trigger('change');
@@ -187,6 +241,12 @@
             data: data,
           },
         });
+
+        // Track if we're using the recommendation
+        if (!this.category_id && this.recommended_category_id) {
+          this.isRecommendationAccepted = true;
+          this.categoryIdData = this.recommended_category_id;
+        }
       }
 
       // Add select2 functionality to tag

@@ -457,6 +457,29 @@
           </div>
         </div>
         <div class="col-md-8">
+          <!-- AI Recommendations Info Banner -->
+          <div
+            v-if="hasAiRecommendations"
+            class="alert alert-primary mb-3"
+            role="alert"
+          >
+            <div class="d-flex align-items-center">
+              <i class="fa fa-robot fa-2x me-3"></i>
+              <div>
+                <h6 class="alert-heading mb-1">
+                  ✨ {{ __('AI-Assisted Transaction') }}
+                </h6>
+                <p class="mb-0 small">
+                  {{
+                    __(
+                      'Review the suggested categories below. Items show the extracted description and AI recommendations. You can accept or modify any suggestion.',
+                    )
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <transaction-item-container
             @addTransactionItem="addTransactionItem"
             :transactionItems="form.items"
@@ -856,6 +879,13 @@
       isBaseSettingsEditsAllowed() {
         return ['create', 'clone', 'finalize'].includes(this.action);
       },
+
+      // Check if any items have AI recommendations
+      hasAiRecommendations() {
+        return this.form.items.some(
+          (item) => item.recommended_category_id || item.description,
+        );
+      },
     },
 
     created() {
@@ -992,12 +1022,44 @@
             this.transaction.config.account_to_id;
 
           // Copy items, and ensure that amount is number
+          // Preserve recommended_category_id from AI draft data
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
               .map((item) => {
                 item.id = this.itemCounter++;
                 item.amount = Number(item.amount);
+                // Preserve recommendation if present
+                if (item.recommended_category_id) {
+                  item.recommended_category_id = item.recommended_category_id;
+                  item.recommended_category = item.recommended_category || null;
+                }
+                item.description = item.description || null;
                 return item;
+              })
+              .forEach((item) => this.form.items.push(item));
+          } else if (this.transaction.items?.length > 0) {
+            // Handle draft data from AI document (items from draft, not transaction_items)
+            this.transaction.items
+              .map((item) => {
+                const formItem = {
+                  id: this.itemCounter++,
+                  amount: Number(item.amount || 0),
+                  category_id: item.category_id || null,
+                  category: item.category || null,
+                  description: item.description || null,
+                  comment: item.comment || null,
+                  tags: item.tags || [],
+                };
+
+                // Preserve recommendation from AI draft
+                if (item.recommended_category_id) {
+                  formItem.recommended_category_id =
+                    item.recommended_category_id;
+                  formItem.recommended_category =
+                    item.recommended_category || null;
+                }
+
+                return formItem;
               })
               .forEach((item) => this.form.items.push(item));
           }

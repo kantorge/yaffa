@@ -941,16 +941,15 @@
           this.form.budget = this.transaction.budget;
           this.form.reconciled = this.transaction.reconciled;
 
-          // Copy configuration
-          this.form.config.quantity = this.transaction.config?.quantity;
-          this.form.config.price = this.transaction.config?.price;
-          this.form.config.commission = this.transaction.config?.commission;
-          this.form.config.tax = this.transaction.config?.tax;
-          this.form.config.dividend = this.transaction.config?.dividend;
-
-          this.form.config.account_id = this.transaction.config.account_id;
-          this.form.config.investment_id =
-            this.transaction.config.investment_id;
+          // Copy configuration (handle both saved transactions and AI drafts)
+          const config = this.transaction.config || {};
+          this.form.config.quantity = config.quantity;
+          this.form.config.price = config.price;
+          this.form.config.commission = config.commission;
+          this.form.config.tax = config.tax;
+          this.form.config.dividend = config.dividend;
+          this.form.config.account_id = config.account_id;
+          this.form.config.investment_id = config.investment_id;
 
           // Copy schedule config
           // TODO: date conversion should take place here, or elsewehere?
@@ -1013,8 +1012,9 @@
           }
         }
 
-        // Set form action
+        // Set form action and AI document ID
         this.form.action = this.action;
+        this.form.ai_document_id = this.aiDocumentId;
       },
 
       transactionTypeChanged() {
