@@ -192,16 +192,16 @@ class Investment extends Model
     {
         $quantity = DB::table('transactions')
             ->select(
-                DB::raw('sum(
-                                  IFNULL(transaction_types.quantity_multiplier, 0)
+                DB::raw("sum(
+                                  CASE transactions.transaction_type
+                                      WHEN 'buy' THEN 1
+                                      WHEN 'add_shares' THEN 1
+                                      WHEN 'sell' THEN -1
+                                      WHEN 'remove_shares' THEN -1
+                                      ELSE 0
+                                  END
                                   * IFNULL(transaction_details_investment.quantity, 0)
-                                ) AS quantity')
-            )
-            ->leftJoin(
-                'transaction_types',
-                'transactions.transaction_type_id',
-                '=',
-                'transaction_types.id'
+                                ) AS quantity")
             )
             ->leftJoin(
                 'transaction_details_investment',

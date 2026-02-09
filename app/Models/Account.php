@@ -134,10 +134,16 @@ class Account extends Model
         return DB::table('transactions')
             ->select(
                 'transaction_details_investment.investment_id',
-                DB::raw('sum(
-                                 IFNULL(transaction_types.quantity_multiplier, 0)
+                DB::raw("sum(
+                                 CASE transactions.transaction_type
+                                     WHEN 'buy' THEN 1
+                                     WHEN 'add_shares' THEN 1
+                                     WHEN 'sell' THEN -1
+                                     WHEN 'remove_shares' THEN -1
+                                     ELSE 0
+                                 END
                                  * IFNULL(transaction_details_investment.quantity, 0)
-                               ) AS quantity')
+                               ) AS quantity")
             )
             ->groupBy(
                 'transaction_details_investment.investment_id',
@@ -148,12 +154,7 @@ class Account extends Model
                 '=',
                 'transaction_details_investment.id'
             )
-            ->leftJoin(
-                'transaction_types',
-                'transactions.transaction_type_id',
-                '=',
-                'transaction_types.id'
-            )
+
             ->when(
                 $untilDate,
                 function ($query, $untilDate) {
@@ -162,12 +163,7 @@ class Account extends Model
             )
             ->where('transactions.schedule', 0)
             ->where('transactions.config_type', 'investment')
-            ->whereIn('transactions.transaction_type_id', function ($query) {
-                $query->from('transaction_types')
-                    ->select('id')
-                    ->where('type', 'investment')
-                    ->whereNotNull('quantity_multiplier');
-            })
+            ->whereIn('transactions.transaction_type', ['buy', 'sell', 'add_shares', 'remove_shares', 'dividend', 'interest_yield'])
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();
     }
