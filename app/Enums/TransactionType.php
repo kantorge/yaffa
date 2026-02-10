@@ -144,6 +144,21 @@ enum TransactionType: string
     }
 
     /**
+     * Get all investment types that require a quantity
+     *
+     * @return array<TransactionType>
+     */
+    public static function investmentTypesWithQuantity(): array
+    {
+        return [
+            self::BUY,
+            self::SELL,
+            self::ADD_SHARES,
+            self::REMOVE_SHARES,
+        ];
+    }
+
+    /**
      * Convert to array for JSON serialization
      *
      * @return array<string, mixed>
