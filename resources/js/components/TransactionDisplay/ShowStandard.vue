@@ -14,7 +14,7 @@
                                 {{ __('Type') }}
                             </dt>
                             <dd class="col-6">
-                                {{ __(capitalize(transaction.transaction_type.name)) }}
+                                {{ __(capitalize(transaction.transaction_type)) }}
                             </dd>
 
                             <dt class="col-6">
@@ -193,7 +193,7 @@ export default {
     computed: {
         // Account TO and FROM labels based on transaction type
         accountFromFieldLabel() {
-            if (this.transaction.transaction_type.name === 'withdrawal' || this.transaction.transaction_type.name === 'transfer') {
+            if (this.transaction.transaction_type === 'withdrawal' || this.transaction.transaction_type === 'transfer') {
                 return __('Account from');
             }
 
@@ -201,7 +201,7 @@ export default {
         },
 
         accountToFieldLabel() {
-            if (this.transaction.transaction_type.name === 'deposit' || this.transaction.transaction_type.name === 'transfer') {
+            if (this.transaction.transaction_type === 'deposit' || this.transaction.transaction_type === 'transfer') {
                 return __('Account to');
             }
 
@@ -215,8 +215,8 @@ export default {
 
         // Amound from currency is dependent on transaction type
         ammountFromCurrency() {
-            if (this.transaction.transaction_type.name === 'withdrawal'
-                || this.transaction.transaction_type.name === 'transfer') {
+            if (this.transaction.transaction_type === 'withdrawal'
+                || this.transaction.transaction_type === 'transfer') {
                 return this.transaction.config.account_from?.config.currency;
             }
 
@@ -252,7 +252,7 @@ export default {
             return 0;
         },
         transactionTypeIsTransfer() {
-            return this.transaction?.transaction_type?.name === 'transfer';
+            return this.transaction?.transaction_type === 'transfer';
         }
     },
     methods: {

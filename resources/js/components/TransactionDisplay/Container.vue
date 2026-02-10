@@ -1,11 +1,11 @@
 <template>
   <div>
     <show-standard
-        v-if="transaction.transaction_type.type === 'standard'"
+        v-if="isStandardTransaction"
         :transaction="transaction"
     ></show-standard>
     <show-investment
-        v-else-if="transaction.transaction_type.type === 'investment'"
+        v-else-if="isInvestmentTransaction"
         :transaction="transaction"
     ></show-investment>
 
@@ -42,6 +42,22 @@ export default {
     return {
       transaction: Object.assign({}, window.transaction),
     };
+  },
+
+  computed: {
+    isStandardTransaction() {
+      // Get transaction type configuration from window.config
+      const transactionTypes = window.config?.transactionTypes || {};
+      const typeConfig = transactionTypes[this.transaction.transaction_type];
+      return typeConfig?.category === 'standard';
+    },
+    
+    isInvestmentTransaction() {
+      // Get transaction type configuration from window.config
+      const transactionTypes = window.config?.transactionTypes || {};
+      const typeConfig = transactionTypes[this.transaction.transaction_type];
+      return typeConfig?.category === 'investment';
+    },
   },
 
   methods: {

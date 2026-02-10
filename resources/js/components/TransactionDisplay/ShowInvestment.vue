@@ -14,7 +14,7 @@
                 {{ __('Type') }}
               </dt>
               <dd class="col-6" dusk="label-transaction-type">
-                {{ __(transaction.transaction_type.name) }}
+                {{ __(transactionTypeLabel) }}
               </dd>
 
               <dt class="col-6">
@@ -215,6 +215,12 @@
     },
 
     computed: {
+      transactionTypeLabel() {
+        // Get transaction type configuration from window.config
+        const transactionTypes = window.config?.transactionTypes || {};
+        const typeConfig = transactionTypes[this.transaction.transaction_type];
+        return typeConfig?.label || this.transaction.transaction_type;
+      },
       total() {
         return (
           (this.transaction.config.quantity || 0) *
