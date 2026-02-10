@@ -42,9 +42,7 @@
       transaction: {
         type: Object,
         default: {
-          transaction_type: {
-            name: 'withdrawal',
-          },
+          transaction_type: 'withdrawal',
           date: new Date(),
           schedule: false,
           budget: false,

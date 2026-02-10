@@ -967,7 +967,8 @@
         if (this.transaction && Object.keys(this.transaction).length > 0) {
           // Populate form data with already known values
           this.form.id = this.transaction.id;
-          this.form.transaction_type = this.transaction.transaction_type?.name;
+          // Transaction type is now directly the enum value string
+          this.form.transaction_type = this.transaction.transaction_type;
 
           // Populate date from source transaction, and ensure that it's a Date object
           this.form.date = this.copyDateObject(this.transaction.date);
@@ -1434,8 +1435,8 @@
         this.initializeTransaction();
 
         // Ensure that new transaction type is set
-        // TODO: should this be part of initializeTransaction()?
-        this.onChangeTransactionType(transaction.transaction_type.name, true);
+        // Transaction type is now directly the enum value string
+        this.onChangeTransactionType(transaction.transaction_type, true);
 
         // Load default value for accounts
         this.getDefaultAccountDetails(

@@ -42,9 +42,7 @@
       transaction: {
         type: Object,
         default: {
-          transaction_type: {
-            name: 'Buy',
-          },
+          transaction_type: 'Buy',
           date: new Date(),
           schedule: false,
           budget: false,
