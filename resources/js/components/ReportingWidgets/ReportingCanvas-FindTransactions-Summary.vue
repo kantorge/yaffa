@@ -117,7 +117,7 @@ export default {
             const currencies = [];
             let total = 0;
             this.transactions
-                .filter(transaction => transaction.transaction_type_id === 1)
+                .filter(transaction => transaction.transaction_type === 'withdrawal')
                 .forEach(transaction => {
                     if (!currencies.includes(transaction.currency_id)) {
                         currencies.push(transaction.currency_id);
@@ -149,14 +149,14 @@ export default {
             return summary;
         },
         countWithdrawals() {
-            return this.transactions.filter(transaction => transaction.transaction_type_id === 1).length;
+            return this.transactions.filter(transaction => transaction.transaction_type === 'withdrawal').length;
         },
         depositSummary() {
             const summary = [];
             const currencies = [];
             let total = 0;
             this.transactions
-                .filter(transaction => transaction.transaction_type_id === 2)
+                .filter(transaction => transaction.transaction_type === 'deposit')
                 .forEach(transaction => {
                     if (!currencies.includes(transaction.currency_id)) {
                         currencies.push(transaction.currency_id);
@@ -188,13 +188,13 @@ export default {
             return summary;
         },
         countDeposits() {
-            return this.transactions.filter(transaction => transaction.transaction_type_id === 2).length;
+            return this.transactions.filter(transaction => transaction.transaction_type === 'deposit').length;
         },
         countTransfers() {
-            return this.transactions.filter(transaction => transaction.transaction_type_id === 3).length;
+            return this.transactions.filter(transaction => transaction.transaction_type === 'transfer').length;
         },
         countInvestments() {
-            return this.transactions.filter(transaction => transaction.transaction_type.type === 'investment').length;
+            return this.transactions.filter(transaction => transaction.transaction_type.category === 'investment').length;
         },
         minDate() {
             return this.transactions.length ? this.transactions.reduce((acc, transaction) => {

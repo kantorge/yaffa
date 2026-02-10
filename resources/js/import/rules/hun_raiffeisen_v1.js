@@ -84,8 +84,8 @@ engine.addRule({
                     customValue: 'standard',
                 },
                 {
-                    transactionField: 'transaction_type_id',
-                    customValue: 1,
+                    transactionField: 'transaction_type',
+                    customValue: 'withdrawal',
                 },
                 {
                     transactionField: 'transaction_type.name',
@@ -193,8 +193,8 @@ engine.addRule({
                     customValue: 'standard',
                 },
                 {
-                    transactionField: 'transaction_type_id',
-                    customValue: 1,
+                    transactionField: 'transaction_type',
+                    customValue: 'withdrawal',
                 },
                 {
                     transactionField: 'transaction_type.name',
@@ -300,8 +300,8 @@ engine.addRule({
                     customValue: 'standard',
                 },
                 {
-                    transactionField: 'transaction_type_id',
-                    customValue: 2,
+                    transactionField: 'transaction_type',
+                    customValue: 'deposit',
                 },
                 {
                     transactionField: 'transaction_type.name',
@@ -422,8 +422,8 @@ engine.addRule({
                     customValue: 'standard',
                 },
                 {
-                    transactionField: 'transaction_type_id',
-                    customValue: 3,
+                    transactionField: 'transaction_type',
+                    customValue: 'transfer',
                 },
                 {
                     transactionField: 'transaction_type.name',
