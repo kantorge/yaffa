@@ -209,6 +209,12 @@ class ResetDemoDatabase extends Command
                 '- Absolutely Unknown Item 2: 40 USD' . "\n",
             'html' => '',
         ]);
+
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Deposit',
+            'text' => 'Total amount of 100 USD was added to "Bank Account - John" on 2026-02-01 by "NetConnect Solutions" as "Incomes / Net wage".',
+            'html' => '',
+        ]);
     }
 
     private function createSampleReceivedMailsForDemoUser(array $mailParams): void
