@@ -41,7 +41,7 @@
                       <option
                         v-for="item in transactionTypes"
                         :key="item.value"
-                        :value="item.value"
+                        :value="item.name"
                       >
                         {{ item.name }}
                       </option>
@@ -547,7 +547,7 @@
 
       // Main form data
       data.form = new Form({
-        transaction_type: 'buy',
+        transaction_type: 'Buy',
         config_type: 'investment',
         date: toIsoDateString(),
         comment: null,
@@ -637,7 +637,7 @@
       transactionTypeSettings() {
         return (
           this.transactionTypes.find(
-            (item) => item.value === this.form.transaction_type,
+            (item) => item.name === this.form.transaction_type,
           ) || {}
         );
       },
@@ -679,10 +679,7 @@
     },
 
     created() {
-      // Copy values of existing transaction into component form data
-      this.initializeTransaction();
-
-      // Load transaction types from window config
+      // Load transaction types from window config first
       const transactionTypesConfig = window.config.transactionTypes || {};
       
       // Filter and map investment types to component format
@@ -696,6 +693,9 @@
           dividend: ['dividend', 'interest_yield'].includes(type.value),
           amount_multiplier: type.amount_multiplier,
         }));
+
+      // Copy values of existing transaction into component form data
+      this.initializeTransaction();
 
       // Check for various default values in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -858,6 +858,18 @@
     },
 
     methods: {
+      // Helper method to convert transaction type label to enum value
+      getTransactionTypeValue(label) {
+        const type = this.transactionTypes.find(t => t.name === label);
+        return type ? type.value : label;
+      },
+
+      // Helper method to convert transaction type enum value to label
+      getTransactionTypeLabel(value) {
+        const type = this.transactionTypes.find(t => t.value === value);
+        return type ? type.name : value;
+      },
+
       getDefaultAccountDetails(account_id) {
         if (!account_id) {
           return;
@@ -923,7 +935,8 @@
         if (this.transaction && Object.keys(this.transaction).length > 0) {
           // Populate form data with already known values
           this.form.id = this.transaction.id;
-          this.form.transaction_type = this.transaction.transaction_type;
+          // Convert enum value to label for the dropdown
+          this.form.transaction_type = this.getTransactionTypeLabel(this.transaction.transaction_type);
 
           // Populate date from source transaction, and ensure that it's a Date object
           this.form.date = this.copyDateObject(this.transaction.date);
@@ -1073,6 +1086,12 @@
       },
 
       onSubmit() {
+        // Convert transaction type from label to enum value before submission
+        const submissionData = {
+          ...this.form,
+          transaction_type: this.getTransactionTypeValue(this.form.transaction_type),
+        };
+
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form
@@ -1080,7 +1099,7 @@
               window.route('api.transactions.updateInvestment', {
                 transaction: this.form.id,
               }),
-              this.form,
+              submissionData,
             )
             .then((response) => {
               this.$emit(
@@ -1096,7 +1115,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(window.route('api.transactions.storeInvestment'), this.form)
+          .post(window.route('api.transactions.storeInvestment'), submissionData)
           .then(async (response) => {
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(
