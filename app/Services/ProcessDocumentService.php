@@ -33,7 +33,7 @@ class ProcessDocumentService
             $document->status = 'processing';
             $document->save();
 
-            // Get user and their provider config
+            // Get user and their AI provider config - currently only one config is allowed
             $user = $document->user;
             $config = $user->aiProviderConfigs()->first();
 
@@ -41,27 +41,26 @@ class ProcessDocumentService
                 throw new Exception('No AI provider configured for user');
             }
 
-            // Extract text from all files
+            // Step 1: Extract text from all files
             $extractedText = $this->extractTextFromFiles($document, $config);
 
             if (empty($extractedText)) {
                 throw new Exception('No text could be extracted from document files');
             }
 
-            // Step 1: Extract basic transaction data
+            // Step 2: Extract core transaction data
             $rawData = $this->extractTransactionData($config, $extractedText, $document->custom_prompt);
 
             Log::debug('AI extracted raw transaction data', ['raw_data' => $rawData]);
 
-            // Step 2: Determine transaction type
+            // Step 3: Determine transaction type
             $transactionType = Str::lower($rawData['transaction_type'] ?? 'withdrawal');
             $transactionTypeId = $this->getTransactionTypeId($transactionType);
 
-            // Step 3: Match assets based on transaction type
+            // Step 4: Match assets based on transaction type
             $accountId = null;
             $accountFromId = null;
             $accountToId = null;
-            $payeeId = null;
             $investmentId = null;
 
             if (in_array($transactionType, ['buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares'])) {
@@ -83,18 +82,18 @@ class ProcessDocumentService
             } elseif ($transactionType === 'withdrawal') {
                 // Withdrawal: match account (from) and payee (to)
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $user, $rawData['account']);
+                    $accountFromId = $this->matchAccount($config, $user, $rawData['account']);
                 }
                 if (!empty($rawData['payee'])) {
-                    $payeeId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $accountToId = $this->matchPayee($config, $user, $rawData['payee']);
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
-                    $payeeId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $accountFromId = $this->matchPayee($config, $user, $rawData['payee']);
                 }
                 if (!empty($rawData['account'])) {
-                    $accountId = $this->matchAccount($config, $user, $rawData['account']);
+                    $accountToId = $this->matchAccount($config, $user, $rawData['account']);
                 }
             }
 
@@ -106,12 +105,11 @@ class ProcessDocumentService
                 $accountId,
                 $accountFromId,
                 $accountToId,
-                $payeeId,
                 $investmentId,
                 $user
             );
 
-            // Store processed data and update document
+            // Step 5: Store processed data and update document
             $document->processed_transaction_data = $transactionData;
             $document->processed_at = now();
             $document->status = 'ready_for_review';
@@ -174,16 +172,16 @@ class ProcessDocumentService
         try {
             $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
 
-            Log::debug('Parsed AI response', ['data' => $data]);
+            Log::debug('Parsed main AI response', ['data' => $data]);
 
             return $data;
         } catch (JsonException $e) {
-            Log::error('Failed to parse AI response', [
+            Log::error('Failed to parse main AI response', [
                 'response' => $response,
                 'error' => $e->getMessage(),
             ]);
 
-            throw new Exception('Failed to parse AI response as JSON');
+            throw new Exception('Failed to parse main AI response as JSON');
         }
     }
 
@@ -372,7 +370,6 @@ EOF;
         ?int $accountId,
         ?int $accountFromId,
         ?int $accountToId,
-        ?int $payeeId,
         ?int $investmentId,
         User $user
     ): array {
@@ -392,35 +389,23 @@ EOF;
             $data['config'] = [
                 'account_id' => $accountId,
                 'investment_id' => $investmentId,
-                'quantity' => $rawData['quantity'] ?? null,
-                'price' => $rawData['price'] ?? null,
+                'quantity' => in_array($transactionType, ['buy', 'sell', 'add_shares', 'remove_shares']) ? $rawData['quantity'] : null,
+                'price' => in_array($transactionType, ['buy', 'sell']) ? $rawData['price'] : null,
+                'commission' => $rawData['commission'] ?? null,
+                'tax' => $rawData['tax'] ?? null,
                 'dividend' => in_array($transactionType, ['dividend', 'interest']) ? $rawData['amount'] : null,
             ];
         } else {
             $amount = floatval($rawData['amount'] ?? 0);
 
-            if ($transactionType === 'withdrawal') {
-                $data['config'] = [
-                    'amount_from' => $amount,
-                    'amount_to' => $amount,
-                    'account_from_id' => $accountId,
-                    'account_to_id' => $payeeId,
-                ];
-            } elseif ($transactionType === 'deposit') {
-                $data['config'] = [
-                    'amount_from' => $amount,
-                    'amount_to' => $amount,
-                    'account_from_id' => $payeeId,
-                    'account_to_id' => $accountId,
-                ];
-            } elseif ($transactionType === 'transfer') {
-                $data['config'] = [
-                    'amount_from' => $amount,
-                    'amount_to' => $amount,
-                    'account_from_id' => $accountFromId,
-                    'account_to_id' => $accountToId,
-                ];
-            }
+            // Config format is the same for withdrawal, deposit, and transfer
+            $data['config'] = [
+                'amount_from' => $amount,
+                'amount_to' => $amount,
+                'account_from_id' => $accountFromId,
+                'account_to_id' => $accountToId,
+            ];
+
         }
 
         // Build items array with category learning
@@ -477,7 +462,7 @@ EOF;
      */
     private function buildMainExtractionPrompt(string $text, ?string $customPrompt = null): string
     {
-        $systemInstructions = $customPrompt ? "Custom instructions from user:\n{$customPrompt}\n\n" : '';
+        $customInstructions = $customPrompt ? "Custom instructions from user:\n{$customPrompt}\n\n" : '';
 
         $prompt = <<<EOF
 I will provide you the text content of a financial document (receipt, invoice, email, bank statement, brokerage confirmation, etc.).
@@ -496,25 +481,28 @@ FOR STANDARD TRANSACTIONS (purchases, deposits, transfers):
   "payee": "merchant/payee name (for withdrawal/deposit)",
   "date": "yyyy-mm-dd format",
   "amount": "total amount as number, no currency symbol",
-  "currency": "ISO code (USD, EUR, etc.)",
+  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing",
   "items": [
     {
       "description": "item description",
-      "amount": "item amount as number"
+      "amount": "item monetary amount as number"
     }
   ]
 }
 
 FOR INVESTMENT TRANSACTIONS (stock/fund purchases, sales, dividends):
 {
-  "transaction_type": "buy|sell|dividend|interest|add_shares|remove_shares",
+  "transaction_type": "exactly one of buy|sell|dividend|interest|add_shares|remove_shares",
   "account": "name of the brokerage/investment account",
-  "investment": "name or ticker symbol of the stock/fund/security",
+  "investment": "name, ticker symbol or ISIN number of the stock/fund/security; ISIN or ticker is preferred if available",
   "date": "yyyy-mm-dd format",
   "amount": "total transaction amount (for dividend/interest)",
   "quantity": "number of shares/units (for buy/sell/add/remove)",
   "price": "price per share/unit (for buy/sell)",
-  "currency": "ISO code (USD, EUR, etc.)"
+  "commission": "total commission/fee amount as number, if available",
+  "tax": "total tax amount as number, if available",
+  "dividend": "dividend amount as number (for dividend/interest)",
+  "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing"
 }
 
 RULES:
@@ -524,11 +512,14 @@ RULES:
   - withdrawal/deposit/transfer → standard transaction
   - buy/sell/dividend/interest/add_shares/remove_shares → investment transaction
 * For transfers, extract BOTH account_from and account_to names
+* For transfers, the items array must be empty (it is not supported to have line items on transfers)
 * For receipts with multiple line items, extract each item separately in the items array
-* For investment transactions, omit the "items" array
+* For investment transactions, omit the "items" array (as it is not part of the sample schema anyway)
 * Date format must be yyyy-mm-dd, use today's date if not specified
 
-{$systemInstructions}The document content to process is:
+{$customInstructions}
+
+The document content to process is:
 """
 {$text}
 """
