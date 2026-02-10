@@ -14,7 +14,7 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\ReceivedMail;
 use App\Models\Tag;
-use App\Models\Transaction as TransactionModel;
+use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
@@ -104,12 +104,11 @@ class TransactionApiController extends Controller implements HasMiddleware
         $accountEntity = $request->get('accountEntity');
 
         // Get all standard transactions
-        $standardTransactions = TransactionModel::with([
+        $standardTransactions = Transaction::with([
             'config',
             'config.accountFrom',
             'config.accountTo',
             'currency',
-            'transactionType',
             'transactionSchedule',
             'transactionItems',
             'transactionItems.category',
@@ -167,12 +166,11 @@ class TransactionApiController extends Controller implements HasMiddleware
             $investmentTransactions = new Collection();
         } else {
             // Get all investment transactions
-            $investmentTransactions = TransactionModel::with([
+            $investmentTransactions = Transaction::with([
                 'config',
                 'config.account',
                 'config.investment',
                 'currency',
-                'transactionType',
                 'transactionSchedule',
             ])
                 ->where('user_id', $request->user()->id)
@@ -231,7 +229,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         $onlyCount = $request->has('only_count');
 
         // Get standard transactions matching any provided criteria
-        $standardQuery = TransactionModel::where('user_id', $user->id)
+        $standardQuery = Transaction::where('user_id', $user->id)
             ->byScheduleType('none')
             ->byType('standard')
             ->when($request->has('date_from'), function ($query) use ($request) {
@@ -279,7 +277,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         // This part of the query is run only if relevant search criteria is provided, and no other search criteria is provided
         if ($request->hasAny(['date_from', 'date_to','accounts'])
             && !($request->hasAny(['categories', 'payees', 'tags']))) {
-            $investmentQuery = TransactionModel::where('user_id', $user->id)
+            $investmentQuery = Transaction::where('user_id', $user->id)
                 ->byScheduleType('none')
                 ->byType('investment')
                 ->when($request->has('date_from'), function ($query) use ($request) {
@@ -296,7 +294,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                     });
                 });
         } else {
-            $investmentQuery = TransactionModel::where('user_id', $user->id)  // User ID is used for security reasons
+            $investmentQuery = Transaction::where('user_id', $user->id)  // User ID is used for security reasons
                 ->byScheduleType('none')->byType('investment') // Pretend that we are searching for investment transactions
                 ->whereRaw('1 = 0'); // Make sure that the query returns no results
         }
@@ -320,7 +318,6 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.accountFrom',
                 'config.accountTo',
                 'currency',
-                'transactionType',
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
@@ -347,7 +344,6 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.account.config.currency',
                 'config.investment',
                 'currency',
-                'transactionType',
                 'transactionSchedule',
             ])
             ->get();
@@ -735,7 +731,7 @@ class TransactionApiController extends Controller implements HasMiddleware
     {
         // Adjust source transaction schedule, if entering schedule instance
         if ($validated['action'] === 'enter') {
-            $sourceTransaction = TransactionModel::find($validated['id'])
+            $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
@@ -752,7 +748,7 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Adjust source transaction schedule, if creating a new schedule clone
         if ($validated['action'] === 'replace') {
-            $sourceTransaction = TransactionModel::find($validated['id'])
+            $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
 
             $originalScheduleConfig = $sourceTransaction->transactionSchedule->attributesToArray();
