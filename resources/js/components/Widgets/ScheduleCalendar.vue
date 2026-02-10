@@ -94,8 +94,8 @@
         if (transaction.config_type === 'standard') {
           // Capitalize first letter of transaction type
           const type =
-            transaction.config_type.charAt(0).toUpperCase() +
-            transaction.config_type.slice(1);
+            transaction.transaction_type.charAt(0).toUpperCase() +
+            transaction.transaction_type.slice(1);
           // Return constructed label
           return (
             type +
