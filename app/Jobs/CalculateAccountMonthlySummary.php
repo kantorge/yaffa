@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ScheduleTrait;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
@@ -30,10 +31,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     use SerializesModels;
 
     private User $user;
-    private AccountEntity|null $accountEntity;
+    private ?AccountEntity $accountEntity;
     private string $task;
-    private Carbon|null $dateFrom;
-    private Carbon|null $dateTo;
+    private ?Carbon $dateFrom;
+    private ?Carbon $dateTo;
 
     public int $timeout = 240;
 
@@ -43,9 +44,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     public function __construct(
         User $user,
         string $task,
-        AccountEntity $accountEntity = null,
-        Carbon $dateFrom = null,
-        Carbon $dateTo = null
+        ?AccountEntity $accountEntity = null,
+        ?Carbon $dateFrom = null,
+        ?Carbon $dateTo = null
     ) {
         // The user is always required, but used only for the budget task, where no account is provided
         $this->user = $user;
@@ -412,9 +413,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            ->get()
             // Filter items where the transaction type has a quantity operator
-            ->filter(fn ($transaction) => $transaction->transaction_type->quantityMultiplier() !== null);
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->get();
 
         // Get all fact transactions for this account, as it is used as a baseline for the forecast
         $factTransactions = Transaction::with([
@@ -428,9 +429,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 TransactionDetailInvestment::class,
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
-            ->get()
             // Filter items where the transaction type has a quantity operator
-            ->filter(fn ($transaction) => $transaction->transaction_type->quantityMultiplier() !== null);
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->get();
 
         // Get all instances of the schedules, added to a new transactions collection
         $scheduledTransactionInstances = $this->getScheduleInstances($scheduledTransactions, 'next');
