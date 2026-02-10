@@ -2,12 +2,12 @@
 
 namespace Tests\Browser\Pages\Transactions;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -639,7 +639,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 'config'
             )
             ->create([
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'transaction_type' => TransactionTypeEnum::TRANSFER->value,
                 'config_type' => 'standard',
             ]);
 
@@ -769,7 +769,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 'config'
             )
             ->make([
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
                 'config_type' => 'standard',
             ])
             ->save();
@@ -830,7 +830,7 @@ class TransactionFormStandardStandaloneTest extends DuskTestCase
                 'config'
             )
             ->create([
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
                 'config_type' => 'standard',
                 'schedule' => true,
                 'reconciled' => false,

@@ -94,7 +94,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "currency" => "Ft",
                         "payee_id" => 385,
                         "account_id" => null,
-                        "transaction_type_id" => 2
+                        "transaction_type" => "deposit"
                     ],
                     "date" => "2023-05-29",
                     "config" => [
@@ -107,7 +107,7 @@ class ReceivedMailShowTest extends DuskTestCase
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],
-                    "transaction_type_id" => 2
+                    "transaction_type" => "deposit"
                 ]
             ]);
 
@@ -174,7 +174,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "currency" => "Ft",
                         "payee_id" => 385,
                         "account_id" => null,
-                        "transaction_type_id" => 2
+                        "transaction_type" => "deposit"
                     ],
                     "date" => "2023-05-29",
                     "config" => [
@@ -187,7 +187,7 @@ class ReceivedMailShowTest extends DuskTestCase
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],
-                    "transaction_type_id" => 2
+                    "transaction_type" => "deposit"
                 ]
             ]);
 
@@ -240,7 +240,7 @@ class ReceivedMailShowTest extends DuskTestCase
                         "currency" => "Ft",
                         "payee_id" => 385,
                         "account_id" => null,
-                        "transaction_type_id" => 2
+                        "transaction_type" => "deposit"
                     ],
                     "date" => "2023-05-29",
                     "config" => [
@@ -253,7 +253,7 @@ class ReceivedMailShowTest extends DuskTestCase
                     "transaction_type" => [
                         "name" => "withdrawal"
                     ],
-                    "transaction_type_id" => 2
+                    "transaction_type" => "deposit"
                 ],
                 'transaction_id' => $transaction->id,
             ]);

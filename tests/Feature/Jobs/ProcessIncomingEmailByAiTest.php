@@ -9,7 +9,6 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\Payee;
 use App\Models\ReceivedMail;
-use App\Models\TransactionType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -171,8 +170,8 @@ class ProcessIncomingEmailByAiTest extends TestCase
         $this->assertNotNull($mail->transaction_data);
         $this->assertEquals($mail->transaction_data['transaction_type']['name'], 'withdrawal');
         $this->assertEquals(
-            $mail->transaction_data['transaction_type_id'],
-            TransactionType::where('name', 'withdrawal')->first()->id
+            $mail->transaction_data['transaction_type'],
+            'withdrawal'
         );
         $this->assertEquals(
             $mail->transaction_data['date'],
