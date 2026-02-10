@@ -206,24 +206,27 @@ export function booleanToTableIcon(data, type) {
 }
 
 export function transactionTypeIcon(transactionType, customTitle) {
+    const typeConfig = getTransactionTypeConfig(transactionType);
 
-    if (transactionType === 'withdrawal') {
-        customTitle = customTitle || __("Withdrawal");
-        return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-    }
-    if (transactionType === 'deposit') {
-        customTitle = customTitle || __("Deposit");
-        return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-    }
-    if (transactionType === 'transfer') {
-        customTitle = customTitle || __("Transfer");
-        return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+    if (typeConfig.category === 'standard') {
+        if (transactionType === 'withdrawal') {
+            customTitle = customTitle || __("Withdrawal");
+            return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+        }
+        if (transactionType === 'deposit') {
+            customTitle = customTitle || __("Deposit");
+            return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+        }
+        if (transactionType === 'transfer') {
+            customTitle = customTitle || __("Transfer");
+            return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+        }
     }
 
-    // Investment types
-    customTitle = customTitle || typeConfig.label;
-    return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-
+    if (typeConfig.category === 'investment') {
+        customTitle = customTitle || typeConfig.label;
+        return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+    }
 
     return null;
 }
@@ -481,7 +484,7 @@ export const transactionColumnDefinition = {
                 return __(typeConfig.label);
             }
 
-            return transactionTypeIcon(typeConfig.category, row.transaction_type);
+            return transactionTypeIcon(row.transaction_type);
         },
         className: "text-center",
     },
