@@ -688,7 +688,6 @@
         .map((type) => ({
           name: type.label,
           value: type.value,
-          quantity: type.quantity_multiplier !== 0,
           quantity: ['buy', 'sell', 'add_shares', 'remove_shares'].includes(
             type.value,
           ),
@@ -1091,9 +1090,6 @@
         // Convert transaction type from label to enum value before submission
         const submissionData = {
           ...this.form,
-          transaction_type: this.getTransactionTypeValue(
-            this.form.transaction_type,
-          ),
         };
 
         // Editing an existing transaction needs PATCH method
