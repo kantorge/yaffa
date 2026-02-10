@@ -1,4 +1,4 @@
-<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar" dusk="quick-action-bar">
+<div class="sidebar sidebar-light sidebar-lg sidebar-end sidebar-overlaid hide" id="quick-action-bar">
     <div class="sidebar-header bg-transparent">
         <span class="sidebar-title">
             {{ __('Quick actions') }}

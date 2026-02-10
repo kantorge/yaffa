@@ -7,7 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 use Throwable;
 
-const QUICK_ACTION_BAR_SELECTOR = '@quick-action-bar';
+const QUICK_ACTION_BAR_SELECTOR = '#quick-action-bar';
 
 class QuickActionBarTest extends DuskTestCase
 {
