@@ -54,6 +54,8 @@
 
     @routes
 
+    @javascript
+
     @includeWhen(config('yaffa.sandbox_mode'), 'template.sandbox-components.body-close')
 </body>
 
