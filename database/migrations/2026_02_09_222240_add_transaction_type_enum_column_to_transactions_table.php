@@ -22,6 +22,8 @@ return new class () extends Migration {
                 'add_shares',
                 'remove_shares',
                 'dividend',
+                'unused_1',
+                'unused_2',
                 'interest_yield',
             ])->nullable()->after('date');
         });
@@ -38,6 +40,8 @@ return new class () extends Migration {
                 WHEN 6 THEN 'add_shares'
                 WHEN 7 THEN 'remove_shares'
                 WHEN 8 THEN 'dividend'
+                WHEN 9 THEN 'unused_1'
+                WHEN 10 THEN 'unused_2'
                 WHEN 11 THEN 'interest_yield'
             END
         ");
@@ -53,6 +57,8 @@ return new class () extends Migration {
                 'add_shares',
                 'remove_shares',
                 'dividend',
+                'unused_1',
+                'unused_2',
                 'interest_yield',
             ])->nullable(false)->change();
         });
@@ -86,6 +92,8 @@ return new class () extends Migration {
                 WHEN 'add_shares' THEN 6
                 WHEN 'remove_shares' THEN 7
                 WHEN 'dividend' THEN 8
+                WHEN 'unused_1' THEN 9
+                WHEN 'unused_2' THEN 10
                 WHEN 'interest_yield' THEN 11
             END
         ");

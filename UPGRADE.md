@@ -4,7 +4,71 @@ This document describes the breaking changes of major versions, and the steps th
 
 Table of contents:
 
+- [Upgrade from YAFFA 2.x to 3.x](#upgrade-from-yaffa-2x-to-3x)
 - [Upgrade from YAFFA 1.x to 2.x](#upgrade-from-yaffa-1x-to-2x)
+
+## Upgrade from YAFFA 2.x to 3.x
+
+The main reason for increasing the version is the refactoring of transaction types from a database table to PHP enums. This change improves type safety and performance but requires database migration.
+
+### Breaking Changes
+
+- **Transaction Types Refactored**: The `transaction_types` database table has been removed and replaced with a PHP enum (`App\Enums\TransactionType`).
+  - The `transactions` table now uses an `transaction_type` ENUM column instead of a foreign key to `transaction_types`.
+  - The `TransactionTypeServiceProvider` has been removed as transaction types are no longer cached in config.
+  - Transaction types are now passed to JavaScript via `JavaScriptConfigVariablesComposer` instead of an API endpoint.
+  
+- **Data Migration**: All existing transactions will be automatically migrated from `transaction_type_id` to the new `transaction_type` enum column.
+  - IDs 1-8 and 11 map to the active transaction types.
+  - IDs 9-10 (previously unused) map to `unused_1` and `unused_2` for backward compatibility.
+  - **WARNING**: If you have transactions with IDs 9 or 10, they will be preserved but marked as unused types.
+
+- **API Changes**: The `/api/transaction-types` endpoint has been removed. Transaction types are now available via JavaScript config variables.
+
+### Step-by-step Guide
+
+#### 1. Backup your database
+
+Before running any migrations, create a complete backup of your database.
+
+```bash
+# Example for MySQL/MariaDB
+mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
+```
+
+#### 2. Run the migrations
+
+```bash
+php artisan migrate
+```
+
+This will:
+- Add a new `transaction_type` ENUM column to the `transactions` table
+- Migrate all data from `transaction_type_id` to `transaction_type`
+- Remove the `transaction_type_id` column
+- Drop the `transaction_types` table
+
+**Note**: This migration is irreversible after the `transaction_types` table is dropped. Ensure you have a backup before proceeding.
+
+#### 3. Clear caches
+
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+```
+
+#### 4. Rebuild frontend assets (if running from source)
+
+```bash
+npm run build
+```
+
+### Potential Issues
+
+- **Custom Transaction Types**: If you manually added custom transaction types to the database (beyond IDs 1-11), these will NOT be migrated and will be lost. The migration only handles the 11 standard types (9 active + 2 unused).
+
+- **Direct Database Access**: If you have any custom scripts or tools that directly query the `transaction_types` table or use `transaction_type_id`, they will need to be updated to use the enum values instead.
 
 ## Upgrade from YAFFA 1.x to 2.x
 

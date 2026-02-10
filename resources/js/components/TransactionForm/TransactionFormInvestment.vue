@@ -503,7 +503,6 @@
     loadSelect2Language,
     __,
   } from '@/helpers';
-  import { getInvestmentTransactionTypes } from '@/composables/transactionTypes';
 
   import select2 from 'select2';
   select2();
@@ -679,22 +678,24 @@
       },
     },
 
-    async created() {
+    created() {
       // Copy values of existing transaction into component form data
       this.initializeTransaction();
 
-      // Load transaction types from API
-      const apiTypes = await getInvestmentTransactionTypes();
+      // Load transaction types from window config
+      const transactionTypesConfig = window.config.transactionTypes || {};
       
-      // Map API response to component format
-      this.transactionTypes = apiTypes.map(type => ({
-        name: type.label,
-        value: type.value,
-        quantity: type.quantity_multiplier !== 0,
-        price: ['buy', 'sell'].includes(type.value),
-        dividend: ['dividend', 'interest_yield'].includes(type.value),
-        amount_multiplier: type.amount_multiplier,
-      }));
+      // Filter and map investment types to component format
+      this.transactionTypes = Object.values(transactionTypesConfig)
+        .filter(type => type.category === 'investment')
+        .map(type => ({
+          name: type.label,
+          value: type.value,
+          quantity: type.quantity_multiplier !== 0,
+          price: ['buy', 'sell'].includes(type.value),
+          dividend: ['dividend', 'interest_yield'].includes(type.value),
+          amount_multiplier: type.amount_multiplier,
+        }));
 
       // Check for various default values in URL
       const urlParams = new URLSearchParams(window.location.search);

@@ -12,6 +12,8 @@ enum TransactionType: string
     case ADD_SHARES = 'add_shares';
     case REMOVE_SHARES = 'remove_shares';
     case DIVIDEND = 'dividend';
+    case UNUSED_1 = 'unused_1';
+    case UNUSED_2 = 'unused_2';
     case INTEREST_YIELD = 'interest_yield';
 
     /**
@@ -28,6 +30,8 @@ enum TransactionType: string
             self::ADD_SHARES => 'Add shares',
             self::REMOVE_SHARES => 'Remove shares',
             self::DIVIDEND => 'Dividend',
+            self::UNUSED_1 => 'Unused',
+            self::UNUSED_2 => 'Unused',
             self::INTEREST_YIELD => 'Interest yield',
         };
     }
@@ -47,6 +51,8 @@ enum TransactionType: string
             self::ADD_SHARES => null,
             self::REMOVE_SHARES => null,
             self::DIVIDEND => 1,
+            self::UNUSED_1 => null,
+            self::UNUSED_2 => null,
             self::INTEREST_YIELD => 1,
         };
     }
@@ -66,6 +72,8 @@ enum TransactionType: string
             self::ADD_SHARES => 1,
             self::REMOVE_SHARES => -1,
             self::DIVIDEND => null,
+            self::UNUSED_1 => null,
+            self::UNUSED_2 => null,
             self::INTEREST_YIELD => null,
         };
     }
@@ -78,6 +86,7 @@ enum TransactionType: string
         return match ($this) {
             self::WITHDRAWAL, self::DEPOSIT, self::TRANSFER => 'standard',
             self::BUY, self::SELL, self::ADD_SHARES, self::REMOVE_SHARES, self::DIVIDEND, self::INTEREST_YIELD => 'investment',
+            self::UNUSED_1, self::UNUSED_2 => 'unused',
         };
     }
 
@@ -191,6 +200,8 @@ enum TransactionType: string
             6 => self::ADD_SHARES,
             7 => self::REMOVE_SHARES,
             8 => self::DIVIDEND,
+            9 => self::UNUSED_1,
+            10 => self::UNUSED_2,
             11 => self::INTEREST_YIELD,
             default => null,
         };
