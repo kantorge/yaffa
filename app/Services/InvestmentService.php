@@ -68,7 +68,7 @@ class InvestmentService
         $accounts->each(function ($accountId) {
             Artisan::call('app:cache:account-monthly-summaries', [
                 'accountEntityId' => $accountId,
-                'transactionType' => 'investment_value'
+                'summaryType' => 'investment_value'
             ]);
         });
     }

@@ -115,7 +115,7 @@ class TransactionController extends Controller implements HasMiddleware
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => $action,
-            'type' => $transaction->transaction_type->category(),
+            'type' => $transaction->config_type,
         ]);
     }
 
@@ -172,13 +172,9 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Try to add relation for transaction type, if it exists
         try {
-            $transaction->transaction_type = [
-                'name' => $transactionData['transaction_type']['name'],
-            ];
+            $transaction->transaction_type =  $transactionData['transaction_type']['name'];
         } catch (Exception $e) {
-            $transaction->transaction_type = [
-                'name' => 'withdrawal',
-            ];
+            $transaction->transaction_type = 'withdrawal';
         }
 
         // Ensure that a config relation exists, even if it's empty

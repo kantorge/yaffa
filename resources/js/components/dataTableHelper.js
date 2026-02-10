@@ -4,12 +4,12 @@ import * as toastHelpers from '../toast.js';
 const route = window.route;
 
 /**
- * Helper function to get transaction type configuration from window.config
+ * Helper function to get transaction type configuration from window.transactionTypes
  * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
  * @returns {object} Transaction type configuration with category, label, multipliers, etc.
  */
 function getTransactionTypeConfig(transactionTypeValue) {
-    const transactionTypes = window.config?.transactionTypes || {};
+    const transactionTypes = window.transactionTypes || {};
     return transactionTypes[transactionTypeValue] || {
         value: transactionTypeValue,
         label: transactionTypeValue,
@@ -205,26 +205,25 @@ export function booleanToTableIcon(data, type) {
         : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
 }
 
-export function transactionTypeIcon(category, enumValue, customTitle) {
-    const typeConfig = getTransactionTypeConfig(enumValue);
-    
-    if (category === 'standard') {
-        if (enumValue === 'withdrawal') {
-            customTitle = customTitle || __("Withdrawal");
-            return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-        }
-        if (enumValue === 'deposit') {
-            customTitle = customTitle || __("Deposit");
-            return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-        }
-        if (enumValue === 'transfer') {
-            customTitle = customTitle || __("Transfer");
-            return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
-        }
-    } else if (category === 'investment') {
-        customTitle = customTitle || typeConfig.label;
-        return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+export function transactionTypeIcon(transactionType, customTitle) {
+
+    if (transactionType === 'withdrawal') {
+        customTitle = customTitle || __("Withdrawal");
+        return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
     }
+    if (transactionType === 'deposit') {
+        customTitle = customTitle || __("Deposit");
+        return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+    }
+    if (transactionType === 'transfer') {
+        customTitle = customTitle || __("Transfer");
+        return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+    }
+
+    // Investment types
+    customTitle = customTitle || typeConfig.label;
+    return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
+
 
     return null;
 }
@@ -273,7 +272,7 @@ export const transactionColumnDefinition = {
         defaultContent: '',
         render: function (_data, _type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
-            
+
             if (typeConfig.category === 'standard') {
                 if (row.transaction_type === 'withdrawal') {
                     return row.config.account_to?.name;
@@ -288,7 +287,7 @@ export const transactionColumnDefinition = {
                     });
                 }
             }
-            
+
             if (typeConfig.category === 'investment') {
                 return row.config.account.name;
             }
@@ -314,7 +313,7 @@ export const transactionColumnDefinition = {
          */
         render: function (_data, type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
-            
+
             // Standard transaction
             if (typeConfig.category === 'standard') {
                 // Empty
@@ -361,7 +360,7 @@ export const transactionColumnDefinition = {
          */
         render: function (_data, type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
-            
+
             if (type === 'display') {
                 let prefix = '';
                 if (typeConfig.category === 'standard') {
@@ -474,7 +473,7 @@ export const transactionColumnDefinition = {
         defaultContent: '',
         render: function(_data, type, row) {
             const typeConfig = getTransactionTypeConfig(row.transaction_type);
-            
+
             if (type === 'filter' || type === 'type') {
                 return __(typeConfig.category) + ' ' + __(typeConfig.label);
             }

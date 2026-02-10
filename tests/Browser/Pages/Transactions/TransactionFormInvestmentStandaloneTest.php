@@ -262,13 +262,12 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             $browser->loginAs($this->user)
                 ->visitRoute('transaction.create', ['type' => 'investment'])
                 ->waitFor(self::MAIN_FORM_SELECTOR)
-
+                // Select type
+                ->select('#transaction_type', 'dividend')
                 // Select account
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                // Select type
-                ->select('#transaction_type', 'Dividend')
                 // Verify that quantity field is disabled
                 ->assertDisabled('#transaction_quantity')
                 // Verify that price field is disabled
@@ -279,6 +278,8 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->type('#transaction_commission', '30')
                 // Add taxes
                 ->type('#transaction_tax', '40')
+                // Additionally, verify the store price checkbox is not visible for dividend transactions
+                ->assertMissing('#store_price_checkbox')
                 // Submit form
                 ->clickAndWaitForReload(self::SUBMIT_BUTTON_SELECTOR, 10)
                 // A success message should be available in a Vue component
@@ -307,7 +308,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                     // Select investment
                     ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                     // Select type
-                    ->select('#transaction_type', 'Add shares')
+                    ->select('#transaction_type', 'add_shares')
                     // Verify that price field is disabled
                     ->assertDisabled('#transaction_price')
                     // Add quantity
@@ -694,29 +695,6 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->where('date', now()->format('Y-m-d'))
                 ->first();
             $this->assertNull($investmentPrice);
-        });
-    }
-
-    public function test_store_price_checkbox_not_visible_for_dividend_transactions(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->loginAs($this->user)
-                ->visitRoute('transaction.create', ['type' => 'investment'])
-                ->waitFor(self::MAIN_FORM_SELECTOR)
-                ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
-                ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
-
-                // Select account and investment
-                ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
-                ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                // Select dividend transaction type
-                ->select('#transaction_type', 'Dividend')
-                // Add dividend amount
-                ->type('#transaction_dividend', '50')
-                // Wait a bit
-                ->pause(1000)
-                // Verify the store price checkbox is not visible for dividend transactions
-                ->assertMissing('#store_price_checkbox');
         });
     }
 }

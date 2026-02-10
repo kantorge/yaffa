@@ -107,10 +107,7 @@ class Account extends Model
         return (object) [
             'id' => null,
             'date' => null,
-            'transaction_type' => [
-                'name' => 'Opening balance',
-                'type' => 'Opening balance',
-            ],
+            'transaction_type' => 'Opening balance',
             'transactionOperator' => 1,
             'config' => [
                 'account_from_id' => null,

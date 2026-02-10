@@ -117,7 +117,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->loginAs($this->user)
-                // Load the view for a random account
+                // Load the view for an account of the user
                 ->visitRoute('account-entity.show', ['account_entity' => 1])
                 // Wait for the page to load
                 ->waitForText('Account details')
@@ -128,7 +128,7 @@ class TransactionFormStandardModalTest extends DuskTestCase
                 ->waitFor('#transactionFormStandard')
 
                 // Fill the form
-                // Account from is pre-selected (account_entity 1)
+                // Account (account from) is pre-selected (account_entity 1)
                 // Select payee (account to), random from dropdown
                 ->select2('#account_to', null, 10)
                 // Add amount

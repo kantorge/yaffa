@@ -130,13 +130,13 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             render: function (_data, type, row) {
                 if (type === 'filter') {
                     return (!row.schedule
-                        && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                        && (row.config_type === 'standard' || row.config_type === 'investment')
                             ? (row.reconciled ? __('Reconciled') : __('Uncleared'))
                             : __('Unavailable')
                     );
                 }
                 return (!row.schedule
-                    && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                    && (row.config_type === 'standard' || row.config_type === 'investment')
                         ? (row.reconciled
                                 ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                                 : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -592,9 +592,7 @@ $('#create-standard-transaction-button').on('click', function () {
 
     // Create transaction daft
     const transaction = {
-        transaction_type: {
-            name: 'withdrawal'
-        },
+        transaction_type: 'withdrawal',
         schedule: false,
         budget: false,
         date: new Date(),
@@ -623,9 +621,7 @@ $('#create-investment-transaction-button').on('click', function () {
 
     // Create transaction daft
     const transaction = {
-        transaction_type: {
-            name: 'Buy',
-        },
+        transaction_type: 'buy',
         schedule: false,
         budget: false,
         date: new Date(),

@@ -17,11 +17,11 @@ The main reason for increasing the version is the refactoring of transaction typ
   - The `transactions` table now uses an `transaction_type` ENUM column instead of a foreign key to `transaction_types`.
   - The `TransactionTypeServiceProvider` has been removed as transaction types are no longer cached in config.
   - Transaction types are now passed to JavaScript via `JavaScriptConfigVariablesComposer` instead of an API endpoint.
-  
+
 - **Data Migration**: All existing transactions will be automatically migrated from `transaction_type_id` to the new `transaction_type` enum column.
   - IDs 1-8 and 11 map to the active transaction types.
-  - IDs 9-10 (previously unused) map to `unused_1` and `unused_2` for backward compatibility.
-  - **WARNING**: If you have transactions with IDs 9 or 10, they will be preserved but marked as unused types.
+  - IDs 9-10 (previously unused) drop support
+  - **WARNING**: If you have transactions with IDs 9 or 10, the migration will fail. You must either delete these transactions or reassign them to a valid type before running the migration.
 
 - **API Changes**: The `/api/transaction-types` endpoint has been removed. Transaction types are now available via JavaScript config variables.
 
@@ -43,6 +43,7 @@ php artisan migrate
 ```
 
 This will:
+
 - Add a new `transaction_type` ENUM column to the `transactions` table
 - Migrate all data from `transaction_type_id` to `transaction_type`
 - Remove the `transaction_type_id` column
@@ -63,12 +64,6 @@ php artisan view:clear
 ```bash
 npm run build
 ```
-
-### Potential Issues
-
-- **Custom Transaction Types**: If you manually added custom transaction types to the database (beyond IDs 1-11), these will NOT be migrated and will be lost. The migration only handles the 11 standard types (9 active + 2 unused).
-
-- **Direct Database Access**: If you have any custom scripts or tools that directly query the `transaction_types` table or use `transaction_type_id`, they will need to be updated to use the enum values instead.
 
 ## Upgrade from YAFFA 1.x to 2.x
 

@@ -223,7 +223,7 @@
             __('Date'),
             this.locale,
           ),
-          { data: 'transaction_type.name', title: __('Transaction') },
+          { data: 'transaction_type', title: __('Transaction') },
           {
             data: 'config.quantity',
             title: __('Quantity'),

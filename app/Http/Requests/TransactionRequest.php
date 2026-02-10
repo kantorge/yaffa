@@ -11,6 +11,7 @@ class TransactionRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'transaction_type' => __('transaction type'),
             // Investment specific fields
             'config.account_id' => __('account'),
             'config.investment_id' => __('investment'),
@@ -260,8 +261,6 @@ class TransactionRequest extends FormRequest
                 'config.dividend' => 'required|numeric|gt:0',
             ];
         }
-
-        // Earlier cap gains (9 and 10) are not used currently
 
         // Fallback
         return [];

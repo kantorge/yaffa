@@ -341,7 +341,7 @@ window.table = $(tableSelector).DataTable({
         {
             title: 'Type',
             render: function (_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type.name);
+                return dataTableHelpers.transactionTypeIcon(row.transaction_type);
             },
             className: "text-center",
         },

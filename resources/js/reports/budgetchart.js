@@ -405,7 +405,7 @@ window.table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
         {
-            data: "transaction_type.type",
+            data: "config_type",
             title: __("Type"),
             render: function (data, type) {
                 if (type === 'filter') {

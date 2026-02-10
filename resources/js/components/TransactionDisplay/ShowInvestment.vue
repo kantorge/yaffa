@@ -122,7 +122,7 @@
                   toFormattedCurrency(
                     transaction.config.price,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   ) || __('Not set')
                 }}
               </dd>
@@ -135,7 +135,7 @@
                   toFormattedCurrency(
                     transaction.config.commission,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -151,7 +151,7 @@
                   toFormattedCurrency(
                     transaction.config.tax,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -171,7 +171,7 @@
                   toFormattedCurrency(
                     transaction.config.dividend,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -216,8 +216,8 @@
 
     computed: {
       transactionTypeLabel() {
-        // Get transaction type configuration from window.config
-        const transactionTypes = window.config?.transactionTypes || {};
+        // Get transaction type configuration from window
+        const transactionTypes = window.transactionTypes || {};
         const typeConfig = transactionTypes[this.transaction.transaction_type];
         return typeConfig?.label || this.transaction.transaction_type;
       },
