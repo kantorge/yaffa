@@ -168,11 +168,7 @@ class ProcessIncomingEmailByAiTest extends TestCase
 
         // Assert that the transaction_data array is created and contains the required data
         $this->assertNotNull($mail->transaction_data);
-        $this->assertEquals($mail->transaction_data['transaction_type']['name'], 'withdrawal');
-        $this->assertEquals(
-            $mail->transaction_data['transaction_type'],
-            'withdrawal'
-        );
+        $this->assertEquals('withdrawal', $mail->transaction_data['transaction_type']['name']);
         $this->assertEquals(
             $mail->transaction_data['date'],
             $date->format('Y-m-d')

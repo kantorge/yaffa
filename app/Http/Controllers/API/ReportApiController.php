@@ -9,7 +9,6 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
-use App\Models\TransactionType;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
 use Carbon\Carbon;
@@ -302,18 +301,17 @@ class ReportApiController extends Controller implements HasMiddleware
 
         if ($transactionType === 'all' || $transactionType === 'investment') {
             // Add investment transaction results
+            // Get investment types with amount multipliers
+            $investmentTypesWithAmount = array_map(
+                fn($type) => $type->value,
+                TransactionTypeEnum::investmentTypesWithAmount()
+            );
+
             $investmentTransactions = Transaction::with([
                 'currency',
-                'transactionType',
             ])
                 ->byType('investment')
-                ->whereIn(
-                    'transaction_type_id',
-                    TransactionType::where('type', 'investment')
-                        ->whereNotNull('amount_multiplier')
-                        ->get()
-                        ->pluck('id')
-                )
+                ->whereIn('transaction_type', $investmentTypesWithAmount)
                 ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
@@ -322,7 +320,7 @@ class ReportApiController extends Controller implements HasMiddleware
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = ($transaction->transactionType->amount_multiplier === 1
+                $category = ($transaction->transaction_type->amountMultiplier() === 1
                     ? __('Investment income')
                     : __('Investment payment'));
 
