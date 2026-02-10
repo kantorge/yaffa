@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use Carbon\Carbon;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
@@ -126,7 +127,7 @@ class Account extends Model
         ];
     }
 
-    public function getAssociatedInvestmentsAndQuantity(Carbon $untilDate = null): IlluminateCollection
+    public function getAssociatedInvestmentsAndQuantity(?Carbon $untilDate = null): IlluminateCollection
     {
         return DB::table('transactions')
             ->select(
@@ -159,7 +160,7 @@ class Account extends Model
             )
             ->where('transactions.schedule', 0)
             ->where('transactions.config_type', 'investment')
-            ->whereIn('transactions.transaction_type', ['buy', 'sell', 'add_shares', 'remove_shares', 'dividend', 'interest_yield'])
+            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();
     }
