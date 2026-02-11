@@ -641,6 +641,7 @@ export function renderDeleteAssetButton(row, requirements, errorMessage) {
 // Import the jstree plugin
 import 'jstree/src/themes/default/style.css';
 import 'jstree';
+import { data } from 'jquery';
 
 /**
  * Initialize a jsTree plugin for investment groups
