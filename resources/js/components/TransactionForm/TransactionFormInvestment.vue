@@ -860,18 +860,6 @@
     },
 
     methods: {
-      // Helper method to convert transaction type label to enum value
-      getTransactionTypeValue(label) {
-        const type = this.transactionTypes.find((t) => t.name === label);
-        return type ? type.value : label;
-      },
-
-      // Helper method to convert transaction type enum value to label
-      getTransactionTypeLabel(value) {
-        const type = this.transactionTypes.find((t) => t.value === value);
-        return type ? type.name : value;
-      },
-
       getDefaultAccountDetails(account_id) {
         if (!account_id) {
           return;

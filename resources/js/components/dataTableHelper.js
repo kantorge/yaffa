@@ -455,22 +455,29 @@ export const transactionColumnDefinition = {
     },
 
     // Icon for the transaction type
-    type: {
-        title: __('Type'),
-        defaultContent: '',
-        render: function(_data, type, row) {
-            const typeConfig = getTransactionTypeConfig(row.transaction_type);
+    type: function(withIcon = false) {
+        return {
+            title: __('Type'),
+            defaultContent: '',
+            data: 'transaction_type',
+            render: function(data, type, _row) {
+                const typeConfig = getTransactionTypeConfig(data);
 
-            if (type === 'filter' || type === 'type') {
-                return __(typeConfig.category) + ' ' + __(typeConfig.label);
-            }
-            if (type === 'sort') {
-                return __(typeConfig.label);
-            }
+                if (type === 'filter' || type === 'type') {
+                    return __(typeConfig.category) + ' ' + __(typeConfig.label);
+                }
+                if (type === 'sort') {
+                    return __(typeConfig.label);
+                }
 
-            return transactionTypeIcon(row.transaction_type);
-        },
-        className: "text-center",
+                if (withIcon) {
+                    return transactionTypeIcon(data);
+                }
+
+                return typeConfig ? typeConfig.label : (data.charAt(0).toUpperCase() + data.slice(1));
+            },
+            className: (withIcon ? "text-center" : ""),
+        }
     },
 }
 

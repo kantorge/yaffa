@@ -223,7 +223,7 @@
             __('Date'),
             this.locale,
           ),
-          { data: 'transaction_type', title: __('Transaction') },
+          dataTableHelpers.transactionColumnDefinition.type(false),
           {
             data: 'config.quantity',
             title: __('Quantity'),
