@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\TransactionType;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Events\TransactionCreated;
@@ -108,7 +109,6 @@ class TransactionApiController extends Controller implements HasMiddleware
             'config.accountFrom',
             'config.accountTo',
             'currency',
-            'transactionType',
             'transactionSchedule',
             'transactionItems',
             'transactionItems.category',
@@ -135,7 +135,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                     return $query
                         // Withdrawal with empty account_from_id
                         ->where(function ($query) {
-                            $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                            $query->where('transaction_type', TransactionType::WITHDRAWAL->value)
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -144,7 +144,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                         })
                         // Or deposit with empty account_to_id
                         ->orWhere(function ($query) {
-                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                            $query->where('transaction_type', TransactionType::DEPOSIT->value)
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -171,7 +171,6 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.account',
                 'config.investment',
                 'currency',
-                'transactionType',
                 'transactionSchedule',
             ])
                 ->where('user_id', $request->user()->id)
@@ -319,7 +318,6 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.accountFrom',
                 'config.accountTo',
                 'currency',
-                'transactionType',
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
@@ -346,7 +344,6 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'config.account.config.currency',
                 'config.investment',
                 'currency',
-                'transactionType',
                 'transactionSchedule',
             ])
             ->get();

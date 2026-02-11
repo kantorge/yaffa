@@ -5,6 +5,5 @@ return [
     App\Providers\FakerServiceProvider::class,
     App\Providers\RouteServiceProvider::class,
     App\Providers\TelescopeServiceProvider::class,
-    App\Providers\TransactionTypeServiceProvider::class,
     App\Providers\ViewServiceProvider::class,
 ];

@@ -60,14 +60,14 @@ export default {
          * Update the chart data based on the current set of transactions.
          *
          * @param {Array} transactions
-         * @property {Number} transactions.transaction_type_id
+         * @property {String} transactions.transaction_type
          * @returns {void}
          */
         updateChartData(transactions) {
             const filteredTransactions = [];
             transactions.forEach(transaction => {
                 // Take only deposits and withdrawals
-                if (transaction.transaction_type_id === 2 || transaction.transaction_type_id === 1) {
+                if (transaction.transaction_type === 'deposit' || transaction.transaction_type === 'withdrawal') {
                     filteredTransactions.push(transaction);
                 }
             });
@@ -103,9 +103,9 @@ export default {
                         };
                     }
 
-                    if (transaction.transaction_type_id === 2) {
+                    if (transaction.transaction_type === 'deposit') {
                         months[month].deposits += transaction.cashflow_value * transaction.currencyRateToBase;
-                    } else if (transaction.transaction_type_id === 1) {
+                    } else if (transaction.transaction_type === 'withdrawal') {
                         months[month].withdrawals += transaction.cashflow_value * transaction.currencyRateToBase;
                     }
                 });

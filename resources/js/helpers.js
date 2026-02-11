@@ -35,6 +35,22 @@ export function toFormattedCurrency(input, locale, currencySettings) {
 }
 
 /**
+ * Helper function to get transaction type configuration from window.transactionTypes
+ * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
+ * @returns {object} Transaction type configuration with category, label, multipliers, etc.
+ */
+export function getTransactionTypeConfig(transactionTypeValue) {
+    const transactionTypes = window.transactionTypes || {};
+    return transactionTypes[transactionTypeValue] || {
+        value: transactionTypeValue,
+        label: transactionTypeValue,
+        category: 'unknown',
+        amount_multiplier: null,
+        quantity_multiplier: null,
+    };
+}
+
+/**
  * Gets the currency symbol for a given locale and ISO currency code.
  *
  * @param {string} locale - The locale string (e.g., 'en-US', 'de-DE')
@@ -95,7 +111,7 @@ export function processTransaction(transaction) {
     }
 
     // We need an array of categories for standard transactions, extracted from the item array
-    if (transaction.transaction_type.type === 'standard') {
+    if (transaction.config_type === 'standard') {
         // We only need each category once, so we need to remove duplicates by their IDs
         transaction.categories = transaction.transaction_items
             .map(item => item.category)
@@ -107,7 +123,7 @@ export function processTransaction(transaction) {
     }
 
     // We need an array of tags for standard transactions, extracted from the item array
-    if (transaction.transaction_type.type === 'standard') {
+    if (transaction.config_type === 'standard') {
         // We only need each tag once, so we need to remove duplicates by their IDs
         transaction.tags = transaction.transaction_items
             .map(item => item.tags)

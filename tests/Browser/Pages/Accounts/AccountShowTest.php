@@ -2,10 +2,10 @@
 
 namespace Tests\Browser\Pages\Accounts;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -64,7 +64,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ])
             ->save();
 
@@ -81,7 +81,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'deposit')->first()->id,
+                'transaction_type' => TransactionTypeEnum::DEPOSIT->value,
             ])
             ->save();
 
@@ -98,7 +98,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'transaction_type' => TransactionTypeEnum::TRANSFER->value,
             ])
             ->save();
 
@@ -115,7 +115,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'transfer')->first()->id,
+                'transaction_type' => TransactionTypeEnum::TRANSFER->value,
             ])
             ->save();
 
@@ -178,7 +178,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'Buy')->first()->id,
+                'transaction_type' => TransactionTypeEnum::BUY->value,
                 // Also store the cash flow value, which would be calculated in the real application
                 'cashflow_value' => '-1150'
             ])
@@ -200,7 +200,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'Add shares')->first()->id,
+                'transaction_type' => TransactionTypeEnum::ADD_SHARES->value,
                 'cashflow_value' => '0'
             ])
             ->save();
@@ -221,7 +221,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'Dividend')->first()->id,
+                'transaction_type' => TransactionTypeEnum::DIVIDEND->value,
                 'cashflow_value' => '100'
             ])
             ->save();
@@ -242,7 +242,7 @@ class AccountShowTest extends DuskTestCase
                 'config'
             )
             ->make($baseData + [
-                'transaction_type_id' => TransactionType::where('name', 'Sell')->first()->id,
+                'transaction_type' => TransactionTypeEnum::SELL->value,
                 'cashflow_value' => '300'
             ])
             ->save();
@@ -305,7 +305,7 @@ class AccountShowTest extends DuskTestCase
                 'date' => $date->format('Y-m-d'),
                 'config_type' => 'standard',
                 'comment' => null,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ])
             ->save();
 
@@ -491,7 +491,7 @@ class AccountShowTest extends DuskTestCase
                 'date' => $date->format('Y-m-d'),
                 'config_type' => 'standard',
                 'comment' => null,
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             ]);
 
         $this->browse(function (Browser $browser) use ($user, $account, $date, $transaction) {

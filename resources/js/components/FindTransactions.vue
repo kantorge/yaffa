@@ -401,7 +401,7 @@
             __('Date'),
             window.YAFFA.locale,
           ),
-          dataTableHelpers.transactionColumnDefinition.type,
+          dataTableHelpers.transactionColumnDefinition.type(true),
           {
             title: __('From'),
             defaultContent: '',

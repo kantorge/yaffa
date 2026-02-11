@@ -71,7 +71,7 @@ if (current === 'transaction.create' && ['standard', 'investment'].includes(rout
 }
 
 if (current === 'transaction.open' && ['edit', 'clone', 'enter', 'replace'].includes(route().params.action)) {
-    loadModule(`transactions/${window.transaction.transaction_type.type}`);
+    loadModule(`transactions/${window.transaction.config_type}`);
 }
 
 if (current === 'transaction.open' && ['show'].includes(route().params.action)) {

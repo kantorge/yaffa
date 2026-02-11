@@ -37,7 +37,7 @@
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '../../components/dataTableHelper';
-  import { __, toIsoDateString } from '../../helpers';
+  import { __, getTransactionTypeConfig, toIsoDateString } from '../../helpers';
   import * as toastHelpers from '../../toast';
 
   export default {
@@ -223,7 +223,7 @@
             __('Date'),
             this.locale,
           ),
-          { data: 'transaction_type.name', title: __('Transaction') },
+          dataTableHelpers.transactionColumnDefinition.type(false),
           {
             data: 'config.quantity',
             title: __('Quantity'),

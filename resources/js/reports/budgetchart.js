@@ -8,7 +8,11 @@ import 'jstree';
 import 'jstree/src/themes/default/style.css'
 
 import 'datatables.net-bs5';
-import 'select2';
+
+import { __, loadSelect2Language } from '../helpers';
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
@@ -404,19 +408,7 @@ window.table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        {
-            data: "transaction_type.type",
-            title: __("Type"),
-            render: function (data, type) {
-                if (type === 'filter') {
-                    return data;
-                }
-                return (data === 'standard'
-                    ? '<i class="fa fa-money text-primary" title="' + __('Standard') + '"></i>'
-                    : '<i class="fa fa-line-chart text-primary" title="' + __('Investment') + '"></i>');
-            },
-            className: "text-center",
-        },
+        dataTableHelpers.transactionColumnDefinition.type(true),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,

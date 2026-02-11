@@ -6,6 +6,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\CurrencyTrait;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Account;
 use App\Models\AccountEntity;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -52,7 +53,7 @@ class AccountApiController extends Controller implements HasMiddleware
 
         $type = ($request->get('account_type') === 'to' ? 'to' : 'from');
         $transactionType = $request->get('transaction_type', null);
-        if ($transactionType !== null && !array_key_exists($transactionType, config('transaction_types'))) {
+        if ($transactionType !== null && TransactionTypeEnum::tryFrom($transactionType) === null) {
             // If transaction type is provided but not valid, return a bad request response
             return response()->json(
                 [
@@ -83,9 +84,9 @@ class AccountApiController extends Controller implements HasMiddleware
             })
             // Optionally limit the search for specific transaction types
             ->when($transactionType !== null, fn ($query) => $query->where(
-                'transaction_type_id',
+                'transaction_type',
                 '=',
-                config('transaction_types')[$transactionType]['id']
+                $transactionType
             ))
             // Search within account and transactions of the user
             ->where('transactions.user_id', $parameters['user']->id)
@@ -218,9 +219,9 @@ class AccountApiController extends Controller implements HasMiddleware
                         $request->get('currency_id')
                     ))
                 ->where(
-                    'transaction_type_id',
+                    'transaction_type',
                     '=',
-                    config('transaction_types')[$request->get('transaction_type')]['id']
+                    $request->get('transaction_type')
                 )
                 ->groupBy('transaction_details_investment.account_id')
                 ->orderByRaw('count(*) DESC')

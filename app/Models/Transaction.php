@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use App\Http\Traits\CurrencyTrait;
 use Bkwld\Cloner\Cloneable;
@@ -27,7 +28,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int $id
  * @property int $user_id
  * @property \Illuminate\Support\Carbon|null $date
- * @property int $transaction_type_id
+ * @property \App\Enums\TransactionType $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
  * @property bool $budget
@@ -41,7 +42,6 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @property-read TransactionType $transactionType
  * @method static Builder|Transaction byScheduleType($type)
  * @method static Builder|Transaction byType($type)
  * @method static TransactionFactory factory(...$parameters)
@@ -57,7 +57,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereId($value)
  * @method static Builder|Transaction whereReconciled($value)
  * @method static Builder|Transaction whereSchedule($value)
- * @method static Builder|Transaction whereTransactionTypeId($value)
+ * @method static Builder|Transaction whereTransactionType($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
  * @mixin Eloquent
@@ -75,7 +75,7 @@ class Transaction extends Model
      */
     protected $fillable = [
         'date',
-        'transaction_type_id',
+        'transaction_type',
         'reconciled',
         'schedule',
         'budget',
@@ -107,6 +107,7 @@ class Transaction extends Model
     {
         return [
             'date' => 'date',
+            'transaction_type' => TransactionTypeEnum::class,
             'reconciled' => 'boolean',
             'schedule' => 'boolean',
             'budget' => 'boolean',
@@ -122,11 +123,6 @@ class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function transactionType(): BelongsTo
-    {
-        return $this->belongsTo(TransactionType::class);
     }
 
     public function transactionItems(): HasMany
@@ -204,11 +200,11 @@ class Transaction extends Model
     // Generic function to load necessary relations, based on transaction type
     public function loadDetails(): void
     {
-        if ($this->transactionType->type === 'standard') {
+        if ($this->transaction_type->isStandard()) {
             $this->loadStandardDetails();
             return;
         }
-        if ($this->transactionType->type === 'investment') {
+        if ($this->transaction_type->isInvestment()) {
             $this->loadInvestmentDetails();
             return;
         }
@@ -222,13 +218,12 @@ class Transaction extends Model
             'config.accountTo',
             'currency',
             'transactionSchedule',
-            'transactionType',
             'transactionItems',
             'transactionItems.tags',
             'transactionItems.category',
         ]);
 
-        if ($this->transactionType->name === 'withdrawal') {
+        if ($this->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
             $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
@@ -236,7 +231,7 @@ class Transaction extends Model
             ]);
         }
 
-        if ($this->transactionType->name === 'deposit') {
+        if ($this->transaction_type === TransactionTypeEnum::DEPOSIT) {
             $this->loadMissing([
                 'config.accountTo.config',
                 'config.accountTo.config.currency',
@@ -244,7 +239,7 @@ class Transaction extends Model
             ]);
         }
 
-        if ($this->transactionType->name === 'transfer') {
+        if ($this->transaction_type === TransactionTypeEnum::TRANSFER) {
             $this->loadMissing([
                 'config.accountFrom.config',
                 'config.accountFrom.config.currency',
@@ -264,7 +259,6 @@ class Transaction extends Model
             'config.investment',
             'currency',
             'transactionSchedule',
-            'transactionType',
         ]);
     }
 
