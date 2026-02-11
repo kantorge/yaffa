@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Spiders\InvestmentPriceScraper;
 use Carbon\Carbon;
@@ -188,20 +189,15 @@ class Investment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getCurrentQuantity(AccountEntity $account = null): float
+    public function getCurrentQuantity(?AccountEntity $account = null): float
     {
         $quantity = DB::table('transactions')
             ->select(
-                DB::raw("sum(
-                                  CASE transactions.transaction_type
-                                      WHEN 'buy' THEN 1
-                                      WHEN 'add_shares' THEN 1
-                                      WHEN 'sell' THEN -1
-                                      WHEN 'remove_shares' THEN -1
-                                      ELSE 0
-                                  END
-                                  * IFNULL(transaction_details_investment.quantity, 0)
-                                ) AS quantity")
+                DB::raw(
+                    "SUM( " .
+                        TransactionTypeEnum::getQuantityMultiplierSqlCase("transactions.transaction_type") .
+                        " * IFNULL(transaction_details_investment.quantity, 0)
+                    ) AS quantity")
             )
             ->leftJoin(
                 'transaction_details_investment',

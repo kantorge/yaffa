@@ -132,16 +132,10 @@ class Account extends Model
         return DB::table('transactions')
             ->select(
                 'transaction_details_investment.investment_id',
-                DB::raw("sum(
-                                 CASE transactions.transaction_type
-                                     WHEN 'buy' THEN 1
-                                     WHEN 'add_shares' THEN 1
-                                     WHEN 'sell' THEN -1
-                                     WHEN 'remove_shares' THEN -1
-                                     ELSE 0
-                                 END
-                                 * IFNULL(transaction_details_investment.quantity, 0)
-                               ) AS quantity")
+                DB::raw("SUM( " .
+                        TransactionTypeEnum::getQuantityMultiplierSqlCase("transactions.transaction_type") .
+                        " * IFNULL(transaction_details_investment.quantity, 0)
+                    ) AS quantity")
             )
             ->groupBy(
                 'transaction_details_investment.investment_id',

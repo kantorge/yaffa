@@ -171,25 +171,14 @@ enum TransactionType: string
     }
 
     /**
-     * Legacy compatibility: Map from old database ID to enum case
-     * This is needed during migration period
-     *
-     * @deprecated Will be removed after migration is complete
+     * Helper method to generate the SQL CASE statement for quantity multiplier in queries
      */
-    public static function fromLegacyId(int $id): ?self
+    public static function getQuantityMultiplierSqlCase(string $columnName): string
     {
-        return match ($id) {
-            1 => self::WITHDRAWAL,
-            2 => self::DEPOSIT,
-            3 => self::TRANSFER,
-            4 => self::BUY,
-            5 => self::SELL,
-            6 => self::ADD_SHARES,
-            7 => self::REMOVE_SHARES,
-            8 => self::DIVIDEND,
-            // Dropped previously unused types
-            11 => self::INTEREST_YIELD,
-            default => null,
-        };
+        $cases = array_map(
+            fn(self $type) => "WHEN '{$type->value}' THEN {$type->quantityMultiplier()}",
+            self::investmentTypesWithQuantity()
+        );
+        return "CASE {$columnName} " . implode(' ', $cases) . " ELSE 0 END";
     }
 }
