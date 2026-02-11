@@ -1,23 +1,7 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../helpers';
+import { __, getTransactionTypeConfig, toFormattedCurrency as toFormattedCurrencyHelper } from '../helpers';
 import * as toastHelpers from '../toast.js';
 
 const route = window.route;
-
-/**
- * Helper function to get transaction type configuration from window.transactionTypes
- * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
- * @returns {object} Transaction type configuration with category, label, multipliers, etc.
- */
-function getTransactionTypeConfig(transactionTypeValue) {
-    const transactionTypes = window.transactionTypes || {};
-    return transactionTypes[transactionTypeValue] || {
-        value: transactionTypeValue,
-        label: transactionTypeValue,
-        category: 'unknown',
-        amount_multiplier: null,
-        quantity_multiplier: null,
-    };
-}
 
 export function dataTablesActionButton(id, action) {
     const functions = {
