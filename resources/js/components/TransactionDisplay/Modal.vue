@@ -19,11 +19,11 @@
         </div>
         <div class="modal-body">
           <transaction-show-standard
-            v-if="transaction.transaction_type?.type === 'standard'"
+            v-if="transaction.config_type === 'standard'"
             :transaction="transaction"
           ></transaction-show-standard>
           <transaction-show-investment
-            v-if="transaction.transaction_type?.type === 'investment'"
+            v-if="transaction.config_type === 'investment'"
             :transaction="transaction"
           ></transaction-show-investment>
         </div>
@@ -41,67 +41,71 @@
 </template>
 
 <script>
-  import ShowStandard from './ShowStandard.vue';
-  import ShowInvestment from './ShowInvestment.vue';
-  import ActionButtonBar from './ActionButtonBar.vue';
-  import { __ } from '../../i18n';
+    import ShowStandard from './ShowStandard.vue';
+    import ShowInvestment from './ShowInvestment.vue';
+    import ActionButtonBar from './ActionButtonBar.vue';
+  <<<<<<< HEAD
+    import { __ } from '../../i18n';
+  =======
+    import { __ } from '../../helpers';
+  >>>>>>> e350c487 (refactor: move transaction type handling from database to PHP Enum)
 
-  export default {
-    name: 'QuickViewTransactionModal',
-    components: {
-      'transaction-show-standard': ShowStandard,
-      'transaction-show-investment': ShowInvestment,
-      'action-button-bar': ActionButtonBar,
-    },
-    props: {
-      initialControls: {
-        type: Object,
-        default: {
-          show: true,
-          edit: true,
-          clone: true,
-          skip: false,
-          enter: false,
-          delete: false,
+    export default {
+      name: 'QuickViewTransactionModal',
+      components: {
+        'transaction-show-standard': ShowStandard,
+        'transaction-show-investment': ShowInvestment,
+        'action-button-bar': ActionButtonBar,
+      },
+      props: {
+        initialControls: {
+          type: Object,
+          default: {
+            show: true,
+            edit: true,
+            clone: true,
+            skip: false,
+            enter: false,
+            delete: false,
+          },
         },
+        originalTransaction: Object,
       },
-      originalTransaction: Object,
-    },
-    data() {
-      return {
-        transaction: Object.assign({}, this.originalTransaction),
-        controls: this.initialControls,
-        modal: undefined,
-      };
-    },
-    methods: {
-      close() {
-        this.$emit('close');
+      data() {
+        return {
+          transaction: Object.assign({}, this.originalTransaction),
+          controls: this.initialControls,
+          modal: undefined,
+        };
       },
-      showTransaction(transaction, controls) {
-        this.transaction = transaction;
-        this.controls = controls;
-
-        this.modal.show();
-      },
-      transactionUpdated: function (transaction) {
-        this.transaction = Object.assign({}, transaction);
-      },
-      __,
-    },
-    mounted() {
-      let $vm = this;
-
-      // Set up global event listener for displaying a transaction in the modal
-      window.addEventListener(
-        'showTransactionQuickViewModal',
-        function (event) {
-          $vm.showTransaction(event.detail.transaction, event.detail.controls);
+      methods: {
+        close() {
+          this.$emit('close');
         },
-      );
+        showTransaction(transaction, controls) {
+          this.transaction = transaction;
+          this.controls = controls;
 
-      // Initialize modal
-      this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
-    },
-  };
+          this.modal.show();
+        },
+        transactionUpdated: function (transaction) {
+          this.transaction = Object.assign({}, transaction);
+        },
+        __,
+      },
+      mounted() {
+        let $vm = this;
+
+        // Set up global event listener for displaying a transaction in the modal
+        window.addEventListener(
+          'showTransactionQuickViewModal',
+          function (event) {
+            $vm.showTransaction(event.detail.transaction, event.detail.controls);
+          },
+        );
+
+        // Initialize modal
+        this.modal = new coreui.Modal(document.getElementById('modal-quickview'));
+      },
+    };
 </script>

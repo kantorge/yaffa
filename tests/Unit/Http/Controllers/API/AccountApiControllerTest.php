@@ -6,7 +6,6 @@ use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
 use App\Models\Currency;
-use App\Models\TransactionType;
 use App\Models\User;
 use App\Providers\Faker\CurrencyData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,14 +17,6 @@ class AccountApiControllerTest extends TestCase
     use RefreshDatabase;
 
     private const BASE_ACCOUNT_NAME = 'Same account name';
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Load the transaction types into the config, used by some of the tests
-        config()->set('transaction_types', TransactionType::all()->keyBy('name')->toArray());
-    }
 
     public function test_account_list_with_query_applies_all_provided_filters(): void
     {

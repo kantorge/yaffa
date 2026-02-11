@@ -256,12 +256,12 @@
         const getSum = (arr, fn) => arr.reduce((sum, trx) => sum + fn(trx), 0);
         const getQty = (arr, type) =>
           getSum(
-            arr.filter((trx) => trx.transaction_type.name === type),
+            arr.filter((trx) => trx.transaction_type === type),
             (trx) => trx.config.quantity || 0,
           );
         const getVal = (arr, type) =>
           getSum(
-            arr.filter((trx) => trx.transaction_type.name === type),
+            arr.filter((trx) => trx.transaction_type === type),
             (trx) => (trx.config.price || 0) * (trx.config.quantity || 0),
           );
         const getField = (arr, field) =>

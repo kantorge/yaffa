@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Currency;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
-use App\Models\TransactionType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +55,7 @@ class TransactionCurrencyTest extends TestCase
             ]),
             'config')
             ->create([
-                'transaction_type_id' => TransactionType::where('name', 'withdrawal')->first()->id,
+                'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
                 'currency_id' => null,
             ]);
 

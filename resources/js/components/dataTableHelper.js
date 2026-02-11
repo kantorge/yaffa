@@ -1,4 +1,5 @@
 import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../i18n';
+import { getTransactionTypeConfig } from '../helpers';
 import * as toastHelpers from '../toast.js';
 
 const route = window.route;
@@ -189,22 +190,26 @@ export function booleanToTableIcon(data, type) {
         : '<i class="fa fa-square text-danger" title="' + __('No') + '"></i>');
 }
 
-export function transactionTypeIcon(type, name, customTitle) {
-    if (type === 'standard') {
-        if (name === 'withdrawal') {
+export function transactionTypeIcon(transactionType, customTitle) {
+    const typeConfig = getTransactionTypeConfig(transactionType);
+
+    if (typeConfig.category === 'standard') {
+        if (transactionType === 'withdrawal') {
             customTitle = customTitle || __("Withdrawal");
             return '<i class="fa fa-circle-minus text-danger" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
-        if (name === 'deposit') {
+        if (transactionType === 'deposit') {
             customTitle = customTitle || __("Deposit");
             return '<i class="fa fa-circle-plus text-success" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
-        if (name === 'transfer') {
+        if (transactionType === 'transfer') {
             customTitle = customTitle || __("Transfer");
             return '<i class="fa fa-exchange-alt text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
         }
-    } else if (type === 'investment') {
-        customTitle = customTitle || name;
+    }
+
+    if (typeConfig.category === 'investment') {
+        customTitle = customTitle || typeConfig.label;
         return '<i class="fa fa-line-chart text-primary" data-bs-toggle="tooltip" title="' + customTitle + '"></i>';
     }
 
@@ -254,26 +259,29 @@ export const transactionColumnDefinition = {
         title: __('Payee'),
         defaultContent: '',
         render: function (_data, _type, row) {
-            if (row.transaction_type.type === 'standard') {
-                if (row.transaction_type.name === 'withdrawal') {
+            const typeConfig = getTransactionTypeConfig(row.transaction_type);
+
+            if (typeConfig.category === 'standard') {
+                if (row.transaction_type === 'withdrawal') {
                     return row.config.account_to?.name;
                 }
-                if (row.transaction_type.name === 'deposit') {
+                if (row.transaction_type === 'deposit') {
                     return row.config.account_from?.name;
                 }
-                if (row.transaction_type.name === 'transfer') {
+                if (row.transaction_type === 'transfer') {
                     return __('Transfer from :account_from to :account_to', {
                         account_from: row.config.account_from?.name,
                         account_to: row.config.account_to?.name
                     });
                 }
             }
-            if (row.transaction_type.type === 'investment') {
+
+            if (typeConfig.category === 'investment') {
                 return row.config.account.name;
             }
 
             // Special case for history view
-            if (row.transaction_type.type === 'Opening balance') {
+            if (typeConfig.category === 'Opening balance') {
                 return __('Opening balance');
             }
 
@@ -289,14 +297,13 @@ export const transactionColumnDefinition = {
          * @param _data
          * @param {string} type
          * @param {Object} row
-         * @property {Object} row.transaction_type
-         * @property {string} row.transaction_type.type
-         * @property {number} row.transaction_type.quantity_multiplier
-         * @property {number} row.transaction_type.amount_multiplier
+         * @property {string} row.transaction_type - Transaction type enum value
          */
         render: function (_data, type, row) {
+            const typeConfig = getTransactionTypeConfig(row.transaction_type);
+
             // Standard transaction
-            if (row.transaction_type.type === 'standard') {
+            if (typeConfig.category === 'standard') {
                 // Empty
                 if (row.categories.length === 0) {
                     return __('Not set');
@@ -311,15 +318,15 @@ export const transactionColumnDefinition = {
                 }
             }
             // Investment transaction
-            if (row.transaction_type.type === 'investment') {
-                if (!isNaN(row.transaction_type.quantity_multiplier)) {
-                    return row.transaction_type.name;
+            if (typeConfig.category === 'investment') {
+                if (!isNaN(typeConfig.quantity_multiplier)) {
+                    return typeConfig.label;
                 }
-                if (!isNaN(row.transaction_type.amount_multiplier)) {
-                    return row.transaction_type.name + " " + row.config.quantity;
+                if (!isNaN(typeConfig.amount_multiplier)) {
+                    return typeConfig.label + " " + row.config.quantity;
                 }
 
-                return row.transaction_type.name + " " + row.config.quantity.toLocaleString(window.YAFFA.locale, {
+                return typeConfig.label + " " + row.config.quantity.toLocaleString(window.YAFFA.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
                 }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.locale, row.transaction_currency);
@@ -336,20 +343,19 @@ export const transactionColumnDefinition = {
          * @param _data
          * @param type
          * @param {Object} row
-         * @property {Object} row.transaction_type
-         * @property {string} row.transaction_type.type
-         * @property {number} row.transaction_type.quantity_multiplier
-         * @property {number} row.transaction_type.amount_multiplier
+         * @property {string} row.transaction_type - Transaction type enum value
          * @property {Object} row.transaction_currency
          */
         render: function (_data, type, row) {
+            const typeConfig = getTransactionTypeConfig(row.transaction_type);
+
             if (type === 'display') {
                 let prefix = '';
-                if (row.transaction_type.type === 'standard') {
-                    if (row.transaction_type.amount_multiplier === -1) {
+                if (typeConfig.category === 'standard') {
+                    if (typeConfig.amount_multiplier === -1) {
                         prefix = '- ';
                     }
-                    if (row.transaction_type.amount_multiplier === 1) {
+                    if (typeConfig.amount_multiplier === 1) {
                         prefix = '+ ';
                     }
 
@@ -360,10 +366,10 @@ export const transactionColumnDefinition = {
                         row.transaction_currency
                     );
                 }
-                if (row.transaction_type.type === 'investment') {
+                if (typeConfig.category === 'investment') {
                     let amount = (row.config.quantity ?? 0) * (row.config.price ?? 0) + (row.config.dividend ?? 0);
 
-                    if (row.transaction_type.amount_multiplier === -1) {
+                    if (typeConfig.amount_multiplier === -1) {
                         prefix = '- ';
                         amount = amount + row.config.commission + row.config.tax ;
                         return prefix + toFormattedCurrency(
@@ -373,7 +379,7 @@ export const transactionColumnDefinition = {
                             row.transaction_currency
                         );
                     }
-                    if (row.transaction_type.amount_multiplier === 1) {
+                    if (typeConfig.amount_multiplier === 1) {
                         prefix = '+ ';
                         amount = amount - row.config.commission - row.config.tax ;
                         return prefix + toFormattedCurrency(
@@ -386,7 +392,7 @@ export const transactionColumnDefinition = {
                 }
             }
 
-            if (row.transaction_type.type === 'standard') {
+            if (typeConfig.category === 'standard') {
                 return row.config.amount_to;
             }
         },
@@ -450,20 +456,29 @@ export const transactionColumnDefinition = {
     },
 
     // Icon for the transaction type
-    type: {
-        title: __('Type'),
-        defaultContent: '',
-        render: function(_data, type, row) {
-            if (type === 'filter' || type === 'type') {
-                return __(row.transaction_type.type) + ' ' + __(row.transaction_type.name);
-            }
-            if (type === 'sort') {
-                return __(row.transaction_type.name);
-            }
+    type: function(withIcon = false) {
+        return {
+            title: __('Type'),
+            defaultContent: '',
+            data: 'transaction_type',
+            render: function(data, type, _row) {
+                const typeConfig = getTransactionTypeConfig(data);
 
-            return transactionTypeIcon(row.transaction_type.type, row.transaction_type.name);
-        },
-        className: "text-center",
+                if (type === 'filter' || type === 'type') {
+                    return __(typeConfig.category) + ' ' + __(typeConfig.label);
+                }
+                if (type === 'sort') {
+                    return __(typeConfig.label);
+                }
+
+                if (withIcon) {
+                    return transactionTypeIcon(data);
+                }
+
+                return typeConfig ? typeConfig.label : (data.charAt(0).toUpperCase() + data.slice(1));
+            },
+            className: (withIcon ? "text-center" : ""),
+        }
     },
 }
 

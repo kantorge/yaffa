@@ -35,7 +35,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
- * @property-read TransactionType $transactionType
  * @mixin Eloquent
  */
 class TransactionDetailStandard extends Model

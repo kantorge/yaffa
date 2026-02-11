@@ -29,14 +29,14 @@ var dtColumnSettingPayee = {
     title: __('Payee'),
     defaultContent: '',
     render: function (_data, _type, row) {
-        if (row.transaction_type.type === 'standard') {
-            if (row.transaction_type.name === 'withdrawal') {
+        if (row.config_type === 'standard') {
+            if (row.transaction_type === 'withdrawal') {
                 return row.account_to_name;
             }
-            if (row.transaction_type.name === 'deposit') {
+            if (row.transaction_type === 'deposit') {
                 return row.account_from_name;
             }
-            if (row.transaction_type.name === 'transfer') {
+            if (row.transaction_type === 'transfer') {
                 if (row.transactionOperator === -1) {
                     return __('Transfer to :account', {account: row.account_to_name});
                 } else {
@@ -44,10 +44,10 @@ var dtColumnSettingPayee = {
                 }
             }
         }
-        if (row.transaction_type.type === 'investment') {
+        if (row.config_type === 'investment') {
             return row.account_to_name;
         }
-        if (row.transaction_type.type === 'Opening balance') {
+        if (row.transaction_type === 'Opening balance') {
             return __('Opening balance');
         }
         return '';
@@ -66,7 +66,7 @@ $(selectorHistoryTable).DataTable({
             render: function (_data, type, row) {
                 if (type === 'filter') {
                     return (!row.schedule
-                        && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                        && (row.config_type === 'standard' || row.config_type === 'investment')
                         ? (row.reconciled
                             ? __('Reconciled')
                             : __('Uncleared')
@@ -75,7 +75,7 @@ $(selectorHistoryTable).DataTable({
                     );
                 }
                 return (!row.schedule
-                    && (row.transaction_type.type === 'standard' || row.transaction_type.type === 'investment')
+                    && (row.config_type === 'standard' || row.config_type === 'investment')
                     ? (row.reconciled
                         ? '<i class="fa fa-check-circle text-success reconcile" data-reconciled="true" data-id="' + row.id + '"></i>'
                         : '<i class="fa fa-circle text-info reconcile" data-reconciled="false" data-id="' + row.id + '"></i>'
@@ -129,7 +129,7 @@ $(selectorHistoryTable).DataTable({
             title: __("Actions"),
             defaultContent: '',
             render: function (_data, _type, row) {
-                if (row.transaction_type.type === 'Opening balance') {
+                if (row.config_type === 'Opening balance') {
                     return null;
                 }
                 if (row.schedule) {

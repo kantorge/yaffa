@@ -40,8 +40,8 @@
                     >
                       <option
                         v-for="item in transactionTypes"
-                        :key="item.name"
-                        :value="item.name"
+                        :key="item.value"
+                        :value="item.value"
                       >
                         {{ item.name }}
                       </option>
@@ -545,7 +545,7 @@
 
       // Main form data
       data.form = new Form({
-        transaction_type: 'Buy',
+        transaction_type: 'buy',
         config_type: 'investment',
         date: toIsoDateString(),
         comment: null,
@@ -635,7 +635,7 @@
       transactionTypeSettings() {
         return (
           this.transactionTypes.find(
-            (item) => item.name === this.form.transaction_type,
+            (item) => item.value === this.form.transaction_type,
           ) || {}
         );
       },
@@ -677,54 +677,25 @@
     },
 
     created() {
+      // Load transaction types from window global context first
+      const transactionTypesConfig = window.transactionTypes || {};
+
+      // Filter and map investment types to component format
+      this.transactionTypes = Object.values(transactionTypesConfig)
+        .filter((type) => type.category === 'investment')
+        .map((type) => ({
+          name: type.label,
+          value: type.value,
+          quantity: ['buy', 'sell', 'add_shares', 'remove_shares'].includes(
+            type.value,
+          ),
+          price: ['buy', 'sell'].includes(type.value),
+          dividend: ['dividend', 'interest_yield'].includes(type.value),
+          amount_multiplier: type.amount_multiplier,
+        }));
+
       // Copy values of existing transaction into component form data
       this.initializeTransaction();
-
-      // TODO: make the list dynamic based on database settings
-      this.transactionTypes = [
-        {
-          name: 'Buy',
-          quantity: true,
-          price: true,
-          dividend: false,
-          amount_multiplier: -1,
-        },
-        {
-          name: 'Sell',
-          quantity: true,
-          price: true,
-          dividend: false,
-          amount_multiplier: 1,
-        },
-        {
-          name: 'Add shares',
-          quantity: true,
-          price: false,
-          dividend: false,
-          amount_multiplier: null,
-        },
-        {
-          name: 'Remove shares',
-          quantity: true,
-          price: false,
-          dividend: false,
-          amount_multiplier: null,
-        },
-        {
-          name: 'Dividend',
-          quantity: false,
-          price: false,
-          dividend: true,
-          amount_multiplier: 1,
-        },
-        {
-          name: 'Interest yield',
-          quantity: false,
-          price: false,
-          dividend: true,
-          amount_multiplier: 1,
-        },
-      ];
 
       // Check for various default values in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -952,7 +923,7 @@
         if (this.transaction && Object.keys(this.transaction).length > 0) {
           // Populate form data with already known values
           this.form.id = this.transaction.id;
-          this.form.transaction_type = this.transaction.transaction_type?.name;
+          this.form.transaction_type = this.transaction.transaction_type;
 
           // Populate date from source transaction, and ensure that it's a Date object
           this.form.date = this.copyDateObject(this.transaction.date);

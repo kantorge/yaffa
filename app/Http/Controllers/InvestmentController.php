@@ -218,7 +218,6 @@ class InvestmentController extends Controller implements HasMiddleware
         $transactions = $investment->transactionsBasic()
             ->with([
                 'config',
-                'transactionType',
             ])
             ->get();
 
@@ -226,7 +225,6 @@ class InvestmentController extends Controller implements HasMiddleware
         $scheduledTransactions = $investment->transactionsScheduled()
             ->with([
                 'config',
-                'transactionType',
                 'transactionSchedule',
             ])
             ->get()

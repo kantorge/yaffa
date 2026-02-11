@@ -125,7 +125,6 @@ class SearchController extends Controller implements HasMiddleware
     {
         return $user
             ->transactions()
-            ->with('transactionType')
             ->whereRaw('UPPER(`comment`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->orderBy('date')
             ->get();

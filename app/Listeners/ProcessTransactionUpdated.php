@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Events\TransactionUpdated;
 use App\Models\Transaction;
 use App\Services\TransactionService;
@@ -97,8 +98,8 @@ class ProcessTransactionUpdated implements ShouldQueue
         if (array_key_exists('config', $changedAttributes)
             && array_key_exists('account_from_id', $changedAttributes['config'])) {
             // Additionally check if the transaction type is withdrawal or transfer
-            if ($transaction->transactionType->name === 'withdrawal'
-                || $transaction->transactionType->name === 'transfer') {
+            if ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
+                || $transaction->transaction_type === TransactionTypeEnum::TRANSFER) {
                 // Invoke the monthly summary calculation command for the old account
                 Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                     self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $changedAttributes['config']['account_from_id']
@@ -110,8 +111,8 @@ class ProcessTransactionUpdated implements ShouldQueue
         if (array_key_exists('config', $changedAttributes)
             && array_key_exists('account_to_id', $changedAttributes['config'])) {
             // Additionally check if the transaction type is deposit or transfer
-            if ($transaction->transactionType->name === 'deposit'
-                || $transaction->transactionType->name === 'transfer') {
+            if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT
+                || $transaction->transaction_type === TransactionTypeEnum::TRANSFER) {
                 // Invoke the monthly summary calculation command for the old account
                 Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                     self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $changedAttributes['config']['account_to_id']
@@ -120,13 +121,13 @@ class ProcessTransactionUpdated implements ShouldQueue
         }
 
         // Invoke the monthly summary calculation command for the current account, based on the transaction type
-        if ($transaction->transactionType->name === 'deposit'
-            || $transaction->transactionType->name === 'transfer') {
+        if ($transaction->transaction_type === TransactionTypeEnum::DEPOSIT
+            || $transaction->transaction_type === TransactionTypeEnum::TRANSFER) {
             Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                 self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $transaction->config->account_to_id
             ]);
-        } elseif ($transaction->transactionType->name === 'withdrawal'
-            || $transaction->transactionType->name === 'transfer') {
+        } elseif ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
+            || $transaction->transaction_type === TransactionTypeEnum::TRANSFER) {
             Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                 self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $transaction->config->account_from_id
             ]);

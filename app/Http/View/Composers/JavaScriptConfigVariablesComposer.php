@@ -2,6 +2,7 @@
 
 namespace App\Http\View\Composers;
 
+use App\Enums\TransactionType;
 use App\Http\Traits\CurrencyTrait;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
@@ -17,6 +18,8 @@ class JavaScriptConfigVariablesComposer
         JavaScriptFacade::put([
             // This type of restrictions must be implemented primarily on server-side, but the UI can also adapt in some cases
             'sandbox_mode' => config('yaffa.sandbox_mode'),
+            // Transaction types for frontend usage
+            'transactionTypes' => TransactionType::all(),
         ]);
     }
 }

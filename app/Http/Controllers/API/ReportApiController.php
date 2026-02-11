@@ -9,7 +9,7 @@ use App\Http\Traits\ScheduleTrait;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
-use App\Models\TransactionType;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Services\CategoryService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -89,7 +89,7 @@ class ReportApiController extends Controller implements HasMiddleware
             /** @var TransactionItem $item */
             $period = $item->transaction->date->format('Y-m-01');
             $currency_id = $item->transaction->currency_id;
-            $amount = $item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+            $amount = $item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
                 ? -1 * $item->amount
                 : $item->amount;
 
@@ -142,7 +142,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 return $query->where(function ($query) {
                     // Withdrawal with empty account_from_id
                     return $query->where(function ($query) {
-                        $query->where('transaction_type_id', config('transaction_types')['withdrawal']['id'])
+                        $query->where('transaction_type', TransactionTypeEnum::WITHDRAWAL)
                             ->whereHasMorph(
                                 'config',
                                 TransactionDetailStandard::class,
@@ -151,7 +151,7 @@ class ReportApiController extends Controller implements HasMiddleware
                     })
                         // Or deposit with empty account_to_id
                         ->orWhere(function ($query) {
-                            $query->where('transaction_type_id', config('transaction_types')['deposit']['id'])
+                            $query->where('transaction_type', TransactionTypeEnum::DEPOSIT)
                                 ->whereHasMorph(
                                     'config',
                                     TransactionDetailStandard::class,
@@ -192,7 +192,7 @@ class ReportApiController extends Controller implements HasMiddleware
             }
 
             $budgetCompact[$period][$currency_id] += $transaction->sum
-                * ($transaction->transaction_type_id === config('transaction_types')['withdrawal']['id'] ? -1 : 1);
+                * ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL ? -1 : 1);
         });
 
         foreach ($budgetCompact as $period => $periodData) {
@@ -267,11 +267,7 @@ class ReportApiController extends Controller implements HasMiddleware
                             ->whereRaw('MONTH(date) = ?', [$month]))
                         ->byScheduleType('none')
                         ->byType('standard')
-                        ->where(
-                            'transaction_type_id',
-                            '!=',
-                            config('transaction_types')['transfer']['id']
-                        );
+                        ->where('transaction_type', '!=', TransactionTypeEnum::TRANSFER);
                 })
                 ->get();
 
@@ -296,7 +292,7 @@ class ReportApiController extends Controller implements HasMiddleware
                 );
 
                 $dataByCategory[$category] +=
-                    ($item->transaction->transaction_type_id === config('transaction_types')['withdrawal']['id']
+                    ($item->transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
                         ? -1
                         : 1)
                     * $item->amount
@@ -306,18 +302,17 @@ class ReportApiController extends Controller implements HasMiddleware
 
         if ($transactionType === 'all' || $transactionType === 'investment') {
             // Add investment transaction results
+            // Get investment types with amount multipliers
+            $investmentTypesWithAmount = array_map(
+                fn($type) => $type->value,
+                TransactionTypeEnum::investmentTypesWithAmount()
+            );
+
             $investmentTransactions = Transaction::with([
                 'currency',
-                'transactionType',
             ])
                 ->byType('investment')
-                ->whereIn(
-                    'transaction_type_id',
-                    TransactionType::where('type', 'investment')
-                        ->whereNotNull('amount_multiplier')
-                        ->get()
-                        ->pluck('id')
-                )
+                ->whereIn('transaction_type', $investmentTypesWithAmount)
                 ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
@@ -326,7 +321,7 @@ class ReportApiController extends Controller implements HasMiddleware
 
             $investmentTransactions->each(function ($transaction) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = ($transaction->transactionType->amount_multiplier === 1
+                $category = ($transaction->transaction_type->amountMultiplier() === 1
                     ? __('Investment income')
                     : __('Investment payment'));
 

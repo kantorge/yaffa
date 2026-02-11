@@ -137,7 +137,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '../../i18n';
+  import { __, toFormattedCurrency } from '@/i18n';
 
   export default {
     name: 'ReportingCanvasFindTransactionsSummary',
@@ -172,7 +172,9 @@
         const currencies = [];
         let total = 0;
         this.transactions
-          .filter((transaction) => transaction.transaction_type_id === 1)
+          .filter(
+            (transaction) => transaction.transaction_type === 'withdrawal',
+          )
           .forEach((transaction) => {
             if (!currencies.includes(transaction.currency_id)) {
               currencies.push(transaction.currency_id);
@@ -212,7 +214,7 @@
       },
       countWithdrawals() {
         return this.transactions.filter(
-          (transaction) => transaction.transaction_type_id === 1,
+          (transaction) => transaction.transaction_type === 'withdrawal',
         ).length;
       },
       depositSummary() {
@@ -220,7 +222,7 @@
         const currencies = [];
         let total = 0;
         this.transactions
-          .filter((transaction) => transaction.transaction_type_id === 2)
+          .filter((transaction) => transaction.transaction_type === 'deposit')
           .forEach((transaction) => {
             if (!currencies.includes(transaction.currency_id)) {
               currencies.push(transaction.currency_id);
@@ -260,17 +262,17 @@
       },
       countDeposits() {
         return this.transactions.filter(
-          (transaction) => transaction.transaction_type_id === 2,
+          (transaction) => transaction.transaction_type === 'deposit',
         ).length;
       },
       countTransfers() {
         return this.transactions.filter(
-          (transaction) => transaction.transaction_type_id === 3,
+          (transaction) => transaction.transaction_type === 'transfer',
         ).length;
       },
       countInvestments() {
         return this.transactions.filter(
-          (transaction) => transaction.transaction_type.type === 'investment',
+          (transaction) => transaction.config_type === 'investment',
         ).length;
       },
       minDate() {

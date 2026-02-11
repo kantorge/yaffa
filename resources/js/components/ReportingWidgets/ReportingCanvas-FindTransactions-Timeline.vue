@@ -10,6 +10,8 @@
 </template>
 
 <script>
+  import { __ } from '../../helpers';
+
   // Import all required reporting widgets
   import MonthlyTimeline from './MonthlyTimeline.vue';
   export default {
@@ -27,6 +29,9 @@
         type: Boolean,
         required: true,
       },
+    },
+    methods: {
+      __,
     },
     mounted() {},
   };

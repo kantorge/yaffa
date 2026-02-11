@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use Carbon\Carbon;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Model as Eloquent;
@@ -107,10 +108,7 @@ class Account extends Model
         return (object) [
             'id' => null,
             'date' => null,
-            'transaction_type' => [
-                'name' => 'Opening balance',
-                'type' => 'Opening balance',
-            ],
+            'transaction_type' => 'Opening balance',
             'transactionOperator' => 1,
             'config' => [
                 'account_from_id' => null,
@@ -129,15 +127,15 @@ class Account extends Model
         ];
     }
 
-    public function getAssociatedInvestmentsAndQuantity(Carbon $untilDate = null): IlluminateCollection
+    public function getAssociatedInvestmentsAndQuantity(?Carbon $untilDate = null): IlluminateCollection
     {
         return DB::table('transactions')
             ->select(
                 'transaction_details_investment.investment_id',
-                DB::raw('sum(
-                                 IFNULL(transaction_types.quantity_multiplier, 0)
-                                 * IFNULL(transaction_details_investment.quantity, 0)
-                               ) AS quantity')
+                DB::raw("SUM( " .
+                        TransactionTypeEnum::getQuantityMultiplierSqlCase("transactions.transaction_type") .
+                        " * IFNULL(transaction_details_investment.quantity, 0)
+                    ) AS quantity")
             )
             ->groupBy(
                 'transaction_details_investment.investment_id',
@@ -148,12 +146,6 @@ class Account extends Model
                 '=',
                 'transaction_details_investment.id'
             )
-            ->leftJoin(
-                'transaction_types',
-                'transactions.transaction_type_id',
-                '=',
-                'transaction_types.id'
-            )
             ->when(
                 $untilDate,
                 function ($query, $untilDate) {
@@ -162,12 +154,7 @@ class Account extends Model
             )
             ->where('transactions.schedule', 0)
             ->where('transactions.config_type', 'investment')
-            ->whereIn('transactions.transaction_type_id', function ($query) {
-                $query->from('transaction_types')
-                    ->select('id')
-                    ->where('type', 'investment')
-                    ->whereNotNull('quantity_multiplier');
-            })
+            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();
     }

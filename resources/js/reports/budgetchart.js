@@ -3,17 +3,20 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+
 // Generic helpers
 import * as dataTableHelpers from './../components/dataTableHelper'
 import * as helpers from "../helpers";
 import { applyAmChartsLocalization } from '../i18n/amcharts';
-import { loadSelect2Language } from '../i18n/select2';
-import { getDataTablesLanguageOptions } from '../i18n';
+import { __, getDataTablesLanguageOptions, loadSelect2Language } from '../i18n';
+
 // Category tree
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
+
 // DataTables
 import 'datatables.net-bs5';
+
 // Select2 for account selection
 import select2 from 'select2';
 select2();
@@ -415,19 +418,7 @@ window.table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        {
-            data: "transaction_type.type",
-            title: __("Type"),
-            render: function (data, type) {
-                if (type === 'filter') {
-                    return data;
-                }
-                return (data === 'standard'
-                    ? '<i class="fa fa-money text-primary" title="' + __('Standard') + '"></i>'
-                    : '<i class="fa fa-line-chart text-primary" title="' + __('Investment') + '"></i>');
-            },
-            className: "text-center",
-        },
+        dataTableHelpers.transactionColumnDefinition.type(true),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,

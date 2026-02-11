@@ -43,7 +43,7 @@ let table = $(tableSelector).DataTable({
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('schedule', __('Schedule')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('budget', __('Budget')),
         dataTableHelpers.transactionColumnDefinition.iconFromBooleanField('transaction_schedule.active', __('Active')),
-        dataTableHelpers.transactionColumnDefinition.type,
+        dataTableHelpers.transactionColumnDefinition.type(true),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amount,

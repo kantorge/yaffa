@@ -79,9 +79,8 @@
           return '';
         }
 
-        return transactionTypeIcon(
-          transaction.transaction_type.type,
-          transaction.transaction_type.name,
+        return dataTableHelpers.transactionTypeIcon(
+          transaction.transaction_type,
           this.getTransactionLabel(transaction),
         );
       },
@@ -96,11 +95,11 @@
           return '';
         }
 
-        if (transaction.transaction_type.type === 'standard') {
+        if (transaction.config_type === 'standard') {
           // Capitalize first letter of transaction type
           const type =
-            transaction.transaction_type.name.charAt(0).toUpperCase() +
-            transaction.transaction_type.name.slice(1);
+            transaction.transaction_type.charAt(0).toUpperCase() +
+            transaction.transaction_type.slice(1);
           // Return constructed label
           return this.__('widget.scheduleCalendar.transactionLabel', {
             type,

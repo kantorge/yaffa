@@ -28,9 +28,7 @@
       transaction: {
         type: Object,
         default: {
-          transaction_type: {
-            name: 'withdrawal',
-          },
+          transaction_type: 'withdrawal',
           date: new Date(),
           schedule: false,
           budget: false,
@@ -93,7 +91,7 @@
         if (transactionType) {
           // Sanitize transaction type
           if (['deposit', 'withdrawal', 'transfer'].includes(transactionType)) {
-            data.transactionData.transaction_type.name = transactionType;
+            data.transactionData.transaction_type = transactionType;
           }
         }
       }
@@ -106,7 +104,7 @@
       getReturnAccount(accountType, transaction) {
         if (
           accountType === 'primary' &&
-          transaction.transaction_type.name === 'deposit'
+          transaction.transaction_type === 'deposit'
         ) {
           return transaction.config.account_to_id;
         }

@@ -52,13 +52,13 @@
        * Update the chart data based on the current set of transactions.
        *
        * @param {Array} transactions
-       * @property {Number} transactions.transaction_type_id
+       * @property {String} transactions.transaction_type
        * @returns {void}
        */
       updateChartData(transactions) {
         const filteredTransactions = [];
         transactions.forEach((transaction) => {
-          if (transaction.transaction_type_id === 2) {
+          if (transaction.transaction_type === 'deposit') {
             filteredTransactions.push(transaction);
           }
         });

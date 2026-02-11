@@ -3,8 +3,8 @@
  * The array of objects is then run throug a rule engine, to create a list of possible transactions.
  */
 
-import 'datatables.net-bs5';
 // Import dataTable helper functions
+import 'datatables.net-bs5';
 import * as dataTableHelpers from './../components/dataTableHelper'
 import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
 import { toIsoDateString } from '../helpers';
@@ -12,11 +12,15 @@ import { toIsoDateString } from '../helpers';
 // Import RRule library for handling schedules
 import {RRule} from 'rrule';
 
+// General helper functions
+import { __ } from '../i18n';
+
 // Select2 for account selection
 import { loadSelect2Language } from '../i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.language);
+
 import 'jquery-csv';
 
 window.transactions = [];
@@ -348,7 +352,7 @@ window.table = $(tableSelector).DataTable({
         {
             title: 'Type',
             render: function (_data, _type, row) {
-                return dataTableHelpers.transactionTypeIcon(row.transaction_config_type, row.transaction_type.name);
+                return dataTableHelpers.transactionTypeIcon(row.transaction_type);
             },
             className: "text-center",
         },

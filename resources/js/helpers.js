@@ -44,7 +44,7 @@ export function processTransaction(transaction) {
     }
 
     // We need an array of categories for standard transactions, extracted from the item array
-    if (transaction.transaction_type.type === 'standard') {
+    if (transaction.config_type === 'standard') {
         // We only need each category once, so we need to remove duplicates by their IDs
         transaction.categories = transaction.transaction_items
             .map(item => item.category)
@@ -56,7 +56,7 @@ export function processTransaction(transaction) {
     }
 
     // We need an array of tags for standard transactions, extracted from the item array
-    if (transaction.transaction_type.type === 'standard') {
+    if (transaction.config_type === 'standard') {
         // We only need each tag once, so we need to remove duplicates by their IDs
         transaction.tags = transaction.transaction_items
             .map(item => item.tags)

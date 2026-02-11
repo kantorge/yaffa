@@ -2,10 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Mail\TransactionCreatedFromEmail;
 use App\Mail\TransactionErrorFromEmail;
 use App\Models\ReceivedMail;
-use App\Models\TransactionType;
 use App\Models\User;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -139,8 +139,8 @@ EOF;
                 throw new Exception('Only withdrawals and deposits are supported at the moment.');
             }
 
-            // Retrieve the transaction type ID from the transaction type name
-            $values['transaction_type_id'] = $this->getTransactionTypeIdFromType($values['type']);
+            // Retrieve the transaction type from the transaction type name
+            $values['transaction_type'] = $this->getTransactionTypeFromType($values['type']);
         } catch (Exception $e) {
             // Send a response email to the user with the error message
             $this->sendErrorEmail($this->mail, $e->getMessage());
@@ -171,7 +171,7 @@ EOF;
     {
         // Create an array from the extracted values, which is aligned with the structure of the transaction config
         $data = [
-            'transaction_type_id' => $values['transaction_type_id'],
+            'transaction_type' => $values['transaction_type'],
             'date' => $values['date'],
             'config_type' => 'standard',
             'config' => [
@@ -349,16 +349,16 @@ EOF;
         return mb_trim($result) !== 'N/A' ? (int) $result : null;
     }
 
-    private function getTransactionTypeIdFromType(string $type): int
+    private function getTransactionTypeFromType(string $type): string
     {
-        return TransactionType::where('name', $type)
-            // Investment types to be supported later
-            ->where('type', 'standard')
-            ->firstOr(function () {
-                $this->markMailAsProcessed();
-                throw new Exception('Transaction type could not be determined');
-            })
-            ->id;
+        $transactionType = TransactionTypeEnum::tryFrom($type);
+
+        if ($transactionType === null || !$transactionType->isStandard()) {
+            $this->markMailAsProcessed();
+            throw new Exception('Transaction type could not be determined or is not a standard type');
+        }
+
+        return $transactionType->value;
     }
 
     private function markMailAsProcessed(): void
