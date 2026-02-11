@@ -221,7 +221,7 @@ class Investment extends Model
      *
      * @param string $type Can be 'stored', 'transaction' or 'combined'
      */
-    public function getLatestPrice(string $type = 'combined', Carbon $onOrBefore = null): ?float
+    public function getLatestPrice(string $type = 'combined', ?Carbon $onOrBefore = null): ?float
     {
         if ($type === 'stored') {
             $price = $this->getLatestStoredPrice($onOrBefore);
@@ -237,7 +237,7 @@ class Investment extends Model
         return $this->getLatestCombinedPrice($onOrBefore);
     }
 
-    private function getLatestStoredPrice(Carbon $onOrBefore = null)
+    private function getLatestStoredPrice(?Carbon $onOrBefore = null)
     {
         return InvestmentPrice::where('investment_id', $this->id)
             ->when($onOrBefore, function ($query) use ($onOrBefore) {
@@ -247,7 +247,7 @@ class Investment extends Model
             ->first();
     }
 
-    private function getLatestTransactionWithPrice(Carbon $onOrBefore = null)
+    private function getLatestTransactionWithPrice(?Carbon $onOrBefore = null)
     {
         return Transaction::with([
             'config',
@@ -269,7 +269,7 @@ class Investment extends Model
             ->first();
     }
 
-    private function getLatestCombinedPrice(Carbon $onOrBefore = null)
+    private function getLatestCombinedPrice(?Carbon $onOrBefore = null)
     {
         $price = $this->getLatestStoredPrice($onOrBefore);
         $transaction = $this->getLatestTransactionWithPrice($onOrBefore);
@@ -354,7 +354,7 @@ class Investment extends Model
      * @uses getInvestmentPriceFromAlphaVantage()
      * @uses getInvestmentPriceFromWebScraping()
      */
-    public function getInvestmentPriceFromProvider(Carbon $from = null, bool $refill = false): void
+    public function getInvestmentPriceFromProvider(?Carbon $from = null, bool $refill = false): void
     {
         $providerSuffix = 'getInvestmentPriceFrom' . str_replace([' ', '_'], '', ucwords($this->investment_price_provider_name, '_'));
         $this->{$providerSuffix}($from, $refill);
