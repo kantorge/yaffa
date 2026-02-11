@@ -104,11 +104,7 @@ enum TransactionType: string
      */
     public static function standardTypes(): array
     {
-        return [
-            self::WITHDRAWAL,
-            self::DEPOSIT,
-            self::TRANSFER,
-        ];
+        return array_filter(self::cases(), fn(self $type) => $type->isStandard());
     }
 
     /**
@@ -118,44 +114,32 @@ enum TransactionType: string
      */
     public static function investmentTypes(): array
     {
-        return [
-            self::BUY,
-            self::SELL,
-            self::ADD_SHARES,
-            self::REMOVE_SHARES,
-            self::DIVIDEND,
-            self::INTEREST_YIELD,
-        ];
+        return array_filter(self::cases(), fn(self $type) => $type->isInvestment());
     }
 
     /**
-     * Get all investment types that require an amount
+     * Get all investment types that require an amount to be recorded with the transaction.
+     * This is NOT based on the amount multiplier, but defined as an explicit list.
      *
      * @return array<TransactionType>
      */
     public static function investmentTypesWithAmount(): array
     {
         return [
-            self::BUY,
-            self::SELL,
             self::DIVIDEND,
             self::INTEREST_YIELD,
         ];
     }
 
     /**
-     * Get all investment types that require a quantity
+     * Get all investment types that require a quantity.
+     * This is based on the quantity multiplier being non-null, which indicates that shares are involved.
      *
      * @return array<TransactionType>
      */
     public static function investmentTypesWithQuantity(): array
     {
-        return [
-            self::BUY,
-            self::SELL,
-            self::ADD_SHARES,
-            self::REMOVE_SHARES,
-        ];
+        return array_filter(self::investmentTypes(), fn(self $type) => $type->quantityMultiplier() !== null);
     }
 
     /**
@@ -181,12 +165,9 @@ enum TransactionType: string
      */
     public static function all(): array
     {
-        $types = [];
-        foreach (self::cases() as $case) {
-            $types[$case->value] = $case->toArray();
-        }
-
-        return $types;
+        return collect(self::cases())
+            ->mapWithKeys(fn (self $case) => [$case->value => $case->toArray()])
+            ->all();
     }
 
     /**
