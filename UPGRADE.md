@@ -33,7 +33,11 @@ Before running any migrations, create a complete backup of your database.
 
 ```bash
 # Example for MySQL/MariaDB
+# On Linux/macOS:
 mysqldump -u username -p database_name > yaffa_backup_$(date +%Y%m%d).sql
+
+# On Windows (PowerShell):
+# mysqldump -u username -p database_name > "yaffa_backup_$(Get-Date -Format 'yyyyMMdd').sql"
 ```
 
 #### 2. Run the migrations
