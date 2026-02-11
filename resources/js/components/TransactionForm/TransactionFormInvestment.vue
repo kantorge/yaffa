@@ -1075,11 +1075,6 @@
       },
 
       onSubmit() {
-        // Convert transaction type from label to enum value before submission
-        const submissionData = {
-          ...this.form,
-        };
-
         // Editing an existing transaction needs PATCH method
         if (this.action === 'edit') {
           this.form
@@ -1087,7 +1082,7 @@
               window.route('api.transactions.updateInvestment', {
                 transaction: this.form.id,
               }),
-              submissionData,
+              this.form,
             )
             .then((response) => {
               this.$emit(
@@ -1103,10 +1098,7 @@
 
         // Any type of new transaction needs POST method
         this.form
-          .post(
-            window.route('api.transactions.storeInvestment'),
-            submissionData,
-          )
+          .post(window.route('api.transactions.storeInvestment'), this.form)
           .then(async (response) => {
             // Store price if enabled
             const investmentPriceStoredResult = await this.storePriceIfEnabled(
