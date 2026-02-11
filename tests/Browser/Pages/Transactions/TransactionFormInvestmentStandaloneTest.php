@@ -48,7 +48,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
             ->waitFor(self::ACCOUNT_DROPDOWN_SELECTOR, 10)
             ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
             // Select type
-            ->select('#transaction_type', 'Buy')
+            ->select('#transaction_type', 'buy')
             // Add quantity
             ->type('#transaction_quantity', '10')
             // Add price
@@ -238,7 +238,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Select investment
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 // Select type
-                ->select('#transaction_type', 'Sell')
+                ->select('#transaction_type', 'sell')
                 // Verify that dividend field is disabled
                 ->assertDisabled('#transaction_dividend')
                 // Add quantity
@@ -547,7 +547,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Add quantity
                 ->type('#transaction_quantity', '10')
                 // Add price - this should trigger the price check
@@ -582,7 +582,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 ->waitFor(self::INVESTMENT_DROPDOWN_SELECTOR, 10)
 
                 // Select transaction type
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 // Select account and investment
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
@@ -617,7 +617,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Fill the form
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_USD, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_USD, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '10')
                 ->type('#transaction_price', '35.75')
                 ->type('#transaction_commission', '5')
@@ -670,7 +670,7 @@ class TransactionFormInvestmentStandaloneTest extends DuskTestCase
                 // Fill the form
                 ->select2ExactSearch(self::ACCOUNT_DROPDOWN_SELECTOR, self::TEST_ACCOUNT_NAME_EUR, 10)
                 ->select2ExactSearch(self::INVESTMENT_DROPDOWN_SELECTOR, self::TEST_INVESTMENT_NAME_EUR, 10)
-                ->select('#transaction_type', 'Buy')
+                ->select('#transaction_type', 'buy')
                 ->type('#transaction_quantity', '5')
                 ->type('#transaction_price', '42.25')
                 ->type('#transaction_commission', '3')
