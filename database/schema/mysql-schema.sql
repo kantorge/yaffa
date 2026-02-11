@@ -488,7 +488,7 @@ CREATE TABLE `transactions` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned NOT NULL,
   `date` date DEFAULT NULL,
-  `transaction_type` enum('withdrawal','deposit','transfer','buy','sell','add_shares','remove_shares','dividend','unused_1','unused_2','interest_yield') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transaction_type` enum('withdrawal','deposit','transfer','buy','sell','add_shares','remove_shares','dividend','interest_yield') COLLATE utf8mb4_unicode_ci NOT NULL,
   `reconciled` tinyint(1) NOT NULL DEFAULT '0',
   `schedule` tinyint(1) NOT NULL DEFAULT '0',
   `budget` tinyint(1) NOT NULL DEFAULT '0',
