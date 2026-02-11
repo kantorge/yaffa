@@ -299,9 +299,7 @@
 
         return newDate.toLocaleDateString(this.locale);
       },
-      toFormattedCurrency(input, locale, currencySettings) {
-        return toFormattedCurrency(input, locale, currencySettings);
-      },
+      toFormattedCurrency,
       capitalize(string) {
         return string[0].toUpperCase() + string.slice(1);
       },

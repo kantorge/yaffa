@@ -23,6 +23,11 @@ loadSelect2Language(window.YAFFA.language);
 
 import 'jquery-csv';
 
+import { __, loadSelect2Language } from '../helpers';
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
+
 window.transactions = [];
 window.account_currency = {};
 window.unmatchedRows = [];
