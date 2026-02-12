@@ -17,5 +17,6 @@ class AiDocumentProcessingFailedEvent
     public function __construct(
         public AiDocument $document,
         public Exception $exception
-    ) {}
+    ) {
+    }
 }

@@ -64,7 +64,7 @@ class PdfExtractionService
     {
         try {
             $text = $this->extract($filePath);
-            return !empty(trim($text));
+            return !empty(mb_trim($text));
         } catch (Exception) {
             return false;
         }

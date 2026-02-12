@@ -302,17 +302,11 @@ class ReportApiController extends Controller implements HasMiddleware
 
         if ($transactionType === 'all' || $transactionType === 'investment') {
             // Add investment transaction results
-            // Get investment types with amount multipliers
-            $investmentTypesWithAmount = array_map(
-                fn ($type) => $type->value,
-                TransactionTypeEnum::investmentTypesWithAmount()
-            );
-
             $investmentTransactions = Transaction::with([
                 'currency',
             ])
                 ->byType('investment')
-                ->whereIn('transaction_type', $investmentTypesWithAmount)
+                ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithAmountValues())
                 ->where('user_id', $request->user()->id)
                 ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                 ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])

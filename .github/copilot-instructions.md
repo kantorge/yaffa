@@ -120,8 +120,10 @@ npx eslint resources/js --ext .js,.vue
 **IMPORTANT:** The automated test suite requires a MySQL database. Tests are configured in `phpunit.xml` and use environment variables from `.env.ci` or `.env.dusk.ci`.
 
 ```bash
-# Run PHPUnit tests (Unit + Feature tests, NO Dusk browser tests)
-vendor/bin/phpunit --testsuite AllNonDusk    # Uses testing database
+# Run PHPUnit tests (Unit and/or Feature tests, NO Dusk browser tests)
+vendor/bin/phpunit --testsuite Unit
+vendor/bin/phpunit --testsuite Feature
+vendor/bin/phpunit --testsuite Unit,Feature
 
 # Run Dusk browser tests (requires Chrome/Selenium)
 php artisan dusk:chrome-driver --detect      # First-time setup

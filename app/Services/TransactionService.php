@@ -18,6 +18,9 @@ class TransactionService
      */
     public function enterScheduleInstance(Transaction $transaction): void
     {
+        // Ensure the schedule is loaded
+        $transaction->loadMissing('transactionSchedule');
+
         // Clone the transaction using cloner
         /** @var Transaction $newTransaction */
         $newTransaction = $transaction->duplicate();

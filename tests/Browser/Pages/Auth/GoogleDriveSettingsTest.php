@@ -5,8 +5,10 @@ namespace Tests\Browser\Pages\Auth;
 use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('extended')]
 class GoogleDriveSettingsTest extends DuskTestCase
 {
     private const string VUE_COMPONENT_SELECTOR = '#googleDriveConfigForm';

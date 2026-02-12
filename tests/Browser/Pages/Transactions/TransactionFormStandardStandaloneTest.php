@@ -10,8 +10,10 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class TransactionFormStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

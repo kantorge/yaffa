@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use Illuminate\Console\Command;
+use Exception;
 
 class ProcessAiDocuments extends Command
 {
@@ -54,7 +55,7 @@ class ProcessAiDocuments extends Command
                 $dispatched++;
 
                 $this->line("✓ Dispatched processing job for document #{$document->id}");
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("✗ Failed to dispatch job for document #{$document->id}: {$e->getMessage()}");
             }
         }

@@ -447,7 +447,7 @@ Standard transaction example:
   },
   "date": "2023-09-05",
   "config_type": "standard",
-  "transaction_type_id": 1,
+  "transaction_type": "withdrawal",
   "config": {
     "amount_to": 4,
     "amount_from": 4,
@@ -468,7 +468,7 @@ Investment transaction example:
   "raw": { ... },
   "date": "2023-09-05",
   "config_type": "investment",
-  "transaction_type_id": 4,
+  "transaction_type": "sell",
   "config": {
     "account_id": 9,
     "investment_id": 144,
@@ -497,7 +497,7 @@ If not determined or used, it must be set to NULL, but never omitted.
   },
   "date": "YYYY-MM-DD|null: the identified date of the transaction, when it occurred",
   "config_type": "standard|investment: based on the transaction type",
-  "transaction_type_id": "number|null: the ID of the transaction type in YAFFA, or null if not determined",
+  "transaction_type": "string|null: one of 'deposit', 'withdrawal', 'transfer'; 'buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares'; or null if not determined",
   "config": "object, different structure based on config_type",
     // For standard transactions:
     {

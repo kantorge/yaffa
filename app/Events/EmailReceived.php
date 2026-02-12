@@ -9,7 +9,11 @@ use Illuminate\Queue\SerializesModels;
 
 class EmailReceived
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
-    public function __construct(public ReceivedMail $receivedMail) {}
+    public function __construct(public ReceivedMail $receivedMail)
+    {
+    }
 }

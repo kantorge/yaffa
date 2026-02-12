@@ -21,7 +21,7 @@ class CategoryLearningService
     public function normalize(string $description): string
     {
         // Lowercase, trim, and remove extra spaces
-        $normalized = mb_strtolower(trim($description));
+        $normalized = mb_strtolower(mb_trim($description));
 
         // Remove punctuation (but keep spaces)
         $normalized = preg_replace('/[^\w\s]/u', '', $normalized);

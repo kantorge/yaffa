@@ -4,9 +4,12 @@ namespace Tests\Browser\Pages\Accounts;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
+
+#[Group('extended')]
 class AccountListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

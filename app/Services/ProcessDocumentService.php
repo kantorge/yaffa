@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\OcrUnavailableException;
 use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
-use App\Models\TransactionType;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JsonException;
 
@@ -19,7 +18,8 @@ class ProcessDocumentService
         private TextExtractionService $textExtractor,
         private AssetMatchingService $assetMatchingService,
         private CategoryLearningService $categoryLearningService
-    ) {}
+    ) {
+    }
 
     /**
      * Process a document and extract transaction data
@@ -55,7 +55,6 @@ class ProcessDocumentService
 
             // Step 3: Determine transaction type
             $transactionType = Str::lower($rawData['transaction_type'] ?? 'withdrawal');
-            $transactionTypeId = $this->getTransactionTypeId($transactionType);
 
             // Step 4: Match assets based on transaction type
             $accountId = null;
@@ -63,7 +62,7 @@ class ProcessDocumentService
             $accountToId = null;
             $investmentId = null;
 
-            if (in_array($transactionType, ['buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares'])) {
+            if (in_array($transactionType, TransactionTypeEnum::investmentTypes())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
                     $accountId = $this->matchAccount($config, $user, $rawData['account']);
@@ -101,7 +100,6 @@ class ProcessDocumentService
             $transactionData = $this->buildTransactionData(
                 $rawData,
                 $transactionType,
-                $transactionTypeId,
                 $accountId,
                 $accountFromId,
                 $accountToId,
@@ -330,56 +328,24 @@ EOF;
     }
 
     /**
-     * Get transaction type ID from transaction type name
-     */
-    private function getTransactionTypeId(string $type): int
-    {
-        // Map AI response to transaction type names
-        $typeMap = [
-            'withdrawal' => 'withdrawal',
-            'deposit' => 'deposit',
-            'transfer' => 'transfer',
-            'buy' => 'buy',
-            'sell' => 'sell',
-            'dividend' => 'dividend',
-            'interest' => 'interest',
-            'add_shares' => 'add_shares',
-            'remove_shares' => 'remove_shares',
-        ];
-
-        $normalizedType = Str::lower($type);
-        $typeName = $typeMap[$normalizedType] ?? 'withdrawal';
-
-        $transactionType = TransactionType::where('name', $typeName)->first();
-
-        if (! $transactionType) {
-            Log::warning("Transaction type not found: {$typeName}, defaulting to withdrawal");
-            $transactionType = TransactionType::where('name', 'withdrawal')->firstOrFail();
-        }
-
-        return $transactionType->id;
-    }
-
-    /**
      * Build final transaction data structure
      */
     private function buildTransactionData(
         array $rawData,
         string $transactionType,
-        int $transactionTypeId,
         ?int $accountId,
         ?int $accountFromId,
         ?int $accountToId,
         ?int $investmentId,
         User $user
     ): array {
-        $isInvestment = in_array($transactionType, ['buy', 'sell', 'dividend', 'interest', 'add_shares', 'remove_shares']);
+        $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypes());
 
         $data = [
             'raw' => $rawData,
             'date' => $rawData['date'] ?? now()->format('Y-m-d'),
             'config_type' => $isInvestment ? 'investment' : 'standard',
-            'transaction_type_id' => $transactionTypeId,
+            'transaction_type' => $transactionType,
             'config' => [],
             'items' => [],
         ];
@@ -389,11 +355,11 @@ EOF;
             $data['config'] = [
                 'account_id' => $accountId,
                 'investment_id' => $investmentId,
-                'quantity' => in_array($transactionType, ['buy', 'sell', 'add_shares', 'remove_shares']) ? $rawData['quantity'] : null,
-                'price' => in_array($transactionType, ['buy', 'sell']) ? $rawData['price'] : null,
+                'quantity' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithQuantityValues()) ? $rawData['quantity'] : null,
+                'price' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithPriceValues()) ? $rawData['price'] : null,
                 'commission' => $rawData['commission'] ?? null,
                 'tax' => $rawData['tax'] ?? null,
-                'dividend' => in_array($transactionType, ['dividend', 'interest']) ? $rawData['amount'] : null,
+                'dividend' => in_array($transactionType, [TransactionTypeEnum::DIVIDEND->value, TransactionTypeEnum::INTEREST_YIELD->value]) ? $rawData['amount'] : null,
             ];
         } else {
             $amount = floatval($rawData['amount'] ?? 0);
