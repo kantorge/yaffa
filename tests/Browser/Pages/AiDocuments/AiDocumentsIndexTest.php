@@ -5,11 +5,10 @@ namespace Tests\Browser\Pages\AiDocuments;
 use App\Models\AiDocument;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class AiDocumentsIndexTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

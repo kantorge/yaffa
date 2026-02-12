@@ -3,11 +3,10 @@
 namespace Tests\Browser\Pages\Payees;
 
 use App\Models\User;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class PayeeMergeTest extends DuskTestCase
 {
     public function test_user_can_load_the_merge_payee_form(): void

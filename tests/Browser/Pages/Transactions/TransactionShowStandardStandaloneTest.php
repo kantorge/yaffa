@@ -5,11 +5,10 @@ namespace Tests\Browser\Pages\Transactions;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group critical
- */
+#[Group('critical')]
 class TransactionShowStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

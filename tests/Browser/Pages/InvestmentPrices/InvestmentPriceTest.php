@@ -5,8 +5,10 @@ namespace Tests\Browser\Pages\InvestmentPrices;
 use App\Models\Investment;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('critical')]
 class InvestmentPriceTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

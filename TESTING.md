@@ -117,12 +117,12 @@ The project uses multiple GitHub Actions workflows for efficient testing:
 
 #### 3. Critical Dusk Tests Workflow (`test-dusk-critical.yml`)
 - **Triggers**: Push to non-main branches, PRs (when Browser tests, resources, or app code changes)
-- **Runs**: Critical Dusk tests only (`@group critical`)
+- **Runs**: Critical Dusk tests only (`#[Group('critical')]`)
 - **Duration**: ~5-8 minutes
 
 #### 4. Extended Dusk Tests Workflow (`test-dusk-extended.yml`)
 - **Triggers**: Push to `develop` branch only
-- **Runs**: Extended Dusk tests only (`@group extended`)
+- **Runs**: Extended Dusk tests only (`#[Group('extended')]`)
 - **Duration**: ~7-10 minutes
 
 #### 5. Legacy Automated Tests Workflow (`automated-tests.yml`)
@@ -134,7 +134,7 @@ The project uses multiple GitHub Actions workflows for efficient testing:
 1. **Write Unit tests first**: Before creating Feature or Dusk tests, ensure business logic is covered by Unit tests
 2. **Prefer lower-level tests**: Feature tests are faster than Dusk tests, Unit tests are faster than Feature tests
 3. **Keep Dusk tests focused**: Test UI interactions and user journeys, not backend validation
-4. **Use appropriate test groups**: Mark Dusk tests as `@group critical` or `@group extended`
+4. **Use appropriate test groups**: Mark Dusk tests with `#[Group('critical')]` or `#[Group('extended')]` attributes
 5. **Run tests incrementally**: Don't run the full suite on every change; run only relevant test groups
 6. **Validate before committing**: Run at least Unit and Feature tests locally before pushing
 
@@ -155,8 +155,9 @@ The project uses multiple GitHub Actions workflows for efficient testing:
 ### Adding a Dusk Test
 1. Create test file in `tests/Browser/Pages/`
 2. Extend `Tests\DuskTestCase`
-3. Add `@group critical` or `@group extended` annotation to class docblock
-4. Run: `php artisan dusk tests/Browser/Pages/YourNewTest.php`
+3. Add `#[Group('critical')]` or `#[Group('extended')]` attribute to class
+4. Import the Group attribute: `use PHPUnit\Framework\Attributes\Group;`
+5. Run: `php artisan dusk tests/Browser/Pages/YourNewTest.php`
 
 Example:
 ```php
@@ -164,11 +165,10 @@ Example:
 
 namespace Tests\Browser\Pages\YourFeature;
 
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group critical
- */
+#[Group('critical')]
 class YourFeatureTest extends DuskTestCase
 {
     public function test_user_can_do_something(): void

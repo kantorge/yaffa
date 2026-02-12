@@ -7,13 +7,12 @@ use App\Models\Category;
 use App\Models\Payee;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class CategoryListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

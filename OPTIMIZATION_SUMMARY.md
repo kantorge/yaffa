@@ -33,7 +33,7 @@ This document summarizes the changes made to optimize the YAFFA test suite while
 - API endpoints (get, reconcile, scheduled items)
 
 ### 3. Dusk Test Categorization
-**Added `@group` annotations to all 25 Dusk test files:**
+**Added `#[Group()]` PHP attributes to all 25 Dusk test files:**
 
 #### Critical Tests (11 files, ~68 test methods)
 - Transaction forms: Standard & Investment (Modal + Standalone)

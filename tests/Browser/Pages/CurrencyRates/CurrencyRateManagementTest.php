@@ -5,11 +5,10 @@ namespace Tests\Browser\Pages\CurrencyRates;
 use App\Models\CurrencyRate;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class CurrencyRateManagementTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

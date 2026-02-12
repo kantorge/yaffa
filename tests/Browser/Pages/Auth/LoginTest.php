@@ -5,11 +5,10 @@ namespace Tests\Browser\Pages\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class LoginTest extends DuskTestCase
 {
     use DatabaseMigrations;

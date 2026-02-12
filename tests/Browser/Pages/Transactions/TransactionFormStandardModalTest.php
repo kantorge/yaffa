@@ -4,11 +4,10 @@ namespace Tests\Browser\Pages\Transactions;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group critical
- */
+#[Group('critical')]
 class TransactionFormStandardModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

@@ -7,11 +7,10 @@ use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
-/**
- * @group critical
- */
+#[Group('critical')]
 class TransactionShowInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

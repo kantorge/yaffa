@@ -6,13 +6,12 @@ use App\Models\Investment;
 use App\Models\InvestmentGroup;
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
 
-/**
- * @group extended
- */
+#[Group('extended')]
 class InvestmentGroupListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
