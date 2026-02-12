@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "337984bf7f3be1bac6947bcb9a79bc5d",
+    "content-hash": "f493a04fa74dd06f5a85b4599d5c0805",
     "packages": [
         {
             "name": "beyondcode/laravel-mailbox",
@@ -12167,23 +12167,23 @@
         },
         {
             "name": "roquie/laravel-dusk-select2",
-            "version": "dev-feature/search_selector_delay",
+            "version": "dev-custom_package",
             "source": {
                 "type": "git",
                 "url": "https://github.com/kantorge/laravel-dusk-select2.git",
-                "reference": "a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4"
+                "reference": "560b9b5b1a22adec487ac257405060c3b1c6e1d9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4",
-                "reference": "a38f4dbd50f5a0f341af1b77e50d8fa19e7992e4",
+                "url": "https://api.github.com/repos/kantorge/laravel-dusk-select2/zipball/560b9b5b1a22adec487ac257405060c3b1c6e1d9",
+                "reference": "560b9b5b1a22adec487ac257405060c3b1c6e1d9",
                 "shasum": ""
             },
             "require-dev": {
-                "laravel/dusk": "^5 || ^6",
-                "php": ">=7.1",
-                "phpunit/phpunit": "^8 || ^9",
-                "symfony/var-dumper": "^4 || ^5"
+                "laravel/dusk": "^6.19",
+                "php": ">=8.1",
+                "phpunit/phpunit": "^9.5",
+                "symfony/var-dumper": "^5.4"
             },
             "type": "library",
             "autoload": {
@@ -12207,9 +12207,9 @@
             ],
             "description": "Select2.js support for the Laravel Dusk testing.",
             "support": {
-                "source": "https://github.com/kantorge/laravel-dusk-select2/tree/feature/search_selector_delay"
+                "source": "https://github.com/kantorge/laravel-dusk-select2/tree/custom_package"
             },
-            "time": "2023-04-29T12:02:10+00:00"
+            "time": "2026-02-12T16:57:10+00:00"
         },
         {
             "name": "sebastian/cli-parser",

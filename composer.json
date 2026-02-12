@@ -52,7 +52,7 @@
         "nikaia/translation-sheet": "dev-feature/config_empty_behavior",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.3",
-        "roquie/laravel-dusk-select2": "dev-feature/search_selector_delay",
+        "roquie/laravel-dusk-select2": "dev-custom_package",
         "spatie/db-dumper": "^3.8"
     },
     "config": {
