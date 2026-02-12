@@ -23,8 +23,11 @@ on:
     branches:
       - develop
     paths:
+      # The tests themselves have changed
       - 'tests/Browser/**'
+      # The test configurations has changed
       - '.env.dusk.ci'
+      # The action itself has changed
       - '.github/workflows/test-dusk-extended.yml'
 
   workflow_dispatch:
