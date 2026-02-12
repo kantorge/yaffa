@@ -1,21 +1,9 @@
 name: Feature Tests
 
 on:
-  push:
+  pull_request:
     branches-ignore:
       - main
-    paths:
-      - 'app/**'
-      - 'tests/Feature/**'
-      - 'database/factories/**'
-      - 'database/migrations/**'
-      - 'routes/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'phpunit.xml'
-      - '.github/workflows/test-feature.yml'
-
-  pull_request:
     paths:
       - 'app/**'
       - 'tests/Feature/**'

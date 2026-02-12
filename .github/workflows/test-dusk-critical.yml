@@ -1,25 +1,9 @@
 name: Dusk Tests (Critical)
 
 on:
-  push:
+  pull_request:
     branches-ignore:
       - main
-    paths:
-      - 'app/**'
-      - 'tests/Browser/**'
-      - 'tests/DuskTestCase.php'
-      - 'database/**'
-      - 'resources/**'
-      - 'routes/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.js'
-      - '.env.dusk.ci'
-      - '.github/workflows/test-dusk-critical.yml'
-
-  pull_request:
     paths:
       - 'app/**'
       - 'tests/Browser/**'
