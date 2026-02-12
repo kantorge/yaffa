@@ -175,9 +175,7 @@ class TransactionController extends Controller implements HasMiddleware
         // Set the transaction type enum value
         $defaultTransactionType = $configType === 'investment' ? TransactionTypeEnum::BUY : TransactionTypeEnum::WITHDRAWAL;
 
-        if (array_key_exists('transaction_type_id', $transactionData)) {
-            $transaction->transaction_type = TransactionTypeEnum::tryFrom($transactionData['transaction_type_id']) ?? $defaultTransactionType;
-        } elseif (array_key_exists('transaction_type', $transactionData) && is_array($transactionData['transaction_type'])) {
+        if (array_key_exists('transaction_type', $transactionData) && is_array($transactionData['transaction_type'])) {
             // Legacy format with transaction_type as array with 'name' key
             $transactionType = TransactionTypeEnum::tryFrom($transactionData['transaction_type']['name']);
             $transaction->transaction_type = $transactionType ?? $defaultTransactionType;

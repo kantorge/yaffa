@@ -355,8 +355,8 @@ EOF;
             $data['config'] = [
                 'account_id' => $accountId,
                 'investment_id' => $investmentId,
-                'quantity' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithQuantity()) ? $rawData['quantity'] : null,
-                'price' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithPrice()) ? $rawData['price'] : null,
+                'quantity' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithQuantityValues()) ? $rawData['quantity'] : null,
+                'price' => in_array($transactionType, TransactionTypeEnum::investmentTypesWithPriceValues()) ? $rawData['price'] : null,
                 'commission' => $rawData['commission'] ?? null,
                 'tax' => $rawData['tax'] ?? null,
                 'dividend' => in_array($transactionType, [TransactionTypeEnum::DIVIDEND->value, TransactionTypeEnum::INTEREST_YIELD->value]) ? $rawData['amount'] : null,

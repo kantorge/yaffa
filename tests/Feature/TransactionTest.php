@@ -337,7 +337,7 @@ class TransactionTest extends TestCase
 
         $draftData = [
             'config_type' => 'standard',
-            'transaction_type_id' => TransactionTypeEnum::WITHDRAWAL->value,
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
             'date' => now()->format('Y-m-d'),
             'config' => [
                 'account_from_id' => $account->id,
