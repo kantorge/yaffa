@@ -10,6 +10,9 @@ use Carbon\Carbon;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+/**
+ * @group critical
+ */
 class TransactionShowInvestmentModalTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

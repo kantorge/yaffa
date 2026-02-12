@@ -7,6 +7,10 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
+
+/**
+ * @group extended
+ */
 class AccountListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

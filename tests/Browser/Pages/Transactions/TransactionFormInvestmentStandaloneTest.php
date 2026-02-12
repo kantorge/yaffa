@@ -9,6 +9,9 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 use Throwable;
 
+/**
+ * @group critical
+ */
 class TransactionFormInvestmentStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

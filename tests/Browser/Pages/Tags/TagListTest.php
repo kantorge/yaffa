@@ -6,6 +6,9 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+/**
+ * @group extended
+ */
 class TagListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

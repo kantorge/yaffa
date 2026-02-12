@@ -9,6 +9,9 @@ use Throwable;
 
 const QUICK_ACTION_BAR_SELECTOR = '#quick-action-bar';
 
+/**
+ * @group extended
+ */
 class QuickActionBarTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

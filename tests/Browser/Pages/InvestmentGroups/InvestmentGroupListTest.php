@@ -10,6 +10,9 @@ use Tests\DuskTestCase;
 
 const TABLE_SELECTOR = '#table';
 
+/**
+ * @group extended
+ */
 class InvestmentGroupListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

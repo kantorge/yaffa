@@ -7,6 +7,9 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+/**
+ * @group extended
+ */
 class CurrencyRateManagementTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

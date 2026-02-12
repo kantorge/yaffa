@@ -5,6 +5,9 @@ namespace Tests\Browser\Pages\Partials;
 use App\Models\User;
 use Tests\DuskTestCase;
 
+/**
+ * @group extended
+ */
 class DataLayerTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

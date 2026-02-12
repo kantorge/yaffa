@@ -7,6 +7,9 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+/**
+ * @group critical
+ */
 class TransactionShowStandardStandaloneTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

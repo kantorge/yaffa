@@ -7,6 +7,9 @@ use App\Models\User;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+/**
+ * @group extended
+ */
 class GoogleDriveSettingsTest extends DuskTestCase
 {
     private const string VUE_COMPONENT_SELECTOR = '#googleDriveConfigForm';
