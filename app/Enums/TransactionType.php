@@ -142,6 +142,14 @@ enum TransactionType: string
         return array_filter(self::investmentTypes(), fn(self $type) => $type->quantityMultiplier() !== null);
     }
 
+    /** Get all investment types that require a price
+     * This is a manual list
+     */
+    public static function investmentTypesWithPrice(): array
+    {
+        return [ self::BUY, self::SELL, ];
+    }
+
     /**
      * Convert to array for JSON serialization
      *
