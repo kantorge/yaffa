@@ -76,6 +76,8 @@ class TransactionApiController extends Controller implements HasMiddleware
          * @get('/api/transaction/{transaction}')
          * @middlewares('api', 'auth:sanctum', 'verified')
          */
+        Gate::authorize('view', $transaction);
+
         $transaction->loadDetails();
 
         return response()->json(

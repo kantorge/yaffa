@@ -15,5 +15,6 @@ class AiDocumentProcessedEvent
 
     public function __construct(
         public AiDocument $document
-    ) {}
+    ) {
+    }
 }

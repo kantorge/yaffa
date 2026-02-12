@@ -4,8 +4,10 @@ namespace Tests\Browser\Pages\Tags;
 
 use App\Models\User;
 use Laravel\Dusk\Browser;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('extended')]
 class TagListTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

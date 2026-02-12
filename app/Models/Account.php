@@ -154,7 +154,7 @@ class Account extends Model
             )
             ->where('transactions.schedule', 0)
             ->where('transactions.config_type', 'investment')
-            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->whereIn('transactions.transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->where('transaction_details_investment.account_id', $this->config->id)
             ->get();
     }

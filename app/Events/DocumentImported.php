@@ -9,7 +9,11 @@ use Illuminate\Queue\SerializesModels;
 
 class DocumentImported
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
-    public function __construct(public AiDocument $aiDocument) {}
+    public function __construct(public AiDocument $aiDocument)
+    {
+    }
 }

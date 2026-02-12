@@ -414,7 +414,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
             // Filter items where the transaction type has a quantity operator
-            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->get();
 
         // Get all fact transactions for this account, as it is used as a baseline for the forecast
@@ -430,7 +430,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
                 fn ($query) => $query->where('account_id', $this->accountEntity->id)
             )
             // Filter items where the transaction type has a quantity operator
-            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantity())
+            ->whereIn('transaction_type', TransactionTypeEnum::investmentTypesWithQuantityValues())
             ->get();
 
         // Get all instances of the schedules, added to a new transactions collection

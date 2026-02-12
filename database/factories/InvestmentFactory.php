@@ -35,6 +35,12 @@ class InvestmentFactory extends Factory
             $baseAttributes['investment_group_id'] = $user->investmentGroups()->inRandomOrder()->first()->id;
             $baseAttributes['currency_id'] = $user->currencies()->inRandomOrder()->first()->id;
             $baseAttributes['user_id'] = $user->id;
+        } else {
+            // Otherwise, create a new user and related assets
+            $user = User::factory()->create();
+            $baseAttributes['investment_group_id'] = InvestmentGroup::factory()->for($user)->create()->id;
+            $baseAttributes['currency_id'] = Currency::factory()->for($user)->create()->id;
+            $baseAttributes['user_id'] = $user->id;
         }
 
         return $baseAttributes;

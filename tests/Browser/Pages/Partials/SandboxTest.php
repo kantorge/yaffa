@@ -3,8 +3,10 @@
 namespace Tests\Browser\Pages\Partials;
 
 use App\Models\User;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\DuskTestCase;
 
+#[Group('extended')]
 class SandboxTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;

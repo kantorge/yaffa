@@ -3,10 +3,9 @@
 namespace Tests\Unit\Models;
 
 use App\Models\AiProviderConfig;
-use App\Models\User;
-use Database\Factories\AiProviderConfigFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use DB;
 
 class AiProviderConfigTest extends TestCase
 {
@@ -18,7 +17,7 @@ class AiProviderConfigTest extends TestCase
         $config = AiProviderConfig::factory()->create(['api_key' => $plainKey]);
 
         // Verify that stored value is different from plaintext (encrypted)
-        $rawValue = \DB::table('ai_provider_configs')
+        $rawValue = DB::table('ai_provider_configs')
             ->where('id', $config->id)
             ->value('api_key');
 
@@ -26,7 +25,7 @@ class AiProviderConfigTest extends TestCase
         $this->assertNotEquals($plainKey, $rawValue);
         // Encrypted values are base64 encoded, so they contain = or + or /
         $this->assertTrue(
-            strpos($rawValue, '=') !== false || strpos($rawValue, '+') !== false || strpos($rawValue, '/') !== false,
+            str_contains($rawValue, '=')   || str_contains($rawValue, '+')   || str_contains($rawValue, '/'),
             'Encrypted value should be base64 encoded'
         );
     }
