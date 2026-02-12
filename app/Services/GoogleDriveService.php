@@ -56,7 +56,6 @@ class GoogleDriveService
      * @param string $fileId
      * @param array $credentials
      * @param string $destination
-     * @return void
      */
     public function downloadFile(string $fileId, array $credentials, string $destination): void
     {
@@ -71,7 +70,6 @@ class GoogleDriveService
      *
      * @param string $fileId
      * @param array $credentials
-     * @return void
      */
     public function deleteFile(string $fileId, array $credentials): void
     {

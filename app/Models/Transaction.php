@@ -28,7 +28,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int $id
  * @property int $user_id
  * @property \Illuminate\Support\Carbon|null $date
- * @property \App\Enums\TransactionType $transaction_type
+ * @property TransactionTypeEnum $transaction_type
  * @property bool $reconciled
  * @property bool $schedule
  * @property bool $budget

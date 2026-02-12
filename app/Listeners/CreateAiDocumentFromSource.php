@@ -125,7 +125,7 @@ class CreateAiDocumentFromSource implements ShouldQueue
         // Clean up multiple spaces and newlines
         $html = preg_replace('/\s+/', ' ', $html);
 
-        return trim($html);
+        return mb_trim($html);
     }
 
     /**

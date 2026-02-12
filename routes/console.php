@@ -40,7 +40,7 @@ if (config('yaffa.runs_scheduler')) {
     Schedule::command('cache:prune-stale-tags')->hourly();
 
     // Google Drive monitoring job - schedule will be determined by the job itself
-    Schedule::job(new GoogleDriveMonitorJob)->everyMinute();
+    Schedule::job(new GoogleDriveMonitorJob())->everyMinute();
 
     // Process AI documents ready for processing
     Schedule::command(ProcessAiDocuments::class)->everyMinute();

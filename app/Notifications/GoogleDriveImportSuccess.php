@@ -22,7 +22,7 @@ class GoogleDriveImportSuccess extends Notification
 
     public function toMail($notifiable)
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject(__('Google Drive Import Succeeded'))
             ->line(__('Your Google Drive import completed successfully for folder: :folder', ['folder' => $this->config->folder_id]))
             ->line(__('You can now review the imported documents.'));

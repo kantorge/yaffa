@@ -22,7 +22,7 @@ class GoogleDriveImportFailed extends Notification
 
     public function toMail($notifiable)
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject(__('Google Drive Import Failed'))
             ->line(__('Your Google Drive import failed for folder: :folder', ['folder' => $this->config->folder_id]))
             ->line(__('Error: :error', ['error' => $this->error]))

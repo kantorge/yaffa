@@ -32,10 +32,10 @@ class TransactionApiControllerTest extends TestCase
             ->create(['user_id' => $this->user->id]);
 
         $this->getJson("/api/transaction/{$transaction->id}")
-            ->assertStatus(Response::HTTP_UNAUTHORIZED);
+            ->assertStatus(Response::HTTP_FORBIDDEN);
 
         $this->putJson("/api/transaction/{$transaction->id}/reconciled/1")
-            ->assertStatus(Response::HTTP_UNAUTHORIZED);
+            ->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -85,7 +85,7 @@ class TransactionApiControllerTest extends TestCase
         // Attempting to access should fail due to route model binding with user scope
         $response = $this->getJson("/api/transaction/{$transaction->id}");
 
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -149,7 +149,7 @@ class TransactionApiControllerTest extends TestCase
 
         $response = $this->putJson("/api/transaction/{$transaction->id}/reconciled/1");
 
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
 
         // Verify transaction was not reconciled
         $this->assertFalse($transaction->fresh()->reconciled);
@@ -167,14 +167,16 @@ class TransactionApiControllerTest extends TestCase
             ->withdrawal_schedule($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        $response = $this->getJson('/api/transactions/get_scheduled_items/standard');
+        $response = $this->getJson('/api/transactions/get_scheduled_items/schedule');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure([
-            '*' => [
-                'id',
-                'date',
-                'transaction_type',
+            'transactions' => [
+                '*' => [
+                    'id',
+                    'date',
+                    'transaction_type',
+                ],
             ],
         ]);
     }
@@ -186,7 +188,7 @@ class TransactionApiControllerTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $response = $this->getJson('/api/transactions/get_scheduled_items/standard?category_required=1');
+        $response = $this->getJson('/api/transactions/get_scheduled_items/schedule?category_required=1');
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([]);

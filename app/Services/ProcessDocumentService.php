@@ -18,7 +18,8 @@ class ProcessDocumentService
         private TextExtractionService $textExtractor,
         private AssetMatchingService $assetMatchingService,
         private CategoryLearningService $categoryLearningService
-    ) {}
+    ) {
+    }
 
     /**
      * Process a document and extract transaction data

@@ -6,6 +6,7 @@ use App\Models\AiProviderConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use DB;
 
 class AiProviderConfigApiControllerTest extends TestCase
 {
@@ -28,7 +29,8 @@ class AiProviderConfigApiControllerTest extends TestCase
     {
         $response = $this->getJson('/api/ai/config');
         // Unauthenticated requests return 403 when authorization check fails
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(401),
                 $this->equalTo(403)
@@ -44,7 +46,8 @@ class AiProviderConfigApiControllerTest extends TestCase
             'api_key' => 'sk-test-1234567890abcdefghij',
         ]);
         // Unauthenticated requests return 403 when authorization check fails
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(401),
                 $this->equalTo(403)
@@ -57,7 +60,8 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config = AiProviderConfig::factory()->create();
         $response = $this->patchJson("/api/ai/config/{$config->id}");
         // Unauthenticated requests return 403 when authorization check fails
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(401),
                 $this->equalTo(403)
@@ -70,7 +74,8 @@ class AiProviderConfigApiControllerTest extends TestCase
         $config = AiProviderConfig::factory()->create();
         $response = $this->deleteJson("/api/ai/config/{$config->id}");
         // Unauthenticated requests return 403 when authorization check fails
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(401),
                 $this->equalTo(403)
@@ -99,7 +104,8 @@ class AiProviderConfigApiControllerTest extends TestCase
             ]);
 
         // Should not find the resource since it's not the user's
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(403),
                 $this->equalTo(404)
@@ -115,7 +121,8 @@ class AiProviderConfigApiControllerTest extends TestCase
             ->deleteJson("/api/ai/config/{$config->id}");
 
         // Should not find the resource since it's not the user's
-        $this->assertThat($response->status(),
+        $this->assertThat(
+            $response->status(),
             $this->logicalOr(
                 $this->equalTo(403),
                 $this->equalTo(404)
@@ -212,7 +219,7 @@ class AiProviderConfigApiControllerTest extends TestCase
         $response->assertStatus(201);
 
         // Verify encrypted value in database differs from plaintext
-        $rawValue = \DB::table('ai_provider_configs')
+        $rawValue = DB::table('ai_provider_configs')
             ->where('user_id', $this->user->id)
             ->value('api_key');
 

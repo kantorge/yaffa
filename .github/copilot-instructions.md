@@ -121,7 +121,8 @@ npx eslint resources/js --ext .js,.vue
 
 ```bash
 # Run PHPUnit tests (Unit + Feature tests, NO Dusk browser tests)
-vendor/bin/phpunit --testsuite AllNonDusk    # Uses testing database
+vendor/bin/phpunit --testsuite Unit
+vendor/bin/phpunit --testsuite Feature
 
 # Run Dusk browser tests (requires Chrome/Selenium)
 php artisan dusk:chrome-driver --detect      # First-time setup
@@ -388,7 +389,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Constructors
 
 - Use PHP 8 constructor property promotion in `__construct()`.
-    - <code-snippet>public function __construct(public GitHub $github) { }</code-snippet>
+  - <code-snippet>public function \_\_construct(public GitHub $github) { }</code-snippet>
 - Do not allow empty `__construct()` methods with zero parameters unless the constructor is private.
 
 ## Type Declarations
@@ -423,10 +424,10 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Start services using `vendor/bin/sail up -d` and stop them with `vendor/bin/sail stop`.
 - Open the application in the browser by running `vendor/bin/sail open`.
 - Always prefix PHP, Artisan, Composer, and Node commands with `vendor/bin/sail`. Examples:
-    - Run Artisan Commands: `vendor/bin/sail artisan migrate`
-    - Install Composer packages: `vendor/bin/sail composer install`
-    - Execute Node commands: `vendor/bin/sail npm run dev`
-    - Execute PHP scripts: `vendor/bin/sail php [script]`
+  - Run Artisan Commands: `vendor/bin/sail artisan migrate`
+  - Install Composer packages: `vendor/bin/sail composer install`
+  - Execute Node commands: `vendor/bin/sail npm run dev`
+  - Execute PHP scripts: `vendor/bin/sail php [script]`
 - View all available Sail commands by running `vendor/bin/sail` without arguments.
 
 === tests rules ===
@@ -540,4 +541,4 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - To run all tests: `vendor/bin/sail artisan test --compact`.
 - To run all tests in a file: `vendor/bin/sail artisan test --compact tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `vendor/bin/sail artisan test --compact --filter=testName` (recommended after making a change to a related file).
-</laravel-boost-guidelines>
+  </laravel-boost-guidelines>

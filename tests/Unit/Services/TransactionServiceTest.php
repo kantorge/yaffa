@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Jobs\CalculateAccountMonthlySummary;
 use App\Models\Transaction;
 use App\Models\User;
@@ -264,8 +263,16 @@ class TransactionServiceTest extends TestCase
 
         // Set a specific next date for the schedule
         $scheduledTransaction->transactionSchedule->update([
+            'start_date' => now(),
             'next_date' => now()->addDays(7),
+            'end_date' => null,
+            'frequency' => 'WEEKLY',
+            'interval' => 1,
+            'count' => null,
         ]);
+
+        $scheduledTransaction->transactionSchedule->refresh();
+        $originalNextDate = $scheduledTransaction->transactionSchedule->next_date;
 
         $originalTransactionCount = Transaction::count();
 
@@ -274,11 +281,14 @@ class TransactionServiceTest extends TestCase
         // Assert a new transaction was created
         $this->assertEquals($originalTransactionCount + 1, Transaction::count());
 
-        // Get the new transaction
-        $newTransaction = Transaction::latest()->first();
+        // Get the new transaction (exclude scheduled ones to get the newly cloned one)
+        $newTransaction = Transaction::where('schedule', false)
+            ->where('user_id', $this->user->id)
+            ->latest('id')
+            ->first();
 
         // Assert the new transaction has correct properties
-        $this->assertEquals($scheduledTransaction->transactionSchedule->next_date->format('Y-m-d'), $newTransaction->date->format('Y-m-d'));
+        $this->assertEquals($originalNextDate?->format('Y-m-d'), $newTransaction->date?->format('Y-m-d'));
         $this->assertFalse($newTransaction->schedule);
         $this->assertFalse($newTransaction->budget);
         $this->assertEquals($scheduledTransaction->user_id, $newTransaction->user_id);

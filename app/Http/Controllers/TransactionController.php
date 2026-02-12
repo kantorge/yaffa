@@ -6,7 +6,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
 use App\Models\TransactionDetailInvestment;
-use App\Models\TransactionType;
+use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
 use App\Models\TransactionDetailStandard;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -169,20 +169,21 @@ class TransactionController extends Controller implements HasMiddleware
         $transactionData = json_decode($request->input('transaction'), true) ?? [];
         $configType = $transactionData['config_type'] ?? 'standard';
 
-        $transactionTypeName = null;
-        if (array_key_exists('transaction_type_id', $transactionData)) {
-            $transactionType = TransactionType::find($transactionData['transaction_type_id']);
-            $transactionTypeName = $transactionType?->name;
-        }
-
         // Make a new transaction from the draft
         $transaction = new Transaction($transactionData);
 
-        $defaultTransactionType = $configType === 'investment' ? 'Buy' : 'withdrawal';
-        $transaction->transaction_type = [
-            'name' => $transactionTypeName
-                ?? ($transactionData['transaction_type']['name'] ?? $defaultTransactionType),
-        ];
+        // Set the transaction type enum value
+        $defaultTransactionType = $configType === 'investment' ? TransactionTypeEnum::BUY : TransactionTypeEnum::WITHDRAWAL;
+
+        if (array_key_exists('transaction_type_id', $transactionData)) {
+            $transaction->transaction_type = TransactionTypeEnum::tryFrom($transactionData['transaction_type_id']) ?? $defaultTransactionType;
+        } elseif (array_key_exists('transaction_type', $transactionData) && is_array($transactionData['transaction_type'])) {
+            // Legacy format with transaction_type as array with 'name' key
+            $transactionType = TransactionTypeEnum::tryFrom($transactionData['transaction_type']['name']);
+            $transaction->transaction_type = $transactionType ?? $defaultTransactionType;
+        } else {
+            $transaction->transaction_type = $defaultTransactionType;
+        }
 
         // Ensure that a config relation exists, even if it's empty
         if (!array_key_exists('config', $transactionData)) {

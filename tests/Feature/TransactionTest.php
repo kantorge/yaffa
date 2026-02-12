@@ -74,9 +74,7 @@ class TransactionTest extends TestCase
      */
     public function test_user_redirected_when_no_accounts_exist(): void
     {
-        // Delete any accounts that might have been created
-        $this->user->accounts()->delete();
-
+        // User has no accounts (RefreshDatabase ensures clean state)
         $response = $this->actingAs($this->user)
             ->get(route('transaction.create', ['type' => 'standard']));
 
@@ -88,18 +86,16 @@ class TransactionTest extends TestCase
      */
     public function test_user_redirected_when_no_investments_exist(): void
     {
-        // Create an account so we pass the first check
+        // Create an active account so we pass the first check
         AccountEntity::factory()
             ->for($this->user)
             ->for(
                 \App\Models\Account::factory()->withUser($this->user),
                 'config'
             )
-            ->create();
+            ->create(['active' => true]);
 
-        // Delete any investments
-        $this->user->investments()->delete();
-
+        // User has no investments (RefreshDatabase ensures clean state)
         $response = $this->actingAs($this->user)
             ->get(route('transaction.create', ['type' => 'investment']));
 
@@ -111,14 +107,14 @@ class TransactionTest extends TestCase
      */
     public function test_user_can_access_standard_transaction_create_form(): void
     {
-        // Create necessary account
+        // Create necessary active account
         AccountEntity::factory()
             ->for($this->user)
             ->for(
                 \App\Models\Account::factory()->withUser($this->user),
                 'config'
             )
-            ->create();
+            ->create(['active' => true]);
 
         $response = $this->actingAs($this->user)
             ->get(route('transaction.create', ['type' => 'standard']));
@@ -134,18 +130,18 @@ class TransactionTest extends TestCase
      */
     public function test_user_can_access_investment_transaction_create_form(): void
     {
-        // Create necessary account and investment
+        // Create necessary active account and active investment
         AccountEntity::factory()
             ->for($this->user)
             ->for(
                 \App\Models\Account::factory()->withUser($this->user),
                 'config'
             )
-            ->create();
+            ->create(['active' => true]);
 
         \App\Models\Investment::factory()
             ->for($this->user)
-            ->create();
+            ->create(['active' => true]);
 
         $response = $this->actingAs($this->user)
             ->get(route('transaction.create', ['type' => 'investment']));
@@ -224,9 +220,14 @@ class TransactionTest extends TestCase
             ->withdrawal_schedule($this->user)
             ->create(['user_id' => $this->user->id]);
 
-        // Set a next_date for the schedule
+        // Ensure schedule has a next_date
         $transaction->transactionSchedule->update([
+            'start_date' => now(),
             'next_date' => now()->addDays(7),
+            'end_date' => null,
+            'frequency' => 'WEEKLY',
+            'interval' => 1,
+            'count' => null,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -291,8 +292,12 @@ class TransactionTest extends TestCase
 
         $originalNextDate = now()->addDays(7);
         $transaction->transactionSchedule->update([
+            'start_date' => now()->subWeek(),
             'next_date' => $originalNextDate,
-            'frequency' => 'monthly',
+            'end_date' => null,
+            'frequency' => 'WEEKLY',
+            'interval' => 1,
+            'count' => null,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -313,14 +318,14 @@ class TransactionTest extends TestCase
      */
     public function test_user_can_create_transaction_from_draft(): void
     {
-        // Create necessary account
+        // Create necessary active account
         $account = AccountEntity::factory()
             ->for($this->user)
             ->for(
                 \App\Models\Account::factory()->withUser($this->user),
                 'config'
             )
-            ->create();
+            ->create(['active' => true]);
 
         $payee = AccountEntity::factory()
             ->for($this->user)
@@ -328,7 +333,7 @@ class TransactionTest extends TestCase
                 \App\Models\Payee::factory()->withUser($this->user),
                 'config'
             )
-            ->create();
+            ->create(['active' => true]);
 
         $draftData = [
             'config_type' => 'standard',

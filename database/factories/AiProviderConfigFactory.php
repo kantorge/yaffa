@@ -14,7 +14,7 @@ class AiProviderConfigFactory extends Factory
     {
         $providers = array_keys(config('ai-documents.providers', []));
         $provider = $this->faker->randomElement($providers);
-        $modelsConfig = config('ai-documents.providers.'.$provider.'.models', []);
+        $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
         $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
         $model = $this->faker->randomElement($models);
         $supportsVision = !array_is_list($modelsConfig)
@@ -24,7 +24,7 @@ class AiProviderConfigFactory extends Factory
             'user_id' => User::factory(),
             'provider' => $provider,
             'model' => $model,
-            'api_key' => 'sk-'.fake()->sha256(),
+            'api_key' => 'sk-' . fake()->sha256(),
             'vision_enabled' => $supportsVision ? $this->faker->boolean() : false,
         ];
     }

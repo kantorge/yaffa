@@ -37,7 +37,7 @@ class AssetMatchingService
             $accountName,
             $accounts,
             fn (AccountEntity $account) => $account->name . ($account->import_alias ? ' (' . $account->import_alias . ')' : '')
-            );
+        );
     }
 
     /**
@@ -54,7 +54,7 @@ class AssetMatchingService
         }
 
         $formatted = $accounts->map(function ($account) {
-            $aliases = trim($account->import_alias ?? '');
+            $aliases = mb_trim($account->import_alias ?? '');
             if ($aliases) {
                 return "{$account->id}: {$account->name}|{$aliases}";
             }
@@ -195,6 +195,6 @@ class AssetMatchingService
      */
     private function normalize(string $text): string
     {
-        return mb_strtolower(trim($text));
+        return mb_strtolower(mb_trim($text));
     }
 }

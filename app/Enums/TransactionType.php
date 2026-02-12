@@ -104,7 +104,7 @@ enum TransactionType: string
      */
     public static function standardTypes(): array
     {
-        return array_filter(self::cases(), fn(self $type) => $type->isStandard());
+        return array_filter(self::cases(), fn (self $type) => $type->isStandard());
     }
 
     /**
@@ -114,7 +114,7 @@ enum TransactionType: string
      */
     public static function investmentTypes(): array
     {
-        return array_filter(self::cases(), fn(self $type) => $type->isInvestment());
+        return array_filter(self::cases(), fn (self $type) => $type->isInvestment());
     }
 
     /**
@@ -139,7 +139,7 @@ enum TransactionType: string
      */
     public static function investmentTypesWithQuantity(): array
     {
-        return array_filter(self::investmentTypes(), fn(self $type) => $type->quantityMultiplier() !== null);
+        return array_filter(self::investmentTypes(), fn (self $type) => $type->quantityMultiplier() !== null);
     }
 
     /** Get all investment types that require a price
@@ -147,7 +147,7 @@ enum TransactionType: string
      */
     public static function investmentTypesWithPrice(): array
     {
-        return [ self::BUY, self::SELL, ];
+        return [self::BUY, self::SELL, ];
     }
 
     /**
@@ -184,7 +184,7 @@ enum TransactionType: string
     public static function getQuantityMultiplierSqlCase(string $columnName): string
     {
         $cases = array_map(
-            fn(self $type) => "WHEN '{$type->value}' THEN {$type->quantityMultiplier()}",
+            fn (self $type) => "WHEN '{$type->value}' THEN {$type->quantityMultiplier()}",
             self::investmentTypesWithQuantity()
         );
         return "CASE {$columnName} " . implode(' ', $cases) . " ELSE 0 END";

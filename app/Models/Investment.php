@@ -197,7 +197,8 @@ class Investment extends Model
                     "SUM( " .
                         TransactionTypeEnum::getQuantityMultiplierSqlCase("transactions.transaction_type") .
                         " * IFNULL(transaction_details_investment.quantity, 0)
-                    ) AS quantity")
+                    ) AS quantity"
+                )
             )
             ->leftJoin(
                 'transaction_details_investment',

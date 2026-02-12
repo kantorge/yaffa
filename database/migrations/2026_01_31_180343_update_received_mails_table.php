@@ -26,13 +26,13 @@ return new class () extends Migration {
 
     private function migrateReceivedMailsToAiDocuments(): void
     {
-        $receivedMails = \DB::table('received_mails')
+        $receivedMails = DB::table('received_mails')
             ->where('processed', true)
             ->get();
 
         foreach ($receivedMails as $mail) {
             // Create AiDocument record for this received mail
-            $aiDocumentId = \DB::table('ai_documents')->insertGetId([
+            $aiDocumentId = DB::table('ai_documents')->insertGetId([
                 'user_id' => $mail->user_id,
                 'status' => $mail->transaction_id ? 'finalized' : 'ready_for_review',
                 'source_type' => 'received_email',
@@ -47,7 +47,7 @@ return new class () extends Migration {
 
             // Update linked transaction to reference the new AiDocument record
             if ($mail->transaction_id) {
-                \DB::table('transactions')
+                DB::table('transactions')
                     ->where('id', $mail->transaction_id)
                     ->update(['ai_document_id' => $aiDocumentId]);
             }

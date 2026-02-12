@@ -11,8 +11,8 @@ use Tests\TestCase;
 
 class CurrencyTraitTest extends TestCase
 {
-    use RefreshDatabase;
     use CurrencyTrait;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {

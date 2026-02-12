@@ -11,8 +11,7 @@ use Tests\DuskTestCase;
 #[Group('extended')]
 class AiProviderSettingsTest extends DuskTestCase
 {
-
-    const string VUE_COMPONENT_SELECTOR = '#aiProviderConfigForm';
+    public const string VUE_COMPONENT_SELECTOR = '#aiProviderConfigForm';
     protected static bool $migrationRun = false;
 
     protected function setUp(): void
@@ -61,7 +60,7 @@ class AiProviderSettingsTest extends DuskTestCase
     private function createTestUser(?string $email = null): User
     {
         if ($email === null) {
-            $email = 'ai-config-test-'.uniqid().'@example.com';
+            $email = 'ai-config-test-' . uniqid() . '@example.com';
         }
 
         return User::factory()->create([
@@ -91,12 +90,12 @@ class AiProviderSettingsTest extends DuskTestCase
             // Get available providers from config, and assert they are in the dropdown
             $providers = array_keys(config('ai-documents.providers'));
             foreach ($providers as $providerKey) {
-                $browser->assertSeeIn('#provider', config("ai-documents.providers.$providerKey.name"));
+                $browser->assertSeeIn('#provider', config("ai-documents.providers.{$providerKey}.name"));
             }
 
             // Get the first provider's models and assert model dropdown behavior
             $firstProviderKey = $providers[0];
-            $modelsConfig = config("ai-documents.providers.$firstProviderKey.models");
+            $modelsConfig = config("ai-documents.providers.{$firstProviderKey}.models");
             $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
 
             // Model dropdown is not visible until provider selected
@@ -139,7 +138,7 @@ class AiProviderSettingsTest extends DuskTestCase
 
     public function test_can_create_ai_provider_config(): void
     {
-         $user = $this->createTestUser();
+        $user = $this->createTestUser();
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user);
@@ -185,7 +184,7 @@ class AiProviderSettingsTest extends DuskTestCase
     public function test_update_with_new_api_key(): void
     {
         // Create or recreate existing config for the user (in case test order changes)
-         $user = $this->createTestUser();
+        $user = $this->createTestUser();
 
         AiProviderConfig::factory()->create([
             'user_id' => $user->id,

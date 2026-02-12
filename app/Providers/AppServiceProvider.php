@@ -90,6 +90,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function bootEvent(): void
     {
-        //
+
     }
 }

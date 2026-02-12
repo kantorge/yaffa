@@ -41,7 +41,7 @@ class OcrServiceHttpModeTest extends TestCase
 
             // Try to extract - should throw because neither method available
             $this->service->extract($tempFile);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // This is expected - HTTP not available and no Vision API
             $this->assertStringContainsString('OCR', $e->getMessage());
         } finally {
