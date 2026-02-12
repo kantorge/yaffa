@@ -75,7 +75,8 @@ This document summarizes the changes made to optimize the YAFFA test suite while
 **Updated** to include separate test suites:
 - `Unit`: Unit tests only
 - `Feature`: Feature tests only
-- `AllNonDusk`: Both Unit and Feature tests (maintains backward compatibility)
+
+To run all non-Dusk tests together, use: `vendor/bin/phpunit --testsuite Unit,Feature`
 
 ### 6. Comprehensive Documentation
 **Created**: `TESTING.md`
@@ -129,7 +130,7 @@ This document summarizes the changes made to optimize the YAFFA test suite while
 
 All existing test commands continue to work:
 - `php artisan dusk` - Runs all Dusk tests
-- `vendor/bin/phpunit --testsuite AllNonDusk` - Runs all Unit + Feature tests
+- `vendor/bin/phpunit --testsuite Unit,Feature` - Runs all Unit + Feature tests
 - `./vendor/bin/sail dusk` - Works with Laravel Sail
 
 New commands available:

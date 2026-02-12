@@ -68,9 +68,9 @@ vendor/bin/phpunit --testsuite Feature
 
 #### All Unit + Feature Tests
 ```bash
-vendor/bin/phpunit --testsuite AllNonDusk
+vendor/bin/phpunit --testsuite Unit,Feature
 # or with Sail
-./vendor/bin/sail artisan test --testsuite=AllNonDusk
+./vendor/bin/sail artisan test --testsuite=Unit --testsuite=Feature
 ```
 
 #### Critical Dusk Tests Only
@@ -96,9 +96,9 @@ php artisan dusk
 
 #### All Tests (Unit + Feature + Dusk)
 ```bash
-vendor/bin/phpunit --testsuite AllNonDusk && php artisan dusk
+vendor/bin/phpunit --testsuite Unit,Feature && php artisan dusk
 # or with Sail
-./vendor/bin/sail test --testsuite=AllNonDusk && ./vendor/bin/sail dusk
+./vendor/bin/sail test --testsuite=Unit --testsuite=Feature && ./vendor/bin/sail dusk
 ```
 
 ### CI/CD Workflows
