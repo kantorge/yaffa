@@ -544,6 +544,10 @@
         type: Number,
         default: null,
       },
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
+      },
     },
 
     data() {
@@ -745,11 +749,7 @@
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $(this.dropdownParentSelector),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {
@@ -822,11 +822,7 @@
           allowClear: true,
           width: 'resolve',
           theme: 'bootstrap-5',
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-investment') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $(this.dropdownParentSelector),
         })
         .on('select2:select', function (e) {
           const event = new Event('change', {

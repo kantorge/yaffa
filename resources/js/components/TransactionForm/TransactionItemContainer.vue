@@ -68,6 +68,7 @@
           :currencySymbol="currencySymbol"
           :remainingAmount="remainingAmount"
           :payee="payee"
+          :dropdown-parent-selector="dropdownParentSelector"
         ></transaction-item>
       </div>
       <div v-if="!enabled">
@@ -139,6 +140,10 @@
       enabled: {
         type: Boolean,
         default: true,
+      },
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
       },
     },
 
