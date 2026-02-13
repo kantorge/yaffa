@@ -165,8 +165,10 @@ class GoogleDriveService
     }
 
     /**
-     * Check if service account has delete permissions on folder
-     * This checks if we can delete files within the folder by verifying write access
+     * Check if the service account has permissions to add and delete files.
+     *
+     * This is inferred by checking `canAddChildren`, which indicates write access.
+     * For a service account, this is sufficient to delete files it creates.
      *
      * @param Drive $service
      * @param string $folderId
