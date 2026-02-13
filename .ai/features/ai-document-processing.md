@@ -151,7 +151,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `error_count` - integer unsigned, not null, default 0
     - `created_at`, `updated_at` - timestamps
     - Indexes: `user_id`, `enabled`
-  - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions` table (✅ implemente)
+  - Add `ai_document_id` (bigint unsigned, nullable FK to ai_documents) to `transactions` table (✅ implemented)
   - Remove `transaction_data`, `processed`, `handled`, `transaction_id` from `received_mails` (✅ implemented)
     - During the migration, create AiDocument records for existing processed received mails to preserve data integrity. (✅ implemented)
     - With a best effort, update linked transactions to reference the new AiDocument records. (Don't try to fix broken, inconsistent data.) (✅ implemented)
@@ -1399,7 +1399,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - The mail notifications sent to the user are just clunky draft emails. The range of information, CTAs and links should be reviewed and enhanced.
 - There might be specific receipt formats for each payee, that could be used to improve the accuracy of the AI extraction for line items, or perhaps any other details. Would it make sense to add a "custom prompt" optional field to the Payee model, that would be used in the AI prompt when a transaction is extracted with that payee? Is the current flow sequential enough to allow for this kind of dynamic prompt injection? This would be a more advanced feature, but it could significantly improve the accuracy of the AI extraction for users who have recurring transactions with the same payees, such as regular bills or subscriptions. Additionally, the systems should try to recognize such patterns, and offer saving it as a custom prompt for the user after a successful extraction, to make it easier for users to take advantage of this feature without needing to manually configure it. (Note: it might even be helpful for the Vision AI processing.)
 - It might add value to have a side-by-side view of the receipt and the extracted values on the Ai Document review page, not just as tabs as currently. On the other hand, it needs to be designed, how to handle multiple files for a single document in this case, and how to display the extracted values in a way that is still clear and user-friendly. This would be a more complex UI change, but it could enhance the review process by allowing users to easily compare the original document with the extracted data, and make any necessary adjustments before finalizing the transaction.
-- What parameters are available for the Tessaract, that could be used to fine-tune and improve the OCR accuracy? The first results using the default settings are quite poor.
-- How to verify an enforce a minimum required Tesseract version for the binary mode, to ensure the best possible OCR performance and compatibility with the features we rely on?
+- What parameters are available for the Tesseract, that could be used to fine-tune and improve the OCR accuracy? The first results using the default settings are quite poor.
+- How to verify and enforce a minimum required Tesseract version for the binary mode, to ensure the best possible OCR performance and compatibility with the features we rely on?
 - When the user initiates reprocessing of a document from its own view, it would be nice to update the status, and even better to indicate completion. Would it be overengineering to introduce Echo and Reverb? Would polling be sufficient for this?
 - When an unidentified payee is returned, the ai document viewer should allow to create it as a new payee.
