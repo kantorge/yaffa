@@ -39,6 +39,8 @@
             </dd>
             <dt class="col-7">{{ __('Files') }}</dt>
             <dd class="col-5">{{ aiDocument.files?.length || 0 }}</dd>
+            <dt class="col-7">{{ __('Line items') }}</dt>
+            <dd class="col-5">{{ draftData.items?.length || 0 }}</dd>
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
@@ -553,9 +555,11 @@
                             <th class="text-end">
                               {{ __('Amount') }}
                             </th>
+                            <th>{{ __('Match Type') }}</th>
                             <th>
                               {{ __('Category') }}
                             </th>
+                            <th class="text-center">{{ __('Confidence') }}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -569,6 +573,18 @@
                               }}
                             </td>
                             <td class="text-end">{{ item.amount || 0 }}</td>
+                            <td>
+                              <span
+                                v-if="item.match_type"
+                                class="badge"
+                                :class="getMatchTypeBadgeClass(item.match_type)"
+                              >
+                                {{ getMatchTypeLabel(item.match_type) }}
+                              </span>
+                              <span v-else class="text-muted">{{
+                                __('No match')
+                              }}</span>
+                            </td>
                             <td>
                               <div
                                 v-if="item.category_full_name"
@@ -590,6 +606,25 @@
                               <span v-else class="text-muted">{{
                                 __('Not categorized')
                               }}</span>
+                            </td>
+                            <td class="text-center">
+                              <span
+                                v-if="
+                                  item.match_type === 'ai' &&
+                                  item.confidence_score !== null
+                                "
+                                :class="
+                                  getConfidenceClass(item.confidence_score)
+                                "
+                              >
+                                {{ formatConfidence(item.confidence_score) }}
+                              </span>
+                              <span
+                                v-else-if="item.match_type === 'exact'"
+                                class="text-muted"
+                              >
+                                -
+                              </span>
                             </td>
                           </tr>
                         </tbody>
@@ -885,5 +920,45 @@
       window.document.getElementById('nav-document-tab-extracted'),
     );
     tab.show();
+  };
+
+  const getMatchTypeBadgeClass = (matchType) => {
+    if (matchType === 'exact') {
+      return 'bg-success';
+    }
+    if (matchType === 'ai') {
+      return 'bg-primary';
+    }
+    return 'bg-secondary';
+  };
+
+  const getMatchTypeLabel = (matchType) => {
+    if (matchType === 'exact') {
+      return __('Exact Match');
+    }
+    if (matchType === 'ai') {
+      return __('AI Suggested');
+    }
+    return __('No Match');
+  };
+
+  const formatConfidence = (score) => {
+    if (score === null || score === undefined) {
+      return '';
+    }
+    return `${(score * 100).toFixed(0)}%`;
+  };
+
+  const getConfidenceClass = (score) => {
+    if (score === null || score === undefined) {
+      return '';
+    }
+    if (score >= 0.8) {
+      return 'text-success fw-bold';
+    }
+    if (score >= 0.5) {
+      return 'text-warning fw-bold';
+    }
+    return 'text-danger fw-bold';
   };
 </script>
