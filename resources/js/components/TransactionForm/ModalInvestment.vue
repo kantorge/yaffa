@@ -20,6 +20,7 @@
             :simplified="true"
             :fromModal="true"
             :ai-document-id="aiDocumentId"
+            :dropdown-parent-selector="'#modal-transaction-form-investment'"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-investment>

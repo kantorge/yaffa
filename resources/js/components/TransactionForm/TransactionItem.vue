@@ -148,6 +148,10 @@
       tags: Array,
       remainingAmount: Number,
       payee: [Number, String],
+      dropdownParentSelector: {
+        type: String,
+        default: 'body',
+      },
     },
 
     emits: [
@@ -200,11 +204,7 @@
           selectOnClose: true,
           placeholder: __('Select category'),
           allowClear: true,
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('transaction_item_container') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $($vm.dropdownParentSelector),
         })
         .on('select2:select select2:unselect', function (e) {
           const event = new Event('change', {
@@ -290,11 +290,7 @@
           },
           placeholder: __('Select tag(s)'),
           allowClear: true,
-          // Component should not be aware where it is used, but we need to hint Select2
-          dropdownParent: $(
-            document.getElementById('modal-transaction-form-standard') ||
-              document.querySelector('body'),
-          ),
+          dropdownParent: $($vm.dropdownParentSelector),
         })
         .on('select2:select select2:unselect', function (e) {
           const event = new Event('change', {

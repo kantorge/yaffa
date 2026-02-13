@@ -5,6 +5,7 @@
     :transaction="transactionData"
     :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
+    :dropdown-parent-selector="'body'"
     @cancel="onCancel"
     @success="onSuccess"
   ></transaction-form-investment>
