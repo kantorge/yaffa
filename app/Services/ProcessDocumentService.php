@@ -29,10 +29,6 @@ class ProcessDocumentService
     public function process(AiDocument $document): array
     {
         try {
-            // Update status to processing
-            $document->status = 'processing';
-            $document->save();
-
             // Get user and their AI provider config - currently only one config is allowed
             $user = $document->user;
             $config = $user->aiProviderConfigs()->first();
@@ -40,6 +36,10 @@ class ProcessDocumentService
             if (! $config) {
                 throw new Exception('No AI provider configured for user');
             }
+
+            // Update status to processing
+            $document->status = 'processing';
+            $document->save();
 
             // Step 1: Extract text from all files
             $extractedText = $this->extractTextFromFiles($document, $config);

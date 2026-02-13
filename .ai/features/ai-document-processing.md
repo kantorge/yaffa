@@ -537,7 +537,10 @@ If not determined or used, it must be set to NULL, but never omitted.
    - ✅ Tesseract (binary or HTTP) or Vision API invoked automatically per configuration
    - ✅ Builds AI prompt with transaction type-specific schemas (standard vs investment)
    - ✅ Includes normalized assets and category learning data
-   - ✅ Calls AI provider (OpenAI/Gemini) via Prism
+   - ✅ Calls AI provider (OpenAI/Gemini) via Prism in multiple steps
+     - Extract generic transaction details (date, amount, payee, accounts, investment, currency)
+     - Identify account(s)/payee/investment matches from user's dataase using local exact match or AI-assisted matching
+     - For withdrawals and deposits, if items are detected, try to identify line item level category mappings. Either use local exact match or AI-assisted matching based on item description.
    - ✅ Validates output schema
    - ✅ Stores JSON draft in `processed_transaction_data`
 4. Status set to `ready_for_review` and email notification sent. ✅
