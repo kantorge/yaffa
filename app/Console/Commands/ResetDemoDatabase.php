@@ -107,18 +107,22 @@ class ResetDemoDatabase extends Command
 
         // Create Google Drive Config for demo user, if provided
         if (config('demo.google_drive_json_key_file')) {
-            $demoUser->googleDriveConfigs()->delete();
+            if (file_exists(config('demo.google_drive_json_key_file'))) {
+                $demoUser->googleDriveConfigs()->delete();
 
-            $keyFileContent = file_get_contents(config('demo.google_drive_json_key_file'));
-            $credentials = json_decode($keyFileContent, true);
-            $demoUser->googleDriveConfigs()->create([
-                'service_account_email' => $credentials['client_email'] ?? null,
-                'folder_id' => config('demo.google_drive_folder_id'),
-                'service_account_json' => $keyFileContent,
-            ]);
-            $this->info('Google Drive Config created.');
+                $keyFileContent = file_get_contents(config('demo.google_drive_json_key_file'));
+                $credentials = json_decode($keyFileContent, true);
+                $demoUser->googleDriveConfigs()->create([
+                    'service_account_email' => $credentials['client_email'] ?? null,
+                    'folder_id' => config('demo.google_drive_folder_id'),
+                    'service_account_json' => $keyFileContent,
+                ]);
+                $this->info('Google Drive Config created.');
+            } else {
+                $this->warn('Skipping Google Drive Config - provided key file not found');
+            }
         } else {
-            $this->warn('Skipping Google Drive Config - DEMO_GOOGLE_DRIVE_JSON_KEY not set');
+            $this->warn('Skipping Google Drive Config - DEMO_GOOGLE_DRIVE_JSON_KEY_FILE not set');
         }
 
         /**

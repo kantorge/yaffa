@@ -1,27 +1,49 @@
-/.idea/sonarlint
-/.nova
+## IDE and editor metadata
 /.idea
+/.idea/sonarlint
 /.vscode
-/.phpunit.cache
+
+## Laravel IDE helper artifacts
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+## Local environment files
+.env
+.env.backup
+.env.*.local
+
+## Dependency and build outputs
 /node_modules
+/vendor
 /public/build
 /public/coverage
 /public/hot
-/public/storage
 /public/css
 /public/js
 /public/fonts
 /public/mix-manifest.json
+/public/storage
 /storage
-/vendor
+/storage/pail
+
+## App-specific generated content
 /resources/google
-.env
-.env.backup
-.env.dusk.local
+/.nova
+
+## Test and tooling caches
+/.phpunit.cache
 .phpunit.result.cache
-.editorconfig
-Homestead.json
-Homestead.yaml
+.pint.cache
+.eslintcache
+.stylelintcache
+
+## OS and runtime noise
+.DS_Store
+Thumbs.db
 npm-debug.log
 yarn-error.log
-/storage/pail
+
+## Laravel Homestead
+Homestead.json
+Homestead.yaml
