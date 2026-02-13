@@ -150,6 +150,89 @@ class AssetMatchingService
     }
 
     /**
+     * Find matching category learning records based on similarity
+     *
+     * @return array<int, array{id: int, description: string, category_id: int, category_name: string, similarity: float}>
+     */
+    public function matchCategoryLearning(?string $description): array
+    {
+        if (! $description || ! $this->user) {
+            return [];
+        }
+
+        $learningRecords = $this->user->categoryLearning()
+            ->with('category')
+            ->whereHas('category', fn ($q) => $q->where('active', 1))
+            ->get();
+
+        $matches = [];
+        $normalizedSearch = $this->normalize($description);
+
+        foreach ($learningRecords as $learning) {
+            $normalizedItem = $this->normalize($learning->item_description);
+
+            $similarity = 0;
+            similar_text($normalizedSearch, $normalizedItem, $similarity);
+            $similarity /= 100;
+
+            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+                $matches[] = [
+                    'id' => $learning->id,
+                    'description' => $learning->item_description,
+                    'category_id' => $learning->category_id,
+                    'category_name' => $learning->category->full_name,
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+
+        return array_slice($matches, 0, $maxSuggestions);
+    }
+
+    /**
+     * Format category learning records for AI prompt (ID: Description [usage_count uses])
+     */
+    public function formatCategoryLearningForPrompt(User $user): string
+    {
+        $learningRecords = $user->categoryLearning()
+            ->with('category')
+            ->whereHas('category', fn ($q) => $q->where('active', 1))
+            ->orderByDesc('usage_count')
+            ->limit(50)
+            ->get();
+
+        if ($learningRecords->isEmpty()) {
+            return 'No category learning data available.';
+        }
+
+        return $learningRecords->map(fn ($learning) => "{$learning->category_id}: {$learning->item_description} ({$learning->usage_count} uses)")->join("\n");
+    }
+
+    /**
+     * Format active categories for AI prompt (ID: Full Name)
+     */
+    public function formatCategoriesForPrompt(User $user): string
+    {
+        $categories = $user->categories()
+            ->active()
+            ->with('parent')
+            ->get()
+            ->sortBy('full_name');
+
+        if ($categories->isEmpty()) {
+            return 'No active categories configured.';
+        }
+
+        return $categories->map(fn ($category) => "{$category->id}: {$category->full_name}")->join("\n");
+    }
+
+    /**
      * Calculate similarity matches for a collection of items
      *
      * @template T

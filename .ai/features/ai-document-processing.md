@@ -582,10 +582,26 @@ A few notes on the statuses
   - AI returns best single match only, or N/A if no match.
   - For investments, match against `name`, `code`, and `isin` fields.
 
-- Category learning:
-  - Flat table with normalized item descriptions.
-  - Normalization: lowercase, trim, remove punctuation.
-  - Stored only on transaction save.
+- Category learning (✅ AI-Enhanced - Implemented Feb 13, 2026):
+  - **Exact Local Matching:**
+    - Flat table with normalized item descriptions (`item_description` field in `category_learning` table).
+    - Normalization: lowercase, trim, remove punctuation.
+    - If exact normalized match found with active category, use immediately (no AI call).
+    - Match type: `'exact'`, confidence score: `1.0`.
+  - **AI-Assisted Matching (Batch Processing):**
+    - When no exact match exists, batch all unmatched items in single AI call for efficiency.
+    - Gather similar learning records per item using `similar_text()` with 0.5 threshold (top 10).
+    - Provide AI with: item descriptions, similar learning patterns, and full active category list.
+    - AI returns: `category_id`, `confidence_score` (0.0-1.0) per item.
+    - Validate category exists and is active before accepting AI suggestion.
+    - Match type: `'ai'`, confidence score from AI response.
+  - **Data Structure:**
+    - Items stored with additional metadata: `{amount, description, category_id, match_type, confidence_score}`.
+    - `match_type`: `'exact'` | `'ai'` | `null` (no match).
+    - `confidence_score`: `1.0` (exact), `0.0-1.0` (AI), `null` (no match).
+  - **Learning Storage:**
+    - Category learning records created/updated only on transaction save (not during AI processing).
+    - Usage count incremented when user accepts suggested category without modification.
 
 ## Duplicate Transaction Detection
 
@@ -1076,7 +1092,10 @@ The system will use multi-step prompting similar to existing email processing:
 2. **Account matching prompt:** Match extracted account name against user's account list (ID: Name|Alias format)
 3. **Payee matching prompt:** Match extracted payee against user's payee list (ID: Name format)
 4. **Investment matching prompt:** (if investment type) Match against user's investments (ID: Name|Code|ISIN format)
-5. **Category matching prompt:** Match each line item description against user's category learning data.
+5. **Category matching prompt (✅ AI-Enhanced - Implemented Feb 13, 2026):** Batch match all line item descriptions against:
+   - User's category learning data (past item descriptions with usage counts)
+   - User's active categories (full list with parent/child hierarchy)
+   - Returns: `[{item_index, category_id, confidence_score}]` for all items in single AI call
 
 **IMPORTANT:** line item matching is only needed for withdrawals and deposits, not for transfers or investment transactions.
 After payee matching, there should be a backend call to determine the most used categories for that payee during the past 6 months (via `GET /api/ai/payees/{id}/category-stats`). If only one category is present in the stats for that period, category matching is skipped and that category is assigned to the entire amount as one line item.
@@ -1283,10 +1302,17 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - ✅ Asset matching branches by transaction type: transfer (2 accounts), withdrawal (account+payee), deposit (payee+account), investment (account+investment)
   - ✅ matchInvestment() method for investment matching via similarity + AI
   - ✅ buildTransactionData() accepts accountFromId/accountToId for proper transfer handling
+  - ✅ **checkExactCategoryMatch()** - Local exact matching for category learning with active category validation (✅ Implemented Feb 13, 2026)
+  - ✅ **matchCategoriesForItems()** - Batch category matching orchestrator combining exact + AI matches (✅ Implemented Feb 13, 2026)
+  - ✅ **matchCategoriesBatch()** - AI-powered batch category matching with confidence scoring (✅ Implemented Feb 13, 2026)
+  - ✅ **buildCategoryMatchingPrompt()** - Batch prompt with learning patterns + active categories (✅ Implemented Feb 13, 2026)
   - ✅ Status management: processing → ready_for_review (success) or processing_failed (error)
-- ✅ AssetMatchingService: Type compatibility fixes
+- ✅ AssetMatchingService: Type compatibility fixes + category learning support (✅ Enhanced Feb 13, 2026)
   - ✅ calculateMatches() signature changed from array to iterable for Collection compatibility
   - ✅ matchInvestments() method working properly
+  - ✅ **matchCategoryLearning()** - Similarity-based learning record matching (✅ Implemented Feb 13, 2026)
+  - ✅ **formatCategoryLearningForPrompt()** - Format top 50 learning records for AI (✅ Implemented Feb 13, 2026)
+  - ✅ **formatCategoriesForPrompt()** - Format active categories with hierarchy for AI (✅ Implemented Feb 13, 2026)
 - ✅ AiProcessingJob: Event-driven architecture
   - ✅ Simplified job dispatches events, no duplicate status setting
   - ✅ Removed failed() method - service handles all status updates
@@ -1306,7 +1332,11 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - ✅ AiDocumentViewer.vue: Enhanced with extracted details tab
   - ✅ "Extracted details" tab visible when status='ready_for_review' (canFinalize)
   - ✅ Comprehensive transaction data display: type, date, currency, accounts, payees, investments
-  - ✅ Line items table with description, amount, category badges
+  - ✅ **Line items table with match type badges and confidence scores** (✅ Enhanced Feb 13, 2026):
+    - ✅ "Match Type" column with color-coded badges (Exact Match = green, AI Suggested = blue, No Match = gray)
+    - ✅ "Confidence" column showing AI confidence percentage (≥80% green, 50-79% yellow, <50% red)
+    - ✅ Helper methods: `getMatchTypeBadgeClass()`, `getMatchTypeLabel()`, `formatConfidence()`, `getConfidenceClass()`
+    - ✅ Category display with full hierarchy (parent > child)
   - ✅ Responsive layout distinguishing standard vs investment transaction fields
   - ✅ showExtractedDetailsTab() method for programmatic tab switching via coreui.Tab API
   - ✅ "More details" button in sidebar card linking to full details tab

@@ -104,7 +104,8 @@ class ProcessDocumentService
                 $accountFromId,
                 $accountToId,
                 $investmentId,
-                $user
+                $user,
+                $config
             );
 
             // Step 5: Store processed data and update document
@@ -206,7 +207,7 @@ class ProcessDocumentService
         foreach ($similarAccounts as $match) {
             $namePart = Str::before($match['name'], '(');
             $aliasesPart = Str::between($match['name'], '(', ')');
-            if (Str::lower(trim($namePart)) === Str::lower(trim($accountName))) {
+            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($accountName))) {
                 Log::info('Exact match found for account name in account name part, skipping AI call', [
                     'account_name' => $accountName,
                     'account_name_in_list' => $match['name'],
@@ -216,7 +217,7 @@ class ProcessDocumentService
 
                 return $match['id'];
             }
-            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(trim($accountName)))) {
+            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(mb_trim($accountName)))) {
                 Log::info('Exact match found for account name in account aliases part, skipping AI call', [
                     'account_name' => $accountName,
                     'account_name_in_list' => $match['name'],
@@ -284,7 +285,7 @@ EOF;
             $namePart = Str::before($match['name'], '(');
             $aliasesPart = Str::between($match['name'], '(', ')');
 
-            if (Str::lower(trim($namePart)) === Str::lower(trim($payeeName))) {
+            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($payeeName))) {
                 Log::info('Exact match found for payee name in payee name part, skipping AI call', [
                     'payee_name' => $payeeName,
                     'payee_name_in_list' => $match['name'],
@@ -295,7 +296,7 @@ EOF;
                 return $match['id'];
             }
 
-            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(trim($payeeName)))) {
+            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(mb_trim($payeeName)))) {
                 Log::info('Exact match found for payee name in payee aliases part, skipping AI call', [
                     'payee_name' => $payeeName,
                     'payee_name_in_list' => $match['name'],
@@ -361,7 +362,7 @@ EOF;
         foreach ($similarInvestments as $match) {
             $namePart = Str::before($match['name'], '(');
             $symbolPart = Str::between($match['name'], '(', ')');
-            if (Str::lower(trim($namePart)) === Str::lower(trim($investmentName))) {
+            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($investmentName))) {
                 Log::info('Exact match found for investment name in investment name part, skipping AI call', [
                     'investment_name' => $investmentName,
                     'investment_name_in_list' => $match['name'],
@@ -370,7 +371,7 @@ EOF;
                 ]);
                 return $match['id'];
             }
-            if ($symbolPart && Str::contains(Str::lower($symbolPart), Str::lower(trim($investmentName)))) {
+            if ($symbolPart && Str::contains(Str::lower($symbolPart), Str::lower(mb_trim($investmentName)))) {
                 Log::info('Exact match found for investment name in investment symbol/ISIN part, skipping AI call', [
                     'investment_name' => $investmentName,
                     'investment_name_in_list' => $match['name'],
@@ -421,7 +422,8 @@ EOF;
         ?int $accountFromId,
         ?int $accountToId,
         ?int $investmentId,
-        User $user
+        User $user,
+        AiProviderConfig $config
     ): array {
         $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypes());
 
@@ -458,17 +460,9 @@ EOF;
 
         }
 
-        // Build items array with category learning
+        // Build items array with category learning (batch AI matching)
         if (! $isInvestment && isset($rawData['items']) && is_array($rawData['items'])) {
-            foreach ($rawData['items'] as $item) {
-                $categoryId = $this->matchCategoryForItem($item['description'] ?? '', $user);
-
-                $data['items'][] = [
-                    'amount' => floatval($item['amount'] ?? 0),
-                    'category_id' => $categoryId,
-                    'description' => $item['description'] ?? '',
-                ];
-            }
+            $data['items'] = $this->matchCategoriesForItems($rawData['items'], $user, $config);
         } else {
             // Single item transaction
             $amount = floatval($rawData['amount'] ?? 0);
@@ -476,6 +470,8 @@ EOF;
                 $data['items'][] = [
                     'amount' => $amount,
                     'category_id' => null,
+                    'match_type' => null,
+                    'confidence_score' => null,
                     'description' => $rawData['payee'] ?? '',
                 ];
             }
@@ -485,9 +481,11 @@ EOF;
     }
 
     /**
-     * Match category for an item based on learning data
+     * Check for exact category match in learning data (local only)
+     *
+     * @return array{category_id: int, match_type: string, confidence_score: float}|null
      */
-    private function matchCategoryForItem(string $description, User $user): ?int
+    private function checkExactCategoryMatch(string $description, User $user): ?array
     {
         if (empty($description)) {
             return null;
@@ -498,13 +496,241 @@ EOF;
 
         $normalized = $learningService->normalize($description);
 
-        // Try to find exact match in learning data
+        // Try to find exact match in learning data with active category
         $learning = $user->categoryLearning()
             ->where('item_description', $normalized)
+            ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->orderByDesc('usage_count')
             ->first();
 
-        return $learning?->category_id;
+        if ($learning) {
+            return [
+                'category_id' => $learning->category_id,
+                'match_type' => 'exact',
+                'confidence_score' => 1.0,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Match categories for multiple items (batch processing with AI)
+     *
+     * @param  array  $items  Raw items from AI extraction
+     * @return array Enriched items with category_id, match_type, confidence_score
+     */
+    private function matchCategoriesForItems(array $items, User $user, AiProviderConfig $config): array
+    {
+        $enrichedItems = [];
+        $itemsNeedingAi = [];
+
+        // First pass: Check for exact matches
+        foreach ($items as $index => $item) {
+            $description = $item['description'] ?? '';
+            $amount = floatval($item['amount'] ?? 0);
+
+            $exactMatch = $this->checkExactCategoryMatch($description, $user);
+
+            if ($exactMatch) {
+                // Exact match found locally
+                $enrichedItems[$index] = [
+                    'amount' => $amount,
+                    'description' => $description,
+                    'category_id' => $exactMatch['category_id'],
+                    'match_type' => $exactMatch['match_type'],
+                    'confidence_score' => $exactMatch['confidence_score'],
+                ];
+            } else {
+                // No exact match, will need AI
+                $itemsNeedingAi[$index] = [
+                    'amount' => $amount,
+                    'description' => $description,
+                ];
+                // Placeholder for now
+                $enrichedItems[$index] = [
+                    'amount' => $amount,
+                    'description' => $description,
+                    'category_id' => null,
+                    'match_type' => null,
+                    'confidence_score' => null,
+                ];
+            }
+        }
+
+        // If all items had exact matches, return early (no AI call needed)
+        if (empty($itemsNeedingAi)) {
+            Log::debug('All items matched exactly, no AI call needed', [
+                'item_count' => count($enrichedItems),
+            ]);
+
+            return array_values($enrichedItems);
+        }
+
+        // Second pass: AI matching for items without exact matches
+        try {
+            $aiMatches = $this->matchCategoriesBatch($itemsNeedingAi, $user, $config);
+
+            // Merge AI results back into enriched items
+            foreach ($aiMatches as $index => $aiMatch) {
+                if (isset($enrichedItems[$index])) {
+                    $enrichedItems[$index]['category_id'] = $aiMatch['category_id'];
+                    $enrichedItems[$index]['match_type'] = $aiMatch['match_type'];
+                    $enrichedItems[$index]['confidence_score'] = $aiMatch['confidence_score'];
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('Category batch matching failed, items will have no category', [
+                'error' => $e->getMessage(),
+                'item_count' => count($itemsNeedingAi),
+            ]);
+            // Items already have null category_id, so no changes needed
+        }
+
+        return array_values($enrichedItems);
+    }
+
+    /**
+     * Match categories using AI for multiple items in a single batch call
+     *
+     * @param  array  $items  Items needing AI matching (indexed by original position)
+     * @return array AI match results indexed by original position
+     */
+    private function matchCategoriesBatch(array $items, User $user, AiProviderConfig $config): array
+    {
+        if (empty($items)) {
+            return [];
+        }
+
+        $matchingService = new AssetMatchingService($user);
+
+        // Gather similar learning records for context (per item)
+        $learningContext = [];
+        foreach ($items as $index => $item) {
+            $similarLearning = $matchingService->matchCategoryLearning($item['description']);
+            if (! empty($similarLearning)) {
+                $learningContext[$index] = $similarLearning;
+            }
+        }
+
+        // Build AI prompt with all items
+        $prompt = $this->buildCategoryMatchingPrompt(
+            $items,
+            $learningContext,
+            $matchingService->formatCategoriesForPrompt($user)
+        );
+
+        $response = $this->callAi($config, $prompt);
+
+        // Parse AI response
+        try {
+            $aiResults = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+
+            Log::debug('Parsed category matching AI response', ['results' => $aiResults]);
+
+            // Validate and format results
+            $matches = [];
+            foreach ($aiResults as $result) {
+                $itemIndex = $result['item_index'] ?? null;
+                $categoryId = $result['category_id'] ?? null;
+                $confidenceScore = $result['confidence_score'] ?? null;
+
+                if ($itemIndex === null || ! isset($items[$itemIndex])) {
+                    continue;
+                }
+
+                // Validate category exists and is active
+                if ($categoryId !== null) {
+                    $categoryExists = $user->categories()
+                        ->active()
+                        ->where('id', $categoryId)
+                        ->exists();
+
+                    if (! $categoryExists) {
+                        Log::warning('AI suggested invalid/inactive category', [
+                            'category_id' => $categoryId,
+                            'item_index' => $itemIndex,
+                        ]);
+                        $categoryId = null;
+                        $confidenceScore = null;
+                    }
+                }
+
+                $matches[$itemIndex] = [
+                    'category_id' => $categoryId,
+                    'match_type' => $categoryId !== null ? 'ai' : null,
+                    'confidence_score' => $confidenceScore,
+                ];
+            }
+
+            return $matches;
+        } catch (JsonException $e) {
+            Log::error('Failed to parse category matching AI response', [
+                'response' => $response,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new Exception('Failed to parse category matching AI response as JSON');
+        }
+    }
+
+    /**
+     * Build AI prompt for batch category matching
+     */
+    private function buildCategoryMatchingPrompt(
+        array $items,
+        array $learningContext,
+        string $categoriesList
+    ): string {
+        // Format learning context if available
+        $learningSection = '';
+        if (! empty($learningContext)) {
+            $learningLines = [];
+            foreach ($learningContext as $index => $learningRecords) {
+                $learningLines[] = "Item {$index} similar patterns:";
+                foreach ($learningRecords as $record) {
+                    $learningLines[] = "  - Category {$record['category_id']}: {$record['description']} (similarity: {$record['similarity']})";
+                }
+            }
+            $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions):\n" . implode("\n", $learningLines) . "\n\n";
+        }
+
+        // Format items list
+        $itemsLines = [];
+        foreach ($items as $index => $item) {
+            $itemsLines[] = "[{$index}] {$item['description']} - \${$item['amount']}";
+        }
+        $itemsList = implode("\n", $itemsLines);
+
+        $prompt = <<<EOF
+You will be provided with:
+1. Category learning patterns (past transaction descriptions matched to categories) - if available
+2. Full list of active categories available for this user
+3. Multiple line items from a receipt that need category assignment
+
+Your task: Match each line item to the most appropriate category.
+
+RULES:
+- Prioritize learning patterns if item description closely matches past patterns
+- Use category list to find best semantic match if no learning patterns match
+- Return confidence score 0.0-1.0 for each match (1.0 = certain, <0.5 = uncertain)
+- Return category_id as null if no reasonable match exists (confidence too low or no semantic match)
+- IMPORTANT: item_index must match the index shown in square brackets [N] in LINE ITEMS list
+
+{$learningSection}AVAILABLE ACTIVE CATEGORIES:
+{$categoriesList}
+
+LINE ITEMS TO MATCH:
+{$itemsList}
+
+Return JSON array ONLY (no markdown, no explanation, no code blocks):
+[
+  {"item_index": 0, "category_id": 123, "confidence_score": 0.95},
+  {"item_index": 1, "category_id": null, "confidence_score": null}
+]
+EOF;
+
+        return $prompt;
     }
 
     /**
