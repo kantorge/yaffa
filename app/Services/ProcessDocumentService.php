@@ -200,6 +200,34 @@ class ProcessDocumentService
             return null;
         }
 
+        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
+        // We need to account for the fact, that optional aliases may be included, so the definition of exact match is the following:
+        // The account name (before the first parenthesis) matches exactly (case insensitive), OR the aliases (one string inside the parenthesis) contains the account name as a substring (case insensitive)
+        foreach ($similarAccounts as $match) {
+            $namePart = Str::before($match['name'], '(');
+            $aliasesPart = Str::between($match['name'], '(', ')');
+            if (Str::lower(trim($namePart)) === Str::lower(trim($accountName))) {
+                Log::info('Exact match found for account name in account name part, skipping AI call', [
+                    'account_name' => $accountName,
+                    'account_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'name_part'
+                ]);
+
+                return $match['id'];
+            }
+            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(trim($accountName)))) {
+                Log::info('Exact match found for account name in account aliases part, skipping AI call', [
+                    'account_name' => $accountName,
+                    'account_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'aliases_part'
+                ]);
+
+                return $match['id'];
+            }
+        }
+
         // Format for AI prompt
         $accountsList = collect($similarAccounts)
             ->map(fn ($match) => "{$match['id']}: {$match['name']}")
@@ -209,6 +237,9 @@ class ProcessDocumentService
 I will provide you a list of accounts and their IDs in the following format: "ID: Account name (optional aliases)"
 I'd like you to identify the ID of the account mentioned in the document.
 Please provide ONLY the numeric ID, or N/A if there is no match.
+
+Primarily look for a match in the main name part, but also check the aliases if the main name doesn't match. The matching can be case insensitive.
+If there's no exact match, try to find the closest one based on similarity.
 
 The list of accounts is:
 {$accountsList}
@@ -237,7 +268,7 @@ EOF;
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
 
-        // Get similar payees
+        // Get similar payees - service limits to top N matches
         $similarPayees = $matchingService->matchPayees($payeeName);
 
         if (empty($similarPayees)) {
@@ -246,17 +277,47 @@ EOF;
             return null;
         }
 
-        // Take top 10 matches
-        $topMatches = array_slice($similarPayees, 0, 10);
+        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
+        // We need to account for the fact, that optional aliases may be included, so the definition of exact match is the following:
+        // The payee name (before the first parenthesis) matches exactly (case insensitive), OR the aliases (one string inside the parenthesis) contains the payee name as a substring (case insensitive)
+        foreach ($similarPayees as $match) {
+            $namePart = Str::before($match['name'], '(');
+            $aliasesPart = Str::between($match['name'], '(', ')');
+
+            if (Str::lower(trim($namePart)) === Str::lower(trim($payeeName))) {
+                Log::info('Exact match found for payee name in payee name part, skipping AI call', [
+                    'payee_name' => $payeeName,
+                    'payee_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'name_part'
+                ]);
+
+                return $match['id'];
+            }
+
+            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(trim($payeeName)))) {
+                Log::info('Exact match found for payee name in payee aliases part, skipping AI call', [
+                    'payee_name' => $payeeName,
+                    'payee_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'aliases_part'
+                ]);
+
+                return $match['id'];
+            }
+        }
 
         // Format for AI prompt
-        $payeesList = collect($topMatches)
+        $payeesList = collect($similarPayees)
             ->map(fn ($match) => "{$match['id']}: {$match['name']}")
             ->join("\n");
 
         $prompt = <<<EOF
 I will provide you a list of payees and their IDs in the following format: "ID: Payee name (optional aliases)"
 I'd like you to identify the ID of the payee mentioned in the document.
+Primarily look for a match in the main name part, but also check the aliases if the main name doesn't match. The matching can be case insensitive.
+If there's no exact match, try to find the closest one based on similarity.
+
 Please provide ONLY the numeric ID, or N/A if there is no match.
 
 The list of payees is:
@@ -286,7 +347,7 @@ EOF;
         // Create service instance with user context
         $matchingService = new AssetMatchingService($user);
 
-        // Get similar investments
+        // Get similar investments - this already limits to top N matches
         $similarInvestments = $matchingService->matchInvestments($investmentName);
 
         if (empty($similarInvestments)) {
@@ -295,17 +356,40 @@ EOF;
             return null;
         }
 
-        // Take top 10 matches
-        $topMatches = array_slice($similarInvestments, 0, 10);
+        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
+        // The investment name (before the first parenthesis) matches exactly (case insensitive), OR the symbol/ISIN (one string inside the parenthesis) contains the investment name as a substring (case insensitive)
+        foreach ($similarInvestments as $match) {
+            $namePart = Str::before($match['name'], '(');
+            $symbolPart = Str::between($match['name'], '(', ')');
+            if (Str::lower(trim($namePart)) === Str::lower(trim($investmentName))) {
+                Log::info('Exact match found for investment name in investment name part, skipping AI call', [
+                    'investment_name' => $investmentName,
+                    'investment_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'name_part'
+                ]);
+                return $match['id'];
+            }
+            if ($symbolPart && Str::contains(Str::lower($symbolPart), Str::lower(trim($investmentName)))) {
+                Log::info('Exact match found for investment name in investment symbol/ISIN part, skipping AI call', [
+                    'investment_name' => $investmentName,
+                    'investment_name_in_list' => $match['name'],
+                    'matched_id' => $match['id'],
+                    'match_type' => 'symbol_part'
+                ]);
+                return $match['id'];
+            }
+        }
 
         // Format for AI prompt
-        $investmentsList = collect($topMatches)
+        $investmentsList = collect($similarInvestments)
             ->map(fn ($match) => "{$match['id']}: {$match['name']}")
             ->join("\n");
 
         $prompt = <<<EOF
 I will provide you a list of investments and their IDs in the following format: "ID: Investment name (optional symbol and ISIN)"
 I'd like you to identify the ID of the investment mentioned in the document.
+Either look for and EXACT symbol/ISIN match in the part within the parenthesis, or a name match in the main name part. The matching can be case insensitive, and might not be exact for the name.
 Please provide ONLY the numeric ID, or N/A if there is no match.
 
 The list of investments is:
@@ -438,7 +522,7 @@ The response must be in JSON format, without any additional text, explanation, o
 
 The document can represent either a STANDARD transaction or an INVESTMENT transaction.
 
-FOR STANDARD TRANSACTIONS (purchases, deposits, transfers):
+FOR STANDARD TRANSACTIONS (spend, purchase, gain money, transfer between accounts):
 {
   "transaction_type": "withdrawal|deposit|transfer",
   "account": "name of the account/card (for withdrawal/deposit)",
@@ -456,7 +540,7 @@ FOR STANDARD TRANSACTIONS (purchases, deposits, transfers):
   ]
 }
 
-FOR INVESTMENT TRANSACTIONS (stock/fund purchases, sales, dividends):
+FOR INVESTMENT TRANSACTIONS (stock/fund buy, sales, dividends):
 {
   "transaction_type": "exactly one of buy|sell|dividend|interest|add_shares|remove_shares",
   "account": "name of the brokerage/investment account",
@@ -479,7 +563,7 @@ RULES:
   - buy/sell/dividend/interest/add_shares/remove_shares → investment transaction
 * For transfers, extract BOTH account_from and account_to names
 * For transfers, the items array must be empty (it is not supported to have line items on transfers)
-* For receipts with multiple line items, extract each item separately in the items array
+* For receipts with multiple line items, extract each item separately into the items array
 * For investment transactions, omit the "items" array (as it is not part of the sample schema anyway)
 * Date format must be yyyy-mm-dd, use today's date if not specified
 
