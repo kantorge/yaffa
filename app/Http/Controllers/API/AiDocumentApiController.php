@@ -305,18 +305,21 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
     /**
      * Get file type from extension
-     * TODO: how to support custmo added types from config?
      */
-    private function getFileType(string $extension): string
+        private function getFileType(string $extension): string
     {
         $extension = mb_strtolower($extension);
+        $allowedTypes = config('ai-documents.file_upload.allowed_types');
 
-        return match ($extension) {
-            'pdf' => 'pdf',
-            'jpg', 'jpeg' => 'jpg',
-            'png' => 'png',
-            'txt' => 'txt',
-            default => 'txt',
-        };
+        // Normalize some common extensions
+        if ($extension === 'jpeg') {
+            return 'jpg';
+        }
+
+        if (in_array($extension, $allowedTypes, true)) {
+            return $extension;
+        }
+
+        return 'txt';
     }
 }
