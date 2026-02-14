@@ -7,7 +7,7 @@
 @section('content_header', __('Accounts'))
 
 @section('content')
-@if(isset($account))
+@isset($account)
 <form
     accept-charset="UTF-8"
     action="{{ route('account-entity.update', ['type' => 'account', 'account_entity' => $account->id]) }}"
@@ -22,16 +22,16 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($account->id))
+                @isset($account->id)
                     {{ __('Modify account') }}
                 @else
                     {{ __('Add new account') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">

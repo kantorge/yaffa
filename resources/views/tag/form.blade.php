@@ -7,7 +7,7 @@
 @section('content_header',  __('Tags'))
 
 @section('content')
-@if(isset($tag))
+@isset($tag)
 <form
     accept-charset="UTF-8"
     action="{{ route('tag.update', $tag) }}"
@@ -24,16 +24,16 @@
     dusk="form-tag"
     method="POST"
 >
-@endif
+@endisset
 
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($tag->id))
+                @isset($tag->id)
                     {{ __('Modify tag') }}
                 @else
                     {{ __('Add tag') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">
