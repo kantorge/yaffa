@@ -448,14 +448,6 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $this->finalizeAiDocument($validated, $transaction, $request->user());
 
-        // Save reference to incoming mail, if finalizing a transaction from email
-        if ($validated['action'] === 'finalize' && $validated['source_id']) {
-            $mail = ReceivedMail::find($validated['source_id']);
-            $mail->transaction_id = $transaction->id;
-            $mail->handled = true;
-            $mail->save();
-        }
-
         // Generate an event for the new transaction
         event(new TransactionCreated($transaction));
 

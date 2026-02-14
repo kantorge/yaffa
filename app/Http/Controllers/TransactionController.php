@@ -198,14 +198,12 @@ class TransactionController extends Controller implements HasMiddleware
         $transaction->budget = false;
         $transaction->reconciled = false;
 
-        $sourceId = $request->input('mail_id');
         $aiDocumentId = $request->input('ai_document_id');
 
         return view('transactions.form', [
             'transaction' => $transaction,
             'action' => 'finalize',
             'type' => $configType === 'investment' ? 'investment' : 'standard',
-            'source_id' => $sourceId,
             'ai_document_id' => $aiDocumentId,
         ]);
     }

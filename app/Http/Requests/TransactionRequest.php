@@ -38,7 +38,6 @@ class TransactionRequest extends FormRequest
     {
         $rules = [
             'action' => 'required|in:create,edit,clone,enter,replace,finalize',
-            'fromModal' => 'nullable|boolean',
 
             'id' => 'nullable|exists:transactions,id',
             'transaction_type' => [
@@ -59,7 +58,6 @@ class TransactionRequest extends FormRequest
             'budget' => 'boolean',
             'config_type' => 'required|in:standard,investment',
 
-            'source_id' => 'nullable|exists:App\Models\ReceivedMail,id',
             'ai_document_id' => 'nullable|exists:App\Models\AiDocument,id',
         ];
 

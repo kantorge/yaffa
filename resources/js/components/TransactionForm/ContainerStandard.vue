@@ -3,7 +3,6 @@
     :action="action"
     :initial-callback="callback"
     :transaction="transactionData"
-    :source-id="sourceId"
     :ai-document-id="aiDocumentId"
     :simplified="isSimplified"
     :dropdown-parent-selector="'body'"
@@ -43,10 +42,6 @@
             amount_to: null,
           },
         },
-      },
-      sourceId: {
-        type: Number,
-        default: null,
       },
       aiDocumentId: {
         type: Number,
