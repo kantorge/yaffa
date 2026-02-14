@@ -15,6 +15,22 @@
         {{ description || recommended_category_full_name }}
       </div>
       <div class="d-flex align-items-center gap-2">
+        <!-- Status badge for AI suggestions -->
+        <span
+          v-if="recommended_category_id && isRecommendationAccepted"
+          class="badge bg-success text-white ms-1"
+          :title="__('Using AI recommendation')"
+        >
+          <i class="fa fa-check me-1"></i>{{ __('AI suggested') }}
+        </span>
+        <span
+          v-else-if="recommended_category_id && !isRecommendationAccepted"
+          class="badge bg-warning text-dark ms-1"
+          :title="__('AI recommendation overridden')"
+        >
+          <i class="fa fa-edit me-1"></i>{{ __('Modified') }}
+        </span>
+
         <!-- Confidence badge for AI suggestions -->
         <span
           v-if="match_type === 'ai' && confidence_score !== null"
@@ -66,18 +82,6 @@
         >
           <i class="fa fa-check me-1"></i>{{ __('Add') }}
         </button>
-
-        <!-- AI suggested badge (generic indicator) -->
-        <span
-          v-if="
-            recommended_category_id &&
-            match_type !== 'exact' &&
-            !showRemoveButton
-          "
-          class="badge bg-primary"
-        >
-          <i class="fa fa-robot me-1"></i>{{ __('AI') }}
-        </span>
       </div>
     </div>
 
@@ -85,20 +89,6 @@
       <div class="col-12 col-sm-4 form-group">
         <span class="form-label">
           {{ __('Category') }}
-          <span
-            v-if="recommended_category_id && isRecommendationAccepted"
-            class="badge bg-success text-white ms-1"
-            :title="__('Using AI recommendation')"
-          >
-            <i class="fa fa-check me-1"></i>{{ __('AI') }}
-          </span>
-          <span
-            v-else-if="recommended_category_id && !isRecommendationAccepted"
-            class="badge bg-warning text-dark ms-1"
-            :title="__('AI recommendation overridden')"
-          >
-            <i class="fa fa-edit me-1"></i>{{ __('Modified') }}
-          </span>
         </span>
         <select
           class="form-select category"
@@ -145,20 +135,13 @@
       >
         <span class="form-label">
           {{ __('Comment') }}
-          <span v-if="recommended_category_id" class="text-muted small">
-            ({{ __('AI extracted') }})
-          </span>
         </span>
         <input
           class="form-control transaction_item_comment"
           v-model="commentData"
           @blur="$emit('update:comment', $event.target.value)"
           type="text"
-          :placeholder="
-            recommended_category_id
-              ? __('Edit item description')
-              : __('Add comment')
-          "
+          :placeholder="__('Add comment')"
         />
       </div>
       <div class="col-12 col-sm-1 justify-content-end d-flex align-items-start">
@@ -294,29 +277,16 @@
        * High confidence (≥0.7): auto-selected + remove button to reject
        */
       showRemoveButton() {
-        // Only show if there's a recommendation that was auto-accepted
+        // Only show if there's a recommendation that was auto-accepted OR accepted by the user
         if (!this.recommended_category_id) {
           return false;
         }
 
-        // If suggestion was removed, don't show remove button anymore
-        if (this.suggestionRemoved) {
-          return false;
-        }
-
-        // Show for exact matches or high confidence AI matches
-        if (this.match_type === 'exact') {
-          return false;
-        }
-
-        if (
-          this.match_type === 'ai' &&
-          this.confidence_score >= this.confidenceThreshold
-        ) {
-          return true;
-        }
-
-        return false;
+        return (
+          (this.match_type === 'exact' || this.match_type === 'ai') &&
+          this.isRecommendationAccepted &&
+          !this.suggestionRemoved
+        );
       },
 
       /**
@@ -325,23 +295,14 @@
        * No match: no button (don't suggest something that wasn't AI-suggested)
        */
       showAddButton() {
-        // Show button if suggestion was removed and user might want to re-accept it
-        if (this.suggestionRemoved && this.recommended_category_id) {
-          return true;
+        if (!this.recommended_category_id) {
+          return false;
         }
 
-        // Show button for low-confidence AI suggestions
-        if (
-          this.match_type === 'ai' &&
-          this.confidence_score !== null &&
-          this.confidence_score < this.confidenceThreshold &&
-          !this.suggestionRemoved
-        ) {
-          return true;
-        }
-
-        // Don't show button if there was no AI recommendation at all
-        return false;
+        return (
+          (this.match_type === 'exact' || this.match_type === 'ai') &&
+          !this.isRecommendationAccepted
+        );
       },
     },
 
@@ -367,11 +328,7 @@
                 payee: $vm.payee,
               };
             },
-            processResults: function (data) {
-              return {
-                results: data,
-              };
-            },
+            processResults: (data) => ({ results: data }),
             cache: true,
           },
           selectOnClose: true,
@@ -541,11 +498,12 @@
 
       /**
        * Remove suggestion without accepting it
-       * Marks the item so it doesn't learn from this suggestion
+       * Marks the item so YAFFA doesn't learn from this suggestion
        */
       removeSuggestion() {
         // Mark that suggestion was removed
         this.suggestionRemoved = true;
+        this.isRecommendationAccepted = false;
 
         // Clear the category field since we're rejecting the suggestion
         this.categoryIdData = null;
@@ -553,8 +511,14 @@
         // Emit event to indicate we don't want to learn from this
         this.$emit('update:dontLearn', { itemId: this.id, dontLearn: true });
 
-        // Emit the category change
+        // Emit the category change to parent component
         this.$emit('update:category_id', null);
+
+        // Clear the select2 selection
+        const $category = $(
+          '#transaction_item_' + this.id + ' select.category',
+        );
+        $category.val(null).trigger('change');
       },
 
       /**
