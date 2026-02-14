@@ -531,7 +531,6 @@
       },
       fromModal: {
         // If true, the form is shown in a modal, which controls a few parts of the form
-        // - notification behavior
         // - availability of callback options
         type: Boolean,
         default: false,
