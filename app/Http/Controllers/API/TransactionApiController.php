@@ -14,7 +14,6 @@ use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
 use App\Models\CategoryLearning;
-use App\Models\ReceivedMail;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;

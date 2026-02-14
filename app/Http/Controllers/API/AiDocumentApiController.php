@@ -222,10 +222,9 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('view', $aiDocument);
 
+        // Asking for duplicates of an unprocessed document is not valid
         if (! $aiDocument->processed_transaction_data) {
-            return response()->json([
-                'duplicates' => [],
-            ], Response::HTTP_OK);
+            return response()->json([], Response::HTTP_BAD_REQUEST);
         }
 
         $extractedData = $aiDocument->processed_transaction_data['raw'] ?? [];
@@ -236,7 +235,6 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         // Load full transaction details for frontend
         $transactionIds = array_column($duplicates, 'id');
         $transactions = \App\Models\Transaction::whereIn('id', $transactionIds)
-            ->with(['config', 'transactionItems.category'])
             ->get()
             ->keyBy('id');
 
@@ -247,9 +245,8 @@ class AiDocumentApiController extends Controller implements HasMiddleware
                 'id' => $duplicate['id'],
                 'similarity' => $duplicate['similarity'],
                 'date' => $transaction->date,
-                'amount' => $transaction->transactionItems->sum('amount'),
+                'amount' => $transaction->cashflow_value,
                 'type' => $transaction->config_type,
-                'description' => $transaction->transactionItems->first()?->comment ?? '',
             ];
         }, $duplicates);
 
@@ -306,7 +303,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     /**
      * Get file type from extension
      */
-        private function getFileType(string $extension): string
+    private function getFileType(string $extension): string
     {
         $extension = mb_strtolower($extension);
         $allowedTypes = config('ai-documents.file_upload.allowed_types');

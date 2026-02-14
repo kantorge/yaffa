@@ -97,61 +97,10 @@
         </div>
       </div>
 
-      <div class="card mb-3" v-if="canFinalize && duplicates.length > 0">
-        <div class="card-header bg-warning">
-          <div
-            class="card-title collapse-control"
-            data-coreui-toggle="collapse"
-            data-coreui-target="#cardDuplicates"
-          >
-            <i class="fa fa-angle-down"></i>
-            {{ __('Potential duplicates') }}
-          </div>
-        </div>
-        <div
-          class="collapse card-body show"
-          aria-expanded="true"
-          id="cardDuplicates"
-        >
-          <div class="alert alert-warning mb-3">
-            {{
-              __(
-                'The following transactions might be duplicates. Please review before finalizing.',
-              )
-            }}
-          </div>
-          <div class="list-group">
-            <a
-              v-for="duplicate in duplicates"
-              :key="duplicate.id"
-              :href="
-                window.route('transaction.open', {
-                  transaction: duplicate.id,
-                  action: 'show',
-                })
-              "
-              class="list-group-item list-group-item-action"
-              target="_blank"
-            >
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-bold">{{ duplicate.date }}</div>
-                  <div class="small">
-                    {{ duplicate.description || __('No description') }}
-                  </div>
-                </div>
-                <div class="text-end">
-                  <div>{{ duplicate.amount }}</div>
-                  <div class="badge bg-warning text-dark">
-                    {{ Math.round(duplicate.similarity * 100) }}%
-                    {{ __('match') }}
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
+      <AiDocumentDuplicates
+        :ai-document-id="aiDocument.id"
+        :can-finalize="canFinalize"
+      />
 
       <div class="card mb-3">
         <div class="card-header">
@@ -287,62 +236,10 @@
               aria-labelledby="nav-document-tab-files"
               tabindex="0"
             >
-              <div class="row">
-                <div class="col-12 col-lg-4">
-                  <div
-                    v-if="!aiDocument.files || aiDocument.files.length === 0"
-                    class="text-muted"
-                  >
-                    {{ __('No files available') }}
-                  </div>
-                  <div class="list-group" v-else>
-                    <button
-                      v-for="file in aiDocument.files"
-                      :key="file.id"
-                      class="list-group-item list-group-item-action"
-                      :class="{
-                        active: selectedFile && selectedFile.id === file.id,
-                      }"
-                      type="button"
-                      @click="selectFile(file)"
-                    >
-                      <i class="fa fa-fw fa-file me-2"></i>
-                      {{ file.file_name }}
-                    </button>
-                  </div>
-                </div>
-                <div class="col-12 col-lg-8">
-                  <div v-if="!selectedFile" class="text-muted">
-                    {{ __('Select a file to preview') }}
-                  </div>
-                  <div v-else>
-                    <div
-                      class="d-flex justify-content-between align-items-center mb-2"
-                    >
-                      <h5 class="mb-0">{{ selectedFile.file_name }}</h5>
-                      <a
-                        class="btn btn-sm btn-outline-primary"
-                        :href="downloadUrl(selectedFile)"
-                      >
-                        <i class="fa fa-fw fa-download"></i>
-                        {{ __('Download') }}
-                      </a>
-                    </div>
-                    <div
-                      v-if="isImage(selectedFile)"
-                      class="border rounded p-2"
-                    >
-                      <img :src="previewUrl(selectedFile)" class="img-fluid" />
-                    </div>
-                    <iframe
-                      v-else
-                      class="w-100 border rounded"
-                      style="min-height: 500px"
-                      :src="previewUrl(selectedFile)"
-                    ></iframe>
-                  </div>
-                </div>
-              </div>
+              <ai-document-file-viewer
+                :files="aiDocument.files || []"
+                :ai-document-id="aiDocument.id"
+              />
             </div>
 
             <div
@@ -476,163 +373,10 @@
               aria-labelledby="nav-document-tab-extracted"
               tabindex="0"
             >
-              <div class="container-fluid">
-                <div class="row mb-4">
-                  <div class="col-12 col-md-6">
-                    <h6 class="text-muted">{{ __('Transaction Type') }}</h6>
-                    <p class="mb-3">{{ draftTypeLabel }}</p>
-
-                    <h6 class="text-muted">{{ __('Date') }}</h6>
-                    <p class="mb-3">{{ draftData.date || __('Not set') }}</p>
-
-                    <h6 class="text-muted">{{ __('Currency') }}</h6>
-                    <p class="mb-3">
-                      {{ draftData.raw?.currency || __('Not set') }}
-                    </p>
-                  </div>
-
-                  <div class="col-12 col-md-6">
-                    <div v-if="draftData.config_type === 'standard'">
-                      <h6 class="text-muted">{{ __('Account') }}</h6>
-                      <p class="mb-3">
-                        {{ draftData.raw?.account || __('Not set') }}
-                      </p>
-
-                      <h6 class="text-muted">{{ __('Payee') }}</h6>
-                      <p class="mb-3">
-                        {{ draftData.raw?.payee || __('Not set') }}
-                      </p>
-
-                      <h6 class="text-muted">{{ __('Amount') }}</h6>
-                      <p class="mb-3">
-                        {{ draftData.raw?.amount || __('Not set') }}
-                      </p>
-                    </div>
-
-                    <div v-else>
-                      <h6 class="text-muted">{{ __('Account') }}</h6>
-                      <p class="mb-3">
-                        {{ draftData.raw?.account || __('Not set') }}
-                      </p>
-
-                      <h6 class="text-muted">{{ __('Investment') }}</h6>
-                      <p class="mb-3">
-                        {{ draftData.raw?.investment || __('Not set') }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  v-if="draftData.config_type === 'investment'"
-                  class="row mb-4"
-                >
-                  <div class="col-12 col-md-6">
-                    <h6 class="text-muted">{{ __('Quantity') }}</h6>
-                    <p class="mb-3">
-                      {{ draftData.raw?.quantity || __('Not set') }}
-                    </p>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <h6 class="text-muted">{{ __('Price') }}</h6>
-                    <p class="mb-3">
-                      {{ draftData.raw?.price || __('Not set') }}
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  v-if="draftData.items && draftData.items.length > 0"
-                  class="row"
-                >
-                  <div class="col-12">
-                    <h6 class="text-muted mb-3">{{ __('Line Items') }}</h6>
-                    <div class="table-responsive">
-                      <table class="table table-bordered">
-                        <thead class="table-light">
-                          <tr>
-                            <th>{{ __('Description') }}</th>
-                            <th class="text-end">
-                              {{ __('Amount') }}
-                            </th>
-                            <th>{{ __('Match Type') }}</th>
-                            <th>
-                              {{ __('Category') }}
-                            </th>
-                            <th class="text-center">{{ __('Confidence') }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="(item, index) in draftData.items"
-                            :key="index"
-                          >
-                            <td>
-                              {{
-                                item.comment || item.description || __('N/A')
-                              }}
-                            </td>
-                            <td class="text-end">{{ item.amount || 0 }}</td>
-                            <td>
-                              <span
-                                v-if="item.match_type"
-                                class="badge"
-                                :class="getMatchTypeBadgeClass(item.match_type)"
-                              >
-                                {{ getMatchTypeLabel(item.match_type) }}
-                              </span>
-                              <span v-else class="text-muted">{{
-                                __('No match')
-                              }}</span>
-                            </td>
-                            <td>
-                              <div
-                                v-if="item.category_full_name"
-                                class="d-flex align-items-center"
-                              >
-                                <span>{{ item.category_full_name }}</span>
-                              </div>
-                              <div
-                                v-else-if="item.recommended_category_full_name"
-                                class="d-flex align-items-center"
-                              >
-                                <span class="badge bg-info me-2">
-                                  <i class="fa fa-robot"></i>
-                                </span>
-                                <span class="text-muted">{{
-                                  item.recommended_category_full_name
-                                }}</span>
-                              </div>
-                              <span v-else class="text-muted">{{
-                                __('Not categorized')
-                              }}</span>
-                            </td>
-                            <td class="text-center">
-                              <span
-                                v-if="
-                                  item.match_type === 'ai' &&
-                                  item.confidence_score !== null
-                                "
-                                :class="
-                                  getConfidenceClass(item.confidence_score)
-                                "
-                              >
-                                {{ formatConfidence(item.confidence_score) }}
-                              </span>
-                              <span
-                                v-else-if="item.match_type === 'exact'"
-                                class="text-muted"
-                              >
-                                -
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ai-document-extracted-details
+                :draft-data="draftData"
+                :draft-type-label="draftTypeLabel"
+              />
             </div>
           </div>
         </div>
@@ -641,34 +385,36 @@
 
     <transaction-form-modal-standard :ai-document-id="aiDocument.id" />
     <transaction-form-modal-investment :ai-document-id="aiDocument.id" />
+    <transaction-show-modal />
   </div>
 </template>
 
 <script setup>
   import { computed, ref } from 'vue';
-  import { __ } from '../../helpers';
+  import { __, getTransactionTypeConfig } from '../../helpers';
   import * as toastHelpers from '../../toast';
   import { storeNotification } from '../../handle_notifications';
   import TransactionFormModalStandard from '../TransactionForm/ModalStandard.vue';
   import TransactionFormModalInvestment from '../TransactionForm/ModalInvestment.vue';
+  import TransactionShowModal from '../TransactionDisplay/Modal.vue';
+  import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
+  import AiDocumentExtractedDetails from './AiDocumentExtractedDetails.vue';
+  import AiDocumentDuplicates from './AiDocumentDuplicates.vue';
   import Swal from 'sweetalert2';
 
   const aiDocument = ref(window.aiDocument || {});
   const statusLabels = window.aiDocumentStatusLabels || {};
   const sourceLabels = window.aiDocumentSourceLabels || {};
-  const selectedFile = ref(aiDocument.value.files?.[0] || null);
   const isBusy = ref(false);
-  const duplicates = ref([]);
-  const duplicatesLoading = ref(false);
+  const locale = window.YAFFA.locale || 'en';
 
+  // Computed properties used in the component
   const createdAtLabel = computed(() => {
     if (!aiDocument.value.created_at) {
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.created_at).toLocaleString(
-      window.YAFFA.locale,
-    );
+    return new Date(aiDocument.value.created_at).toLocaleString(locale);
   });
 
   const processedAtLabel = computed(() => {
@@ -676,9 +422,7 @@
       return __('Not set');
     }
 
-    return new Date(aiDocument.value.processed_at).toLocaleString(
-      window.YAFFA.locale,
-    );
+    return new Date(aiDocument.value.processed_at).toLocaleString(locale);
   });
 
   const statusLabel = computed(
@@ -707,35 +451,22 @@
     }
   });
 
+  // Computed flag indicating if the document has draft data available for finalization
   const hasDraftData = computed(
     () => !!aiDocument.value.processed_transaction_data,
   );
+  // Computed property to access draft transaction data more easily
   const draftData = computed(
     () => aiDocument.value.processed_transaction_data || {},
   );
 
-  const standardTypeMap = {
-    withdrawal: 'withdrawal',
-    deposit: 'deposit',
-    transfer: 'transfer',
-  };
-
-  const investmentTypeMap = {
-    buy: 'Buy',
-    sell: 'Sell',
-    dividend: 'Dividend',
-    interest: 'Interest yield',
-    add_shares: 'Add shares',
-    remove_shares: 'Remove shares',
-  };
-
   const draftTypeLabel = computed(() => {
     const rawType = draftData.value?.raw?.transaction_type || '';
-    if (draftData.value?.config_type === 'investment') {
-      return investmentTypeMap[rawType] || rawType || __('Not set');
+    if (!rawType) {
+      return __('Not set');
     }
 
-    return standardTypeMap[rawType] || rawType || __('Not set');
+    return getTransactionTypeConfig(rawType).label || rawType;
   });
 
   const canFinalize = computed(
@@ -743,9 +474,7 @@
   );
 
   const canReprocess = computed(() =>
-    ['ready_for_review', 'processing_failed', 'finalized'].includes(
-      aiDocument.value.status,
-    ),
+    ['ready_for_review', 'processing_failed'].includes(aiDocument.value.status),
   );
 
   const transactionLink = computed(() =>
@@ -757,60 +486,12 @@
       : '#',
   );
 
-  const loadDuplicates = async () => {
-    if (!hasDraftData.value || duplicatesLoading.value) {
-      return;
-    }
-
-    duplicatesLoading.value = true;
-
-    try {
-      const response = await window.axios.post(
-        window.route('api.documents.checkDuplicates', {
-          aiDocument: aiDocument.value.id,
-        }),
-      );
-
-      duplicates.value = response.data.duplicates || [];
-    } catch (error) {
-      console.error('Failed to load duplicates:', error);
-      duplicates.value = [];
-    } finally {
-      duplicatesLoading.value = false;
-    }
-  };
-
-  const isImage = (file) => ['jpg', 'jpeg', 'png'].includes(file.file_type);
-
-  const previewUrl = (file) =>
-    window.route('ai-documents.files.show', {
-      aiDocument: aiDocument.value.id,
-      aiDocumentFile: file.id,
-    });
-
-  const downloadUrl = (file) => `${previewUrl(file)}?download=1`;
-
-  const selectFile = (file) => {
-    selectedFile.value = file;
-  };
-
   const buildDraftTransaction = () => {
+    // Create a deep copy of the draft data to avoid mutating the original
     const draft = JSON.parse(JSON.stringify(draftData.value || {}));
+
     draft.config = draft.config || {};
     draft.items = Array.isArray(draft.items) ? draft.items : [];
-
-    const rawType = draft.raw?.transaction_type || '';
-    let transactionTypeName = null;
-
-    if (draft.config_type === 'investment') {
-      transactionTypeName = investmentTypeMap[rawType] || 'Buy';
-    } else {
-      transactionTypeName = standardTypeMap[rawType] || 'withdrawal';
-    }
-
-    draft.transaction_type = {
-      name: transactionTypeName,
-    };
 
     return draft;
   };
@@ -820,9 +501,6 @@
       toastHelpers.showErrorToast(__('No draft data available to finalize.'));
       return;
     }
-
-    // Load duplicates before opening modal
-    loadDuplicates();
 
     const draft = buildDraftTransaction();
 
@@ -920,45 +598,5 @@
       window.document.getElementById('nav-document-tab-extracted'),
     );
     tab.show();
-  };
-
-  const getMatchTypeBadgeClass = (matchType) => {
-    if (matchType === 'exact') {
-      return 'bg-success';
-    }
-    if (matchType === 'ai') {
-      return 'bg-primary';
-    }
-    return 'bg-secondary';
-  };
-
-  const getMatchTypeLabel = (matchType) => {
-    if (matchType === 'exact') {
-      return __('Exact Match');
-    }
-    if (matchType === 'ai') {
-      return __('AI Suggested');
-    }
-    return __('No Match');
-  };
-
-  const formatConfidence = (score) => {
-    if (score === null || score === undefined) {
-      return '';
-    }
-    return `${(score * 100).toFixed(0)}%`;
-  };
-
-  const getConfidenceClass = (score) => {
-    if (score === null || score === undefined) {
-      return '';
-    }
-    if (score >= 0.8) {
-      return 'text-success fw-bold';
-    }
-    if (score >= 0.5) {
-      return 'text-warning fw-bold';
-    }
-    return 'text-danger fw-bold';
   };
 </script>

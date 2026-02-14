@@ -6,16 +6,79 @@
     <!-- Item description banner for AI recommendations -->
     <div
       v-if="recommended_category_id || description"
-      class="alert alert-info mb-2 py-2 px-3 d-flex justify-content-between align-items-center"
+      class="alert mb-2 py-2 px-3 d-flex justify-content-between align-items-center"
+      :class="aiAlertClass"
     >
       <div>
         <i class="fa fa-receipt me-2"></i>
         <strong>{{ __('Item') }}:</strong>
         {{ description || recommended_category.full_name }}
       </div>
-      <span class="badge bg-primary">
-        <i class="fa fa-robot me-1"></i>{{ __('AI suggested') }}
-      </span>
+      <div class="d-flex align-items-center gap-2">
+        <!-- Confidence badge for AI suggestions -->
+        <span
+          v-if="match_type === 'ai' && confidence_score !== null"
+          class="badge"
+          :class="confidenceBadgeClass"
+          :title="__('AI confidence score')"
+        >
+          {{ formatConfidence }}%
+        </span>
+
+        <span
+          v-else-if="description !== null && confidence_score === null"
+          class="badge"
+          :class="'bg-danger'"
+          :title="__('No AI match found')"
+        >
+          {{ __('No AI match found') }}
+        </span>
+
+        <!-- Exact match badge -->
+        <span
+          v-else-if="match_type === 'exact'"
+          class="badge bg-success"
+          :title="__('Exact match from learning')"
+        >
+          <i class="fa fa-check me-1"></i>{{ __('Exact') }}
+        </span>
+
+        <!-- Remove button for high-confidence matches -->
+        <button
+          v-if="showRemoveButton"
+          type="button"
+          class="btn btn-sm btn-outline-warning"
+          :title="__('Remove suggestion (will not learn)')"
+          @click="removeSuggestion"
+          style="white-space: nowrap"
+        >
+          <i class="fa fa-trash me-1"></i>{{ __('Remove') }}
+        </button>
+
+        <!-- Add button for low-confidence or no match -->
+        <button
+          v-if="showAddButton"
+          type="button"
+          class="btn btn-sm btn-outline-success"
+          :title="__('Accept suggestion')"
+          @click="acceptSuggestion"
+          style="white-space: nowrap"
+        >
+          <i class="fa fa-check me-1"></i>{{ __('Add') }}
+        </button>
+
+        <!-- AI suggested badge (generic indicator) -->
+        <span
+          v-if="
+            recommended_category_id &&
+            match_type !== 'exact' &&
+            !showRemoveButton
+          "
+          class="badge bg-primary"
+        >
+          <i class="fa fa-robot me-1"></i>{{ __('AI') }}
+        </span>
+      </div>
     </div>
 
     <div class="row">
@@ -147,9 +210,21 @@
       tags: Array,
       remainingAmount: Number,
       payee: [Number, String],
+      match_type: {
+        type: String,
+        default: null,
+      },
+      confidence_score: {
+        type: [Number, null],
+        default: null,
+      },
       dropdownParentSelector: {
         type: String,
         default: 'body',
+      },
+      confidenceThreshold: {
+        type: Number,
+        default: 0.7,
       },
     },
 
@@ -159,6 +234,7 @@
       'update:comment',
       'update:tags',
       'removeItem',
+      'update:dontLearn',
     ],
 
     data() {
@@ -168,7 +244,105 @@
         tagsData: this.tags,
         commentData: this.comment,
         isRecommendationAccepted: false,
+        suggestionRemoved: false,
       };
+    },
+
+    computed: {
+      /**
+       * Determine which alert class to use based on match type and confidence
+       */
+      aiAlertClass() {
+        if (this.match_type === 'exact') {
+          return 'alert-success';
+        }
+        if (this.match_type === 'ai') {
+          if (this.confidence_score >= this.confidenceThreshold) {
+            return 'alert-info';
+          }
+          return 'alert-warning';
+        }
+        return 'alert-info';
+      },
+
+      /**
+       * Format confidence score as percentage
+       */
+      formatConfidence() {
+        if (this.confidence_score === null) {
+          return '--';
+        }
+        return Math.round(this.confidence_score * 100);
+      },
+
+      /**
+       * Badge styling for confidence score
+       */
+      confidenceBadgeClass() {
+        if (this.confidence_score >= 0.8) {
+          return 'bg-success';
+        }
+        if (this.confidence_score >= this.confidenceThreshold) {
+          return 'bg-info';
+        }
+        return 'bg-warning';
+      },
+
+      /**
+       * Show remove button for high-confidence AI matches or exact matches
+       * Exact: auto-selected with no button initially, but show if user tries to change
+       * High confidence (≥0.7): auto-selected + remove button to reject
+       */
+      showRemoveButton() {
+        // Only show if there's a recommendation that was auto-accepted
+        if (!this.recommended_category_id) {
+          return false;
+        }
+
+        // If suggestion was removed, don't show remove button anymore
+        if (this.suggestionRemoved) {
+          return false;
+        }
+
+        // Show for exact matches or high confidence AI matches
+        if (this.match_type === 'exact') {
+          return false;
+        }
+
+        if (
+          this.match_type === 'ai' &&
+          this.confidence_score >= this.confidenceThreshold
+        ) {
+          return true;
+        }
+
+        return false;
+      },
+
+      /**
+       * Show add button for low-confidence suggestions or no match at all
+       * Low confidence (<0.7): show button to accept
+       * No match: no button (don't suggest something that wasn't AI-suggested)
+       */
+      showAddButton() {
+        // Show button if suggestion was removed and user might want to re-accept it
+        if (this.suggestionRemoved && this.recommended_category_id) {
+          return true;
+        }
+
+        // Show button for low-confidence AI suggestions
+        if (
+          this.match_type === 'ai' &&
+          this.confidence_score !== null &&
+          this.confidence_score < this.confidenceThreshold &&
+          !this.suggestionRemoved
+        ) {
+          return true;
+        }
+
+        // Don't show button if there was no AI recommendation at all
+        return false;
+      },
     },
 
     mounted() {
@@ -223,10 +397,19 @@
         });
 
       // Load selected item for category select2
-      // Priority: explicit category_id > recommended_category_id
+      // Priority: explicit category_id > recommended_category_id (if confidence permits)
+      const shouldAutoLoadRecommendation =
+        this.recommended_category_id &&
+        (this.match_type === 'exact' ||
+          (this.match_type === 'ai' &&
+            this.confidence_score >= this.confidenceThreshold));
+
       const effectiveCategoryId =
-        this.category_id || this.recommended_category_id;
-      const effectiveCategory = this.category || this.recommended_category;
+        this.category_id ||
+        (shouldAutoLoadRecommendation ? this.recommended_category_id : null);
+      const effectiveCategory =
+        this.category ||
+        (shouldAutoLoadRecommendation ? this.recommended_category : null);
 
       if (effectiveCategoryId && effectiveCategory) {
         const data = effectiveCategory;
@@ -243,7 +426,7 @@
         });
 
         // Track if we're using the recommendation
-        if (!this.category_id && this.recommended_category_id) {
+        if (!this.category_id && shouldAutoLoadRecommendation) {
           this.isRecommendationAccepted = true;
           this.categoryIdData = this.recommended_category_id;
         }
@@ -330,7 +513,7 @@
         this.$emit('updateItemAmount', event.target.value);
       },
 
-      // Emmit an event to instruct items container to remove this item
+      // Emit an event to instruct items container to remove this item
       removeItem() {
         this.$emit('removeItem');
       },
@@ -349,6 +532,57 @@
 
         element.val(amount);
         this.$emit('update:amount', amount);
+      },
+
+      /**
+       * Remove suggestion without accepting it
+       * Marks the item so it doesn't learn from this suggestion
+       */
+      removeSuggestion() {
+        // Mark that suggestion was removed
+        this.suggestionRemoved = true;
+
+        // Clear the category field since we're rejecting the suggestion
+        this.categoryIdData = null;
+
+        // Emit event to indicate we don't want to learn from this
+        this.$emit('update:dontLearn', { itemId: this.id, dontLearn: true });
+
+        // Emit the category change
+        this.$emit('update:category_id', null);
+      },
+
+      /**
+       * Accept a low-confidence or removed suggestion
+       * Resets the "removed" flag and applies the recommendation
+       */
+      acceptSuggestion() {
+        // Reset the removed flag
+        this.suggestionRemoved = false;
+
+        // Apply the recommended category
+        if (this.recommended_category_id) {
+          this.categoryIdData = this.recommended_category_id;
+          this.isRecommendationAccepted = true;
+
+          // Re-initialize select2 with the category
+          const $category = $(
+            '#transaction_item_' + this.id + ' select.category',
+          );
+          const option = new Option(
+            this.recommended_category.full_name,
+            this.recommended_category.id,
+            true,
+            true,
+          );
+          $category.append(option).trigger('change');
+
+          // Emit the category change
+          this.$emit('update:category_id', this.recommended_category_id);
+
+          // Clear the "don't learn" flag
+          this.$emit('update:dontLearn', { itemId: this.id, dontLearn: false });
+        }
       },
     },
 
