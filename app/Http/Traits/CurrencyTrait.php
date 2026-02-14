@@ -82,7 +82,6 @@ trait CurrencyTrait
      * Uses the cached collection from getAllCurrencies for efficiency.
      *
      * @param int|null $userId User ID (defaults to authenticated user)
-     * @return Currency|null
      */
     public function getBaseCurrency(?int $userId = null): ?Currency
     {
