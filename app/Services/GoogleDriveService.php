@@ -191,12 +191,8 @@ class GoogleDriveService
 
             // Check if we can add/delete children (indicates write access)
             // canAddChildren means we can create/delete files in the folder
-            return (bool) ($capabilities && $capabilities->getCanAddChildren())
-
-
-
             // If capabilities don't give us the answer, assume no delete permission
-            ;
+            return (bool) ($capabilities && $capabilities->getCanAddChildren());
         } catch (Exception $e) {
             Log::warning('Could not check delete permissions', [
                 'folder_id' => $folderId,

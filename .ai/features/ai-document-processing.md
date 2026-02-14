@@ -454,9 +454,9 @@ Standard transaction example:
     "account_to_id": 583,
     "account_from_id": 9
   },
-  "items": [
-    { "amount": 2.50, "category_id": 12 },
-    { "amount": 1.50, "category_id": 7 }
+  "transaction_items": [
+    { "amount": 2.50, "recommended_category_id": 12 },
+    { "amount": 1.50, "recommended_category_id": 7 }
   ]
 }
 ```
@@ -478,7 +478,7 @@ Investment transaction example:
     "tax": 0.75,
     "dividend": 0.0
   },
-  "items": []
+  "transaction_items": []
 }
 ```
 
@@ -516,11 +516,11 @@ If not determined or used, it must be set to NULL, but never omitted.
       "tax": "number|null: any tax amounts identified",
       "dividend": "number|null: dividend amount (for dividend transactions)"
     }
-  "items": "array of objects|null: line items for multi-item receipts; empty array if none",
+  "transaction_items": "array of objects|null: line items for multi-item receipts; empty array if none",
     [
       {
         "amount": "number|null: the amount for this item",
-        "category_id": "number|null: the ID of the category in YAFFA, or null if not determined"
+        "recommended_category_id": "number|null: the ID of the category in YAFFA, or null if not determined"
       }
     ]
 }
@@ -557,9 +557,8 @@ If not determined or used, it must be set to NULL, but never omitted.
 7. Details for the item-level category mapping:
    - Each item in the `items` array is rendered as a separate line item in the transaction form
    - The `amount` field maps to the line item amount
-   - If `category_id` is provided, preselect that category in the dropdown
-   - If `category_id` is null, no category is preselected
-   - User can change category selection freely
+   - If `recommended_category_id` is provided, and the `match_type` is `exact`, or if the `confidence_score` is above a certain threshold, preselect that category in the dropdown
+   - User can change category selection freely, and buttons are added to allow or deny AI suggestions
 8. User saves transaction form:
    - Transaction created via existing transaction creation endpoint
    - `ai_document_id` added to transaction record
@@ -592,11 +591,11 @@ A few notes on the statuses
     - When no exact match exists, batch all unmatched items in single AI call for efficiency.
     - Gather similar learning records per item using `similar_text()` with 0.5 threshold (top 10).
     - Provide AI with: item descriptions, similar learning patterns, and full active category list.
-    - AI returns: `category_id`, `confidence_score` (0.0-1.0) per item.
+    - AI returns: `recommended_category_id`, `confidence_score` (0.0-1.0) per item.
     - Validate category exists and is active before accepting AI suggestion.
     - Match type: `'ai'`, confidence score from AI response.
   - **Data Structure:**
-    - Items stored with additional metadata: `{amount, description, category_id, match_type, confidence_score}`.
+    - Items stored with additional metadata: `{amount, description, recommended_category_id, match_type, confidence_score}`.
     - `match_type`: `'exact'` | `'ai'` | `null` (no match).
     - `confidence_score`: `1.0` (exact), `0.0-1.0` (AI), `null` (no match).
   - **Learning Storage:**
@@ -1263,7 +1262,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 **PDF Processing:**
 
-- `"smalot/pdfparser": "^2.0"` - Extract text from PDF files (required, not yet added)
+- `"smalot/pdfparser": "^2.0"` - Extract text from PDF files (✅ already installed)
 
 **Image Processing:**
 

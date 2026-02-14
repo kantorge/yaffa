@@ -91,17 +91,13 @@ class AiDocumentController extends Controller implements HasMiddleware
     {
         $processedData = $aiDocument->processed_transaction_data;
 
-        if (!$processedData || !isset($processedData['items']) || !is_array($processedData['items'])) {
+        if (!$processedData || !isset($processedData['transaction_items']) || !is_array($processedData['transaction_items'])) {
             return;
         }
 
-        // Collect all unique category IDs from items
-        $categoryIds = collect($processedData['items'])
-            ->map(fn ($item) => [
-                $item['category_id'] ?? null,
-                $item['recommended_category_id'] ?? null,
-            ])
-            ->flatten()
+        // Collect all unique recommended category IDs from items
+        $categoryIds = collect($processedData['transaction_items'])
+            ->map(fn ($item) => $item['recommended_category_id'] ?? null)
             ->filter()
             ->unique()
             ->values()
@@ -118,24 +114,11 @@ class AiDocumentController extends Controller implements HasMiddleware
             ->get()
             ->keyBy('id');
 
-        // Enrich each item with category objects and full names
-        foreach ($processedData['items'] as &$item) {
-            if (isset($item['category_id']) && $categories->has($item['category_id'])) {
-                $category = $categories->get($item['category_id']);
-                $item['category_full_name'] = $category->full_name;
-                $item['category'] = [
-                    'id' => $category->id,
-                    'full_name' => $category->full_name,
-                ];
-            }
-
+        // Enrich each item with recommended category objects and full names
+        foreach ($processedData['transaction_items'] as &$item) {
             if (isset($item['recommended_category_id']) && $categories->has($item['recommended_category_id'])) {
                 $recommendedCategory = $categories->get($item['recommended_category_id']);
                 $item['recommended_category_full_name'] = $recommendedCategory->full_name;
-                $item['recommended_category'] = [
-                    'id' => $recommendedCategory->id,
-                    'full_name' => $recommendedCategory->full_name,
-                ];
             }
         }
 
