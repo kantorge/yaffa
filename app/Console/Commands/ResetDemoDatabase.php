@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
@@ -87,6 +88,8 @@ class ResetDemoDatabase extends Command
         $this->info('Demo data loaded.');
 
         // Create a set of sample received mails for the demo user, which can be used to test the email processing features of the app.
+        // These will be raw incoming mails, which will have to be processed before they can be finalized as a transaction. This allows testing the full flow of incoming mail processing, including the AI parsing features.
+        // Note, that there can be other AI Document records in the demo.sql file, but IDs should not conflict
         $this->info('Creating sample received mails...');
         $this->createSampleReceivedMails();
 
@@ -156,6 +159,9 @@ class ResetDemoDatabase extends Command
                 ]);
             $this->info("Transaction schedules updated: {$affected}");
         }
+
+        $this->info('Creating AI document duplicate scenario...');
+        $this->createDuplicateAiDocumentScenario($demoUser);
 
         // Next, run automated data retrieval commands to populate the database with current data.
         $this->info('Retrieving investment data...');
@@ -230,6 +236,67 @@ class ResetDemoDatabase extends Command
             '--html' => $mailParams['html'] ?? null,
             '--message-id' => $mailParams['message_id'] ?? 'sample-email-' . uniqid(),
             '--user-id' => 1,
+        ]);
+    }
+
+    private function createDuplicateAiDocumentScenario(User $demoUser): void
+    {
+        $transaction = Transaction::query()
+            ->where('user_id', $demoUser->id)
+            ->where('config_type', 'standard')
+            ->whereNotNull('date')
+            ->with(['config', 'transactionItems'])
+            ->first();
+
+        if (! $transaction || ! $transaction->config || $transaction->transactionItems->isEmpty()) {
+            $this->warn('Skipping AI document duplicate scenario - no suitable transaction found');
+            return;
+        }
+
+        $amount = (float) $transaction->transactionItems->sum('amount');
+        if ($amount <= 0) {
+            $this->warn('Skipping AI document duplicate scenario - transaction amount is not positive');
+            return;
+        }
+
+        $rawData = [
+            'date' => $transaction->date?->format('Y-m-d'),
+            'amount' => $amount,
+            'config_type' => $transaction->config_type,
+            'transaction_type' => $transaction->transaction_type->value,
+            'account_from_id' => $transaction->config->account_from_id,
+            'account_to_id' => $transaction->config->account_to_id,
+        ];
+
+        $firstItem = $transaction->transactionItems->first();
+
+        $processedData = [
+            'raw' => $rawData,
+            'date' => $rawData['date'],
+            'config_type' => $rawData['config_type'],
+            'transaction_type' => $rawData['transaction_type'],
+            'config' => [
+                'amount_from' => $amount,
+                'amount_to' => $amount,
+                'account_from_id' => $transaction->config->account_from_id,
+                'account_to_id' => $transaction->config->account_to_id,
+            ],
+            'items' => [
+                [
+                    'amount' => $amount,
+                    'category_id' => $firstItem?->category_id ?: null,
+                    'match_type' => null,
+                    'confidence_score' => null,
+                    'description' => $firstItem?->comment ?? '',
+                ],
+            ],
+        ];
+
+        $demoUser->aiDocuments()->create([
+            'status' => 'ready_for_review',
+            'source_type' => 'manual_upload',
+            'processed_transaction_data' => $processedData,
+            'processed_at' => now(),
         ]);
     }
 }

@@ -466,13 +466,21 @@
             <div class="d-flex align-items-center">
               <i class="fa fa-robot fa-2x me-3"></i>
               <div>
-                <h6 class="alert-heading mb-1">
+                <h6 class="alert-heading mb-2">
                   ✨ {{ __('AI-Assisted Transaction') }}
                 </h6>
-                <p class="mb-0 small">
+                <p class="mb-1 small">
                   {{
                     __(
-                      'Review the suggested categories below. Items show the extracted description and AI recommendations. You can accept or modify any suggestion.',
+                      'Review the suggested categories below. Items show the extracted description and AI recommendations with confidence scoring.',
+                    )
+                  }}
+                </p>
+                <p class="mb-0 small text-muted">
+                  <i class="fa fa-info-circle me-1"></i>
+                  {{
+                    __(
+                      'Categories are auto-applied based on confidence: Exact matches and high-confidence suggestions (≥70%) are auto-selected; low-confidence suggestions appear with an "Add" button for your approval.',
                     )
                   }}
                 </p>
@@ -886,7 +894,8 @@
       // Check if any items have AI recommendations
       hasAiRecommendations() {
         return this.form.items.some(
-          (item) => item.recommended_category_id || item.description,
+          (item) =>
+            item.recommended_category_id || item.description || item.match_type,
         );
       },
     },
@@ -1128,8 +1137,7 @@
           }
         }
 
-        // Assign any source ID passed to the form. Currently, this can be a received mail ID
-        this.form.source_id = this.sourceId;
+        // Assign AI document ID passed to the form for future reference when saving the transaction
         this.form.ai_document_id = this.aiDocumentId;
 
         // Set form action

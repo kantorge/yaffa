@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -73,5 +74,63 @@ class AiDocumentPageTest extends TestCase
         $this->actingAs($user)
             ->get(route('ai-documents.files.show', [$document, $file]))
             ->assertStatus(Response::HTTP_OK);
+    }
+
+    public function test_user_can_check_ai_document_duplicates(): void
+    {
+        $user = User::factory()->create();
+
+        $transaction = Transaction::factory()
+            ->for($user)
+            ->withdrawal($user)
+            ->create();
+
+        $transaction->load(['config', 'transactionItems']);
+        $amount = (float) $transaction->transactionItems->sum('amount');
+
+        $rawData = [
+            'date' => $transaction->date?->format('Y-m-d'),
+            'amount' => $amount,
+            'config_type' => $transaction->config_type,
+            'transaction_type' => $transaction->transaction_type->value,
+            'account_from_id' => $transaction->config->account_from_id,
+            'account_to_id' => $transaction->config->account_to_id,
+        ];
+
+        $firstItem = $transaction->transactionItems->first();
+
+        $document = AiDocument::factory()->for($user)->create([
+            'status' => 'ready_for_review',
+            'source_type' => 'manual_upload',
+            'processed_transaction_data' => [
+                'raw' => $rawData,
+                'date' => $rawData['date'],
+                'config_type' => $rawData['config_type'],
+                'transaction_type' => $rawData['transaction_type'],
+                'config' => [
+                    'amount_from' => $amount,
+                    'amount_to' => $amount,
+                    'account_from_id' => $transaction->config->account_from_id,
+                    'account_to_id' => $transaction->config->account_to_id,
+                ],
+                'items' => [
+                    [
+                        'amount' => $amount,
+                        'category_id' => $firstItem?->category_id ?: null,
+                        'match_type' => null,
+                        'confidence_score' => null,
+                        'description' => $firstItem?->comment ?? '',
+                    ],
+                ],
+            ],
+            'processed_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('api.documents.checkDuplicates', $document))
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJsonFragment([
+                'id' => $transaction->id,
+            ]);
     }
 }
