@@ -12,10 +12,10 @@ return new class () extends Migration {
     {
         Schema::table('transactions', function (Blueprint $table) {
             $table->foreignId('ai_document_id')
+                ->after('id')
                 ->nullable()
                 ->constrained('ai_documents')
-                ->cascadeOnDelete()
-                ->after('id');
+                ->cascadeOnDelete();
         });
     }
 
