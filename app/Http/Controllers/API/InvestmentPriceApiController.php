@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Requests\API\CheckPriceInvestmentPriceApiRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InvestmentPriceRequest;
 use App\Models\Investment;
@@ -151,13 +152,11 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function checkPrice(Request $request, Investment $investment): JsonResponse
+    public function checkPrice(CheckPriceInvestmentPriceApiRequest $request, Investment $investment): JsonResponse
     {
         Gate::authorize('view', $investment);
 
-        $validated = $request->validate([
-            'date' => 'required|date_format:Y-m-d',
-        ]);
+        $validated = $request->validated();
 
         $existingPrice = InvestmentPrice::where('investment_id', $investment->id)
             ->where('date', $validated['date'])
