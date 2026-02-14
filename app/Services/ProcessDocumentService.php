@@ -433,7 +433,7 @@ EOF;
             'config_type' => $isInvestment ? 'investment' : 'standard',
             'transaction_type' => $transactionType,
             'config' => [],
-            'items' => [],
+            'transaction_items' => [],
         ];
 
         // Build config based on transaction type
@@ -460,16 +460,16 @@ EOF;
 
         }
 
-        // Build items array with category learning (batch AI matching)
-        if (! $isInvestment && isset($rawData['items']) && is_array($rawData['items'])) {
-            $data['items'] = $this->matchCategoriesForItems($rawData['items'], $user, $config);
+        // Build transaction_items array with category learning (batch AI matching)
+        if (! $isInvestment && isset($rawData['transaction_items']) && is_array($rawData['transaction_items'])) {
+            $data['transaction_items'] = $this->matchCategoriesForItems($rawData['transaction_items'], $user, $config);
         } else {
             // Single item transaction
             $amount = floatval($rawData['amount'] ?? 0);
             if ($amount > 0) {
-                $data['items'][] = [
+                $data['transaction_items'][] = [
                     'amount' => $amount,
-                    'category_id' => null,
+                    'recommended_category_id' => null,
                     'match_type' => null,
                     'confidence_score' => null,
                     'description' => $rawData['payee'] ?? '',
@@ -483,7 +483,7 @@ EOF;
     /**
      * Check for exact category match in learning data (local only)
      *
-     * @return array{category_id: int, match_type: string, confidence_score: float}|null
+     * @return array{recommended_category_id: int, match_type: string, confidence_score: float}|null
      */
     private function checkExactCategoryMatch(string $description, User $user): ?array
     {
@@ -505,7 +505,7 @@ EOF;
 
         if ($learning) {
             return [
-                'category_id' => $learning->category_id,
+                'recommended_category_id' => $learning->category_id,
                 'match_type' => 'exact',
                 'confidence_score' => 1.0,
             ];
@@ -518,9 +518,9 @@ EOF;
      * Match categories for multiple items (batch processing with AI)
      *
      * @param  array  $items  Raw items from AI extraction
-     * @return array Enriched items with category_id, match_type, confidence_score
+     * @return array Enriched items with recommended_category_id, match_type, confidence_score
      */
-    private function matchCategoriesForItems(array $items, User $user, AiProviderConfig $config): array
+    protected function matchCategoriesForItems(array $items, User $user, AiProviderConfig $config): array
     {
         $enrichedItems = [];
         $itemsNeedingAi = [];
@@ -537,7 +537,7 @@ EOF;
                 $enrichedItems[$index] = [
                     'amount' => $amount,
                     'description' => $description,
-                    'category_id' => $exactMatch['category_id'],
+                    'recommended_category_id' => $exactMatch['recommended_category_id'],
                     'match_type' => $exactMatch['match_type'],
                     'confidence_score' => $exactMatch['confidence_score'],
                 ];
@@ -551,7 +551,7 @@ EOF;
                 $enrichedItems[$index] = [
                     'amount' => $amount,
                     'description' => $description,
-                    'category_id' => null,
+                    'recommended_category_id' => null,
                     'match_type' => null,
                     'confidence_score' => null,
                 ];
@@ -572,9 +572,10 @@ EOF;
             $aiMatches = $this->matchCategoriesBatch($itemsNeedingAi, $user, $config);
 
             // Merge AI results back into enriched items
+            // All recommendations (exact or AI) populate recommended_category_id
             foreach ($aiMatches as $index => $aiMatch) {
                 if (isset($enrichedItems[$index])) {
-                    $enrichedItems[$index]['category_id'] = $aiMatch['category_id'];
+                    $enrichedItems[$index]['recommended_category_id'] = $aiMatch['recommended_category_id'];
                     $enrichedItems[$index]['match_type'] = $aiMatch['match_type'];
                     $enrichedItems[$index]['confidence_score'] = $aiMatch['confidence_score'];
                 }
@@ -584,7 +585,7 @@ EOF;
                 'error' => $e->getMessage(),
                 'item_count' => count($itemsNeedingAi),
             ]);
-            // Items already have null category_id, so no changes needed
+            // Items already have null recommended_category_id, so no changes needed
         }
 
         return array_values($enrichedItems);
@@ -596,7 +597,7 @@ EOF;
      * @param  array  $items  Items needing AI matching (indexed by original position)
      * @return array AI match results indexed by original position
      */
-    private function matchCategoriesBatch(array $items, User $user, AiProviderConfig $config): array
+    protected function matchCategoriesBatch(array $items, User $user, AiProviderConfig $config): array
     {
         if (empty($items)) {
             return [];
@@ -648,7 +649,7 @@ EOF;
 
                     if (! $categoryExists) {
                         Log::warning('AI suggested invalid/inactive category', [
-                            'category_id' => $categoryId,
+                            'recommended_category_id' => $categoryId,
                             'item_index' => $itemIndex,
                         ]);
                         $categoryId = null;
@@ -657,7 +658,7 @@ EOF;
                 }
 
                 $matches[$itemIndex] = [
-                    'category_id' => $categoryId,
+                    'recommended_category_id' => $categoryId,
                     'match_type' => $categoryId !== null ? 'ai' : null,
                     'confidence_score' => $confidenceScore,
                 ];
@@ -689,7 +690,7 @@ EOF;
             foreach ($learningContext as $index => $learningRecords) {
                 $learningLines[] = "Item {$index} similar patterns:";
                 foreach ($learningRecords as $record) {
-                    $learningLines[] = "  - Category {$record['category_id']}: {$record['description']} (similarity: {$record['similarity']})";
+                    $learningLines[] = "  - Recommended Category {$record['recommended_category_id']}: {$record['description']} (similarity: {$record['similarity']})";
                 }
             }
             $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions):\n" . implode("\n", $learningLines) . "\n\n";
@@ -714,7 +715,7 @@ RULES:
 - Prioritize learning patterns if item description closely matches past patterns
 - Use category list to find best semantic match if no learning patterns match
 - Return confidence score 0.0-1.0 for each match (1.0 = certain, <0.5 = uncertain)
-- Return category_id as null if no reasonable match exists (confidence too low or no semantic match)
+- Return recommended_category_id as null if no reasonable match exists (confidence too low or no semantic match)
 - IMPORTANT: item_index must match the index shown in square brackets [N] in LINE ITEMS list
 
 {$learningSection}AVAILABLE ACTIVE CATEGORIES:
@@ -725,8 +726,8 @@ LINE ITEMS TO MATCH:
 
 Return JSON array ONLY (no markdown, no explanation, no code blocks):
 [
-  {"item_index": 0, "category_id": 123, "confidence_score": 0.95},
-  {"item_index": 1, "category_id": null, "confidence_score": null}
+  {"item_index": 0, "recommended_category_id": 123, "confidence_score": 0.95},
+  {"item_index": 1, "recommended_category_id": null, "confidence_score": null}
 ]
 EOF;
 
@@ -758,7 +759,7 @@ FOR STANDARD TRANSACTIONS (spend, purchase, gain money, transfer between account
   "date": "yyyy-mm-dd format",
   "amount": "total amount as number, no currency symbol",
   "currency": "ISO code (USD, EUR, etc.) if available; not fundamental for processing",
-  "items": [
+  "transaction_items": [
     {
       "description": "item description",
       "amount": "item monetary amount as number"
@@ -788,9 +789,9 @@ RULES:
   - withdrawal/deposit/transfer → standard transaction
   - buy/sell/dividend/interest/add_shares/remove_shares → investment transaction
 * For transfers, extract BOTH account_from and account_to names
-* For transfers, the items array must be empty (it is not supported to have line items on transfers)
-* For receipts with multiple line items, extract each item separately into the items array
-* For investment transactions, omit the "items" array (as it is not part of the sample schema anyway)
+* For transfers, the transaction_items array must be empty (it is not supported to have line items on transfers)
+* For receipts with multiple line items, extract each item separately into the transaction_items array
+* For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
 * Date format must be yyyy-mm-dd, use today's date if not specified
 
 {$customInstructions}
@@ -809,7 +810,7 @@ EOF;
     /**
      * Call AI provider and get text response
      */
-    private function callAi(AiProviderConfig $config, string $prompt): string
+    protected function callAi(AiProviderConfig $config, string $prompt): string
     {
         try {
             $response = \Prism\Prism\Facades\Prism::text()

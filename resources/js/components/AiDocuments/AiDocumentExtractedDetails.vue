@@ -80,7 +80,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in draftData.items" :key="index">
+              <tr
+                v-for="(item, index) in draftData.transaction_items"
+                :key="index"
+              >
                 <td>
                   {{ item.comment || item.description || __('N/A') }}
                 </td>
@@ -97,13 +100,7 @@
                 </td>
                 <td>
                   <div
-                    v-if="item.category_full_name"
-                    class="d-flex align-items-center"
-                  >
-                    <span>{{ item.category_full_name }}</span>
-                  </div>
-                  <div
-                    v-else-if="item.recommended_category_full_name"
+                    v-if="item.recommended_category_full_name"
                     class="d-flex align-items-center"
                   >
                     <span class="badge bg-info me-2">
@@ -159,7 +156,8 @@
 
   const hasItems = computed(
     () =>
-      Array.isArray(props.draftData.items) && props.draftData.items.length > 0,
+      Array.isArray(props.draftData.transaction_items) &&
+      props.draftData.transaction_items.length > 0,
   );
 
   const getMatchTypeBadgeClass = (matchType) => {

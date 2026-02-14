@@ -476,14 +476,6 @@
                     )
                   }}
                 </p>
-                <p class="mb-0 small text-muted">
-                  <i class="fa fa-info-circle me-1"></i>
-                  {{
-                    __(
-                      'Categories are auto-applied based on confidence: Exact matches and high-confidence suggestions (≥70%) are auto-selected; low-confidence suggestions appear with an "Add" button for your approval.',
-                    )
-                  }}
-                </p>
               </div>
             </div>
           </div>
@@ -1043,7 +1035,8 @@
                 // Preserve recommendation if present
                 if (item.recommended_category_id) {
                   item.recommended_category_id = item.recommended_category_id;
-                  item.recommended_category = item.recommended_category || null;
+                  item.recommended_category_full_name =
+                    item.recommended_category_full_name || null;
                 }
                 item.description = item.description || null;
                 return item;
@@ -1056,11 +1049,11 @@
                 const formItem = {
                   id: this.itemCounter++,
                   amount: Number(item.amount || 0),
-                  category_id: item.category_id || null,
-                  category: item.category || null,
                   description: item.description || null,
                   comment: item.comment || null,
                   tags: item.tags || [],
+                  match_type: item.match_type || null,
+                  confidence_score: item.confidence_score || null,
                 };
 
                 // Preserve recommendation from AI draft

@@ -172,6 +172,10 @@ class ResetDemoDatabase extends Command
         Artisan::call('app:calculate-transaction-cached-data');
         Artisan::call('app:cache:account-monthly-summaries');
 
+        // Initiate processing the AI documents we added
+        $this->info('Initiating AI document processing...');
+        Artisan::call('app:process-ai-documents');
+
         // Finally, put the site live
         $this->info('Database refresh ready, putting site live...');
         Artisan::call('up');
@@ -281,10 +285,10 @@ class ResetDemoDatabase extends Command
                 'account_from_id' => $transaction->config->account_from_id,
                 'account_to_id' => $transaction->config->account_to_id,
             ],
-            'items' => [
+            'transaction_items' => [
                 [
                     'amount' => $amount,
-                    'category_id' => $firstItem?->category_id ?: null,
+                    'recommended_category_id' => $firstItem?->category_id ?: null,
                     'match_type' => null,
                     'confidence_score' => null,
                     'description' => $firstItem?->comment ?? '',

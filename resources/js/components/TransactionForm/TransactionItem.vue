@@ -12,7 +12,7 @@
       <div>
         <i class="fa fa-receipt me-2"></i>
         <strong>{{ __('Item') }}:</strong>
-        {{ description || recommended_category.full_name }}
+        {{ description || recommended_category_full_name }}
       </div>
       <div class="d-flex align-items-center gap-2">
         <!-- Confidence badge for AI suggestions -->
@@ -202,9 +202,8 @@
       id: Number,
       amount: [Number, String],
       category_id: Number,
-      category: Object,
       recommended_category_id: Number,
-      recommended_category: Object,
+      recommended_category_full_name: String,
       description: String,
       currencySymbol: String,
       comment: String,
@@ -398,7 +397,7 @@
         });
 
       // Load selected item for category select2
-      // Priority: explicit category_id > recommended_category_id (if confidence permits)
+      // Auto-load recommendation if it's exact or high-confidence AI match
       const shouldAutoLoadRecommendation =
         this.recommended_category_id &&
         (this.match_type === 'exact' ||
@@ -408,9 +407,12 @@
       const effectiveCategoryId =
         this.category_id ||
         (shouldAutoLoadRecommendation ? this.recommended_category_id : null);
-      const effectiveCategory =
-        this.category ||
-        (shouldAutoLoadRecommendation ? this.recommended_category : null);
+      const effectiveCategory = shouldAutoLoadRecommendation
+        ? {
+            id: this.recommended_category_id,
+            full_name: this.recommended_category_full_name,
+          }
+        : null;
 
       if (effectiveCategoryId && effectiveCategory) {
         const data = effectiveCategory;
@@ -426,10 +428,12 @@
           },
         });
 
-        // Track if we're using the recommendation
+        // Track if we're using the recommendation and emit the category_id
         if (!this.category_id && shouldAutoLoadRecommendation) {
           this.isRecommendationAccepted = true;
           this.categoryIdData = this.recommended_category_id;
+          // Emit the category_id so parent component tracks it
+          this.$emit('update:category_id', this.recommended_category_id);
         }
       }
 
@@ -562,7 +566,10 @@
         this.suggestionRemoved = false;
 
         // Apply the recommended category
-        if (this.recommended_category_id) {
+        if (
+          this.recommended_category_id &&
+          this.recommended_category_full_name
+        ) {
           this.categoryIdData = this.recommended_category_id;
           this.isRecommendationAccepted = true;
 
@@ -570,13 +577,28 @@
           const $category = $(
             '#transaction_item_' + this.id + ' select.category',
           );
+
+          // Clear existing options first
+          $category.empty();
+
           const option = new Option(
-            this.recommended_category.full_name,
-            this.recommended_category.id,
+            this.recommended_category_full_name,
+            this.recommended_category_id,
             true,
             true,
           );
           $category.append(option).trigger('change');
+
+          // Manually trigger the select2:select event
+          $category.trigger({
+            type: 'select2:select',
+            params: {
+              data: {
+                id: this.recommended_category_id,
+                name: this.recommended_category_full_name,
+              },
+            },
+          });
 
           // Emit the category change
           this.$emit('update:category_id', this.recommended_category_id);

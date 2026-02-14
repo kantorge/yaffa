@@ -60,9 +60,10 @@
           :id="item.id"
           :amount="item.amount"
           :category_id="item.category_id ? Number(item.category_id) : null"
-          :category="item.category"
           :recommended_category_id="item.recommended_category_id || null"
-          :recommended_category="item.recommended_category || null"
+          :recommended_category_full_name="
+            item.recommended_category_full_name || null
+          "
           :description="item.description || null"
           :match_type="item.match_type || null"
           :confidence_score="item.confidence_score || null"

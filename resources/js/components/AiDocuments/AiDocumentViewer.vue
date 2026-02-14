@@ -40,7 +40,9 @@
             <dt class="col-7">{{ __('Files') }}</dt>
             <dd class="col-5">{{ aiDocument.files?.length || 0 }}</dd>
             <dt class="col-7">{{ __('Line items') }}</dt>
-            <dd class="col-5">{{ draftData.items?.length || 0 }}</dd>
+            <dd class="col-5">
+              {{ draftData.transaction_items?.length || 0 }}
+            </dd>
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
@@ -491,12 +493,15 @@
     const draft = JSON.parse(JSON.stringify(draftData.value || {}));
 
     draft.config = draft.config || {};
-    draft.items = Array.isArray(draft.items) ? draft.items : [];
+    draft.transaction_items = Array.isArray(draft.transaction_items)
+      ? draft.transaction_items
+      : [];
 
     return draft;
   };
 
   const finalizeDocument = () => {
+    // The button should be disabled if there's no draft data, but we add a check here just in case
     if (!hasDraftData.value) {
       toastHelpers.showErrorToast(__('No draft data available to finalize.'));
       return;
