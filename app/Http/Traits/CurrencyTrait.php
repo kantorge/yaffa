@@ -62,14 +62,17 @@ trait CurrencyTrait
     public function getAllCurrencies(?int $userId = null): \Illuminate\Support\Collection
     {
         $userId = $userId ?? auth()->user()?->id;
-        
+
         if (!$userId) {
             return collect();
         }
 
         $cacheKey = "currencies_user_{$userId}";
 
-        return Cache::remember($cacheKey, now()->addHours(24), fn() =>
+        return Cache::remember(
+            $cacheKey,
+            now()->addHours(24),
+            fn () =>
             Currency::where('user_id', $userId)->get()->keyBy('id')
         );
     }
@@ -84,7 +87,7 @@ trait CurrencyTrait
     public function getBaseCurrency(?int $userId = null): ?Currency
     {
         $userId = $userId ?? auth()->user()?->id;
-        
+
         if (!$userId) {
             return null;
         }
@@ -105,7 +108,7 @@ trait CurrencyTrait
     public function clearCurrencyCache(?int $userId = null): void
     {
         $userId = $userId ?? auth()->user()?->id;
-        
+
         if ($userId) {
             Cache::forget("currencies_user_{$userId}");
         }
