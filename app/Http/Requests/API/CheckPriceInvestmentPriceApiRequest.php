@@ -13,6 +13,9 @@ class CheckPriceInvestmentPriceApiRequest extends FormRequest
      */
     public function rules()
     {
-        return ['date' => 'required|date_format:Y-m-d'];
+        return ['date' => [
+                'required',
+                'date_format:Y-m-d',
+            ],];
     }
 }
