@@ -20,7 +20,7 @@
             :simplified="true"
             :fromModal="true"
             :ai-document-id="aiDocumentId"
-            :dropdown-parent-selector="'#modal-transaction-form-standard'"
+            :dropdown-parent-selector="'#transaction_item_container'"
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-standard>

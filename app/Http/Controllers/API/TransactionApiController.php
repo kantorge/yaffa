@@ -778,6 +778,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             ->where('user_id', $user->id)
             ->first();
 
+        // Silently return if the AI document is not found
         if (! $aiDocument) {
             return;
         }
@@ -790,7 +791,8 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         if ($transaction->ai_document_id !== $aiDocument->id) {
             $transaction->ai_document_id = $aiDocument->id;
-            $transaction->save();
+            // The update of the reference should not trigger update-based events
+            $transaction->saveQuietly();
         }
 
         // Update CategoryLearning for accepted recommendations
