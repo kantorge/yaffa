@@ -250,7 +250,7 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 
 1. **Trust These Instructions:** Only perform additional searches if information here is incomplete or incorrect. This document is designed to minimize exploration time.
 
-2. **Build Before Test:** Always build assets (`npm run dev`) before running Dusk tests or testing UI changes.
+2. **Build Before Test:** Always build assets (`sail npm run build`) before running Dusk tests or testing UI changes.
 
 3. **Database Required:** Most tests require MySQL. Use Docker Compose or local MySQL instance.
 
@@ -262,11 +262,11 @@ Builds multi-platform Docker images (linux/amd64, linux/arm64) and pushes to Doc
 
 5. **Known TODOs in Codebase:** The codebase contains TODO comments (found in `resources/js/` files) indicating future improvements. These are informational and don't block development.
 
-6. **Migration Path:** If upgrading from YAFFA 1.x to 2.x, see `UPGRADE.md` for breaking changes related to Laravel 10→12 migration and environment variable renames.
+6. **Docker Deployment:** Production Docker image is built from `docker/Dockerfile` with Caddy web server. Local development uses Laravel Sail with `docker-compose.yml`.
 
-7. **Docker Deployment:** Production Docker image is built from `docker/Dockerfile` with Caddy web server. Local development uses Laravel Sail with `docker-compose.yml`.
+7. **Queue System:** Application uses Laravel queues for background jobs. Start queue worker with `php artisan queue:work` or use `composer dev` for development.
 
-8. **Queue System:** Application uses Laravel queues for background jobs. Start queue worker with `php artisan queue:work` or use `composer dev` for development.
+8. **Developer Environment:** You are NOT allowed to make any changes to the `.env` file at any time. If you ever think you need to change it, ask the user instead. The `.env` file is critical to the application's configuration and stability.
 
 ## Validation Checklist
 
@@ -388,7 +388,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Constructors
 
 - Use PHP 8 constructor property promotion in `__construct()`.
-    - <code-snippet>public function __construct(public GitHub $github) { }</code-snippet>
+  - <code-snippet>public function \_\_construct(public GitHub $github) { }</code-snippet>
 - Do not allow empty `__construct()` methods with zero parameters unless the constructor is private.
 
 ## Type Declarations
@@ -423,10 +423,10 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Start services using `vendor/bin/sail up -d` and stop them with `vendor/bin/sail stop`.
 - Open the application in the browser by running `vendor/bin/sail open`.
 - Always prefix PHP, Artisan, Composer, and Node commands with `vendor/bin/sail`. Examples:
-    - Run Artisan Commands: `vendor/bin/sail artisan migrate`
-    - Install Composer packages: `vendor/bin/sail composer install`
-    - Execute Node commands: `vendor/bin/sail npm run dev`
-    - Execute PHP scripts: `vendor/bin/sail php [script]`
+  - Run Artisan Commands: `vendor/bin/sail artisan migrate`
+  - Install Composer packages: `vendor/bin/sail composer install`
+  - Execute Node commands: `vendor/bin/sail npm run dev`
+  - Execute PHP scripts: `vendor/bin/sail php [script]`
 - View all available Sail commands by running `vendor/bin/sail` without arguments.
 
 === tests rules ===
@@ -540,4 +540,4 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - To run all tests: `vendor/bin/sail artisan test --compact`.
 - To run all tests in a file: `vendor/bin/sail artisan test --compact tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `vendor/bin/sail artisan test --compact --filter=testName` (recommended after making a change to a related file).
-</laravel-boost-guidelines>
+  </laravel-boost-guidelines>
