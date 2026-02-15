@@ -163,6 +163,10 @@ class ResetDemoDatabase extends Command
         $this->info('Creating AI document duplicate scenario...');
         $this->createDuplicateAiDocumentScenario($demoUser);
 
+        // Initiate processing the AI documents we added
+        $this->info('Initiating AI document processing...');
+        Artisan::call('app:process-ai-documents');
+
         // Next, run automated data retrieval commands to populate the database with current data.
         $this->info('Retrieving investment data...');
         Artisan::call('app:investment-prices:get');
@@ -171,10 +175,6 @@ class ResetDemoDatabase extends Command
         Artisan::call('app:cache:transaction-schedule-active-flags');
         Artisan::call('app:calculate-transaction-cached-data');
         Artisan::call('app:cache:account-monthly-summaries');
-
-        // Initiate processing the AI documents we added
-        $this->info('Initiating AI document processing...');
-        Artisan::call('app:process-ai-documents');
 
         // Finally, put the site live
         $this->info('Database refresh ready, putting site live...');

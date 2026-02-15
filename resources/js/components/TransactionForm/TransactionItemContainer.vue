@@ -56,10 +56,15 @@
           @update:category_id="updateItemCategory(index, $event)"
           @update:tags="updateItemTag(index, $event)"
           @update:comment="updateItemComment(index, $event)"
-          @update:dontLearn="updateItemDontLearn(index, $event)"
+          @update:learnRecommendation="
+            updateItemLearnRecommendation(index, $event)
+          "
           :id="item.id"
           :amount="item.amount"
           :category_id="item.category_id ? Number(item.category_id) : null"
+          :category_full_name="
+            item.category?.full_name || item.category_full_name || null
+          "
           :recommended_category_id="item.recommended_category_id || null"
           :recommended_category_full_name="
             item.recommended_category_full_name || null
@@ -188,9 +193,10 @@
         this.transactionItems[index].comment = value;
       },
 
-      // Update transaction item don't learn flag with value received from child component
-      updateItemDontLearn(index, value) {
-        this.transactionItems[index].dontLearn = value.dontLearn;
+      // Update transaction item learn recommendation flag with value received from child component
+      updateItemLearnRecommendation(index, value) {
+        this.transactionItems[index].learnRecommendation =
+          value.learnRecommendation;
       },
 
       // Item list collapse and expand functionality

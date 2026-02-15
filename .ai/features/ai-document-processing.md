@@ -1436,3 +1436,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - When the user initiates reprocessing of a document from its own view, it would be nice to update the status, and even better to indicate completion. Would it be overengineering to introduce Echo and Reverb? Would polling be sufficient for this?
 - When an unidentified payee is returned, the ai document viewer should allow to create it as a new payee.
 - Once a category mapping is learned, there's no UI to manage it. It would be good to have a section in the category management page, that lists all the learned mappings, with the option to delete them if they are wrong, or if the user just wants to clean up.
+
+** Bugs to fix for MVP:**
+
+- When a transaction is finalized from the AiDocument review page, and the modal gets closed, the document status is not updated, and other related UI elements are not refreshed.

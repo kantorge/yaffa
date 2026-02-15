@@ -681,7 +681,6 @@
         },
         remaining_payee_default_amount: 0,
         remaining_payee_default_category_id: null,
-        source_id: null,
         ai_document_id: null,
       });
 
@@ -882,7 +881,7 @@
 
       // Do we allow the user to edit the base settings?
       isBaseSettingsEditsAllowed() {
-        return ['create', 'clone', 'finalize'].includes(this.action);
+        return ['create', 'finalize'].includes(this.action);
       },
 
       // Check if any items have AI recommendations
@@ -1034,6 +1033,9 @@
               .map((item) => {
                 item.id = this.itemCounter++;
                 item.amount = Number(item.amount);
+                item.learnRecommendation = true; // Default to learning enabled
+                item.category_full_name =
+                  item.category?.full_name || item.category_full_name || null;
                 // Preserve recommendation if present
                 if (item.recommended_category_id) {
                   item.recommended_category_id = item.recommended_category_id;
@@ -1056,6 +1058,7 @@
                   tags: item.tags || [],
                   match_type: item.match_type || null,
                   confidence_score: item.confidence_score || null,
+                  learnRecommendation: true, // Default to learning enabled for AI recommendations
                 };
 
                 // Preserve recommendation from AI draft
@@ -1245,6 +1248,7 @@
       addTransactionItem() {
         this.form.items.push({
           id: this.itemCounter++,
+          learnRecommendation: true,
         });
       },
 
