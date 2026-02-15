@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-12 col-lg-3">
+    <div class="col-12 col-lg-4">
       <div class="card mb-3">
         <div class="card-header">
           <div
@@ -39,10 +39,6 @@
             </dd>
             <dt class="col-7">{{ __('Files') }}</dt>
             <dd class="col-5">{{ aiDocument.files?.length || 0 }}</dd>
-            <dt class="col-7">{{ __('Line items') }}</dt>
-            <dd class="col-5">
-              {{ draftData.transaction_items?.length || 0 }}
-            </dd>
             <dt class="col-7">{{ __('Linked transaction') }}</dt>
             <dd class="col-5">
               <a
@@ -59,7 +55,9 @@
       </div>
 
       <div class="card mb-3" v-if="hasDraftData">
-        <div class="card-header">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
           <div
             class="card-title collapse-control"
             data-coreui-toggle="collapse"
@@ -68,6 +66,14 @@
             <i class="fa fa-angle-down"></i>
             {{ __('Extracted data') }}
           </div>
+          <button
+            class="btn btn-sm btn-outline-primary"
+            type="button"
+            @click="showExtractedDetailsTab"
+            v-if="showExtractedDetails"
+          >
+            <i class="fa fa-fw fa-info-circle" :title="__('More details')"></i>
+          </button>
         </div>
         <div
           class="collapse card-body show"
@@ -75,27 +81,37 @@
           id="cardExtractedData"
         >
           <dl class="row mb-0">
-            <dd class="col-6">{{ __('Transaction type') }}</dd>
-            <dt class="col-6">{{ draftTypeLabel }}</dt>
-            <dd class="col-6">{{ __('Date') }}</dd>
-            <dt class="col-6">{{ draftData.date || __('Not set') }}</dt>
-            <dd class="col-6">{{ __('Account') }}</dd>
-            <dt class="col-6">{{ draftData.raw?.account || __('Not set') }}</dt>
-            <dd class="col-6">{{ __('Payee') }}</dd>
-            <dt class="col-6">{{ draftData.raw?.payee || __('Not set') }}</dt>
-            <dd class="col-6">{{ __('Amount') }}</dd>
-            <dt class="col-6">{{ draftData.raw?.amount || __('Not set') }}</dt>
+            <dt class="col-6">{{ __('Transaction type') }}</dt>
+            <dd class="col-6">{{ draftTypeLabel }}</dd>
+            <dt class="col-6">{{ __('Date') }}</dt>
+            <dd class="col-6">{{ draftData.date || unidentifiedLabel }}</dd>
+            <dt class="col-6">{{ __('Account') }}</dt>
+            <dd class="col-6">
+              {{ draftData.raw?.account || unidentifiedLabel }}
+            </dd>
+            <dt class="col-6" v-if="draftData.config_type === 'standard'">
+              {{ __('Payee') }}
+            </dt>
+            <dd class="col-6" v-if="draftData.config_type === 'standard'">
+              {{ draftData.raw?.payee || unidentifiedLabel }}
+            </dd>
+            <dt class="col-6" v-if="draftData.config_type === 'investment'">
+              {{ __('Investment') }}
+            </dt>
+            <dd class="col-6" v-if="draftData.config_type === 'investment'">
+              {{ draftData.raw?.investment || unidentifiedLabel }}
+            </dd>
+            <dt class="col-6">{{ __('Amount') }}</dt>
+            <dd class="col-6">
+              {{ draftData.raw?.amount || unidentifiedLabel }}
+            </dd>
+            <dt class="col-6" v-if="draftData.config_type === 'standard'">
+              {{ __('Line items') }}
+            </dt>
+            <dd class="col-6" v-if="draftData.config_type === 'standard'">
+              {{ draftData.transaction_items?.length || 0 }}
+            </dd>
           </dl>
-          <div class="mt-3">
-            <button
-              class="btn btn-sm btn-outline-primary"
-              type="button"
-              @click="showExtractedDetailsTab"
-              v-if="canFinalize"
-            >
-              {{ __('More details') }}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -167,7 +183,7 @@
       </div>
     </div>
 
-    <div class="col-12 col-lg-9">
+    <div class="col-12 col-lg-8">
       <div class="card mb-3">
         <div class="card-header">
           <ul class="nav nav-tabs card-header-tabs">
@@ -213,7 +229,7 @@
                 {{ __('Custom prompt') }}
               </button>
             </li>
-            <li class="nav-item" v-if="canFinalize">
+            <li class="nav-item" v-if="showExtractedDetails">
               <button
                 class="nav-link"
                 id="nav-document-tab-extracted"
@@ -244,117 +260,10 @@
               />
             </div>
 
-            <div
+            <ai-document-email-viewer
               v-if="aiDocument.received_mail"
-              class="tab-pane fade"
-              id="document-tab-email"
-              role="tabpanel"
-              aria-labelledby="nav-document-tab-email"
-              tabindex="0"
-            >
-              <div
-                v-if="
-                  !aiDocument.received_mail.html &&
-                  !aiDocument.received_mail.text
-                "
-                class="text-muted"
-              >
-                {{ __('No email content available') }}
-              </div>
-              <div v-else class="card mb-3">
-                <div
-                  class="card-header"
-                  v-if="
-                    aiDocument.received_mail.html &&
-                    aiDocument.received_mail.text
-                  "
-                >
-                  <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                      <button
-                        class="nav-link active"
-                        id="nav-email-tab-html"
-                        data-coreui-toggle="tab"
-                        data-coreui-target="#email-tab-html"
-                        type="button"
-                        role="tab"
-                        aria-controls="email-tab-html"
-                        aria-selected="true"
-                      >
-                        {{ __('HTML view') }}
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        id="nav-email-tab-text"
-                        data-coreui-toggle="tab"
-                        data-coreui-target="#email-tab-text"
-                        type="button"
-                        role="tab"
-                        aria-controls="email-tab-text"
-                        aria-selected="false"
-                      >
-                        {{ __('Text view') }}
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-                <div class="card-body">
-                  <div class="tab-content" id="nav-tabContent">
-                    <div
-                      v-if="aiDocument.received_mail.html"
-                      class="tab-pane fade"
-                      :class="{
-                        'show active':
-                          !aiDocument.received_mail.text ||
-                          aiDocument.received_mail.html,
-                      }"
-                      id="email-tab-html"
-                      role="tabpanel"
-                      aria-labelledby="nav-email-tab-html"
-                      tabindex="0"
-                      v-html="aiDocument.received_mail.html"
-                    ></div>
-                    <div
-                      v-else
-                      class="tab-pane fade show active"
-                      id="email-tab-html"
-                      role="tabpanel"
-                      aria-labelledby="nav-email-tab-html"
-                      tabindex="0"
-                    >
-                      <div class="text-muted">
-                        {{ __('HTML content not available') }}
-                      </div>
-                    </div>
-                    <div
-                      v-if="aiDocument.received_mail.text"
-                      class="tab-pane fade"
-                      :class="{ 'show active': !aiDocument.received_mail.html }"
-                      id="email-tab-text"
-                      role="tabpanel"
-                      aria-labelledby="nav-email-tab-text"
-                      tabindex="0"
-                    >
-                      <pre>{{ aiDocument.received_mail.text }}</pre>
-                    </div>
-                    <div
-                      v-else
-                      class="tab-pane fade"
-                      id="email-tab-text"
-                      role="tabpanel"
-                      aria-labelledby="nav-email-tab-text"
-                      tabindex="0"
-                    >
-                      <div class="text-muted">
-                        {{ __('Text content not available') }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              :received-mail="aiDocument.received_mail"
+            />
 
             <div
               v-if="aiDocument.custom_prompt"
@@ -368,7 +277,7 @@
             </div>
 
             <div
-              v-if="canFinalize"
+              v-if="showExtractedDetails"
               class="tab-pane fade"
               id="document-tab-extracted"
               role="tabpanel"
@@ -392,13 +301,14 @@
 </template>
 
 <script setup>
-  import { computed, ref } from 'vue';
-  import { __, getTransactionTypeConfig } from '../../helpers';
-  import * as toastHelpers from '../../toast';
-  import { storeNotification } from '../../handle_notifications';
+  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+  import { __, getTransactionTypeConfig } from '@/helpers';
+  import * as toastHelpers from '@/toast';
+  import { storeNotification } from '@/handle_notifications';
   import TransactionFormModalStandard from '../TransactionForm/ModalStandard.vue';
   import TransactionFormModalInvestment from '../TransactionForm/ModalInvestment.vue';
   import TransactionShowModal from '../TransactionDisplay/Modal.vue';
+  import AiDocumentEmailViewer from './AiDocumentEmailViewer.vue';
   import AiDocumentFileViewer from './AiDocumentFileViewer.vue';
   import AiDocumentExtractedDetails from './AiDocumentExtractedDetails.vue';
   import AiDocumentDuplicates from './AiDocumentDuplicates.vue';
@@ -409,6 +319,7 @@
   const sourceLabels = window.aiDocumentSourceLabels || {};
   const isBusy = ref(false);
   const locale = window.YAFFA.locale || 'en';
+  const unidentifiedLabel = __('Unidentified');
 
   // Computed properties used in the component
   const createdAtLabel = computed(() => {
@@ -473,6 +384,12 @@
 
   const canFinalize = computed(
     () => aiDocument.value.status === 'ready_for_review' && hasDraftData.value,
+  );
+
+  const showExtractedDetails = computed(
+    () =>
+      hasDraftData.value &&
+      ['ready_for_review', 'finalized'].includes(aiDocument.value.status),
   );
 
   const canReprocess = computed(() =>
@@ -604,4 +521,41 @@
     );
     tab.show();
   };
+
+  const refreshDocument = () =>
+    window.axios
+      .get(
+        window.route('api.documents.show', {
+          aiDocument: aiDocument.value.id,
+        }),
+      )
+      .then((response) => {
+        if (response?.data?.document) {
+          aiDocument.value = response.data.document;
+        }
+      });
+
+  const handleTransactionCreated = (event) => {
+    const transaction = event?.detail?.transaction;
+    if (!transaction) {
+      return;
+    }
+
+    const relatedDocumentId =
+      transaction.ai_document_id || transaction.ai_document?.id || null;
+
+    if (!relatedDocumentId || relatedDocumentId !== aiDocument.value.id) {
+      return;
+    }
+
+    refreshDocument();
+  };
+
+  onMounted(() => {
+    window.addEventListener('transaction-created', handleTransactionCreated);
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('transaction-created', handleTransactionCreated);
+  });
 </script>

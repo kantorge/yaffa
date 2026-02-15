@@ -29,6 +29,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
   - SPA architecture changes or global state on the frontend.
   - Iterative user-AI prompt refinement during document processing.
   - Email attachment extraction and storage in AiDocumentFile (MVP only processes email body text, attachments are ignored).
+  - Remove files from local storage after given number of days (MVP does not implement any cleanup mechanism, but this can be added in the future if needed).
 
 ## Assumptions
 
@@ -68,7 +69,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `file_name`
     - `file_type`
     - `created_at`
-  - `CategoryLearning` (new)
+  - `CategoryLearning` (✅ implemented)
     - `id`
     - `user_id`
     - `item_description`
@@ -301,7 +302,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Traits: Dispatchable, InteractsWithQueue, Queueable, SerializesModels
     - Properties: $tries = 3, $timeout = 300
     - Test coverage: ProcessGoogleDriveConfigJobTest.php (14 tests, 35+ assertions) (✅ implemented)
-  - `EmailProcessingService` (extend existing)
+  - `EmailProcessingService` (extend existing, ✅ implemented)
     - Parses incoming email (text/HTML cleanup)
     - Extracts attachments
     - Creates AiDocument with source_type=received_email
@@ -639,7 +640,7 @@ A few notes on the statuses
   - **For Tesseract OCR:** Use original resolution (better OCR accuracy)
   - Resized images not persisted (memory only, temporary for Vision API call)
   - Original files always retained
-- **Retention:**
+- **Retention: (non-MVP)**
   - Environment variable: `AI_DOCUMENT_FILE_RETENTION_DAYS=90` (default)
   - Empty or `0` disables auto-deletion
   - Cleanup job: `php artisan ai-documents:cleanup-old-files`
@@ -1397,9 +1398,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - `test_user_sees_only_own_documents` - Data isolation verified (users see only own documents)
   - Status: ✅ All 6 tests passing
 
-- **Summary:** 10 new tests, 28 assertions, 100% passing rate
-- **Test Coverage Impact:** Full test suite now 395 tests passing (no regressions, tests from previous sessions still passing)
-
 **Transaction Finalization & Category Learning (✅ Completed):**
 
 - **Frontend Integration:**
@@ -1489,7 +1487,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ** Bugs to fix for MVP:**
 
-- When a transaction is finalized from the AiDocument review page, and the modal gets closed, the document status is not updated, and other related UI elements are not refreshed.
 - The Extracted data summary always shows payee, and does not adapt to show investment or transfer details when those types are extracted. Anyway, the idenified payee is also not displayed correctly.
 - A seemingly good match of investment (Disney) is not identified in the database while processing and investment transaction
 - The extracted details tab is a bit messy, especially for the investment transactions.

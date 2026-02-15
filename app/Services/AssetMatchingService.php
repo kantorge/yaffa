@@ -6,6 +6,8 @@ use App\Models\AccountEntity;
 use App\Models\Investment;
 use App\Models\User;
 use Closure;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AssetMatchingService
 {
@@ -25,44 +27,23 @@ class AssetMatchingService
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
-    public function matchAccounts(?string $accountName): array
+    public function matchAccounts(string $accountName): array
     {
         if (! $accountName || ! $this->user) {
             return [];
         }
 
-        $accounts = $this->user->accounts()->get();
+        $accounts = $this->user
+            ->accounts()
+            ->select('id', 'name', 'alias')
+            ->get();
 
         return $this->calculateMatches(
             $accountName,
             $accounts,
-            fn (AccountEntity $account) => $account->name . ($account->import_alias ? ' (' . $account->import_alias . ')' : '')
+            fn (AccountEntity $account) => $account->name .
+                ($account->alias ? ' (' . $account->alias . ')' : '')
         );
-    }
-
-    /**
-     * Format accounts for AI prompt (ID: Name|Aliases)
-     */
-    public function formatAccountsForPrompt(User $user): string
-    {
-        $accounts = $user->accounts()
-            ->select('id', 'name', 'import_alias')
-            ->get();
-
-        if ($accounts->isEmpty()) {
-            return 'No accounts configured.';
-        }
-
-        $formatted = $accounts->map(function ($account) {
-            $aliases = mb_trim($account->import_alias ?? '');
-            if ($aliases) {
-                return "{$account->id}: {$account->name}|{$aliases}";
-            }
-
-            return "{$account->id}: {$account->name}";
-        })->join("\n");
-
-        return $formatted;
     }
 
     /**
@@ -70,35 +51,23 @@ class AssetMatchingService
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
-    public function matchPayees(?string $payeeName): array
+    public function matchPayees(string $payeeName): array
     {
         if (! $payeeName || ! $this->user) {
             return [];
         }
 
-        $payees = $this->user->payees()->get();
+        $payees = $this->user
+            ->payees()
+            ->select('id', 'name', 'alias')
+            ->get();
 
         return $this->calculateMatches(
             $payeeName,
             $payees,
-            fn (AccountEntity $payee) => $payee->name . ($payee->import_alias ? ' (' . $payee->import_alias . ')' : '')
+            fn (AccountEntity $payee) => $payee->name .
+                ($payee->alias ? ' (' . $payee->alias . ')' : '')
         );
-    }
-
-    /**
-     * Format payees for AI prompt (ID: Name)
-     */
-    public function formatPayeesForPrompt(User $user): string
-    {
-        $payees = $user->payees()
-            ->select('id', 'name')
-            ->get();
-
-        if ($payees->isEmpty()) {
-            return 'No payees configured.';
-        }
-
-        return $payees->map(fn ($payee) => "{$payee->id}: {$payee->name}")->join("\n");
     }
 
     /**
@@ -106,7 +75,7 @@ class AssetMatchingService
      *
      * @return array<int, array{id: int, name: string, similarity: float}>
      */
-    public function matchInvestments(?string $investmentName): array
+    public function matchInvestments(string $investmentName): array
     {
         if (! $investmentName || ! $this->user) {
             return [];
@@ -117,36 +86,10 @@ class AssetMatchingService
         return $this->calculateMatches(
             $investmentName,
             $investments,
-            fn (Investment $investment) => $investment->name . ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') . ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : '')
+            fn (Investment $investment) => $investment->name .
+                ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') .
+                ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : '')
         );
-    }
-
-    /**
-     * Format investments for AI prompt (ID: Name|Code|ISIN)
-     */
-    public function formatInvestmentsForPrompt(User $user): string
-    {
-        $investments = $user->investments()
-            ->select('id', 'name', 'code', 'isin')
-            ->get();
-
-        if ($investments->isEmpty()) {
-            return 'No investments configured.';
-        }
-
-        $formatted = $investments->map(function ($investment) {
-            $parts = [$investment->name];
-            if ($investment->code) {
-                $parts[] = $investment->code;
-            }
-            if ($investment->isin) {
-                $parts[] = $investment->isin;
-            }
-
-            return "{$investment->id}: " . implode('|', $parts);
-        })->join("\n");
-
-        return $formatted;
     }
 
     /**
@@ -154,7 +97,7 @@ class AssetMatchingService
      *
      * @return array<int, array{id: int, description: string, category_id: int, category_name: string, similarity: float}>
      */
-    public function matchCategoryLearning(?string $description): array
+    public function matchCategoryLearning(string $description): array
     {
         if (! $description || ! $this->user) {
             return [];
@@ -255,6 +198,8 @@ class AssetMatchingService
             similar_text($normalizedSearch, $normalizedItem, $similarity);
             $similarity /= 100;
 
+            Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedItem}' => similarity: {$similarity}");
+
             if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
                 $matches[] = [
                     'id' => $item->id,
@@ -278,6 +223,6 @@ class AssetMatchingService
      */
     private function normalize(string $text): string
     {
-        return mb_strtolower(mb_trim($text));
+        return Str::lower(Str::trim($text));
     }
 }

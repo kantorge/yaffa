@@ -3,44 +3,39 @@
     <div class="row mb-4">
       <div class="col-12 col-md-6">
         <h6 class="text-muted">{{ __('Transaction Type') }}</h6>
-        <p class="mb-3">{{ draftTypeLabel || __('Not set') }}</p>
+        <p class="mb-3">{{ draftTypeLabel || unidentifiedLabel }}</p>
 
         <h6 class="text-muted">{{ __('Date') }}</h6>
-        <p class="mb-3">{{ draftData.date || __('Not set') }}</p>
-
-        <h6 class="text-muted">{{ __('Currency') }}</h6>
-        <p class="mb-3">
-          {{ draftData.raw?.currency || __('Not set') }}
-        </p>
+        <p class="mb-3">{{ draftData.date || unidentifiedLabel }}</p>
       </div>
 
       <div class="col-12 col-md-6">
         <div v-if="draftData.config_type === 'standard'">
           <h6 class="text-muted">{{ __('Account') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.account || __('Not set') }}
+            {{ draftData.raw?.account || unidentifiedLabel }}
           </p>
 
           <h6 class="text-muted">{{ __('Payee') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.payee || __('Not set') }}
+            {{ draftData.raw?.payee || unidentifiedLabel }}
           </p>
 
           <h6 class="text-muted">{{ __('Amount') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.amount || __('Not set') }}
+            {{ draftData.raw?.amount || unidentifiedLabel }}
           </p>
         </div>
 
         <div v-else>
           <h6 class="text-muted">{{ __('Account') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.account || __('Not set') }}
+            {{ draftData.raw?.account || unidentifiedLabel }}
           </p>
 
           <h6 class="text-muted">{{ __('Investment') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.investment || __('Not set') }}
+            {{ draftData.raw?.investment || unidentifiedLabel }}
           </p>
         </div>
       </div>
@@ -50,13 +45,13 @@
       <div class="col-12 col-md-6">
         <h6 class="text-muted">{{ __('Quantity') }}</h6>
         <p class="mb-3">
-          {{ draftData.raw?.quantity || __('Not set') }}
+          {{ draftData.raw?.quantity || unidentifiedLabel }}
         </p>
       </div>
       <div class="col-12 col-md-6">
         <h6 class="text-muted">{{ __('Price') }}</h6>
         <p class="mb-3">
-          {{ draftData.raw?.price || __('Not set') }}
+          {{ draftData.raw?.price || unidentifiedLabel }}
         </p>
       </div>
     </div>
@@ -87,7 +82,7 @@
                 <td>
                   {{ item.comment || item.description || __('N/A') }}
                 </td>
-                <td class="text-end">{{ item.amount || 0 }}</td>
+                <td class="text-end">{{ item.amount || unidentifiedLabel }}</td>
                 <td>
                   <span
                     v-if="item.match_type"
@@ -110,9 +105,7 @@
                       {{ item.recommended_category_full_name }}
                     </span>
                   </div>
-                  <span v-else class="text-muted">{{
-                    __('Not categorized')
-                  }}</span>
+                  <span v-else class="text-muted">{{ unidentifiedLabel }}</span>
                 </td>
                 <td class="text-center">
                   <span
@@ -141,8 +134,9 @@
 
 <script setup>
   import { computed } from 'vue';
-  import { __ } from '../../helpers';
+  import { __ } from '@/helpers';
 
+  const unidentifiedLabel = __('Unidentified');
   const props = defineProps({
     draftData: {
       type: Object,
