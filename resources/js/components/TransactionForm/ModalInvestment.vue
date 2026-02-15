@@ -124,7 +124,7 @@
         this.modal.show();
       },
       onInitiateCreateDraft(transaction) {
-        this.action = 'create';
+        this.action = 'finalize';
         this.transactionData = transaction;
 
         this.modal.show();
@@ -166,6 +166,7 @@
           ['clone', __('Clone existing transaction')],
           ['enter', __('Enter scheduled transaction instance')],
           ['replace', __('Clone scheduled transaction and close base item')],
+          ['finalize', __('Finalize transaction draft')],
         ]);
 
         return titles.get(this.action);

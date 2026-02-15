@@ -13,13 +13,13 @@ use App\Http\Requests\TransactionRequest;
 use App\Http\Traits\CurrencyTrait;
 use App\Models\Account;
 use App\Models\AiDocument;
-use App\Models\CategoryLearning;
 use App\Models\Tag;
 use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
+use App\Models\User;
 use App\Services\CategoryService;
 use App\Services\CategoryLearningService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,7 +29,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class TransactionApiController extends Controller implements HasMiddleware
 {
@@ -587,7 +587,6 @@ class TransactionApiController extends Controller implements HasMiddleware
         ]);
     }
 
-    // TODO: unify the update methods, account for the differences in the update process
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
@@ -732,6 +731,7 @@ class TransactionApiController extends Controller implements HasMiddleware
     private function handleSourceTransactionUpdates(array $validated): void
     {
         // Adjust source transaction schedule, if entering schedule instance
+        // The reference is passed as the ID
         if ($validated['action'] === 'enter') {
             $sourceTransaction = Transaction::find($validated['id'])
                 ->load(['transactionSchedule']);
@@ -771,6 +771,10 @@ class TransactionApiController extends Controller implements HasMiddleware
     private function finalizeAiDocument(array $validated, Transaction $transaction, User $user): void
     {
         if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
+            Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
+                'action' => $validated['action'] ?? null,
+                'ai_document_id' => $validated['ai_document_id'] ?? null,
+            ]);
             return;
         }
 
@@ -781,6 +785,10 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         // Silently return if the AI document is not found
         if (! $aiDocument) {
+            Log::debug('AI document not found for finalization', [
+                'ai_document_id' => $validated['ai_document_id'] ?? null,
+                'user_id' => $user->id,
+            ]);
             return;
         }
 
@@ -796,22 +804,30 @@ class TransactionApiController extends Controller implements HasMiddleware
             $transaction->saveQuietly();
         }
 
-        // Update CategoryLearning for accepted recommendations
-        $this->updateCategoryLearning($aiDocument, $transaction, $user);
+        // Update CategoryLearning for accepted recommendations if there are any
+        if (!$validated['items'] || !is_array($validated['items'])) {
+            return;
+        }
+        $this->updateCategoryLearning($aiDocument, $transaction, $user, $validated['items']);
     }
 
     /**
      * Update CategoryLearning usage counts for accepted AI recommendations.
      */
-    private function updateCategoryLearning(AiDocument $aiDocument, Transaction $transaction, User $user): void
-    {
+    private function updateCategoryLearning(
+        AiDocument $aiDocument,
+        Transaction $transaction,
+        User $user,
+        array $submittedItems = []
+    ): void {
         // Only applicable for standard transactions with items
         if ($transaction->config_type !== 'standard') {
             return;
         }
 
         $draftData = $aiDocument->processed_transaction_data;
-        if (! $draftData || ! isset($draftData['items']) || ! is_array($draftData['items'])) {
+        $draftItems = $draftData['transaction_items'] ?? null;
+        if (! $draftData || ! is_array($draftItems)) {
             return;
         }
 
@@ -820,13 +836,28 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Load transaction items with categories
         $transaction->load('transactionItems.category');
 
-        // Build a map of draft items by their description (normalized)
-        $draftItemsMap = [];
-        foreach ($draftData['items'] as $draftItem) {
-            if (isset($draftItem['recommended_category_id']) && isset($draftItem['comment'])) {
-                $normalizedDescription = $learningService->normalize($draftItem['comment']);
-                $draftItemsMap[$normalizedDescription] = $draftItem['recommended_category_id'];
+        $learnSkipKeys = $this->buildLearnSkipKeys($submittedItems, $learningService);
+
+        $draftItemsByKey = [];
+        $draftItemsByDescription = [];
+        foreach ($draftItems as $draftItem) {
+            $description = $draftItem['description'] ?? $draftItem['comment'] ?? null;
+            $recommendedCategoryId = $draftItem['recommended_category_id'] ?? null;
+
+            if (! $description || $recommendedCategoryId === null) {
+                continue;
             }
+
+            $normalizedDescription = $learningService->normalize($description);
+            $amount = isset($draftItem['amount']) ? (float) $draftItem['amount'] : null;
+            $key = $this->buildLearningItemKey($normalizedDescription, $amount);
+            $entry = [
+                'recommended_category_id' => $recommendedCategoryId,
+                'match_type' => $draftItem['match_type'] ?? null,
+            ];
+
+            $draftItemsByKey[$key][] = $entry;
+            $draftItemsByDescription[$normalizedDescription][] = $entry;
         }
 
         // Check each transaction item against the draft
@@ -836,22 +867,93 @@ class TransactionApiController extends Controller implements HasMiddleware
             }
 
             $normalizedDescription = $learningService->normalize($item->comment);
+            $key = $this->buildLearningItemKey($normalizedDescription, (float) $item->amount);
 
-            // Skip if no recommendation exists for this item
-            if (! isset($draftItemsMap[$normalizedDescription])) {
+            if (isset($learnSkipKeys[$key])) {
                 continue;
             }
 
-            $recommendedCategoryId = $draftItemsMap[$normalizedDescription];
+            $draftMatch = $this->shiftDraftMatch(
+                $draftItemsByKey,
+                $draftItemsByDescription,
+                $key,
+                $normalizedDescription
+            );
 
-            // If the user accepted the recommendation, increment usage count
-            if ($item->category_id === $recommendedCategoryId) {
-                CategoryLearning::query()
-                    ->where('user_id', $user->id)
-                    ->where('item_description', $normalizedDescription)
-                    ->where('category_id', $recommendedCategoryId)
-                    ->increment('usage_count');
+            if (! $draftMatch) {
+                continue;
+            }
+
+            $recommendedCategoryId = $draftMatch['recommended_category_id'];
+            if ($item->category_id !== $recommendedCategoryId) {
+                continue;
+            }
+
+            $matchType = $draftMatch['match_type'] ?? null;
+            if ($matchType === 'ai') {
+                $learningService->recordLearningAndIncrement($item->comment, $item->category_id);
+            }
+
+            if ($matchType === 'exact') {
+                $learningService->incrementUsageCountForDescription($item->comment, $item->category_id);
             }
         }
+    }
+
+    /**
+     * Build a set of keys for items where learning should be skipped.
+     * Learning is skipped when learnRecommendation is false.
+     *
+     * @param  array<int, array<string, mixed>>  $submittedItems
+     * @return array<string, bool>
+     */
+    private function buildLearnSkipKeys(array $submittedItems, CategoryLearningService $learningService): array
+    {
+        $keys = [];
+
+        foreach ($submittedItems as $submittedItem) {
+            // Learning is enabled by default, skip only if explicitly disabled
+            if ($submittedItem['learnRecommendation'] ?? true) {
+                continue;
+            }
+
+            $comment = $submittedItem['comment'] ?? null;
+            $amount = $submittedItem['amount'] ?? null;
+
+            if (!$comment || $amount === null) {
+                continue;
+            }
+
+            $normalizedDescription = $learningService->normalize($comment);
+            $key = $this->buildLearningItemKey($normalizedDescription, (float) $amount);
+            $keys[$key] = true;
+        }
+
+        return $keys;
+    }
+
+    private function buildLearningItemKey(string $normalizedDescription, ?float $amount): string
+    {
+        $amountKey = $amount === null ? '' : number_format($amount, 2, '.', '');
+
+        return $normalizedDescription . '|' . $amountKey;
+    }
+
+    private function shiftDraftMatch(
+        array &$draftItemsByKey,
+        array &$draftItemsByDescription,
+        string $key,
+        string $normalizedDescription
+    ): ?array {
+        if (isset($draftItemsByKey[$key]) && count($draftItemsByKey[$key]) > 0) {
+            return array_shift($draftItemsByKey[$key]);
+        }
+
+        if (isset($draftItemsByDescription[$normalizedDescription])
+            && count($draftItemsByDescription[$normalizedDescription]) > 0) {
+            return array_shift($draftItemsByDescription[$normalizedDescription]);
+        }
+
+        return null;
     }
 }

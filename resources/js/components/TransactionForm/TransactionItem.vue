@@ -11,10 +11,29 @@
     >
       <div>
         <i class="fa fa-receipt me-2"></i>
-        <strong>{{ __('Item') }}:</strong>
-        {{ description || recommended_category_full_name }}
+        {{ description }}
+        <span v-if="showAddButton">
+          → {{ recommended_category_full_name }}
+        </span>
       </div>
       <div class="d-flex align-items-center gap-2">
+        <!-- Learn recommendation toggle for AI-based, non-exact matches -->
+        <div
+          v-if="match_type === 'ai' && recommended_category_id"
+          class="form-check form-check-inline"
+          :title="__('Toggle whether to learn from this recommendation')"
+        >
+          <input
+            type="checkbox"
+            class="form-check-input"
+            :id="'learn-recommendation-' + id"
+            v-model="learnRecommendation"
+            @change="onLearnRecommendationChange"
+          />
+          <label class="form-check-label" :for="'learn-recommendation-' + id">
+            <small>{{ __('Learn') }}</small>
+          </label>
+        </div>
         <!-- Status badge for AI suggestions -->
         <span
           v-if="recommended_category_id && isRecommendationAccepted"
@@ -185,6 +204,7 @@
       id: Number,
       amount: [Number, String],
       category_id: Number,
+      category_full_name: String,
       recommended_category_id: Number,
       recommended_category_full_name: String,
       description: String,
@@ -217,7 +237,7 @@
       'update:comment',
       'update:tags',
       'removeItem',
-      'update:dontLearn',
+      'update:learnRecommendation',
     ],
 
     data() {
@@ -228,6 +248,7 @@
         commentData: this.comment,
         isRecommendationAccepted: false,
         suggestionRemoved: false,
+        learnRecommendation: this.match_type === 'exact' ? false : true,
       };
     },
 
@@ -274,7 +295,7 @@
       /**
        * Show remove button for high-confidence AI matches or exact matches
        * Exact: auto-selected with no button initially, but show if user tries to change
-       * High confidence (≥0.7): auto-selected + remove button to reject
+       * High confidence (>=0.7): auto-selected + remove button to reject
        */
       showRemoveButton() {
         // Only show if there's a recommendation that was auto-accepted OR accepted by the user
@@ -354,44 +375,71 @@
         });
 
       // Load selected item for category select2
-      // Auto-load recommendation if it's exact or high-confidence AI match
+      // Prefer the saved category when editing; only auto-load recommendation
+      // when there is no existing category.
       const shouldAutoLoadRecommendation =
+        !this.category_id &&
         this.recommended_category_id &&
         (this.match_type === 'exact' ||
           (this.match_type === 'ai' &&
             this.confidence_score >= this.confidenceThreshold));
 
-      const effectiveCategoryId =
-        this.category_id ||
-        (shouldAutoLoadRecommendation ? this.recommended_category_id : null);
-      const effectiveCategory = shouldAutoLoadRecommendation
-        ? {
-            id: this.recommended_category_id,
-            full_name: this.recommended_category_full_name,
-          }
-        : null;
-
-      if (effectiveCategoryId && effectiveCategory) {
-        const data = effectiveCategory;
-
-        const option = new Option(data.full_name, data.id, true, true);
+      const preloadCategory = (category) => {
+        const option = new Option(category.full_name, category.id, true, true);
         elementCategory.append(option).trigger('change');
 
         // Manually trigger the `select2:select` event
         elementCategory.trigger({
           type: 'select2:select',
           params: {
-            data: data,
+            data: category,
           },
         });
+      };
 
-        // Track if we're using the recommendation and emit the category_id
-        if (!this.category_id && shouldAutoLoadRecommendation) {
+      if (this.category_id && this.category_full_name) {
+        preloadCategory({
+          id: this.category_id,
+          full_name: this.category_full_name,
+        });
+      } else if (shouldAutoLoadRecommendation) {
+        if (this.recommended_category_full_name) {
+          preloadCategory({
+            id: this.recommended_category_id,
+            full_name: this.recommended_category_full_name,
+          });
+
+          // Track if we're using the recommendation and emit the category_id
           this.isRecommendationAccepted = true;
           this.categoryIdData = this.recommended_category_id;
           // Emit the category_id so parent component tracks it
           this.$emit('update:category_id', this.recommended_category_id);
+        } else if (this.recommended_category_id) {
+          $.getJSON(
+            `/api/assets/category/${this.recommended_category_id}`,
+            (data) => {
+              if (data && data.id && data.full_name) {
+                preloadCategory({
+                  id: data.id,
+                  full_name: data.full_name,
+                });
+
+                this.isRecommendationAccepted = true;
+                this.categoryIdData = data.id;
+                this.$emit('update:category_id', data.id);
+              }
+            },
+          );
         }
+      } else if (this.category_id) {
+        $.getJSON(`/api/assets/category/${this.category_id}`, (data) => {
+          if (data && data.id && data.full_name) {
+            preloadCategory({
+              id: data.id,
+              full_name: data.full_name,
+            });
+          }
+        });
       }
 
       // Add select2 functionality to tag
@@ -498,18 +546,19 @@
 
       /**
        * Remove suggestion without accepting it
-       * Marks the item so YAFFA doesn't learn from this suggestion
+       * Sets learnRecommendation to false
        */
       removeSuggestion() {
         // Mark that suggestion was removed
         this.suggestionRemoved = true;
         this.isRecommendationAccepted = false;
 
+        // Disable learning from this suggestion
+        this.learnRecommendation = false;
+        this.onLearnRecommendationChange();
+
         // Clear the category field since we're rejecting the suggestion
         this.categoryIdData = null;
-
-        // Emit event to indicate we don't want to learn from this
-        this.$emit('update:dontLearn', { itemId: this.id, dontLearn: true });
 
         // Emit the category change to parent component
         this.$emit('update:category_id', null);
@@ -528,6 +577,10 @@
       acceptSuggestion() {
         // Reset the removed flag
         this.suggestionRemoved = false;
+
+        // Enable learning when accepting a suggestion
+        this.learnRecommendation = true;
+        this.onLearnRecommendationChange();
 
         // Apply the recommended category
         if (
@@ -567,9 +620,20 @@
           // Emit the category change
           this.$emit('update:category_id', this.recommended_category_id);
 
-          // Clear the "don't learn" flag
-          this.$emit('update:dontLearn', { itemId: this.id, dontLearn: false });
+          // Clear the "don't learn" flag - learning is enabled when accepting
+          this.onLearnRecommendationChange();
         }
+      },
+
+      /**
+       * Handle learn recommendation toggle change
+       * Emits event to parent component to update the learning flag
+       */
+      onLearnRecommendationChange() {
+        this.$emit('update:learnRecommendation', {
+          itemId: this.id,
+          learnRecommendation: this.learnRecommendation,
+        });
       },
     },
 
