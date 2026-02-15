@@ -15,6 +15,8 @@ use Carbon\Carbon;
 
 class ProcessDocumentService
 {
+    const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
+
     public function __construct(
         private TextExtractionService $textExtractor,
         private AssetMatchingService $assetMatchingService,
@@ -202,32 +204,17 @@ class ProcessDocumentService
             return null;
         }
 
-        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
-        // We need to account for the fact, that optional aliases may be included, so the definition of exact match is the following:
-        // The account name (before the first parenthesis) matches exactly (case insensitive), OR the aliases (one string inside the parenthesis) contains the account name as a substring (case insensitive)
-        foreach ($similarAccounts as $match) {
-            $namePart = Str::before($match['name'], '(');
-            $aliasesPart = Str::between($match['name'], '(', ')');
-            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($accountName))) {
-                Log::info('Exact match found for account name in account name part, skipping AI call', [
-                    'account_name' => $accountName,
-                    'account_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'name_part'
-                ]);
+        // If the top match has high confidence, return it immediately to save AI calls
+        $topMatch = reset($similarAccounts);
+        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+            Log::info('High confidence match found for account name, skipping AI call', [
+                'account_name' => $accountName,
+                'account_name_in_list' => $topMatch['name'],
+                'matched_id' => $topMatch['id'],
+                'similarity' => $topMatch['similarity'],
+            ]);
 
-                return $match['id'];
-            }
-            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(mb_trim($accountName)))) {
-                Log::info('Exact match found for account name in account aliases part, skipping AI call', [
-                    'account_name' => $accountName,
-                    'account_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'aliases_part'
-                ]);
-
-                return $match['id'];
-            }
+            return $topMatch['id'];
         }
 
         // Format for AI prompt
@@ -279,34 +266,17 @@ EOF;
             return null;
         }
 
-        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
-        // We need to account for the fact, that optional aliases may be included, so the definition of exact match is the following:
-        // The payee name (before the first parenthesis) matches exactly (case insensitive), OR the aliases (one string inside the parenthesis) contains the payee name as a substring (case insensitive)
-        foreach ($similarPayees as $match) {
-            $namePart = Str::before($match['name'], '(');
-            $aliasesPart = Str::between($match['name'], '(', ')');
+        // If the top match has high confidence, return it immediately to save AI calls
+        $topMatch = reset($similarPayees);
+        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+            Log::info('High confidence match found for payee name, skipping AI call', [
+                'payee_name' => $payeeName,
+                'payee_name_in_list' => $topMatch['name'],
+                'matched_id' => $topMatch['id'],
+                'similarity' => $topMatch['similarity'],
+            ]);
 
-            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($payeeName))) {
-                Log::info('Exact match found for payee name in payee name part, skipping AI call', [
-                    'payee_name' => $payeeName,
-                    'payee_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'name_part'
-                ]);
-
-                return $match['id'];
-            }
-
-            if ($aliasesPart && Str::contains(Str::lower($aliasesPart), Str::lower(mb_trim($payeeName)))) {
-                Log::info('Exact match found for payee name in payee aliases part, skipping AI call', [
-                    'payee_name' => $payeeName,
-                    'payee_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'aliases_part'
-                ]);
-
-                return $match['id'];
-            }
+            return $topMatch['id'];
         }
 
         // Format for AI prompt
@@ -358,29 +328,17 @@ EOF;
             return null;
         }
 
-        // Before passing the data to AI, let's check if there's an exact match and return it immediately to save API calls
-        // The investment name (before the first parenthesis) matches exactly (case insensitive), OR the symbol/ISIN (one string inside the parenthesis) contains the investment name as a substring (case insensitive)
-        foreach ($similarInvestments as $match) {
-            $namePart = Str::before($match['name'], '(');
-            $symbolPart = Str::between($match['name'], '(', ')');
-            if (Str::lower(mb_trim($namePart)) === Str::lower(mb_trim($investmentName))) {
-                Log::info('Exact match found for investment name in investment name part, skipping AI call', [
-                    'investment_name' => $investmentName,
-                    'investment_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'name_part'
-                ]);
-                return $match['id'];
-            }
-            if ($symbolPart && Str::contains(Str::lower($symbolPart), Str::lower(mb_trim($investmentName)))) {
-                Log::info('Exact match found for investment name in investment symbol/ISIN part, skipping AI call', [
-                    'investment_name' => $investmentName,
-                    'investment_name_in_list' => $match['name'],
-                    'matched_id' => $match['id'],
-                    'match_type' => 'symbol_part'
-                ]);
-                return $match['id'];
-            }
+        // If the top match has high confidence, return it immediately to save AI calls
+        $topMatch = reset($similarInvestments);
+        if ($topMatch['similarity'] >= self::SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH) {
+            Log::info('High confidence match found for investment name, skipping AI call', [
+                'investment_name' => $investmentName,
+                'investment_name_in_list' => $topMatch['name'],
+                'matched_id' => $topMatch['id'],
+                'similarity' => $topMatch['similarity'],
+            ]);
+
+            return $topMatch['id'];
         }
 
         // Format for AI prompt
