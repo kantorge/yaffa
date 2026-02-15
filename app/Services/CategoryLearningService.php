@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CategoryLearning;
 use App\Models\User;
-use Exception;
 
 class CategoryLearningService
 {
@@ -32,67 +30,6 @@ class CategoryLearningService
         return $normalized;
     }
 
-    /**
-     * Save or update category learning data
-     */
-    public function recordLearning(string $itemDescription, int $categoryId): CategoryLearning
-    {
-        if (! $this->user) {
-            throw new Exception('User not set for CategoryLearningService');
-        }
-
-        $normalized = $this->normalize($itemDescription);
-
-        $learning = CategoryLearning::query()
-            ->where('user_id', $this->user->id)
-            ->where('item_description', $normalized)
-            ->first();
-
-        if ($learning) {
-            $learning->update(['category_id' => $categoryId]);
-        } else {
-            $learning = CategoryLearning::create([
-                'user_id' => $this->user->id,
-                'item_description' => $normalized,
-                'category_id' => $categoryId,
-                'usage_count' => 0,
-            ]);
-        }
-
-        return $learning;
-    }
-
-    /**
-     * Save or update learning data and increment usage count
-     */
-    public function recordLearningAndIncrement(string $itemDescription, int $categoryId, int $incrementBy = 1): CategoryLearning
-    {
-        if (! $this->user) {
-            throw new Exception('User not set for CategoryLearningService');
-        }
-
-        $normalized = $this->normalize($itemDescription);
-
-        $learning = CategoryLearning::query()
-            ->where('user_id', $this->user->id)
-            ->where('item_description', $normalized)
-            ->first();
-
-        if ($learning) {
-            $learning->category_id = $categoryId;
-            $learning->usage_count += $incrementBy;
-            $learning->save();
-        } else {
-            $learning = CategoryLearning::create([
-                'user_id' => $this->user->id,
-                'item_description' => $normalized,
-                'category_id' => $categoryId,
-                'usage_count' => $incrementBy,
-            ]);
-        }
-
-        return $learning;
-    }
 
     /**
      * Get learning data for AI prompt context
@@ -135,36 +72,4 @@ class CategoryLearningService
         return $learnings->map(fn ($learning) => "{$learning->item_description} → Category ID: {$learning->category_id}")->join("\n");
     }
 
-    /**
-     * Increment usage count for category learning records
-     */
-    public function incrementUsageCount(int $categoryLearningId): void
-    {
-        if (! $this->user) {
-            return;
-        }
-
-        CategoryLearning::query()
-            ->where('id', $categoryLearningId)
-            ->where('user_id', $this->user->id)
-            ->increment('usage_count');
-    }
-
-    /**
-     * Increment usage count for a normalized description and category.
-     */
-    public function incrementUsageCountForDescription(string $itemDescription, int $categoryId): void
-    {
-        if (! $this->user) {
-            return;
-        }
-
-        $normalized = $this->normalize($itemDescription);
-
-        CategoryLearning::query()
-            ->where('user_id', $this->user->id)
-            ->where('item_description', $normalized)
-            ->where('category_id', $categoryId)
-            ->increment('usage_count');
-    }
 }

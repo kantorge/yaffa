@@ -305,6 +305,82 @@ class TransactionApiControllerTest extends TestCase
         ]);
     }
 
+    public function test_store_standard_finalization_resets_usage_when_category_changes(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $account = Account::factory()->withUser($this->user)->create();
+        $payee = Payee::factory()->withUser($this->user)->create();
+
+        $accountEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'account',
+            'config_id' => $account->id,
+            'active' => true,
+        ]);
+
+        $payeeEntity = AccountEntity::factory()->create([
+            'user_id' => $this->user->id,
+            'config_type' => 'payee',
+            'config_id' => $payee->id,
+            'active' => true,
+        ]);
+
+        $originalCategory = Category::factory()->for($this->user)->create(['active' => true]);
+        $newCategory = Category::factory()->for($this->user)->create(['active' => true]);
+
+        $existingLearning = new CategoryLearning();
+        $existingLearning->forceFill([
+            'user_id' => $this->user->id,
+            'item_description' => 'lunch',
+            'category_id' => $originalCategory->id,
+            'usage_count' => 5,
+        ]);
+        $existingLearning->save();
+
+        $aiDocument = AiDocument::factory()->for($this->user)->create([
+            'status' => 'ready_for_review',
+        ]);
+
+        $payload = [
+            'action' => 'finalize',
+            'transaction_type' => 'withdrawal',
+            'config_type' => 'standard',
+            'date' => now()->format('Y-m-d'),
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'config' => [
+                'account_from_id' => $accountEntity->id,
+                'account_to_id' => $payeeEntity->id,
+                'amount_from' => 10,
+                'amount_to' => 10,
+            ],
+            'items' => [
+                [
+                    'amount' => 10,
+                    'category_id' => $newCategory->id,
+                    'comment' => 'Lunch',
+                    'tags' => [],
+                    'learnRecommendation' => true,
+                ],
+            ],
+            'ai_document_id' => $aiDocument->id,
+        ];
+
+        $response = $this->postJson('/api/transactions/standard', $payload);
+
+        $response->assertStatus(Response::HTTP_OK);
+
+        $learningService = new CategoryLearningService($this->user);
+        $this->assertDatabaseHas('category_learning', [
+            'user_id' => $this->user->id,
+            'item_description' => $learningService->normalize('Lunch'),
+            'category_id' => $newCategory->id,
+            'usage_count' => 1,
+        ]);
+    }
+
     public function test_store_standard_finalization_respects_dont_learn_flag(): void
     {
         Sanctum::actingAs($this->user);
