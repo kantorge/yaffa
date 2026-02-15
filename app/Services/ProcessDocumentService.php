@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use JsonException;
+use Carbon\Carbon;
 
 class ProcessDocumentService
 {
@@ -110,7 +111,7 @@ class ProcessDocumentService
 
             // Step 5: Store processed data and update document
             $document->processed_transaction_data = $transactionData;
-            $document->processed_at = now();
+            $document->processed_at = Carbon::now();
             $document->status = 'ready_for_review';
             $document->save();
 
@@ -180,7 +181,7 @@ class ProcessDocumentService
                 'error' => $e->getMessage(),
             ]);
 
-            throw new Exception('Failed to parse main AI response as JSON');
+            throw $e;
         }
     }
 

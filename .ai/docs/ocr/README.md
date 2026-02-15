@@ -73,7 +73,7 @@ depends_on:
 
 # Uncomment the tesseract service (or remove profile)
 tesseract:
-  image: franky1/tesseract-ocr:latest
+  image: franky1/tesseract-ocr:x.y.z
   # ... full config in docker-compose.yml
 ```
 

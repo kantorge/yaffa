@@ -125,7 +125,7 @@ services:
   # Tesseract OCR HTTP service
   # Comment the following lines if you don't use Tesseract OCR from the Docker sidecar
   tesseract:
-    image: franky1/tesseract-ocr:latest
+    image: franky1/tesseract-ocr:5.5.2
     container_name: yaffa_tesseract
     ports:
       - '8888:8888'
