@@ -1492,6 +1492,5 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - When a transaction is finalized from the AiDocument review page, and the modal gets closed, the document status is not updated, and other related UI elements are not refreshed.
 - The Extracted data summary always shows payee, and does not adapt to show investment or transfer details when those types are extracted. Anyway, the idenified payee is also not displayed correctly.
 - A seemingly good match of investment (Disney) is not identified in the database while processing and investment transaction
-- There's still an error around sending the notification emails.
 - The extracted details tab is a bit messy, especially for the investment transactions.
 - The extracted details tab does not have to be hidden if the transaction is finalized.
