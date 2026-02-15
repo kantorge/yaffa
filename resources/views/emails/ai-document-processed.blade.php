@@ -1,7 +1,5 @@
 @component('mail::message')
 
-@endcomponent
-
 Dear {{ $document->user->name }},
 
 Your document has been successfully processed and is ready for review!
