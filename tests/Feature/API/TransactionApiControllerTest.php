@@ -274,14 +274,14 @@ class TransactionApiControllerTest extends TestCase
                 [
                     'amount' => 5,
                     'category_id' => $categoryExact->id,
-                    'comment' => 'Coffee',
+                    'description' => 'Coffee',
                     'tags' => [],
                     'learnRecommendation' => true,
                 ],
                 [
                     'amount' => 3,
                     'category_id' => $categoryAi->id,
-                    'comment' => 'Snack',
+                    'description' => 'Snack',
                     'tags' => [],
                     'learnRecommendation' => true,
                 ],
@@ -360,7 +360,7 @@ class TransactionApiControllerTest extends TestCase
                 [
                     'amount' => 10,
                     'category_id' => $newCategory->id,
-                    'comment' => 'Lunch',
+                    'description' => 'Lunch',
                     'tags' => [],
                     'learnRecommendation' => true,
                 ],
@@ -437,7 +437,7 @@ class TransactionApiControllerTest extends TestCase
                 [
                     'amount' => 4,
                     'category_id' => $category->id,
-                    'comment' => 'Tea',
+                    'description' => 'Tea',
                     'tags' => [],
                     'learnRecommendation' => false,
                 ],
