@@ -25,17 +25,17 @@ class CurrencyRateRequest extends FormRequest
             ],
             'from_id' => [
                 'required',
-                Rule::exists('currencies', 'id')->where(fn($query) => $query->where('user_id', Auth::user()->id)),
+                Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
             'to_id' => [
                 'required',
-                Rule::exists('currencies', 'id')->where(fn($query) => $query->where('user_id', Auth::user()->id)),
+                Rule::exists('currencies', 'id')->where(fn ($query) => $query->where('user_id', Auth::user()->id)),
             ],
         ];
 
         // Add unique constraint, ignoring current record if updating
         $uniqueRule = Rule::unique('currency_rates')
-            ->where(fn($query) => $query
+            ->where(fn ($query) => $query
                 ->where('from_id', $this->from_id)
                 ->where('to_id', $this->to_id));
 

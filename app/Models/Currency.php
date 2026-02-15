@@ -50,9 +50,9 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  */
 class Currency extends Model
 {
+    use CurrencyTrait;
     use HasFactory;
     use ModelOwnedByUserTrait;
-    use CurrencyTrait;
 
     /**
      * The attributes that are mass assignable.

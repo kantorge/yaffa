@@ -303,7 +303,7 @@ class ReportApiController extends Controller implements HasMiddleware
             // Add investment transaction results
             // Get investment types with amount multipliers
             $investmentTypesWithAmount = array_map(
-                fn($type) => $type->value,
+                fn ($type) => $type->value,
                 TransactionTypeEnum::investmentTypesWithAmount()
             );
 

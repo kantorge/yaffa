@@ -41,10 +41,10 @@
                 @if ($transaction)
                     :transaction = "{{ $transaction }}"
                 @endif
-                @if (isset($source_id))
+                @isset($source_id)
                     :source-id = "{{ $source_id }}"
                     data-source-id = "{{ $source_id }}"
-                @endif
+                @endisset
             ></transaction-container-standard>
         </div>
     @elseif ($type === 'investment')
