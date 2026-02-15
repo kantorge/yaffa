@@ -812,7 +812,12 @@ class TransactionApiController extends Controller implements HasMiddleware
     }
 
     /**
-     * Update CategoryLearning usage counts for accepted AI recommendations.
+     * Update CategoryLearning for accepted recommendations and user-provided categories.
+     *
+     * This handles three scenarios:
+     * 1. AI recommendation accepted: records both the learning and increments usage count
+     * 2. Recommendation overridden by user: records new learning from user's choice
+     * 3. No recommendation but user provided category: records learning from user's selection
      */
     private function updateCategoryLearning(
         AiDocument $aiDocument,
@@ -833,18 +838,14 @@ class TransactionApiController extends Controller implements HasMiddleware
 
         $learningService = new CategoryLearningService($user);
 
-        // Load transaction items with categories
-        $transaction->load('transactionItems.category');
-
-        $learnSkipKeys = $this->buildLearnSkipKeys($submittedItems, $learningService);
-
+        // Build lookup maps for draft items
         $draftItemsByKey = [];
         $draftItemsByDescription = [];
         foreach ($draftItems as $draftItem) {
             $description = $draftItem['description'] ?? $draftItem['comment'] ?? null;
             $recommendedCategoryId = $draftItem['recommended_category_id'] ?? null;
 
-            if (! $description || $recommendedCategoryId === null) {
+            if (! $description) {
                 continue;
             }
 
@@ -860,19 +861,27 @@ class TransactionApiController extends Controller implements HasMiddleware
             $draftItemsByDescription[$normalizedDescription][] = $entry;
         }
 
-        // Check each transaction item against the draft
-        foreach ($transaction->transactionItems as $item) {
-            if (! $item->category_id || ! $item->comment) {
+        // Process each submitted item where learning is enabled
+        foreach ($submittedItems as $submittedItem) {
+            // Learning is enabled by default, skip only if explicitly disabled
+            if (! ($submittedItem['learnRecommendation'] ?? true)) {
                 continue;
             }
 
-            $normalizedDescription = $learningService->normalize($item->comment);
-            $key = $this->buildLearningItemKey($normalizedDescription, (float) $item->amount);
+            $categoryId = $submittedItem['category_id'] ?? null;
+            $comment = $submittedItem['comment'] ?? null;
 
-            if (isset($learnSkipKeys[$key])) {
+            // Need both category and comment to learn
+            if (! $categoryId || ! $comment) {
                 continue;
             }
 
+            // Build key for matching with draft
+            $normalizedDescription = $learningService->normalize($comment);
+            $amount = $submittedItem['amount'] ?? null;
+            $key = $this->buildLearningItemKey($normalizedDescription, $amount);
+
+            // Look for matching recommendation in draft
             $draftMatch = $this->shiftDraftMatch(
                 $draftItemsByKey,
                 $draftItemsByDescription,
@@ -880,56 +889,26 @@ class TransactionApiController extends Controller implements HasMiddleware
                 $normalizedDescription
             );
 
-            if (! $draftMatch) {
-                continue;
-            }
+            if ($draftMatch) {
+                $recommendedCategoryId = $draftMatch['recommended_category_id'];
+                $matchType = $draftMatch['match_type'] ?? null;
 
-            $recommendedCategoryId = $draftMatch['recommended_category_id'];
-            if ($item->category_id !== $recommendedCategoryId) {
-                continue;
-            }
-
-            $matchType = $draftMatch['match_type'] ?? null;
-            if ($matchType === 'ai') {
-                $learningService->recordLearningAndIncrement($item->comment, $item->category_id);
-            }
-
-            if ($matchType === 'exact') {
-                $learningService->incrementUsageCountForDescription($item->comment, $item->category_id);
+                if ($categoryId === $recommendedCategoryId) {
+                    // User accepted the recommendation - learn from the recommendation with higher weight
+                    if ($matchType === 'ai') {
+                        $learningService->recordLearningAndIncrement($comment, $categoryId);
+                    } elseif ($matchType === 'exact') {
+                        $learningService->incrementUsageCountForDescription($comment, $categoryId);
+                    }
+                } else {
+                    // User overrode the recommendation - learn from the user's choice
+                    $learningService->recordLearning($comment, $categoryId);
+                }
+            } else {
+                // No recommendation available - learn from the user's manual selection
+                $learningService->recordLearning($comment, $categoryId);
             }
         }
-    }
-
-    /**
-     * Build a set of keys for items where learning should be skipped.
-     * Learning is skipped when learnRecommendation is false.
-     *
-     * @param  array<int, array<string, mixed>>  $submittedItems
-     * @return array<string, bool>
-     */
-    private function buildLearnSkipKeys(array $submittedItems, CategoryLearningService $learningService): array
-    {
-        $keys = [];
-
-        foreach ($submittedItems as $submittedItem) {
-            // Learning is enabled by default, skip only if explicitly disabled
-            if ($submittedItem['learnRecommendation'] ?? true) {
-                continue;
-            }
-
-            $comment = $submittedItem['comment'] ?? null;
-            $amount = $submittedItem['amount'] ?? null;
-
-            if (!$comment || $amount === null) {
-                continue;
-            }
-
-            $normalizedDescription = $learningService->normalize($comment);
-            $key = $this->buildLearningItemKey($normalizedDescription, (float) $amount);
-            $keys[$key] = true;
-        }
-
-        return $keys;
     }
 
     private function buildLearningItemKey(string $normalizedDescription, ?float $amount): string

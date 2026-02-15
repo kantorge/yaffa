@@ -17,11 +17,18 @@
         </span>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <!-- Learn recommendation toggle for AI-based, non-exact matches -->
+        <!-- Learn recommendation toggle for AI-based and manually selected categories -->
         <div
-          v-if="match_type === 'ai' && recommended_category_id"
+          v-if="
+            (match_type === 'ai' && recommended_category_id) ||
+            (categoryIdData && !recommended_category_id)
+          "
           class="form-check form-check-inline"
-          :title="__('Toggle whether to learn from this recommendation')"
+          :title="
+            recommended_category_id
+              ? __('Toggle whether to learn from this recommendation')
+              : __('Toggle whether to learn from your selection')
+          "
         >
           <input
             type="checkbox"

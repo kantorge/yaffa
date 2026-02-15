@@ -181,6 +181,15 @@ enum TransactionType: string
     }
 
     /**
+     * Summary of investmentTypeValues
+     * @return array<string> An array of the values of all investment transaction types, for easy use in validation rules and other places where we just need the string values.
+     */
+    public static function investmentTypeValues(): array
+    {
+        return array_map(fn (self $type) => $type->value, self::investmentTypes());
+    }
+
+    /**
      * Convert to array for JSON serialization
      *
      * @return array<string, mixed>

@@ -62,7 +62,7 @@ class ProcessDocumentService
             $accountToId = null;
             $investmentId = null;
 
-            if (in_array($transactionType, TransactionTypeEnum::investmentTypes())) {
+            if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
                 if (!empty($rawData['account'])) {
                     $accountId = $this->matchAccount($config, $user, $rawData['account']);
@@ -425,7 +425,7 @@ EOF;
         User $user,
         AiProviderConfig $config
     ): array {
-        $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypes());
+        $isInvestment = in_array($transactionType, TransactionTypeEnum::investmentTypeValues());
 
         $data = [
             'raw' => $rawData,
@@ -433,7 +433,6 @@ EOF;
             'config_type' => $isInvestment ? 'investment' : 'standard',
             'transaction_type' => $transactionType,
             'config' => [],
-            'transaction_items' => [],
         ];
 
         // Build config based on transaction type
@@ -448,6 +447,9 @@ EOF;
                 'dividend' => in_array($transactionType, [TransactionTypeEnum::DIVIDEND->value, TransactionTypeEnum::INTEREST_YIELD->value]) ? $rawData['amount'] : null,
             ];
         } else {
+            // Will be populated later, either from AI items or single item based on amount
+            $data['transaction_items'] = [];
+
             $amount = floatval($rawData['amount'] ?? 0);
 
             // Config format is the same for withdrawal, deposit, and transfer
@@ -463,18 +465,6 @@ EOF;
         // Build transaction_items array with category learning (batch AI matching)
         if (! $isInvestment && isset($rawData['transaction_items']) && is_array($rawData['transaction_items'])) {
             $data['transaction_items'] = $this->matchCategoriesForItems($rawData['transaction_items'], $user, $config);
-        } else {
-            // Single item transaction
-            $amount = floatval($rawData['amount'] ?? 0);
-            if ($amount > 0) {
-                $data['transaction_items'][] = [
-                    'amount' => $amount,
-                    'recommended_category_id' => null,
-                    'match_type' => null,
-                    'confidence_score' => null,
-                    'description' => $rawData['payee'] ?? '',
-                ];
-            }
         }
 
         return $data;
