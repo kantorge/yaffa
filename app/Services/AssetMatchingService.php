@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\AccountEntity;
-use App\Models\Investment;
 use App\Models\User;
-use Closure;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -38,12 +35,34 @@ class AssetMatchingService
             ->select('id', 'name', 'alias')
             ->get();
 
-        return $this->calculateMatches(
-            $accountName,
-            $accounts,
-            fn (AccountEntity $account) => $account->name .
-                ($account->alias ? ' (' . $account->alias . ')' : '')
-        );
+        $matches = [];
+
+        foreach ($accounts as $account) {
+            // Split alias by newline to handle multiple alias values
+            $secondaryParts = $account->alias ? array_filter(array_map('trim', explode("\n", $account->alias))) : [];
+
+            $similarity = $this->calculatePartialSimilarity(
+                $accountName,
+                $account->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+                $matches[] = [
+                    'id' => $account->id,
+                    'name' => $account->name . ($account->alias ? ' (' . $account->alias . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+
+        return array_slice($matches, 0, $maxSuggestions);
     }
 
     /**
@@ -62,12 +81,34 @@ class AssetMatchingService
             ->select('id', 'name', 'alias')
             ->get();
 
-        return $this->calculateMatches(
-            $payeeName,
-            $payees,
-            fn (AccountEntity $payee) => $payee->name .
-                ($payee->alias ? ' (' . $payee->alias . ')' : '')
-        );
+        $matches = [];
+
+        foreach ($payees as $payee) {
+            // Split alias by newline to handle multiple alias values
+            $secondaryParts = $payee->alias ? array_filter(array_map('trim', explode("\n", $payee->alias))) : [];
+
+            $similarity = $this->calculatePartialSimilarity(
+                $payeeName,
+                $payee->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+                $matches[] = [
+                    'id' => $payee->id,
+                    'name' => $payee->name . ($payee->alias ? ' (' . $payee->alias . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+
+        return array_slice($matches, 0, $maxSuggestions);
     }
 
     /**
@@ -83,13 +124,39 @@ class AssetMatchingService
 
         $investments = $this->user->investments()->get();
 
-        return $this->calculateMatches(
-            $investmentName,
-            $investments,
-            fn (Investment $investment) => $investment->name .
-                ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') .
-                ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : '')
-        );
+        $matches = [];
+
+        foreach ($investments as $investment) {
+            // Create array with symbol and ISIN as separate secondary parts
+            $secondaryParts = array_filter([
+                $investment->symbol,
+                $investment->isin,
+            ]);
+
+            $similarity = $this->calculatePartialSimilarity(
+                $investmentName,
+                $investment->name,
+                $secondaryParts ?: null
+            );
+
+            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
+                $matches[] = [
+                    'id' => $investment->id,
+                    'name' => $investment->name .
+                        ($investment->symbol ? ' (symbol: ' . $investment->symbol . ')' : '') .
+                        ($investment->isin ? ' (ISIN: ' . $investment->isin . ')' : ''),
+                    'similarity' => round($similarity, 3),
+                ];
+            }
+        }
+
+        // Sort by similarity descending
+        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+
+        // Return top matches
+        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+
+        return array_slice($matches, 0, $maxSuggestions);
     }
 
     /**
@@ -176,46 +243,50 @@ class AssetMatchingService
     }
 
     /**
-     * Calculate similarity matches for a collection of items
+     * Calculate similarity against primary and optional secondary parts
      *
-     * @template T
+     * Compares search text against primary part first, then against each secondary part separately.
+     * Returns the maximum similarity score. This prevents dilution of scores when
+     * full strings include additional metadata.
      *
-     * @param  iterable<T>  $items
-     * @param  Closure(T): string  $textExtractor
-     * @return array<int, array{id: int, name: string, similarity: float}>
+     * @param  array<string>|null  $secondary  Optional array of secondary strings to compare against
      */
-    private function calculateMatches(string $searchText, iterable $items, Closure $textExtractor): array
+    private function calculatePartialSimilarity(string $searchText, string $primary, ?array $secondary = null): float
     {
-        $matches = [];
-
         $normalizedSearch = $this->normalize($searchText);
 
-        foreach ($items as $item) {
-            $itemText = $textExtractor($item);
-            $normalizedItem = $this->normalize($itemText);
+        // Compare against primary part
+        $normalizedPrimary = $this->normalize($primary);
+        $primarySimilarity = 0;
+        similar_text($normalizedSearch, $normalizedPrimary, $primarySimilarity);
+        $primarySimilarity /= 100;
 
-            $similarity = 0;
-            similar_text($normalizedSearch, $normalizedItem, $similarity);
-            $similarity /= 100;
+        Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedPrimary}' (primary) => similarity: {$primarySimilarity}");
 
-            Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedItem}' => similarity: {$similarity}");
-
-            if ($similarity >= config('ai-documents.asset_matching.similarity_threshold', self::SIMILARITY_THRESHOLD)) {
-                $matches[] = [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'similarity' => round($similarity, 3),
-                ];
-            }
+        // If no secondary parts, return primary score
+        if (! $secondary) {
+            return $primarySimilarity;
         }
 
-        // Sort by similarity descending
-        usort($matches, fn ($a, $b) => $b['similarity'] <=> $a['similarity']);
+        // Compare against each secondary part and find the maximum
+        $maxSecondarySimilarity = 0;
+        foreach ($secondary as $secondaryPart) {
+            if (! $secondaryPart) {
+                continue;
+            }
 
-        // Return top matches
-        $maxSuggestions = config('ai-documents.asset_matching.max_suggestions', self::MAX_SUGGESTIONS);
+            $normalizedSecondary = $this->normalize($secondaryPart);
+            $secondarySimilarity = 0;
+            similar_text($normalizedSearch, $normalizedSecondary, $secondarySimilarity);
+            $secondarySimilarity /= 100;
 
-        return array_slice($matches, 0, $maxSuggestions);
+            Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedSecondary}' (secondary) => similarity: {$secondarySimilarity}");
+
+            $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
+        }
+
+        // Return maximum of primary and best secondary match
+        return max($primarySimilarity, $maxSecondarySimilarity);
     }
 
     /**
