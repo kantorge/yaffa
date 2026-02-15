@@ -20,6 +20,7 @@ use App\Models\TransactionDetailStandard;
 use App\Models\TransactionItem;
 use App\Models\TransactionSchedule;
 use App\Models\User;
+use App\Models\CategoryLearning;
 use App\Services\CategoryService;
 use App\Services\CategoryLearningService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -804,22 +805,15 @@ class TransactionApiController extends Controller implements HasMiddleware
         }
 
         // Update CategoryLearning for accepted recommendations if there are any
-        if (!$validated['items'] || !is_array($validated['items'])) {
-            return;
+        if ($validated['items'] && is_array($validated['items'])) {
+            $this->updateCategoryLearning($transaction, $user, $validated['items']);
         }
-        $this->updateCategoryLearning($aiDocument, $transaction, $user, $validated['items']);
     }
 
     /**
-     * Update CategoryLearning for accepted recommendations and user-provided categories.
-     *
-     * This handles three scenarios:
-     * 1. AI recommendation accepted: records both the learning and increments usage count
-     * 2. Recommendation overridden by user: records new learning from user's choice
-     * 3. No recommendation but user provided category: records learning from user's selection
+     * Update CategoryLearning from user-submitted transaction items.
      */
     private function updateCategoryLearning(
-        AiDocument $aiDocument,
         Transaction $transaction,
         User $user,
         array $submittedItems = []
@@ -829,36 +823,7 @@ class TransactionApiController extends Controller implements HasMiddleware
             return;
         }
 
-        $draftData = $aiDocument->processed_transaction_data;
-        $draftItems = $draftData['transaction_items'] ?? null;
-        if (! $draftData || ! is_array($draftItems)) {
-            return;
-        }
-
         $learningService = new CategoryLearningService($user);
-
-        // Build lookup maps for draft items
-        $draftItemsByKey = [];
-        $draftItemsByDescription = [];
-        foreach ($draftItems as $draftItem) {
-            $description = $draftItem['description'] ?? $draftItem['comment'] ?? null;
-            $recommendedCategoryId = $draftItem['recommended_category_id'] ?? null;
-
-            if (! $description) {
-                continue;
-            }
-
-            $normalizedDescription = $learningService->normalize($description);
-            $amount = isset($draftItem['amount']) ? (float) $draftItem['amount'] : null;
-            $key = $this->buildLearningItemKey($normalizedDescription, $amount);
-            $entry = [
-                'recommended_category_id' => $recommendedCategoryId,
-                'match_type' => $draftItem['match_type'] ?? null,
-            ];
-
-            $draftItemsByKey[$key][] = $entry;
-            $draftItemsByDescription[$normalizedDescription][] = $entry;
-        }
 
         // Process each submitted item where learning is enabled
         foreach ($submittedItems as $submittedItem) {
@@ -868,70 +833,39 @@ class TransactionApiController extends Controller implements HasMiddleware
             }
 
             $categoryId = $submittedItem['category_id'] ?? null;
-            $comment = $submittedItem['comment'] ?? null;
+            $description = $submittedItem['description'] ?? null;
 
-            // Need both category and comment to learn
-            if (! $categoryId || ! $comment) {
+            // Need both category and description to learn
+            if (! $categoryId || ! $description) {
                 continue;
             }
 
-            // Build key for matching with draft
-            $normalizedDescription = $learningService->normalize($comment);
-            $amount = $submittedItem['amount'] ?? null;
-            $key = $this->buildLearningItemKey($normalizedDescription, $amount);
+            $normalizedDescription = $learningService->normalize($description);
+            $categoryId = (int) $categoryId;
 
-            // Look for matching recommendation in draft
-            $draftMatch = $this->shiftDraftMatch(
-                $draftItemsByKey,
-                $draftItemsByDescription,
-                $key,
-                $normalizedDescription
-            );
+            $learning = CategoryLearning::query()
+                ->where('user_id', $user->id)
+                ->where('item_description', $normalizedDescription)
+                ->first();
 
-            if ($draftMatch) {
-                $recommendedCategoryId = $draftMatch['recommended_category_id'];
-                $matchType = $draftMatch['match_type'] ?? null;
-
-                if ($categoryId === $recommendedCategoryId) {
-                    // User accepted the recommendation - learn from the recommendation with higher weight
-                    if ($matchType === 'ai') {
-                        $learningService->recordLearningAndIncrement($comment, $categoryId);
-                    } elseif ($matchType === 'exact') {
-                        $learningService->incrementUsageCountForDescription($comment, $categoryId);
-                    }
+            if ($learning) {
+                if ((int) $learning->category_id === $categoryId) {
+                    $learning->increment('usage_count');
                 } else {
-                    // User overrode the recommendation - learn from the user's choice
-                    $learningService->recordLearning($comment, $categoryId);
+                    $learning->category_id = $categoryId;
+                    $learning->usage_count = 1;
+                    $learning->save();
                 }
-            } else {
-                // No recommendation available - learn from the user's manual selection
-                $learningService->recordLearning($comment, $categoryId);
+
+                continue;
             }
+
+            CategoryLearning::create([
+                'user_id' => $user->id,
+                'item_description' => $normalizedDescription,
+                'category_id' => $categoryId,
+                'usage_count' => 1,
+            ]);
         }
-    }
-
-    private function buildLearningItemKey(string $normalizedDescription, ?float $amount): string
-    {
-        $amountKey = $amount === null ? '' : number_format($amount, 2, '.', '');
-
-        return $normalizedDescription . '|' . $amountKey;
-    }
-
-    private function shiftDraftMatch(
-        array &$draftItemsByKey,
-        array &$draftItemsByDescription,
-        string $key,
-        string $normalizedDescription
-    ): ?array {
-        if (isset($draftItemsByKey[$key]) && count($draftItemsByKey[$key]) > 0) {
-            return array_shift($draftItemsByKey[$key]);
-        }
-
-        if (isset($draftItemsByDescription[$normalizedDescription])
-            && count($draftItemsByDescription[$normalizedDescription]) > 0) {
-            return array_shift($draftItemsByDescription[$normalizedDescription]);
-        }
-
-        return null;
     }
 }
