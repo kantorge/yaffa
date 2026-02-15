@@ -12,6 +12,7 @@ class StoreAiDocumentRequest extends FormRequest
 
         return [
             'files' => [
+                'required_without:text_input',
                 'nullable',
                 'array',
                 'max:' . $maxFilesPerSubmission,
@@ -23,6 +24,7 @@ class StoreAiDocumentRequest extends FormRequest
                 'mimes:' . implode(',', $allowedTypes),
             ],
             'text_input' => [
+                'required_without:files',
                 'nullable',
                 'string',
                 'max:10000',
@@ -38,7 +40,7 @@ class StoreAiDocumentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'files.required_if' => 'You must provide either files or text input.',
+            'files.required_without' => 'You must provide either files or text input.',
             'files.max' => 'You can upload a maximum of ' . config('ai-documents.file_upload.max_files_per_submission') . ' files.',
             'files.*.file' => 'Each file must be a valid file.',
             'files.*.max' => 'Each file must not exceed ' . config('ai-documents.file_upload.max_file_size_mb') . 'MB.',
