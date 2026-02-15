@@ -1447,4 +1447,4 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - A seemingly good match of investment (Disney) is not identified in the database while processing and investment transaction
 - There's still an error around sending the notification emails.
 - The extracted details tab is a bit messy, especially for the investment transactions.
-- The extracted detaisl tab does not have to be hidden if the transaction is finalized.
+- The extracted details tab does not have to be hidden if the transaction is finalized.
