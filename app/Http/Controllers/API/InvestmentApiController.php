@@ -14,6 +14,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
@@ -59,7 +60,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         }
 
         // Validate sort_order parameter
-        if (!in_array(mb_strtolower($sortOrder), ['asc', 'desc'], true)) {
+        if (!in_array(Str::lower($sortOrder), ['asc', 'desc'], true)) {
             $sortOrder = 'asc';
         }
 
@@ -77,15 +78,15 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 $query->where(function ($q) use ($request) {
                     $q->whereRaw(
                         'LOWER(name) LIKE ?',
-                        ['%' . mb_strtolower($request->get('query')) . '%']
+                        ['%' . Str::lower($request->get('query')) . '%']
                     )
                         ->orWhereRaw(
                             'LOWER(symbol) LIKE ?',
-                            ['%' . mb_strtolower($request->get('query')) . '%']
+                            ['%' . Str::lower($request->get('query')) . '%']
                         )
                         ->orWhereRaw(
                             'LOWER(isin) LIKE ?',
-                            ['%' . mb_strtolower($request->get('query')) . '%']
+                            ['%' . Str::lower($request->get('query')) . '%']
                         );
                 })
             )
