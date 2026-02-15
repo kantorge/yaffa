@@ -24,14 +24,18 @@ class ImagePreprocessingService
      * This method maintains aspect ratio while constraining the maximum dimension.
      *
      * @param string $filePath Full file path to the image
-     * @param int $maxDimension Maximum width or height (default 2048px for Vision API)
      * @return string Path to resized image (temporary file)
      *
      * @throws Exception if image cannot be read or resized
      */
-    public function resizeForVisionApi(string $filePath, int $maxDimension = 2048): string
+    public function resizeForVisionApi(string $filePath): string
     {
         try {
+            // Read image processing configuration
+            $maxWidth = config('ai-documents.image_processing.max_width', 2048);
+            $maxHeight = config('ai-documents.image_processing.max_height', 2048);
+            $quality = config('ai-documents.image_processing.quality', 85);
+
             // Read original image
             $image = $this->imageManager->read($filePath);
 
@@ -40,21 +44,18 @@ class ImagePreprocessingService
             $height = $image->height();
 
             // Check if resizing is needed
-            if ($width <= $maxDimension && $height <= $maxDimension) {
+            if ($width <= $maxWidth && $height <= $maxHeight) {
                 // Image already within bounds, return original
                 return $filePath;
             }
 
             // Calculate new dimensions maintaining aspect ratio
-            if ($width > $height) {
-                // Landscape orientation
-                $newWidth = $maxDimension;
-                $newHeight = (int) ($height * ($maxDimension / $width));
-            } else {
-                // Portrait or square orientation
-                $newHeight = $maxDimension;
-                $newWidth = (int) ($width * ($maxDimension / $height));
-            }
+            $widthRatio = $maxWidth / $width;
+            $heightRatio = $maxHeight / $height;
+            $scale = min($widthRatio, $heightRatio);
+
+            $newWidth = (int) ($width * $scale);
+            $newHeight = (int) ($height * $scale);
 
             // Resize image
             $image->scale($newWidth, $newHeight);
@@ -67,7 +68,7 @@ class ImagePreprocessingService
                 mkdir(dirname($tempPath), 0755, true);
             }
 
-            $image->save($tempPath);
+            $image->save($tempPath, quality: $quality);
 
             Log::info("Image resized for Vision API: {$width}x{$height} → {$newWidth}x{$newHeight}");
 

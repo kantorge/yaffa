@@ -648,7 +648,6 @@ A few notes on the statuses
 - **File upload limits:**
   - Max files per submission: 5
   - Max file size: 20MB per file (configurable via `AI_DOCUMENT_MAX_FILE_SIZE_MB`)
-  - Max total submission size: 500MB (configurable via `AI_DOCUMENT_MAX_TOTAL_SIZE_MB`)
   - Allowed types (configurable via `AI_DOCUMENT_ALLOWED_TYPES`): pdf, jpg, jpeg, png, txt
 
 ## Google Drive Monitoring
@@ -1083,13 +1082,6 @@ TESSERACT_LANGUAGE=eng              # OCR language (eng, fra, deu, etc.)
 - OpenAI default: `gpt-4o-mini`
 - Gemini default: `gemini-1.5-flash`
 
-### AI Parameters (based on existing email processing)
-
-- Temperature: `0.1` (low for deterministic extraction)
-- Top P: `1`
-- Frequency penalty: `0`
-- Presence penalty: `0`
-
 ## Prompt Engineering (based on existing patterns)
 
 The system will use multi-step prompting similar to existing email processing:
@@ -1101,7 +1093,7 @@ The system will use multi-step prompting similar to existing email processing:
 5. **Category matching prompt (✅ AI-Enhanced - Implemented):** Batch match all line item descriptions against:
    - User's category learning data (past item descriptions with usage counts)
    - User's active categories (full list with parent/child hierarchy)
-   - Returns: `[{item_index, category_id, confidence_score}]` for all items in single AI call
+   - Returns: `[{item_index, recommended_category_id, confidence_score}]` for all items in single AI call
 
 **IMPORTANT:** line item matching is only needed for withdrawals and deposits, not for transfers or investment transactions.
 After payee matching, there should be a backend call to determine the most used categories for that payee during the past 6 months (via `GET /api/ai/payees/{id}/category-stats`). If only one category is present in the stats for that period, category matching is skipped and that category is assigned to the entire amount as one line item.
@@ -1493,6 +1485,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - The extractTransactionData function of the ProcessDocumentService does not validate the AI response against the expected JSON schema, which could lead to unhandled exceptions if the AI returns malformed data. Implementing a validation step, and either iterate with the AI, of fail and wait for the next processing attempt, would improve the robustness of the system and prevent processing failures due to unexpected AI responses. (Avoiding infinite loops with a retry limit and proper error handling is crucial here.)
 - This is really an edge case, but if the same item description is present multiple times in the same transaction, but with different categories (e.g. a shopping receipt with multiple items of the same type, but some are on sale and categorized differently), the current category learning mechanism would not be able to handle this properly, as it only considers the description for matching. Implementing a more sophisticated learning mechanism that takes into account additional context, such as the amount or the position of the item in the list, could help to improve the accuracy of category suggestions in these cases.
 - It needs to be tested, how the AI handles receipts where item-level discounts are present, and how to reflect this in the extracted data and the final transaction. For example, if a receipt shows a total amount for a category of items, but some of them are discounted, the AI should ideally be able to extract the original price and the discount for each item, and this should be reflected in the line items of the transaction. This could be a complex scenario to handle, but it would significantly enhance the accuracy of the extracted data for users who frequently have such receipts. For MVP, we could add a check to see if the same (normalized) item description appears with multiple categories marked to be learned, and display a warning on the UI.
+- How to mark or identify Payees, where an item-level breakdown is not necessary, even if the receipt contains multiple items? For example, typically at restaurants, the receipt contains multiple items, but the user might not care about categorizing them separately, and would be fine with just having the total amount categorized as "dining". In this case, it would be good to have a way to indicate that for this payee, the item-level details should be ignored, and only the overall category for the total amount should be learned and suggested. This could be implemented as a simple toggle in the Payee management UI, allowing users to specify whether they want item-level categorization for each payee or not.
 
 ** Bugs to fix for MVP:**
 

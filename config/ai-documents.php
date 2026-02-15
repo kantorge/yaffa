@@ -7,29 +7,15 @@ return [
     'file_upload' => [
         'max_files_per_submission' => env('AI_DOCUMENT_MAX_FILES_PER_SUBMISSION', 5),
         'max_file_size_mb' => env('AI_DOCUMENT_MAX_FILE_SIZE_MB', 20),
-        'max_total_size_mb' => env('AI_DOCUMENT_MAX_TOTAL_SIZE_MB', 100),
         // This is a restrictive default. Adjust as needed, but be cautious about allowing too many types for security reasons.
         'allowed_types' => explode(',', env('AI_DOCUMENT_ALLOWED_TYPES', 'txt'))
     ],
 
     /*
-     * File retention and cleanup
+     * File retention and cleanup - NOT IMPLEMENTED YET, but reserved for future use.
      */
     'local_storage_file_retention' => [
         'retention_days' => env('AI_DOCUMENT_FILE_RETENTION_DAYS', 90),
-    ],
-
-    /*
-     * Processing configuration
-     */
-    'processing' => [
-        'max_retries' => 3,
-        'retry_delay_seconds' => 30,
-        'processing_timeout_seconds' => 300,
-        'ai_temperature' => 0.1,
-        'ai_top_p' => 1,
-        'ai_frequency_penalty' => 0,
-        'ai_presence_penalty' => 0,
     ],
 
     /*
@@ -55,10 +41,6 @@ return [
     'google_drive' => [
         'enabled' => env('AI_GOOGLE_DRIVE_ENABLED', false),
         'sync_interval_minutes' => env('AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES', 15),
-        'scopes' => [
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/drive.readonly',
-        ],
     ],
 
     /*
