@@ -7,7 +7,7 @@
 @section('content_header', __('Categories'))
 
 @section('content')
-@if(isset($category))
+@isset($category)
 <form
     accept-charset="UTF-8"
     action="{{ route('categories.update', $category->id) }}"
@@ -22,7 +22,7 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
 @php
     $previousUrl = url()->previous();
@@ -35,11 +35,11 @@
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($category->id))
+                @isset($category->id)
                     {{ __('Modify category') }}
                 @else
                     {{ __('Add new category') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">

@@ -7,7 +7,7 @@
 @section('content_header', __('Account groups'))
 
 @section('content')
-@if(isset($accountGroup))
+@isset($accountGroup)
 <form
     accept-charset="UTF-8"
     action="{{ route('account-group.update', $accountGroup->id) }}"
@@ -22,16 +22,16 @@
     autocomplete="off"
     method="POST"
 >
-@endif
+@endisset
 
     <div class="card">
         <div class="card-header">
             <div class="card-title">
-                @if(isset($accountGroup->id))
+                @isset($accountGroup->id)
                     {{ __('Modify account group') }}
                 @else
                     {{ __('Add account group') }}
-                @endif
+                @endisset
             </div>
         </div>
         <div class="card-body">

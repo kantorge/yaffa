@@ -14,6 +14,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class InvestmentApiController extends Controller implements HasMiddleware
 {
@@ -59,33 +60,39 @@ class InvestmentApiController extends Controller implements HasMiddleware
         }
 
         // Validate sort_order parameter
-        if (!in_array(strtolower($sortOrder), ['asc', 'desc'], true)) {
+        if (!in_array(Str::lower($sortOrder), ['asc', 'desc'], true)) {
             $sortOrder = 'asc';
         }
 
         $investments = $request->user()
             ->investments()
-            ->when($request->has('active'), fn($query) =>
+            ->when(
+                $request->has('active'),
+                fn ($query) =>
                 $query->where('active', $request->get('active'))
             )
-            ->when($request->get('query'), fn ($query) =>
+            ->when(
+                $request->get('query'),
+                fn ($query) =>
                 // The query string is searched in: name, symbol, ISIN
                 $query->where(function ($q) use ($request) {
                     $q->whereRaw(
                         'LOWER(name) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
+                        ['%' . Str::lower($request->get('query')) . '%']
                     )
-                    ->orWhereRaw(
-                        'LOWER(symbol) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
-                    )
-                    ->orWhereRaw(
-                        'LOWER(isin) LIKE ?',
-                        ['%' . strtolower($request->get('query')) . '%']
-                    );
+                        ->orWhereRaw(
+                            'LOWER(symbol) LIKE ?',
+                            ['%' . Str::lower($request->get('query')) . '%']
+                        )
+                        ->orWhereRaw(
+                            'LOWER(isin) LIKE ?',
+                            ['%' . Str::lower($request->get('query')) . '%']
+                        );
                 })
             )
-            ->when($request->get('currency_id'), fn ($query) =>
+            ->when(
+                $request->get('currency_id'),
+                fn ($query) =>
                 $query->where('currency_id', '=', $request->get('currency_id'))
             )
             ->orderBy($sortBy, $sortOrder)
@@ -174,7 +181,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
             ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];

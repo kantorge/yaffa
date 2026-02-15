@@ -11,11 +11,11 @@
 
                         <h2>{{ __('Reset Password') }}</h2>
 
-                        @if (session('status'))
+                        @session('status')
                         <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
+                            {{ $value }}
                         </div>
-                        @endif
+                        @endsession
 
                         <form
                                 method="POST"

@@ -128,7 +128,7 @@ class AccountApiController extends Controller implements HasMiddleware
     {
         $parameters = array_merge(
             [
-                'user' => Auth::user(),
+                'user' => request()->user(),
                 'query' => '',
                 'limit' => 10,
                 'withInactive' => false,

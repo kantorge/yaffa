@@ -11,7 +11,7 @@ class InvestmentPriceTest extends DuskTestCase
 {
     protected static bool $migrationRun = false;
 
-    const TABLESELECTOR = '#table-investment-prices';
+    public const TABLESELECTOR = '#table-investment-prices';
 
     protected function setUp(): void
     {

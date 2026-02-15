@@ -2,10 +2,6 @@
 
 namespace Tests\Browser\Pages\ReceivedMails;
 
-use App\Models\ReceivedMail;
-use App\Models\Transaction;
-use App\Models\User;
-use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 const TABLESELECTOR = '#table';
