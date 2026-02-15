@@ -11,7 +11,6 @@ return [
     "alpha_num" => "L'attribut :attribute ne peut contenir que des lettres et des chiffres.",
     "any_of" => "Le champ :attribute est invalide.",
     "array" => "L'attribut :attribute doit être un tableau.",
-    "ascii" => "Le champ :attribute ne doit contenir que des caractères alphanumériques et des symboles sur un seul octet.",
     "attributes" => [
         "config" => [
             "opening_balance" => "solde d'ouverture"
@@ -31,11 +30,6 @@ return [
     "can" => "Le champ :attribute contient une valeur non autorisée.",
     "confirmed" => "La confirmation de l'attribut :attribute ne correspond pas.",
     "contains" => "Le champ :attribute ne contient pas de valeur obligatoire.",
-    "custom" => [
-        "attribute-name" => [
-            "rule-name" => "message personnalisé"
-        ]
-    ],
     "date" => "L'attribut :attribute ne correspond pas à une date valide.",
     "date_equals" => "L'attribut :attribute doit être une date égale à :date.",
     "date_format" => "L'attribut :attribute ne correspond pas au format :format.",
@@ -76,9 +70,6 @@ return [
     "in_array" => "Le champ :attribute n'existe pas dans :other.",
     "in_array_keys" => "Le champ :attribute doit contenir au moins une des clés suivantes : :values.",
     "integer" => "L'attribut :attribute doit être un entier.",
-    "ip" => "L'attribut :attribute doit être une adresse IP valide.",
-    "ipv4" => "L'attribut :attribute doit être une adresse IPv4 valide.",
-    "ipv6" => "L'attribut :attribute doit être une adresse IPv6 valide.",
     "json" => "L'attribut :attribute doit être une chaîne JSON valide.",
     "list" => "Le champ :attribute doit être une liste.",
     "lowercase" => "Le champ :attribute doit être en minuscules.",
@@ -94,7 +85,6 @@ return [
         "numeric" => "L'attribut :attribute doit être inférieur ou égal à :value.",
         "string" => "L'attribut :attribute doit avoir un nombre de caractères inférieur ou égal à :value."
     ],
-    "mac_address" => "Le champ :attribute doit être une adresse MAC valide.",
     "max" => [
         "array" => "L'attribut :attribute ne peut pas contenir plus de :max éléments."
     ],
@@ -153,6 +143,5 @@ return [
     "unique" => "L'attribut :attribute a déjà été utilisé.",
     "uploaded" => "Le fichier :attribute n'a pas pu être téléversé.",
     "uppercase" => "Le champ :attribute doit être en majuscules.",
-    "url" => "Le format :attribute est invalide.",
-    "uuid" => "L'attribut :attribute doit être un UUID valide."
+    "url" => "Le format :attribute est invalide."
 ];

@@ -1,6 +1,5 @@
 <?php
 
 return [
-    "failed" => "Invalid login credentials.",
-
+    "failed" => "Invalid login credentials."
 ];
