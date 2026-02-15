@@ -12,13 +12,25 @@
 
 LOCK TABLES `investments` WRITE;
 /*!40000 ALTER TABLE `investments` DISABLE KEYS */;
-INSERT INTO `investments` (`id`, `user_id`, `name`, `symbol`, `isin`, `comment`, `active`, `auto_update`, `investment_price_provider`, `investment_group_id`, `currency_id`, `scrape_url`, `scrape_selector`) VALUES (1,1,'Disney','DIS',NULL,NULL,1,1,'alpha_vantage',1,1,NULL,NULL),(2,1,'Coca-cola','KO',NULL,NULL,0,0,'alpha_vantage',1,1,NULL,NULL),(3,1,'Nintendo Co. Ltd.','NTDOY',NULL,NULL,0,0,'alpha_vantage',1,1,NULL,NULL),(4,1,'Microsoft','MSFT',NULL,NULL,1,1,'alpha_vantage',1,1,NULL,NULL),(5,1,'iShares Dow Jones US Select Dividend UCITS ETF (DE)','DJDVY','DE000A0D8Q49',NULL,1,0,NULL,5,2,NULL,NULL),(6,1,'iShares Core Euro Corporate Bond UCITS ETF (Dist)','EUN5','IE00B3F81R35',NULL,1,0,NULL,5,2,NULL,NULL),(7,1,'iShares Euro Dividend UCITS ETF','IQQA','IE00B0M62S72',NULL,1,0,NULL,5,2,NULL,NULL),(8,1,'Activision Blizzard, Inc','ATVI',NULL,NULL,0,0,NULL,1,1,NULL,NULL),(9,1,'Short Term Government Bond','STGB',NULL,NULL,1,0,NULL,3,1,NULL,NULL),(10,1,'Government Bond with Yield','GBWY',NULL,NULL,1,0,NULL,3,1,NULL,NULL),(11,2,'Magyar Telekom','MTELEKOM',NULL,NULL,1,1,'web_scraping',6,4,'https://www.erstemarket.hu/termek/96/MTELEKOM','span.i_96_last_close');
+INSERT INTO `investments` (`id`, `user_id`, `name`, `symbol`, `isin`, `comment`, `active`, `auto_update`, `investment_price_provider`, `investment_group_id`, `currency_id`, `scrape_url`, `scrape_selector`) VALUES
+(1,1,'Disney','DIS',NULL,NULL,1,1,'alpha_vantage',1,1,NULL,NULL),
+(2,1,'Coca-cola','KO',NULL,NULL,0,0,'alpha_vantage',1,1,NULL,NULL),
+(3,1,'Nintendo Co. Ltd.','NTDOY',NULL,NULL,0,0,'alpha_vantage',1,1,NULL,NULL),
+(4,1,'Microsoft','MSFT',NULL,NULL,1,1,'alpha_vantage',1,1,NULL,NULL),
+(5,1,'iShares Dow Jones US Select Dividend UCITS ETF (DE)','DJDVY','DE000A0D8Q49',NULL,1,0,NULL,5,2,NULL,NULL),
+(6,1,'iShares Core Euro Corporate Bond UCITS ETF (Dist)','EUN5','IE00B3F81R35',NULL,1,0,NULL,5,2,NULL,NULL),
+(7,1,'iShares Euro Dividend UCITS ETF','IQQA','IE00B0M62S72',NULL,1,0,NULL,5,2,NULL,NULL),
+(8,1,'Activision Blizzard, Inc','ATVI',NULL,NULL,0,0,NULL,1,1,NULL,NULL),
+(9,1,'Short Term Government Bond','STGB',NULL,NULL,1,0,NULL,3,1,NULL,NULL),
+(10,1,'Government Bond with Yield','GBWY',NULL,NULL,1,0,NULL,3,1,NULL,NULL),
+(11,2,'Magyar Telekom','MTELEKOM',NULL,NULL,1,1,'web_scraping',6,4,'https://www.erstemarket.hu/termek/96/MTELEKOM','span.i_96_last_close');
 /*!40000 ALTER TABLE `investments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 LOCK TABLES `tags` WRITE;
 /*!40000 ALTER TABLE `tags` DISABLE KEYS */;
-INSERT INTO `tags` (`id`, `user_id`, `name`, `active`) VALUES (1,1,'Vacation 2022',0),(4,1,'Home',0);
+INSERT INTO `tags` (`id`, `user_id`, `name`, `active`) VALUES
+(1,1,'Vacation 2022',0),(4,1,'Home',0);
 /*!40000 ALTER TABLE `tags` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -30,7 +42,10 @@ UNLOCK TABLES;
 
 LOCK TABLES `currencies` WRITE;
 /*!40000 ALTER TABLE `currencies` DISABLE KEYS */;
-INSERT INTO `currencies` (`id`, `user_id`, `name`, `iso_code`, `base`, `auto_update`) VALUES (1,1,'US Dollar','USD',1,0),(2,1,'Euro','EUR',NULL,1),(3,1,'Indonesian Rupee','IDR',NULL,1),(4,2,'Hungarian Forint','HUF',1,0);
+INSERT INTO `currencies` (`id`, `user_id`, `name`, `iso_code`, `base`, `auto_update`) VALUES
+(1,1,'US Dollar','USD',1,0),(2,1,'Euro','EUR',NULL,1),
+(3,1,'Indonesian Rupee','IDR',NULL,1),
+(4,2,'Hungarian Forint','HUF',1,0);
 /*!40000 ALTER TABLE `currencies` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -113,7 +128,8 @@ UNLOCK TABLES;
 
 LOCK TABLES `category_learning` WRITE;
 /*!40000 ALTER TABLE `category_learning` DISABLE KEYS */;
-INSERT INTO `category_learning` (`id`, `user_id`, `item_description`, `category_id`, `usage_count`) VALUES (1,1,'Hammer',29, 2);
+INSERT INTO `category_learning` (`id`, `user_id`, `item_description`, `category_id`, `usage_count`) VALUES
+(1,1,'Hammer',29, 2);
 /*!40000 ALTER TABLE `category_learning` ENABLE KEYS */;
 UNLOCK TABLES;
 

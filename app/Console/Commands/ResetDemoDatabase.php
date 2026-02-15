@@ -229,6 +229,18 @@ class ResetDemoDatabase extends Command
             'text' => 'Total amount of 100 USD was added to "Bank Account - John" on 2026-02-01 by "NetConnect Solutions" as "Incomes / Net wage".',
             'html' => '',
         ]);
+
+        // TODO: read account and investment details from actual demo assets
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Simple Investment Buy Transaction',
+            'text' => 'Bought 10 shares of "Disney" shares for 150 USD total (15 USD per share) on 2026-02-01 from "Brokerage account". Paid 5 USD commission fee.',
+            'html' => '',
+        ]);
+        $this->createSampleReceivedMailsForDemoUser([
+            'subject' => 'Sample Incoming Email - Simple Investment Dividend Transaction',
+            'text' => 'Received 10 USD dividend from "Disney" shares on 2026-02-02 in "Brokerage account". Paid 2 USD taxes.',
+            'html' => '',
+        ]);
     }
 
     private function createSampleReceivedMailsForDemoUser(array $mailParams): void
