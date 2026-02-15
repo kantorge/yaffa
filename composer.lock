@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f493a04fa74dd06f5a85b4599d5c0805",
+    "content-hash": "0ed6c360afc1cc270cccb5bb79e4157e",
     "packages": [
         {
             "name": "beyondcode/laravel-mailbox",
@@ -3381,68 +3381,6 @@
             "time": "2025-07-25T09:04:22+00:00"
         },
         {
-            "name": "mobiledetect/mobiledetectlib",
-            "version": "2.8.45",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/serbanghita/Mobile-Detect.git",
-                "reference": "96aaebcf4f50d3d2692ab81d2c5132e425bca266"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/serbanghita/Mobile-Detect/zipball/96aaebcf4f50d3d2692ab81d2c5132e425bca266",
-                "reference": "96aaebcf4f50d3d2692ab81d2c5132e425bca266",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.0.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~4.8.36"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Detection": "namespaced/"
-                },
-                "classmap": [
-                    "Mobile_Detect.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Serban Ghita",
-                    "email": "serbanghita@gmail.com",
-                    "homepage": "http://mobiledetect.net",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Mobile_Detect is a lightweight PHP class for detecting mobile devices. It uses the User-Agent string combined with specific HTTP headers to detect the mobile environment.",
-            "homepage": "https://github.com/serbanghita/Mobile-Detect",
-            "keywords": [
-                "detect mobile devices",
-                "mobile",
-                "mobile detect",
-                "mobile detector",
-                "php mobile detect"
-            ],
-            "support": {
-                "issues": "https://github.com/serbanghita/Mobile-Detect/issues",
-                "source": "https://github.com/serbanghita/Mobile-Detect/tree/2.8.45"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/serbanghita",
-                    "type": "github"
-                }
-            ],
-            "time": "2023-11-07T21:57:25+00:00"
-        },
-        {
             "name": "monolog/monolog",
             "version": "3.10.0",
             "source": {
@@ -3717,16 +3655,16 @@
         },
         {
             "name": "nette/utils",
-            "version": "v4.1.2",
+            "version": "v4.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/utils.git",
-                "reference": "f76b5dc3d6c6d3043c8d937df2698515b99cbaf5"
+                "reference": "bb3ea637e3d131d72acc033cfc2746ee893349fe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/utils/zipball/f76b5dc3d6c6d3043c8d937df2698515b99cbaf5",
-                "reference": "f76b5dc3d6c6d3043c8d937df2698515b99cbaf5",
+                "url": "https://api.github.com/repos/nette/utils/zipball/bb3ea637e3d131d72acc033cfc2746ee893349fe",
+                "reference": "bb3ea637e3d131d72acc033cfc2746ee893349fe",
                 "shasum": ""
             },
             "require": {
@@ -3738,8 +3676,10 @@
             },
             "require-dev": {
                 "jetbrains/phpstorm-attributes": "^1.2",
+                "nette/phpstan-rules": "^1.0",
                 "nette/tester": "^2.5",
-                "phpstan/phpstan": "^2.0@stable",
+                "phpstan/extension-installer": "^1.4@stable",
+                "phpstan/phpstan": "^2.1@stable",
                 "tracy/tracy": "^2.9"
             },
             "suggest": {
@@ -3800,9 +3740,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/utils/issues",
-                "source": "https://github.com/nette/utils/tree/v4.1.2"
+                "source": "https://github.com/nette/utils/tree/v4.1.3"
             },
-            "time": "2026-02-03T17:21:09+00:00"
+            "time": "2026-02-13T03:05:33+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -5341,68 +5281,6 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.2"
             },
             "time": "2025-12-14T04:43:48+00:00"
-        },
-        {
-            "name": "riverskies/laravel-mobile-detect",
-            "version": "1.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/riverskies/laravel-mobile-detect.git",
-                "reference": "0ddb27d31a4a1148875424426b9feda6598f2f14"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/riverskies/laravel-mobile-detect/zipball/0ddb27d31a4a1148875424426b9feda6598f2f14",
-                "reference": "0ddb27d31a4a1148875424426b9feda6598f2f14",
-                "shasum": ""
-            },
-            "require": {
-                "mobiledetect/mobiledetectlib": "^2.8"
-            },
-            "require-dev": {
-                "laravel/laravel": "5.5.*",
-                "philo/laravel-blade": "^3.1",
-                "phpspec/prophecy-phpunit": "^1.1",
-                "phpunit/phpunit": "^6.3"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "MobileDetect": "Riverskies\\Laravel\\MobileDetect\\Facades\\MobileDetect"
-                    },
-                    "providers": [
-                        "Riverskies\\Laravel\\MobileDetect\\MobileDetectServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Riverskies\\Laravel\\MobileDetect\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Barnabas Kecskes",
-                    "email": "barnabas@riverskies.com"
-                }
-            ],
-            "description": "Instant mobile detection access directly from within Blade templates.",
-            "keywords": [
-                "blade",
-                "detection",
-                "laravel",
-                "mobile"
-            ],
-            "support": {
-                "issues": "https://github.com/riverskies/laravel-mobile-detect/issues",
-                "source": "https://github.com/riverskies/laravel-mobile-detect/tree/master"
-            },
-            "time": "2017-09-02T08:11:53+00:00"
         },
         {
             "name": "roach-php/core",
@@ -10159,16 +10037,16 @@
         },
         {
             "name": "fruitcake/laravel-debugbar",
-            "version": "v4.0.7",
+            "version": "v4.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fruitcake/laravel-debugbar.git",
-                "reference": "a9cc62c81cd0bda4ca7410229487638d7df786be"
+                "reference": "ad7a5b11c11bf7773c9acd04d0fe0d79a229b1c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fruitcake/laravel-debugbar/zipball/a9cc62c81cd0bda4ca7410229487638d7df786be",
-                "reference": "a9cc62c81cd0bda4ca7410229487638d7df786be",
+                "url": "https://api.github.com/repos/fruitcake/laravel-debugbar/zipball/ad7a5b11c11bf7773c9acd04d0fe0d79a229b1c7",
+                "reference": "ad7a5b11c11bf7773c9acd04d0fe0d79a229b1c7",
                 "shasum": ""
             },
             "require": {
@@ -10245,7 +10123,7 @@
             ],
             "support": {
                 "issues": "https://github.com/fruitcake/laravel-debugbar/issues",
-                "source": "https://github.com/fruitcake/laravel-debugbar/tree/v4.0.7"
+                "source": "https://github.com/fruitcake/laravel-debugbar/tree/v4.0.8"
             },
             "funding": [
                 {
@@ -10257,7 +10135,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-06T20:53:50+00:00"
+            "time": "2026-02-14T13:26:03+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -10508,16 +10386,16 @@
         },
         {
             "name": "laravel/boost",
-            "version": "v2.1.2",
+            "version": "v2.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/boost.git",
-                "reference": "81ecf79e82c979efd92afaeac012605cc7b2f31f"
+                "reference": "acf33b7c17b51307837d3d63ce1795fc1bd12e4b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/boost/zipball/81ecf79e82c979efd92afaeac012605cc7b2f31f",
-                "reference": "81ecf79e82c979efd92afaeac012605cc7b2f31f",
+                "url": "https://api.github.com/repos/laravel/boost/zipball/acf33b7c17b51307837d3d63ce1795fc1bd12e4b",
+                "reference": "acf33b7c17b51307837d3d63ce1795fc1bd12e4b",
                 "shasum": ""
             },
             "require": {
@@ -10528,7 +10406,7 @@
                 "illuminate/support": "^11.45.3|^12.41.1",
                 "laravel/mcp": "^0.5.1",
                 "laravel/prompts": "^0.3.10",
-                "laravel/roster": "^0.2.9",
+                "laravel/roster": "^0.4.0",
                 "php": "^8.2"
             },
             "require-dev": {
@@ -10570,7 +10448,7 @@
                 "issues": "https://github.com/laravel/boost/issues",
                 "source": "https://github.com/laravel/boost"
             },
-            "time": "2026-02-10T17:40:45+00:00"
+            "time": "2026-02-13T12:09:09+00:00"
         },
         {
             "name": "laravel/dusk",
@@ -10648,16 +10526,16 @@
         },
         {
             "name": "laravel/mcp",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/mcp.git",
-                "reference": "87905978bf2a230d6c01f8d03e172249e37917f7"
+                "reference": "97fcdacbce93c572e3d25457cf30395dede67088"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/mcp/zipball/87905978bf2a230d6c01f8d03e172249e37917f7",
-                "reference": "87905978bf2a230d6c01f8d03e172249e37917f7",
+                "url": "https://api.github.com/repos/laravel/mcp/zipball/97fcdacbce93c572e3d25457cf30395dede67088",
+                "reference": "97fcdacbce93c572e3d25457cf30395dede67088",
                 "shasum": ""
             },
             "require": {
@@ -10717,7 +10595,7 @@
                 "issues": "https://github.com/laravel/mcp/issues",
                 "source": "https://github.com/laravel/mcp"
             },
-            "time": "2026-02-09T22:08:43+00:00"
+            "time": "2026-02-13T14:08:37+00:00"
         },
         {
             "name": "laravel/pint",
@@ -10788,31 +10666,31 @@
         },
         {
             "name": "laravel/roster",
-            "version": "v0.2.9",
+            "version": "v0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/roster.git",
-                "reference": "82bbd0e2de614906811aebdf16b4305956816fa6"
+                "reference": "77e6c1187952d0eef50a54922db47893f5e7c986"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/roster/zipball/82bbd0e2de614906811aebdf16b4305956816fa6",
-                "reference": "82bbd0e2de614906811aebdf16b4305956816fa6",
+                "url": "https://api.github.com/repos/laravel/roster/zipball/77e6c1187952d0eef50a54922db47893f5e7c986",
+                "reference": "77e6c1187952d0eef50a54922db47893f5e7c986",
                 "shasum": ""
             },
             "require": {
-                "illuminate/console": "^10.0|^11.0|^12.0",
-                "illuminate/contracts": "^10.0|^11.0|^12.0",
-                "illuminate/routing": "^10.0|^11.0|^12.0",
-                "illuminate/support": "^10.0|^11.0|^12.0",
-                "php": "^8.1|^8.2",
-                "symfony/yaml": "^6.4|^7.2"
+                "illuminate/console": "^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^11.0|^12.0|^13.0",
+                "illuminate/routing": "^11.0|^12.0|^13.0",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "php": "^8.2",
+                "symfony/yaml": "^7.2|^8.0"
             },
             "require-dev": {
                 "laravel/pint": "^1.14",
                 "mockery/mockery": "^1.6",
-                "orchestra/testbench": "^8.22.0|^9.0|^10.0",
-                "pestphp/pest": "^2.0|^3.0",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "pestphp/pest": "^3.0|^4.1",
                 "phpstan/phpstan": "^2.0"
             },
             "type": "library",
@@ -10845,7 +10723,7 @@
                 "issues": "https://github.com/laravel/roster/issues",
                 "source": "https://github.com/laravel/roster"
             },
-            "time": "2025-10-20T09:56:46+00:00"
+            "time": "2026-02-11T07:24:41+00:00"
         },
         {
             "name": "laravel/sail",
@@ -11423,16 +11301,16 @@
         },
         {
             "name": "php-debugbar/php-debugbar",
-            "version": "v3.3.1",
+            "version": "v3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-debugbar/php-debugbar.git",
-                "reference": "afdaa2e56aca9d56b5bb2bad041bd2f6002017cf"
+                "reference": "e50d470344b62a033a76d3d10a803b04c8e3be69"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-debugbar/php-debugbar/zipball/afdaa2e56aca9d56b5bb2bad041bd2f6002017cf",
-                "reference": "afdaa2e56aca9d56b5bb2bad041bd2f6002017cf",
+                "url": "https://api.github.com/repos/php-debugbar/php-debugbar/zipball/e50d470344b62a033a76d3d10a803b04c8e3be69",
+                "reference": "e50d470344b62a033a76d3d10a803b04c8e3be69",
                 "shasum": ""
             },
             "require": {
@@ -11509,7 +11387,7 @@
             ],
             "support": {
                 "issues": "https://github.com/php-debugbar/php-debugbar/issues",
-                "source": "https://github.com/php-debugbar/php-debugbar/tree/v3.3.1"
+                "source": "https://github.com/php-debugbar/php-debugbar/tree/v3.4.0"
             },
             "funding": [
                 {
@@ -11521,7 +11399,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-06T21:09:38+00:00"
+            "time": "2026-02-14T14:10:26+00:00"
         },
         {
             "name": "php-debugbar/symfony-bridge",
@@ -13314,28 +13192,27 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.1",
+            "version": "v8.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "24dd4de28d2e3988b311751ac49e684d783e2345"
+                "reference": "7a1a90ba1df6e821a6b53c4cabdc32a56cabfb14"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/24dd4de28d2e3988b311751ac49e684d783e2345",
-                "reference": "24dd4de28d2e3988b311751ac49e684d783e2345",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/7a1a90ba1df6e821a6b53c4cabdc32a56cabfb14",
+                "reference": "7a1a90ba1df6e821a6b53c4cabdc32a56cabfb14",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3",
+                "php": ">=8.4",
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
-                "symfony/console": "<6.4"
+                "symfony/console": "<7.4"
             },
             "require-dev": {
-                "symfony/console": "^6.4|^7.0|^8.0"
+                "symfony/console": "^7.4|^8.0"
             },
             "bin": [
                 "Resources/bin/yaml-lint"
@@ -13366,7 +13243,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.1"
+                "source": "https://github.com/symfony/yaml/tree/v8.0.1"
             },
             "funding": [
                 {
@@ -13386,7 +13263,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-04T18:11:45+00:00"
+            "time": "2025-12-04T18:17:06+00:00"
         },
         {
             "name": "theseer/tokenizer",
