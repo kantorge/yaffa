@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-sm-3">
+    <div :class="sidebarCollapsed ? 'd-none' : 'col-sm-3'">
       <div class="card mb-3" id="findTransactionsActionsCard">
         <div class="card-header">
           <div class="card-title">
@@ -80,9 +80,17 @@
         @preset-ready="setReadyFlag($event)"
       ></find-transaction-select-card>
     </div>
-    <div class="col-sm-9">
+    <div :class="sidebarCollapsed ? 'col-sm-12' : 'col-sm-9'">
       <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex align-items-center">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary me-2"
+            @click="sidebarCollapsed = !sidebarCollapsed"
+            :title="sidebarCollapsed ? __('Expand sidebar') : __('Collapse sidebar')"
+          >
+            <i :class="sidebarCollapsed ? 'fas fa-angles-right' : 'fas fa-angles-left'"></i>
+          </button>
           <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
               <button
@@ -140,6 +148,20 @@
                 {{ __('Category charts') }}
               </button>
             </li>
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                id="nav-monthly-breakdown"
+                data-coreui-toggle="tab"
+                data-coreui-target="#tab-monthly-breakdown"
+                type="button"
+                role="tab"
+                aria-controls="tab-monthly-breakdown"
+                aria-selected="false"
+              >
+                {{ __('Monthly breakdown') }}
+              </button>
+            </li>
           </ul>
         </div>
 
@@ -193,6 +215,18 @@
                 :busy="busy"
               ></reporting-canvas-categories>
             </div>
+            <div
+              class="tab-pane fade"
+              id="tab-monthly-breakdown"
+              role="tabpanel"
+              aria-labelledby="nav-monthly-breakdown"
+              tabindex="5"
+            >
+              <reporting-canvas-monthly-breakdown
+                :transactions="transactions"
+                :busy="busy"
+              ></reporting-canvas-monthly-breakdown>
+            </div>
           </div>
         </div>
       </div>
@@ -211,6 +245,7 @@
   import ReportingCanvasFindTransactionsCategoryDetails from './ReportingWidgets/ReportingCanvas-FindTransactions-CategoryDetails.vue';
   import ReportingCanvasFindTransactionsSummary from './ReportingWidgets/ReportingCanvas-FindTransactions-Summary.vue';
   import ReportingCanvasFindTransactionsTimeline from './ReportingWidgets/ReportingCanvas-FindTransactions-Timeline.vue';
+  import ReportingCanvasFindTransactionsMonthlyBreakdown from './ReportingWidgets/ReportingCanvas-FindTransactions-MonthlyBreakdown.vue';
   import TransactionShowModal from './../components/TransactionDisplay/Modal.vue';
 
   import 'datatables.net-bs5';
@@ -225,12 +260,14 @@
         ReportingCanvasFindTransactionsCategoryDetails,
       'reporting-canvas-summary': ReportingCanvasFindTransactionsSummary,
       'reporting-canvas-timeline': ReportingCanvasFindTransactionsTimeline,
+      'reporting-canvas-monthly-breakdown': ReportingCanvasFindTransactionsMonthlyBreakdown,
     },
     data() {
       const urlParams = new URLSearchParams(window.location.search);
       return {
         busy: false,
         ready: false,
+        sidebarCollapsed: false,
         dataTable: null,
         dateFrom: urlParams.get('date_from') || null,
         dateTo: urlParams.get('date_to') || null,
