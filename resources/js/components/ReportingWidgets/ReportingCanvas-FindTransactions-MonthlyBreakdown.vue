@@ -55,7 +55,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.avg, row.nonZeroCount)"
+                :class="deviationClass(row.values[m] || 0, row.avg, row.min, row.max, row.nonZeroCount)"
                 class="text-end"
               >
                 <a
@@ -427,14 +427,19 @@ export default {
           const entry = catData[catName];
           const values = entry.values;
           const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-          const nonZeroCount = months.filter((m) => (values[m] || 0) > 0).length;
+          const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
+          const nonZeroCount = nonZeroValues.length;
           const avg = nonZeroCount > 0 ? total / n : 0;
+          const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
+          const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
 
           return {
             name: catName,
             values,
             total: Math.round(total * 100) / 100,
             avg: Math.round(avg * 100) / 100,
+            min,
+            max,
             nonZeroCount,
             categoryIds: Array.from(entry.categoryIds),
           };
@@ -471,14 +476,19 @@ export default {
           const entry = catData[catName];
           const values = entry.values;
           const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-          const nonZeroCount = months.filter((m) => (values[m] || 0) > 0).length;
+          const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
+          const nonZeroCount = nonZeroValues.length;
           const avg = nonZeroCount > 0 ? total / n : 0;
+          const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
+          const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
 
           return {
             name: catName,
             values,
             total: Math.round(total * 100) / 100,
             avg: Math.round(avg * 100) / 100,
+            min,
+            max,
             nonZeroCount,
             categoryIds: Array.from(entry.categoryIds),
           };
@@ -621,25 +631,33 @@ export default {
     },
 
     /**
-     * Return a CSS class for deviation highlighting based on how far the value
-     * deviates from the category average. Uses 3 thresholds: 5%, 10%, 15%.
+     * Return a CSS class for deviation highlighting based on where the value
+     * falls relative to the category's min, avg, and max across months.
+     * Color intensity scales proportionally within the [min, max] range.
      * Requires at least 3 non-zero months to activate.
      *
      * @param {number} value - The cell amount
      * @param {number} avg - Category average across months
+     * @param {number} min - Minimum non-zero value across months
+     * @param {number} max - Maximum non-zero value across months
      * @param {number} nonZeroCount - Number of months with non-zero values
      * @returns {string} CSS class name or empty string
      */
-    deviationClass(value, avg, nonZeroCount) {
-      if (nonZeroCount < 3 || value === 0 || avg === 0) return '';
+    deviationClass(value, avg, min, max, nonZeroCount) {
+      if (nonZeroCount < 3 || value === 0 || avg === 0 || min === max) return '';
 
-      const ratio = value / avg;
-      if (ratio > 1.15) return 'bg-deviation-high-3';
-      if (ratio > 1.10) return 'bg-deviation-high-2';
-      if (ratio > 1.05) return 'bg-deviation-high-1';
-      if (ratio < 0.85) return 'bg-deviation-low-3';
-      if (ratio < 0.90) return 'bg-deviation-low-2';
-      if (ratio < 0.95) return 'bg-deviation-low-1';
+      if (value > avg) {
+        const intensity = (max - avg) > 0 ? (value - avg) / (max - avg) : 0;
+        if (intensity > 0.66) return 'bg-deviation-high-3';
+        if (intensity > 0.33) return 'bg-deviation-high-2';
+        return 'bg-deviation-high-1';
+      }
+      if (value < avg) {
+        const intensity = (avg - min) > 0 ? (avg - value) / (avg - min) : 0;
+        if (intensity > 0.66) return 'bg-deviation-low-3';
+        if (intensity > 0.33) return 'bg-deviation-low-2';
+        return 'bg-deviation-low-1';
+      }
       return '';
     },
 
