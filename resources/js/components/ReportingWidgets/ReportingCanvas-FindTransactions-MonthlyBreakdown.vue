@@ -178,7 +178,13 @@
 <script>
 import { __ as translator, toFormattedCurrency } from '../../helpers';
 
-// Section definitions using default_assets.categories keys
+/**
+ * Section definitions mapping default_assets.categories translation keys
+ * to visual groups. Each section has a title (translation key), a CSS class
+ * for colored headers, and a list of category keys from default_assets.php.
+ *
+ * @type {Array<{titleKey: string, cssClass: string, categoryKeys: string[]}>}
+ */
 const SECTION_DEFINITIONS = [
   {
     titleKey: 'Daily living expenses',
@@ -229,7 +235,13 @@ const SECTION_DEFINITIONS = [
   },
 ];
 
-// Build a map of default_assets.categories key -> translated name
+/**
+ * Build a lookup map from default_assets.categories keys to their translated names.
+ * Uses window.YAFFA.translations to resolve translation keys, enabling locale-aware
+ * category matching regardless of the user's language.
+ *
+ * @returns {Object<string, {fullKey: string, translated: string|null, matchNames: string[]}>}
+ */
 function buildCategoryKeyMap() {
   const translations = window.YAFFA?.translations || {};
   const map = {};
@@ -305,6 +317,7 @@ export default {
     };
   },
   computed: {
+    /** @returns {string[]} Sorted unique YYYY-MM month strings extracted from transactions */
     months() {
       const monthSet = new Set();
       this.transactions.forEach((tx) => {
@@ -317,7 +330,10 @@ export default {
     },
 
     /**
-     * Build a map: { categoryFullName: { values: {month: amount}, categoryIds: Set, isIncome: bool } }
+     * Aggregate transaction items by category name and month.
+     * Skips transfers and investment transactions.
+     *
+     * @returns {Object<string, {values: Object<string, number>, categoryIds: Set<number>, isIncome: boolean, rawName: string}>}
      */
     categoryData() {
       const data = {};
@@ -362,7 +378,11 @@ export default {
     },
 
     /**
-     * Match categories to sections and build section data
+     * Match categories to predefined sections using translation key lookups,
+     * compute per-row totals/averages, section subtotals, and collect category IDs.
+     * Unmatched categories are grouped into an "Other expenses" section.
+     *
+     * @returns {Array<{title: string, cssClass: string, rows: Array, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}>}
      */
     computedSections() {
       const catKeyMap = buildCategoryKeyMap();
@@ -488,6 +508,7 @@ export default {
       return sections;
     },
 
+    /** @returns {Object<string, number>} Monthly total expense amounts keyed by YYYY-MM */
     monthlyTotalExpenses() {
       const totals = {};
       this.computedSections.forEach((section) => {
@@ -508,6 +529,7 @@ export default {
       return Math.round((this.totalExpensesSum / n) * 100) / 100;
     },
 
+    /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM */
     monthlyTotalIncome() {
       const totals = {};
       this.transactions.forEach((tx) => {
@@ -533,6 +555,7 @@ export default {
       return Math.round((this.totalIncomeSum / n) * 100) / 100;
     },
 
+    /** @returns {Object<string, number>} Monthly balance (income - expenses) keyed by YYYY-MM */
     monthlyBalance() {
       const balance = {};
       this.months.forEach((m) => {
@@ -556,11 +579,20 @@ export default {
       return translator(string, replace);
     },
 
+    /**
+     * Format a YYYY-MM month string as a short MM header.
+     * @param {string} month - Month in YYYY-MM format
+     * @returns {string} Month in MM format
+     */
     formatMonthHeader(month) {
-      // "2026-02" -> "02"
       return month.substring(5);
     },
 
+    /**
+     * Format a numeric value as a localized currency string, or a dash for zero.
+     * @param {number} value
+     * @returns {string}
+     */
     formatAmount(value) {
       if (value === 0) return '—';
       return toFormattedCurrency(
@@ -570,6 +602,12 @@ export default {
       );
     },
 
+    /**
+     * Format a cell value as currency or percentage depending on the toggle.
+     * @param {number} value - The cell amount
+     * @param {number} monthTotal - Total expenses for that month (used for percentage mode)
+     * @returns {string}
+     */
     formatCell(value, monthTotal) {
       if (value === 0) return '—';
       if (this.showPercentages && monthTotal > 0) {
@@ -582,8 +620,17 @@ export default {
       );
     },
 
+    /**
+     * Return a CSS class for deviation highlighting based on how far the value
+     * deviates from the category average. Uses 3 thresholds: 5%, 10%, 15%.
+     * Requires at least 3 non-zero months to activate.
+     *
+     * @param {number} value - The cell amount
+     * @param {number} avg - Category average across months
+     * @param {number} nonZeroCount - Number of months with non-zero values
+     * @returns {string} CSS class name or empty string
+     */
     deviationClass(value, avg, nonZeroCount) {
-      // Don't highlight if not enough data or value is zero
       if (nonZeroCount < 3 || value === 0 || avg === 0) return '';
 
       const ratio = value / avg;
@@ -596,6 +643,12 @@ export default {
       return '';
     },
 
+    /**
+     * Build a URL to the transactions report filtered by month and category IDs.
+     * @param {string} month - Month in YYYY-MM format
+     * @param {number[]} categoryIds - Category IDs to filter by
+     * @returns {string} URL with query parameters
+     */
     drillDownUrl(month, categoryIds) {
       const [year, mon] = month.split('-').map(Number);
       const lastDay = new Date(year, mon, 0).getDate();
