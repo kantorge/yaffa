@@ -6,53 +6,95 @@
         <p class="mb-3">{{ draftTypeLabel || unidentifiedLabel }}</p>
 
         <h6 class="text-muted">{{ __('Date') }}</h6>
-        <p class="mb-3">{{ draftData.date || unidentifiedLabel }}</p>
-      </div>
+        <p class="mb-3">{{ formatRawValue(draftData.date) }}</p>
 
-      <div class="col-12 col-md-6">
-        <div v-if="draftData.config_type === 'standard'">
+        <template v-if="isInvestment">
           <h6 class="text-muted">{{ __('Account') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.account || unidentifiedLabel }}
-          </p>
-
-          <h6 class="text-muted">{{ __('Payee') }}</h6>
-          <p class="mb-3">
-            {{ draftData.raw?.payee || unidentifiedLabel }}
-          </p>
-
-          <h6 class="text-muted">{{ __('Amount') }}</h6>
-          <p class="mb-3">
-            {{ draftData.raw?.amount || unidentifiedLabel }}
-          </p>
-        </div>
-
-        <div v-else>
-          <h6 class="text-muted">{{ __('Account') }}</h6>
-          <p class="mb-3">
-            {{ draftData.raw?.account || unidentifiedLabel }}
+            {{ formatRawValue(rawData.account) }}
           </p>
 
           <h6 class="text-muted">{{ __('Investment') }}</h6>
           <p class="mb-3">
-            {{ draftData.raw?.investment || unidentifiedLabel }}
+            {{ formatRawValue(rawData.investment) }}
           </p>
-        </div>
-      </div>
-    </div>
+        </template>
 
-    <div v-if="draftData.config_type === 'investment'" class="row mb-4">
-      <div class="col-12 col-md-6">
-        <h6 class="text-muted">{{ __('Quantity') }}</h6>
-        <p class="mb-3">
-          {{ draftData.raw?.quantity || unidentifiedLabel }}
-        </p>
+        <template v-else>
+          <template v-if="isTransfer">
+            <h6 class="text-muted">{{ __('Account from') }}</h6>
+            <p class="mb-3">
+              {{ formatRawValue(rawData.account_from) }}
+            </p>
+
+            <h6 class="text-muted">{{ __('Account to') }}</h6>
+            <p class="mb-3">
+              {{ formatRawValue(rawData.account_to) }}
+            </p>
+          </template>
+
+          <template v-else>
+            <h6 class="text-muted">{{ __('Account') }}</h6>
+            <p class="mb-3">
+              {{ formatRawValue(rawData.account) }}
+            </p>
+
+            <h6 class="text-muted">{{ __('Payee') }}</h6>
+            <p class="mb-3">
+              {{ formatRawValue(rawData.payee) }}
+            </p>
+          </template>
+        </template>
       </div>
       <div class="col-12 col-md-6">
-        <h6 class="text-muted">{{ __('Price') }}</h6>
-        <p class="mb-3">
-          {{ draftData.raw?.price || unidentifiedLabel }}
-        </p>
+        <template v-if="isInvestment">
+          <h6 class="text-muted">{{ __('Amount') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.amount) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Quantity') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.quantity) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Price') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.price) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Commission') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.commission) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Tax') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.tax) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Dividend') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.dividend) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Currency') }}</h6>
+          <p class="mb-0">
+            {{ formatRawValue(rawData.currency) }}
+          </p>
+        </template>
+
+        <template v-else>
+          <h6 class="text-muted">{{ __('Amount') }}</h6>
+          <p class="mb-3">
+            {{ formatRawValue(rawData.amount) }}
+          </p>
+
+          <h6 class="text-muted">{{ __('Currency') }}</h6>
+          <p class="mb-0">
+            {{ formatRawValue(rawData.currency) }}
+          </p>
+        </template>
       </div>
     </div>
 
@@ -82,7 +124,9 @@
                 <td>
                   {{ item.comment || item.description || __('N/A') }}
                 </td>
-                <td class="text-end">{{ item.amount || unidentifiedLabel }}</td>
+                <td class="text-end">
+                  {{ formatRawValue(item.amount) }}
+                </td>
                 <td>
                   <span
                     v-if="item.match_type"
@@ -153,6 +197,23 @@
       Array.isArray(props.draftData.transaction_items) &&
       props.draftData.transaction_items.length > 0,
   );
+
+  const rawData = computed(() => props.draftData?.raw || {});
+  const draftTransactionType = computed(
+    () => rawData.value.transaction_type || props.draftData?.transaction_type,
+  );
+  const isInvestment = computed(
+    () => props.draftData?.config_type === 'investment',
+  );
+  const isTransfer = computed(() => draftTransactionType.value === 'transfer');
+
+  const formatRawValue = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return unidentifiedLabel;
+    }
+
+    return value;
+  };
 
   const getMatchTypeBadgeClass = (matchType) => {
     if (matchType === 'exact') {

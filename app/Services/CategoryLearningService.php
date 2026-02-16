@@ -77,7 +77,6 @@ class CategoryLearningService
      *
      * @param string $description Item description to learn from
      * @param int $categoryId Category ID selected by user
-     * @return void
      */
     public function recordCategorySelection(string $description, int $categoryId): void
     {

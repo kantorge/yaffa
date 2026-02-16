@@ -1488,6 +1488,4 @@ All prompts require JSON responses with strict schemas to ensure validation.
 ** Bugs to fix for MVP:**
 
 - The Extracted data summary always shows payee, and does not adapt to show investment or transfer details when those types are extracted. Anyway, the idenified payee is also not displayed correctly.
-- A seemingly good match of investment (Disney) is not identified in the database while processing and investment transaction
-- The extracted details tab is a bit messy, especially for the investment transactions.
-- The extracted details tab does not have to be hidden if the transaction is finalized.
+- The extracted details tab is a bit messy, especially for the investment transactions, where not all details are displayed (with value or with unidentified placeholder). This should be more structured.

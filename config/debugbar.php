@@ -112,7 +112,7 @@ return [
             'hard_limit'       => (int) env('DEBUGBAR_OPTIONS_DB_HARD_LIMIT', 500),  // After the hard limit, queries are ignored
         ],
         'mail' => [
-            'timeline' => env('DEBUGBAR_OPTIONS_MAIL_TIMELINE', true),  // Add mails to the timeline
+            'timeline' => env('DEBUGBAR_OPTIONS_MAIL_TIMELINE', false),  // Add mails to the timeline (disabled by default due to issues with route notifications)
             'show_body' => env('DEBUGBAR_OPTIONS_MAIL_SHOW_BODY', true),
         ],
         'views' => [
