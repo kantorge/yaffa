@@ -253,6 +253,57 @@ class CategoryApiControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function test_it_rejects_creating_a_category_with_parent_from_another_user(): void
+    {
+        /** @var User $user1 */
+        $user1 = User::factory()->create();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        /** @var Category $parentCategory */
+        $parentCategory = Category::factory()
+            ->for($user1)
+            ->create();
+
+        $this->actingAs($user2);
+        $response = $this->postJson(route('api.category.store'), [
+            'name' => 'Child Category',
+            'active' => true,
+            'parent_id' => $parentCategory->id,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response->assertJsonValidationErrors('parent_id');
+    }
+
+    public function test_different_users_can_create_categories_with_the_same_name(): void
+    {
+        /** @var User $user1 */
+        $user1 = User::factory()->create();
+
+        /** @var User $user2 */
+        $user2 = User::factory()->create();
+
+        Category::factory()
+            ->for($user1)
+            ->create(['name' => 'Groceries']);
+
+        $this->actingAs($user2);
+        $response = $this->postJson(route('api.category.store'), [
+            'name' => 'Groceries',
+            'active' => true,
+            'default_aggregation' => 'month',
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Groceries',
+            'user_id' => $user2->id,
+        ]);
+    }
+
     public function test_it_does_not_delete_a_category_if_it_is_used_in_a_transaction(): void
     {
         // Create a user and a category
