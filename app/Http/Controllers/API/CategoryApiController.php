@@ -168,12 +168,14 @@ class CategoryApiController extends Controller implements HasMiddleware
             );
     }
 
+    /**
+     * Store a newly created category in storage.
+     *
+     * @post('/api/assets/category')
+     * @middlewares('api', 'auth:sanctum')
+     */
     public function store(CategoryRequest $request): JsonResponse
     {
-        /**
-         * @post('/api/assets/category')
-         * @middlewares('api', 'auth:sanctum')
-         */
         Gate::authorize('create', Category::class);
 
         $category = $request->user()->categories()->create($request->validated());
