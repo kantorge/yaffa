@@ -15,7 +15,7 @@ use Carbon\Carbon;
 
 class ProcessDocumentService
 {
-    const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
+    public const SIMILARITY_THRESHOLD_TO_ACCEPT_MATCH = 0.95;
 
     public function __construct(
         private TextExtractionService $textExtractor,

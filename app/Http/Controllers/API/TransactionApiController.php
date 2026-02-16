@@ -841,32 +841,8 @@ class TransactionApiController extends Controller implements HasMiddleware
                 continue;
             }
 
-            $normalizedDescription = $learningService->normalize($description);
-            $categoryId = (int) $categoryId;
-
-            $learning = CategoryLearning::query()
-                ->where('user_id', $user->id)
-                ->where('item_description', $normalizedDescription)
-                ->first();
-
-            if ($learning) {
-                if ((int) $learning->category_id === $categoryId) {
-                    $learning->increment('usage_count');
-                } else {
-                    $learning->category_id = $categoryId;
-                    $learning->usage_count = 1;
-                    $learning->save();
-                }
-
-                continue;
-            }
-
-            CategoryLearning::create([
-                'user_id' => $user->id,
-                'item_description' => $normalizedDescription,
-                'category_id' => $categoryId,
-                'usage_count' => 1,
-            ]);
+            // Use service method to record the learning
+            $learningService->recordCategorySelection($description, (int) $categoryId);
         }
     }
 }

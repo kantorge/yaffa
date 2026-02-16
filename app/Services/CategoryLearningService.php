@@ -72,4 +72,45 @@ class CategoryLearningService
         return $learnings->map(fn ($learning) => "{$learning->item_description} → Category ID: {$learning->category_id}")->join("\n");
     }
 
+    /**
+     * Record a category selection for learning
+     *
+     * @param string $description Item description to learn from
+     * @param int $categoryId Category ID selected by user
+     * @return void
+     */
+    public function recordCategorySelection(string $description, int $categoryId): void
+    {
+        if (! $this->user) {
+            return;
+        }
+
+        $normalizedDescription = $this->normalize($description);
+
+        $learning = \App\Models\CategoryLearning::query()
+            ->where('user_id', $this->user->id)
+            ->where('item_description', $normalizedDescription)
+            ->first();
+
+        if ($learning) {
+            // If category matches existing learning, increment usage count
+            if ((int) $learning->category_id === $categoryId) {
+                $learning->increment('usage_count');
+            } else {
+                // Category changed, reset to new category with count of 1
+                $learning->category_id = $categoryId;
+                $learning->usage_count = 1;
+                $learning->save();
+            }
+        } else {
+            // Create new learning record
+            \App\Models\CategoryLearning::create([
+                'user_id' => $this->user->id,
+                'item_description' => $normalizedDescription,
+                'category_id' => $categoryId,
+                'usage_count' => 1,
+            ]);
+        }
+    }
+
 }

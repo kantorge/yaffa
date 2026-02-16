@@ -1024,50 +1024,40 @@
           this.form.config.account_to_id =
             this.transaction.config.account_to_id;
 
-          // Copy items, and ensure that amount is number
-          // Preserve recommended_category_id from AI draft data
+          // Copy transaction items from either saved transaction or AI draft
+          // Both sources use 'transaction_items' key for consistency
+          //
+          // Property mapping between sources:
+          // - Saved transactions: Have category_id, comment, tags (from database)
+          // - AI drafts: Have description, recommended_category_id, match_type, confidence_score (ephemeral AI metadata)
+          //
+          // Note: AI-specific properties (description, match_type, confidence_score) are used during
+          // finalization but NOT persisted to the database. Only the user-selected category_id and
+          // optional comment are saved. The 'description' field is preserved for category learning.
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
               .map((item) => {
                 item.id = this.itemCounter++;
                 item.amount = Number(item.amount);
                 item.learnRecommendation = true; // Default to learning enabled
+
+                // Handle saved transaction properties (from database)
                 item.category_full_name =
                   item.category?.full_name || item.category_full_name || null;
-                // Preserve recommendation if present
+
+                // Preserve AI recommendation metadata if present (from draft)
                 if (item.recommended_category_id) {
                   item.recommended_category_id = item.recommended_category_id;
                   item.recommended_category_full_name =
                     item.recommended_category_full_name || null;
                 }
+
+                // Preserve AI-extracted description and metadata (ephemeral, for UI only)
                 item.description = item.description || null;
+                item.match_type = item.match_type || null;
+                item.confidence_score = item.confidence_score || null;
+
                 return item;
-              })
-              .forEach((item) => this.form.items.push(item));
-          } else if (this.transaction.items?.length > 0) {
-            // Handle draft data from AI document (items from draft, not transaction_items)
-            this.transaction.items
-              .map((item) => {
-                const formItem = {
-                  id: this.itemCounter++,
-                  amount: Number(item.amount || 0),
-                  description: item.description || null,
-                  comment: item.comment || null,
-                  tags: item.tags || [],
-                  match_type: item.match_type || null,
-                  confidence_score: item.confidence_score || null,
-                  learnRecommendation: true, // Default to learning enabled for AI recommendations
-                };
-
-                // Preserve recommendation from AI draft
-                if (item.recommended_category_id) {
-                  formItem.recommended_category_id =
-                    item.recommended_category_id;
-                  formItem.recommended_category =
-                    item.recommended_category || null;
-                }
-
-                return formItem;
               })
               .forEach((item) => this.form.items.push(item));
           }
