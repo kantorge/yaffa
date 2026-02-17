@@ -760,11 +760,17 @@ export default {
   background: transparent !important;
 }
 
-/* Deviation highlighting */
-.bg-deviation-high-1 { background-color: #ffebee !important; }
-.bg-deviation-high-2 { background-color: #ffcdd2 !important; }
-.bg-deviation-high-3 { background-color: #ef9a9a !important; }
-.bg-deviation-low-1 { background-color: #e8f5e9 !important; }
-.bg-deviation-low-2 { background-color: #c8e6c9 !important; }
-.bg-deviation-low-3 { background-color: #a5d6a7 !important; }
+/* Deviation highlighting — high specificity to override Bootstrap table-hover */
+.table-hover > tbody > tr > .bg-deviation-high-1,
+.bg-deviation-high-1 { background-color: #ffebee; }
+.table-hover > tbody > tr > .bg-deviation-high-2,
+.bg-deviation-high-2 { background-color: #ffcdd2; }
+.table-hover > tbody > tr > .bg-deviation-high-3,
+.bg-deviation-high-3 { background-color: #ef9a9a; }
+.table-hover > tbody > tr > .bg-deviation-low-1,
+.bg-deviation-low-1 { background-color: #e8f5e9; }
+.table-hover > tbody > tr > .bg-deviation-low-2,
+.bg-deviation-low-2 { background-color: #c8e6c9; }
+.table-hover > tbody > tr > .bg-deviation-low-3,
+.bg-deviation-low-3 { background-color: #a5d6a7; }
 </style>
