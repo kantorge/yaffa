@@ -353,6 +353,10 @@ export default {
       type: Boolean,
       required: true,
     },
+    isDrillDown: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -620,8 +624,7 @@ export default {
     saveBreakdownCache() {
       try {
         // Don't overwrite cache on drill-down pages
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('return_to')) {
+        if (this.isDrillDown) {
           console.log('[MonthlyBreakdown] Skipping cache save (drill-down page)');
           return;
         }

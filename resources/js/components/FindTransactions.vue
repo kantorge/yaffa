@@ -231,6 +231,7 @@
               <reporting-canvas-monthly-breakdown
                 :transactions="transactions"
                 :busy="busy"
+                :is-drill-down="!!returnTo"
               ></reporting-canvas-monthly-breakdown>
             </div>
           </div>
