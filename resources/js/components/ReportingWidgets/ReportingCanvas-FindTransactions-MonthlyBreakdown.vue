@@ -70,15 +70,15 @@
                   :href="drillDownUrl(m, row.categoryIds)"
                   class="cell-link"
                 >
-                  {{ formatCell(row.values[m] || 0, monthlyTotalExpenses[m]) }}
+                  {{ formatCell(row.values[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
                 </a>
                 <span v-else class="zero">&mdash;</span>
               </td>
               <td class="text-end fw-semibold">
-                {{ formatCell(row.total, totalExpensesSum) }}
+                {{ formatCell(row.total, section.isIncome ? totalIncomeSum : totalExpensesSum) }}
               </td>
               <td class="text-end">
-                {{ formatCell(row.avg, totalExpensesAvg) }}
+                {{ formatCell(row.avg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
               </td>
             </tr>
 
@@ -97,15 +97,15 @@
                   :href="drillDownUrl(m, section.allCategoryIds)"
                   class="cell-link"
                 >
-                  {{ formatCell(section.subtotals[m] || 0, monthlyTotalExpenses[m]) }}
+                  {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
                 </a>
                 <span v-else class="zero">&mdash;</span>
               </td>
               <td class="text-end fw-bold">
-                {{ formatCell(section.subtotalSum, totalExpensesSum) }}
+                {{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum) }}
               </td>
               <td class="text-end fw-bold">
-                {{ formatCell(section.subtotalAvg, totalExpensesAvg) }}
+                {{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
               </td>
             </tr>
           </template>
@@ -169,12 +169,12 @@
             <td class="sticky-col fw-bold" :title="__(section.title)">{{ __(section.title) }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold">
               <span v-if="(section.subtotals[m] || 0) !== 0">
-                {{ formatCell(section.subtotals[m] || 0, monthlyTotalExpenses[m]) }}
+                {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
               </span>
               <span v-else class="zero">&mdash;</span>
             </td>
-            <td class="text-end fw-bold">{{ formatCell(section.subtotalSum, totalExpensesSum) }}</td>
-            <td class="text-end fw-bold">{{ formatCell(section.subtotalAvg, totalExpensesAvg) }}</td>
+            <td class="text-end fw-bold">{{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum) }}</td>
+            <td class="text-end fw-bold">{{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}</td>
           </tr>
         </tbody>
       </table>
@@ -380,9 +380,11 @@ export default {
       const sections = [];
       sortedParents.forEach((parentName, idx) => {
         const group = processCategoryGroup(groups[parentName], catData, months, n);
+        const isIncome = groups[parentName].every((c) => catData[c].isIncome);
         sections.push({
           title: parentName,
           cssClass: SECTION_CSS_CLASSES[idx % SECTION_CSS_CLASSES.length],
+          isIncome,
           ...group,
         });
       });
@@ -390,9 +392,11 @@ export default {
       // Add "Other" section for parentless categories
       if (noParent.length > 0) {
         const group = processCategoryGroup(noParent, catData, months, n);
+        const isIncome = noParent.every((c) => catData[c].isIncome);
         sections.push({
           title: 'Other expenses',
           cssClass: 's-other',
+          isIncome,
           ...group,
         });
       }
