@@ -283,6 +283,7 @@
         selectedTags: this.getUrlParams('tags'),
         returnTo: urlParams.get('return_to') || null,
         initialTab: urlParams.get('tab') || null,
+        cachedDataPending: false,
         presetsReady: {
           category: false,
           payee: false,
@@ -381,13 +382,20 @@
           const { key, data } = JSON.parse(cached);
           if (key !== this.getCacheKey()) return false;
           this.transactions = data.map(processTransaction);
-          this.dataTable.clear();
-          this.dataTable.rows.add(this.transactions);
-          this.dataTable.draw();
+          // Defer DataTable population — only needed if user switches to List tab
+          this.cachedDataPending = true;
           return true;
         } catch {
           return false;
         }
+      },
+
+      populateDataTable() {
+        if (!this.cachedDataPending) return;
+        this.cachedDataPending = false;
+        this.dataTable.clear();
+        this.dataTable.rows.add(this.transactions);
+        this.dataTable.draw();
       },
 
       saveToCache(data) {
@@ -529,6 +537,14 @@
       // Delete transaction icon functionality
       dataTableHelpers.initializeAjaxDeleteButton(this.$refs.dataTable);
       dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
+
+      // Lazily populate DataTable when transaction list tab is shown
+      const transactionListTab = document.getElementById('nav-transaction-list');
+      if (transactionListTab) {
+        transactionListTab.addEventListener('shown.coreui.tab', () => {
+          this.populateDataTable();
+        });
+      }
 
       // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
       if (this.initialTab) {
