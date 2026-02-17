@@ -644,15 +644,16 @@ export default {
       const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
       const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-      const params = [`date_from=${dateFrom}`, `date_to=${dateTo}`];
-      const uniqueIds = [...new Set(categoryIds)];
-      uniqueIds.forEach((id) => params.push(`categories[]=${id}`));
-      params.push('tab=transaction-list');
+      const params = new URLSearchParams();
+      params.append('date_from', dateFrom);
+      params.append('date_to', dateTo);
+      [...new Set(categoryIds)].forEach((id) => params.append('categories[]', id));
+      params.append('tab', 'transaction-list');
       const returnUrl = new URL(window.location.href);
       returnUrl.searchParams.set('tab', 'monthly-breakdown');
-      params.push('return_to=' + encodeURIComponent(returnUrl.href));
+      params.append('return_to', returnUrl.href);
 
-      return `/reports/transactions?${params.join('&')}`;
+      return `/reports/transactions?${params.toString()}`;
     },
 
     toFormattedCurrency,
