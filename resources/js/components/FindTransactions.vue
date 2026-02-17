@@ -409,6 +409,14 @@
         }
       },
 
+      clearTransactionCache() {
+        try {
+          sessionStorage.removeItem('yaffa_transactions_cache');
+        } catch {
+          // ignore
+        }
+      },
+
       getTransactions() {
         this.busy = true;
 

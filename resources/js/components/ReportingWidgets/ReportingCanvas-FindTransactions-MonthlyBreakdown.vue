@@ -26,7 +26,7 @@
       </li>
     </ul>
 
-    <div v-else-if="transactions.length === 0" class="text-muted">
+    <div v-else-if="transactions.length === 0 && !cachedCategoryData" class="text-muted">
       {{ __('No transactions to display') }}
     </div>
 
@@ -359,11 +359,29 @@ export default {
       showPercentages: false,
       baseCurrency: window.YAFFA.baseCurrency,
       locale: window.YAFFA.locale,
+      cachedCategoryData: null,
+      cachedMonthlyIncome: null,
     };
   },
+  mounted() {
+    this.loadBreakdownCache();
+  },
   computed: {
-    /** @returns {string[]} Sorted unique YYYY-MM month strings extracted from transactions */
+    /** @returns {string[]} Sorted unique YYYY-MM month strings extracted from transactions or cached data */
     months() {
+      // When using cached data, extract months from categoryData values
+      if (this.cachedCategoryData) {
+        const monthSet = new Set();
+        Object.values(this.cachedCategoryData).forEach((entry) => {
+          Object.keys(entry.values).forEach((m) => monthSet.add(m));
+        });
+        // Also include months from cachedMonthlyIncome
+        if (this.cachedMonthlyIncome) {
+          Object.keys(this.cachedMonthlyIncome).forEach((m) => monthSet.add(m));
+        }
+        return Array.from(monthSet).sort();
+      }
+
       const monthSet = new Set();
       this.transactions.forEach((tx) => {
         if (tx.date instanceof Date) {
@@ -377,10 +395,15 @@ export default {
     /**
      * Aggregate transaction items by category name and month.
      * Skips transfers and investment transactions.
+     * Uses cached data when available to avoid reprocessing.
      *
      * @returns {Object<string, {values: Object<string, number>, categoryIds: Set<number>, isIncome: boolean, rawName: string}>}
      */
     categoryData() {
+      if (this.cachedCategoryData) {
+        return this.cachedCategoryData;
+      }
+
       const data = {};
 
       this.transactions.forEach((tx) => {
@@ -515,6 +538,10 @@ export default {
 
     /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM */
     monthlyTotalIncome() {
+      if (this.cachedMonthlyIncome) {
+        return this.cachedMonthlyIncome;
+      }
+
       const totals = {};
       this.transactions.forEach((tx) => {
         if (!tx.date || !(tx.date instanceof Date)) return;
@@ -558,9 +585,82 @@ export default {
     },
   },
 
+  watch: {
+    transactions(newVal) {
+      if (newVal && newVal.length > 0) {
+        // Clear cached data so computed properties recalculate from fresh transactions
+        this.cachedCategoryData = null;
+        this.cachedMonthlyIncome = null;
+        // Save aggregated results to sessionStorage after Vue recalculates
+        this.$nextTick(() => {
+          this.saveBreakdownCache();
+        });
+      }
+    },
+  },
+
   methods: {
     __: function (string, replace) {
       return translator(string, replace);
+    },
+
+    saveBreakdownCache() {
+      try {
+        // Serialize categoryData: convert Sets to Arrays for JSON
+        const serializable = {};
+        const catData = this.categoryData;
+        Object.keys(catData).forEach((key) => {
+          serializable[key] = {
+            values: catData[key].values,
+            categoryIds: Array.from(catData[key].categoryIds),
+            isIncome: catData[key].isIncome,
+            rawName: catData[key].rawName,
+          };
+        });
+
+        sessionStorage.setItem('yaffa_breakdown_cache', JSON.stringify({
+          key: this.getParentCacheKey(),
+          categoryData: serializable,
+          monthlyIncome: this.monthlyTotalIncome,
+        }));
+      } catch {
+        // sessionStorage full or unavailable
+      }
+    },
+
+    loadBreakdownCache() {
+      try {
+        const cached = sessionStorage.getItem('yaffa_breakdown_cache');
+        if (!cached) return;
+        const { key, categoryData, monthlyIncome } = JSON.parse(cached);
+        if (key !== this.getParentCacheKey()) return;
+
+        // Restore categoryData with Sets
+        const restored = {};
+        Object.keys(categoryData).forEach((k) => {
+          restored[k] = {
+            values: categoryData[k].values,
+            categoryIds: new Set(categoryData[k].categoryIds),
+            isIncome: categoryData[k].isIncome,
+            rawName: categoryData[k].rawName,
+          };
+        });
+
+        this.cachedCategoryData = restored;
+        this.cachedMonthlyIncome = monthlyIncome;
+      } catch {
+        // ignore
+      }
+    },
+
+    getParentCacheKey() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return JSON.stringify({
+        date_from: urlParams.get('date_from'),
+        date_to: urlParams.get('date_to'),
+        accounts: urlParams.getAll('accounts[]'),
+        categories: urlParams.getAll('categories[]'),
+      });
     },
 
     /**
