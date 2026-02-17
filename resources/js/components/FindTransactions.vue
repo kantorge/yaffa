@@ -431,6 +431,8 @@
             date_to: urlParams.get('date_to'),
             accounts: urlParams.getAll('accounts[]'),
             categories: urlParams.getAll('categories[]'),
+            payees: urlParams.getAll('payees[]'),
+            tags: urlParams.getAll('tags[]'),
           });
           return key === currentKey;
         } catch (e) {
