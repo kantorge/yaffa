@@ -166,6 +166,12 @@
         </div>
 
         <div class="card-body">
+          <div v-if="returnTo" class="mb-3">
+            <a :href="returnTo" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-arrow-left me-1"></i>
+              {{ __('Back to Monthly breakdown') }}
+            </a>
+          </div>
           <div class="tab-content">
             <div
               class="tab-pane fade show active"
@@ -225,7 +231,6 @@
               <reporting-canvas-monthly-breakdown
                 :transactions="transactions"
                 :busy="busy"
-                @drill-down="onDrillDown"
               ></reporting-canvas-monthly-breakdown>
             </div>
           </div>
@@ -276,6 +281,8 @@
         selectedCategories: this.getUrlParams('categories'),
         selectedPayees: this.getUrlParams('payees'),
         selectedTags: this.getUrlParams('tags'),
+        returnTo: urlParams.get('return_to') || null,
+        initialTab: urlParams.get('tab') || null,
         presetsReady: {
           category: false,
           payee: false,
@@ -312,16 +319,6 @@
       onUpdateTag(event) {
         this.selectedTags = event;
         this.rebuildUrl();
-      },
-      onDrillDown(event) {
-        this.dateFrom = event.dateFrom;
-        this.dateTo = event.dateTo;
-        this.selectedCategories = event.categoryIds.map(String);
-        this.selectedAccounts = [];
-        this.selectedPayees = [];
-        this.selectedTags = [];
-        this.rebuildUrl();
-        this.getTransactions();
       },
       rebuildUrl() {
         let params = [];
@@ -487,6 +484,16 @@
       // Delete transaction icon functionality
       dataTableHelpers.initializeAjaxDeleteButton(this.$refs.dataTable);
       dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
+
+      // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
+      if (this.initialTab) {
+        this.$nextTick(() => {
+          const tabButton = document.getElementById('nav-' + this.initialTab);
+          if (tabButton) {
+            tabButton.click();
+          }
+        });
+      }
 
       this.ready = true;
     },

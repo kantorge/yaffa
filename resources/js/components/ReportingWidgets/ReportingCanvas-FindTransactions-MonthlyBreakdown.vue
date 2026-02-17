@@ -60,9 +60,8 @@
               >
                 <a
                   v-if="(row.values[m] || 0) !== 0"
-                  href="#"
+                  :href="drillDownUrl(m, row.categoryIds)"
                   class="cell-link"
-                  @click.prevent="emitDrillDown(m, row.categoryIds)"
                 >
                   {{ formatCell(row.values[m] || 0, monthlyTotalExpenses[m]) }}
                 </a>
@@ -88,9 +87,8 @@
               >
                 <a
                   v-if="(section.subtotals[m] || 0) !== 0"
-                  href="#"
+                  :href="drillDownUrl(m, section.allCategoryIds)"
                   class="cell-link"
-                  @click.prevent="emitDrillDown(m, section.allCategoryIds)"
                 >
                   {{ formatCell(section.subtotals[m] || 0, monthlyTotalExpenses[m]) }}
                 </a>
@@ -345,7 +343,6 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
 
 export default {
   name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
-  emits: ['drill-down'],
   props: {
     transactions: {
       type: Array,
@@ -640,20 +637,27 @@ export default {
     },
 
     /**
-     * Emit a drill-down event with date range and category IDs for the given month.
-     * The parent component handles URL update and re-fetch.
+     * Build a drill-down URL filtered by month and categories.
+     * Includes tab=transaction-list to auto-open that tab, and return_to
+     * with the current page URL so the user can navigate back.
      *
      * @param {string} month - Month in YYYY-MM format
      * @param {number[]} categoryIds - Category IDs to filter by
+     * @returns {string} Full URL with query parameters
      */
-    emitDrillDown(month, categoryIds) {
+    drillDownUrl(month, categoryIds) {
       const [year, mon] = month.split('-').map(Number);
       const lastDay = new Date(year, mon, 0).getDate();
       const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
       const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-      const uniqueIds = [...new Set(categoryIds)];
 
-      this.$emit('drill-down', { dateFrom, dateTo, categoryIds: uniqueIds });
+      const params = [`date_from=${dateFrom}`, `date_to=${dateTo}`];
+      const uniqueIds = [...new Set(categoryIds)];
+      uniqueIds.forEach((id) => params.push(`categories[]=${id}`));
+      params.push('tab=transaction-list');
+      params.push('return_to=' + encodeURIComponent(window.location.href));
+
+      return `/reports/transactions?${params.join('&')}`;
     },
 
     toFormattedCurrency,
