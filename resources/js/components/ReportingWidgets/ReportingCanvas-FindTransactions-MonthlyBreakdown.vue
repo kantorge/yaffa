@@ -60,8 +60,9 @@
               >
                 <a
                   v-if="(row.values[m] || 0) !== 0"
-                  :href="drillDownUrl(m, row.categoryIds)"
+                  href="#"
                   class="cell-link"
+                  @click.prevent="emitDrillDown(m, row.categoryIds)"
                 >
                   {{ formatCell(row.values[m] || 0, monthlyTotalExpenses[m]) }}
                 </a>
@@ -87,8 +88,9 @@
               >
                 <a
                   v-if="(section.subtotals[m] || 0) !== 0"
-                  :href="drillDownUrl(m, section.allCategoryIds)"
+                  href="#"
                   class="cell-link"
+                  @click.prevent="emitDrillDown(m, section.allCategoryIds)"
                 >
                   {{ formatCell(section.subtotals[m] || 0, monthlyTotalExpenses[m]) }}
                 </a>
@@ -296,8 +298,54 @@ function buildCategoryKeyMap() {
   return map;
 }
 
+/**
+ * Process a list of category names into sorted rows with totals, subtotals, and statistics.
+ *
+ * @param {string[]} categoryNames - Category names to process
+ * @param {Object} catData - Category data map from categoryData computed
+ * @param {string[]} months - Sorted month strings
+ * @param {number} monthCount - Number of months (for average calculation)
+ * @returns {{rows: Array, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}}
+ */
+function processCategoryGroup(categoryNames, catData, months, monthCount) {
+  const rows = categoryNames.map((catName) => {
+    const entry = catData[catName];
+    const values = entry.values;
+    const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
+    const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
+    const nonZeroCount = nonZeroValues.length;
+    const avg = nonZeroCount > 0 ? total / monthCount : 0;
+    const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
+    const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
+
+    return {
+      name: catName,
+      values,
+      total: Math.round(total * 100) / 100,
+      avg: Math.round(avg * 100) / 100,
+      min,
+      max,
+      nonZeroCount,
+      categoryIds: Array.from(entry.categoryIds),
+    };
+  });
+
+  rows.sort((a, b) => b.total - a.total);
+
+  const subtotals = {};
+  months.forEach((m) => {
+    subtotals[m] = rows.reduce((sum, r) => sum + (r.values[m] || 0), 0);
+  });
+  const subtotalSum = Math.round(rows.reduce((sum, r) => sum + r.total, 0) * 100) / 100;
+  const subtotalAvg = Math.round((subtotalSum / monthCount) * 100) / 100;
+  const allCategoryIds = rows.flatMap((r) => r.categoryIds);
+
+  return { rows, subtotals, subtotalSum, subtotalAvg, allCategoryIds };
+}
+
 export default {
   name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
+  emits: ['drill-down'],
   props: {
     transactions: {
       type: Array,
@@ -423,105 +471,32 @@ export default {
 
       // Build section objects
       const sections = SECTION_DEFINITIONS.map((def, si) => {
-        const rows = sectionCategories[si].map((catName) => {
-          const entry = catData[catName];
-          const values = entry.values;
-          const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-          const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
-          const nonZeroCount = nonZeroValues.length;
-          const avg = nonZeroCount > 0 ? total / n : 0;
-          const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
-          const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
-
-          return {
-            name: catName,
-            values,
-            total: Math.round(total * 100) / 100,
-            avg: Math.round(avg * 100) / 100,
-            min,
-            max,
-            nonZeroCount,
-            categoryIds: Array.from(entry.categoryIds),
-          };
-        });
-
-        // Sort by total descending
-        rows.sort((a, b) => b.total - a.total);
-
-        // Subtotals
-        const subtotals = {};
-        months.forEach((m) => {
-          subtotals[m] = rows.reduce((sum, r) => sum + (r.values[m] || 0), 0);
-        });
-        const subtotalSum = Math.round(rows.reduce((sum, r) => sum + r.total, 0) * 100) / 100;
-        const subtotalAvg = Math.round((subtotalSum / n) * 100) / 100;
-
-        // All category IDs in this section
-        const allCategoryIds = rows.flatMap((r) => r.categoryIds);
-
+        const group = processCategoryGroup(sectionCategories[si], catData, months, n);
         return {
           title: def.titleKey,
           cssClass: def.cssClass,
-          rows,
-          subtotals,
-          subtotalSum,
-          subtotalAvg,
-          allCategoryIds,
+          ...group,
         };
       });
 
       // Add "Other" section if there are unmatched categories
       if (otherCategories.length > 0) {
-        const rows = otherCategories.map((catName) => {
-          const entry = catData[catName];
-          const values = entry.values;
-          const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-          const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
-          const nonZeroCount = nonZeroValues.length;
-          const avg = nonZeroCount > 0 ? total / n : 0;
-          const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
-          const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
-
-          return {
-            name: catName,
-            values,
-            total: Math.round(total * 100) / 100,
-            avg: Math.round(avg * 100) / 100,
-            min,
-            max,
-            nonZeroCount,
-            categoryIds: Array.from(entry.categoryIds),
-          };
-        });
-
-        rows.sort((a, b) => b.total - a.total);
-
-        const subtotals = {};
-        months.forEach((m) => {
-          subtotals[m] = rows.reduce((sum, r) => sum + (r.values[m] || 0), 0);
-        });
-        const subtotalSum = Math.round(rows.reduce((sum, r) => sum + r.total, 0) * 100) / 100;
-        const subtotalAvg = Math.round((subtotalSum / n) * 100) / 100;
-        const allCategoryIds = rows.flatMap((r) => r.categoryIds);
-
+        const group = processCategoryGroup(otherCategories, catData, months, n);
         sections.push({
           title: 'Other expenses',
           cssClass: 's-other',
-          rows,
-          subtotals,
-          subtotalSum,
-          subtotalAvg,
-          allCategoryIds,
+          ...group,
         });
       }
 
       return sections;
     },
 
-    /** @returns {Object<string, number>} Monthly total expense amounts keyed by YYYY-MM */
+    /** @returns {Object<string, number>} Monthly total expense amounts keyed by YYYY-MM (excludes Income) */
     monthlyTotalExpenses() {
       const totals = {};
       this.computedSections.forEach((section) => {
+        if (section.title === 'Income') return;
         this.months.forEach((m) => {
           if (!totals[m]) totals[m] = 0;
           totals[m] += section.subtotals[m] || 0;
@@ -531,7 +506,9 @@ export default {
     },
 
     totalExpensesSum() {
-      return this.computedSections.reduce((sum, s) => sum + s.subtotalSum, 0);
+      return this.computedSections
+        .filter((s) => s.title !== 'Income')
+        .reduce((sum, s) => sum + s.subtotalSum, 0);
     },
 
     totalExpensesAvg() {
@@ -662,22 +639,20 @@ export default {
     },
 
     /**
-     * Build a URL to the transactions report filtered by month and category IDs.
+     * Emit a drill-down event with date range and category IDs for the given month.
+     * The parent component handles URL update and re-fetch.
+     *
      * @param {string} month - Month in YYYY-MM format
      * @param {number[]} categoryIds - Category IDs to filter by
-     * @returns {string} URL with query parameters
      */
-    drillDownUrl(month, categoryIds) {
+    emitDrillDown(month, categoryIds) {
       const [year, mon] = month.split('-').map(Number);
       const lastDay = new Date(year, mon, 0).getDate();
       const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
       const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-      const params = [`date_from=${dateFrom}`, `date_to=${dateTo}`];
       const uniqueIds = [...new Set(categoryIds)];
-      uniqueIds.forEach((id) => params.push(`categories[]=${id}`));
 
-      return `/reports/transactions?${params.join('&')}`;
+      this.$emit('drill-down', { dateFrom, dateTo, categoryIds: uniqueIds });
     },
 
     toFormattedCurrency,

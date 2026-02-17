@@ -225,6 +225,7 @@
               <reporting-canvas-monthly-breakdown
                 :transactions="transactions"
                 :busy="busy"
+                @drill-down="onDrillDown"
               ></reporting-canvas-monthly-breakdown>
             </div>
           </div>
@@ -311,6 +312,16 @@
       onUpdateTag(event) {
         this.selectedTags = event;
         this.rebuildUrl();
+      },
+      onDrillDown(event) {
+        this.dateFrom = event.dateFrom;
+        this.dateTo = event.dateTo;
+        this.selectedCategories = event.categoryIds.map(String);
+        this.selectedAccounts = [];
+        this.selectedPayees = [];
+        this.selectedTags = [];
+        this.rebuildUrl();
+        this.getTransactions();
       },
       rebuildUrl() {
         let params = [];
