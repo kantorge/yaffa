@@ -70,7 +70,7 @@
     "Are you sure you want to discard any changes?": "Biztosan elveti a módosításokat?",
     "Are you sure you want to merge these categories?": "Biztosan egyesíteni szeretné ezeket a kategóriákat?",
     "Are you sure you want to merge these payees?": "Biztosan egyesíteni szeretné ezeket a kedvezményezetteket?",
-    "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Biztosan ezt a pénznemet szeretnéd alapértelmezettként beállítani?\\n\\nBár ez a művelet visszafordítható, elindít egy folyamatot, amelynek befejezése eltarthat egy ideig.",
+    "Are you sure you want to set this currency as the default one?": "Biztosan ezt a pénznemet szeretnéd alapértelmezettként beállítani?\\n\\nBár ez a művelet visszafordítható, elindít egy folyamatot, amelynek befejezése eltarthat egy ideig.",
     "Are you sure, you want to change the transaction type? Some data might get lost.": "Biztos benne, hogy módosítani szeretné a tranzakció típusát? Előfordulhat, hogy egyes adatok elvesznek.",
     "Assets": "Eszközök",
     "Assign remaining amount to this item": "Fennmaradó összeg hozzárendelése",
