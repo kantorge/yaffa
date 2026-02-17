@@ -464,7 +464,7 @@
       // When all preselected filters are ready, get the transactions
       ready: function (newReady) {
         if (newReady) {
-          if (this.returnTo && this.loadFromCache()) {
+          if (this.initialTab && this.loadFromCache()) {
             return;
           }
           this.getTransactions();
