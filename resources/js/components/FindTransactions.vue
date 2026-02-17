@@ -416,7 +416,10 @@
             },
           })
           .then((response) => {
-            this.saveToCache(response.data.data);
+            // Only cache when this is the original query, not a drill-down
+            if (!this.returnTo) {
+              this.saveToCache(response.data.data);
+            }
             this.transactions = response.data.data.map(processTransaction);
           })
           .then(() => {
