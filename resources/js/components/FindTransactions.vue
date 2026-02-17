@@ -285,6 +285,7 @@
         returnTo: urlParams.get('return_to') || null,
         initialTab: urlParams.get('tab') || null,
         cachedDataPending: false,
+        skippedTransactionLoad: false,
         presetsReady: {
           category: false,
           payee: false,
@@ -500,6 +501,7 @@
           // When returning to monthly-breakdown, check if the breakdown component
           // has its own lightweight cache — skip heavy transaction cache parsing
           if (this.initialTab === 'monthly-breakdown' && this.hasBreakdownCache()) {
+            this.skippedTransactionLoad = true;
             return;
           }
           if (this.initialTab && this.loadFromCache()) {
@@ -572,6 +574,18 @@
           this.populateDataTable();
         });
       }
+
+      // Lazily load transactions when switching away from monthly-breakdown
+      // (covers the case where breakdown cache allowed skipping transaction load)
+      const otherTabs = document.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
+      otherTabs.forEach((tab) => {
+        tab.addEventListener('shown.coreui.tab', () => {
+          if (this.skippedTransactionLoad && this.transactions.length === 0) {
+            this.skippedTransactionLoad = false;
+            this.getTransactions();
+          }
+        });
+      });
 
       // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
       if (this.initialTab) {
