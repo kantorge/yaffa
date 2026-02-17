@@ -417,6 +417,25 @@
         }
       },
 
+      hasBreakdownCache() {
+        try {
+          const cached = sessionStorage.getItem('yaffa_breakdown_cache');
+          if (!cached) return false;
+          const { key } = JSON.parse(cached);
+          // Breakdown cache uses URL params as key (same as getParentCacheKey in MonthlyBreakdown)
+          const urlParams = new URLSearchParams(window.location.search);
+          const currentKey = JSON.stringify({
+            date_from: urlParams.get('date_from'),
+            date_to: urlParams.get('date_to'),
+            accounts: urlParams.getAll('accounts[]'),
+            categories: urlParams.getAll('categories[]'),
+          });
+          return key === currentKey;
+        } catch {
+          return false;
+        }
+      },
+
       getTransactions() {
         this.busy = true;
 
@@ -483,6 +502,11 @@
       // When all preselected filters are ready, get the transactions
       ready: function (newReady) {
         if (newReady) {
+          // When returning to monthly-breakdown, check if the breakdown component
+          // has its own lightweight cache — skip heavy transaction cache parsing
+          if (this.initialTab === 'monthly-breakdown' && this.hasBreakdownCache()) {
+            return;
+          }
           if (this.initialTab && this.loadFromCache()) {
             return;
           }
