@@ -62,7 +62,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.min, row.max, row.nonZeroCount)"
+                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.nonZeroCount)"
                 class="text-end"
               >
                 <a
@@ -185,10 +185,6 @@
 <script>
 import { __ as translator, toFormattedCurrency, buildBreakdownCacheKey } from '../../helpers';
 
-/** Intensity thresholds for deviation highlighting bands (0–1 scale) */
-const INTENSITY_HIGH_THRESHOLD = 0.66;
-const INTENSITY_MEDIUM_THRESHOLD = 0.33;
-
 /** Rotating color palette for section headers */
 const SECTION_CSS_CLASSES = [
   's-section-0', 's-section-1', 's-section-2', 's-section-3',
@@ -209,12 +205,9 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
     const entry = catData[catName];
     const values = entry.values;
     const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-    const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
-    const nonZeroCount = nonZeroValues.length;
+    const nonZeroCount = months.map((m) => values[m] || 0).filter((v) => v > 0).length;
     const avg = nonZeroCount > 0 ? total / monthCount : 0;
     const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
-    const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
-    const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
 
     return {
       name: catName,
@@ -223,8 +216,6 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
       total: Math.round(total * 100) / 100,
       avg: Math.round(avg * 100) / 100,
       nonZeroAvg,
-      min,
-      max,
       nonZeroCount,
       categoryIds: Array.from(entry.categoryIds),
     };
@@ -604,33 +595,28 @@ export default {
     },
 
     /**
-     * Return a CSS class for deviation highlighting based on where the value
-     * falls relative to the category's min, avg, and max across months.
-     * Color intensity scales proportionally within the [min, max] range.
+     * Return a CSS class for deviation highlighting based on percentage
+     * deviation from the category's average across non-zero months.
      * Requires at least 3 non-zero months to activate.
      *
      * @param {number} value - The cell amount
-     * @param {number} avg - Category average across months
-     * @param {number} min - Minimum non-zero value across months
-     * @param {number} max - Maximum non-zero value across months
+     * @param {number} avg - Category average across non-zero months
      * @param {number} nonZeroCount - Number of months with non-zero values
      * @returns {string} CSS class name or empty string
      */
-    deviationClass(value, avg, min, max, nonZeroCount) {
-      if (nonZeroCount < 3 || value === 0 || avg === 0 || min === max) return '';
+    deviationClass(value, avg, nonZeroCount) {
+      if (nonZeroCount < 3 || value === 0 || avg === 0) return '';
 
-      if (value > avg) {
-        const intensity = (max - avg) > 0 ? (value - avg) / (max - avg) : 0;
-        if (intensity > INTENSITY_HIGH_THRESHOLD) return 'bg-deviation-high-3';
-        if (intensity > INTENSITY_MEDIUM_THRESHOLD) return 'bg-deviation-high-2';
-        return 'bg-deviation-high-1';
-      }
-      if (value < avg) {
-        const intensity = (avg - min) > 0 ? (avg - value) / (avg - min) : 0;
-        if (intensity > INTENSITY_HIGH_THRESHOLD) return 'bg-deviation-low-3';
-        if (intensity > INTENSITY_MEDIUM_THRESHOLD) return 'bg-deviation-low-2';
-        return 'bg-deviation-low-1';
-      }
+      const deviation = (value - avg) / avg;
+
+      if (deviation > 0.15) return 'bg-deviation-high-3';
+      if (deviation > 0.10) return 'bg-deviation-high-2';
+      if (deviation > 0.05) return 'bg-deviation-high-1';
+
+      if (deviation < -0.15) return 'bg-deviation-low-3';
+      if (deviation < -0.10) return 'bg-deviation-low-2';
+      if (deviation < -0.05) return 'bg-deviation-low-1';
+
       return '';
     },
 
