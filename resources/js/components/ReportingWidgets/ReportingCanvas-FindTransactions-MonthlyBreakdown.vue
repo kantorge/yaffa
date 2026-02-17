@@ -51,7 +51,14 @@
 
             <!-- Category rows -->
             <tr v-for="row in section.rows" :key="row.name">
-              <td class="sticky-col category-name" :title="row.name">{{ row.name }}</td>
+              <td class="sticky-col category-name" :title="row.name">
+                <a
+                  v-if="row.categoryIds.length === 1"
+                  :href="'/categories/' + row.categoryIds[0] + '/edit'"
+                  class="category-link"
+                >{{ row.name }}</a>
+                <span v-else>{{ row.name }}</span>
+              </td>
               <td
                 v-for="m in months"
                 :key="m"
@@ -695,6 +702,14 @@ export default {
 .category-name {
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.category-link {
+  color: inherit;
+  text-decoration: none;
+}
+.category-link:hover {
+  text-decoration: underline;
 }
 
 .section-header td {
