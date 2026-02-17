@@ -70,7 +70,7 @@
     "Are you sure you want to discard any changes?": "Êtes-vous sûr de vouloir annuler toutes les modifications?",
     "Are you sure you want to merge these categories?": "Êtes-vous sûr de vouloir fusionner ces catégories?",
     "Are you sure you want to merge these payees?": "Êtes-vous sûr de vouloir fusionner ces bénéficiaires?",
-    "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Êtes-vous sûr de vouloir définir cette devise comme devise par défaut?\\n\\nBien que cette action soit réversible, elle lance un processus qui peut prendre un certain temps à se terminer.",
+    "Are you sure you want to set this currency as the default one?": "Êtes-vous sûr de vouloir définir cette devise comme devise par défaut?\\n\\nBien que cette action soit réversible, elle lance un processus qui peut prendre un certain temps à se terminer.",
     "Are you sure, you want to change the transaction type? Some data might get lost.": "Êtes-vous sûr de vouloir modifier le type de transaction? Des données pourraient être perdues.",
     "Assets": "Actifs",
     "Assign remaining amount to this item": "Attribuez le montant restant à cet article",

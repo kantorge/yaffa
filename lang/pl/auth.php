@@ -2,6 +2,6 @@
 
 return [
     "failed" => "Nieprawidłowe dane logowania.",
-    "password" => "password",
+    "password" => "Podane hasło jest nieprawidłowe.",
     "throttle" => "Wyczerpano limit prób"
 ];

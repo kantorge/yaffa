@@ -71,7 +71,7 @@
     "Are you sure you want to discard any changes?": "Czy na pewno chcesz odrzucić wszystkie zmiany?",
     "Are you sure you want to merge these categories?": "Czy na pewno chcesz połączyć te kategorie?",
     "Are you sure you want to merge these payees?": "Czy na pewno chcesz połączyć tych odbiorców?",
-    "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Czy na pewno chcesz ustawić tę walutę jako domyślną?",
+    "Are you sure you want to set this currency as the default one?": "Czy na pewno chcesz ustawić tę walutę jako domyślną?\\n\\nChoć czynność ta jest odwracalna, rozpoczyna ona proces, którego ukończenie może potrwać pewien czas.",
     "Are you sure, you want to change the transaction type? Some data might get lost.": "Czy na pewno chcesz zmienić typ transakcji? Niektóre dane mogą zostać utracone.",
     "Assets": "Aktywa",
     "Assign remaining amount to this item": "Przypisz pozostałą kwotę do tej pozycji",
