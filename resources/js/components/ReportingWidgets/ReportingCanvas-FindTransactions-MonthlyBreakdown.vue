@@ -376,12 +376,14 @@ export default {
         }
       });
 
-      // Sort parent groups by total descending
-      const sortedParents = Object.keys(groups).sort((a, b) => {
-        const totalA = groups[a].reduce((sum, c) => sum + months.reduce((s, m) => s + (catData[c].values[m] || 0), 0), 0);
-        const totalB = groups[b].reduce((sum, c) => sum + months.reduce((s, m) => s + (catData[c].values[m] || 0), 0), 0);
-        return totalB - totalA;
-      });
+      // Pre-calculate totals per parent group, then sort descending
+      const parentTotals = Object.fromEntries(
+        Object.keys(groups).map((parentName) => [
+          parentName,
+          groups[parentName].reduce((sum, c) => sum + months.reduce((s, m) => s + (catData[c].values[m] || 0), 0), 0),
+        ]),
+      );
+      const sortedParents = Object.keys(groups).sort((a, b) => parentTotals[b] - parentTotals[a]);
 
       // Build sections from parent groups
       const sections = [];
