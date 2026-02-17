@@ -569,8 +569,8 @@ export default {
               const { key } = JSON.parse(cached);
               if (key === currentKey) return;
             }
-          } catch {
-            // fall through to recalculate
+          } catch (e) {
+            console.warn('Failed to check breakdown cache key:', e);
           }
         }
         // Clear cached data so computed properties recalculate from fresh transactions
@@ -609,8 +609,8 @@ export default {
           key: this.getParentCacheKey(),
           categoryData: serializable,
         }));
-      } catch {
-        // sessionStorage full or unavailable
+      } catch (e) {
+        console.warn('Failed to save breakdown cache:', e);
       }
     },
 
@@ -633,8 +633,8 @@ export default {
         });
 
         this.cachedCategoryData = restored;
-      } catch {
-        // ignore
+      } catch (e) {
+        console.warn('Failed to load breakdown cache:', e);
       }
     },
 

@@ -386,7 +386,8 @@
           // Defer DataTable population — only needed if user switches to List tab
           this.cachedDataPending = true;
           return true;
-        } catch {
+        } catch (e) {
+          console.warn('Failed to load transactions from cache:', e);
           return false;
         }
       },
@@ -405,16 +406,16 @@
             key: this.getCacheKey(),
             data: data,
           }));
-        } catch {
-          // sessionStorage full or unavailable — ignore
+        } catch (e) {
+          console.warn('Failed to save transactions to cache:', e);
         }
       },
 
       clearTransactionCache() {
         try {
           sessionStorage.removeItem('yaffa_transactions_cache');
-        } catch {
-          // ignore
+        } catch (e) {
+          console.warn('Failed to clear transaction cache:', e);
         }
       },
 
@@ -432,7 +433,8 @@
             categories: urlParams.getAll('categories[]'),
           });
           return key === currentKey;
-        } catch {
+        } catch (e) {
+          console.warn('Failed to check breakdown cache:', e);
           return false;
         }
       },
