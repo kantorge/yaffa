@@ -420,7 +420,10 @@
       hasBreakdownCache() {
         try {
           const cached = sessionStorage.getItem('yaffa_breakdown_cache');
-          if (!cached) return false;
+          if (!cached) {
+            console.log('[hasBreakdownCache] No yaffa_breakdown_cache in sessionStorage');
+            return false;
+          }
           const { key } = JSON.parse(cached);
           // Breakdown cache uses URL params as key (same as getParentCacheKey in MonthlyBreakdown)
           const urlParams = new URLSearchParams(window.location.search);
@@ -430,8 +433,12 @@
             accounts: urlParams.getAll('accounts[]'),
             categories: urlParams.getAll('categories[]'),
           });
+          console.log('[hasBreakdownCache] cached key:', key);
+          console.log('[hasBreakdownCache] current key:', currentKey);
+          console.log('[hasBreakdownCache] match:', key === currentKey);
           return key === currentKey;
-        } catch {
+        } catch (e) {
+          console.log('[hasBreakdownCache] error:', e);
           return false;
         }
       },
@@ -504,12 +511,19 @@
         if (newReady) {
           // When returning to monthly-breakdown, check if the breakdown component
           // has its own lightweight cache — skip heavy transaction cache parsing
-          if (this.initialTab === 'monthly-breakdown' && this.hasBreakdownCache()) {
-            return;
+          if (this.initialTab === 'monthly-breakdown') {
+            const hasBdc = this.hasBreakdownCache();
+            console.log('[FindTransactions] initialTab=monthly-breakdown, hasBreakdownCache=', hasBdc);
+            if (hasBdc) {
+              console.log('[FindTransactions] Using breakdown cache, skipping transaction load');
+              return;
+            }
           }
           if (this.initialTab && this.loadFromCache()) {
+            console.log('[FindTransactions] Loaded from transaction cache');
             return;
           }
+          console.log('[FindTransactions] Fetching transactions from API');
           this.getTransactions();
         }
       },
