@@ -14,6 +14,8 @@ class CategoryRequest extends FormRequest
                 'min:' . self::DEFAULT_STRING_MIN_LENGTH,
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH,
                 Rule::unique('categories')->where(function ($query) {
+                    $query->where('user_id', $this->user()->id);
+
                     // If it's a parent category
                     if (empty($this->parent_id)) {
                         return $query->whereNull('parent_id');
@@ -28,7 +30,7 @@ class CategoryRequest extends FormRequest
             ],
             'parent_id' => [
                 'nullable',
-                'exists:categories,id',
+                Rule::exists('categories', 'id')->where('user_id', $this->user()->id),
             ],
             'default_aggregation' => [
                 'required',

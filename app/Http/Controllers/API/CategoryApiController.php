@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use App\Services\CategoryService;
 use Illuminate\Database\Eloquent\Builder;
@@ -165,6 +166,21 @@ class CategoryApiController extends Controller implements HasMiddleware
                 $category,
                 Response::HTTP_OK
             );
+    }
+
+    /**
+     * Store a newly created category in storage.
+     *
+     * @post('/api/assets/category')
+     * @middlewares('api', 'auth:sanctum')
+     */
+    public function store(CategoryRequest $request): JsonResponse
+    {
+        Gate::authorize('create', Category::class);
+
+        $category = $request->user()->categories()->create($request->validated());
+
+        return response()->json($category, Response::HTTP_CREATED);
     }
 
     public function updateActive(Category $category, $active): JsonResponse

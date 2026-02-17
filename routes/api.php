@@ -34,6 +34,7 @@ Route::delete('/assets/accountgroup/{accountGroup}', [AccountGroupApiController:
 
 Route::get('/assets/category', [CategoryApiController::class, 'getList']);
 Route::get('/assets/categories', [CategoryApiController::class, 'getFullList']);
+Route::post('/assets/category', [CategoryApiController::class, 'store'])->name('api.category.store');
 Route::put('/assets/category/{category}/active/{active}', [CategoryApiController::class, 'updateActive'])
     ->name('api.category.updateActive');
 Route::get('/assets/category/{category}', [CategoryApiController::class, 'getItem']);
