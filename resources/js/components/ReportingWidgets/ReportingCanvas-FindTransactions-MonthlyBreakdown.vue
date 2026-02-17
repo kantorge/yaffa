@@ -62,7 +62,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.nonZeroCount)"
+                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.nonZeroCount, section.isIncome)"
                 class="text-end"
               >
                 <a
@@ -601,25 +601,30 @@ export default {
     /**
      * Return a CSS class for deviation highlighting based on percentage
      * deviation from the category's average across non-zero months.
+     * For expenses: above average = red (bad), below = green (good).
+     * For income: above average = green (good), below = red (bad).
      * Requires at least 3 non-zero months to activate.
      *
      * @param {number} value - The cell amount
      * @param {number} avg - Category average across non-zero months
      * @param {number} nonZeroCount - Number of months with non-zero values
+     * @param {boolean} isIncome - Whether this is an income category
      * @returns {string} CSS class name or empty string
      */
-    deviationClass(value, avg, nonZeroCount) {
+    deviationClass(value, avg, nonZeroCount, isIncome) {
       if (nonZeroCount < 3 || value === 0 || avg === 0) return '';
 
       const deviation = (value - avg) / avg;
+      const above = isIncome ? 'low' : 'high';
+      const below = isIncome ? 'high' : 'low';
 
-      if (deviation > 0.15) return 'bg-deviation-high-3';
-      if (deviation > 0.10) return 'bg-deviation-high-2';
-      if (deviation > 0.05) return 'bg-deviation-high-1';
+      if (deviation > 0.15) return `bg-deviation-${above}-3`;
+      if (deviation > 0.10) return `bg-deviation-${above}-2`;
+      if (deviation > 0.05) return `bg-deviation-${above}-1`;
 
-      if (deviation < -0.15) return 'bg-deviation-low-3';
-      if (deviation < -0.10) return 'bg-deviation-low-2';
-      if (deviation < -0.05) return 'bg-deviation-low-1';
+      if (deviation < -0.15) return `bg-deviation-${below}-3`;
+      if (deviation < -0.10) return `bg-deviation-${below}-2`;
+      if (deviation < -0.05) return `bg-deviation-${below}-1`;
 
       return '';
     },
