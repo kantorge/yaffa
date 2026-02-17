@@ -363,6 +363,44 @@
         );
       },
 
+      getCacheKey() {
+        return JSON.stringify({
+          date_from: this.dateFrom,
+          date_to: this.dateTo,
+          accounts: this.selectedAccounts,
+          categories: this.selectedCategories,
+          payees: this.selectedPayees,
+          tags: this.selectedTags,
+        });
+      },
+
+      loadFromCache() {
+        try {
+          const cached = sessionStorage.getItem('yaffa_transactions_cache');
+          if (!cached) return false;
+          const { key, data } = JSON.parse(cached);
+          if (key !== this.getCacheKey()) return false;
+          this.transactions = data.map(processTransaction);
+          this.dataTable.clear();
+          this.dataTable.rows.add(this.transactions);
+          this.dataTable.draw();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+
+      saveToCache(data) {
+        try {
+          sessionStorage.setItem('yaffa_transactions_cache', JSON.stringify({
+            key: this.getCacheKey(),
+            data: data,
+          }));
+        } catch {
+          // sessionStorage full or unavailable — ignore
+        }
+      },
+
       getTransactions() {
         this.busy = true;
 
@@ -378,6 +416,7 @@
             },
           })
           .then((response) => {
+            this.saveToCache(response.data.data);
             this.transactions = response.data.data.map(processTransaction);
           })
           .then(() => {
@@ -425,6 +464,9 @@
       // When all preselected filters are ready, get the transactions
       ready: function (newReady) {
         if (newReady) {
+          if (this.returnTo && this.loadFromCache()) {
+            return;
+          }
           this.getTransactions();
         }
       },
