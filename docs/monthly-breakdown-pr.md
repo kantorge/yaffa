@@ -24,11 +24,13 @@ Users often want to see how their spending in each category changes month-to-mon
 - Total and average-per-month columns on the right
 
 ### Deviation Highlighting
-- Cells are color-coded when they deviate from the category's monthly average:
-  - **Red shades** (light to dark): 5%, 10%, 15% above average
-  - **Green shades** (light to dark): 5%, 10%, 15% below average
-- Only applies when there are at least 3 months of data for a category
-- Zero-value months are excluded from the average calculation
+- Cells are color-coded based on where the value falls relative to the category's min, average, and max across months:
+  - **Red shades** (light to dark): values above the non-zero average, intensity proportional to position between average and max
+  - **Green shades** (light to dark): values below the non-zero average, intensity proportional to position between min and average
+- Three intensity levels for each direction (light, medium, dark) at 33% and 66% thresholds
+- Only applies when there are at least 3 non-zero months of data for a category
+- Zero-value months are excluded from min/max/average calculation
+- If all non-zero values are identical (min == max), no highlighting is applied
 
 ### Percentage View
 - A toggle switch above the table switches between absolute amounts and percentages

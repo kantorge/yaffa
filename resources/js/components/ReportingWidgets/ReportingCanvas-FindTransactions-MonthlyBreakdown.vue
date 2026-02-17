@@ -55,7 +55,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.avg, row.min, row.max, row.nonZeroCount)"
+                :class="deviationClass(row.values[m] || 0, row.avgDeviation, row.min, row.max, row.nonZeroCount)"
                 class="text-end"
               >
                 <a
@@ -313,6 +313,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
     const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
     const nonZeroCount = nonZeroValues.length;
     const avg = nonZeroCount > 0 ? total / monthCount : 0;
+    const avgDeviation = nonZeroCount > 0 ? total / nonZeroCount : 0;
     const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
     const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
 
@@ -321,6 +322,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
       values,
       total: Math.round(total * 100) / 100,
       avg: Math.round(avg * 100) / 100,
+      avgDeviation,
       min,
       max,
       nonZeroCount,
@@ -364,7 +366,6 @@ export default {
       baseCurrency: window.YAFFA.baseCurrency,
       locale: window.YAFFA.locale,
       cachedCategoryData: null,
-      cachedMonthlyIncome: null,
     };
   },
   mounted() {
@@ -379,10 +380,6 @@ export default {
         Object.values(this.cachedCategoryData).forEach((entry) => {
           Object.keys(entry.values).forEach((m) => monthSet.add(m));
         });
-        // Also include months from cachedMonthlyIncome
-        if (this.cachedMonthlyIncome) {
-          Object.keys(this.cachedMonthlyIncome).forEach((m) => monthSet.add(m));
-        }
         return Array.from(monthSet).sort();
       }
 
@@ -540,23 +537,12 @@ export default {
       return Math.round((this.totalExpensesSum / n) * 100) / 100;
     },
 
-    /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM */
+    /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM, derived from Income section */
     monthlyTotalIncome() {
-      if (this.cachedMonthlyIncome) {
-        return this.cachedMonthlyIncome;
-      }
-
+      const incomeSection = this.computedSections.find((s) => s.title === 'Income');
       const totals = {};
-      this.transactions.forEach((tx) => {
-        if (!tx.date || !(tx.date instanceof Date)) return;
-        if (tx.transaction_type_id !== 2) return;
-        const month = tx.date.getFullYear() + '-' + String(tx.date.getMonth() + 1).padStart(2, '0');
-        if (!totals[month]) totals[month] = 0;
-        if (tx.transaction_items) {
-          tx.transaction_items.forEach((item) => {
-            totals[month] += Math.abs(item.amount_in_base || item.amount || 0);
-          });
-        }
+      this.months.forEach((m) => {
+        totals[m] = (incomeSection && incomeSection.subtotals[m]) || 0;
       });
       return totals;
     },
@@ -607,7 +593,6 @@ export default {
         }
         // Clear cached data so computed properties recalculate from fresh transactions
         this.cachedCategoryData = null;
-        this.cachedMonthlyIncome = null;
         // Save aggregated results to sessionStorage after Vue recalculates
         this.$nextTick(() => {
           this.saveBreakdownCache();
@@ -641,7 +626,6 @@ export default {
         sessionStorage.setItem('yaffa_breakdown_cache', JSON.stringify({
           key: this.getParentCacheKey(),
           categoryData: serializable,
-          monthlyIncome: this.monthlyTotalIncome,
         }));
       } catch {
         // sessionStorage full or unavailable
@@ -652,7 +636,7 @@ export default {
       try {
         const cached = sessionStorage.getItem('yaffa_breakdown_cache');
         if (!cached) return;
-        const { key, categoryData, monthlyIncome } = JSON.parse(cached);
+        const { key, categoryData } = JSON.parse(cached);
         if (key !== this.getParentCacheKey()) return;
 
         // Restore categoryData with Sets
@@ -667,7 +651,6 @@ export default {
         });
 
         this.cachedCategoryData = restored;
-        this.cachedMonthlyIncome = monthlyIncome;
       } catch {
         // ignore
       }
