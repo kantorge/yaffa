@@ -182,101 +182,11 @@ import { __ as translator, toFormattedCurrency } from '../../helpers';
 const INTENSITY_HIGH_THRESHOLD = 0.66;
 const INTENSITY_MEDIUM_THRESHOLD = 0.33;
 
-/**
- * Section definitions mapping default_assets.categories translation keys
- * to visual groups. Each section has a title (translation key), a CSS class
- * for colored headers, and a list of category keys from default_assets.php.
- *
- * @type {Array<{titleKey: string, cssClass: string, categoryKeys: string[]}>}
- */
-const SECTION_DEFINITIONS = [
-  {
-    titleKey: 'Income',
-    cssClass: 's-income',
-    categoryKeys: [
-      'salary', 'main_job', 'bonuses', 'side_job',
-      'freelance_work', 'rental_income', 'other_income',
-      'government_benefits', 'social_assistance', 'child_allowance',
-    ],
-  },
-  {
-    titleKey: 'Daily living expenses',
-    cssClass: 's-living',
-    categoryKeys: [
-      'food', 'dining_out', 'groceries', 'clothing', 'personal_care',
-      'medications', 'healthcare', 'doctor_visits', 'vision_and_dental_care',
-      'fuel', 'parking', 'transportation', 'public_transport',
-      'vehicle_maintenance', 'car_payments',
-      'subscriptions', 'entertainment', 'entertainment_and_leisure',
-      'events', 'hobbies_and_activities', 'vacation_and_travel',
-      'household_products', 'home_improvements',
-      'maintenance_and_repairs', 'repairs_maintenance',
-      'pet_care', 'gifts_and_donations', 'books_and_supplies',
-      'miscellaneous', 'credit_card',
-      'school_and_university_fees', 'education_and_development',
-      'courses_and_training',
-    ],
-  },
-  {
-    titleKey: 'Fixed obligations',
-    cssClass: 's-obligations',
-    categoryKeys: [
-      'rent_and_mortgage', 'rent', 'housing',
-      'utilities', 'electricity', 'water', 'water_sewer',
-      'gas_and_heating', 'internet_cable',
-      'insurance', 'car_insurance', 'home_insurance',
-      'health_insurance', 'life_insurance', 'disability_insurance',
-      'loans', 'personal_loans', 'student_loans',
-      'debt_repayment', 'property_taxes', 'legal_fees', 'fines',
-    ],
-  },
-  {
-    titleKey: 'Savings and investments',
-    cssClass: 's-savings',
-    categoryKeys: [
-      'mortgage_overpayments',
-    ],
-  },
+/** Rotating color palette for section headers */
+const SECTION_CSS_CLASSES = [
+  's-section-0', 's-section-1', 's-section-2', 's-section-3',
+  's-section-4', 's-section-5', 's-section-6', 's-section-7',
 ];
-
-/**
- * Build a lookup map from default_assets.categories keys to their translated names.
- * Uses window.YAFFA.translations to resolve translation keys, enabling locale-aware
- * category matching regardless of the user's language.
- *
- * @returns {Object<string, {fullKey: string, translated: string|null, matchNames: string[]}>}
- */
-function buildCategoryKeyMap() {
-  const translations = window.YAFFA?.translations || {};
-  const map = {};
-
-  // The default_assets.php keys are like "default_assets.categories.food" -> "Food"
-  // But in the JSON translations, they might be stored differently.
-  // The category names in the DB are stored as the translated value directly,
-  // or as plain user-defined names. We need to match against both.
-
-  // Derive default keys from SECTION_DEFINITIONS to avoid maintaining a separate list
-  const defaultKeys = SECTION_DEFINITIONS.flatMap((s) => s.categoryKeys);
-
-  for (const key of defaultKeys) {
-    // The DB stores the name as the full translation key or translated value
-    const fullKey = `default_assets.categories.${key}`;
-    const translated = translations[fullKey] || null;
-
-    // Store both the full key and translated name as possible matches
-    map[key] = {
-      fullKey,
-      translated,
-      // Build list of names that should match this key
-      matchNames: [fullKey],
-    };
-    if (translated) {
-      map[key].matchNames.push(translated);
-    }
-  }
-
-  return map;
-}
 
 /**
  * Process a list of category names into sorted rows with totals, subtotals, and statistics.
@@ -406,6 +316,8 @@ export default {
             const catName = item.category.full_name || item.category.name || 'Uncategorized';
             const catId = item.category.id;
             const amount = Math.abs(item.amount_in_base || item.amount || 0);
+            const parentName = item.category.parent?.name || null;
+            const parentId = item.category.parent?.id || null;
 
             if (!data[catName]) {
               data[catName] = {
@@ -413,6 +325,8 @@ export default {
                 categoryIds: new Set(),
                 isIncome: isDeposit,
                 rawName: item.category.name || catName,
+                parentName,
+                parentId,
               };
             }
 
@@ -429,62 +343,52 @@ export default {
     },
 
     /**
-     * Match categories to predefined sections using translation key lookups,
-     * compute per-row totals/averages, section subtotals, and collect category IDs.
-     * Unmatched categories are grouped into an "Other expenses" section.
+     * Group categories into sections based on their parent category.
+     * Each unique parent category becomes its own section, sorted by total descending.
+     * Categories without a parent go into an "Other expenses" section.
      *
      * @returns {Array<{title: string, cssClass: string, rows: Array, subtotals: Object, subtotalSum: number, subtotalAvg: number, allCategoryIds: number[]}>}
      */
     computedSections() {
-      const catKeyMap = buildCategoryKeyMap();
       const catData = this.categoryData;
       const months = this.months;
       const n = months.length || 1;
 
-      // Build reverse map: categoryName (lowercase) -> sectionIndex
-      const nameToSection = {};
-      SECTION_DEFINITIONS.forEach((section, si) => {
-        section.categoryKeys.forEach((key) => {
-          const info = catKeyMap[key];
-          if (info) {
-            info.matchNames.forEach((name) => {
-              nameToSection[name.toLowerCase()] = si;
-            });
-          }
-        });
-      });
-
-      // Assign each category to a section
-      const sectionCategories = SECTION_DEFINITIONS.map(() => []);
-      const otherCategories = [];
+      // Group categories by parent name
+      const groups = {};
+      const noParent = [];
 
       Object.keys(catData).forEach((catName) => {
         const entry = catData[catName];
-        const lookupName = (entry.rawName || catName).toLowerCase();
-        const lookupFullName = catName.toLowerCase();
-
-        let sectionIdx = nameToSection[lookupName] ?? nameToSection[lookupFullName] ?? null;
-
-        if (sectionIdx !== null) {
-          sectionCategories[sectionIdx].push(catName);
+        if (entry.parentName) {
+          if (!groups[entry.parentName]) groups[entry.parentName] = [];
+          groups[entry.parentName].push(catName);
         } else {
-          otherCategories.push(catName);
+          noParent.push(catName);
         }
       });
 
-      // Build section objects
-      const sections = SECTION_DEFINITIONS.map((def, si) => {
-        const group = processCategoryGroup(sectionCategories[si], catData, months, n);
-        return {
-          title: def.titleKey,
-          cssClass: def.cssClass,
-          ...group,
-        };
+      // Sort parent groups by total descending
+      const sortedParents = Object.keys(groups).sort((a, b) => {
+        const totalA = groups[a].reduce((sum, c) => sum + months.reduce((s, m) => s + (catData[c].values[m] || 0), 0), 0);
+        const totalB = groups[b].reduce((sum, c) => sum + months.reduce((s, m) => s + (catData[c].values[m] || 0), 0), 0);
+        return totalB - totalA;
       });
 
-      // Add "Other" section if there are unmatched categories
-      if (otherCategories.length > 0) {
-        const group = processCategoryGroup(otherCategories, catData, months, n);
+      // Build sections from parent groups
+      const sections = [];
+      sortedParents.forEach((parentName, idx) => {
+        const group = processCategoryGroup(groups[parentName], catData, months, n);
+        sections.push({
+          title: parentName,
+          cssClass: SECTION_CSS_CLASSES[idx % SECTION_CSS_CLASSES.length],
+          ...group,
+        });
+      });
+
+      // Add "Other" section for parentless categories
+      if (noParent.length > 0) {
+        const group = processCategoryGroup(noParent, catData, months, n);
         sections.push({
           title: 'Other expenses',
           cssClass: 's-other',
@@ -495,23 +399,23 @@ export default {
       return sections;
     },
 
-    /** @returns {Object<string, number>} Monthly total expense amounts keyed by YYYY-MM (excludes Income) */
+    /** @returns {Object<string, number>} Monthly total expense amounts keyed by YYYY-MM */
     monthlyTotalExpenses() {
+      const catData = this.categoryData;
       const totals = {};
-      this.computedSections.forEach((section) => {
-        if (section.title === 'Income') return;
-        this.months.forEach((m) => {
-          if (!totals[m]) totals[m] = 0;
-          totals[m] += section.subtotals[m] || 0;
-        });
+      this.months.forEach((m) => { totals[m] = 0; });
+      Object.values(catData).forEach((entry) => {
+        if (!entry.isIncome) {
+          this.months.forEach((m) => {
+            totals[m] += entry.values[m] || 0;
+          });
+        }
       });
       return totals;
     },
 
     totalExpensesSum() {
-      return this.computedSections
-        .filter((s) => s.title !== 'Income')
-        .reduce((sum, s) => sum + s.subtotalSum, 0);
+      return Object.values(this.monthlyTotalExpenses).reduce((a, b) => a + b, 0);
     },
 
     totalExpensesAvg() {
@@ -519,12 +423,17 @@ export default {
       return Math.round((this.totalExpensesSum / n) * 100) / 100;
     },
 
-    /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM, derived from Income section */
+    /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM */
     monthlyTotalIncome() {
-      const incomeSection = this.computedSections.find((s) => s.title === 'Income');
+      const catData = this.categoryData;
       const totals = {};
-      this.months.forEach((m) => {
-        totals[m] = (incomeSection && incomeSection.subtotals[m]) || 0;
+      this.months.forEach((m) => { totals[m] = 0; });
+      Object.values(catData).forEach((entry) => {
+        if (entry.isIncome) {
+          this.months.forEach((m) => {
+            totals[m] += entry.values[m] || 0;
+          });
+        }
       });
       return totals;
     },
@@ -602,6 +511,8 @@ export default {
             categoryIds: Array.from(catData[key].categoryIds),
             isIncome: catData[key].isIncome,
             rawName: catData[key].rawName,
+            parentName: catData[key].parentName,
+            parentId: catData[key].parentId,
           };
         });
 
@@ -629,6 +540,8 @@ export default {
             categoryIds: new Set(categoryData[k].categoryIds),
             isIncome: categoryData[k].isIncome,
             rawName: categoryData[k].rawName,
+            parentName: categoryData[k].parentName,
+            parentId: categoryData[k].parentId,
           };
         });
 
@@ -790,10 +703,14 @@ export default {
   border-radius: 2px;
 }
 
-.s-living td { background: #e3f2fd; color: #1565c0; }
-.s-obligations td { background: #fff3e0; color: #e65100; }
-.s-savings td { background: #e8f5e9; color: #2e7d32; }
-.s-income td { background: #e0f2f1; color: #00695c; }
+.s-section-0 td { background: #e3f2fd; color: #1565c0; }
+.s-section-1 td { background: #fff3e0; color: #e65100; }
+.s-section-2 td { background: #e8f5e9; color: #2e7d32; }
+.s-section-3 td { background: #e0f2f1; color: #00695c; }
+.s-section-4 td { background: #f3e5f5; color: #6a1b9a; }
+.s-section-5 td { background: #fce4ec; color: #c2185b; }
+.s-section-6 td { background: #fff8e1; color: #f57f17; }
+.s-section-7 td { background: #e0f7fa; color: #00838f; }
 .s-other td { background: #f5f5f5; color: #616161; }
 .s-summary td { background: #e0e0e0; color: #212121; }
 

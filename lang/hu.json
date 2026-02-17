@@ -1,5 +1,8 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   " < No default category > ": " < Nincs alapértelmezett kategória >",
   " < No price provider > ": " < Nincs adatszolgáltató >",
   "(No subject)": "(Nincs tárgy)",
@@ -75,7 +78,10 @@
   "Are you sure you want to discard any changes?": "Biztosan elveti a módosításokat?",
   "Are you sure you want to merge these categories?": "Biztosan egyesíteni szeretné ezeket a kategóriákat?",
   "Are you sure you want to merge these payees?": "Biztosan egyesíteni szeretné ezeket a kedvezményezetteket?",
+<<<<<<< HEAD
   "Are you sure you want to set this currency as the default one?": "Biztosan ezt a pénznemet szeretnéd alapértelmezettként beállítani?\\n\\nBár ez a művelet visszafordítható, elindít egy folyamatot, amelynek befejezése eltarthat egy ideig.",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Biztosan ezt a pénznemet szeretnéd alapértelmezettként beállítani?\\n\\nBár ez a művelet visszafordítható, elindít egy folyamatot, amelynek befejezése eltarthat egy ideig.",
   "Are you sure, you want to change the transaction type? Some data might get lost.": "Biztos benne, hogy módosítani szeretné a tranzakció típusát? Előfordulhat, hogy egyes adatok elvesznek.",
   "Assets": "Eszközök",
@@ -84,6 +90,10 @@
   "Automatic update": "Automatikus frissítés",
   "Automation": "Automatizálás",
   "Avg/month": "Átl./hó",
+<<<<<<< HEAD
+=======
+  "Back to Monthly breakdown": "Vissza a havi bontáshoz",
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Balance": "Egyenleg",
   "Base currency": "Elsődleges pénznem",
   "Base currency cannot be deleted": "Az elsődleges pénznem nem törölhető",
@@ -164,7 +174,10 @@
   "Customize": "Testreszabás",
   "Customize YAFFA": "YAFFA testreszabása",
   "Daily": "Naponta",
+<<<<<<< HEAD
   "Daily living expenses": "Napi megélhetési költségek",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Dashboard": "Áttekintés",
   "Database error:": "Adatbázis hiba:",
   "Date": "Dátum",
@@ -238,7 +251,10 @@
   "Find transactions": "Tranzakció keresése",
   "First available data": "Első elérhető adat",
   "First transaction": "Első tranzakció",
+<<<<<<< HEAD
   "Fixed obligations": "Fix kötelezettségek",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Forgot Your Password?": "Elfelejtetted a jelszavad?",
   "Frequency": "Gyakoriság",
   "From": "Tól",
@@ -474,7 +490,10 @@
   "sandbox.reset.timer": "A teszt környezetben az adatok rendszeresen visszaállításra kerülnek. Idő a következő törlésig :days nap, :hours óra.",
   "Save": "Mentés",
   "Saved successfully": "Sikeresen elmentve",
+<<<<<<< HEAD
   "Savings and investments": "Megtakarítások és befektetések",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Schedule": "Ütemezés",
   "schedule count": "ütemezett számláló",
   "schedule end date": "ütemezés befejezési dátuma",
@@ -660,6 +679,7 @@
   "You cannot register new users.": "Új felhasználókat nem lehet regisztrálni.",
   "Your changes have been saved!": "A módosításokat mentettük!",
   "Zoom in": "Nagyítás"
+<<<<<<< HEAD
 =======
     " < No default category > ": " < Nincs alapértelmezett kategória >",
     " < No price provider > ": " < Nincs adatszolgáltató >",
@@ -1322,4 +1342,6 @@
     "Your changes have been saved!": "A módosításokat mentettük!",
     "Zoom in": "Nagyítás"
 >>>>>>> 999af8b (feat: drill-down opens transaction list tab with back button)
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
 }

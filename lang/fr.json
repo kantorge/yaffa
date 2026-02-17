@@ -1,5 +1,8 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   " < No default category > ": "< Aucune catégorie par défaut >",
   " < No price provider > ": "< Aucun fournisseur de prix >",
   "(No subject)": "(Sans sujet)",
@@ -75,7 +78,10 @@
   "Are you sure you want to discard any changes?": "Êtes-vous sûr de vouloir annuler toutes les modifications?",
   "Are you sure you want to merge these categories?": "Êtes-vous sûr de vouloir fusionner ces catégories?",
   "Are you sure you want to merge these payees?": "Êtes-vous sûr de vouloir fusionner ces bénéficiaires?",
+<<<<<<< HEAD
   "Are you sure you want to set this currency as the default one?": "Êtes-vous sûr de vouloir définir cette devise comme devise par défaut?\\n\\nBien que cette action soit réversible, elle lance un processus qui peut prendre un certain temps à se terminer.",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Êtes-vous sûr de vouloir définir cette devise comme devise par défaut?\\n\\nBien que cette action soit réversible, elle lance un processus qui peut prendre un certain temps à se terminer.",
   "Are you sure, you want to change the transaction type? Some data might get lost.": "Êtes-vous sûr de vouloir modifier le type de transaction? Des données pourraient être perdues.",
   "Assets": "Actifs",
@@ -84,6 +90,10 @@
   "Automatic update": "Mise à jour automatique",
   "Automation": "Automation",
   "Avg/month": "Moy./mois",
+<<<<<<< HEAD
+=======
+  "Back to Monthly breakdown": "Retour au détail mensuel",
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Balance": "Solde",
   "Base currency": "Monnaie de base",
   "Base currency cannot be deleted": "La devise de base ne peut pas être supprimée",
@@ -164,7 +174,10 @@
   "Customize": "Personnaliser",
   "Customize YAFFA": "Personnaliser YAFFA",
   "Daily": "Tous les jours",
+<<<<<<< HEAD
   "Daily living expenses": "Dépenses quotidiennes",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Dashboard": "Tableau de bord",
   "Database error:": "Erreur de base de données:",
   "Date": "Date",
@@ -238,7 +251,10 @@
   "Find transactions": "Trouver des transactions",
   "First available data": "Premières données disponibles",
   "First transaction": "Première transaction",
+<<<<<<< HEAD
   "Fixed obligations": "Charges fixes",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Forgot Your Password?": "Mot de passe oublié?",
   "Frequency": "Fréquence",
   "From": "Depuis",
@@ -474,7 +490,10 @@
   "sandbox.reset.timer": "Les données de cet environnement de test sont régulièrement effacées. Prochaine réinitialisation :days jours et :hours heures.",
   "Save": "Sauvegarder",
   "Saved successfully": "Sauvegarde réussie",
+<<<<<<< HEAD
   "Savings and investments": "Épargne et investissements",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Schedule": "Calendrier",
   "schedule count": "nombre de jours de planification",
   "schedule end date": "date de fin prévue",
@@ -660,6 +679,7 @@
   "You cannot register new users.": "Vous ne pouvez pas enregistrer de nouveaux utilisateurs.",
   "Your changes have been saved!": "Vos modifications ont été enregistrées !",
   "Zoom in": "Zoomer"
+<<<<<<< HEAD
 =======
     " < No default category > ": "< Aucune catégorie par défaut >",
     " < No price provider > ": "< Aucun fournisseur de prix >",
@@ -1322,4 +1342,6 @@
     "Your changes have been saved!": "Vos modifications ont été enregistrées !",
     "Zoom in": "Zoomer"
 >>>>>>> 999af8b (feat: drill-down opens transaction list tab with back button)
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
 }

@@ -1,5 +1,8 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   " < No default category > ": " < No default category > ",
   " < No price provider > ": " < No price provider > ",
   "(No subject)": "(No subject)",
@@ -76,7 +79,10 @@
   "Are you sure you want to discard any changes?": "Are you sure you want to discard any changes?",
   "Are you sure you want to merge these categories?": "Are you sure you want to merge these categories?",
   "Are you sure you want to merge these payees?": "Are you sure you want to merge these payees?",
+<<<<<<< HEAD
   "Are you sure you want to set this currency as the default one?": "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.": "Are you sure you want to set this currency as the default one?\\n\\nWhile this action is reversible, it starts a process that may take a while to complete.",
   "Are you sure, you want to change the transaction type? Some data might get lost.": "Are you sure, you want to change the transaction type? Some data might get lost.",
   "Assets": "Assets",
@@ -85,6 +91,10 @@
   "Automatic update": "Automatic update",
   "Automation": "Automation",
   "Avg/month": "Avg/month",
+<<<<<<< HEAD
+=======
+  "Back to Monthly breakdown": "Back to Monthly breakdown",
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Balance": "Balance",
   "Base currency": "Base currency",
   "Base currency cannot be deleted": "Base currency cannot be deleted",
@@ -166,7 +176,10 @@
   "Customize": "Customize",
   "Customize YAFFA": "Customize YAFFA",
   "Daily": "Daily",
+<<<<<<< HEAD
   "Daily living expenses": "Daily living expenses",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Dashboard": "Dashboard",
   "Database error:": "Database error:",
   "Date": "Date",
@@ -244,7 +257,10 @@
   "Find transactions": "Find transactions",
   "First available data": "First available data",
   "First transaction": "First transaction",
+<<<<<<< HEAD
   "Fixed obligations": "Fixed obligations",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Forgot Your Password?": "Forgot Your Password?",
   "Frequency": "Frequency",
   "From": "From",
@@ -483,7 +499,10 @@
   "sandbox.reset.timer": "The data in this sandbox environment is regularly cleared. Time until next reset: :days days and :hours hours.",
   "Save": "Save",
   "Saved successfully": "Saved successfully",
+<<<<<<< HEAD
   "Savings and investments": "Savings and investments",
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
   "Schedule": "Schedule",
   "schedule count": "schedule count",
   "schedule end date": "schedule end date",
@@ -673,6 +692,7 @@
   "You cannot register new users.": "You cannot register new users.",
   "Your changes have been saved!": "Your changes have been saved!",
   "Zoom in": "Zoom in"
+<<<<<<< HEAD
 =======
     " < No default category > ": " < No default category > ",
     " < No price provider > ": " < No price provider > ",
@@ -1348,4 +1368,6 @@
     "Your changes have been saved!": "Your changes have been saved!",
     "Zoom in": "Zoom in"
 >>>>>>> 999af8b (feat: drill-down opens transaction list tab with back button)
+=======
+>>>>>>> 7df4c65 (refactor: use parent category hierarchy for section grouping)
 }
