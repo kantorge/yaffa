@@ -178,6 +178,10 @@
 <script>
 import { __ as translator, toFormattedCurrency } from '../../helpers';
 
+/** Intensity thresholds for deviation highlighting bands (0–1 scale) */
+const INTENSITY_HIGH_THRESHOLD = 0.66;
+const INTENSITY_MEDIUM_THRESHOLD = 0.33;
+
 /**
  * Section definitions mapping default_assets.categories translation keys
  * to visual groups. Each section has a title (translation key), a CSS class
@@ -704,14 +708,14 @@ export default {
 
       if (value > avg) {
         const intensity = (max - avg) > 0 ? (value - avg) / (max - avg) : 0;
-        if (intensity > 0.66) return 'bg-deviation-high-3';
-        if (intensity > 0.33) return 'bg-deviation-high-2';
+        if (intensity > INTENSITY_HIGH_THRESHOLD) return 'bg-deviation-high-3';
+        if (intensity > INTENSITY_MEDIUM_THRESHOLD) return 'bg-deviation-high-2';
         return 'bg-deviation-high-1';
       }
       if (value < avg) {
         const intensity = (avg - min) > 0 ? (avg - value) / (avg - min) : 0;
-        if (intensity > 0.66) return 'bg-deviation-low-3';
-        if (intensity > 0.33) return 'bg-deviation-low-2';
+        if (intensity > INTENSITY_HIGH_THRESHOLD) return 'bg-deviation-low-3';
+        if (intensity > INTENSITY_MEDIUM_THRESHOLD) return 'bg-deviation-low-2';
         return 'bg-deviation-low-1';
       }
       return '';
