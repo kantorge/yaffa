@@ -251,30 +251,8 @@ function buildCategoryKeyMap() {
   // The category names in the DB are stored as the translated value directly,
   // or as plain user-defined names. We need to match against both.
 
-  // First, try to get translations for default_assets keys
-  const defaultKeys = [
-    'food', 'dining_out', 'groceries', 'clothing', 'personal_care',
-    'medications', 'healthcare', 'doctor_visits', 'vision_and_dental_care',
-    'fuel', 'parking', 'transportation', 'public_transport',
-    'vehicle_maintenance', 'car_payments', 'subscriptions',
-    'entertainment', 'entertainment_and_leisure', 'events',
-    'hobbies_and_activities', 'vacation_and_travel',
-    'household_products', 'home_improvements',
-    'maintenance_and_repairs', 'repairs_maintenance',
-    'pet_care', 'gifts_and_donations', 'books_and_supplies',
-    'miscellaneous', 'credit_card', 'school_and_university_fees',
-    'education_and_development', 'courses_and_training',
-    'rent_and_mortgage', 'rent', 'housing', 'utilities', 'electricity',
-    'water', 'water_sewer', 'gas_and_heating', 'internet_cable',
-    'insurance', 'car_insurance', 'home_insurance',
-    'health_insurance', 'life_insurance', 'disability_insurance',
-    'loans', 'personal_loans', 'student_loans',
-    'debt_repayment', 'property_taxes', 'legal_fees', 'fines',
-    'mortgage_overpayments',
-    'salary', 'main_job', 'bonuses', 'side_job',
-    'freelance_work', 'rental_income', 'other_income',
-    'government_benefits', 'social_assistance', 'child_allowance',
-  ];
+  // Derive default keys from SECTION_DEFINITIONS to avoid maintaining a separate list
+  const defaultKeys = SECTION_DEFINITIONS.flatMap((s) => s.categoryKeys);
 
   for (const key of defaultKeys) {
     // The DB stores the name as the full translation key or translated value
