@@ -189,6 +189,15 @@ import { __ as translator, toFormattedCurrency } from '../../helpers';
  */
 const SECTION_DEFINITIONS = [
   {
+    titleKey: 'Income',
+    cssClass: 's-income',
+    categoryKeys: [
+      'salary', 'main_job', 'bonuses', 'side_job',
+      'freelance_work', 'rental_income', 'other_income',
+      'government_benefits', 'social_assistance', 'child_allowance',
+    ],
+  },
+  {
     titleKey: 'Daily living expenses',
     cssClass: 's-living',
     categoryKeys: [
@@ -224,15 +233,6 @@ const SECTION_DEFINITIONS = [
     cssClass: 's-savings',
     categoryKeys: [
       'mortgage_overpayments',
-    ],
-  },
-  {
-    titleKey: 'Income',
-    cssClass: 's-income',
-    categoryKeys: [
-      'salary', 'main_job', 'bonuses', 'side_job',
-      'freelance_work', 'rental_income', 'other_income',
-      'government_benefits', 'social_assistance', 'child_allowance',
     ],
   },
 ];
@@ -567,12 +567,13 @@ export default {
     },
 
     /**
-     * Format a YYYY-MM month string as a short MM header.
+     * Format a YYYY-MM month string as MM.YYYY header.
      * @param {string} month - Month in YYYY-MM format
-     * @returns {string} Month in MM format
+     * @returns {string} Month in MM.YYYY format
      */
     formatMonthHeader(month) {
-      return month.substring(5);
+      const [year, mon] = month.split('-');
+      return `${mon}.${year}`;
     },
 
     /**
