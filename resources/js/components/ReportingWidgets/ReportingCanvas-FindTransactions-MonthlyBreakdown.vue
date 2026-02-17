@@ -56,8 +56,8 @@
                   v-if="row.categoryIds.length === 1"
                   :href="'/categories/' + row.categoryIds[0] + '/edit'"
                   class="category-link"
-                >{{ row.name }}</a>
-                <span v-else>{{ row.name }}</span>
+                >{{ row.displayName }}</a>
+                <span v-else>{{ row.displayName }}</span>
               </td>
               <td
                 v-for="m in months"
@@ -218,6 +218,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
 
     return {
       name: catName,
+      displayName: entry.rawName || catName,
       values,
       total: Math.round(total * 100) / 100,
       avg: Math.round(avg * 100) / 100,
