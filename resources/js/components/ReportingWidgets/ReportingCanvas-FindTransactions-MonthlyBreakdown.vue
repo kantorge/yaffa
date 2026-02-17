@@ -55,7 +55,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.avgDeviation, row.min, row.max, row.nonZeroCount)"
+                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.min, row.max, row.nonZeroCount)"
                 class="text-end"
               >
                 <a
@@ -291,7 +291,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
     const nonZeroValues = months.map((m) => values[m] || 0).filter((v) => v > 0);
     const nonZeroCount = nonZeroValues.length;
     const avg = nonZeroCount > 0 ? total / monthCount : 0;
-    const avgDeviation = nonZeroCount > 0 ? total / nonZeroCount : 0;
+    const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
     const min = nonZeroValues.length ? Math.min(...nonZeroValues) : 0;
     const max = nonZeroValues.length ? Math.max(...nonZeroValues) : 0;
 
@@ -300,7 +300,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
       values,
       total: Math.round(total * 100) / 100,
       avg: Math.round(avg * 100) / 100,
-      avgDeviation,
+      nonZeroAvg,
       min,
       max,
       nonZeroCount,
