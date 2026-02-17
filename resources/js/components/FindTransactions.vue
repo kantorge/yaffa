@@ -244,7 +244,7 @@
 </template>
 
 <script>
-  import { __, processTransaction } from '../helpers';
+  import { __, processTransaction, buildBreakdownCacheKey } from '../helpers';
   import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
@@ -424,17 +424,7 @@
           const cached = sessionStorage.getItem('yaffa_breakdown_cache');
           if (!cached) return false;
           const { key } = JSON.parse(cached);
-          // Breakdown cache uses URL params as key (same as getParentCacheKey in MonthlyBreakdown)
-          const urlParams = new URLSearchParams(window.location.search);
-          const currentKey = JSON.stringify({
-            date_from: urlParams.get('date_from'),
-            date_to: urlParams.get('date_to'),
-            accounts: urlParams.getAll('accounts[]'),
-            categories: urlParams.getAll('categories[]'),
-            payees: urlParams.getAll('payees[]'),
-            tags: urlParams.getAll('tags[]'),
-          });
-          return key === currentKey;
+          return key === buildBreakdownCacheKey();
         } catch (e) {
           console.warn('Failed to check breakdown cache:', e);
           return false;

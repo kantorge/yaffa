@@ -183,7 +183,7 @@
 </template>
 
 <script>
-import { __ as translator, toFormattedCurrency } from '../../helpers';
+import { __ as translator, toFormattedCurrency, buildBreakdownCacheKey } from '../../helpers';
 
 /** Intensity thresholds for deviation highlighting bands (0–1 scale) */
 const INTENSITY_HIGH_THRESHOLD = 0.66;
@@ -481,7 +481,7 @@ export default {
       if (newVal && newVal.length > 0) {
         // If breakdown cache is already loaded and matches, skip reprocessing
         if (this.cachedCategoryData) {
-          const currentKey = this.getParentCacheKey();
+          const currentKey = buildBreakdownCacheKey();
           try {
             const cached = sessionStorage.getItem('yaffa_breakdown_cache');
             if (cached) {
@@ -527,7 +527,7 @@ export default {
         });
 
         sessionStorage.setItem('yaffa_breakdown_cache', JSON.stringify({
-          key: this.getParentCacheKey(),
+          key: buildBreakdownCacheKey(),
           categoryData: serializable,
         }));
       } catch (e) {
@@ -540,7 +540,7 @@ export default {
         const cached = sessionStorage.getItem('yaffa_breakdown_cache');
         if (!cached) return;
         const { key, categoryData } = JSON.parse(cached);
-        if (key !== this.getParentCacheKey()) return;
+        if (key !== buildBreakdownCacheKey()) return;
 
         // Restore categoryData with Sets
         const restored = {};
@@ -559,18 +559,6 @@ export default {
       } catch (e) {
         console.warn('Failed to load breakdown cache:', e);
       }
-    },
-
-    getParentCacheKey() {
-      const urlParams = new URLSearchParams(window.location.search);
-      return JSON.stringify({
-        date_from: urlParams.get('date_from'),
-        date_to: urlParams.get('date_to'),
-        accounts: urlParams.getAll('accounts[]'),
-        categories: urlParams.getAll('categories[]'),
-        payees: urlParams.getAll('payees[]'),
-        tags: urlParams.getAll('tags[]'),
-      });
     },
 
     /**

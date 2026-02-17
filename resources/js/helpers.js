@@ -204,3 +204,22 @@ export function loadSelect2Language(lang) {
     }
     return Promise.resolve();
 }
+
+
+/**
+ * Build a cache key string from the current URL query parameters.
+ * Used by both FindTransactions (hasBreakdownCache) and MonthlyBreakdown cache methods.
+ *
+ * @returns {string} JSON-serialized key based on filter parameters
+ */
+export function buildBreakdownCacheKey() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return JSON.stringify({
+        date_from: urlParams.get('date_from'),
+        date_to: urlParams.get('date_to'),
+        accounts: urlParams.getAll('accounts[]'),
+        categories: urlParams.getAll('categories[]'),
+        payees: urlParams.getAll('payees[]'),
+        tags: urlParams.getAll('tags[]'),
+    });
+}
