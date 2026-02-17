@@ -619,6 +619,10 @@ export default {
 
     saveBreakdownCache() {
       try {
+        // Don't overwrite cache on drill-down pages
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('return_to')) return;
+
         // Serialize categoryData: convert Sets to Arrays for JSON
         const serializable = {};
         const catData = this.categoryData;
