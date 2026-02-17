@@ -655,7 +655,9 @@ export default {
       const uniqueIds = [...new Set(categoryIds)];
       uniqueIds.forEach((id) => params.push(`categories[]=${id}`));
       params.push('tab=transaction-list');
-      params.push('return_to=' + encodeURIComponent(window.location.href));
+      const returnUrl = new URL(window.location.href);
+      returnUrl.searchParams.set('tab', 'monthly-breakdown');
+      params.push('return_to=' + encodeURIComponent(returnUrl.href));
 
       return `/reports/transactions?${params.join('&')}`;
     },
