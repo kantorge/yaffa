@@ -624,11 +624,7 @@ export default {
     saveBreakdownCache() {
       try {
         // Don't overwrite cache on drill-down pages
-        if (this.isDrillDown) {
-          console.log('[MonthlyBreakdown] Skipping cache save (drill-down page)');
-          return;
-        }
-        console.log('[MonthlyBreakdown] Saving breakdown cache, key:', this.getParentCacheKey());
+        if (this.isDrillDown) return;
 
         // Serialize categoryData: convert Sets to Arrays for JSON
         const serializable = {};
@@ -655,16 +651,9 @@ export default {
     loadBreakdownCache() {
       try {
         const cached = sessionStorage.getItem('yaffa_breakdown_cache');
-        if (!cached) {
-          console.log('[MonthlyBreakdown] No breakdown cache found');
-          return;
-        }
+        if (!cached) return;
         const { key, categoryData, monthlyIncome } = JSON.parse(cached);
-        if (key !== this.getParentCacheKey()) {
-          console.log('[MonthlyBreakdown] Cache key mismatch:', key, '!==', this.getParentCacheKey());
-          return;
-        }
-        console.log('[MonthlyBreakdown] Loaded breakdown cache successfully');
+        if (key !== this.getParentCacheKey()) return;
 
         // Restore categoryData with Sets
         const restored = {};
