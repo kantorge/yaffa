@@ -84,7 +84,7 @@
 
             <!-- Section subtotal -->
             <tr class="subtotal-row">
-              <td class="sticky-col fw-bold">
+              <td class="sticky-col fw-bold" :title="__('Subtotal') + ': ' + __(section.title)">
                 {{ __('Subtotal') }}: {{ __(section.title) }}
               </td>
               <td
@@ -118,7 +118,7 @@
           </tr>
 
           <tr class="grand-row">
-            <td class="sticky-col fw-bold">{{ __('Total expenses') }}</td>
+            <td class="sticky-col fw-bold" :title="__('Total expenses')">{{ __('Total expenses') }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold">
               {{ formatAmount(monthlyTotalExpenses[m] || 0) }}
             </td>
@@ -127,7 +127,7 @@
           </tr>
 
           <tr class="grand-row">
-            <td class="sticky-col fw-bold">{{ __('Total income') }}</td>
+            <td class="sticky-col fw-bold" :title="__('Total income')">{{ __('Total income') }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold text-success">
               {{ formatAmount(monthlyTotalIncome[m] || 0) }}
             </td>
@@ -136,7 +136,7 @@
           </tr>
 
           <tr class="grand-row">
-            <td class="sticky-col fw-bold">{{ __('Balance') }}</td>
+            <td class="sticky-col fw-bold" :title="__('Balance')">{{ __('Balance') }}</td>
             <td
               v-for="m in months"
               :key="m"
@@ -166,7 +166,7 @@
             :key="'recap-' + si"
             class="subtotal-row"
           >
-            <td class="sticky-col fw-bold">{{ __(section.title) }}</td>
+            <td class="sticky-col fw-bold" :title="__(section.title)">{{ __(section.title) }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold">
               <span v-if="(section.subtotals[m] || 0) !== 0">
                 {{ formatCell(section.subtotals[m] || 0, monthlyTotalExpenses[m]) }}
