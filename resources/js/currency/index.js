@@ -126,7 +126,7 @@ initializeDeleteButtonListener(dataTableSelector, 'currency.destroy');
 $(dataTableSelector).on('click', 'a.data-set-default', function (event) {
     event.preventDefault();
     const url = $(this).attr('href');
-    if (!confirm(__('Are you sure you want to set this currency as the default one?\n\nWhile this action is reversible, it starts a process that may take a while to complete.'))) {
+    if (!confirm(__('Are you sure you want to set this currency as the default one?'))) {
         return;
     }
     window.location.href = url;

@@ -71,6 +71,11 @@ and the [Installation instructions](https://yaffa.cc/documentation/resources/cat
 
 When upgrading between major versions, please see the details and follow the instructions listed in the [upgrade guide](UPGRADE.md).
 
+## Contributors
+
+Thanks to these people for helping improve this project:
+@WMP - Polish translation and various features
+
 ## License
 
 Yaffa is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
