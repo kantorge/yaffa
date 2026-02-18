@@ -154,8 +154,8 @@
     },
     data() {
       return {
-        baseCurrency: window.YAFFA.baseCurrency,
-        locale: window.YAFFA.locale,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
+        locale: window.YAFFA.userSettings.locale,
       };
     },
     computed: {
@@ -286,7 +286,7 @@
         if (!this.minDate || !this.minDate.toLocaleDateString) {
           return null;
         }
-        return this.minDate.toLocaleDateString(window.YAFFA.locale);
+        return this.minDate.toLocaleDateString(window.YAFFA.userSettings.locale);
       },
       maxDate() {
         return this.transactions.length
@@ -299,7 +299,7 @@
         if (!this.maxDate || !this.maxDate.toLocaleDateString) {
           return null;
         }
-        return this.maxDate.toLocaleDateString(window.YAFFA.locale);
+        return this.maxDate.toLocaleDateString(window.YAFFA.userSettings.locale);
       },
     },
     methods: {

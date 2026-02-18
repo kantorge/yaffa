@@ -75,7 +75,7 @@
       tags: Array,
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
       },
     },
 

@@ -326,10 +326,10 @@ export const transactionColumnDefinition = {
                     return typeConfig.label + " " + row.config.quantity;
                 }
 
-                return typeConfig.label + " " + row.config.quantity.toLocaleString(window.YAFFA.locale, {
+                return typeConfig.label + " " + row.config.quantity.toLocaleString(window.YAFFA.userSettings.locale, {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4
-                }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.locale, row.transaction_currency);
+                }) + " @ " + toFormattedCurrency(type, row.config.price, window.YAFFA.userSettings.locale, row.transaction_currency);
             }
         },
         orderable: false
@@ -362,7 +362,7 @@ export const transactionColumnDefinition = {
                     return prefix + toFormattedCurrency(
                         type,
                         row.config.amount_to,
-                        window.YAFFA.locale,
+                        window.YAFFA.userSettings.locale,
                         row.transaction_currency
                     );
                 }
@@ -375,7 +375,7 @@ export const transactionColumnDefinition = {
                         return prefix + toFormattedCurrency(
                             type,
                             amount,
-                            window.YAFFA.locale,
+                            window.YAFFA.userSettings.locale,
                             row.transaction_currency
                         );
                     }
@@ -385,7 +385,7 @@ export const transactionColumnDefinition = {
                         return prefix + toFormattedCurrency(
                             type,
                             amount,
-                            window.YAFFA.locale,
+                            window.YAFFA.userSettings.locale,
                             row.transaction_currency
                         );
                     }
@@ -410,7 +410,7 @@ export const transactionColumnDefinition = {
                 return toFormattedCurrency(
                     type,
                     data,
-                    window.YAFFA.locale,
+                    window.YAFFA.userSettings.locale,
                     window.account.config.currency
                 );
             }

@@ -162,7 +162,7 @@
           this.chartData = categorySummary.map((category) => {
             return {
               ...category,
-              tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.locale, window.YAFFA.baseCurrency)}`,
+              tooltip: `${category.name}: ${toFormattedCurrency(category.amount, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency)}`,
             };
           });
         }

@@ -29,7 +29,7 @@
       locale: {
         type: String,
         default: () =>
-          window.YAFFA ? window.YAFFA.locale : navigator.language,
+          window.YAFFA ? window.YAFFA.userSettings.locale : navigator.language,
       },
     },
     computed: {

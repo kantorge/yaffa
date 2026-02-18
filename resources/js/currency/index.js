@@ -63,11 +63,11 @@ $(dataTableSelector).DataTable({
                     return row.latest_rate;
                 }
                 // Formatted text is returned for display in a specific way
-                const targetCurrency = Object.assign({}, window.YAFFA.baseCurrency, {max_digits: 4});
+                const targetCurrency = Object.assign({}, window.YAFFA.userSettings.baseCurrency, {max_digits: 4});
 
-                return toFormattedCurrency(1, window.YAFFA.locale, row) +
+                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, row) +
                     " = " +
-                    toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.locale, targetCurrency);
+                    toFormattedCurrency(parseFloat(row.latest_rate), window.YAFFA.userSettings.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -91,9 +91,9 @@ $(dataTableSelector).DataTable({
                 // Formatted text is returned for display in a specific way
                 const targetCurrency = Object.assign({}, row, {max_digits: 4});
 
-                return toFormattedCurrency(1, window.YAFFA.locale, window.YAFFA.baseCurrency) +
+                return toFormattedCurrency(1, window.YAFFA.userSettings.locale, window.YAFFA.userSettings.baseCurrency) +
                     " = " +
-                    toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.locale, targetCurrency);
+                    toFormattedCurrency((1 / parseFloat(row.latest_rate)), window.YAFFA.userSettings.locale, targetCurrency);
             },
             className: "dt-nowrap",
             searchable: false,
@@ -105,7 +105,7 @@ $(dataTableSelector).DataTable({
                 return genericDataTablesActionButton(data, 'edit', 'currency.edit') +
                     // Base currency cannot be deleted or set as default
                     (!row.base
-                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.baseCurrency.id + '" class="btn btn-xs btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-fw fa-chart-line"></i></a> ' +
+                        ? '<a href="/currencyrates/' + data + '/' + window.YAFFA.userSettings.baseCurrency.id + '" class="btn btn-xs btn-info" title="' + __('Rates') + '"><i class="fa-solid fa-fw fa-chart-line"></i></a> ' +
                         genericDataTablesActionButton(data, 'delete') +
                         '<a href="' + window.route('currency.setDefault', data) + '" class="btn btn-xs btn-primary data-set-default" title="' + __('Set as default') + '"><i class="fa-solid fa-fw fa-building-columns"></i></a>'
                         : '');

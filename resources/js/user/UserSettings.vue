@@ -231,7 +231,7 @@
     },
     datePresets: {
       type: Object,
-      default: window.datePresets,
+      default: window.YAFFA.config.datePresets,
     },
   });
 </script>
@@ -252,12 +252,12 @@
     },
     data: () => ({
       form: new Form({
-        language: window.YAFFA.language,
-        locale: window.YAFFA.locale,
-        end_date: window.YAFFA.end_date,
-        start_date: window.YAFFA.start_date,
+        language: window.YAFFA.userSettings.language,
+        locale: window.YAFFA.userSettings.locale,
+        end_date: window.YAFFA.userSettings.end_date,
+        start_date: window.YAFFA.userSettings.start_date,
         account_details_date_range:
-          window.YAFFA.account_details_date_range || 'none',
+          window.YAFFA.userSettings.account_details_date_range || 'none',
       }),
     }),
     mounted() {
@@ -275,11 +275,11 @@
           .then((response) => {
             if (response.status === 200) {
               // Update the global YAFFA object with the new settings
-              window.YAFFA.language = response.data.data.language;
-              window.YAFFA.locale = response.data.data.locale;
-              window.YAFFA.start_date = response.data.data.start_date;
-              window.YAFFA.end_date = response.data.data.end_date;
-              window.YAFFA.account_details_date_range =
+              window.YAFFA.userSettings.language = response.data.data.language;
+              window.YAFFA.userSettings.locale = response.data.data.locale;
+              window.YAFFA.userSettings.start_date = response.data.data.start_date;
+              window.YAFFA.userSettings.end_date = response.data.data.end_date;
+              window.YAFFA.userSettings.account_details_date_range =
                 response.data.data.account_details_date_range;
 
               // Emit a custom event to global scope about the result

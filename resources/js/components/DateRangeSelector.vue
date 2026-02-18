@@ -204,7 +204,7 @@
         todayButton: true,
         todayButtonMode: 1,
         todayHighlight: true,
-        language: window.YAFFA.language,
+        language: window.YAFFA.userSettings.language,
         format: 'yyyy-mm-dd',
         autohide: true,
         buttonClass: 'btn',

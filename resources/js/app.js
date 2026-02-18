@@ -140,7 +140,7 @@ if (import.meta.env.DEV) {
 /**
  * The scripts below are needed only if the application is in sandbox mode, or configured to use related features.
  */
-if (window.sandbox_mode) {
+if (window.YAFFA.config.sandbox_mode) {
     if (current !== 'login') {
         loadModule('sandbox-components/reset-timer');
     } else {

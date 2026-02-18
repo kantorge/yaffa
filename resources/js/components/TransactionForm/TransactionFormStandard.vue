@@ -582,7 +582,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   import MathInput from '@components/MathInput.vue';
 
@@ -727,7 +727,7 @@
       ];
 
       // Some other settings
-      data.locale = window.YAFFA.locale;
+      data.locale = window.YAFFA.userSettings.locale;
 
       return data;
     },
@@ -798,7 +798,7 @@
 
       // Provide the base currency from the global scope for the template
       baseCurrency() {
-        return window.YAFFA.baseCurrency;
+        return window.YAFFA.userSettings.baseCurrency;
       },
 
       remainingAmountToPayeeDefault() {
@@ -1286,7 +1286,7 @@
 
         return {
           theme: 'bootstrap-5',
-          language: window.YAFFA.language,
+          language: window.YAFFA.userSettings.language,
           ajax: {
             url: $vm.getAccountApiUrl(type),
             dataType: 'json',

@@ -58,7 +58,7 @@ $(selectorHistoryTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: transactionData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -94,7 +94,7 @@ $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
         },
@@ -105,7 +105,7 @@ $(selectorHistoryTable).DataTable({
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
         },
@@ -114,7 +114,7 @@ $(selectorHistoryTable).DataTable({
             title: __('Running total'),
             defaultContent: '',
             render: function (data, type) {
-                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, data, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap',
             createdCell: function (td, cellData) {
@@ -179,7 +179,7 @@ $(selectorScheduleTable).DataTable({
     language: getDataTablesLanguageOptions() || undefined,
     data: scheduleData,
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dtColumnSettingPayee,
         dataTableHelpers.transactionColumnDefinition.category,
         {
@@ -189,7 +189,7 @@ $(selectorScheduleTable).DataTable({
                 if (row.transactionOperator !== -1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_from, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap'
         },
@@ -200,7 +200,7 @@ $(selectorScheduleTable).DataTable({
                 if (row.transactionOperator !== 1) {
                     return;
                 }
-                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.locale, currency);
+                return dataTableHelpers.toFormattedCurrency(type, row.amount_to, window.YAFFA.userSettings.locale, currency);
             },
             className: 'dt-nowrap'
         },

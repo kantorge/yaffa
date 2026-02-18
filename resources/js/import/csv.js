@@ -26,7 +26,7 @@ import 'jquery-csv';
 import { __, loadSelect2Language } from '../helpers';
 import select2 from 'select2';
 select2();
-loadSelect2Language(window.YAFFA.language);
+loadSelect2Language(window.YAFFA.userSettings.language);
 
 window.transactions = [];
 window.account_currency = {};
@@ -350,7 +350,7 @@ window.table = $(tableSelector).DataTable({
                 if (!data) {
                     return data;
                 }
-                return data.toLocaleDateString(window.YAFFA.locale);
+                return data.toLocaleDateString(window.YAFFA.userSettings.locale);
             },
             className: "dt-nowrap",
         },
@@ -418,7 +418,7 @@ window.table = $(tableSelector).DataTable({
                 if (row.transaction_type.amount_multiplier === 1) {
                     prefix = '+ ';
                 }
-                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.locale, window.account_currency);
+                return prefix + toFormattedCurrency(row.config.amount_to, window.YAFFA.userSettings.locale, window.account_currency);
             },
             className: "dt-nowrap",
         },

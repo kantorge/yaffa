@@ -306,7 +306,7 @@
       showForm: false,
       testResult: null,
       testingConnection: false,
-      sandbox_mode: window.sandbox_mode,
+      sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
       availableModels() {

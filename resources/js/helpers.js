@@ -35,12 +35,12 @@ export function toFormattedCurrency(input, locale, currencySettings) {
 }
 
 /**
- * Helper function to get transaction type configuration from window.transactionTypes
+ * Helper function to get transaction type configuration from window.YAFFA.config.transactionTypes
  * @param {string} transactionTypeValue - The enum value (e.g., 'buy', 'sell', 'withdrawal')
  * @returns {object} Transaction type configuration with category, label, multipliers, etc.
  */
 export function getTransactionTypeConfig(transactionTypeValue) {
-    const transactionTypes = window.transactionTypes || {};
+    const transactionTypes = window.YAFFA.config.transactionTypes || {};
     return transactionTypes[transactionTypeValue] || {
         value: transactionTypeValue,
         label: transactionTypeValue,

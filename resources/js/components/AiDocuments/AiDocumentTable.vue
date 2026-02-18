@@ -248,7 +248,7 @@
           title: __('Received at'),
           render: (value, type) => {
             if (type === 'display' && value && value.toLocaleString) {
-              return value.toLocaleString(window.YAFFA.locale);
+              return value.toLocaleString(window.YAFFA.userSettings.locale);
             }
 
             return value;

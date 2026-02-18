@@ -131,7 +131,7 @@
   const presetsId = `${props.componentId}Presets`;
   const updateButtonId = `${props.componentId}Update`;
 
-  const datePresets = window.YAFFA?.datePresets || window.datePresets || [];
+  const datePresets = window.YAFFA?.config?.datePresets || [];
   const isPresetChange = ref(false);
   let dateRangePicker = null;
 
@@ -145,7 +145,7 @@
         todayBtn: true,
         todayBtnMode: 1,
         todayHighlight: true,
-        language: window.YAFFA.language,
+        language: window.YAFFA.userSettings.language,
         format: 'yyyy-mm-dd',
         autohide: true,
         buttonClass: 'btn',

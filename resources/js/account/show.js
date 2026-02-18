@@ -89,7 +89,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
             });
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.userSettings.locale),
         {
             data: "reconciled",
             title: '<span title="' + __('Reconciled') + '">R</span>',
@@ -189,7 +189,7 @@ let dtSchedule = $(selectorScheduleTable).DataTable({
         deferRender: true
     },
     columns: [
-        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),
+        dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.userSettings.locale),
         dataTableHelpers.transactionColumnDefinition.payee,
         dataTableHelpers.transactionColumnDefinition.category,
         dataTableHelpers.transactionColumnDefinition.amountCustom,
@@ -346,34 +346,34 @@ let getAccountBalance = function () {
 
             elementOpeningBalance.innerText = toFormattedCurrency(
                 balance.config.opening_balance,
-                window.YAFFA.locale,
+                window.YAFFA.userSettings.locale,
                 balance.config.currency
             );
 
             elementCurrentCash.innerText = toFormattedCurrency(
                 balance.cash,
-                window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                window.YAFFA.userSettings.locale,
+                window.YAFFA.userSettings.baseCurrency
             );
 
             if (balance.hasOwnProperty('cash_foreign')) {
                 elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
                     balance.cash_foreign,
-                    window.YAFFA.locale,
+                    window.YAFFA.userSettings.locale,
                     balance.config.currency
                 );
             }
 
             elementCurrentBalance.innerText = toFormattedCurrency(
                 balance.sum,
-                window.YAFFA.locale,
-                window.YAFFA.baseCurrency
+                window.YAFFA.userSettings.locale,
+                window.YAFFA.userSettings.baseCurrency
             );
 
             if (balance.hasOwnProperty('sum_foreign')) {
                 elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
                     balance.sum_foreign,
-                    window.YAFFA.locale,
+                    window.YAFFA.userSettings.locale,
                     balance.config.currency
                 );
             }

@@ -78,7 +78,7 @@
             dataTableHelpers.transactionColumnDefinition.dateFromCustomField(
               'date',
               this.__('Date'),
-              window.YAFFA.locale,
+              window.YAFFA.userSettings.locale,
             ),
             {
               data: 'price',
@@ -87,7 +87,7 @@
                 return dataTableHelpers.toFormattedCurrency(
                   type,
                   data,
-                  window.YAFFA.locale,
+                  window.YAFFA.userSettings.locale,
                   {
                     iso_code: self.investment.currency.iso_code,
                   },

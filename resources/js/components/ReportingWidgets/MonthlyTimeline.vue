@@ -43,8 +43,8 @@
       return {
         filteredTransactions: [],
         chartData: {},
-        locale: window.YAFFA.locale,
-        baseCurrency: window.YAFFA.baseCurrency,
+        locale: window.YAFFA.userSettings.locale,
+        baseCurrency: window.YAFFA.userSettings.baseCurrency,
       };
     },
     watch: {

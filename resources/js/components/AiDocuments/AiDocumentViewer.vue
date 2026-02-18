@@ -433,7 +433,7 @@
   const statusLabels = window.aiDocumentStatusLabels || {};
   const sourceLabels = window.aiDocumentSourceLabels || {};
   const isBusy = ref(false);
-  const locale = window.YAFFA.locale || 'en';
+  const locale = window.YAFFA.userSettings.locale || 'en';
   const unidentifiedLabel = __('Unidentified');
 
   // Computed properties used in the component

@@ -504,7 +504,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   export default {
     components: {
@@ -535,7 +535,7 @@
       },
       locale: {
         type: String,
-        default: window.YAFFA.locale,
+        default: window.YAFFA.userSettings.locale,
       },
       aiDocumentId: {
         type: Number,
@@ -686,7 +686,7 @@
 
     created() {
       // Load transaction types from window global context first
-      const transactionTypesConfig = window.transactionTypes || {};
+      const transactionTypesConfig = window.YAFFA.config.transactionTypes || {};
 
       // Filter and map investment types to component format
       this.transactionTypes = Object.values(transactionTypesConfig)

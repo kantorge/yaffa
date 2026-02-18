@@ -24,7 +24,7 @@
           let input = target.value;
 
           // Replace commas with dots if locale has comma as decimal separator
-          if (this.getDecimalSeparator(window.YAFFA.locale) === ',') {
+          if (this.getDecimalSeparator(window.YAFFA.userSettings.locale) === ',') {
             input = input.replace(/,/g, '.');
           } else {
             // Otherwise, remove commas, assuming they are thousands separators

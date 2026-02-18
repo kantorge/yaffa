@@ -73,7 +73,7 @@
   const duplicates = ref([]);
   const duplicatesLoading = ref(false);
   const duplicatesCard = ref(null);
-  const locale = window.YAFFA?.locale || 'en';
+  const locale = window.YAFFA?.userSettings?.locale || 'en';
 
   const initializeTooltips = async () => {
     await nextTick();

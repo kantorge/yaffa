@@ -2,11 +2,12 @@
 
 namespace App\Http\View\Composers;
 
+use App\Enums\TransactionType;
 use App\Http\Traits\CurrencyTrait;
 use Illuminate\Support\Facades\Auth;
 use Laracasts\Utilities\JavaScript\JavaScriptFacade;
 
-class JavaScriptUserVariablesComposer
+class JavaScriptVariablesComposer
 {
     use CurrencyTrait;
 
@@ -15,22 +16,37 @@ class JavaScriptUserVariablesComposer
      */
     public function compose(): void
     {
-        $user = Auth::user();
-
-        JavaScriptFacade::put([
+        $payload = [
             'YAFFA' => [
+                'config' => [
+                    // This type of restriction is implemented primarily on server-side, but the UI can also adapt in some cases
+                    'sandbox_mode' => config('yaffa.sandbox_mode'),
+                    // Transaction types for frontend usage
+                    'transactionTypes' => TransactionType::all(),
+                    // Date presets for date range pickers
+                    'datePresets' => config('yaffa.account_date_presets', []),
+                    'translations' => $this->getTranslations(),
+                ],
+                'userSettings' => [],
+            ],
+        ];
+
+        $user = Auth::user();
+        if ($user) {
+            $payload['YAFFA']['userSettings'] = [
                 'baseCurrency' => $this->getBaseCurrency(),
                 'language' => $user->language,
                 'locale' => $user->locale,
-                'translations' => $this->getTranslations(),
                 'start_date' => $user->start_date,
                 'end_date' => $user->end_date,
                 'account_details_date_range' => $user->account_details_date_range,
-            ]
-        ]);
+            ];
+        }
+
+        JavaScriptFacade::put($payload);
     }
 
-    private function getTranslations()
+    private function getTranslations(): array
     {
         $locale = app()->getLocale();
         $fallback = config('app.fallback_locale');

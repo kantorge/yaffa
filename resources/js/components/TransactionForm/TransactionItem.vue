@@ -200,7 +200,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   export default {
     components: {
@@ -344,7 +344,7 @@
 
       elementCategory
         .select2({
-          language: window.YAFFA.language,
+          language: window.YAFFA.userSettings.language,
           theme: 'bootstrap-5',
           ajax: {
             url: '/api/assets/category',

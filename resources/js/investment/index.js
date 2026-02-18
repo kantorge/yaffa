@@ -72,7 +72,7 @@ let table = $('#investmentSummary').DataTable({
             title: __("Quantity"),
             render: function (data, type) {
                 if (type === 'display') {
-                    return data.toLocaleString(window.YAFFA.locale, {maximumFractionDigits: 2, useGrouping: true});
+                    return data.toLocaleString(window.YAFFA.userSettings.locale, {maximumFractionDigits: 2, useGrouping: true});
                 }
                 return data;
             },
@@ -84,7 +84,7 @@ let table = $('#investmentSummary').DataTable({
             title: __("Latest price"),
             render: function (data, type, row) {
                 if (type === 'display' && !isNaN(data) && typeof data === "number") {
-                    return toFormattedCurrency(data, window.YAFFA.locale, row.currency);
+                    return toFormattedCurrency(data, window.YAFFA.userSettings.locale, row.currency);
                 }
 
                 return data;
@@ -99,7 +99,7 @@ let table = $('#investmentSummary').DataTable({
                 const value = row.quantity * row.price;
 
                 if (type === 'display') {
-                    return toFormattedCurrency(value, window.YAFFA.locale, row.currency);
+                    return toFormattedCurrency(value, window.YAFFA.userSettings.locale, row.currency);
                 }
 
                 return value;

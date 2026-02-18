@@ -27,7 +27,7 @@
 
   import select2 from 'select2';
   select2();
-  loadSelect2Language(window.YAFFA.language);
+  loadSelect2Language(window.YAFFA.userSettings.language);
 
   export default {
     name: 'FindTransactionSelectCard',
