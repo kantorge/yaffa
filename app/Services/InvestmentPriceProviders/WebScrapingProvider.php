@@ -6,15 +6,17 @@ use App\Contracts\InvestmentPriceProvider;
 use App\Exceptions\InvalidPriceDataException;
 use App\Exceptions\PriceProviderException;
 use App\Models\Investment;
-use App\Spiders\InvestmentPriceScraper;
+use App\Services\ScraperService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use RoachPHP\Roach;
-use RoachPHP\Spider\Configuration\Overrides;
 use Exception;
 
 class WebScrapingProvider implements InvestmentPriceProvider
 {
+    public function __construct(private ScraperService $scraperService)
+    {
+    }
+
     public function fetchPrices(Investment $investment, ?Carbon $from = null, bool $refill = false): array
     {
         // This provider ignores the $from and $refill parameters, as it looks for the latest price,
@@ -38,14 +40,9 @@ class WebScrapingProvider implements InvestmentPriceProvider
         }
 
         try {
-            $result = Roach::collectSpider(
-                InvestmentPriceScraper::class,
-                new Overrides(
-                    startUrls: [$investment->scrape_url],
-                ),
-                [
-                    'selector' => $investment->scrape_selector,
-                ]
+            $result = $this->scraperService->scrape(
+                $investment->scrape_url,
+                $investment->scrape_selector
             );
 
             if (empty($result)) {

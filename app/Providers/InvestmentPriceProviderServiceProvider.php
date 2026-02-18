@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\InvestmentPriceProviderRegistry;
 use App\Services\InvestmentPriceProviders\AlphaVantageProvider;
 use App\Services\InvestmentPriceProviders\WebScrapingProvider;
+use App\Services\ScraperService;
 use GuzzleHttp\Client;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
@@ -29,7 +30,7 @@ class InvestmentPriceProviderServiceProvider extends ServiceProvider implements 
             // Register Web Scraping provider
             $registry->register(
                 'web_scraping',
-                new WebScrapingProvider()
+                new WebScrapingProvider(new ScraperService())
             );
 
             return $registry;
