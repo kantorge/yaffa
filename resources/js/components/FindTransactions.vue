@@ -559,25 +559,25 @@
       dataTableHelpers.initializeAjaxDeleteButton(this.$refs.dataTable);
       dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
 
-      // Lazily populate DataTable when transaction list tab is shown
-      this._onTransactionListTab = () => this.populateDataTable();
-      this._onOtherTab = () => {
-        if (this.skippedTransactionLoad && this.transactions.length === 0) {
-          this.skippedTransactionLoad = false;
-          this.getTransactions();
+      // Handle tab switching for lazy loading data
+      this._allTabs = Array.from(this.$el.querySelectorAll('[data-coreui-toggle="tab"]'));
+      this._onTabShown = (event) => {
+        const targetId = event.target.getAttribute('data-coreui-target');
+
+        // Lazily populate DataTable when transaction list tab is shown
+        if (targetId === '#tab-transaction-list') {
+          this.populateDataTable();
+        }
+
+        // Lazily load all transactions if they were skipped for the breakdown tab
+        if (targetId !== '#tab-monthly-breakdown') {
+          if (this.skippedTransactionLoad && this.transactions.length === 0) {
+            this.skippedTransactionLoad = false;
+            this.getTransactions();
+          }
         }
       };
-
-      const transactionListTab = this.$el.querySelector('#nav-transaction-list');
-      if (transactionListTab) {
-        transactionListTab.addEventListener('shown.coreui.tab', this._onTransactionListTab);
-      }
-
-      // Lazily load transactions when switching away from monthly-breakdown
-      this._otherTabs = this.$el.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
-      this._otherTabs.forEach((tab) => {
-        tab.addEventListener('shown.coreui.tab', this._onOtherTab);
-      });
+      this._allTabs.forEach((tab) => tab.addEventListener('shown.coreui.tab', this._onTabShown));
 
       // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
       if (this.initialTab) {
@@ -593,14 +593,8 @@
     },
 
     beforeUnmount() {
-      const transactionListTab = this.$el.querySelector('#nav-transaction-list');
-      if (transactionListTab) {
-        transactionListTab.removeEventListener('shown.coreui.tab', this._onTransactionListTab);
-      }
-      if (this._otherTabs) {
-        this._otherTabs.forEach((tab) => {
-          tab.removeEventListener('shown.coreui.tab', this._onOtherTab);
-        });
+      if (this._allTabs) {
+        this._allTabs.forEach((tab) => tab.removeEventListener('shown.coreui.tab', this._onTabShown));
       }
     },
   };
