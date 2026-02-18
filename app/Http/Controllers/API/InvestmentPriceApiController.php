@@ -137,7 +137,7 @@ class InvestmentPriceApiController extends Controller implements HasMiddleware
         $lastPrice = $investment->investmentPrices()->latest('date')->first();
         $date = $lastPrice ? $lastPrice->date : Carbon::now()->subDays(30);
 
-        $investment->getInvestmentPriceFromProvider($date);
+        $this->investmentService->fetchAndSavePrices($investment, $date);
 
         // Recalculate related accounts
         $this->investmentService->recalculateRelatedAccounts($investment);

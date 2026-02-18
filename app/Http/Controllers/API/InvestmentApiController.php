@@ -20,12 +20,9 @@ class InvestmentApiController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
-    protected InvestmentService $investmentService;
-
-    public function __construct()
-    {
-
-        $this->investmentService = new InvestmentService();
+    public function __construct(
+        protected InvestmentService $investmentService
+    ) {
     }
 
     public static function middleware(): array
@@ -167,8 +164,6 @@ class InvestmentApiController extends Controller implements HasMiddleware
          * @get('/api/assets/investment/timeline')
          * @middlewares('api', 'auth:sanctum')
          */
-        $investmentService = new InvestmentService();
-
         $investments = $request->user()
             ->investments()
             ->with([
@@ -181,7 +176,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn ($investment) => $investmentService->enrichInvestmentWithQuantityHistory($investment))
+        $investments->map(fn ($investment) => $this->investmentService->enrichInvestmentWithQuantityHistory($investment))
             ->each(function ($investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
@@ -205,7 +200,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
 
                     if (!$start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
                         $period['end'] = $item['date'];
-                        $period['last_price'] = $investment->getLatestPrice('combined', new Carbon($item['date']));
+                        $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined', new Carbon($item['date']));
                         $positions[] = $period;
                         $period = [];
 
@@ -220,7 +215,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 // If period start was set but the end date is missing, then set it to the app config end date
                 if (array_key_exists('start', $period) && !array_key_exists('end', $period)) {
                     $period['end'] = $request->user()->end_date;
-                    $period['last_price'] = $investment->getLatestPrice('combined');
+                    $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined');
                     $positions[] = $period;
                 }
             });

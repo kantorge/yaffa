@@ -17,6 +17,8 @@ class GetInvestmentPrices implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public int $tries = 3;
+
     public Investment $investment;
 
     /**
@@ -30,14 +32,21 @@ class GetInvestmentPrices implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(InvestmentService $investmentService): void
     {
-        // Invoke provider's getInvestmentPrice method
-        $this->investment->getInvestmentPriceFromProvider();
+        // Fetch and save investment prices from provider
+        $investmentService->fetchAndSavePrices($this->investment);
 
         // Use the InvestmentService to recalculate the related accounts
         // TODO: this should be done once for all accounts
-        $investmentService = new InvestmentService();
         $investmentService->recalculateRelatedAccounts($this->investment);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 60];
     }
 }
