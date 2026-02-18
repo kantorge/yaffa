@@ -212,8 +212,8 @@ export function loadSelect2Language(lang) {
  *
  * @returns {string} JSON-serialized key based on filter parameters
  */
-export function buildBreakdownCacheKey() {
-    const urlParams = new URLSearchParams(window.location.search);
+export function buildBreakdownCacheKey(searchString = window.location.search) {
+    const urlParams = new URLSearchParams(searchString);
     return JSON.stringify({
         date_from: urlParams.get('date_from'),
         date_to: urlParams.get('date_to'),
