@@ -62,7 +62,7 @@
               <td
                 v-for="m in months"
                 :key="m"
-                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.nonZeroCount, section.isIncome)"
+                :class="deviationClass(row.values[m] || 0, row.nonZeroAvg, row.nonZeroCount, row.isIncome)"
                 class="text-end"
               >
                 <a
@@ -70,15 +70,15 @@
                   :href="drillDownUrl(m, row.categoryIds)"
                   class="cell-link"
                 >
-                  {{ formatCell(row.values[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
+                  {{ formatCell(row.values[m] || 0, row.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
                 </a>
                 <span v-else class="zero">&mdash;</span>
               </td>
               <td class="text-end fw-semibold">
-                {{ formatCell(row.total, section.isIncome ? totalIncomeSum : totalExpensesSum) }}
+                {{ formatCell(row.total, row.isIncome ? totalIncomeSum : totalExpensesSum) }}
               </td>
               <td class="text-end">
-                {{ formatCell(row.avg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
+                {{ formatCell(row.avg, row.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
               </td>
             </tr>
 
@@ -222,6 +222,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
       nonZeroAvg,
       nonZeroCount,
       categoryIds: Array.from(entry.categoryIds),
+      isIncome: entry.depositTotal > entry.withdrawalTotal,
     };
   });
 
