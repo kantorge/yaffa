@@ -370,10 +370,10 @@
         return JSON.stringify({
           date_from: this.dateFrom,
           date_to: this.dateTo,
-          accounts: this.selectedAccounts,
-          categories: this.selectedCategories,
-          payees: this.selectedPayees,
-          tags: this.selectedTags,
+          accounts: this.selectedAccounts.slice().sort(),
+          categories: this.selectedCategories.slice().sort(),
+          payees: this.selectedPayees.slice().sort(),
+          tags: this.selectedTags.slice().sort(),
         });
       },
 

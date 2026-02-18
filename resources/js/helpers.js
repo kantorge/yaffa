@@ -217,9 +217,9 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
     return JSON.stringify({
         date_from: urlParams.get('date_from'),
         date_to: urlParams.get('date_to'),
-        accounts: urlParams.getAll('accounts[]'),
-        categories: urlParams.getAll('categories[]'),
-        payees: urlParams.getAll('payees[]'),
-        tags: urlParams.getAll('tags[]'),
+        accounts: urlParams.getAll('accounts[]').sort(),
+        categories: urlParams.getAll('categories[]').sort(),
+        payees: urlParams.getAll('payees[]').sort(),
+        tags: urlParams.getAll('tags[]').sort(),
     });
 }
