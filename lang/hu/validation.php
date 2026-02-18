@@ -11,6 +11,7 @@ return [
     "alpha_num" => "Az :attribútum csak betűket és számokat tartalmazhat.",
     "any_of" => "A(z) :attribute mező érvénytelen.",
     "array" => "A :attribute-nak tömbnek kell lennie.",
+    "ascii" => "Az :attribute mező csak egybájtos alfanumerikus karaktereket és szimbólumokat tartalmazhat.",
     "attributes" => [
         "config" => [
             "opening_balance" => "nyitó egyenleg"
@@ -31,6 +32,11 @@ return [
     "confirmed" => "A(z) :attribute megerősítése nem egyezik.",
     "contains" => "A(z) :attribute mezőből hiányzik egy kötelező érték.",
     "current_password" => "A jelszó helytelen.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "egyéni üzenet"
+        ]
+    ],
     "date" => "A(z) :attribute nem érvényes dátum.",
     "date_equals" => "A(z) :attribute paraméternek egy :date paraméterrel megegyező dátumnak kell lennie.",
     "date_format" => "A(z) :attribute nem egyezik a(z) :format formátummal.",
@@ -71,6 +77,9 @@ return [
     "in_array" => "A(z) :attribute mező nem létezik az :other paraméterben.",
     "in_array_keys" => "Az :attribute mezőnek a következő kulcsok közül legalább egyet tartalmaznia kell: :values.",
     "integer" => "A :attribútumnak egész számnak kell lennie.",
+    "ip" => "A(z) :attribútumnak érvényes IP-címnek kell lennie.",
+    "ipv4" => "A(z) :attribútumnak érvényes IPv4-címnek kell lennie.",
+    "ipv6" => "A(z) :attribútumnak érvényes IPv6-címnek kell lennie.",
     "json" => "A(z) :attribute tulajdonságnak érvényes JSON karakterláncnak kell lennie.",
     "list" => "Az :attribute mezőnek listának kell lennie.",
     "lowercase" => "Az :attribute mezőnek kisbetűsnek kell lennie.",
@@ -86,6 +95,7 @@ return [
         "numeric" => "A(z) :attribute értékének kisebbnek vagy egyenlőnek kell lennie, mint :value.",
         "string" => "A(z) :attribute karakterszámának kisebbnek vagy egyenlőnek kell lennie, mint :value karakter."
     ],
+    "mac_address" => "Az :attribute mezőnek érvényes MAC-címnek kell lennie.",
     "max" => [
         "array" => "Az :attribute nem tartalmazhat :max-nál több elemet.",
         "file" => "Az :attribute nem lehet nagyobb, mint :max kilobájt.",
@@ -93,8 +103,8 @@ return [
         "string" => "A(z) :attribute nem lehet hosszabb, mint :max karakter."
     ],
     "max_digits" => "Az :attribute mező nem tartalmazhat :max számjegynél többet.",
-    "mimes" => "A(z) :attribute tulajdonságnak egy :values típusú fájlnak kell lennie.",
-    "mimetypes" => "A(z) :attribute tulajdonságnak egy :values típusú fájlnak kell lennie.",
+    "mimes" => "A(z) :attribute tulajdonságnak egy :values ​​típusú fájlnak kell lennie.",
+    "mimetypes" => "A(z) :attribute tulajdonságnak egy :values ​​típusú fájlnak kell lennie.",
     "min" => [
         "array" => "A(z) :attribute tulajdonságnak legalább :min elemet kell tartalmaznia.",
         "file" => "A(z) :attribute tulajdonságnak legalább :min kilobájt méretűnek kell lennie.",
@@ -105,8 +115,8 @@ return [
     "missing" => "A(z) :attribute mezőnek hiányoznia kell.",
     "missing_if" => "A(z) :attribute mezőnek hiányoznia kell, ha a :other értéke :value.",
     "missing_unless" => "Az :attribute mezőnek hiányoznia kell, kivéve, ha az :other nem :value.",
-    "missing_with" => "A(z) :attribute mezőnek hiányoznia kell, ha a(z) :values jelen van.",
-    "missing_with_all" => "Az :attribute mezőnek hiányoznia kell, ha :values értékek vannak jelen.",
+    "missing_with" => "A(z) :attribute mezőnek hiányoznia kell, ha a(z) :values ​​jelen van.",
+    "missing_with_all" => "Az :attribute mezőnek hiányoznia kell, ha :values ​​értékek vannak jelen.",
     "multiple_of" => "Az :attribute mezőnek a :value többszörösének kell lennie.",
     "not_in" => "A kiválasztott :attribute érvénytelen.",
     "not_regex" => "A(z) :attribute formátuma érvénytelen.",
@@ -115,8 +125,8 @@ return [
     "present" => "A :attribute mezőnek jelen kell lennie.",
     "present_if" => "Az :attribute mezőnek jelen kell lennie, ha az :other értéke :value.",
     "present_unless" => "Az :attribute mezőnek jelen kell lennie, kivéve, ha az :other nem :value.",
-    "present_with" => "Az :attribute mezőnek jelen kell lennie, ha a :values is jelen van.",
-    "present_with_all" => "Az :attribute mezőnek jelen kell lennie, ha a :values értékek jelen vannak.",
+    "present_with" => "Az :attribute mezőnek jelen kell lennie, ha a :values ​​is jelen van.",
+    "present_with_all" => "Az :attribute mezőnek jelen kell lennie, ha a :values ​​értékek jelen vannak.",
     "prohibited" => "A :attribute mező használata tiltott.",
     "prohibited_if" => "Az :attribute mező használata tilos, ha az :other értéke :value.",
     "prohibited_if_accepted" => "Az :attribute mező tiltott, ha az :other elfogadott.",
@@ -130,10 +140,10 @@ return [
     "required_if_accepted" => "Az :attribute mező kitöltése kötelező, ha az :other elfogadott.",
     "required_if_declined" => "A :attribute mező kitöltése kötelező, ha a :other mezőt elutasítják.",
     "required_unless" => "Az :attribute mező kitöltése kötelező, kivéve, ha az :other szerepel a :values ​​változóban.",
-    "required_with" => "Az :attribute mező kitöltése kötelező, ha a :values jelen van.",
-    "required_with_all" => "Az :attribute mező kitöltése kötelező, ha :values értékek vannak jelen.",
-    "required_without" => "Az :attribute mező kitöltése kötelező, ha a :values nincs jelen.",
-    "required_without_all" => "Az :attribute mező kitöltése kötelező, ha a :values egyik értéke sem található meg.",
+    "required_with" => "Az :attribute mező kitöltése kötelező, ha a :values ​​jelen van.",
+    "required_with_all" => "Az :attribute mező kitöltése kötelező, ha :values ​​értékek vannak jelen.",
+    "required_without" => "Az :attribute mező kitöltése kötelező, ha a :values ​​nincs jelen.",
+    "required_without_all" => "Az :attribute mező kitöltése kötelező, ha a :values ​​egyik értéke sem található meg.",
     "same" => "A(z) :attribute és a(z) :other paramétereknek egyezniük kell.",
     "size" => [
         "array" => "Az :attribute tulajdonságnak :size elemeket kell tartalmaznia.",
@@ -148,5 +158,6 @@ return [
     "unique" => "A(z) :attribute már foglalt.",
     "uploaded" => "A(z) :attribute feltöltése sikertelen.",
     "uppercase" => "Az :attribute mezőnek nagybetűsnek kell lennie.",
-    "url" => "A(z) :attribute formátuma érvénytelen."
+    "url" => "A(z) :attribute formátuma érvénytelen.",
+    "uuid" => "A(z) :attribute tulajdonságnak érvényes UUID-nak kell lennie."
 ];
