@@ -6,6 +6,9 @@ use App\Models\AccountEntity;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+/**
+ * Response-based policy results are intentionally not used yet.
+ */
 class AccountEntityPolicy
 {
     use HandlesAuthorization;

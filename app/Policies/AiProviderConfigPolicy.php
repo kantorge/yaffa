@@ -6,6 +6,9 @@ use App\Models\AiProviderConfig;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+/**
+ * Response-based policy results are intentionally not used yet.
+ */
 class AiProviderConfigPolicy
 {
     use HandlesAuthorization;

@@ -6,6 +6,9 @@ use App\Models\GoogleDriveConfig;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+/**
+ * Response-based policy results are intentionally not used yet.
+ */
 class GoogleDriveConfigPolicy
 {
     use HandlesAuthorization;

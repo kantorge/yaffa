@@ -5,6 +5,9 @@ namespace App\Policies;
 use App\Models\AiDocument;
 use App\Models\User;
 
+/**
+ * Response-based policy results are intentionally not used yet.
+ */
 class AiDocumentPolicy
 {
     private function isOwnItem(User $user, AiDocument $aiDocument): bool
