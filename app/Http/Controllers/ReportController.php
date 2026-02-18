@@ -48,9 +48,9 @@ class ReportController extends Controller implements HasMiddleware
     public function budgetChart(Request $request): View
     {
         /**
-         * @get('/reports/budgetchart')
-         * @name('reports.budgetchart')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/reports/budgetchart")
+         * @name("reports.budgetchart")
+         * @middlewares("web", "auth", "verified")
          */
 
         return view('reports.budgetchart');
@@ -62,9 +62,9 @@ class ReportController extends Controller implements HasMiddleware
     public function transactionsByCriteria(Request $request): View
     {
         /**
-         * @get('/reports/transactions')
-         * @name('reports.transactions')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/reports/transactions")
+         * @name("reports.transactions")
+         * @middlewares("web", "auth", "verified")
          */
         return view('reports.transactions');
     }
@@ -72,9 +72,9 @@ class ReportController extends Controller implements HasMiddleware
     public function getSchedules(): View
     {
         /**
-         * @get('/reports/schedule')
-         * @name('report.schedules')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/reports/schedule")
+         * @name("report.schedules")
+         * @middlewares("web", "auth", "verified")
          */
         return view('reports.schedule');
     }
@@ -85,9 +85,9 @@ class ReportController extends Controller implements HasMiddleware
     public function investmentTimeline(Request $request): View
     {
         /**
-         * @get('/reports/investment-timeline')
-         * @name('reports.investment_timeline')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/reports/investment-timeline")
+         * @name("reports.investment_timeline")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Pass data for JavaScript in the view
