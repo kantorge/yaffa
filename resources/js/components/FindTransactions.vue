@@ -244,7 +244,7 @@
 </template>
 
 <script>
-  import { __, processTransaction, buildBreakdownCacheKey } from '../helpers';
+  import { __, processTransaction, buildFilterCacheKey, buildBreakdownCacheKey } from '../helpers';
   import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
@@ -367,13 +367,13 @@
       },
 
       getCacheKey() {
-        return JSON.stringify({
+        return buildFilterCacheKey({
           date_from: this.dateFrom,
           date_to: this.dateTo,
-          accounts: this.selectedAccounts.slice().sort(),
-          categories: this.selectedCategories.slice().sort(),
-          payees: this.selectedPayees.slice().sort(),
-          tags: this.selectedTags.slice().sort(),
+          accounts: this.selectedAccounts,
+          categories: this.selectedCategories,
+          payees: this.selectedPayees,
+          tags: this.selectedTags,
         });
       },
 
