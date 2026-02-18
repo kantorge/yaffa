@@ -311,7 +311,7 @@ export default {
       this.transactions.forEach((tx) => {
         if (!tx.date || !(tx.date instanceof Date)) return;
         // Skip transfers
-        if (tx.transaction_type_id === 3) return;
+        if (tx.transaction_type?.type === 'transfer') return;
         // Skip investment transactions
         if (tx.transaction_type?.type === 'investment') return;
 
