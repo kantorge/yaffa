@@ -1,0 +1,52 @@
+name: Composer Security Audit
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - 'composer.json'
+      - 'composer.lock'
+
+  workflow_dispatch:
+
+  schedule:
+    # Run daily at 00:00 UTC to check for new vulnerabilities
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    name: Check for Security Vulnerabilities
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, mysql
+        env:
+          fail-fast: true
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get composer cache directory
+        run: echo "COMPOSER_CACHE_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.COMPOSER_CACHE_DIR }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+
+      - name: Run Composer Audit (Fail on High/Critical)
+        run: composer audit --locked --format=table --ignore-severity=low --ignore-severity=medium
