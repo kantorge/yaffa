@@ -655,7 +655,7 @@ export default {
       params.append('tab', 'transaction-list');
       const returnUrl = new URL(window.location.href);
       returnUrl.searchParams.set('tab', 'monthly-breakdown');
-      params.append('return_to', returnUrl.href);
+      params.append('return_to', returnUrl.pathname + returnUrl.search);
 
       return `/reports/transactions?${params.toString()}`;
     },

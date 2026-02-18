@@ -282,7 +282,7 @@
         selectedCategories: this.getUrlParams('categories'),
         selectedPayees: this.getUrlParams('payees'),
         selectedTags: this.getUrlParams('tags'),
-        returnTo: urlParams.get('return_to') || null,
+        returnTo: this.sanitizeReturnTo(urlParams.get('return_to')),
         initialTab: urlParams.get('tab') || null,
         cachedDataPending: false,
         skippedTransactionLoad: false,
@@ -469,6 +469,13 @@
        * @param paramName
        * @returns {string[]} Array of URL parameters
        */
+      sanitizeReturnTo(value) {
+        if (!value) return null;
+        // Only allow relative paths starting with /
+        if (value.startsWith('/') && !value.startsWith('//')) return value;
+        return null;
+      },
+
       getUrlParams(paramName) {
         const urlParams = new URLSearchParams(window.location.search);
         const regex = new RegExp(`^${paramName}\\[(\\d)?\\]$`);
