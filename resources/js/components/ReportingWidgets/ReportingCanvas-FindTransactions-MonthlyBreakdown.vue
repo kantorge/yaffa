@@ -186,6 +186,10 @@
 import { __ as translator, toFormattedCurrency, buildBreakdownCacheKey } from '../../helpers';
 
 /** Rotating color palette for section headers */
+const DEVIATION_LEVEL_1 = 0.05;
+const DEVIATION_LEVEL_2 = 0.10;
+const DEVIATION_LEVEL_3 = 0.15;
+
 const SECTION_CSS_CLASSES = [
   's-section-0', 's-section-1', 's-section-2', 's-section-3',
   's-section-4', 's-section-5', 's-section-6', 's-section-7',
@@ -289,7 +293,7 @@ export default {
      * Skips transfers and investment transactions.
      * Uses cached data when available to avoid reprocessing.
      *
-     * @returns {Object<string, {values: Object<string, number>, categoryIds: Set<number>, isIncome: boolean, rawName: string}>}
+     * @returns {Object<string, {values: Object<string, number>, categoryIds: Set<number>, depositTotal: number, withdrawalTotal: number, rawName: string}>}
      */
     categoryData() {
       if (this.cachedCategoryData) {
@@ -322,7 +326,8 @@ export default {
               data[catName] = {
                 values: {},
                 categoryIds: new Set(),
-                isIncome: isDeposit,
+                depositTotal: 0,
+                withdrawalTotal: 0,
                 rawName: item.category.name || catName,
                 parentName,
                 parentId,
@@ -330,6 +335,11 @@ export default {
             }
 
             data[catName].categoryIds.add(catId);
+            if (isDeposit) {
+              data[catName].depositTotal += amount;
+            } else {
+              data[catName].withdrawalTotal += amount;
+            }
             if (!data[catName].values[month]) {
               data[catName].values[month] = 0;
             }
@@ -380,7 +390,7 @@ export default {
       const sections = [];
       sortedParents.forEach((parentName, idx) => {
         const group = processCategoryGroup(groups[parentName], catData, months, n);
-        const isIncome = groups[parentName].every((c) => catData[c].isIncome);
+        const isIncome = groups[parentName].every((c) => catData[c].depositTotal > catData[c].withdrawalTotal);
         sections.push({
           title: parentName,
           cssClass: SECTION_CSS_CLASSES[idx % SECTION_CSS_CLASSES.length],
@@ -392,7 +402,7 @@ export default {
       // Add "Other" section for parentless categories
       if (noParent.length > 0) {
         const group = processCategoryGroup(noParent, catData, months, n);
-        const isIncome = noParent.every((c) => catData[c].isIncome);
+        const isIncome = noParent.every((c) => catData[c].depositTotal > catData[c].withdrawalTotal);
         sections.push({
           title: 'Other expenses',
           cssClass: 's-other',
@@ -410,7 +420,7 @@ export default {
       const totals = {};
       this.months.forEach((m) => { totals[m] = 0; });
       Object.values(catData).forEach((entry) => {
-        if (!entry.isIncome) {
+        if (!(entry.depositTotal > entry.withdrawalTotal)) {
           this.months.forEach((m) => {
             totals[m] += entry.values[m] || 0;
           });
@@ -434,7 +444,7 @@ export default {
       const totals = {};
       this.months.forEach((m) => { totals[m] = 0; });
       Object.values(catData).forEach((entry) => {
-        if (entry.isIncome) {
+        if (entry.depositTotal > entry.withdrawalTotal) {
           this.months.forEach((m) => {
             totals[m] += entry.values[m] || 0;
           });
@@ -514,7 +524,8 @@ export default {
           serializable[key] = {
             values: catData[key].values,
             categoryIds: Array.from(catData[key].categoryIds),
-            isIncome: catData[key].isIncome,
+            depositTotal: catData[key].depositTotal,
+            withdrawalTotal: catData[key].withdrawalTotal,
             rawName: catData[key].rawName,
             parentName: catData[key].parentName,
             parentId: catData[key].parentId,
@@ -543,7 +554,8 @@ export default {
           restored[k] = {
             values: categoryData[k].values,
             categoryIds: new Set(categoryData[k].categoryIds),
-            isIncome: categoryData[k].isIncome,
+            depositTotal: categoryData[k].depositTotal,
+            withdrawalTotal: categoryData[k].withdrawalTotal,
             rawName: categoryData[k].rawName,
             parentName: categoryData[k].parentName,
             parentId: categoryData[k].parentId,
@@ -618,13 +630,13 @@ export default {
       const above = isIncome ? 'low' : 'high';
       const below = isIncome ? 'high' : 'low';
 
-      if (deviation > 0.15) return `bg-deviation-${above}-3`;
-      if (deviation > 0.10) return `bg-deviation-${above}-2`;
-      if (deviation > 0.05) return `bg-deviation-${above}-1`;
+      if (deviation > DEVIATION_LEVEL_3) return `bg-deviation-${above}-3`;
+      if (deviation > DEVIATION_LEVEL_2) return `bg-deviation-${above}-2`;
+      if (deviation > DEVIATION_LEVEL_1) return `bg-deviation-${above}-1`;
 
-      if (deviation < -0.15) return `bg-deviation-${below}-3`;
-      if (deviation < -0.10) return `bg-deviation-${below}-2`;
-      if (deviation < -0.05) return `bg-deviation-${below}-1`;
+      if (deviation < -DEVIATION_LEVEL_3) return `bg-deviation-${below}-3`;
+      if (deviation < -DEVIATION_LEVEL_2) return `bg-deviation-${below}-2`;
+      if (deviation < -DEVIATION_LEVEL_1) return `bg-deviation-${below}-1`;
 
       return '';
     },

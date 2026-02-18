@@ -412,14 +412,6 @@
         }
       },
 
-      clearTransactionCache() {
-        try {
-          sessionStorage.removeItem('yaffa_transactions_cache');
-        } catch (e) {
-          console.warn('Failed to clear transaction cache:', e);
-        }
-      },
-
       hasBreakdownCache() {
         try {
           const cached = sessionStorage.getItem('yaffa_breakdown_cache');
