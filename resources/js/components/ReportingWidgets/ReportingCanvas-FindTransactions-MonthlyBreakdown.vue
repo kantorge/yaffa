@@ -490,20 +490,7 @@ export default {
   watch: {
     transactions(newVal) {
       if (newVal && newVal.length > 0) {
-        // If breakdown cache is already loaded and matches, skip reprocessing
-        if (this.cachedCategoryData) {
-          const currentKey = buildBreakdownCacheKey();
-          try {
-            const cached = sessionStorage.getItem('yaffa_breakdown_cache');
-            if (cached) {
-              const { key } = JSON.parse(cached);
-              if (key === currentKey) return;
-            }
-          } catch (e) {
-            console.warn('Failed to check breakdown cache key:', e);
-          }
-        }
-        // Clear cached data so computed properties recalculate from fresh transactions
+        // Always re-calculate from fresh transactions to ensure data consistency
         this.cachedCategoryData = null;
         // Save aggregated results to sessionStorage after Vue recalculates
         this.$nextTick(() => {
