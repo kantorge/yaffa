@@ -190,6 +190,11 @@ const DEVIATION_LEVEL_1 = 0.05;
 const DEVIATION_LEVEL_2 = 0.10;
 const DEVIATION_LEVEL_3 = 0.15;
 
+/** Round to 2 decimal places with EPSILON correction for floating-point precision */
+function round2(num) {
+  return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+
 const SECTION_CSS_CLASSES = [
   's-section-0', 's-section-1', 's-section-2', 's-section-3',
   's-section-4', 's-section-5', 's-section-6', 's-section-7',
@@ -217,8 +222,8 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
       name: catName,
       displayName: entry.rawName || catName,
       values,
-      total: Math.round(total * 100) / 100,
-      avg: Math.round(avg * 100) / 100,
+      total: round2(total),
+      avg: round2(avg),
       nonZeroAvg,
       nonZeroCount,
       categoryIds: Array.from(entry.categoryIds),
@@ -232,8 +237,8 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
   months.forEach((m) => {
     subtotals[m] = rows.reduce((sum, r) => sum + (r.values[m] || 0), 0);
   });
-  const subtotalSum = Math.round(rows.reduce((sum, r) => sum + r.total, 0) * 100) / 100;
-  const subtotalAvg = Math.round((subtotalSum / monthCount) * 100) / 100;
+  const subtotalSum = round2(rows.reduce((sum, r) => sum + r.total, 0));
+  const subtotalAvg = round2(subtotalSum / monthCount);
   const allCategoryIds = rows.flatMap((r) => r.categoryIds);
 
   return { rows, subtotals, subtotalSum, subtotalAvg, allCategoryIds };
@@ -436,7 +441,7 @@ export default {
 
     totalExpensesAvg() {
       const n = this.months.length || 1;
-      return Math.round((this.totalExpensesSum / n) * 100) / 100;
+      return round2(this.totalExpensesSum / n);
     },
 
     /** @returns {Object<string, number>} Monthly total income amounts keyed by YYYY-MM */
@@ -460,7 +465,7 @@ export default {
 
     totalIncomeAvg() {
       const n = this.months.length || 1;
-      return Math.round((this.totalIncomeSum / n) * 100) / 100;
+      return round2(this.totalIncomeSum / n);
     },
 
     /** @returns {Object<string, number>} Monthly balance (income - expenses) keyed by YYYY-MM */
@@ -478,7 +483,7 @@ export default {
 
     balanceAvg() {
       const n = this.months.length || 1;
-      return Math.round((this.balanceSum / n) * 100) / 100;
+      return round2(this.balanceSum / n);
     },
   },
 
@@ -587,7 +592,7 @@ export default {
     formatAmount(value) {
       if (value === 0) return '—';
       return toFormattedCurrency(
-        Math.round(value * 100) / 100,
+        round2(value),
         this.locale,
         this.baseCurrency,
       );
@@ -605,7 +610,7 @@ export default {
         return ((value / monthTotal) * 100).toFixed(1) + '%';
       }
       return toFormattedCurrency(
-        Math.round(value * 100) / 100,
+        round2(value),
         this.locale,
         this.baseCurrency,
       );
