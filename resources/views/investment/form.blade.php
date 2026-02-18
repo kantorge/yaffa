@@ -235,7 +235,7 @@
                                     @endif
                                 @endif
                             >
-                                {{ $properties['name'] }}
+                                {{ $properties['displayName'] }}
                             </option>
                         @empty
 

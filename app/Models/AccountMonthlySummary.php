@@ -129,15 +129,17 @@ class AccountMonthlySummary extends Model
 
         // All associated investments should be in the same currency as the account, so no conversion is needed
         // Get the current value of all the investments
+        $investmentService = app(\App\Services\InvestmentService::class);
+
         return $investments->sum(
-            function ($item) use ($endOfMonth) {
+            function ($item) use ($endOfMonth, $investmentService) {
                 if ($item->quantity === 0 || $item->quantity === 0.0) {
                     return 0;
                 }
 
                 $investment = Investment::find($item->investment_id);
 
-                return $item->quantity * $investment->getLatestPrice('combined', $endOfMonth);
+                return $item->quantity * $investmentService->getLatestPrice($investment, 'combined', $endOfMonth);
             }
         );
     }

@@ -12,6 +12,7 @@ use App\Models\InvestmentGroup;
 use App\Models\Payee;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -65,7 +66,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle();
+        $job->handle($this->app->make(InvestmentService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([
@@ -93,7 +94,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle();
+        $job->handle($this->app->make(InvestmentService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([
@@ -195,7 +196,7 @@ class CalculateAccountMonthlySummaryTest extends TestCase
 
         // Run the job
         $job = new CalculateAccountMonthlySummary($user, 'account_balance-forecast', $account);
-        $job->handle();
+        $job->handle($this->app->make(InvestmentService::class));
 
         // Get the summary values from the database for the account and the data type
         $summaryRecords = AccountMonthlySummary::where([

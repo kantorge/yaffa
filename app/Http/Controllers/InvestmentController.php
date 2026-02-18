@@ -18,12 +18,9 @@ class InvestmentController extends Controller implements HasMiddleware
 {
     use ScheduleTrait;
 
-    protected InvestmentService $investmentService;
-
-    public function __construct()
-    {
-
-        $this->investmentService = new InvestmentService();
+    public function __construct(
+        protected InvestmentService $investmentService
+    ) {
     }
 
     public static function middleware(): array
@@ -61,8 +58,8 @@ class InvestmentController extends Controller implements HasMiddleware
             ->get();
 
         $investments->map(function ($investment) {
-            $investment['price'] = $investment->getLatestPrice();
-            $investment['quantity'] = $investment->getCurrentQuantity();
+            $investment['price'] = $this->investmentService->getLatestPrice($investment);
+            $investment['quantity'] = $this->investmentService->getCurrentQuantity($investment);
 
             return $investment;
         });
@@ -208,11 +205,10 @@ class InvestmentController extends Controller implements HasMiddleware
         ]);
 
         // Add current quantity and price as dynamic properties for use in the view or JS
-        $investment->current_quantity = $investment->getCurrentQuantity();
-        $investment->latest_price = $investment->getLatestPrice();
+        $investment->current_quantity = $this->investmentService->getCurrentQuantity($investment);
+        $investment->latest_price = $this->investmentService->getLatestPrice($investment);
 
-        $investmentService = new InvestmentService();
-        $investment = $investmentService->enrichInvestmentWithQuantityHistory($investment);
+        $investment = $this->investmentService->enrichInvestmentWithQuantityHistory($investment);
 
         // Get basic (non-scheduled) transactions
         $transactions = $investment->transactionsBasic()

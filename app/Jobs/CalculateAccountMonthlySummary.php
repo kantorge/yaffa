@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use App\Models\TransactionDetailStandard;
 use App\Models\User;
+use App\Services\InvestmentService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Batchable;
@@ -35,6 +36,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     private string $task;
     private ?Carbon $dateFrom;
     private ?Carbon $dateTo;
+    private InvestmentService $investmentService;
 
     public int $timeout = 240;
 
@@ -59,8 +61,10 @@ class CalculateAccountMonthlySummary implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(InvestmentService $investmentService): void
     {
+        $this->investmentService = $investmentService;
+
         switch ($this->task) {
             case 'account_balance-fact':
                 $this->handleAccountBalanceFact();
@@ -481,8 +485,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
             $amount = $quantities->map(function ($quantity, $investmentId) use ($carbonEndOfMonth) {
                 // Get the latest known price up to this date
-                $latestPrice = Investment::find($investmentId)
-                    ->getLatestPrice('combined', $carbonEndOfMonth);
+                $investment = Investment::find($investmentId);
+                $latestPrice = $this->investmentService->getLatestPrice($investment, 'combined', $carbonEndOfMonth);
 
                 return $quantity * $latestPrice;
             })
