@@ -316,7 +316,7 @@ export default {
         if (tx.transaction_type?.type === 'investment') return;
 
         const month = tx.date.getFullYear() + '-' + String(tx.date.getMonth() + 1).padStart(2, '0');
-        const isDeposit = tx.transaction_type_id === 2;
+        const isDeposit = tx.transaction_type?.type === 'deposit';
 
         if (tx.transaction_items) {
           tx.transaction_items.forEach((item) => {
