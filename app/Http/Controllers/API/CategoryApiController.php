@@ -180,7 +180,7 @@ class CategoryApiController extends Controller implements HasMiddleware
 
         $category = $request->user()->categories()->create($request->validated());
 
-        return response()->json($category, Response::HTTP_CREATED);
+        return response()->json($category->fresh(), Response::HTTP_CREATED);
     }
 
     public function updateActive(Category $category, $active): JsonResponse
