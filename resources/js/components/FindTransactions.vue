@@ -560,23 +560,23 @@
       dataTableHelpers.initializeQuickViewButton(this.$refs.dataTable);
 
       // Lazily populate DataTable when transaction list tab is shown
+      this._onTransactionListTab = () => this.populateDataTable();
+      this._onOtherTab = () => {
+        if (this.skippedTransactionLoad && this.transactions.length === 0) {
+          this.skippedTransactionLoad = false;
+          this.getTransactions();
+        }
+      };
+
       const transactionListTab = document.getElementById('nav-transaction-list');
       if (transactionListTab) {
-        transactionListTab.addEventListener('shown.coreui.tab', () => {
-          this.populateDataTable();
-        });
+        transactionListTab.addEventListener('shown.coreui.tab', this._onTransactionListTab);
       }
 
       // Lazily load transactions when switching away from monthly-breakdown
-      // (covers the case where breakdown cache allowed skipping transaction load)
-      const otherTabs = document.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
-      otherTabs.forEach((tab) => {
-        tab.addEventListener('shown.coreui.tab', () => {
-          if (this.skippedTransactionLoad && this.transactions.length === 0) {
-            this.skippedTransactionLoad = false;
-            this.getTransactions();
-          }
-        });
+      this._otherTabs = document.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
+      this._otherTabs.forEach((tab) => {
+        tab.addEventListener('shown.coreui.tab', this._onOtherTab);
       });
 
       // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
@@ -590,6 +590,18 @@
       }
 
       this.ready = true;
+    },
+
+    beforeUnmount() {
+      const transactionListTab = document.getElementById('nav-transaction-list');
+      if (transactionListTab) {
+        transactionListTab.removeEventListener('shown.coreui.tab', this._onTransactionListTab);
+      }
+      if (this._otherTabs) {
+        this._otherTabs.forEach((tab) => {
+          tab.removeEventListener('shown.coreui.tab', this._onOtherTab);
+        });
+      }
     },
   };
 </script>
