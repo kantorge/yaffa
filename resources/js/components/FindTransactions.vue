@@ -568,13 +568,13 @@
         }
       };
 
-      const transactionListTab = document.getElementById('nav-transaction-list');
+      const transactionListTab = this.$el.querySelector('#nav-transaction-list');
       if (transactionListTab) {
         transactionListTab.addEventListener('shown.coreui.tab', this._onTransactionListTab);
       }
 
       // Lazily load transactions when switching away from monthly-breakdown
-      this._otherTabs = document.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
+      this._otherTabs = this.$el.querySelectorAll('[data-coreui-toggle="tab"]:not([data-coreui-target="#tab-monthly-breakdown"])');
       this._otherTabs.forEach((tab) => {
         tab.addEventListener('shown.coreui.tab', this._onOtherTab);
       });
@@ -582,7 +582,7 @@
       // Auto-switch to requested tab (e.g. from monthly breakdown drill-down)
       if (this.initialTab) {
         this.$nextTick(() => {
-          const tabButton = document.getElementById('nav-' + this.initialTab);
+          const tabButton = this.$el.querySelector('#nav-' + this.initialTab);
           if (tabButton) {
             tabButton.click();
           }
@@ -593,7 +593,7 @@
     },
 
     beforeUnmount() {
-      const transactionListTab = document.getElementById('nav-transaction-list');
+      const transactionListTab = this.$el.querySelector('#nav-transaction-list');
       if (transactionListTab) {
         transactionListTab.removeEventListener('shown.coreui.tab', this._onTransactionListTab);
       }
