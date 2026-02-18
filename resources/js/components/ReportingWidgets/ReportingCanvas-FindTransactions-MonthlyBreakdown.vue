@@ -312,7 +312,7 @@ export default {
         if (tx.transaction_items) {
           tx.transaction_items.forEach((item) => {
             if (!item.category) return;
-            const catName = item.category.full_name || item.category.name || 'Uncategorized';
+            const catName = item.category.full_name || item.category.name || this.__('No category assigned');
             const catId = item.category.id;
             const amount = Math.abs(item.amount_in_base || item.amount || 0);
             const parentName = item.category.parent?.name || null;
