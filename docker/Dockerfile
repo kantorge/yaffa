@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git curl libxml2-dev zlib1g-dev libonig-dev \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo pdo_mysql mbstring zip xml gd
 
