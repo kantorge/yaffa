@@ -70,7 +70,16 @@ class CategoryRequest extends FormRequest
                 return;
             }
 
+            $allCategories = Category::query()
+                ->where('user_id', $this->user()->id)
+                ->get(['id', 'parent_id'])
+                ->keyBy('id');
+
             $visited = [];
+            if ($currentCategoryId) {
+                $visited[(int) $currentCategoryId] = true;
+            }
+
             $nextParentId = (int) $parentId;
             while ($nextParentId > 0) {
                 if (isset($visited[$nextParentId])) {
@@ -80,16 +89,8 @@ class CategoryRequest extends FormRequest
                 }
                 $visited[$nextParentId] = true;
 
-                if ($currentCategoryId && $nextParentId === (int) $currentCategoryId) {
-                    $validator->errors()->add('parent_id', __('Invalid category hierarchy: parent loop detected.'));
-
-                    return;
-                }
-
-                $nextParentId = (int) (Category::query()
-                    ->where('user_id', $this->user()->id)
-                    ->whereKey($nextParentId)
-                    ->value('parent_id') ?? 0);
+                $nextParent = $allCategories->get($nextParentId);
+                $nextParentId = (int) ($nextParent->parent_id ?? 0);
             }
         });
     }

@@ -26,12 +26,7 @@ class FixCategoryParentLoops extends Command
         $this->warn(sprintf('Found %d self-referencing categories.', $affected->count()));
         $this->table(
             ['id', 'user_id', 'name', 'parent_id'],
-            $affected->map(fn (Category $category) => [
-                $category->id,
-                $category->user_id,
-                $category->name,
-                $category->parent_id,
-            ])->all()
+            $affected->toArray()
         );
 
         if ($this->option('dry-run')) {
