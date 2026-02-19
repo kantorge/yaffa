@@ -20,8 +20,9 @@ class AiDocumentController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\AiDocument', only: ['index']),
+            'auth',
+            'verified',
+            new Middleware('can:viewAny,' . AiDocument::class, only: ['index']),
             new Middleware('can:view,aiDocument', only: ['show', 'file']),
         ];
     }
@@ -32,9 +33,9 @@ class AiDocumentController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/ai-documents')
-         * @name('ai-documents.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AiDocument')
+         * @get("/ai-documents")
+         * @name("ai-documents.index")
+         * @middlewares("web", "auth", "verified")
          */
         $documents = $request->user()
             ->aiDocuments()
@@ -64,9 +65,9 @@ class AiDocumentController extends Controller implements HasMiddleware
     public function show(AiDocument $aiDocument): View
     {
         /**
-         * @get('/ai-documents/{aiDocument}')
-         * @name('ai-documents.show')
-         * @middlewares('web', 'auth', 'verified', 'can:view,aiDocument')
+         * @get("/ai-documents/{aiDocument}")
+         * @name("ai-documents.show")
+         * @middlewares("web", "auth", "verified")
          */
         $aiDocument->load(['files', 'receivedMail', 'transaction']);
 
@@ -132,10 +133,11 @@ class AiDocumentController extends Controller implements HasMiddleware
     public function file(Request $request, AiDocument $aiDocument, AiDocumentFile $aiDocumentFile): SymfonyResponse
     {
         /**
-         * @get('/ai-documents/{aiDocument}/files/{aiDocumentFile}')
-         * @name('ai-documents.files.show')
-         * @middlewares('web', 'auth', 'verified', 'can:view,aiDocument')
+         * @get("/ai-documents/{aiDocument}/files/{aiDocumentFile}")
+         * @name("ai-documents.files.show")
+         * @middlewares("web", "auth", "verified")
          */
+        $this->authorize('view', $aiDocument);
         if ($aiDocumentFile->ai_document_id !== $aiDocument->id) {
             abort(Response::HTTP_NOT_FOUND);
         }

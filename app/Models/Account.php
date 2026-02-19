@@ -53,6 +53,8 @@ use Illuminate\Support\Facades\DB;
  * @method static Builder|Account whereId($value)
  * @method static Builder|Account whereOpeningBalance($value)
  * @mixin Eloquent
+ * @method static Builder<static>|Account whereDefaultDateRange($value)
+ * @mixin \Eloquent
  */
 class Account extends Model
 {

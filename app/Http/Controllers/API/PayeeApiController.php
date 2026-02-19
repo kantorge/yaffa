@@ -23,15 +23,16 @@ class PayeeApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/payee')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         if ($request->get('q')) {
             $payees = $request->user()
@@ -96,7 +97,6 @@ class PayeeApiController extends Controller implements HasMiddleware
                 ->groupBy("account_entities.id")
                 ->orderByRaw('count(*) DESC')
                 ->limit(10)
-                ->get()
                 ->pluck('id');
 
             // Hydrate models
@@ -112,8 +112,8 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getPayeeDefaultSuggestion(Request $request): Response
     {
         /**
-         * @get('/api/assets/get_default_category_suggestion')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/get_default_category_suggestion")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $baseQueryFrom = DB::table('transaction_items')
             ->join(
@@ -249,12 +249,16 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function acceptPayeeDefaultCategorySuggestion(AccountEntity $accountEntity, Category $category): Response
     {
         /**
-         * @get('/api/assets/accept_default_category_suggestion/{accountEntity}/{category}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/accept_default_category_suggestion/{accountEntity}/{category}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
+        if (! $accountEntity->config instanceof Payee) {
+            return response()->noContent(Response::HTTP_BAD_REQUEST);
+        }
+
         $accountEntity->config->category_id = $category->id;
         $accountEntity->config->save();
 
@@ -267,12 +271,16 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function dismissPayeeDefaultCategorySuggestion(AccountEntity $accountEntity): Response
     {
         /**
-         * @get('/api/assets/dismiss_default_category_suggestion/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/dismiss_default_category_suggestion/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $accountEntity);
 
         $accountEntity->load(['config']);
+        if (! $accountEntity->config instanceof Payee) {
+            return response()->noContent(Response::HTTP_BAD_REQUEST);
+        }
+
         $accountEntity->config->category_suggestion_dismissed = Carbon::now();
         $accountEntity->config->save();
 
@@ -282,9 +290,9 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function storePayee(AccountEntityRequest $request)
     {
         /**
-         * @post('/api/assets/payee')
-         * @name('api.payee.store')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/assets/payee")
+         * @name("api.payee.store")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('create', AccountEntity::class);
 
@@ -308,9 +316,9 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getSimilarPayees(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/payee/similar')
-         * @name('api.payee.similar')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee/similar")
+         * @name("api.payee.similar")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $query = Str::lower($request->get('query'));
         $withActive = $request->get('withActive');
@@ -324,9 +332,13 @@ class PayeeApiController extends Controller implements HasMiddleware
         // Filter payees by similarity to query
         $payees = $payees->map(function ($payee) use ($query) {
             similar_text($query, Str::lower($payee->name), $percentage);
-            $payee->percentage = $percentage;
 
-            return $payee;
+            return [
+                'id' => $payee->id,
+                'name' => $payee->name,
+                'active' => $payee->active,
+                'percentage' => $percentage,
+            ];
         })
             ->sortByDesc('percentage')
             ->take(5)
@@ -346,8 +358,8 @@ class PayeeApiController extends Controller implements HasMiddleware
     public function getItem(AccountEntity $accountEntity): JsonResponse
     {
         /**
-         * @get('/api/assets/payee/{accountEntity}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/assets/payee/{accountEntity}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $accountEntity);
 

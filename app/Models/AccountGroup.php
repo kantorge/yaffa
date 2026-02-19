@@ -29,6 +29,9 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|AccountGroup whereUserId($value)
  * @mixin Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AccountEntity> $accountEntities
+ * @property-read int|null $account_entities_count
+ * @mixin \Eloquent
  */
 class AccountGroup extends Model
 {

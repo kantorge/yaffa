@@ -15,6 +15,24 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $subject
  * @property string $html
  * @property string $text
+ * @property string $message_id
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read AiDocument|null $aiDocument
+ * @property-read User $user
+ * @method static \Database\Factories\ReceivedMailFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereHtml($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereMessageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReceivedMail whereUserId($value)
  * @mixin Eloquent
  */
 class ReceivedMail extends Model

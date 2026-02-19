@@ -80,6 +80,19 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder|User whereStartDate($value)
  * @method static Builder|User whereUpdatedAt($value)
  * @mixin Eloquent
+ * @property-read Collection<int, AiDocument> $aiDocuments
+ * @property-read int|null $ai_documents_count
+ * @property-read Collection<int, AiProviderConfig> $aiProviderConfigs
+ * @property-read int|null $ai_provider_configs_count
+ * @property-read Collection<int, CategoryLearning> $categoryLearning
+ * @property-read int|null $category_learning_count
+ * @property-read Collection<int, GoogleDriveConfig> $googleDriveConfigs
+ * @property-read int|null $google_drive_configs_count
+ * @property-read Collection<int, ReceivedMail> $receivedMails
+ * @property-read int|null $received_mails_count
+ * @property-read Collection<int, Tag> $tags
+ * @method static Builder<static>|User whereAccountDetailsDateRange($value)
+ * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail, Onboardable
 {
@@ -134,11 +147,17 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(AccountGroup::class);
     }
 
+    /**
+     * @return HasMany<AccountEntity>
+     */
     public function accounts(): HasMany
     {
         return $this->hasMany(AccountEntity::class)->accounts();
     }
 
+    /**
+     * @return HasMany<Category>
+     */
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
@@ -166,6 +185,9 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(Investment::class);
     }
 
+    /**
+     * @return HasMany<AccountEntity>
+     */
     public function payees(): HasMany
     {
         return $this->hasMany(AccountEntity::class)->payees();
@@ -196,11 +218,17 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
         return $this->hasMany(AiDocument::class);
     }
 
+    /**
+     * @return HasMany<AiProviderConfig>
+     */
     public function aiProviderConfigs(): HasMany
     {
         return $this->hasMany(AiProviderConfig::class);
     }
 
+    /**
+     * @return HasMany<GoogleDriveConfig>
+     */
     public function googleDriveConfigs(): HasMany
     {
         return $this->hasMany(GoogleDriveConfig::class);

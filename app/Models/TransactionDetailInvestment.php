@@ -42,6 +42,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
  * @mixin Eloquent
+ * @property int $account_id
+ * @property-read Transaction|null $transaction
+ * @mixin \Eloquent
  */
 class TransactionDetailInvestment extends Model
 {

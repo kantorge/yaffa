@@ -26,10 +26,11 @@ class InvestmentController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\Investment', only: ['index']),
+            'auth',
+            'verified',
+            new Middleware('can:viewAny,' . Investment::class, only: ['index']),
             new Middleware('can:view,investment', only: ['show']),
-            new Middleware('can:create,App\Models\Investment', only: ['create', 'store']),
+            new Middleware('can:create,' . Investment::class, only: ['create', 'store']),
             new Middleware('can:update,investment', only: ['edit', 'update']),
             new Middleware('can:delete,investment', only: ['destroy']),
         ];
@@ -41,9 +42,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/investment')
-         * @name('investment.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\Investment')
+         * @get("/investment")
+         * @name("investment.index")
+         * @middlewares("web", "auth", "verified")
          */
         // Show all investments from the database and return to view
         $investments = $request->user()
@@ -79,9 +80,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function edit(Investment $investment): View
     {
         /**
-         * @get('/investment/{investment}/edit')
-         * @name('investment.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,investment')
+         * @get("/investment/{investment}/edit")
+         * @name("investment.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return view(
             'investment.form',
@@ -94,9 +95,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function update(InvestmentRequest $request, Investment $investment): RedirectResponse
     {
         /**
-         * @uri('/investment/{investment}')
-         * @name('investment.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,investment')
+         * @uri("/investment/{investment}")
+         * @name("investment.update")
+         * @middlewares("web", "auth", "verified")
          */
         // Retrieve the validated input data
         $validated = $request->validated();
@@ -116,9 +117,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function create(Request $request): View|RedirectResponse
     {
         /**
-         * @get('/investment/create')
-         * @name('investment.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
+         * @get("/investment/create")
+         * @name("investment.create")
+         * @middlewares("web", "auth", "verified")
          */
         // Redirect the user to the investment group form, if no investment groups are available
         if ($request->user()->investmentGroups()->count() === 0) {
@@ -150,9 +151,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function store(InvestmentRequest $request): RedirectResponse
     {
         /**
-         * @post('/investment')
-         * @name('investment.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\Investment')
+         * @post("/investment")
+         * @name("investment.store")
+         * @middlewares("web", "auth", "verified")
          */
         $investment = Investment::make($request->validated());
         $investment->user()->associate($request->user());
@@ -169,9 +170,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function destroy(Investment $investment): RedirectResponse
     {
         /**
-         * @delete('/investment/{investment}')
-         * @name('investment.destroy')
-         * @middlewares('web', 'auth', 'verified', 'can:delete,investment')
+         * @delete("/investment/{investment}")
+         * @name("investment.destroy")
+         * @middlewares("web", "auth", "verified")
          */
 
         $result = $this->investmentService->delete($investment);
@@ -188,9 +189,9 @@ class InvestmentController extends Controller implements HasMiddleware
     public function show(Investment $investment): View
     {
         /**
-         * @get('/investment/{investment}')
-         * @name('investment.show')
-         * @middlewares('web', 'auth', 'verified', 'can:view,investment')
+         * @get("/investment/{investment}")
+         * @name("investment.show")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Get all stored price points

@@ -24,12 +24,11 @@ class AccountEntityController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
-            new Middleware('can:viewAny,App\Models\AccountEntity', only: ['index']),
+            'auth',
+            'verified',
             new Middleware('can:view,account_entity', only: ['show']),
-            new Middleware('can:create,App\Models\AccountEntity', only: ['create', 'store']),
+            new Middleware('can:create,' . AccountEntity::class, only: ['create', 'store']),
             new Middleware('can:update,account_entity', only: ['edit', 'update']),
-            new Middleware('can:delete,account_entity', only: ['destroy']),
         ];
     }
 
@@ -99,9 +98,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function index(Request $request): View
     {
         /**
-         * @get('/account-entity')
-         * @name('account-entity.index')
-         * @middlewares('web', 'auth', 'verified', 'can:viewAny,App\Models\AccountEntity')
+         * @get("/account-entity")
+         * @name("account-entity.index")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -166,9 +165,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function create(Request $request): View|RedirectResponse
     {
         /**
-         * @get('/account-entity/create')
-         * @name('account-entity.create')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
+         * @get("/account-entity/create")
+         * @name("account-entity.create")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -219,9 +218,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function store(AccountEntityRequest $request): RedirectResponse
     {
         /**
-         * @post('/account-entity')
-         * @name('account-entity.store')
-         * @middlewares('web', 'auth', 'verified', 'can:create,App\Models\AccountEntity')
+         * @post("/account-entity")
+         * @name("account-entity.store")
+         * @middlewares("web", "auth", "verified")
          */
         $this->checkTypeParam($request);
 
@@ -289,9 +288,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function edit(AccountEntity $accountEntity): View
     {
         /**
-         * @get('/account-entity/{account_entity}/edit')
-         * @name('account-entity.edit')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
+         * @get("/account-entity/{account_entity}/edit")
+         * @name("account-entity.edit")
+         * @middlewares("web", "auth", "verified")
          */
         return $this->{'edit' . Str::ucfirst($accountEntity->config_type)}($accountEntity);
     }
@@ -344,10 +343,10 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function update(AccountEntityRequest $request, AccountEntity $accountEntity): RedirectResponse
     {
         /**
-         * @method('PUT', PATCH')
-         * @uri('/account-entity/{account_entity}')
-         * @name('account-entity.update')
-         * @middlewares('web', 'auth', 'verified', 'can:update,account_entity')
+         * @methods("PUT", "PATCH")
+         * @uri("/account-entity/{account_entity}")
+         * @name("account-entity.update")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 
@@ -403,9 +402,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function mergePayeesForm(?AccountEntity $payeeSource): View
     {
         /**
-         * @get('/payees/merge/{payeeSource?}')
-         * @name('payees.merge.form')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/payees/merge/{payeeSource?}")
+         * @name("payees.merge.form")
+         * @middlewares("web", "auth", "verified")
          */
         if ($payeeSource) {
             JavaScriptFacade::put([
@@ -422,9 +421,9 @@ class AccountEntityController extends Controller implements HasMiddleware
     public function mergePayees(MergePayeesRequest $request): RedirectResponse
     {
         /**
-         * @post('/payees/merge')
-         * @name('payees.merge.submit')
-         * @middlewares('web', 'auth', 'verified')
+         * @post("/payees/merge")
+         * @name("payees.merge.submit")
+         * @middlewares("web", "auth", "verified")
          */
         $validated = $request->validated();
 

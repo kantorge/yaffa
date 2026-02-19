@@ -16,7 +16,8 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -30,7 +31,7 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
         $user = $request->user();
 
         // Ensure payee belongs to user
-        if ($payee->user_id !== $user->id) {
+        if ($payee->config?->user_id !== $user->id) {
             return response()->json([
                 'error' => __('Payee not found'),
             ], Response::HTTP_NOT_FOUND);
@@ -63,7 +64,7 @@ class PayeeStatsApiController extends Controller implements HasMiddleware
 
         return response()->json([
             'payee_id' => $payee->id,
-            'payee_name' => $payee->name,
+            'payee_name' => $payee->config?->name,
             'categories' => $categories,
             'period_months' => 6,
         ], Response::HTTP_OK);

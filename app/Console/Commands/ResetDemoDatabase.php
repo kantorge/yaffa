@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionItem;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
@@ -264,8 +266,13 @@ class ResetDemoDatabase extends Command
             ->with(['config', 'transactionItems'])
             ->first();
 
-        if (! $transaction || ! $transaction->config || $transaction->transactionItems->isEmpty()) {
+        if (! $transaction || $transaction->transactionItems->isEmpty()) {
             $this->warn('Skipping AI document duplicate scenario - no suitable transaction found');
+            return;
+        }
+
+        if (! $transaction->config instanceof TransactionDetailStandard) {
+            $this->warn('Skipping AI document duplicate scenario - unsupported transaction config');
             return;
         }
 
@@ -284,6 +291,7 @@ class ResetDemoDatabase extends Command
             'account_to_id' => $transaction->config->account_to_id,
         ];
 
+        /** @var TransactionItem|null $firstItem */
         $firstItem = $transaction->transactionItems->first();
 
         $processedData = [

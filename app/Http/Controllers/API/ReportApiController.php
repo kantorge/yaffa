@@ -34,7 +34,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -44,8 +45,8 @@ class ReportApiController extends Controller implements HasMiddleware
     public function budgetChart(Request $request): JsonResponse
     {
         /**
-         * @get('/api/budgetchart')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/budgetchart")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get list of requested categories
@@ -240,8 +241,8 @@ class ReportApiController extends Controller implements HasMiddleware
         int|null $month = null
     ): JsonResponse {
         /**
-         * @get('/api/reports/waterfall/{type}/{year}/{month?}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/reports/waterfall/{type}/{year}/{month?}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Get monthly average currency rate for all currencies against base currency

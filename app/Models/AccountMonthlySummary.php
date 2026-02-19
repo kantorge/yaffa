@@ -14,6 +14,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
 /**
+ * @property int $id
+ * @property \Illuminate\Support\Carbon $date
+ * @property int $user_id
+ * @property int|null $account_entity_id
+ * @property string $transaction_type
+ * @property string $data_type
+ * @property float $amount
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read AccountEntity|null $accountEntity
+ * @property-read User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereAccountEntityId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereDataType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereTransactionType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AccountMonthlySummary whereUserId($value)
  * @mixin Eloquent
  */
 class AccountMonthlySummary extends Model

@@ -98,31 +98,31 @@ class CalculateAccountMonthlySummaries extends Command
             );
 
             // Now we need to dispatch the jobs prepared above
-            if (array_key_exists('account_balance-fact', $jobs)) {
+            if (! empty($jobs['account_balance-fact'] ?? [])) {
                 Bus::batch($jobs['account_balance-fact'])
                     ->name('CalculateAccountMonthlySummariesJob-account_balance-fact-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('investment_value-fact', $jobs)) {
+            if (! empty($jobs['investment_value-fact'] ?? [])) {
                 Bus::batch($jobs['investment_value-fact'])
                     ->name('CalculateAccountMonthlySummariesJob-investment_value-fact-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('account_balance-forecast', $jobs)) {
+            if (! empty($jobs['account_balance-forecast'] ?? [])) {
                 Bus::batch($jobs['account_balance-forecast'])
                     ->name('CalculateAccountMonthlySummariesJob-account_balance-forecast-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('investment_value-forecast', $jobs)) {
+            if (! empty($jobs['investment_value-forecast'] ?? [])) {
                 Bus::batch($jobs['investment_value-forecast'])
                     ->name('CalculateAccountMonthlySummariesJob-investment_value-forecast-' . $user->id)
                     ->dispatch();
             }
 
-            if (array_key_exists('account_balance-budget', $jobs)) {
+            if (! empty($jobs['account_balance-budget'] ?? [])) {
                 Bus::batch($jobs['account_balance-budget'])
                     ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
                     ->dispatch();
@@ -135,7 +135,7 @@ class CalculateAccountMonthlySummaries extends Command
      */
     public function handleSpecifiedAccountEntity(int $accountEntityId): void
     {
-        /** @var AccountEntity $accountEntity */
+        /** @var AccountEntity|null $accountEntity */
         $accountEntity = AccountEntity::find($accountEntityId);
 
         if ($accountEntity === null) {

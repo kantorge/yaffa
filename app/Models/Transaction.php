@@ -38,7 +38,7 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property int|null $currency_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read Model|Eloquent $config
+ * @property-read TransactionDetailInvestment|TransactionDetailStandard|Model|Eloquent|null $config
  * @property-read \Illuminate\Database\Eloquent\Collection|TransactionItem[] $transactionItems
  * @property-read int|null $transaction_items_count
  * @property-read TransactionSchedule|null $transactionSchedule
@@ -60,6 +60,17 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @method static Builder|Transaction whereTransactionType($value)
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
+ * @property int|null $ai_document_id
+ * @property float|null $cashflow_value
+ * @property float|null $currencyRateToBase
+ * @property float|null $sum
+ * @property-read AiDocument|null $aiDocument
+ * @property-read Currency|null $currency
+ * @property-read Currency|null $transaction_currency
+ * @property-read User $user
+ * @method static Builder<static>|Transaction whereAiDocumentId($value)
+ * @method static Builder<static>|Transaction whereCashflowValue($value)
+ * @method static Builder<static>|Transaction whereCurrencyId($value)
  * @mixin Eloquent
  */
 class Transaction extends Model

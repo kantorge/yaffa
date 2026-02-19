@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GoogleDriveConfigRequest;
 use App\Jobs\ProcessGoogleDriveConfigJob;
 use App\Models\GoogleDriveConfig;
+use App\Models\User;
 use App\Services\GoogleDriveService;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -26,7 +27,8 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -36,6 +38,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     public function show(Request $request): JsonResponse
     {
         // For MVP, we assume one config per user
+        /** @var User $user */
         $user = $request->user();
         $config = $user->googleDriveConfigs()->first();
 
@@ -71,6 +74,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('create', GoogleDriveConfig::class);
 
+        /** @var User $user */
         $user = $request->user();
 
         // Delete existing config if present (enforce one per user for MVP)
@@ -163,6 +167,7 @@ class GoogleDriveConfigApiController extends Controller implements HasMiddleware
 
         // If the service account JSON is indicated as existing, fetch the stored JSON
         if (($validated['service_account_json'] ?? null) === '__existing__') {
+            /** @var User $user */
             $user = $request->user();
             $existingConfig = $user->googleDriveConfigs()->first();
             if (! $existingConfig) {

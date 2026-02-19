@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiProviderConfigRequest;
 use App\Models\AiProviderConfig;
+use App\Models\User;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,8 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -30,6 +32,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     public function show(Request $request): JsonResponse
     {
         // For MVP, we assume one config per user
+        /** @var User $user */
         $user = $request->user();
         $config = $user->aiProviderConfigs()->first();
 
@@ -61,6 +64,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     {
         Gate::authorize('create', AiProviderConfig::class);
 
+        /** @var User $user */
         $user = $request->user();
 
         // Delete existing config(s) if present (enforce one per user)
@@ -127,9 +131,9 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
     public function destroy(AiProviderConfig $aiProviderConfig): JsonResponse
     {
         /**
-         * @delete('/api/ai/config/{config}')
-         * @name('api.ai.config.destroy')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @delete("/api/ai/config/{config}")
+         * @name("api.ai.config.destroy")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('delete', $aiProviderConfig);
 
@@ -148,6 +152,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         // If the API key is indicated as existing, fetch the stored key
         if ($validated['api_key'] === '__existing__') {
+            /** @var User $user */
             $user = $request->user();
             $existingConfig = $user->aiProviderConfigs()->first();
             if (!$existingConfig) {

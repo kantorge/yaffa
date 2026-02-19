@@ -28,14 +28,15 @@ class CategoryApiController extends Controller implements HasMiddleware
     {
         return [
             'auth:sanctum',
+            'verified',
         ];
     }
 
     public function getList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/category')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/assets/category")
+         * @middlewares("api", "auth:sanctum")
          */
         $user = $request->user();
 
@@ -59,11 +60,10 @@ class CategoryApiController extends Controller implements HasMiddleware
                 ->filter(fn ($category) => mb_stripos($category->full_name, $query) !== false)
                 ->sortBy('full_name')
                 ->take(10)
-                ->map(function ($category) {
-                    $category->text = $category->full_name;
-
-                    return $category->only(['id', 'text']);
-                })
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'text' => $category->full_name,
+                ])
                 ->values();
         } elseif ($query === '*') {
             $categories = $user->categories()
@@ -73,11 +73,10 @@ class CategoryApiController extends Controller implements HasMiddleware
                 })
                 ->get()
                 ->sortBy('full_name')
-                ->map(function ($category) {
-                    $category->text = $category->full_name;
-
-                    return $category->only(['id', 'text']);
-                })
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'text' => $category->full_name,
+                ])
                 ->values();
         } else {
             $results = DB::table('transaction_items')
@@ -120,11 +119,10 @@ class CategoryApiController extends Controller implements HasMiddleware
 
             $categories = Category::with('parent')->findMany($results)
                 ->sortBy(fn ($category) => array_search($category->getKey(), $results))
-                ->map(function ($category) {
-                    $category->text = $category->full_name;
-
-                    return $category->only(['id', 'text']);
-                })
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'text' => $category->full_name,
+                ])
                 ->values();
         }
 
@@ -138,8 +136,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function getFullList(Request $request): JsonResponse
     {
         /**
-         * @get('/api/assets/categories')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/assets/categories")
+         * @middlewares("api", "auth:sanctum")
          */
         $categories = $request->user()
             ->categories()
@@ -159,8 +157,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function getItem(Category $category): JsonResponse
     {
         /**
-         * @get('/api/assets/category/{category}')
-         * @middlewares('api', 'auth:sanctum')
+         * @get("/api/assets/category/{category}")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('view', $category);
 
@@ -189,9 +187,9 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function updateActive(Category $category, $active): JsonResponse
     {
         /**
-         * @put('/api/assets/category/{category}/active/{active}')
-         * @name('api.category.updateActive')
-         * @middlewares('api', 'auth:sanctum')
+         * @put("/api/assets/category/{category}/active/{active}")
+         * @name("api.category.updateActive")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('update', $category);
 
@@ -208,9 +206,9 @@ class CategoryApiController extends Controller implements HasMiddleware
     public function destroy(Category $category): JsonResponse
     {
         /**
-         * @delete('/api/assets/category/{category}')
-         * @name('api.category.destroy')
-         * @middlewares('api', 'auth:sanctum')
+         * @delete("/api/assets/category/{category}")
+         * @name("api.category.destroy")
+         * @middlewares("api", "auth:sanctum")
          */
         Gate::authorize('delete', $category);
         $result = $this->categoryService->delete($category);

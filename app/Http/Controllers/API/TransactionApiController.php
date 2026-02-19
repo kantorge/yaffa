@@ -47,7 +47,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -59,8 +60,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function reconcile(Transaction $transaction, string $newState): JsonResponse
     {
         /**
-         * @put('/api/transaction/{transaction}/reconciled/{newState}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @put("/api/transaction/{transaction}/reconciled/{newState}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('update', $transaction);
 
@@ -73,8 +74,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getItem(Transaction $transaction): JsonResponse
     {
         /**
-         * @get('/api/transaction/{transaction}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transaction/{transaction}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         Gate::authorize('view', $transaction);
 
@@ -91,8 +92,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function getScheduledItems(string $type, Request $request): JsonResponse
     {
         /**
-         * @get('/api/transactions/get_scheduled_items/{type}')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transactions/get_scheduled_items/{type}")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // Return empty response if categories are required, but not set or empty
@@ -207,8 +208,8 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function findTransactions(Request $request): JsonResponse
     {
         /**
-         * @get('/api/transactions')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @get("/api/transactions")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
 
         // A request without any search criteria will return an empty response to avoid loading all transactions
@@ -375,11 +376,13 @@ class TransactionApiController extends Controller implements HasMiddleware
             ) ?? 1;
 
             // Extend the optional amount_to and amount_from fields in the config
-            if ($transaction->config->amount_to) {
-                $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
-            }
-            if ($transaction->config->amount_from) {
-                $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+            if ($transaction->config instanceof TransactionDetailStandard) {
+                if ($transaction->config->amount_to) {
+                    $transaction->config->amount_to_base = $transaction->config->amount_to * $transaction->currencyRateToBase;
+                }
+                if ($transaction->config->amount_from) {
+                    $transaction->config->amount_from_base = $transaction->config->amount_from * $transaction->currencyRateToBase;
+                }
             }
 
             // Extend the amount field in the items
@@ -403,9 +406,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeStandard(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post('/api/transactions/standard')
-         * @name('api.transactions.storeStandard')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/transactions/standard")
+         * @name("api.transactions.storeStandard")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -462,9 +465,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function storeInvestment(TransactionRequest $request): JsonResponse
     {
         /**
-         * @post('/api/transactions/investment')
-         * @name('api.transactions.storeInvestment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @post("/api/transactions/investment")
+         * @name("api.transactions.storeInvestment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -509,9 +512,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function updateStandard(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/standard/{transaction}')
-         * @name('api.transactions.updateStandard')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/standard/{transaction}")
+         * @name("api.transactions.updateStandard")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -591,9 +594,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function updateInvestment(TransactionRequest $request, Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/investment/{transaction}')
-         * @name('api.transactions.updateInvestment')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/investment/{transaction}")
+         * @name("api.transactions.updateInvestment")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $validated = $request->validated();
 
@@ -685,9 +688,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function skipScheduleInstance(Transaction $transaction): JsonResponse
     {
         /**
-         * @patch('/api/transactions/{transaction}/skip')
-         * @name('api.transactions.skipScheduleInstance')
-         * @middlewares('api', 'auth:sanctum', 'verified')
+         * @patch("/api/transactions/{transaction}/skip")
+         * @name("api.transactions.skipScheduleInstance")
+         * @middlewares("api", "auth:sanctum", "verified")
          */
         $transaction->loadDetails();
         $transaction->transactionSchedule->skipNextInstance();
@@ -706,9 +709,9 @@ class TransactionApiController extends Controller implements HasMiddleware
     public function destroy(Transaction $transaction): JsonResponse
     {
         /**
-         * @delete('/api/transactions/{transaction}')
-         * @name('api.transactions.destroy')
-         * @middlewares('web', 'auth', 'verified')
+         * @delete("/api/transactions/{transaction}")
+         * @name("api.transactions.destroy")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Load the details of the transaction for the event

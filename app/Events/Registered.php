@@ -16,6 +16,7 @@ class Registered extends OriginalRegistered
     use InteractsWithSockets;
     use SerializesModels;
 
+    /** @var User */
     public $user;
     public array $context;
 

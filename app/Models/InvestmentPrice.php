@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereInvestmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice wherePrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentPrice whereUpdatedAt($value)
+ * @method static \Database\Factories\InvestmentPriceFactory factory($count = null, $state = [])
  * @mixin \Eloquent
  */
 #[ObservedBy([InvestmentPriceObserver::class])]

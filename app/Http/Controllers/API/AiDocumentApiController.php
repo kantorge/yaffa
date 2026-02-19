@@ -21,7 +21,8 @@ class AiDocumentApiController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth:sanctum', 'verified'],
+            'auth:sanctum',
+            'verified',
         ];
     }
 
@@ -200,6 +201,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
 
         // Delete stored files
         foreach ($aiDocument->aiDocumentFiles as $file) {
+            /** @var AiDocumentFile $file */
             Storage::disk('local')->delete($file->file_path);
         }
 
@@ -227,9 +229,19 @@ class AiDocumentApiController extends Controller implements HasMiddleware
             return response()->json([], Response::HTTP_BAD_REQUEST);
         }
 
-        $extractedData = $aiDocument->processed_transaction_data['raw'] ?? [];
+        $processedData = $aiDocument->processed_transaction_data;
+        $extractedData = is_array($processedData) ? ($processedData['raw'] ?? []) : [];
 
-        $duplicateService = new \App\Services\DuplicateDetectionService($aiDocument->user);
+        if (! is_array($extractedData) || ! array_key_exists('date', $extractedData)) {
+            return response()->json([
+                'duplicates' => [],
+            ], Response::HTTP_OK);
+        }
+
+        /** @var \App\Models\User $user */
+        $user = $aiDocument->user;
+
+        $duplicateService = new \App\Services\DuplicateDetectionService($user);
         $duplicates = $duplicateService->findDuplicates($extractedData);
 
         // Load full transaction details for frontend

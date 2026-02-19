@@ -46,6 +46,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder|Category whereParentId($value)
  * @method static Builder|Category whereUpdatedAt($value)
  * @method static Builder|Category whereUserId($value)
+ * @property string $default_aggregation
+ * @property-read Collection<int, Category> $children
+ * @property-read int|null $children_count
+ * @property-read Collection<int, AccountEntity> $payeesDefaulting
+ * @property-read int|null $payees_defaulting_count
+ * @property-read Collection<int, AccountEntity> $payeesPreferring
+ * @property-read int|null $payees_preferring_count
+ * @method static Builder<static>|Category childCategory()
+ * @method static Builder<static>|Category parentCategory()
+ * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
 class Category extends Model

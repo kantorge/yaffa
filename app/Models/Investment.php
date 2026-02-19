@@ -61,9 +61,12 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property-read Collection<int, Transaction> $transactions
  * @property-read int|null $transactions_count
  * @property-read Collection<int, Transaction> $transactionsBasic
+ * @property array<int, array{date: string, quantity: float, schedule: float}>|null $quantities
  * @property-read int|null $transactions_basic_count
  * @property-read Collection<int, Transaction> $transactionsScheduled
  * @property-read int|null $transactions_scheduled_count
+ * @method static Builder<static>|Investment whereScrapeSelector($value)
+ * @method static Builder<static>|Investment whereScrapeUrl($value)
  * @mixin Eloquent
  */
 class Investment extends Model

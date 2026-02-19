@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|InvestmentGroup whereUserId($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Investment> $investments
+ * @property-read int|null $investments_count
  * @mixin \Eloquent
  */
 class InvestmentGroup extends Model

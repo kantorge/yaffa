@@ -47,6 +47,7 @@ use Kantorge\CurrencyExchangeRates\Facades\CurrencyExchangeRates;
  * @method static Builder|Currency whereUpdatedAt($value)
  * @method static Builder|Currency whereUserId($value)
  * @mixin Eloquent
+ * @mixin \Eloquent
  */
 class Currency extends Model
 {

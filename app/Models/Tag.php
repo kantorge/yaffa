@@ -36,6 +36,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Tag whereName($value)
  * @method static Builder|Tag whereUpdatedAt($value)
  * @method static Builder|Tag whereUserId($value)
+ * @property-read int $transaction_count
+ * @mixin \Eloquent
  */
 class Tag extends Model
 {
