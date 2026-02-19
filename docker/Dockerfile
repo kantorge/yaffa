@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && docker-php-ext-install \
-        pdo pdo_mysql mbstring zip xml
+        pdo pdo_mysql mbstring zip xml gd
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
