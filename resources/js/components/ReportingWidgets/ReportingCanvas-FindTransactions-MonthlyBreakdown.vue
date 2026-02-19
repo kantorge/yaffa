@@ -214,7 +214,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
     const entry = catData[catName];
     const values = entry.values;
     const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
-    const nonZeroCount = months.map((m) => values[m] || 0).filter((v) => v > 0).length;
+    const nonZeroCount = months.map((m) => values[m] || 0).filter((v) => v !== 0).length;
     const avg = nonZeroCount > 0 ? total / monthCount : 0;
     const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
 
@@ -323,7 +323,9 @@ export default {
             if (!item.category) return;
             const catName = item.category.full_name || item.category.name || this.__('No category assigned');
             const catId = item.category.id;
-            const amount = Math.abs(item.amount_in_base || 0);
+            let signedAmount = Number(item.amount_in_base || 0);
+            if (!isFinite(signedAmount)) signedAmount = 0;
+            const amountAbs = Math.abs(signedAmount);
             const parentName = item.category.parent?.name || null;
             const parentId = item.category.parent?.id || null;
 
@@ -341,14 +343,14 @@ export default {
 
             data[catName].categoryIds.add(catId);
             if (isDeposit) {
-              data[catName].depositTotal += amount;
+              data[catName].depositTotal += amountAbs;
             } else {
-              data[catName].withdrawalTotal += amount;
+              data[catName].withdrawalTotal += amountAbs;
             }
             if (!data[catName].values[month]) {
               data[catName].values[month] = 0;
             }
-            data[catName].values[month] += amount;
+            data[catName].values[month] += signedAmount;
           });
         }
       });
