@@ -237,7 +237,7 @@ class PayeeApiController extends Controller implements HasMiddleware
         $payee = $payees->random();
 
         $payee['payee'] = AccountEntity::find($payee['payee_id'])->name;
-        $payee['category'] = Category::find($payee['max_category_id'])->full_name;
+        $payee['category'] = Category::with('parent')->find($payee['max_category_id'])->full_name;
 
         return response($payee, Response::HTTP_OK);
     }

@@ -318,7 +318,7 @@ class AccountEntityController extends Controller implements HasMiddleware
 
     private function editPayee(AccountEntity $accountEntity): View
     {
-        $accountEntity->load(['config', 'categoryPreference']);
+        $accountEntity->load(['config', 'categoryPreference.parent']);
 
         // Simplify the category preference structure and pass it as JavaScript variable
         $categoryPreference = $accountEntity->categoryPreference->map(fn ($item) => [

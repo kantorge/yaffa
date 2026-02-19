@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class CategoryRequest extends FormRequest
 {
@@ -49,5 +51,46 @@ class CategoryRequest extends FormRequest
             'active' => $this->active ?? 0,
             'parent_id' => $this->parent_id ?? null,
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $parentId = $this->input('parent_id');
+            if (empty($parentId)) {
+                return;
+            }
+
+            $routeCategory = $this->route('category');
+            $currentCategoryId = $routeCategory instanceof Category ? $routeCategory->getKey() : null;
+
+            if ($currentCategoryId && (int) $parentId === (int) $currentCategoryId) {
+                $validator->errors()->add('parent_id', __('A category cannot be its own parent.'));
+
+                return;
+            }
+
+            $visited = [];
+            $nextParentId = (int) $parentId;
+            while ($nextParentId > 0) {
+                if (isset($visited[$nextParentId])) {
+                    $validator->errors()->add('parent_id', __('Invalid category hierarchy: parent loop detected.'));
+
+                    return;
+                }
+                $visited[$nextParentId] = true;
+
+                if ($currentCategoryId && $nextParentId === (int) $currentCategoryId) {
+                    $validator->errors()->add('parent_id', __('Invalid category hierarchy: parent loop detected.'));
+
+                    return;
+                }
+
+                $nextParentId = (int) (Category::query()
+                    ->where('user_id', $this->user()->id)
+                    ->whereKey($nextParentId)
+                    ->value('parent_id') ?? 0);
+            }
+        });
     }
 }

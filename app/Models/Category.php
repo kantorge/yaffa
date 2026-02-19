@@ -53,10 +53,6 @@ class Category extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
-    protected $with = [
-        'parent',
-    ];
-
     /**
      * The attributes that are mass assignable.
      *
@@ -92,7 +88,10 @@ class Category extends Model
 
     public function getFullNameAttribute(): string
     {
-        return (isset($this->parent->name) ? $this->parent->name . ' > ' : '') . $this['name'];
+        $parent = $this->relationLoaded('parent') ? $this->getRelation('parent') : null;
+        $hasValidParent = $parent && $parent->getKey() !== $this->getKey();
+
+        return ($hasValidParent ? $parent->name . ' > ' : '') . $this['name'];
     }
 
     /**
