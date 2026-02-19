@@ -307,24 +307,25 @@ export default {
       }
 
       const data = {};
-      console.debug('[MonthlyBreakdown] input transactions', this.transactions);
 
       this.transactions.forEach((tx) => {
         if (!tx.date || !(tx.date instanceof Date)) return;
         // Skip transfers
-        if (tx.transaction_type?.name === 'transfer' || tx.transaction_type?.type === 'transfer') return;
+        if (tx.transaction_type?.type === 'transfer') return;
         // Skip investment transactions
         if (tx.transaction_type?.type === 'investment') return;
 
         const month = tx.date.getFullYear() + '-' + String(tx.date.getMonth() + 1).padStart(2, '0');
-        const isDeposit = tx.transaction_type?.name === 'deposit' || tx.transaction_type?.type === 'deposit';
+        const isDeposit = tx.transaction_type?.type === 'deposit';
 
         if (tx.transaction_items) {
           tx.transaction_items.forEach((item) => {
             if (!item.category) return;
             const catName = item.category.full_name || item.category.name || this.__('No category assigned');
             const catId = item.category.id;
-            const amount = Math.abs(Number(item.amount_in_base || 0));
+            let signedAmount = Number(item.amount_in_base || 0);
+            if (!isFinite(signedAmount)) signedAmount = 0;
+            const amountAbs = Math.abs(signedAmount);
             const parentName = item.category.parent?.name || null;
             const parentId = item.category.parent?.id || null;
 
@@ -342,26 +343,14 @@ export default {
 
             data[catName].categoryIds.add(catId);
             if (isDeposit) {
-              data[catName].depositTotal += amount;
+              data[catName].depositTotal += amountAbs;
             } else {
-              data[catName].withdrawalTotal += amount;
+              data[catName].withdrawalTotal += amountAbs;
             }
             if (!data[catName].values[month]) {
               data[catName].values[month] = 0;
             }
-            // Net value: withdrawals add, deposits subtract (handles refunds)
-            data[catName].values[month] += isDeposit ? -amount : amount;
-            console.debug('[MonthlyBreakdown] calc', {
-              transactionId: tx.id,
-              transactionType: tx.transaction_type,
-              month,
-              category: catName,
-              amountInBase: item.amount_in_base,
-              amountAbs: amount,
-              isDeposit,
-              delta: isDeposit ? -amount : amount,
-              monthValue: data[catName].values[month],
-            });
+            data[catName].values[month] += signedAmount;
           });
         }
       });
