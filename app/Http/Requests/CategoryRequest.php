@@ -3,8 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Category;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class CategoryRequest extends FormRequest
 {
