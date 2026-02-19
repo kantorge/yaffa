@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use App\Models\AiDocument;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -18,12 +17,18 @@ class AiDocumentProcessingFailed extends Mailable
 
     public AiDocument $document;
 
-    public Exception $exception;
+    public string $errorMessage;
 
-    public function __construct(AiDocument $document, Exception $exception)
+    public string $exceptionClass;
+
+    public int $errorCode;
+
+    public function __construct(AiDocument $document, string $errorMessage, string $exceptionClass, int $errorCode)
     {
         $this->document = $document;
-        $this->exception = $exception;
+        $this->errorMessage = $errorMessage;
+        $this->exceptionClass = $exceptionClass;
+        $this->errorCode = $errorCode;
     }
 
     public function envelope(): Envelope
@@ -40,7 +45,7 @@ class AiDocumentProcessingFailed extends Mailable
             markdown: 'emails.ai-document-processing-failed',
             with: [
                 'document' => $this->document,
-                'error' => $this->exception->getMessage(),
+                'error' => $this->errorMessage,
             ],
         );
     }

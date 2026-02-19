@@ -49,7 +49,12 @@ class AiProcessingJob implements ShouldQueue
             Log::error("Document {$this->document->id} processing failed: {$e->getMessage()}");
 
             // Dispatch failure event
-            AiDocumentProcessingFailedEvent::dispatch($this->document, $e);
+            AiDocumentProcessingFailedEvent::dispatch(
+                $this->document,
+                $e->getMessage(),
+                $e::class,
+                (int) $e->getCode(),
+            );
 
             // Don't retry on auth/quota errors
             if ($this->shouldNotRetry($e->getMessage())) {

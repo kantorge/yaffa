@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\AiDocument;
-use Exception;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -16,7 +15,9 @@ class AiDocumentProcessingFailedEvent
 
     public function __construct(
         public AiDocument $document,
-        public Exception $exception
+        public string $errorMessage,
+        public string $exceptionClass,
+        public int $errorCode
     ) {
     }
 }

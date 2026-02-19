@@ -18,7 +18,12 @@ class SendAiDocumentProcessingFailedNotification implements ShouldQueue
     {
         try {
             Mail::to($event->document->user->email)
-                ->send(new AiDocumentProcessingFailedMail($event->document, $event->exception));
+                ->send(new AiDocumentProcessingFailedMail(
+                    $event->document,
+                    $event->errorMessage,
+                    $event->exceptionClass,
+                    $event->errorCode,
+                ));
 
             Log::info("Failure notification sent for document {$event->document->id}");
         } catch (Exception $e) {
