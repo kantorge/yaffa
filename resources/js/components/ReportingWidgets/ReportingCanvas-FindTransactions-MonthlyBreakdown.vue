@@ -310,28 +310,33 @@ export default {
 
       this.transactions.forEach((tx) => {
         if (!tx.date || !(tx.date instanceof Date)) return;
+        const txTypeName = tx.transaction_type?.name || tx.transaction_type?.type;
+        const txTypeId = tx.transaction_type_id;
         // Skip transfers
-        if (tx.transaction_type?.type === 'transfer') return;
+        if (txTypeName === 'transfer' || txTypeId === 3) return;
         // Skip investment transactions
         if (tx.transaction_type?.type === 'investment') return;
 
         const month = tx.date.getFullYear() + '-' + String(tx.date.getMonth() + 1).padStart(2, '0');
-        const isDeposit = tx.transaction_type?.type === 'deposit';
+        const isDeposit = txTypeName === 'deposit' || txTypeId === 2;
+        const isWithdrawal = txTypeName === 'withdrawal' || txTypeId === 1;
 
         if (tx.transaction_items) {
           tx.transaction_items.forEach((item) => {
             if (!item.category) return;
             const catName = item.category.full_name || item.category.name || this.__('No category assigned');
             const catId = item.category.id;
-            let signedAmount = Number(item.amount_in_base || 0);
-            if (!isFinite(signedAmount)) signedAmount = 0;
-            const amountAbs = Math.abs(signedAmount);
+            let rawAmount = Number(item.amount_in_base || 0);
+            if (!isFinite(rawAmount)) rawAmount = 0;
+            const amountAbs = Math.abs(rawAmount);
             const parentName = item.category.parent?.name || null;
             const parentId = item.category.parent?.id || null;
 
             if (!data[catName]) {
               data[catName] = {
                 values: {},
+                depositValues: {},
+                withdrawalValues: {},
                 categoryIds: new Set(),
                 depositTotal: 0,
                 withdrawalTotal: 0,
@@ -342,17 +347,30 @@ export default {
             }
 
             data[catName].categoryIds.add(catId);
-            if (isDeposit) {
+            const isDepositTx = isDeposit || (!isWithdrawal && rawAmount < 0);
+            if (isDepositTx) {
               data[catName].depositTotal += amountAbs;
+              data[catName].depositValues[month] = (data[catName].depositValues[month] || 0) + amountAbs;
             } else {
               data[catName].withdrawalTotal += amountAbs;
+              data[catName].withdrawalValues[month] = (data[catName].withdrawalValues[month] || 0) + amountAbs;
             }
-            if (!data[catName].values[month]) {
-              data[catName].values[month] = 0;
-            }
-            data[catName].values[month] += signedAmount;
           });
         }
+      });
+
+      Object.values(data).forEach((entry) => {
+        const isIncome = entry.depositTotal > entry.withdrawalTotal;
+        const months = new Set([
+          ...Object.keys(entry.depositValues),
+          ...Object.keys(entry.withdrawalValues),
+        ]);
+
+        months.forEach((m) => {
+          const deposits = entry.depositValues[m] || 0;
+          const withdrawals = entry.withdrawalValues[m] || 0;
+          entry.values[m] = isIncome ? (deposits - withdrawals) : (withdrawals - deposits);
+        });
       });
 
       return data;
