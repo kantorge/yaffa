@@ -266,4 +266,49 @@ class CategoryTest extends TestCase
             'parent_id' => $category->parent_id,
         ]);
     }
+
+    public function test_user_cannot_set_category_as_its_own_parent(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route("{$this->base_route}.update", $category->id),
+                [
+                    'name' => $category->name,
+                    'active' => $category->active,
+                    'parent_id' => $category->id,
+                    'default_aggregation' => 'month',
+                ]
+            );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['parent_id']);
+    }
+
+    public function test_user_cannot_create_parent_cycle_between_categories(): void
+    {
+        $user = User::factory()->create();
+        $categoryA = Category::factory()->for($user)->create();
+        $categoryB = Category::factory()->for($user)->create([
+            'parent_id' => $categoryA->id,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route("{$this->base_route}.update", $categoryA->id),
+                [
+                    'name' => $categoryA->name,
+                    'active' => $categoryA->active,
+                    'parent_id' => $categoryB->id,
+                    'default_aggregation' => 'month',
+                ]
+            );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['parent_id']);
+    }
 }

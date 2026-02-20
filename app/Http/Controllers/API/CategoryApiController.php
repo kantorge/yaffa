@@ -42,6 +42,7 @@ class CategoryApiController extends Controller implements HasMiddleware
         $query = $request->get('q');
         if ($query && $query !== '*') {
             $categories = $user->categories()
+                ->with('parent')
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
@@ -66,6 +67,7 @@ class CategoryApiController extends Controller implements HasMiddleware
                 ->values();
         } elseif ($query === '*') {
             $categories = $user->categories()
+                ->with('parent')
                 ->when($request->missing('withInactive'), function ($query) {
                     $query->active();
                 })
@@ -116,7 +118,7 @@ class CategoryApiController extends Controller implements HasMiddleware
                 ->pluck('id')
                 ->toArray();
 
-            $categories = Category::findMany($results)
+            $categories = Category::with('parent')->findMany($results)
                 ->sortBy(fn ($category) => array_search($category->getKey(), $results))
                 ->map(function ($category) {
                     $category->text = $category->full_name;
@@ -141,6 +143,7 @@ class CategoryApiController extends Controller implements HasMiddleware
          */
         $categories = $request->user()
             ->categories()
+            ->with('parent')
             ->when($request->missing('withInactive'), function ($query) {
                 $query->active();
             })

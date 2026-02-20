@@ -100,6 +100,7 @@ class SearchController extends Controller implements HasMiddleware
     {
         return $user
             ->categories()
+            ->with('parent')
             ->whereRaw('UPPER(`name`) LIKE ?', ['%' . mb_strtoupper($searchTerm) . '%'])
             ->get()
             ->sortBy('full_name');
