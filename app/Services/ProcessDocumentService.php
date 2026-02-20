@@ -587,7 +587,7 @@ EOF;
             $matches = [];
             foreach ($aiResults as $result) {
                 $itemIndex = $result['item_index'] ?? null;
-                $categoryId = $result['category_id'] ?? null;
+                $categoryId = $result['recommended_category_id'] ?? null;
                 $confidenceScore = $result['confidence_score'] ?? null;
 
                 if ($itemIndex === null || ! isset($items[$itemIndex])) {
