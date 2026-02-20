@@ -572,6 +572,11 @@ EOF;
 
         $response = $this->callAi($config, $prompt);
 
+        Log::debug('Category matching AI response', [
+            'prompt' => $prompt,
+            'result' => $response,
+        ]);
+
         // Parse AI response
         try {
             $aiResults = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
