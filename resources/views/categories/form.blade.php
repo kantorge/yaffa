@@ -96,7 +96,7 @@
                                         selected="selected"
                                     @endif
                                 @elseif(isset($category))
-                                    @if ($category->parent_id == $id))
+                                    @if ($category->parent_id == $id)
                                         selected="selected"
                                     @endif
                                 @endif
