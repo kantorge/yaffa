@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="card-body">
-      <select :id="elementId" class="form-select"></select>
+      <select :id="elementId" class="form-select" style="width: 100%"></select>
     </div>
   </div>
 </template>
