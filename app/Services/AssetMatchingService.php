@@ -261,7 +261,8 @@ class AssetMatchingService
         similar_text($normalizedSearch, $normalizedPrimary, $primarySimilarity);
         $primarySimilarity /= 100;
 
-        Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedPrimary}' (primary) => similarity: {$primarySimilarity}");
+        // For extreme verbose logging
+        //Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedPrimary}' (primary) => similarity: {$primarySimilarity}");
 
         // If no secondary parts, return primary score
         if (! $secondary) {
@@ -280,7 +281,8 @@ class AssetMatchingService
             similar_text($normalizedSearch, $normalizedSecondary, $secondarySimilarity);
             $secondarySimilarity /= 100;
 
-            Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedSecondary}' (secondary) => similarity: {$secondarySimilarity}");
+            // For extreme verbose logging
+            //Log::debug("Comparing '{$normalizedSearch}' with '{$normalizedSecondary}' (secondary) => similarity: {$secondarySimilarity}");
 
             $maxSecondarySimilarity = max($maxSecondarySimilarity, $secondarySimilarity);
         }
