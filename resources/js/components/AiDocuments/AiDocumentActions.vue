@@ -20,7 +20,7 @@
       >
         {{ __('Upload document') }}
         <button
-          class="btn btn-sm btn-outline-primary"
+          class="btn btn-sm btn-outline-success"
           @click="$emit('open-upload-form')"
           :title="__('Upload a new document')"
         >
