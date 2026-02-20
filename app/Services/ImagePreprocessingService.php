@@ -31,6 +31,16 @@ class ImagePreprocessingService
     public function resizeForVisionApi(string $filePath): string
     {
         try {
+            // Sanity check for file existence
+            if (!is_file($filePath) || !is_readable($filePath)) {
+                throw new Exception("Image file is not readable: {$filePath}");
+            }
+
+            $fileSize = filesize($filePath);
+            if ($fileSize === false || $fileSize === 0) {
+                throw new Exception("Image file is empty or size unavailable: {$filePath}");
+            }
+
             // Read image processing configuration
             $maxWidth = config('ai-documents.image_processing.max_width', 2048);
             $maxHeight = config('ai-documents.image_processing.max_height', 2048);
@@ -38,6 +48,8 @@ class ImagePreprocessingService
 
             // Read original image
             $image = $this->imageManager->read($filePath);
+
+            Log::info("Original image dimensions: {$image->width()}x{$image->height()}, size: {$fileSize} bytes");
 
             // Get current dimensions
             $width = $image->width();
