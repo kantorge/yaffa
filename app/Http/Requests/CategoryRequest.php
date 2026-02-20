@@ -94,6 +94,7 @@ class CategoryRequest extends FormRequest
                 }
                 $visited[$nextParentId] = true;
 
+                // Move one level up in the tree; stop when parent is null/missing.
                 $nextParent = $allCategories->get($nextParentId);
                 $nextParentId = (int) ($nextParent->parent_id ?? 0);
             }
