@@ -49,7 +49,7 @@ class ProcessDocumentServiceTest extends TestCase
                 return json_encode([
                     [
                         'item_index' => 0,
-                        'category_id' => $this->categoryId,
+                        'recommended_category_id' => $this->categoryId,
                         'confidence_score' => 0.4,
                     ],
                 ]);
