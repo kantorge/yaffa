@@ -254,7 +254,7 @@ class ReportApiController extends Controller implements HasMiddleware
         if ($transactionType === 'all' || $transactionType === 'standard') {
             // Get all standard transactions with related categories
             $standardTransactions = TransactionItem::with([
-                'category',
+                'category.parent',
                 'transaction',
                 'transaction.currency',
                 'transaction.config.accountFrom.config',
