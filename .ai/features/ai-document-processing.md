@@ -1501,3 +1501,5 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - The extracted details tab is a bit messy, especially for the investment transactions, where not all details are displayed (with value or with unidentified placeholder). This should be more structured.
 - The dialog to store a standard transaction does not always show the "no ai match" label, despite not having a match.
 - Collect all new translatable strings and add them to at least the English language file. Optionally, generate the AI-based translation for other supported languages.
+- Clarify if lower-level categories are preferred, and if parent level categories are enabled at all for AI detection and learning.
+- Review and extend the upgrade instructions to specify the need and use of various ENV variables, and options for configuring the AI provider and Tesseract OCR.

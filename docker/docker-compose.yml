@@ -62,6 +62,8 @@ services:
       - .env
     environment:
       RUNS_SCHEDULER: TRUE
+    volumes:
+      - yaffa_storage:/var/www/html/storage
     depends_on:
       db:
         condition: service_healthy

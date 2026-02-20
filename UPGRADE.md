@@ -69,6 +69,14 @@ php artisan view:clear
 npm run build
 ```
 
+### Note for Docker users
+
+You'll need to adjust your `docker-compose.yml` to reflect the changes in the app infrastructure.
+
+- Decide if you want to use Tesseract OCR as a local service or not.
+
+````bash
+
 ## Upgrade from YAFFA 1.x to 2.x
 
 The main reason for increasing the version is the migration of the framework from Laravel 10 to Laravel 12.
@@ -86,7 +94,7 @@ The main reason for increasing the version is the migration of the framework fro
 ```diff
 - BROADCAST_DRIVER=#your_value#
 + BROADCAST_CONNECTION=#your_value#
-```
+````
 
 - The key for the cache driver has been renamed. Some YAFFA features rely on caching so you need to make this change.
 
