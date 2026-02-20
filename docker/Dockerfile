@@ -28,8 +28,8 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Stream Apache logs to container stdout/stderr for centralized collection.
-RUN sed -i 's|ErrorLog ${APACHE_LOG_DIR}/error.log|ErrorLog /proc/self/fd/2|g' /etc/apache2/apache2.conf \
-    && sed -i 's|CustomLog ${APACHE_LOG_DIR}/access.log combined|CustomLog /proc/self/fd/1 combined|g' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|ErrorLog ${APACHE_LOG_DIR}/error.log|ErrorLog /dev/stderr|g' /etc/apache2/apache2.conf /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's|CustomLog ${APACHE_LOG_DIR}/access.log combined|CustomLog /dev/stdout combined|g' /etc/apache2/sites-available/000-default.conf
 
 # Install Composer globally (will be cached until the next change)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
