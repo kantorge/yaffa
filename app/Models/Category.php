@@ -91,7 +91,7 @@ class Category extends Model
         $parent = $this->relationLoaded('parent') ? $this->getRelation('parent') : null;
         $hasValidParent = $parent && $parent->getKey() !== $this->getKey();
 
-        return ($hasValidParent ? $parent->name . ' > ' : '') . $this['name'];
+        return ($hasValidParent ? $parent->name . ' > ' : '') . $this->name;
     }
 
     /**

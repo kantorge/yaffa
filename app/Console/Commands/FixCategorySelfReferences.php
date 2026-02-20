@@ -5,11 +5,11 @@ namespace App\Console\Commands;
 use App\Models\Category;
 use Illuminate\Console\Command;
 
-class FixCategoryParentLoops extends Command
+class FixCategorySelfReferences extends Command
 {
-    protected $signature = 'categories:fix-parent-loops {--dry-run : Show affected categories without updating}';
+    protected $signature = 'app:category:fix-self-references {--dry-run : Show affected categories without updating}';
 
-    protected $description = 'Fix category rows where id equals parent_id by setting parent_id to null';
+    protected $description = 'Fix self-referencing categories (id = parent_id) by setting parent_id to null';
 
     public function handle(): int
     {

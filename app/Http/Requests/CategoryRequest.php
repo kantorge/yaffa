@@ -32,7 +32,9 @@ class CategoryRequest extends FormRequest
             ],
             'parent_id' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where('user_id', $this->user()->id),
+                Rule::exists('categories', 'id')
+                    ->where('user_id', $this->user()->id)
+                    ->whereNull('parent_id'),
             ],
             'default_aggregation' => [
                 'required',
@@ -56,6 +58,7 @@ class CategoryRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            // Validate selected parent hierarchy to prevent self-references and loops.
             $parentId = $this->input('parent_id');
             if (empty($parentId)) {
                 return;
@@ -70,11 +73,13 @@ class CategoryRequest extends FormRequest
                 return;
             }
 
+            // Build an in-memory map once to avoid querying inside the traversal loop.
             $allCategories = Category::query()
                 ->where('user_id', $this->user()->id)
                 ->get(['id', 'parent_id'])
                 ->keyBy('id');
 
+            // Track visited nodes (and current category when updating) to detect loops.
             $visited = [];
             if ($currentCategoryId) {
                 $visited[(int) $currentCategoryId] = true;
