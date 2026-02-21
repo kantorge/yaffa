@@ -200,7 +200,9 @@
 
         summary.unshift({
           currency_id: 0,
-          currency_name: 'All withdrawals in ' + this.baseCurrency.name,
+          currency_name: __('All withdrawals in :currency', {
+            currency: this.baseCurrency.name,
+          }),
           currency: this.baseCurrency,
           count: this.countWithdrawals,
           sum: total,
@@ -246,7 +248,9 @@
 
         summary.unshift({
           currency_id: 0,
-          currency_name: 'All deposits in ' + this.baseCurrency.name,
+          currency_name: __('All deposits in :currency', {
+            currency: this.baseCurrency.name,
+          }),
           currency: this.baseCurrency,
           count: this.countDeposits,
           sum: total,

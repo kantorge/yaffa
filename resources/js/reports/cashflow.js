@@ -4,7 +4,12 @@ import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import { applyAmChartsLocalization } from '../i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
-import 'select2';
+
+// Select2 for account selection
+import { loadSelect2Language } from '../i18n/select2';
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
 
 import * as toastHelpers from '../toast';
 
