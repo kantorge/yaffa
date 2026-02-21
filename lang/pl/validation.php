@@ -65,7 +65,6 @@ return [
         "numeric" => ":attribute musi być większe lub równe :value.",
         "string" => ":attribute musi zawierać więcej niż lub równo :value znaków."
     ],
-    "hex_color" => "Pole :attribute musi być prawidłowym kolorem szesnastkowym.",
     "image" => ":attribute musi być obrazem.",
     "in" => "Wybrana wartość :attribute jest nieprawidłowa.",
     "in_array" => "Pole :attribute nie istnieje w :other.",
@@ -144,7 +143,6 @@ return [
     "starts_with" => ":attribute musi zaczynać się jedną z następujących wartości: :values.",
     "string" => ":attribute musi być ciągiem znaków.",
     "timezone" => ":attribute musi być prawidłową strefą.",
-    "ulid" => "Pole :attribute musi być prawidłowym ULID.",
     "unique" => ":attribute jest już zajęte.",
     "uploaded" => "Przesyłanie :attribute nie powiodło się.",
     "uppercase" => "Pole :attribute musi być wielkimi literami.",
