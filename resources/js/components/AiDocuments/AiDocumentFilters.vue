@@ -79,7 +79,7 @@
 
 <script setup>
   import { reactive } from 'vue';
-  import { __ } from '../../helpers';
+  import { __ } from '@/i18n';
 
   const props = defineProps({
     statusOptions: {

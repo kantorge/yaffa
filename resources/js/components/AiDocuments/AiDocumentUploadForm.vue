@@ -210,7 +210,7 @@
 
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
-  import { __ } from '../../helpers';
+  import { __ } from '@/i18n';
 
   const props = defineProps({
     modalId: {

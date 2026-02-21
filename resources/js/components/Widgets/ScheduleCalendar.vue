@@ -79,7 +79,7 @@
           return '';
         }
 
-        return dataTableHelpers.transactionTypeIcon(
+        return transactionTypeIcon(
           transaction.transaction_type,
           this.getTransactionLabel(transaction),
         );

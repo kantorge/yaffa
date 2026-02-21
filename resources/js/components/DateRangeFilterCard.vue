@@ -87,7 +87,7 @@
 
 <script setup>
   import { onMounted, ref } from 'vue';
-  import { __ } from '../helpers';
+  import { __ } from '@/i18n';
   import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
   import presetCalculators from '../presetDates';
 

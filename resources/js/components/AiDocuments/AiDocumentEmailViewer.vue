@@ -99,7 +99,7 @@
 
 <script setup>
   import { computed } from 'vue';
-  import { __ } from '@/helpers';
+  import { __ } from '@/i18n';
 
   const props = defineProps({
     receivedMail: {

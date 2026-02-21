@@ -57,7 +57,8 @@
 
 <script setup>
   import { nextTick, onMounted, ref, watch } from 'vue';
-  import { __, initializeBootstrapTooltips } from '../../helpers';
+  import { initializeBootstrapTooltips } from '@/helpers';
+  import { __ } from '@/i18n';
 
   const props = defineProps({
     aiDocumentId: {

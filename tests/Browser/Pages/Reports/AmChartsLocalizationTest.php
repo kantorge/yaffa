@@ -37,9 +37,12 @@ class AmChartsLocalizationTest extends DuskTestCase
                 ->loginAs($this->user)
                 ->visitRoute('reports.budgetchart')
                 ->waitFor('#chartdiv', 10)
-                ->waitUsing(20, 200, function () use ($browser) {
-                    return $browser->script("return Boolean(window.chart?.language?.locale?.['Zoom Out']);")[0] === true;
-                })
+                ->waitUsing(
+                    20,
+                    200,
+                    fn () =>
+                    $browser->script("return Boolean(window.chart?.language?.locale?.['Zoom Out']);")[0] === true
+                )
                 ->assertScript("return window.chart.language.locale['Zoom Out'] === 'Zoom Arrière';", true)
                 ->assertScript("return window.chart.numberFormatter.intlLocales === 'fr-FR';", true);
         });

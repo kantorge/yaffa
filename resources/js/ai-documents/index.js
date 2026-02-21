@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import AiDocumentManager from '../components/AiDocuments/AiDocumentManager.vue';
-import { __ } from '../helpers';
+import { __ } from '@/i18n';
 
 const app = createApp({});
 

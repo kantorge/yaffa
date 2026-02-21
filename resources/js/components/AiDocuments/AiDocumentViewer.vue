@@ -417,7 +417,8 @@
 
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-  import { __, getTransactionTypeConfig } from '@/helpers';
+  import { getTransactionTypeConfig } from '@/helpers';
+  import { __ } from '@/i18n';
   import * as toastHelpers from '@/toast';
   import { storeNotification } from '@/handle_notifications';
   import TransactionFormModalStandard from '../TransactionForm/ModalStandard.vue';

@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-  import { __ } from '../../helpers';
+  import { __ } from '@/i18n';
 
   defineEmits(['open-upload-form']);
 

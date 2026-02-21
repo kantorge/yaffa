@@ -18,9 +18,9 @@
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
   import { onMounted, ref } from 'vue';
-  import { __ } from '../../helpers';
+  import { __ } from '@/i18n';
   import * as dataTableHelpers from '../dataTableHelper';
-  import * as toastHelpers from '../../toast';
+  import * as toastHelpers from '@/toast';
 
   const props = defineProps({
     documents: {
@@ -159,43 +159,49 @@
     const data = prepareDocuments(props.documents);
 
     // Add custom search function for date range filtering
-    window.$.fn.dataTable.ext.search.push(function (settings, _searchData, _index, rowData) {
-      // Only apply to our specific table
-      if (settings.nTable.id !== 'ai-document-table') {
+    window.$.fn.dataTable.ext.search.push(
+      function (settings, _searchData, _index, rowData) {
+        // Only apply to our specific table
+        if (settings.nTable.id !== 'ai-document-table') {
+          return true;
+        }
+
+        const dateFrom = settings.dateFrom;
+        const dateTo = settings.dateTo;
+
+        // If no date filters, show all rows
+        if (!dateFrom && !dateTo) {
+          return true;
+        }
+
+        // Get the date from the row data
+        const rowDate = rowData.created_at;
+        if (!rowDate) {
+          return false;
+        }
+
+        // Convert dates to comparable format (reset time to midnight for comparison)
+        const rowDateOnly = new Date(
+          rowDate.getFullYear(),
+          rowDate.getMonth(),
+          rowDate.getDate(),
+        );
+
+        if (dateFrom && dateTo) {
+          const fromDate = new Date(dateFrom);
+          const toDate = new Date(dateTo);
+          return rowDateOnly >= fromDate && rowDateOnly <= toDate;
+        } else if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          return rowDateOnly >= fromDate;
+        } else if (dateTo) {
+          const toDate = new Date(dateTo);
+          return rowDateOnly <= toDate;
+        }
+
         return true;
-      }
-
-      const dateFrom = settings.dateFrom;
-      const dateTo = settings.dateTo;
-
-      // If no date filters, show all rows
-      if (!dateFrom && !dateTo) {
-        return true;
-      }
-
-      // Get the date from the row data
-      const rowDate = rowData.created_at;
-      if (!rowDate) {
-        return false;
-      }
-
-      // Convert dates to comparable format (reset time to midnight for comparison)
-      const rowDateOnly = new Date(rowDate.getFullYear(), rowDate.getMonth(), rowDate.getDate());
-      
-      if (dateFrom && dateTo) {
-        const fromDate = new Date(dateFrom);
-        const toDate = new Date(dateTo);
-        return rowDateOnly >= fromDate && rowDateOnly <= toDate;
-      } else if (dateFrom) {
-        const fromDate = new Date(dateFrom);
-        return rowDateOnly >= fromDate;
-      } else if (dateTo) {
-        const toDate = new Date(dateTo);
-        return rowDateOnly <= toDate;
-      }
-
-      return true;
-    });
+      },
+    );
 
     table.value = window.$(tableElement.value).DataTable({
       data,

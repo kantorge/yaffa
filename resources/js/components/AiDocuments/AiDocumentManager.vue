@@ -58,7 +58,7 @@
   import AiDocumentTable from './AiDocumentTable.vue';
   import AiDocumentUploadForm from './AiDocumentUploadForm.vue';
   import DateRangeFilterCard from '../DateRangeFilterCard.vue';
-  import { __ } from '../../helpers';
+  import { __ } from '@/i18n';
 
   const documents = ref(window.aiDocuments || []);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});

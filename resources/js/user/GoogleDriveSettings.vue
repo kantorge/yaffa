@@ -371,8 +371,9 @@
 </template>
 
 <script>
-  import { __, initializeBootstrapTooltips } from '../helpers';
-  import * as toastHelpers from '../toast';
+  import { __ } from '@/i18n';
+  import { initializeBootstrapTooltips } from '@/helpers';
+  import * as toastHelpers from '@/toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
   import Swal from 'sweetalert2';

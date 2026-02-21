@@ -178,7 +178,7 @@
 
 <script setup>
   import { computed } from 'vue';
-  import { __ } from '@/helpers';
+  import { __ } from '@/i18n';
 
   const unidentifiedLabel = __('Unidentified');
   const props = defineProps({
