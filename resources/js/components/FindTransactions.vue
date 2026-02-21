@@ -328,6 +328,7 @@
             selectedCategories: [...this.selectedCategories],
             selectedPayees: [...this.selectedPayees],
             selectedTags: [...this.selectedTags],
+            transactions: this.transactions,
           };
         }
 
@@ -620,8 +621,9 @@
           this.selectedCategories = snapshot.selectedCategories;
           this.selectedPayees = snapshot.selectedPayees;
           this.selectedTags = snapshot.selectedTags;
+          this.transactions = snapshot.transactions || [];
+          this.cachedDataPending = true;
           this.rebuildUrl('monthly-breakdown');
-          this.getTransactions();
         }
       };
       this._allTabs.forEach((tab) => tab.addEventListener('shown.coreui.tab', this._onTabShown));
