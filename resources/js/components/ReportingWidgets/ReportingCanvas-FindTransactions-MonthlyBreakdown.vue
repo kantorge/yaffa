@@ -71,15 +71,15 @@
                   @click.prevent="emitDrillDown(m, row.categoryIds)"
                   class="cell-link"
                 >
-                  {{ formatCell(row.values[m] || 0, row.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
+                  {{ formatCell(row.values[m] || 0, row.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m], row.isIncome) }}
                 </a>
                 <span v-else class="zero">&mdash;</span>
               </td>
               <td class="text-end fw-semibold">
-                {{ formatCell(row.total, row.isIncome ? totalIncomeSum : totalExpensesSum) }}
+                {{ formatCell(row.total, row.isIncome ? totalIncomeSum : totalExpensesSum, row.isIncome) }}
               </td>
               <td class="text-end">
-                {{ formatCell(row.avg, row.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
+                {{ formatCell(row.avg, row.isIncome ? totalIncomeAvg : totalExpensesAvg, row.isIncome) }}
               </td>
             </tr>
 
@@ -99,15 +99,15 @@
                   @click.prevent="emitDrillDown(m, section.allCategoryIds)"
                   class="cell-link"
                 >
-                  {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
+                  {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m], section.isIncome) }}
                 </a>
                 <span v-else class="zero">&mdash;</span>
               </td>
               <td class="text-end fw-bold">
-                {{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum) }}
+                {{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum, section.isIncome) }}
               </td>
               <td class="text-end fw-bold">
-                {{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}
+                {{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg, section.isIncome) }}
               </td>
             </tr>
           </template>
@@ -122,19 +122,19 @@
           <tr class="grand-row">
             <td class="sticky-col fw-bold" :title="__('Total expenses')">{{ __('Total expenses') }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold">
-              {{ formatAmount(monthlyTotalExpenses[m] || 0) }}
+              {{ formatAmount(monthlyTotalExpenses[m] || 0, false) }}
             </td>
-            <td class="text-end fw-bold">{{ formatAmount(totalExpensesSum) }}</td>
-            <td class="text-end fw-bold">{{ formatAmount(totalExpensesAvg) }}</td>
+            <td class="text-end fw-bold">{{ formatAmount(totalExpensesSum, false) }}</td>
+            <td class="text-end fw-bold">{{ formatAmount(totalExpensesAvg, false) }}</td>
           </tr>
 
           <tr class="grand-row">
             <td class="sticky-col fw-bold" :title="__('Total income')">{{ __('Total income') }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold text-success">
-              {{ formatAmount(monthlyTotalIncome[m] || 0) }}
+              {{ formatAmount(monthlyTotalIncome[m] || 0, true) }}
             </td>
-            <td class="text-end fw-bold text-success">{{ formatAmount(totalIncomeSum) }}</td>
-            <td class="text-end fw-bold text-success">{{ formatAmount(totalIncomeAvg) }}</td>
+            <td class="text-end fw-bold text-success">{{ formatAmount(totalIncomeSum, true) }}</td>
+            <td class="text-end fw-bold text-success">{{ formatAmount(totalIncomeAvg, true) }}</td>
           </tr>
 
           <tr class="grand-row">
@@ -171,12 +171,12 @@
             <td class="sticky-col fw-bold" :title="__(section.title)">{{ __(section.title) }}</td>
             <td v-for="m in months" :key="m" class="text-end fw-bold">
               <span v-if="(section.subtotals[m] || 0) !== 0">
-                {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
+                {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m], section.isIncome) }}
               </span>
               <span v-else class="zero">&mdash;</span>
             </td>
-            <td class="text-end fw-bold">{{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum) }}</td>
-            <td class="text-end fw-bold">{{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg) }}</td>
+            <td class="text-end fw-bold">{{ formatCell(section.subtotalSum, section.isIncome ? totalIncomeSum : totalExpensesSum, section.isIncome) }}</td>
+            <td class="text-end fw-bold">{{ formatCell(section.subtotalAvg, section.isIncome ? totalIncomeAvg : totalExpensesAvg, section.isIncome) }}</td>
           </tr>
         </tbody>
       </table>
@@ -611,11 +611,12 @@ export default {
      * @param {number} value
      * @returns {string}
      */
-    formatAmount(value) {
+    formatAmount(value, isIncome = null) {
       if (value === 0) return '—';
-      const sign = value > 0 ? '+' : '-';
+      const normalized = isIncome === null ? value : (isIncome ? value : -value);
+      const sign = normalized > 0 ? '+' : '-';
       return `${sign} ${toFormattedCurrency(
-        round2(Math.abs(value)),
+        round2(Math.abs(normalized)),
         this.locale,
         this.baseCurrency,
       )}`;
@@ -627,14 +628,15 @@ export default {
      * @param {number} monthTotal - Total expenses for that month (used for percentage mode)
      * @returns {string}
      */
-    formatCell(value, monthTotal) {
+    formatCell(value, monthTotal, isIncome = null) {
       if (value === 0) return '—';
-      const sign = value > 0 ? '+' : '-';
+      const normalized = isIncome === null ? value : (isIncome ? value : -value);
+      const sign = normalized > 0 ? '+' : '-';
       if (this.showPercentages && monthTotal > 0) {
-        return `${sign}${((Math.abs(value) / monthTotal) * 100).toFixed(1)}%`;
+        return `${sign}${((Math.abs(normalized) / monthTotal) * 100).toFixed(1)}%`;
       }
       return `${sign} ${toFormattedCurrency(
-        round2(Math.abs(value)),
+        round2(Math.abs(normalized)),
         this.locale,
         this.baseCurrency,
       )}`;

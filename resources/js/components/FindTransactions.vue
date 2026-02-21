@@ -166,12 +166,6 @@
         </div>
 
         <div class="card-body">
-          <div v-if="returnTo" class="mb-3">
-            <a :href="returnTo" class="btn btn-sm btn-outline-primary">
-              <i class="fas fa-arrow-left me-1"></i>
-              {{ __('Back to Monthly breakdown') }}
-            </a>
-          </div>
           <div class="tab-content">
             <div
               class="tab-pane fade show active"
@@ -287,6 +281,7 @@
         initialTab: urlParams.get('tab') || null,
         cachedDataPending: false,
         skippedTransactionLoad: false,
+        monthlyBreakdownSnapshot: null,
         presetsReady: {
           category: false,
           payee: false,
@@ -325,10 +320,21 @@
         this.rebuildUrl();
       },
       onMonthlyBreakdownDrillDown(event) {
+        if (!this.monthlyBreakdownSnapshot) {
+          this.monthlyBreakdownSnapshot = {
+            dateFrom: this.dateFrom,
+            dateTo: this.dateTo,
+            selectedAccounts: [...this.selectedAccounts],
+            selectedCategories: [...this.selectedCategories],
+            selectedPayees: [...this.selectedPayees],
+            selectedTags: [...this.selectedTags],
+          };
+        }
+
         this.dateFrom = event.dateFrom;
         this.dateTo = event.dateTo;
         this.selectedCategories = event.categories;
-        this.rebuildUrl();
+        this.rebuildUrl('transaction-list');
         this.getTransactions();
 
         this.$nextTick(() => {
@@ -338,7 +344,7 @@
           }
         });
       },
-      rebuildUrl() {
+      rebuildUrl(tab = null, returnTo = null) {
         let params = [];
 
         // Date from
@@ -370,6 +376,14 @@
         // Tags
         const tags = this.selectedTags.map((item) => 'tags[]=' + item);
         params.push(...tags);
+
+        if (tab) {
+          params.push('tab=' + encodeURIComponent(tab));
+        }
+
+        if (returnTo) {
+          params.push('return_to=' + encodeURIComponent(returnTo));
+        }
 
         window.history.pushState(
           '',
@@ -597,6 +611,17 @@
             this.skippedTransactionLoad = false;
             this.getTransactions();
           }
+        } else if (this.monthlyBreakdownSnapshot) {
+          const snapshot = this.monthlyBreakdownSnapshot;
+          this.monthlyBreakdownSnapshot = null;
+          this.dateFrom = snapshot.dateFrom;
+          this.dateTo = snapshot.dateTo;
+          this.selectedAccounts = snapshot.selectedAccounts;
+          this.selectedCategories = snapshot.selectedCategories;
+          this.selectedPayees = snapshot.selectedPayees;
+          this.selectedTags = snapshot.selectedTags;
+          this.rebuildUrl('monthly-breakdown');
+          this.getTransactions();
         }
       };
       this._allTabs.forEach((tab) => tab.addEventListener('shown.coreui.tab', this._onTabShown));
