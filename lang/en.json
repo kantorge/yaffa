@@ -723,5 +723,21 @@
     "You cannot register new users.": "You cannot register new users.",
     "Your changes have been saved!": "Your changes have been saved!",
     "Your search returned <strong>:total<\/strong> transactions in total": "Your search returned <strong>:total<\/strong> transactions in total",
-    "Zoom in": "Zoom in"
+    "Zoom in": "Zoom in",
+    "Current interval": "Current interval",
+    "This month": "This month",
+    "This quarter": "This quarter",
+    "This year": "This year",
+    "This month to date": "This month to date",
+    "This quarter to date": "This quarter to date",
+    "This year to date": "This year to date",
+    "Previous day(s)": "Previous day(s)",
+    "Yesterday": "Yesterday",
+    "Previous 7 days": "Previous 7 days",
+    "Previous 30 days": "Previous 30 days",
+    "Previous 90 days": "Previous 90 days",
+    "Previous 180 days": "Previous 180 days",
+    "Previous 365 days": "Previous 365 days",
+    "Previous interval": "Previous interval",
+    "Previous month to date": "Previous month to date"
 }

@@ -89,14 +89,14 @@
         presetSelectorOptions: [
           {
             value: 'placeholder',
-            label: 'Select preset',
+            label: __('Select preset'),
             callback: function () {
               this.clearSelection();
             },
           },
           {
             value: 'thisMonth',
-            label: 'This month',
+            label: __('This month'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -107,7 +107,7 @@
           },
           {
             value: 'thisQuarter',
-            label: 'This quarter',
+            label: __('This quarter'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -126,7 +126,7 @@
           },
           {
             value: 'thisYear',
-            label: 'This year',
+            label: __('This year'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -137,7 +137,7 @@
           },
           {
             value: 'thisMonthToDate',
-            label: 'This month to date',
+            label: __('This month to date'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -148,7 +148,7 @@
           },
           {
             value: 'thisQuarterToDate',
-            label: 'This quarter to date',
+            label: __('This quarter to date'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -163,7 +163,7 @@
           },
           {
             value: 'thisYearToDate',
-            label: 'This year to date',
+            label: __('This year to date'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -174,7 +174,7 @@
           },
           {
             value: 'previousMonth',
-            label: 'Previous month',
+            label: __('Previous month'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(
@@ -185,7 +185,7 @@
           },
           {
             value: 'previousMonthToDate',
-            label: 'Previous month to date',
+            label: __('Previous month to date'),
             callback: function () {
               const now = new Date();
               this.dateRangePicker.setDates(

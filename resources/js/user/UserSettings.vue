@@ -184,9 +184,9 @@
                 <option value="none">
                   {{ __("Don't load data by default") }}
                 </option>
-                <optgroup v-for="group in datePresets" :label="group.label">
+                <optgroup v-for="group in datePresets" :label="__(group.label)">
                   <option v-for="option in group.options" :value="option.value">
-                    {{ option.label }}
+                    {{ __(option.label) }}
                   </option>
                 </optgroup>
               </select>
