@@ -80,17 +80,17 @@
         @preset-ready="setReadyFlag($event)"
       ></find-transaction-select-card>
     </div>
-    <div :class="sidebarCollapsed ? 'col-sm-12' : 'col-sm-9'" class="position-relative">
-      <button
-        type="button"
-        class="transactions-sidebar-toggle"
-        @click="sidebarCollapsed = !sidebarCollapsed"
-        :title="sidebarCollapsed ? __('Expand sidebar') : __('Collapse sidebar')"
-      >
-        <i :class="sidebarCollapsed ? 'fas fa-angle-right' : 'fas fa-angle-left'"></i>
-      </button>
+    <div :class="sidebarCollapsed ? 'col-sm-12' : 'col-sm-9'">
       <div class="card">
         <div class="card-header d-flex align-items-center">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary me-2"
+            @click="sidebarCollapsed = !sidebarCollapsed"
+            :title="sidebarCollapsed ? __('Expand sidebar') : __('Collapse sidebar')"
+          >
+            <i :class="sidebarCollapsed ? 'fas fa-angles-right' : 'fas fa-angles-left'"></i>
+          </button>
           <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
               <button
@@ -673,34 +673,3 @@
     },
   };
 </script>
-
-<style scoped>
-.transactions-sidebar-toggle {
-  position: absolute;
-  left: -16px;
-  bottom: 16px;
-  z-index: 5;
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--cui-border-color, #d8dbe0);
-  background: var(--cui-card-cap-bg, #f8f9fa);
-  color: var(--cui-secondary-color, #6c757d);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-}
-
-.transactions-sidebar-toggle:hover {
-  background: #fff;
-  color: var(--cui-body-color, #212529);
-}
-
-@media (max-width: 576px) {
-  .transactions-sidebar-toggle {
-    left: 8px;
-    bottom: 8px;
-  }
-}
-</style>
