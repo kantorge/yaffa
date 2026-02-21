@@ -2,7 +2,7 @@
   <div class="card mb-4" id="widgetScheduleCalendar">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        {{ __('Scheduled transaction instances') }}
+        {{ __('widget.scheduleCalendar.cardTitle') }}
       </div>
       <div>
         <button
@@ -53,11 +53,8 @@
 
 <script>
   import { transactionTypeIcon } from '../dataTableHelper';
-  import {
-    __,
-    toFormattedCurrency,
-    initializeBootstrapTooltips,
-  } from '@/helpers';
+  import { initializeBootstrapTooltips } from '@/helpers';
+  import { __, toFormattedCurrency } from '@/i18n';
   import { Calendar } from 'v-calendar';
 
   export default {
@@ -105,19 +102,16 @@
             transaction.transaction_type.name.charAt(0).toUpperCase() +
             transaction.transaction_type.name.slice(1);
           // Return constructed label
-          return (
-            type +
-            ' ' +
-            toFormattedCurrency(
+          return this.__('widget.scheduleCalendar.transactionLabel', {
+            type,
+            amount: toFormattedCurrency(
               transaction.config.amount_to,
               this.locale,
               transaction.transaction_currency,
-            ) +
-            ' from ' +
-            transaction.config.account_from.name +
-            ' to ' +
-            transaction.config.account_to.name
-          );
+            ),
+            fromAccount: transaction.config.account_from.name,
+            toAccount: transaction.config.account_to.name,
+          });
         }
       },
       refreshTooltip: function () {

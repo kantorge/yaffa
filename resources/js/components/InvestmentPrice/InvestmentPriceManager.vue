@@ -57,7 +57,7 @@
   import InvestmentPriceModal from './InvestmentPriceModal.vue';
   import PriceHistoryCard from '../InvestmentDisplay/PriceHistoryCard.vue';
   import DateRangeSelectorWithPresets from '../DateRangeSelectorWithPresets.vue';
-  import { __ } from '../../helpers';
+  import { __ } from '../../i18n';
   import * as toastHelpers from '../../toast';
 
   export default {

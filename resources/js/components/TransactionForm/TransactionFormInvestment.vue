@@ -494,15 +494,13 @@
   import TransactionSchedule from './TransactionSchedule.vue';
 
   import {
-    getCurrencySymbol,
-    toFormattedCurrency,
     processTransaction,
     todayInUTC,
     toIsoDateString,
     initializeBootstrapTooltips,
-    loadSelect2Language,
-    __,
   } from '@/helpers';
+  import { __, getCurrencySymbol, toFormattedCurrency } from '@/i18n';
+  import { loadSelect2Language } from '@/i18n/select2';
 
   import select2 from 'select2';
   select2();

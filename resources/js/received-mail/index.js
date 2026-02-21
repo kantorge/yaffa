@@ -2,7 +2,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as toastHelpers from '../toast';
-import { __ } from '../helpers';
+import { __ } from '../i18n';
 
 const dataTableSelector = '#table';
 

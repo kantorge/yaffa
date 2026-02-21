@@ -3,6 +3,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
+import { toFormattedCurrency } from '../i18n';
 import * as toastHelpers from '../toast';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
@@ -376,34 +377,34 @@ let getAccountBalance = function () {
             }
             let balance = response.data.accountBalanceData[0];
 
-            elementOpeningBalance.innerText = helpers.toFormattedCurrency(
+            elementOpeningBalance.innerText = toFormattedCurrency(
                 balance.config.opening_balance,
                 window.YAFFA.locale,
                 balance.config.currency
             );
 
-            elementCurrentCash.innerText = helpers.toFormattedCurrency(
+            elementCurrentCash.innerText = toFormattedCurrency(
                 balance.cash,
                 window.YAFFA.locale,
                 window.YAFFA.baseCurrency
             );
 
             if (balance.hasOwnProperty('cash_foreign')) {
-                elementCurrentCash.innerText += ' / ' + helpers.toFormattedCurrency(
+                elementCurrentCash.innerText += ' / ' + toFormattedCurrency(
                     balance.cash_foreign,
                     window.YAFFA.locale,
                     balance.config.currency
                 );
             }
 
-            elementCurrentBalance.innerText = helpers.toFormattedCurrency(
+            elementCurrentBalance.innerText = toFormattedCurrency(
                 balance.sum,
                 window.YAFFA.locale,
                 window.YAFFA.baseCurrency
             );
 
             if (balance.hasOwnProperty('sum_foreign')) {
-                elementCurrentBalance.innerText += ' / ' + helpers.toFormattedCurrency(
+                elementCurrentBalance.innerText += ' / ' + toFormattedCurrency(
                     balance.sum_foreign,
                     window.YAFFA.locale,
                     balance.config.currency

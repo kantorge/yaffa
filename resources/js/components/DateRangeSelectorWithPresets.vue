@@ -70,6 +70,7 @@
 
 <script>
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
+import { __ } from '../i18n';
 import presetCalculators from '../presetDates';
 
 export default {
@@ -264,9 +265,7 @@ export default {
       }
       return [this.dateFrom, this.dateTo];
     },
-    __: function (string, replace) {
-      return window.__(string, replace);
-    },
+    __,
   },
 };
 </script>

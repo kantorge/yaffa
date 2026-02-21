@@ -237,7 +237,7 @@
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
-  import { __ } from '../helpers';
+  import { __ } from '../i18n';
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';

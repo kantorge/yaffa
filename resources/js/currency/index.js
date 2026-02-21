@@ -6,7 +6,7 @@ import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
 } from '../components/dataTableHelper';
-import {toFormattedCurrency} from '../helpers';
+import {toFormattedCurrency} from '../i18n';
 
 const dataTableSelector = '#table';
 

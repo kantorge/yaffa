@@ -7,7 +7,7 @@ import {
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
 
-import { __ } from '../helpers';
+import { __ } from '../i18n';
 import * as toastHelpers from '../toast';
 
 const dataTableSelector = '#table';

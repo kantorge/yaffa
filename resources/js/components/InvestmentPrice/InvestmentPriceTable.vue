@@ -17,7 +17,7 @@
   import 'datatables.net-bs5';
   import * as dataTableHelpers from '../dataTableHelper';
   import Swal from 'sweetalert2';
-  import { __ } from '../../helpers';
+  import { __ } from '../../i18n';
   import * as toastHelpers from '../../toast';
 
   export default {

@@ -1,6 +1,7 @@
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+import { applyAmChartsLocalization } from '../i18n/amcharts';
 
 am4core.useTheme(am4themes_animated);
 import 'select2';
@@ -11,6 +12,7 @@ window.chartData = [];
 let chart;
 
 chart = am4core.create("chartdiv", am4charts.XYChart);
+applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
 
 chart.numberFormatter.intlLocales = window.YAFFA.locale;
 chart.dateFormatter.intlLocales = window.YAFFA.locale;

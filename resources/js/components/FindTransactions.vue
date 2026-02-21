@@ -203,7 +203,8 @@
 </template>
 
 <script>
-  import { __, processTransaction } from '../helpers';
+  import { __ } from '../i18n';
+  import { processTransaction } from '../helpers';
   import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';

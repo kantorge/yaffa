@@ -1,4 +1,4 @@
-import { __ } from '../helpers';
+import { __ } from '../i18n';
 import * as toastHelpers from '../toast';
 
 // Initialize the finalize transaction button

@@ -2,14 +2,14 @@
   <div class="card mb-4" v-if="available">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        {{ __('Monthly overview for top-level categories') }}
+        {{ __('widget.categoryWaterfall.cardTitle') }}
       </div>
       <div v-show="ready">
         <button
           class="btn btn-sm btn-outline-info me-2"
           type="button"
           @click="previousMonth"
-          :title="__('Previous month')"
+          :title="__('widget.categoryWaterfall.previousMonthTitle')"
         >
           <span class="fa fa-fw fa-caret-left"></span>
         </button>
@@ -18,7 +18,7 @@
           class="btn btn-sm btn-outline-info ms-2"
           type="button"
           @click="nextMonth"
-          :title="__('Next month')"
+          :title="__('widget.categoryWaterfall.nextMonthTitle')"
         >
           <span class="fa fa-fw fa-caret-right"></span>
         </button>
@@ -51,7 +51,7 @@
           class="btn btn-sm btn-outline-primary"
           for="waterfallTransactionCategory_All"
         >
-          {{ __('All transactions') }}</label
+          {{ __('widget.categoryWaterfall.allTransactions') }}</label
         >
 
         <input
@@ -69,7 +69,7 @@
           class="btn btn-sm btn-outline-primary"
           for="waterfallTransactionCategory_Standard"
         >
-          {{ __('Only standard') }}
+          {{ __('widget.categoryWaterfall.onlyStandard') }}
         </label>
 
         <input
@@ -87,7 +87,7 @@
           class="btn btn-sm btn-outline-primary"
           for="waterfallTransactionCategory_Investment"
         >
-          {{ __('Only investment') }}
+          {{ __('widget.categoryWaterfall.onlyInvestment') }}
         </label>
       </div>
     </div>
@@ -99,7 +99,8 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
-  import * as helpers from '../../helpers';
+  import { __ } from '../../i18n';
+  import { applyAmChartsLocalization } from '../../i18n/amcharts';
 
   export default {
     props: {
@@ -140,6 +141,7 @@
       }
 
       let chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart);
+      applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
       chart.hiddenState.properties.opacity = 0;
 
       // Set up number formatting
@@ -221,7 +223,7 @@
       noDataMessagecontainer.layout = 'vertical';
 
       const messageLabel = noDataMessagecontainer.createChild(am4core.Label);
-      messageLabel.text = __('There is no data to show on this chart.');
+      messageLabel.text = __('widget.categoryWaterfall.noData');
       messageLabel.textAlign = 'middle';
       messageLabel.maxWidth = 300;
       messageLabel.wrap = true;
@@ -293,12 +295,7 @@
           });
       },
 
-      /**
-       * Import the translation helper function.
-       */
-      __: function (string, replace) {
-        return helpers.__(string, replace);
-      },
+      __,
     },
     computed: {
       chartData() {
@@ -342,7 +339,7 @@
         if (data.length > 1) {
           // Open history is the last value of the data
           data.push({
-            category: __('Result'),
+            category: __('widget.categoryWaterfall.result'),
             open: 0,
             stepValue: 0,
             barValue: openHistory,

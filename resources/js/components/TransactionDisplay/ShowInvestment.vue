@@ -122,7 +122,7 @@
                   toFormattedCurrency(
                     transaction.config.price,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   ) || __('Not set')
                 }}
               </dd>
@@ -135,7 +135,7 @@
                   toFormattedCurrency(
                     transaction.config.commission,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -151,7 +151,7 @@
                   toFormattedCurrency(
                     transaction.config.tax,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -171,7 +171,7 @@
                   toFormattedCurrency(
                     transaction.config.dividend,
                     locale,
-                    transaction.config.account.config.currency
+                    transaction.config.account.config.currency,
                   )
                 }}
               </dd>
@@ -196,7 +196,7 @@
 
 <script>
   import TransactionSchedule from './Schedule.vue';
-  import { __, toFormattedCurrency } from '../../helpers';
+  import { __, toFormattedCurrency } from '../../i18n';
 
   export default {
     components: {

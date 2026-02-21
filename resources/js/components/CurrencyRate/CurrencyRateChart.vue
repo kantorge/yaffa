@@ -15,7 +15,8 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
-  import { __ } from '../../helpers';
+  import { __ } from '../../i18n';
+  import { applyAmChartsLocalization } from '../../i18n/amcharts';
 
   export default {
     name: 'CurrencyRateChart',
@@ -78,6 +79,7 @@
 
         // Chart setup using ref instead of ID
         const chart = am4core.create(this.$refs.chartRate, am4charts.XYChart);
+        applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
         chart.data = this.currencyRates;
         chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
 

@@ -83,7 +83,7 @@
 </template>
 
 <script>
-  import { __ } from '../helpers';
+  import { __ } from '../i18n';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
   import * as toastHelpers from '../toast';

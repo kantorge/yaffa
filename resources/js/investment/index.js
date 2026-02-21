@@ -5,7 +5,7 @@ import 'datatables-contextual-actions';
 import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from './../components/dataTableHelper';
-import { __, toFormattedCurrency } from '../helpers';
+import { __, toFormattedCurrency } from '../i18n';
 import * as toastHelpers from '../toast';
 
 let ajaxIsBusy = false;

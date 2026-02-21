@@ -7,7 +7,7 @@ import Swal from 'sweetalert2'
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 import * as toastHelpers from '../toast';
-import { __ } from '../helpers';
+import { __ } from '../i18n';
 
 let ajaxIsBusy = true;
 

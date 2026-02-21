@@ -6,7 +6,8 @@ import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 
-import { __, toFormattedCurrency } from "../helpers";
+import { __, toFormattedCurrency } from "../i18n";
+import { applyAmChartsLocalization } from '../i18n/amcharts';
 import * as toastHelpers from '../toast';
 import { investmentGroupTree } from "../components/dataTableHelper";
 
@@ -14,10 +15,17 @@ window.chartData = [];
 let chart;
 
 function initializeChart() {
+    if (chart) {
+        chart.dispose();
+    }
+
     chart = am4core.create("chart", am4charts.XYChart);
+    applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
     chart.hiddenState.properties.opacity = 0;
     chart.paddingRight = 30;
     chart.dateFormatter.inputDateFormat = "yyyy-MM-dd";
+    chart.numberFormatter.intlLocales = window.YAFFA.locale;
+    chart.dateFormatter.intlLocales = window.YAFFA.locale;
 
     var colorSet = new am4core.ColorSet();
     colorSet.saturation = 0.4;
@@ -165,7 +173,6 @@ fetch('/api/assets/investment/timeline')
         initializeChart();
     })
     .then(() => {
-        initializeChart();
         document.getElementById('chart-placeholder').style.display = 'none';
         document.getElementById('chart').style.display = 'block';
     })
