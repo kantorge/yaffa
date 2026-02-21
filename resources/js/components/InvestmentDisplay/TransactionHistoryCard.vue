@@ -37,7 +37,9 @@
   import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
   import * as dataTableHelpers from '../../components/dataTableHelper';
-  import { __, toIsoDateString } from '../../helpers';
+  import { getDataTablesLanguageOptions } from '../../i18n';
+  import { __ } from '../../i18n';
+  import { toIsoDateString } from '../../helpers';
   import * as toastHelpers from '../../toast';
 
   export default {
@@ -180,6 +182,7 @@
       },
       tableOptions() {
         return {
+          language: getDataTablesLanguageOptions() || undefined,
           createdRow: (row, data) => {
             // Set date range buttons
             row.querySelectorAll('.set-date').forEach((btn) => {

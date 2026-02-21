@@ -1,14 +1,23 @@
+// Chart components
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import am4themes_kelly from "@amcharts/amcharts4/themes/kelly";
+// Generic helpers
 import * as dataTableHelpers from './../components/dataTableHelper'
 import * as helpers from "../helpers";
+import { applyAmChartsLocalization } from '../i18n/amcharts';
+import { loadSelect2Language } from '../i18n/select2';
+import { getDataTablesLanguageOptions } from '../i18n';
+// Category tree
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
-
+// DataTables
 import 'datatables.net-bs5';
-import 'select2';
+// Select2 for account selection
+import select2 from 'select2';
+select2();
+loadSelect2Language(window.YAFFA.language);
 
 const accountSelector = '#accountList';
 const treeSelector = '#categoryTree';
@@ -71,6 +80,7 @@ const elementRefreshButton = document.getElementById('reload');
 am4core.useTheme(am4themes_animated);
 am4core.useTheme(am4themes_kelly);
 window.chart = am4core.create("chartdiv", am4charts.XYChart);
+applyAmChartsLocalization(chart, window.YAFFA.locale, window.YAFFA.language);
 
 chart.numberFormatter.intlLocales = window.YAFFA.locale;
 chart.numberFormatter.numberFormat = {
@@ -360,6 +370,7 @@ let initialTableLoad = true;
 const tableSelector = '#table';
 
 window.table = $(tableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     ajax: {
         url: window.route('api.transactions.getScheduledItems', {type: 'any'}),
         type: 'GET',

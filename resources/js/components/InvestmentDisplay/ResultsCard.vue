@@ -114,7 +114,7 @@
 </template>
 
 <script>
-  import { toFormattedCurrency, __ } from '../../helpers';
+  import { toFormattedCurrency, __ } from '../../i18n';
   import * as toastHelpers from '../../toast';
 
   export default {

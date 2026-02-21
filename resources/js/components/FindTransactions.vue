@@ -203,7 +203,8 @@
 </template>
 
 <script>
-  import { __, processTransaction } from '../helpers';
+  import { __, getDataTablesLanguageOptions } from '../i18n';
+  import { processTransaction } from '../helpers';
   import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
   import FindTransactionSelectCard from './FindTransactionSelectCard.vue';
@@ -393,6 +394,7 @@
 
     mounted() {
       this.dataTable = $(this.$refs.dataTable).DataTable({
+        language: getDataTablesLanguageOptions() || undefined,
         data: this.transactions,
         processing: true,
         columns: [

@@ -73,7 +73,7 @@
 </template>
 
 <script>
-  import { __ } from '../../helpers';
+  import { __ } from '../../i18n';
 
   export default {
     name: 'ActionButtonBar',
@@ -109,7 +109,7 @@
       getRoute(action, additionalParams = {}) {
         const routeParams = Object.assign(
           { transaction: this.transaction.id, action: action },
-          additionalParams
+          additionalParams,
         );
         return window.route('transaction.open', routeParams);
       },

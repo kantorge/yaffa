@@ -64,7 +64,6 @@ return [
         "numeric" => "L'attribut :attribute doit être supérieur ou égal à :value.",
         "string" => "L'attribut :attribute doit avoir une valeur supérieure ou égale à :value."
     ],
-    "hex_color" => "Le champ :attribute doit être une couleur hexadécimale valide.",
     "image" => "L'attribut :attribute doit être une image.",
     "in" => "L'attribut sélectionné :attribute est invalide.",
     "in_array" => "Le champ :attribute n'existe pas dans :other.",
@@ -139,7 +138,6 @@ return [
     "starts_with" => "L'attribut :attribute doit commencer par l'une des valeurs suivantes : :values.",
     "string" => "L'attribut :attribute doit être une chaîne de caractères.",
     "timezone" => "L'attribut :attribute doit correspondre à une zone valide.",
-    "ulid" => "Le champ :attribute doit être un ULID valide.",
     "unique" => "L'attribut :attribute a déjà été utilisé.",
     "uploaded" => "Le fichier :attribute n'a pas pu être téléversé.",
     "uppercase" => "Le champ :attribute doit être en majuscules.",

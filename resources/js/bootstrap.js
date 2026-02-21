@@ -22,16 +22,9 @@ if (window.csrfToken) {
 import * as coreui from '@coreui/coreui';
 window.coreui = coreui;
 
-// Custom translation function
-window.__ = function (key, replace) {
-    let translation = window.YAFFA.translations[key] ? window.YAFFA.translations[key] : key;
-
-    for (const [key, value] of Object.entries(replace || {})) {
-        translation = translation.replace(':' + key, value);
-    }
-
-    return translation;
-};
+// Global fallback function for translations
+import { __ } from './i18n/translate';
+window.__ = __;
 
 // Toasts
 (function (bootstrap) {

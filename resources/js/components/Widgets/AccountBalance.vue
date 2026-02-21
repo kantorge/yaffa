@@ -2,7 +2,7 @@
   <div class="card mb-4" id="widgetAccountBalance">
     <div class="card-header d-flex justify-content-between">
       <div class="card-title">
-        {{ __('Total value') }}
+        {{ __('widget.accountBalance.cardTitle') }}
       </div>
       <div v-show="state === 'data-available'">
         {{ toFormattedCurrency(totalValue, locale, baseCurrency) }}
@@ -28,7 +28,7 @@
     </ul>
     <ul class="list-group list-group-flush" v-if="state === 'error'">
       <li class="list-group-item list-group-item-danger">
-        {{ __('There was an error while getting account data: ') }}
+        {{ __('widget.accountBalance.loadErrorPrefix') }}
         {{ errorMessage }}
       </li>
     </ul>
@@ -95,18 +95,22 @@
       <div v-show="state === 'data-available'">
         <span
           v-if="withClosed"
-          v-html="__('Closed accounts are <strong>included</strong>')"
+          v-html="__('widget.accountBalance.closedIncluded')"
         ></span>
         <span
           v-if="!withClosed"
-          v-html="__('Closed accounts are <strong>hidden</strong>')"
+          v-html="__('widget.accountBalance.closedHidden')"
         ></span>
 
         <button
           class="btn btn-sm btn-ghost-dark ms-1"
           type="button"
           @click="toggleWithInactive"
-          v-html="withClosed ? __('Hide') : __('Show')"
+          v-html="
+            withClosed
+              ? __('widget.accountBalance.hideButton')
+              : __('widget.accountBalance.showButton')
+          "
         ></button>
       </div>
     </div>
@@ -114,7 +118,7 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency } from '@/helpers';
+  import { __, toFormattedCurrency } from '@/i18n';
   import * as toastHelpers from '@/toast';
 
   export default {
@@ -189,7 +193,7 @@
         // Verify if base currency is set. Without this, the widget cannot be displayed.
         if (!this.baseCurrency) {
           this.state = 'error';
-          this.errorMessage = __('Base currency is not set');
+          this.errorMessage = __('widget.accountBalance.baseCurrencyMissing');
           this.baseCurrency = {};
 
           return;

@@ -6,7 +6,7 @@ import {
     initializeStandardExternalSearch
 } from '../components/dataTableHelper';
 
-import { __ } from '../helpers';
+import { __, getDataTablesLanguageOptions } from '../i18n';
 import * as toastHelpers from '../toast';
 
 const dataTableSelector = '#table';
@@ -25,6 +25,7 @@ const deleteButtonConditions = [
 
 /** @property {Array} investmentGroups */
 let table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.investmentGroups,
     columns: [
         {

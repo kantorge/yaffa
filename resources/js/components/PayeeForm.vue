@@ -119,7 +119,7 @@
 </template>
 
 <script>
-  import { loadSelect2Language } from '../helpers';
+  import { loadSelect2Language } from '../i18n/select2';
   import select2 from 'select2';
   select2();
   loadSelect2Language(window.YAFFA.language);
@@ -130,6 +130,8 @@
     AlertErrors,
     AlertSuccess,
   } from 'vform/src/components/bootstrap5';
+
+  import { __ } from '@/i18n';
 
   export default {
     components: {
@@ -275,6 +277,7 @@
             .then((response) => this.processAfterSubmit(response));
         }
       },
+      __,
     },
   };
 </script>

@@ -197,22 +197,22 @@ Breadcrumbs::for('transaction.open', function (BreadcrumbTrail $trail, $transact
 
 Breadcrumbs::for('reports.cashflow', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push('Reports');
+    $trail->push(__('Reports'));
     $trail->push(__('Cash Flow'), route('reports.cashflow'));
 });
 Breadcrumbs::for('reports.budgetchart', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push('Reports');
+    $trail->push(__('Reports'));
     $trail->push(__('Budget Chart'), route('reports.budgetchart'));
 });
 Breadcrumbs::for('report.schedules', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push('Reports');
+    $trail->push(__('Reports'));
     $trail->push(__('Schedules and Budgets'), route('report.schedules'));
 });
 Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
-    $trail->push('Reports');
+    $trail->push(__('Reports'));
     $trail->push(__('Transactions'), route('reports.transactions'));
 });
 Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail) {

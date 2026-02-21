@@ -1,4 +1,5 @@
-import { __, loadSelect2Language } from '../helpers';
+import { __ } from '../i18n';
+import { loadSelect2Language } from '../i18n/select2';
 import select2 from 'select2';
 select2();
 loadSelect2Language(window.YAFFA.language);

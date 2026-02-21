@@ -15,7 +15,7 @@
             toFormattedCurrency(
               investment.latest_price,
               locale,
-              investment.currency
+              investment.currency,
             )
           }}
         </dd>
@@ -25,7 +25,7 @@
             toFormattedCurrency(
               investment.current_quantity * investment.latest_price,
               locale,
-              investment.currency
+              investment.currency,
             )
           }}
         </dd>
@@ -35,7 +35,7 @@
 </template>
 
 <script>
-  import { toFormattedCurrency } from '../../helpers';
+  import { __, toFormattedCurrency } from '@/i18n';
 
   export default {
     name: 'CurrentAssetsCard',
@@ -61,6 +61,7 @@
           maximumFractionDigits: 4,
         });
       },
+      __,
     },
   };
 </script>

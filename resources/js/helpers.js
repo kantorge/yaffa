@@ -1,57 +1,3 @@
-/**
- * @param {number} input The number to be formatted as currency.
- * @param {string} locale The locale to be used for formatting.
- * @param {Object} currencySettings Object with settings to apply. Expected key(s): iso_code. Optional key(s): min_digits, max_digits.
- * @property {string} currencySettings.iso_code
- * @property {number} currencySettings.min_digits
- * @property {number} currencySettings.max_digits
- *
- * @type {string}
- */
-export function toFormattedCurrency(input, locale, currencySettings) {
-    // Fallback to raw input if currency settings are missing
-    if (!currencySettings || !currencySettings.iso_code) {
-        return input.toString();
-    }
-
-    // If input is not a number, return it as is
-    if (input === null || input === undefined) {
-        return '';
-    }
-    if (isNaN(input)) {
-        return input.toString();
-    }
-
-    return input.toLocaleString(
-        locale,
-        {
-            style: 'currency',
-            currency: currencySettings.iso_code,
-            currencyDisplay: 'narrowSymbol',
-            minimumFractionDigits: currencySettings.min_digits || 0,
-            maximumFractionDigits: currencySettings.max_digits
-        }
-    );
-}
-
-/**
- * Gets the currency symbol for a given locale and ISO currency code.
- *
- * @param {string} locale - The locale string (e.g., 'en-US', 'de-DE')
- * @param {string} iso_code - The ISO 4217 currency code (e.g., 'USD', 'EUR')
- *
- * @returns {string} The currency symbol for the specified locale and currency
- */
-export function getCurrencySymbol(locale, iso_code) {
-    const numberFormat = new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: iso_code,
-        currencyDisplay: 'narrowSymbol',
-    });
-    const symbol = numberFormat.format(0).match(/[^0-9,.\s]+/);
-    return symbol[0];
-}
-
 // Function to return just the ISO version of a date.
 export function toIsoDateString(date) {
     // Verify that the date is a Date object
@@ -139,30 +85,6 @@ export function processScheduledTransaction(transaction) {
 }
 
 /**
- * Function to translate strings using the predefined translations in the window.YAFFA.translations object.
- *
- * @param {string} key The translation key.
- * @param {Object} replace An object with key/value pairs to replace in the translation string.
- * @property {string} replace.key The key to replace in the translation string.
- * @property {string} replace.value The value to replace the key with.
- * @returns {string}
- */
-export function __(key, replace = {}) {
-    let translation = window.YAFFA.translations[key] || key;
-
-    // If the replace object is empty, return the translation as is
-    if (Object.keys(replace).length === 0) {
-        return translation;
-    }
-
-    for (const [key, value] of Object.entries(replace)) {
-        translation = translation.replace(':' + key, String(value));
-    }
-
-    return translation;
-}
-
-/**
  * Function to generate an anchor element with a link to a transaction.
  *
  * @param {number} id The transaction ID.
@@ -188,19 +110,4 @@ export function initializeBootstrapTooltips() {
     [...tooltipTriggerList].map(
       (tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl),
     );
-}
-
-// Helper to load Select2 i18n files in a Vite-friendly way
-const select2I18nLoaders = {
-    en: () => import('select2/dist/js/i18n/en.js'),
-    fr: () => import('select2/dist/js/i18n/fr.js'),
-    hu: () => import('select2/dist/js/i18n/hu.js'),
-};
-
-export function loadSelect2Language(lang) {
-    const loader = select2I18nLoaders[lang] || select2I18nLoaders.en;
-    if (loader) {
-        return loader();
-    }
-    return Promise.resolve();
 }

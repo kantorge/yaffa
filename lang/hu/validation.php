@@ -65,7 +65,6 @@ return [
         "numeric" => "A(z) :attribute értékének nagyobbnak vagy egyenlőnek kell lennie, mint a :value.",
         "string" => "A(z) :attribute karakternek nagyobbnak vagy egyenlőnek kell lennie, mint :value karakter."
     ],
-    "hex_color" => "Az :attribute mezőnek érvényes hexadecimális színnek kell lennie.",
     "image" => "A(z) :attribútumnak képnek kell lennie.",
     "in" => "A kiválasztott :attribute érvénytelen.",
     "in_array" => "A(z) :attribute mező nem létezik az :other paraméterben.",
@@ -144,7 +143,6 @@ return [
     "starts_with" => "A(z) :attribute tulajdonságnak a következők egyikével kell kezdődnie: :values.",
     "string" => "A :attribute-nak karakterláncnak kell lennie.",
     "timezone" => "A(z) :attribute tulajdonságnak érvényes zónának kell lennie.",
-    "ulid" => "Az :attribute mezőnek érvényes ULID-nak kell lennie.",
     "unique" => "A(z) :attribute már foglalt.",
     "uploaded" => "A(z) :attribute feltöltése sikertelen.",
     "uppercase" => "Az :attribute mezőnek nagybetűsnek kell lennie.",

@@ -239,7 +239,7 @@
 <script>
   import { DatePicker } from 'v-calendar';
   import MathInput from '@components/MathInput.vue';
-  import { __ } from '@/helpers';
+  import { __ } from '@/i18n';
 
   export default {
     components: {

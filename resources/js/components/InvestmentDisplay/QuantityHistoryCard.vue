@@ -20,6 +20,7 @@
   import * as am4core from '@amcharts/amcharts4/core';
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
+  import { applyAmChartsLocalization } from '../../i18n/amcharts';
 
   export default {
     name: 'QuantityHistoryCard',
@@ -42,7 +43,9 @@
       am4core.useTheme(am4themes_animated);
       // Chart setup
       let chart = am4core.create(this.$refs.chartQuantity, am4charts.XYChart);
+      applyAmChartsLocalization(chart, this.locale, window.YAFFA.language);
       chart.data = this.quantities;
+      chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
       let categoryAxis = chart.xAxes.push(new am4charts.DateAxis());
       categoryAxis.dataFields = { category: 'date' };
       let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());

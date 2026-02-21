@@ -1,4 +1,4 @@
-import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../helpers';
+import { __, toFormattedCurrency as toFormattedCurrencyHelper } from '../i18n';
 import * as toastHelpers from '../toast.js';
 
 const route = window.route;

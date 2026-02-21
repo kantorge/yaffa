@@ -184,9 +184,9 @@
                 <option value="none">
                   {{ __("Don't load data by default") }}
                 </option>
-                <optgroup v-for="group in datePresets" :label="group.label">
+                <optgroup v-for="group in datePresets" :label="__(group.label)">
                   <option v-for="option in group.options" :value="option.value">
-                    {{ option.label }}
+                    {{ __(option.label) }}
                   </option>
                 </optgroup>
               </select>
@@ -237,7 +237,7 @@
 </script>
 <script>
   import { DatePicker } from 'v-calendar';
-  import { __ } from '../helpers';
+  import { __ } from '../i18n';
   import * as toastHelpers from '../toast';
   import Form from 'vform';
   import { Button, HasError } from 'vform/src/components/bootstrap5';
