@@ -67,7 +67,8 @@
               >
                 <a
                   v-if="(row.values[m] || 0) !== 0"
-                  :href="drillDownUrl(m, row.categoryIds)"
+                  href="#"
+                  @click.prevent="emitDrillDown(m, row.categoryIds)"
                   class="cell-link"
                 >
                   {{ formatCell(row.values[m] || 0, row.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
@@ -94,7 +95,8 @@
               >
                 <a
                   v-if="(section.subtotals[m] || 0) !== 0"
-                  :href="drillDownUrl(m, section.allCategoryIds)"
+                  href="#"
+                  @click.prevent="emitDrillDown(m, section.allCategoryIds)"
                   class="cell-link"
                 >
                   {{ formatCell(section.subtotals[m] || 0, section.isIncome ? monthlyTotalIncome[m] : monthlyTotalExpenses[m]) }}
@@ -246,6 +248,7 @@ function processCategoryGroup(categoryNames, catData, months, monthCount) {
 
 export default {
   name: 'ReportingCanvasFindTransactionsMonthlyBreakdown',
+  emits: ['drill-down'],
   props: {
     transactions: {
       type: Array,
@@ -520,6 +523,19 @@ export default {
   },
 
   methods: {
+    emitDrillDown(month, categoryIds) {
+      const [year, mon] = month.split('-').map(Number);
+      const lastDay = new Date(year, mon, 0).getDate();
+      const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
+      const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      this.$emit('drill-down', {
+        dateFrom,
+        dateTo,
+        categories: [...new Set(categoryIds)].map((id) => String(id)),
+      });
+    },
+
     __: function (string, replace) {
       return translator(string, replace);
     },
@@ -653,33 +669,6 @@ export default {
       if (deviation < -DEVIATION_LEVEL_1) return `bg-deviation-${below}-1`;
 
       return '';
-    },
-
-    /**
-     * Build a drill-down URL filtered by month and categories.
-     * Includes tab=transaction-list to auto-open that tab, and return_to
-     * with the current page URL so the user can navigate back.
-     *
-     * @param {string} month - Month in YYYY-MM format
-     * @param {number[]} categoryIds - Category IDs to filter by
-     * @returns {string} Full URL with query parameters
-     */
-    drillDownUrl(month, categoryIds) {
-      const [year, mon] = month.split('-').map(Number);
-      const lastDay = new Date(year, mon, 0).getDate();
-      const dateFrom = `${year}-${String(mon).padStart(2, '0')}-01`;
-      const dateTo = `${year}-${String(mon).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-      const params = new URLSearchParams();
-      params.append('date_from', dateFrom);
-      params.append('date_to', dateTo);
-      [...new Set(categoryIds)].forEach((id) => params.append('categories[]', id));
-      params.append('tab', 'transaction-list');
-      const returnUrl = new URL(window.location.href);
-      returnUrl.searchParams.set('tab', 'monthly-breakdown');
-      params.append('return_to', returnUrl.pathname + returnUrl.search);
-
-      return `/reports/transactions?${params.toString()}`;
     },
 
     toFormattedCurrency,

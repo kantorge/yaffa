@@ -232,6 +232,7 @@
                 :transactions="transactions"
                 :busy="busy"
                 :is-drill-down="!!returnTo"
+                @drill-down="onMonthlyBreakdownDrillDown"
               ></reporting-canvas-monthly-breakdown>
             </div>
           </div>
@@ -322,6 +323,20 @@
       onUpdateTag(event) {
         this.selectedTags = event;
         this.rebuildUrl();
+      },
+      onMonthlyBreakdownDrillDown(event) {
+        this.dateFrom = event.dateFrom;
+        this.dateTo = event.dateTo;
+        this.selectedCategories = event.categories;
+        this.rebuildUrl();
+        this.getTransactions();
+
+        this.$nextTick(() => {
+          const tabButton = this.$el.querySelector('#nav-transaction-list');
+          if (tabButton) {
+            tabButton.click();
+          }
+        });
       },
       rebuildUrl() {
         let params = [];
