@@ -131,6 +131,8 @@
     AlertSuccess,
   } from 'vform/src/components/bootstrap5';
 
+  import { __ } from '@/i18n';
+
   export default {
     components: {
       Button,
@@ -275,6 +277,7 @@
             .then((response) => this.processAfterSubmit(response));
         }
       },
+      __,
     },
   };
 </script>

@@ -22,8 +22,9 @@ if (window.csrfToken) {
 import * as coreui from '@coreui/coreui';
 window.coreui = coreui;
 
-import { __ as translate } from './i18n/translate';
-window.__ = translate;
+// Global fallback function for translations
+import { __ } from './i18n/translate';
+window.__ = __;
 
 // Toasts
 (function (bootstrap) {

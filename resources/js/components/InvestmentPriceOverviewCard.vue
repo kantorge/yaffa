@@ -53,7 +53,7 @@
 </template>
 
 <script>
-  import { toFormattedCurrency } from '../i18n';
+  import { __, toFormattedCurrency } from '../i18n';
 
   export default {
     props: {
@@ -75,6 +75,7 @@
       toFormattedCurrency(value, locale, currency) {
         return toFormattedCurrency(value, locale, currency);
       },
+      __,
     },
   };
 </script>

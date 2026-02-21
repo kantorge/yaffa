@@ -35,7 +35,7 @@
 </template>
 
 <script>
-  import { toFormattedCurrency } from '../../i18n';
+  import { __, toFormattedCurrency } from '@/i18n';
 
   export default {
     name: 'CurrentAssetsCard',
@@ -61,6 +61,7 @@
           maximumFractionDigits: 4,
         });
       },
+      __,
     },
   };
 </script>

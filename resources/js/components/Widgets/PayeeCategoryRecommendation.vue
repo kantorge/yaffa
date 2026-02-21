@@ -62,6 +62,8 @@
 </template>
 
 <script>
+  import { __ } from '@/i18n';
+
   export default {
     data() {
       return {
@@ -129,6 +131,7 @@
 
         return textNode.innerHTML;
       },
+      __,
     },
 
     computed: {
