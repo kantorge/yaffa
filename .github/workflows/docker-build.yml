@@ -5,10 +5,10 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      source_branch:
-        description: 'Source branch name for Docker tag (e.g. feat/monthly-breakdown-tab)'
+      ref_name:
+        description: 'Reference name to simulate github.ref_name'
         required: true
-        default: 'develop'
+        default: 'test'
       platforms:
         description: 'Platforms to build (comma-separated)'
         required: false
@@ -23,11 +23,7 @@ jobs:
 
       - name: Set version from workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
-        run: |
-          BRANCH=$(echo "${{ github.event.inputs.source_branch }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
-          DATE=$(date +%Y%m%d-%H%M)
-          echo "DOCKER_VERSION_TAG=${BRANCH}-${DATE}" >> $GITHUB_ENV
-          echo "SOURCE_BRANCH=${{ github.event.inputs.source_branch }}" >> $GITHUB_ENV
+        run: echo "DOCKER_VERSION_TAG=${{ github.event.inputs.ref_name }}" >> $GITHUB_ENV
 
       - name: Set version from release tag
         if: github.event_name == 'release'
@@ -41,24 +37,17 @@ jobs:
             echo "BUILD_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
           fi
 
-      - name: Set image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/yaffa" >> $GITHUB_ENV
-
-      - name: Print build info
+      - name: Print github.ref_name
         run: |
-          echo "event: ${{ github.event_name }}"
-          echo "build branch: ${{ github.ref_name }}"
-          echo "source branch: ${{ env.SOURCE_BRANCH || github.ref_name }}"
-          echo "version tag: ${{ env.DOCKER_VERSION_TAG }}"
-          echo "platforms: ${{ env.BUILD_PLATFORMS }}"
-          echo "image: ${{ env.IMAGE_NAME }}"
+          echo "github.event_name is ${{ github.event_name }}"
+          echo "github.ref_name is ${{ env.DOCKER_VERSION_TAG }}"
+          echo "platforms is ${{ env.BUILD_PLATFORMS }}"
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -82,10 +71,10 @@ jobs:
           platforms: ${{ env.BUILD_PLATFORMS }}
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.DOCKER_VERSION_TAG }}
-            ${{ env.DOCKER_VERSION_TAG != 'test' && format('{0}:latest', env.IMAGE_NAME) || '' }}
+            kantorge/yaffa:${{ env.DOCKER_VERSION_TAG }}
+            ${{ env.DOCKER_VERSION_TAG != 'test' && 'kantorge/yaffa:latest' || '' }}
           build-args: |
-            BRANCH=${{ env.SOURCE_BRANCH || github.ref_name }}
+            BRANCH=main
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
