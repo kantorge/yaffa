@@ -225,7 +225,7 @@
               <reporting-canvas-monthly-breakdown
                 :transactions="transactions"
                 :busy="busy"
-                :is-drill-down="!!returnTo"
+                :is-drill-down="!!drillDownFilter"
                 @drill-down="onMonthlyBreakdownDrillDown"
               ></reporting-canvas-monthly-breakdown>
             </div>
@@ -281,7 +281,7 @@
         initialTab: urlParams.get('tab') || null,
         cachedDataPending: false,
         skippedTransactionLoad: false,
-        monthlyBreakdownSnapshot: null,
+        drillDownFilter: null,
         presetsReady: {
           category: false,
           payee: false,
@@ -299,44 +299,45 @@
         );
       },
       onUpdateDateRange(event) {
+        this.drillDownFilter = null;
         this.dateFrom = event.dateFrom;
         this.dateTo = event.dateTo;
         this.rebuildUrl();
       },
       onUpdateCategory(event) {
+        this.drillDownFilter = null;
         this.selectedCategories = event;
         this.rebuildUrl();
       },
       onUpdatePayee(event) {
+        this.drillDownFilter = null;
         this.selectedPayees = event;
         this.rebuildUrl();
       },
       onUpdateAccount(event) {
+        this.drillDownFilter = null;
         this.selectedAccounts = event;
         this.rebuildUrl();
       },
       onUpdateTag(event) {
+        this.drillDownFilter = null;
         this.selectedTags = event;
         this.rebuildUrl();
       },
       onMonthlyBreakdownDrillDown(event) {
-        if (!this.monthlyBreakdownSnapshot) {
-          this.monthlyBreakdownSnapshot = {
-            dateFrom: this.dateFrom,
-            dateTo: this.dateTo,
-            selectedAccounts: [...this.selectedAccounts],
-            selectedCategories: [...this.selectedCategories],
-            selectedPayees: [...this.selectedPayees],
-            selectedTags: [...this.selectedTags],
-            transactions: this.transactions,
-          };
-        }
+        // Keep original query context and apply a lightweight in-memory filter for list view.
+        this.drillDownFilter = {
+          month: event.dateFrom.slice(0, 7),
+          categories: [...new Set((event.categories || []).map((id) => String(id)))],
+        };
 
-        this.dateFrom = event.dateFrom;
-        this.dateTo = event.dateTo;
-        this.selectedCategories = event.categories;
         this.rebuildUrl('transaction-list');
-        this.getTransactions();
+        if (this.skippedTransactionLoad && this.transactions.length === 0) {
+          this.skippedTransactionLoad = false;
+          this.getTransactions({ keepDrillDown: true });
+        } else {
+          this.cachedDataPending = true;
+        }
 
         this.$nextTick(() => {
           const tabButton = this.$el.querySelector('#nav-transaction-list');
@@ -414,7 +415,6 @@
           const { key, data } = JSON.parse(cached);
           if (key !== this.getCacheKey()) return false;
           this.transactions = data.map(processTransaction);
-          // Defer DataTable population — only needed if user switches to List tab
           this.cachedDataPending = true;
           return true;
         } catch (e) {
@@ -423,12 +423,40 @@
         }
       },
 
-      populateDataTable() {
-        if (!this.cachedDataPending) return;
-        this.cachedDataPending = false;
+      getListTransactions() {
+        if (!this.drillDownFilter) {
+          return this.transactions;
+        }
+
+        const month = this.drillDownFilter.month;
+        const categorySet = new Set(this.drillDownFilter.categories);
+
+        return this.transactions.filter((tx) => {
+          if (!(tx.date instanceof Date)) return false;
+          const txMonth = `${tx.date.getFullYear()}-${String(tx.date.getMonth() + 1).padStart(2, '0')}`;
+          if (txMonth !== month) return false;
+          const txCategories = tx.categories || [];
+          return txCategories.some((category) => category && categorySet.has(String(category.id)));
+        });
+      },
+
+      redrawDataTable() {
+        if (!this.dataTable) return;
         this.dataTable.clear();
-        this.dataTable.rows.add(this.transactions);
+        this.dataTable.rows.add(this.getListTransactions());
         this.dataTable.draw();
+      },
+
+      populateDataTable(force = false) {
+        if (!force && !this.cachedDataPending) return;
+        this.cachedDataPending = false;
+        this.redrawDataTable();
+      },
+
+      isTransactionListActive() {
+        if (!this.$el) return false;
+        const transactionListTab = this.$el.querySelector('#tab-transaction-list');
+        return !!transactionListTab && transactionListTab.classList.contains('active');
       },
 
       saveToCache(data) {
@@ -454,8 +482,12 @@
         }
       },
 
-      getTransactions() {
+      getTransactions(options = null) {
+        const keepDrillDown = !!(options && options.keepDrillDown === true);
         this.busy = true;
+        if (!keepDrillDown) {
+          this.drillDownFilter = null;
+        }
 
         window.axios
           .get('/api/transactions', {
@@ -476,9 +508,11 @@
             this.transactions = response.data.data.map(processTransaction);
           })
           .then(() => {
-            this.dataTable.clear();
-            this.dataTable.rows.add(this.transactions);
-            this.dataTable.draw();
+            if (this.isTransactionListActive()) {
+              this.redrawDataTable();
+            } else {
+              this.cachedDataPending = true;
+            }
           })
           .catch((error) => {
             toastHelpers.showErrorToast(
@@ -603,7 +637,7 @@
 
         // Lazily populate DataTable when transaction list tab is shown
         if (targetId === '#tab-transaction-list') {
-          this.populateDataTable();
+          this.populateDataTable(true);
         }
 
         // Lazily load all transactions if they were skipped for the breakdown tab
@@ -612,17 +646,8 @@
             this.skippedTransactionLoad = false;
             this.getTransactions();
           }
-        } else if (this.monthlyBreakdownSnapshot) {
-          const snapshot = this.monthlyBreakdownSnapshot;
-          this.monthlyBreakdownSnapshot = null;
-          this.dateFrom = snapshot.dateFrom;
-          this.dateTo = snapshot.dateTo;
-          this.selectedAccounts = snapshot.selectedAccounts;
-          this.selectedCategories = snapshot.selectedCategories;
-          this.selectedPayees = snapshot.selectedPayees;
-          this.selectedTags = snapshot.selectedTags;
-          this.transactions = snapshot.transactions || [];
-          this.cachedDataPending = true;
+        } else if (this.drillDownFilter) {
+          this.drillDownFilter = null;
           this.rebuildUrl('monthly-breakdown');
         }
       };
