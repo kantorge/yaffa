@@ -30,6 +30,7 @@
         trim-weeks
         @transition-end="refreshTooltip"
         v-if="!busy"
+        :locale="language"
       >
         <template v-slot:day-content="{ day, attributes }">
           <div>
@@ -51,14 +52,16 @@
 </template>
 
 <script>
-  import * as dataTableHelpers from '../dataTableHelper';
-  import * as helpers from '../../helpers';
+  import { transactionTypeIcon } from '../dataTableHelper';
+  import {
+    __,
+    toFormattedCurrency,
+    initializeBootstrapTooltips,
+  } from '@/helpers';
   import { Calendar } from 'v-calendar';
 
   export default {
     components: {
-      dataTableHelpers,
-      helpers,
       Calendar,
     },
 
@@ -66,6 +69,10 @@
       locale: {
         type: String,
         default: window.YAFFA.locale,
+      },
+      language: {
+        type: String,
+        default: window.YAFFA.language,
       },
     },
 
@@ -75,7 +82,7 @@
           return '';
         }
 
-        return dataTableHelpers.transactionTypeIcon(
+        return transactionTypeIcon(
           transaction.transaction_type.type,
           transaction.transaction_type.name,
           this.getTransactionLabel(transaction),
@@ -101,7 +108,7 @@
           return (
             type +
             ' ' +
-            helpers.toFormattedCurrency(
+            toFormattedCurrency(
               transaction.config.amount_to,
               this.locale,
               transaction.transaction_currency,
@@ -114,11 +121,10 @@
         }
       },
       refreshTooltip: function () {
-        helpers.initializeBootstrapTooltips();
+        initializeBootstrapTooltips();
       },
-      toFormattedCurrency(input, locale, currencySettings) {
-        return helpers.toFormattedCurrency(input, locale, currencySettings);
-      },
+      __,
+      toFormattedCurrency,
       hide() {
         $('#widgetScheduleCalendar').hide();
       },
