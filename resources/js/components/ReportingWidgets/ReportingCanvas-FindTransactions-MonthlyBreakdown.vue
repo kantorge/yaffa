@@ -597,11 +597,12 @@ export default {
      */
     formatAmount(value) {
       if (value === 0) return '—';
-      return toFormattedCurrency(
-        round2(value),
+      const sign = value > 0 ? '+' : '-';
+      return `${sign} ${toFormattedCurrency(
+        round2(Math.abs(value)),
         this.locale,
         this.baseCurrency,
-      );
+      )}`;
     },
 
     /**
@@ -612,14 +613,15 @@ export default {
      */
     formatCell(value, monthTotal) {
       if (value === 0) return '—';
+      const sign = value > 0 ? '+' : '-';
       if (this.showPercentages && monthTotal > 0) {
-        return ((value / monthTotal) * 100).toFixed(1) + '%';
+        return `${sign}${((Math.abs(value) / monthTotal) * 100).toFixed(1)}%`;
       }
-      return toFormattedCurrency(
-        round2(value),
+      return `${sign} ${toFormattedCurrency(
+        round2(Math.abs(value)),
         this.locale,
         this.baseCurrency,
-      );
+      )}`;
     },
 
     /**
