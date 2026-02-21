@@ -91,7 +91,7 @@
           >
             <i :class="sidebarCollapsed ? 'fas fa-angles-right' : 'fas fa-angles-left'"></i>
           </button>
-          <ul class="nav nav-tabs card-header-tabs">
+          <ul class="nav nav-tabs card-header-tabs transactions-tabs-offset">
             <li class="nav-item">
               <button
                 class="nav-link active"
@@ -673,3 +673,9 @@
     },
   };
 </script>
+
+<style scoped>
+.transactions-tabs-offset {
+  margin-left: 10px;
+}
+</style>
