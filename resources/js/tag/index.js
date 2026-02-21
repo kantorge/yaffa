@@ -6,10 +6,12 @@ import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
 } from '../components/dataTableHelper';
+import { getDataTablesLanguageOptions } from '../i18n';
 
 const dataTableSelector = '#table';
 
 window.table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
 
     data: tags,
     columns: [
@@ -41,8 +43,8 @@ window.table = $(dataTableSelector).DataTable({
             data: "id",
             title: __("Actions"),
             render: function (data) {
-                return  `<a 
-                                class="btn btn-xs btn-success" 
+                return  `<a
+                                class="btn btn-xs btn-success"
                                 href="${route('reports.transactions', {tags: [data]})}"
                                 title="${__('View associated transactions')}"
                         >

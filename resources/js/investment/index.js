@@ -5,7 +5,7 @@ import 'datatables-contextual-actions';
 import Swal from 'sweetalert2'
 
 import * as dataTableHelpers from './../components/dataTableHelper';
-import { __, toFormattedCurrency } from '../i18n';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
 import * as toastHelpers from '../toast';
 
 let ajaxIsBusy = false;
@@ -24,6 +24,7 @@ const deleteButtonConditions = [
 
 
 let table = $('#investmentSummary').DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.investments,
     columns: [
         {

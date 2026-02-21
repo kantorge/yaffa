@@ -6,11 +6,12 @@ import {
     genericDataTablesActionButton,
     initializeDeleteButtonListener
 } from '../components/dataTableHelper';
-import {toFormattedCurrency} from '../i18n';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
 
 const dataTableSelector = '#table';
 
 $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.currencies,
     columns: [
         {

@@ -203,7 +203,7 @@
 </template>
 
 <script>
-  import { __ } from '../i18n';
+  import { __, getDataTablesLanguageOptions } from '../i18n';
   import { processTransaction } from '../helpers';
   import * as toastHelpers from '../toast';
   import * as dataTableHelpers from './dataTableHelper';
@@ -394,6 +394,7 @@
 
     mounted() {
       this.dataTable = $(this.$refs.dataTable).DataTable({
+        language: getDataTablesLanguageOptions() || undefined,
         data: this.transactions,
         processing: true,
         columns: [

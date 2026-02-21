@@ -7,12 +7,13 @@ import Swal from 'sweetalert2'
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
 import * as toastHelpers from '../toast';
-import { __ } from '../i18n';
+import { __, getDataTablesLanguageOptions } from '../i18n';
 
 let ajaxIsBusy = true;
 
 const tableSelector = '#table';
 let table = $(tableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     ajax: {
         url: '/api/transactions/get_scheduled_items/any',
         type: 'GET',

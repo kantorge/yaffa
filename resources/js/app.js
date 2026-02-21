@@ -1,10 +1,16 @@
 import '../sass/app.scss';
 import './bootstrap';
+import { initializeDataTablesI18n } from './i18n/datatables';
 
 // One glob map for all .js files under resources/js
 const modules = import.meta.glob('./**/*.js');
 
-const loadModule = (path) => {
+const dataTablesI18nReady = initializeDataTablesI18n(window.YAFFA?.locale, window.YAFFA?.language)
+    .catch(() => null);
+
+const loadModule = async (path) => {
+    await dataTablesI18nReady;
+
     // normalize to "./foo/bar.js"
     const withDot = path.startsWith('./') ? path : `./${path}`;
     const key = withDot.endsWith('.js') ? withDot : `${withDot}.js`;

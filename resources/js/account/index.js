@@ -4,7 +4,7 @@ import 'datatables-contextual-actions';
 
 import Swal from 'sweetalert2'
 
-import { __, toFormattedCurrency } from '@/i18n';
+import { __, getDataTablesLanguageOptions, toFormattedCurrency } from '@/i18n';
 import { transactionLink } from '@/helpers';
 import * as toastHelpers from '@/toast';
 
@@ -17,6 +17,7 @@ const dataTableSelector = '#table';
 let ajaxIsBusy = false;
 
 window.table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.accounts,
     columns: [
         {

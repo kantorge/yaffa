@@ -2,6 +2,7 @@ import 'datatables.net-bs5';
 import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from './../components/dataTableHelper';
+import { getDataTablesLanguageOptions } from '../i18n';
 
 const selectorScheduleTable = '#scheduleTable';
 const selectorHistoryTable = '#historyTable';
@@ -54,6 +55,7 @@ var dtColumnSettingPayee = {
 };
 
 $(selectorHistoryTable).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: transactionData,
     columns: [
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('date', __('Date'), window.YAFFA.locale),
@@ -174,6 +176,7 @@ $(selectorHistoryTable).DataTable({
 });
 
 $(selectorScheduleTable).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: scheduleData,
     columns: [
         dataTableHelpers.transactionColumnDefinition.dateFromCustomField('transaction_schedule.next_date', __('Next date'), window.YAFFA.locale),

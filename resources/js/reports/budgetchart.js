@@ -8,6 +8,7 @@ import * as dataTableHelpers from './../components/dataTableHelper'
 import * as helpers from "../helpers";
 import { applyAmChartsLocalization } from '../i18n/amcharts';
 import { loadSelect2Language } from '../i18n/select2';
+import { getDataTablesLanguageOptions } from '../i18n';
 // Category tree
 import 'jstree';
 import 'jstree/src/themes/default/style.css'
@@ -369,6 +370,7 @@ let initialTableLoad = true;
 const tableSelector = '#table';
 
 window.table = $(tableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     ajax: {
         url: window.route('api.transactions.getScheduledItems', {type: 'any'}),
         type: 'GET',

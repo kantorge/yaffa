@@ -6,7 +6,7 @@
 import 'datatables.net-bs5';
 // Import dataTable helper functions
 import * as dataTableHelpers from './../components/dataTableHelper'
-import {toFormattedCurrency} from '../i18n';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
 import { toIsoDateString } from '../helpers';
 
 // Import RRule library for handling schedules
@@ -326,6 +326,7 @@ $('#account').select2({
 const tableSelector = '#dataTable';
 
 window.table = $(tableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.transactions,
     columns: [
         {

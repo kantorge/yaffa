@@ -2,7 +2,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as toastHelpers from '../toast';
-import { __ } from '../i18n';
+import { __, getDataTablesLanguageOptions } from '../i18n';
 
 const dataTableSelector = '#table';
 
@@ -12,6 +12,7 @@ window.mails = window.mails.map(function (mail) {
 })
 
 window.table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: window.mails,
     columns: [
         {

@@ -3,7 +3,7 @@ import "datatables.net-responsive-bs5";
 
 import * as dataTableHelpers from '../components/dataTableHelper';
 import * as helpers from '../helpers';
-import { toFormattedCurrency } from '../i18n';
+import { getDataTablesLanguageOptions, toFormattedCurrency } from '../i18n';
 import * as toastHelpers from '../toast';
 
 import DateRangePicker from 'vanillajs-datepicker/DateRangePicker';
@@ -85,6 +85,7 @@ let initialLoad = true;
 let isPresetChange = false;
 
 let dtHistory = $(selectorHistoryTable).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     ajax: function (_data, callback, _settings) {
         if (initialLoad) {
             initialLoad = false;
@@ -208,6 +209,7 @@ let dtHistory = $(selectorHistoryTable).DataTable({
 });
 
 let dtSchedule = $(selectorScheduleTable).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     ajax: {
         url: '/api/transactions/get_scheduled_items/schedule' +
             '?accountEntity=' + window.account.id +

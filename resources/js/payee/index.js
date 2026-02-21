@@ -5,6 +5,7 @@ import {
     booleanToTableIcon,
     renderDeleteAssetButton,
 } from '../components/dataTableHelper';
+import { getDataTablesLanguageOptions } from '../i18n';
 
 import * as toastHelpers from '../toast';
 
@@ -45,6 +46,7 @@ window.payees = window.payees.map(function(payee) {
 });
 
 window.table = $(dataTableSelector).DataTable({
+    language: getDataTablesLanguageOptions() || undefined,
     data: payees,
     columns: [
         {
