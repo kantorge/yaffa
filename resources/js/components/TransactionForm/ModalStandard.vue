@@ -13,7 +13,7 @@
             aria-label="Close"
           ></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body d-md-none d-lg-block">
           <transaction-form-standard
             :action="action"
             :transaction="transactionData"
@@ -24,6 +24,13 @@
             @cancel="onCancel"
             @success="onSuccess"
           ></transaction-form-standard>
+        </div>
+        <div class="modal-body d-none d-md-block">
+          {{
+            __(
+              'Sorry, the transaction form is not available on smaller screens.',
+            )
+          }}
         </div>
       </div>
     </div>

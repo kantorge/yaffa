@@ -110,6 +110,7 @@ class AiDocumentController extends Controller implements HasMiddleware
 
         // Load all categories in one query
         $categories = Category::query()
+            ->with('parent')
             ->whereIn('id', $categoryIds)
             ->where('user_id', $aiDocument->user_id)
             ->get()

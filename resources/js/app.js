@@ -7,6 +7,7 @@ import { initializeDataTablesI18n } from './i18n/datatables';
 const modules = import.meta.glob([
     './**/*.js',
     '!./bootstrap.js',
+    '!./i18n/**/*.js',
     '!./display_notifications.js'
 ]);
 

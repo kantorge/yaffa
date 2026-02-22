@@ -1,100 +1,136 @@
 <template>
   <div class="container-fluid">
     <div class="row mb-4">
-      <div class="col-12 col-md-6">
-        <h6 class="text-muted">{{ __('Transaction Type') }}</h6>
-        <p class="mb-3">{{ draftTypeLabel || unidentifiedLabel }}</p>
+      <div class="col-sm-6">
+        <dl class="row mb-0">
+          <dt class="col-6">{{ __('Transaction Type') }}</dt>
+          <dd class="col-6" :class="{ 'text-muted': !draftTypeLabel }">
+            {{ draftTypeLabel || unidentifiedLabel }}
+          </dd>
 
-        <h6 class="text-muted">{{ __('Date') }}</h6>
-        <p class="mb-3">{{ formatRawValue(draftData.date) }}</p>
+          <dt class="col-6">{{ __('Date') }}</dt>
+          <dd
+            class="col-6"
+            :class="{ 'text-muted': isUnidentified(draftData.date) }"
+          >
+            {{ formatRawValue(draftData.date) }}
+          </dd>
 
-        <template v-if="isInvestment">
-          <h6 class="text-muted">{{ __('Account') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.account) }}
-          </p>
+          <template v-if="isInvestment">
+            <dt class="col-6">{{ __('Account') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.account) }"
+            >
+              {{ formatRawValue(rawData.account) }}
+            </dd>
 
-          <h6 class="text-muted">{{ __('Investment') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.investment) }}
-          </p>
-        </template>
+            <dt class="col-6">{{ __('Investment') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.investment) }"
+            >
+              {{ formatRawValue(rawData.investment) }}
+            </dd>
+          </template>
 
-        <template v-else>
-          <template v-if="isTransfer">
-            <h6 class="text-muted">{{ __('Account from') }}</h6>
-            <p class="mb-3">
+          <template v-else-if="isTransfer">
+            <dt class="col-6">{{ __('Account from') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.account_from) }"
+            >
               {{ formatRawValue(rawData.account_from) }}
-            </p>
+            </dd>
 
-            <h6 class="text-muted">{{ __('Account to') }}</h6>
-            <p class="mb-3">
+            <dt class="col-6">{{ __('Account to') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.account_to) }"
+            >
               {{ formatRawValue(rawData.account_to) }}
-            </p>
+            </dd>
           </template>
 
           <template v-else>
-            <h6 class="text-muted">{{ __('Account') }}</h6>
-            <p class="mb-3">
+            <dt class="col-6">{{ __('Account') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.account) }"
+            >
               {{ formatRawValue(rawData.account) }}
-            </p>
+            </dd>
 
-            <h6 class="text-muted">{{ __('Payee') }}</h6>
-            <p class="mb-3">
+            <dt class="col-6">{{ __('Payee') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.payee) }"
+            >
               {{ formatRawValue(rawData.payee) }}
-            </p>
+            </dd>
           </template>
-        </template>
+        </dl>
       </div>
-      <div class="col-12 col-md-6">
-        <template v-if="isInvestment">
-          <h6 class="text-muted">{{ __('Amount') }}</h6>
-          <p class="mb-3">
+      <div class="col-sm-6">
+        <dl class="row mb-0">
+          <dt class="col-6">{{ __('Amount') }}</dt>
+          <dd
+            class="col-6"
+            :class="{ 'text-muted': isUnidentified(rawData.amount) }"
+          >
             {{ formatRawValue(rawData.amount) }}
-          </p>
+          </dd>
 
-          <h6 class="text-muted">{{ __('Quantity') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.quantity) }}
-          </p>
+          <template v-if="isInvestment">
+            <dt class="col-6">{{ __('Quantity') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.quantity) }"
+            >
+              {{ formatRawValue(rawData.quantity) }}
+            </dd>
 
-          <h6 class="text-muted">{{ __('Price') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.price) }}
-          </p>
+            <dt class="col-6">{{ __('Price') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.price) }"
+            >
+              {{ formatRawValue(rawData.price) }}
+            </dd>
 
-          <h6 class="text-muted">{{ __('Commission') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.commission) }}
-          </p>
+            <dt class="col-6">{{ __('Commission') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.commission) }"
+            >
+              {{ formatRawValue(rawData.commission) }}
+            </dd>
 
-          <h6 class="text-muted">{{ __('Tax') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.tax) }}
-          </p>
+            <dt class="col-6">{{ __('Tax') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.tax) }"
+            >
+              {{ formatRawValue(rawData.tax) }}
+            </dd>
 
-          <h6 class="text-muted">{{ __('Dividend') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.dividend) }}
-          </p>
+            <dt class="col-6">{{ __('Dividend') }}</dt>
+            <dd
+              class="col-6"
+              :class="{ 'text-muted': isUnidentified(rawData.dividend) }"
+            >
+              {{ formatRawValue(rawData.dividend) }}
+            </dd>
+          </template>
 
-          <h6 class="text-muted">{{ __('Currency') }}</h6>
-          <p class="mb-0">
+          <dt class="col-6">{{ __('Currency') }}</dt>
+          <dd
+            class="col-6"
+            :class="{ 'text-muted': isUnidentified(rawData.currency) }"
+          >
             {{ formatRawValue(rawData.currency) }}
-          </p>
-        </template>
-
-        <template v-else>
-          <h6 class="text-muted">{{ __('Amount') }}</h6>
-          <p class="mb-3">
-            {{ formatRawValue(rawData.amount) }}
-          </p>
-
-          <h6 class="text-muted">{{ __('Currency') }}</h6>
-          <p class="mb-0">
-            {{ formatRawValue(rawData.currency) }}
-          </p>
-        </template>
+          </dd>
+        </dl>
       </div>
     </div>
 
@@ -207,8 +243,12 @@
   );
   const isTransfer = computed(() => draftTransactionType.value === 'transfer');
 
+  const isUnidentified = (value) => {
+    return value === null || value === undefined || value === '';
+  };
+
   const formatRawValue = (value) => {
-    if (value === null || value === undefined || value === '') {
+    if (isUnidentified(value)) {
       return unidentifiedLabel;
     }
 

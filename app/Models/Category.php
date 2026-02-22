@@ -98,6 +98,7 @@ class Category extends Model
 
     public function getFullNameAttribute(): string
     {
+        $this->loadMissing('parent');
         $parent = $this->relationLoaded('parent') ? $this->getRelation('parent') : null;
         $hasValidParent = $parent && $parent->getKey() !== $this->getKey();
 
