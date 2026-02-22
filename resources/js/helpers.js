@@ -226,7 +226,6 @@ export function buildFilterCacheKey(filters) {
         categories: (filters.categories || []).slice().sort(),
         payees: (filters.payees || []).slice().sort(),
         tags: (filters.tags || []).slice().sort(),
-        locale: filters.locale || (window.YAFFA && window.YAFFA.locale) || null,
     });
 }
 
@@ -247,6 +246,5 @@ export function buildBreakdownCacheKey(searchString = window.location.search) {
         categories: urlParams.getAll('categories[]'),
         payees: urlParams.getAll('payees[]'),
         tags: urlParams.getAll('tags[]'),
-        locale: (window.YAFFA && window.YAFFA.locale) || null,
     });
 }
