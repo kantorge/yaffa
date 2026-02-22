@@ -24,6 +24,14 @@
 >
 @endif
 
+@php
+    $previousUrl = url()->previous();
+    $currentUrl = url()->current();
+    $cancelUrl = $previousUrl && $previousUrl !== $currentUrl
+        ? $previousUrl
+        : route('categories.index');
+@endphp
+
     <div class="card">
         <div class="card-header">
             <div class="card-title">
@@ -130,7 +138,7 @@
             @csrf
 
             <input class="btn btn-primary" type="submit" value="{{ __('Save') }}">
-            <a href="{{ route('categories.index') }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
+            <a href="{{ $cancelUrl }}" class="btn btn-secondary cancel confirm-needed">{{ __('Cancel') }}</a>
         </div>
     </div>
 </form>
