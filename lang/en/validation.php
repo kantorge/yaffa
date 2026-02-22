@@ -11,6 +11,7 @@ return [
     "alpha_num" => "The :attribute may only contain letters and numbers.",
     "any_of" => "The :attribute field is invalid.",
     "array" => "The :attribute must be an array.",
+    "ascii" => "The :attribute field must only contain single-byte alphanumeric characters and symbols.",
     "attributes" => [
         "config" => [
             "opening_balance" => "opening balance"
@@ -31,6 +32,11 @@ return [
     "confirmed" => "The :attribute confirmation does not match.",
     "contains" => "The :attribute field is missing a required value.",
     "current_password" => "The password is incorrect.",
+    "custom" => [
+        "attribute-name" => [
+            "rule-name" => "custom-message"
+        ]
+    ],
     "date" => "The :attribute is not a valid date.",
     "date_equals" => "The :attribute must be a date equal to :date.",
     "date_format" => "The :attribute does not match the format :format.",
@@ -65,11 +71,15 @@ return [
         "numeric" => "The :attribute must be greater than or equal :value.",
         "string" => "The :attribute field must be greater than or equal to :value characters."
     ],
+    "hex_color" => "The :attribute field must be a valid hexadecimal color.",
     "image" => "The :attribute must be an image.",
     "in" => "The selected :attribute is invalid.",
     "in_array" => "The :attribute field does not exist in :other.",
     "in_array_keys" => "The :attribute field must contain at least one of the following keys: :values.",
     "integer" => "The :attribute must be an integer.",
+    "ip" => "The :attribute field must be a valid IP address.",
+    "ipv4" => "The :attribute field must be a valid IPv4 address.",
+    "ipv6" => "The :attribute field must be a valid IPv6 address.",
     "json" => "The :attribute must be a valid JSON string.",
     "list" => "The :attribute field must be a list.",
     "lowercase" => "The :attribute field must be lowercase.",
@@ -85,6 +95,7 @@ return [
         "numeric" => "The :attribute must be less than or equal :value.",
         "string" => "The :attribute field must be less than or equal to :value characters."
     ],
+    "mac_address" => "The :attribute field must be a valid MAC address.",
     "max" => [
         "array" => "The :attribute may not have more than :max items.",
         "file" => "The :attribute may not be greater than :max kilobytes.",
@@ -143,8 +154,10 @@ return [
     "starts_with" => "The :attribute must start with one of the following: :values.",
     "string" => "The :attribute must be a string.",
     "timezone" => "The :attribute must be a valid zone.",
+    "ulid" => "The :attribute field must be a valid ULID.",
     "unique" => "The :attribute has already been taken.",
     "uploaded" => "The :attribute failed to upload.",
     "uppercase" => "The :attribute field must be uppercase.",
-    "url" => "The :attribute format is invalid."
+    "url" => "The :attribute format is invalid.",
+    "uuid" => "The :attribute field must be a valid UUID."
 ];

@@ -74,7 +74,8 @@ When upgrading between major versions, please see the details and follow the ins
 ## Contributors
 
 Thanks to these people for helping improve this project:
-@WMP - Polish translation and various features
+
+- @WMP - Polish translation and various features, including the monthly breakdown and drill down functionality.
 
 ## License
 

@@ -323,6 +323,7 @@ class TransactionApiController extends Controller implements HasMiddleware
                 'transactionItems',
                 'transactionItems.tags',
                 'transactionItems.category',
+                'transactionItems.category.parent',
             ])
             ->get()
             ->loadMorph(
