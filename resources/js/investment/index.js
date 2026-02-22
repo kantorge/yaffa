@@ -380,14 +380,14 @@ window.onboardingTourSteps = [
     {
         element: '#investmentSummary',
         popover: {
-            title: __('Manage Investments'),
+            title: __('Manage investments'),
             description: __('Use the action menu (three vertical dots) next to each investment to view details, edit, or delete the investment. You can also initiate new transactions directly from this menu.'),
         }
     },
     {
         element: '#investmentSummary',
         popover: {
-            title: __('Manage Investments'),
+            title: __('Manage investments'),
             description: __('You can also right-click on any investment row to access the contextual actions menu for the available operations.'),
         }
     },

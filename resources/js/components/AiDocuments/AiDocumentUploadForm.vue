@@ -4,7 +4,7 @@
       <div class="modal-content">
         <form @submit.prevent="onSubmit" autocomplete="off">
           <div class="modal-header">
-            <h5 class="modal-title">{{ __('Upload Document') }}</h5>
+            <h5 class="modal-title">{{ __('Upload document') }}</h5>
             <button
               type="button"
               class="btn-close"

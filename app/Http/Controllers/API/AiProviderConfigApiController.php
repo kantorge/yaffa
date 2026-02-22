@@ -38,7 +38,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
 
         if (! $config) {
             return response()->json([
-                'error' => __('No AI provider configured'),
+                'error' => __('No AI provider configured yet.'),
             ], Response::HTTP_NOT_FOUND);
         }
 

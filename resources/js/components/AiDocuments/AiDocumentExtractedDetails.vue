@@ -136,7 +136,7 @@
 
     <div v-if="hasItems" class="row">
       <div class="col-12">
-        <h6 class="text-muted mb-3">{{ __('Line Items') }}</h6>
+        <h6 class="text-muted mb-3">{{ __('Line items') }}</h6>
         <div class="table-responsive">
           <table class="table table-bordered">
             <thead class="table-light">
@@ -267,12 +267,12 @@
 
   const getMatchTypeLabel = (matchType) => {
     if (matchType === 'exact') {
-      return __('Exact Match');
+      return __('Exact match');
     }
     if (matchType === 'ai') {
-      return __('AI Suggested');
+      return __('AI suggested');
     }
-    return __('No Match');
+    return __('No match');
   };
 
   const formatConfidence = (score) => {
