@@ -277,7 +277,8 @@ class ReportApiController extends Controller implements HasMiddleware
 
             $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
-                $category = $item->category?->parent?->name ?? $item->category?->name ?? __('No category assigned');
+                // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
+                $category = $item->category?->parent?->name ?? $item->category?->name ?? 'Error: no category assigned';
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {

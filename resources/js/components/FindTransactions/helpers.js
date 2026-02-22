@@ -85,63 +85,60 @@ export function getTransactionTypeFlags(tx) {
  * and calculates monthly values per category.
  *
  * Skips transfers and investment transactions.
- * Requires transactions to have parsed Date objects in tx.date.
+ * Requires transactions to have parsed Date objects in transaction.date, which is generally expected
  *
  * @param {Array} transactions - Array of transaction objects
- * @param {Function} translateFn - i18n translate function for "No category assigned" fallback
  * @returns {Object<string, {values: Object, depositValues: Object, withdrawalValues: Object, categoryIds: Set, depositTotal: number, withdrawalTotal: number, rawName: string, parentName: string, parentId: number}>}
  */
-export function aggregateTransactionsByCategory(transactions, translateFn) {
+export function aggregateTransactionsByCategory(transactions) {
   const data = {};
 
-  transactions.forEach((tx) => {
-    if (!tx.date || !(tx.date instanceof Date)) return;
+  transactions.forEach((transaction) => {
+    if (!transaction.date || !(transaction.date instanceof Date)) return;
 
-    const typeFlags = getTransactionTypeFlags(tx);
+    const typeFlags = getTransactionTypeFlags(transaction);
     if (typeFlags.isTransfer || typeFlags.isInvestment) return;
 
-    const month =
-      tx.date.getFullYear() +
-      '-' +
-      String(tx.date.getMonth() + 1).padStart(2, '0');
+    const month = transaction.year_month;
 
-    if (tx.transaction_items) {
-      tx.transaction_items.forEach((item) => {
+    if (transaction.transaction_items) {
+      transaction.transaction_items.forEach((item) => {
         if (!item.category) return;
 
-        const catName = item.category.full_name || item.category.name || translateFn('No category assigned');
-        const catId = item.category.id;
+        // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
+        const categoryName = item.category.full_name || item.category.name || 'Error: no category assigned';
+        const categoryId = item.category.id;
         let rawAmount = Number(item.amount_in_base || 0);
         if (!isFinite(rawAmount)) rawAmount = 0;
         const amountAbs = Math.abs(rawAmount);
         const parentName = item.category.parent?.name || null;
         const parentId = item.category.parent?.id || null;
 
-        if (!data[catName]) {
-          data[catName] = {
+        if (!data[categoryName]) {
+          data[categoryName] = {
             values: {},
             depositValues: {},
             withdrawalValues: {},
             categoryIds: new Set(),
             depositTotal: 0,
             withdrawalTotal: 0,
-            rawName: item.category.name || catName,
+            rawName: item.category.name || categoryName,
             parentName,
             parentId,
           };
         }
 
-        data[catName].categoryIds.add(catId);
+        data[categoryName].categoryIds.add(categoryId);
         const isDepositTx = typeFlags.isDeposit || (!typeFlags.isWithdrawal && rawAmount < 0);
 
         if (isDepositTx) {
-          data[catName].depositTotal += amountAbs;
-          data[catName].depositValues[month] =
-            (data[catName].depositValues[month] || 0) + amountAbs;
+          data[categoryName].depositTotal += amountAbs;
+          data[categoryName].depositValues[month] =
+            (data[categoryName].depositValues[month] || 0) + amountAbs;
         } else {
-          data[catName].withdrawalTotal += amountAbs;
-          data[catName].withdrawalValues[month] =
-            (data[catName].withdrawalValues[month] || 0) + amountAbs;
+          data[categoryName].withdrawalTotal += amountAbs;
+          data[categoryName].withdrawalValues[month] =
+            (data[categoryName].withdrawalValues[month] || 0) + amountAbs;
         }
       });
     }
@@ -155,10 +152,10 @@ export function aggregateTransactionsByCategory(transactions, translateFn) {
       ...Object.keys(entry.withdrawalValues),
     ]);
 
-    months.forEach((m) => {
-      const deposits = entry.depositValues[m] || 0;
-      const withdrawals = entry.withdrawalValues[m] || 0;
-      entry.values[m] = isIncome
+    months.forEach((month) => {
+      const deposits = entry.depositValues[month] || 0;
+      const withdrawals = entry.withdrawalValues[month] || 0;
+      entry.values[month] = isIncome
         ? deposits - withdrawals
         : withdrawals - deposits;
     });
@@ -181,9 +178,9 @@ export function processCategoryGroup(categoryNames, catData, months, monthCount)
   const rows = categoryNames.map((catName) => {
     const entry = catData[catName];
     const values = entry.values;
-    const total = months.reduce((sum, m) => sum + (values[m] || 0), 0);
+    const total = months.reduce((sum, month) => sum + (values[month] || 0), 0);
     const nonZeroCount = months
-      .map((m) => values[m] || 0)
+      .map((month) => values[month] || 0)
       .filter((v) => v !== 0).length;
     const avg = nonZeroCount > 0 ? total / monthCount : 0;
     const nonZeroAvg = nonZeroCount > 0 ? total / nonZeroCount : 0;
@@ -204,8 +201,8 @@ export function processCategoryGroup(categoryNames, catData, months, monthCount)
   rows.sort((a, b) => b.total - a.total);
 
   const subtotals = {};
-  months.forEach((m) => {
-    subtotals[m] = rows.reduce((sum, r) => sum + (r.values[m] || 0), 0);
+  months.forEach((month) => {
+    subtotals[month] = rows.reduce((sum, r) => sum + (r.values[month] || 0), 0);
   });
   const subtotalSum = round2(rows.reduce((sum, r) => sum + r.total, 0));
   const subtotalAvg = round2(subtotalSum / monthCount);
@@ -234,9 +231,12 @@ export function calculateDeviationClass(
   nonZeroAvg,
   nonZeroCount,
   isIncome,
-  deviationLevels = { level1: 0.05, level2: 0.1, level3: 0.15 },
 ) {
   if (nonZeroCount < 3 || value === 0 || nonZeroAvg === 0) return '';
+
+  // As long as we don't expect the levels to be configurable by the user,
+  // we can keep them hardcoded here for simplicity
+  const deviationLevels = { level1: 0.05, level2: 0.1, level3: 0.15 };
 
   const deviation = (value - nonZeroAvg) / nonZeroAvg;
   const above = isIncome ? 'low' : 'high';
@@ -302,7 +302,7 @@ export function buildSectionHierarchy(
       groups[parentName].reduce(
         (sum, c) =>
           sum +
-          months.reduce((s, m) => s + (categoryData[c].values[m] || 0), 0),
+          months.reduce((sum, month) => sum + (categoryData[c].values[month] || 0), 0),
         0,
       ),
     ]),

@@ -491,11 +491,11 @@
         const month = this.drillDownFilter.month;
         const categorySet = new Set(this.drillDownFilter.categories);
 
-        return this.transactions.filter((tx) => {
-          if (!(tx.date instanceof Date)) return false;
-          const txMonth = `${tx.date.getFullYear()}-${String(tx.date.getMonth() + 1).padStart(2, '0')}`;
+        return this.transactions.filter((transaction) => {
+          if (!(transaction.date instanceof Date)) return false;
+          const txMonth = transaction.year_month;
           if (txMonth !== month) return false;
-          const txCategories = tx.categories || [];
+          const txCategories = transaction.categories || [];
           return txCategories.some(
             (category) => category && categorySet.has(String(category.id)),
           );

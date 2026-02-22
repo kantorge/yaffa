@@ -28,6 +28,9 @@ export function processTransaction(transaction) {
         transaction.date = new Date(transaction.date);
     }
 
+    // Add a helper to handle year-month level handling
+    transaction.year_month = transaction.date ? transaction.date.toISOString().slice(0, 7) : null;
+
     if (transaction.transaction_schedule?.start_date) {
         transaction.transaction_schedule.start_date = new Date(transaction.transaction_schedule.start_date);
     }
