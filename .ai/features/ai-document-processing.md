@@ -1494,6 +1494,8 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - Make the item-level editing foldable per item when finalizing the transaction, displaying only the category and the sum when collapsed.
 - Tweak the AI prompt to ignore custom prompts if dangerous, offensive, or absolutely off-topic content is detected in them. Should this be part of the main prompt, or should this be a separate moderation step?
 - If processing a document fails, the UI should show some kind of error message to the user so they can decide how to proceed. At this point, it would also be useful to allow adding or editing the custom prompt of the ai document.
+- Explore the option to use Search Vectors for AI cost and performance optimization. The main idea is that the local similarity search can be skipped providing more context and authority to the AI, and also reducing the number of API calls.
+- Would it make sense to store the entire AI message back-and-forth in the database for each document, to allow for better debugging and understanding of how the AI arrived at its conclusions? This would be especially useful for users who want to fine-tune the AI's performance by adjusting their prompts or providing feedback on specific responses. For MVP, we could implement this as a simple JSON field in the AiDocument model that stores the conversation history, and display it in a collapsible section in the AiDocumentViewer for review.
 
 ** Bugs to fix for MVP:**
 
