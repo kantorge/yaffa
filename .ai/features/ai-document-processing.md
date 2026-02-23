@@ -1506,9 +1506,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 **Candidates to be added to MVP but not yet implemented:**
 
-- [MVP now] Move AI document list loading from global JS bootstrap to API-based fetch.
-  - Verbose detail: Avoid bootstrapping full list via global JS variable; fetch via API on page load for better scalability and cleaner architecture.
-  - Agent prompt: Refactor AI documents index to fetch data from `/api/documents` instead of `window.aiDocuments`, preserving current filters/pagination behavior and adding focused endpoint compatibility tests. As part of this change, set the default date range to the last 90 days (previous90Days).
 - [MVP now] Enforce Google Drive feature flag on config endpoints and align UI behavior when disabled.
   - Verbose detail: Prevent creating configs when Drive import is globally disabled and provide clear UI feedback/hiding to avoid user confusion.
   - Agent prompt: Apply `ai-documents.google_drive.enabled` guard consistently on Google Drive config `show/store/update/destroy/test/sync`, and mirror disabled state in settings UI with clear messaging.
