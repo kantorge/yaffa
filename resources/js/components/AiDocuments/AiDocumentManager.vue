@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { nextTick, ref } from 'vue';
   import OnboardingCard from '../Widgets/OnboardingCard.vue';
   import TransactionShowModal from '../TransactionDisplay/Modal.vue';
   import AiDocumentActions from './AiDocumentActions.vue';
@@ -59,18 +59,26 @@
   import AiDocumentUploadForm from './AiDocumentUploadForm.vue';
   import DateRangeFilterCard from '../DateRangeFilterCard.vue';
   import { __ } from '@/i18n';
+  import * as toastHelpers from '@/toast';
 
-  const documents = ref(window.aiDocuments || []);
+  const documents = ref([]);
   const statusLabels = ref(window.aiDocumentStatusLabels || {});
   const sourceLabels = ref(window.aiDocumentSourceLabels || {});
   const tableRef = ref(null);
   const uploadFormRef = ref(null);
+  const isLoading = ref(false);
 
   // Get initial date filters from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const initialDateFrom = ref(urlParams.get('date_from') || null);
   const initialDateTo = ref(urlParams.get('date_to') || null);
-  const initialPreset = ref(urlParams.get('date_preset') || null);
+  const hasExplicitDateFilter = Boolean(
+    initialDateFrom.value || initialDateTo.value,
+  );
+  const initialPreset = ref(
+    urlParams.get('date_preset') ||
+      (hasExplicitDateFilter ? null : 'previous90Days'),
+  );
 
   const currentFilters = ref({
     status: '',
@@ -82,13 +90,75 @@
 
   const onFiltersUpdated = (filters) => {
     currentFilters.value = { ...currentFilters.value, ...filters };
-    tableRef.value?.applyFilters(currentFilters.value);
+    tableRef.value?.applyFilters({
+      status: currentFilters.value.status,
+      source: currentFilters.value.source,
+      search: currentFilters.value.search,
+    });
   };
 
-  const onDateRangeUpdated = ({ dateFrom, dateTo }) => {
+  const normalizeDocuments = (apiDocuments) =>
+    apiDocuments.map((document) => ({
+      ...document,
+      files: document.files || document.ai_document_files || [],
+    }));
+
+  const fetchDocuments = async ({ dateFrom, dateTo }) => {
+    if (isLoading.value) {
+      return;
+    }
+
+    isLoading.value = true;
+
+    try {
+      const allDocuments = [];
+      const perPage = 100;
+      let page = 1;
+      let lastPage = 1;
+
+      do {
+        const response = await window.axios.get(
+          window.route('api.documents.index'),
+          {
+            params: {
+              page,
+              per_page: perPage,
+              date_from: dateFrom || undefined,
+              date_to: dateTo || undefined,
+            },
+          },
+        );
+
+        allDocuments.push(...(response.data?.data || []));
+        lastPage = response.data?.meta?.last_page || 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      documents.value = normalizeDocuments(allDocuments);
+
+      await nextTick();
+      tableRef.value?.applyFilters({
+        status: currentFilters.value.status,
+        source: currentFilters.value.source,
+        search: currentFilters.value.search,
+      });
+    } catch (error) {
+      documents.value = [];
+      toastHelpers.showErrorToast(
+        __('Error while loading AI documents: :errorMessage', {
+          errorMessage: error.response?.data?.message || error.message,
+        }),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const onDateRangeUpdated = async ({ dateFrom, dateTo }) => {
     currentFilters.value.dateFrom = dateFrom;
     currentFilters.value.dateTo = dateTo;
-    tableRef.value?.applyFilters(currentFilters.value);
+
+    await fetchDocuments({ dateFrom, dateTo });
   };
 
   const openUploadForm = () => {

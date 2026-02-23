@@ -37,14 +37,7 @@ class AiDocumentController extends Controller implements HasMiddleware
          * @name("ai-documents.index")
          * @middlewares("web", "auth", "verified")
          */
-        $documents = $request->user()
-            ->aiDocuments()
-            ->with(['files', 'receivedMail', 'transaction'])
-            ->latest()
-            ->get();
-
         JavaScriptFacade::put([
-            'aiDocuments' => $documents,
             'aiDocumentStatusLabels' => AiDocument::statusLabels(),
             'aiDocumentSourceLabels' => AiDocument::sourceLabels(),
             'aiDocumentConfig' => [

@@ -17,8 +17,8 @@
   import 'datatables.net-select-bs5';
   import 'datatables-contextual-actions';
   import Swal from 'sweetalert2';
-  import { onMounted, ref } from 'vue';
-  import { __ } from '@/i18n';
+  import { onMounted, onUnmounted, ref, watch } from 'vue';
+  import { __, getDataTablesLanguageOptions } from '@/i18n';
   import * as dataTableHelpers from '../dataTableHelper';
   import * as toastHelpers from '@/toast';
 
@@ -40,6 +40,7 @@
   const tableElement = ref(null);
   const table = ref(null);
   const ajaxIsBusy = ref(false);
+  const RESIZE_RECALC_DELAY_MS = 100;
 
   const statusBadgeClass = (status) => {
     switch (status) {
@@ -155,55 +156,43 @@
   const canReprocess = (status) =>
     ['ready_for_review', 'processing_failed', 'finalized'].includes(status);
 
+  const recalculateTableLayout = () => {
+    if (!table.value) {
+      return;
+    }
+
+    table.value.columns.adjust();
+
+    if (table.value.responsive && table.value.responsive.recalc) {
+      table.value.responsive.recalc();
+    }
+
+    table.value.draw(false);
+  };
+
+  const refreshRows = (documents) => {
+    if (!table.value) {
+      return;
+    }
+
+    const data = prepareDocuments(documents || []);
+    table.value.clear();
+    table.value.rows.add(data);
+    table.value.draw(false);
+
+    window.requestAnimationFrame(() => {
+      recalculateTableLayout();
+      window.setTimeout(() => {
+        recalculateTableLayout();
+      }, 120);
+    });
+  };
+
   onMounted(() => {
     const data = prepareDocuments(props.documents);
 
-    // Add custom search function for date range filtering
-    window.$.fn.dataTable.ext.search.push(
-      function (settings, _searchData, _index, rowData) {
-        // Only apply to our specific table
-        if (settings.nTable.id !== 'ai-document-table') {
-          return true;
-        }
-
-        const dateFrom = settings.dateFrom;
-        const dateTo = settings.dateTo;
-
-        // If no date filters, show all rows
-        if (!dateFrom && !dateTo) {
-          return true;
-        }
-
-        // Get the date from the row data
-        const rowDate = rowData.created_at;
-        if (!rowDate) {
-          return false;
-        }
-
-        // Convert dates to comparable format (reset time to midnight for comparison)
-        const rowDateOnly = new Date(
-          rowDate.getFullYear(),
-          rowDate.getMonth(),
-          rowDate.getDate(),
-        );
-
-        if (dateFrom && dateTo) {
-          const fromDate = new Date(dateFrom);
-          const toDate = new Date(dateTo);
-          return rowDateOnly >= fromDate && rowDateOnly <= toDate;
-        } else if (dateFrom) {
-          const fromDate = new Date(dateFrom);
-          return rowDateOnly >= fromDate;
-        } else if (dateTo) {
-          const toDate = new Date(dateTo);
-          return rowDateOnly <= toDate;
-        }
-
-        return true;
-      },
-    );
-
     table.value = window.$(tableElement.value).DataTable({
+      language: getDataTablesLanguageOptions() || undefined,
       data,
       columns: [
         {
@@ -217,14 +206,15 @@
             return `
               <div class="d-flex justify-content-start align-items-center">
                 <i class="hover-icon me-2 fa-fw fa-solid fa-ellipsis-vertical"></i>
-                <span>
+                <span class="ai-document-title-wrapper">
                   <a href="${window.route('ai-documents.show', {
                     aiDocument: row.id,
-                  })}" title="${__('Show details')}">${value}</a>
+                  })}" title="${value}" class="ai-document-title-link">${value}</a>
                 </span>
               </div>`;
           },
           type: 'html',
+          width: '52%',
         },
         {
           data: 'status',
@@ -237,6 +227,7 @@
             const label = props.statusLabels[value] || value;
             return `<span class="badge ${statusBadgeClass(value)}">${label}</span>`;
           },
+          width: '12%',
         },
         {
           data: 'source_type',
@@ -248,6 +239,7 @@
 
             return props.sourceLabels[value] || value;
           },
+          width: '10%',
         },
         {
           data: 'created_at',
@@ -261,6 +253,7 @@
           },
           className: 'dt-nowrap',
           type: 'date',
+          width: '14%',
         },
         {
           data: 'transaction',
@@ -278,9 +271,11 @@
           className: 'dt-nowrap',
           orderable: false,
           searchable: false,
+          width: '12%',
         },
       ],
       order: [[3, 'desc']],
+      autoWidth: false,
       deferRender: true,
       scrollY: '500px',
       scrollCollapse: true,
@@ -377,23 +372,31 @@
     });
 
     dataTableHelpers.initializeQuickViewButton('#ai-document-table');
+
+    window.requestAnimationFrame(() => {
+      recalculateTableLayout();
+    });
+
+    window.addEventListener('resize', handleWindowResize);
   });
+
+  const handleWindowResize = () => {
+    window.setTimeout(() => {
+      recalculateTableLayout();
+    }, RESIZE_RECALC_DELAY_MS);
+  };
 
   const escapeRegex = (str) => {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  const applyFilters = ({ status, source, search, dateFrom, dateTo }) => {
+  const applyFilters = ({ status, source, search }) => {
     if (!table.value) {
       return;
     }
 
     const statusValue = status ? props.statusLabels[status] || status : '';
     const sourceValue = source ? props.sourceLabels[source] || source : '';
-
-    // Store date filters for custom search function
-    table.value.settings()[0].dateFrom = dateFrom;
-    table.value.settings()[0].dateTo = dateTo;
 
     // Use exact match with regex for status and source filters
     table.value
@@ -417,7 +420,37 @@
       .draw();
 
     table.value.search(search || '').draw();
+
+    recalculateTableLayout();
   };
+
+  watch(
+    () => props.documents,
+    (newDocuments) => {
+      refreshRows(newDocuments);
+    },
+    { deep: true },
+  );
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleWindowResize);
+  });
 
   defineExpose({ applyFilters });
 </script>
+
+<style scoped>
+  .ai-document-title-wrapper {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .ai-document-title-link {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+</style>

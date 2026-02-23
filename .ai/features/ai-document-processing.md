@@ -137,7 +137,7 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - `provider` - varchar(255), not null
     - `model` - varchar(255), not null
     - `api_key` - text, not null (encrypted)
-    - `vision_enabled` - boolean, not null, default false - NEW! Needs to be added.
+    - `vision_enabled` - boolean, not null, default false (✅ implemented)
     - `created_at`, `updated_at` - timestamps
   - `google_drive_configs` (✅ implemented)
     - `id` - bigint unsigned, primary key
@@ -159,14 +159,14 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Status mapping: (✅ implemented)
       - If `processed` = true and `transaction_id` is set → `finalized`
       - If `processed` = true and no `transaction_id` → `ready_for_review`
-      - If `processed` = false → `draft`
+      - If `processed` = false → not migrated to AiDocument (legacy unprocessed mails remain unmigrated)
     - The 'down' migration does not attempt to restore removed fields or data. It only drops the AiDocument records created during the 'up' migration.
 
 - Controllers / APIs:
   - `AiDocumentApiController` (✅ implemented)
     - `POST /api/documents` - Upload document
       - Request: multipart/form-data with `files[]`, `text_input`, `custom_prompt`
-      - Validation: at least one file OR text_input required; max 10 files; max 50MB per file; allowed types: pdf,jpg,png,txt
+      - Validation: at least one file OR text_input required; max files and size are config-based (default: 3 files, 20MB/file); allowed types: pdf,jpg,jpeg,png,txt
       - Response: `{"id": 1, "status": "ready_for_processing", "message": "..."}`
     - `PATCH /api/documents/{id}` - Update custom prompt or status
       - Request: `{"custom_prompt": "...", "status": "..."}`
@@ -547,7 +547,7 @@ If not determined or used, it must be set to NULL, but never omitted.
    - Includes normalized assets and category learning data
    - Calls AI provider (OpenAI/Gemini) via Prism in multiple steps
      - Extract generic transaction details (date, amount, payee, accounts, investment, currency)
-     - Identify account(s)/payee/investment matches from user's dataase using local exact match or AI-assisted matching
+     - Identify account(s)/payee/investment matches from user's database using local exact match or AI-assisted matching
      - For withdrawals and deposits, if items are detected, try to identify line item level category mappings. Either use local exact match or AI-assisted matching based on item description.
    - Validates output schema
    - Stores JSON draft in `processed_transaction_data`
@@ -1018,13 +1018,6 @@ TESSERACT_HTTP_TIMEOUT=30           # Request timeout in seconds
 TESSERACT_LANGUAGE=eng              # OCR language (eng, fra, deu, etc.)
 ```
 
-**Documentation:** ✅ See [.ai/docs/](./docs/) for complete setup guides:
-
-- [README.md](./docs/README.md) - Quick overview of 3 deployment modes
-- [SETUP.md](./docs/SETUP.md) - Installation and configuration for all modes
-- [USAGE.md](./docs/USAGE.md) - Code examples and patterns
-- [REFERENCE.md](./docs/REFERENCE.md) - Full technical architecture
-
 **User Workflow:**
 
 1. ✅ User configures AI provider (OpenAI/Gemini) in settings
@@ -1436,69 +1429,97 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 ### Pending/Not Yet Implemented
 
-**Frontend Components (✅ Fully Implemented):**
+**Status reconciliation (Feb 2026):**
 
-- ✅ `AiDocumentViewer.vue` - Enhanced with extracted details tab and finalize button
-- ✅ `AiDocumentUploadForm.vue` - Multi-file upload with drag-drop, text input support
-- ✅ `AiDocumentManager.vue` - Document list with filters (status, source_type, pagination)
-- ✅ `AiDocumentExtractedDetails.vue` - Comprehensive view of extracted transaction data
-- ✅ `AiDocumentDuplicates.vue` - Duplicate detection UI with similarity scores
-- ✅ `AiDocumentFileViewer.vue` - File preview component
-- ✅ `AiDocumentFilters.vue` - Status and source type filtering
-- ✅ `AiDocumentTable.vue` - DataTable integration
-- ✅ `AiDocumentActions.vue` - Action buttons (upload, etc.)
-
-**Processing & Transaction Flow (✅ Fully Implemented):**
-
-- ✅ Transaction finalization flow (form pre-population via event dispatch to existing transaction modal)
-- ✅ Duplicate transaction detection UI warning (AiDocumentDuplicates component with similarity scores)
-- ✅ Category learning integration (automatic updates on transaction save via TransactionApiController)
-- ✅ AI document status update to 'finalized' when transaction created
-- ✅ Transaction linking (ai_document_id foreign key)
+- ✅ Multi-file submissions are processed as one AiDocument and one processing flow using all files.
+- ✅ `vision_enabled` in `ai_provider_configs` is implemented and wired to OCR/Vision behavior.
+- ✅ Google Drive monitor/worker split and manual sync queueing are implemented.
+- ⏳ File retention cleanup command/job remains not implemented.
 
 **Notifications & Jobs:**
 
 - ✅ Email notifications wired (AiDocumentProcessedEvent/FailedEvent with queued listeners)
-- ✅ GoogleDriveMonitorJob scheduled (configurable interval via AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES)
+- ✅ GoogleDriveMonitorJob scheduled (configurable interval via `AI_GOOGLE_DRIVE_SYNC_INTERVAL_MINUTES`)
 - ⏳ File retention and cleanup job (`ai-documents:cleanup-old-files` command and scheduled task) - NOT YET IMPLEMENTED
 
 **Other open items, tech debts, future improvements:**
 
-- Create test email with various types of complete an incomplete transaction data, especially one with items, and investment types.
-- Add an optional title field for AiDocument, as the manually uploaded documents are currently identified by the file name of the first uploaded file, which may not be user-friendly. This can be implemented as a simple text field in the database and form, allowing users to give their documents custom names for easier identification. As the optional Google Drive ID and received email reference are already in place, this could be a similar, small update.
-- As part of the document upload, or by using an almost identical modal dialog, allow the user to use the camera of the device to take a picture of a receipt and upload it directly. While YAFFA is primarily designed for desktop use, this feature would be very useful for mobile users who want to quickly capture and upload receipts on the go. The implementation could leverage the HTML5 `getUserMedia` API to access the camera and capture an image, which can then be processed like any other uploaded file. This would require some additional frontend work to create the camera interface and handle the captured image, but it would significantly enhance the mobile user experience.
-- In the list view of AI Documents, the list of documents should not be added as a global JavaScript variable, but instead be fetched via an API endpoint. This would allow for better performance and scalability, especially as the number of documents grows. The frontend can make an AJAX request to fetch the documents when the page loads, and then render them dynamically.
-- We allow the user to create a Google Drive configuration, even if the Drive import feature is globally disabled via the `.env` variable. While this is not a critical issue, it could lead to confusion if users create configurations that they cannot use. A simple improvement would be to check the feature flag in the GoogleDriveConfigApiController and display a warning for the user. As an alternative, the UI could also hide the option to create a Google Drive configuration when the feature is disabled, providing a clearer user experience.
-- For a given AiDocument, always one processing job instance is allowed to run at the same time. Though the UI and the API endpoints are designed to prevent multiple processing attempts, there is currently no backend enforcement of this rule. This should be handled at the level of the job settings.
-- At the moment, the Google Drive folder is stored only by the ID, which is sufficient for API interactions but not user-friendly. It would be beneficial to also store the folder name in the database and display it in the UI, so users can easily identify which folder is linked to their configuration without needing to look up the ID. This would require an additional API call to fetch the folder name when the configuration is created or updated, and a new column in the `google_drive_configs` table to store this information. (Maybe with the same approach as the optional title for AiDocument, this could be implemented as a simple text field that is populated automatically based on the folder ID, but can be edited by the user if needed.)
-- PDFs that contain scanned images instead of text are currently processed as text documents, which results in empty extracted content and failed processing. The mechanism of text extraction should have a fallback for this to either pass the PDF itself for OCR processing, or to extract the images from the PDF and process them individually. This would allow users to upload scanned documents without needing to manually convert them to images first, improving the overall user experience and reducing friction in the document upload process.
-- The mail notifications sent to the user are just clunky draft emails. The range of information, CTAs and links should be reviewed and enhanced.
-- There might be specific receipt formats for each payee, that could be used to improve the accuracy of the AI extraction for line items, or perhaps any other details. Would it make sense to add a "custom prompt" optional field to the Payee model, that would be used in the AI prompt when a transaction is extracted with that payee? Is the current flow sequential enough to allow for this kind of dynamic prompt injection? This would be a more advanced feature, but it could significantly improve the accuracy of the AI extraction for users who have recurring transactions with the same payees, such as regular bills or subscriptions. Additionally, the systems should try to recognize such patterns, and offer saving it as a custom prompt for the user after a successful extraction, to make it easier for users to take advantage of this feature without needing to manually configure it. (Note: it might even be helpful for the Vision AI processing.)
-- It might add value to have a side-by-side view of the receipt and the extracted values on the Ai Document review page, not just as tabs as currently. On the other hand, it needs to be designed, how to handle multiple files for a single document in this case, and how to display the extracted values in a way that is still clear and user-friendly. This would be a more complex UI change, but it could enhance the review process by allowing users to easily compare the original document with the extracted data, and make any necessary adjustments before finalizing the transaction.
-- What parameters are available for the Tesseract, that could be used to fine-tune and improve the OCR accuracy? The first results using the default settings are quite poor.
-- How to verify and enforce a minimum required Tesseract version for the binary mode, to ensure the best possible OCR performance and compatibility with the features we rely on?
-- When the user initiates reprocessing of a document from its own view, it would be nice to update the status, and even better to indicate completion. Would it be overengineering to introduce Echo and Reverb? Would polling be sufficient for this?
-- When an unidentified payee is returned, the ai document viewer should allow to create it as a new payee.
-- Once a category mapping is learned, there's no UI to manage it. It would be good to have a section in the category management page, that lists all the learned mappings, with the option to delete them if they are wrong, or if the user just wants to clean up.
-- The extractTransactionData function of the ProcessDocumentService does not validate the AI response against the expected JSON schema, which could lead to unhandled exceptions if the AI returns malformed data. Implementing a validation step, and either iterate with the AI, of fail and wait for the next processing attempt, would improve the robustness of the system and prevent processing failures due to unexpected AI responses. (Avoiding infinite loops with a retry limit and proper error handling is crucial here.)
-- This is really an edge case, but if the same item description is present multiple times in the same transaction, but with different categories (e.g. a shopping receipt with multiple items of the same type, but some are on sale and categorized differently), the current category learning mechanism would not be able to handle this properly, as it only considers the description for matching. Implementing a more sophisticated learning mechanism that takes into account additional context, such as the amount or the position of the item in the list, could help to improve the accuracy of category suggestions in these cases.
-- It needs to be tested, how the AI handles receipts where item-level discounts are present, and how to reflect this in the extracted data and the final transaction. For example, if a receipt shows a total amount for a category of items, but some of them are discounted, the AI should ideally be able to extract the original price and the discount for each item, and this should be reflected in the line items of the transaction. This could be a complex scenario to handle, but it would significantly enhance the accuracy of the extracted data for users who frequently have such receipts. For MVP, we could add a check to see if the same (normalized) item description appears with multiple categories marked to be learned, and display a warning on the UI.
-- How to mark or identify Payees, where an item-level breakdown is not necessary, even if the receipt contains multiple items? For example, typically at restaurants, the receipt contains multiple items, but the user might not care about categorizing them separately, and would be fine with just having the total amount categorized as "dining". In this case, it would be good to have a way to indicate that for this payee, the item-level details should be ignored, and only the overall category for the total amount should be learned and suggested. This could be implemented as a simple toggle in the Payee management UI, allowing users to specify whether they want item-level categorization for each payee or not.
-- If the payee has been identified, than the categories should be marked if preferred or not for this payee. (See the improvement for one-item transactions above, where payee determines the category regardless of the items.)
-- Craft a note in the AI image processing step to ignore hand-written notes on receipts.
-- The AI should remove the quantity from the item description, to improve category matching and learning. For example, if the receipt shows "3x Coca-Cola", the AI should ideally extract the description as "Coca-Cola" and the quantity as 3, so that the category learning can recognize that "Coca-Cola" is a beverage, even if it appears with different quantities on different receipts. This would require some adjustments in the AI prompt and the way the extracted data is processed, but it would significantly enhance the accuracy of category suggestions for items that are frequently purchased in varying quantities. For MVP, we could implement a simple regex-based cleanup in the CategoryLearningService to remove common quantity patterns from item descriptions before matching.
-- Categories should have an optional description field, that would be used in the AI prompts to improve category matching. For example, if a category has the name "Utilities", but the description says "Electricity, water, gas bills", the AI could use this additional information to better understand which transactions belong to this category, even if the transaction description does not explicitly mention "Utilities". This would be a simple enhancement to the Category model and database schema, and would allow users to provide more context for their categories, improving the overall accuracy of AI-powered categorization. For MVP, we could implement this as an optional field in the category management UI, and include it in the AI prompts when available.
-- As a preparation for the AI usage, it might make sense to allow mass assignment of preferred and non-preferred categories to multiple payees. A proper UI needs to be designed for this.
-- It might make sense to introduce a flag to categories: any, expense preferred (warn the user on adding income), expense only (don't allow recording income), income preferred (warn the user on adding expense), income only (don't allow recording expense). This would help the AI to better understand the categories, and also help the user to avoid mistakes when categorizing transactions. For example, if a category is marked as "expense only", the AI would know that it should not suggest this category for income transactions, and if the user tries to manually categorize an income transaction with this category, they would get a warning. This would be a more advanced feature, but it could significantly improve the accuracy of categorization and reduce user errors. For MVP, we could implement this as a simple dropdown in the category management UI, allowing users to specify the type of each category.
-- Add a hint to the main extraction prompt to look for overlap in the text content if multiple image files are uploaded for the same document, as this is a common pattern for multi-page receipts, and it would help the AI to understand that these files belong together and should be processed as a single transaction. For example, if the same item appears on multiple pages, the AI should recognize that it's the same item and not treat them as separate entries. This would require some adjustments in the AI prompt to include instructions for handling multiple files with overlapping content, but it would significantly enhance the accuracy of data extraction for multi-page documents.
-- Make the item-level editing foldable per item when finalizing the transaction, displaying only the category and the sum when collapsed.
-- Tweak the AI prompt to ignore custom prompts if dangerous, offensive, or absolutely off-topic content is detected in them. Should this be part of the main prompt, or should this be a separate moderation step?
-- If processing a document fails, the UI should show some kind of error message to the user so they can decide how to proceed. At this point, it would also be useful to allow adding or editing the custom prompt of the ai document.
-- Explore the option to use Search Vectors for AI cost and performance optimization. The main idea is that the local similarity search can be skipped providing more context and authority to the AI, and also reducing the number of API calls.
-- Would it make sense to store the entire AI message back-and-forth in the database for each document, to allow for better debugging and understanding of how the AI arrived at its conclusions? This would be especially useful for users who want to fine-tune the AI's performance by adjusting their prompts or providing feedback on specific responses. For MVP, we could implement this as a simple JSON field in the AiDocument model that stores the conversation history, and display it in a collapsible section in the AiDocumentViewer for review.
+- [Post-MVP] Add an optional title field for AiDocument for user-friendly naming.
+  - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
+- [Post-MVP] Add camera capture support in upload flow for mobile receipt capture.
+  - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
+- [MVP now] Enforce one processing job instance per AiDocument in backend job layer.
+  - Verbose detail: UI/API already reduce duplicate attempts, but backend currently has no strict enforcement; this should be guaranteed at job level.
+  - Agent prompt: Implement backend single-run guarantee for `AiProcessingJob` per `ai_document_id` (queue uniqueness or overlap lock), prevent duplicate dispatch race between upload/reprocess and `app:process-ai-documents`, and add focused tests.
+- [Post-MVP] Store and display Google Drive folder name in addition to folder ID.
+  - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
+- [Post-MVP] Add payee/account-level custom prompt support and optional prompt-learning UX.
+  - Verbose detail: Consider optional per-payee (and maybe per-account) custom prompts to improve extraction on recurring receipt formats, plus optional “save as custom prompt” suggestion after successful extractions.
+- [Post-MVP] Consider side-by-side receipt vs extracted-values review UI.
+  - Verbose detail: Current tab layout works, but side-by-side could improve review speed; requires careful design for multi-file documents and dense extracted data.
+- [Post-MVP research] Tune Tesseract parameters for OCR quality.
+  - Verbose detail: Current default OCR results may be weak; investigate concrete parameter combinations that improve practical extraction accuracy.
+- [Post-MVP research] Define and enforce minimum Tesseract binary version for local mode.
+  - Verbose detail: Add version checks and enforcement strategy so binary mode runs only on supported/minimum versions for compatibility and OCR quality.
+- [Post-MVP] Add richer live status completion feedback for reprocessing (polling or realtime).
+  - Verbose detail: Reprocessing currently updates status minimally; evaluate if simple polling is enough or if Echo/Reverb realtime would be justified.
+- [Post-MVP] Allow creating payee from unidentified payee result in AiDocument review flow.
+  - Verbose detail: Add “create payee” action when extraction returns unidentified payee, likely aligned with the modal-based payee management direction in PR 371.
+- [Post-MVP] Add category-learning management UI (list, delete/archive).
+  - Verbose detail: Once mappings are learned, users currently cannot manage them; add list + cleanup controls in category management.
+- [MVP now] Validate AI response against strict JSON schema in `extractTransactionData`.
+  - Verbose detail: Missing schema validation can cause unhandled failures on malformed AI responses; add robust validation and controlled retry/fail behavior (without infinite loops).
+  - Agent prompt: Add strict post-AI schema validator in `ProcessDocumentService::extractTransactionData()` for standard/investment payloads, fail with typed exception on missing/invalid keys, and add unit tests for malformed AI JSON and invalid schema.
+- [Post-MVP] Handle duplicate item descriptions with contextual learning (amount/position aware).
+  - Verbose detail: Current learning key is mostly description-only, which can fail when same item text appears with different categories; consider amount/position/context-sensitive learning.
+- [Post-MVP] Improve receipt discount handling and optional warning heuristics.
+  - Verbose detail: Test and improve handling of item-level discounts and mixed pricing cases; MVP fallback could warn when same normalized item appears with conflicting category-learning intent.
+- [Post-MVP] Add payee-level toggle to disable item-level breakdown when desired.
+  - Verbose detail: For some payees (e.g., restaurants), item-level split may be unnecessary; add per-payee preference to collapse to total-category behavior.
+- [Post-MVP] Improve preferred/non-preferred category workflows per payee and bulk assignment UX.
+  - Verbose detail: System already holds preference data but management is cumbersome; add both per-payee and mass-assignment tooling for preferred/non-preferred categories.
+- [Post-MVP] Add optional category description and category type constraints for better AI guidance.
+  - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
+- [Post-MVP] Make item-level editing foldable in finalization UI.
+  - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
+- [MVP now] Improve failed-processing UX and allow prompt editing directly from AiDocument view.
+  - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing.
+  - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
+- [Post-MVP] Explore vector search for AI cost/performance optimization.
+  - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
+- [Post-MVP] Consider storing AI conversation history per document for observability.
+  - Verbose detail: Storing full AI message exchange can help debugging, transparency, and user-driven prompt tuning; possible as JSON + collapsible viewer section.
+- [Post-MVP] Add learning flow for account/payee/investment overrides during finalization.
+  - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
+- [Post-MVP tech debt] Revisit AI documents DataTable column width behavior after async refresh.
+  - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
 
-** Bugs to fix for MVP:**
+**Bugs to fix for MVP:**
 
-- Collect all new translatable strings and add them to at least the English language file. Optionally, generate the AI-based translation for other supported languages.
-- Clarify if lower-level categories are preferred, and if parent level categories are enabled at all for AI detection and learning.
-- Review and extend the upgrade instructions to specify the need and use of various ENV variables, and options for configuring the AI provider and Tesseract OCR.
+- ✅ Clarified: AI documents with multiple files are processed in one processing flow using all files.
+  - Verbose detail: Submission may include multiple photos for one receipt; all files are consumed by one AiDocument pipeline.
+- [MVP now] Clarify/enforce category hierarchy behavior (leaf-category preference vs parent eligibility).
+  - Verbose detail: Decide whether AI should always prefer lower-level categories and whether parent-level categories should be selectable/learnable, potentially with or without a user setting.
+- [MVP now] Improve mail notifications (content quality, CTA clarity, links).
+  - Verbose detail: Current notifications are functional but draft-like; improve information hierarchy, calls to action, and relevant links.
+  - Agent prompt: Rewrite AI processing success/failure email templates for clearer CTA, reason and next action; include links to review/config pages while keeping existing mailable wiring.
+
+**Candidates to be added to MVP but not yet implemented:**
+
+- [MVP now] Move AI document list loading from global JS bootstrap to API-based fetch.
+  - Verbose detail: Avoid bootstrapping full list via global JS variable; fetch via API on page load for better scalability and cleaner architecture.
+  - Agent prompt: Refactor AI documents index to fetch data from `/api/documents` instead of `window.aiDocuments`, preserving current filters/pagination behavior and adding focused endpoint compatibility tests. As part of this change, set the default date range to the last 90 days (previous90Days).
+- [MVP now] Enforce Google Drive feature flag on config endpoints and align UI behavior when disabled.
+  - Verbose detail: Prevent creating configs when Drive import is globally disabled and provide clear UI feedback/hiding to avoid user confusion.
+  - Agent prompt: Apply `ai-documents.google_drive.enabled` guard consistently on Google Drive config `show/store/update/destroy/test/sync`, and mirror disabled state in settings UI with clear messaging.
+- [MVP now] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
+  - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
+  - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
+- [Post-MVP] Add hint in AI image processing to ignore hand-written notes.
+  - Verbose detail: Add prompt instruction so incidental handwriting on receipts is deprioritized and does not pollute extracted transaction items.
+- [Post-MVP] Normalize quantities out of item descriptions to improve matching/learning.
+  - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
+- [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.
+  - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
+- [Post-MVP] Add moderation/safety gate for dangerous/off-topic custom prompts.
+  - Verbose detail: Decide whether this should be inline in main prompt or a separate moderation step; block clearly dangerous/off-topic custom instructions.

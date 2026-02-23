@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +104,16 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         $query = AiDocument::query()
             ->where('user_id', $user->id)
             ->with(['aiDocumentFiles', 'receivedMail', 'transaction']);
+
+        if ($request->filled('date_from')) {
+            $dateFrom = Carbon::parse((string) $request->input('date_from'))->startOfDay();
+            $query->where('created_at', '>=', $dateFrom);
+        }
+
+        if ($request->filled('date_to')) {
+            $dateTo = Carbon::parse((string) $request->input('date_to'))->endOfDay();
+            $query->where('created_at', '<=', $dateTo);
+        }
 
         // Filter by status
         if ($request->filled('status')) {

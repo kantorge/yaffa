@@ -15,13 +15,15 @@
       aria-expanded="true"
       id="cardFilters"
     >
-      <li class="list-group-item">
-        <label class="form-label mb-1" for="table_filter_status">
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <label class="form-label col-4" for="table_filter_status">
           {{ __('Status') }}
         </label>
         <select
           id="table_filter_status"
-          class="form-select form-select-sm"
+          class="form-select"
           v-model="filters.status"
           @change="emitFilters"
         >
@@ -31,13 +33,15 @@
           </option>
         </select>
       </li>
-      <li class="list-group-item">
-        <label class="form-label mb-1" for="table_filter_source">
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <label class="form-label col-4" for="table_filter_source">
           {{ __('Source') }}
         </label>
         <select
           id="table_filter_source"
-          class="form-select form-select-sm"
+          class="form-select"
           v-model="filters.source"
           @change="emitFilters"
         >
@@ -50,13 +54,13 @@
       <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
-        <label class="col-6" for="table_filter_search_text">
+        <label class="col-4" for="table_filter_search_text">
           {{ __('Search') }}
         </label>
-        <div class="input-group input-group-sm">
+        <div class="input-group">
           <input
             autocomplete="off"
-            class="form-control form-control-sm"
+            class="form-control"
             id="table_filter_search_text"
             type="text"
             v-model="filters.search"

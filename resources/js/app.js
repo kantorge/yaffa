@@ -11,7 +11,10 @@ const modules = import.meta.glob([
     '!./display_notifications.js'
 ]);
 
-const dataTablesI18nReady = initializeDataTablesI18n(window.YAFFA?.locale, window.YAFFA?.language)
+const dataTablesI18nReady = initializeDataTablesI18n(
+    window.YAFFA?.userSettings?.locale || window.YAFFA?.locale,
+    window.YAFFA?.userSettings?.language || window.YAFFA?.language,
+)
     .catch(() => null);
 
 const loadModule = async (path) => {

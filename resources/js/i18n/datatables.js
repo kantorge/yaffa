@@ -33,7 +33,15 @@ export function resolveDataTablesLocaleCandidates(locale, language) {
     ].filter((candidate, index, list) => candidate && list.indexOf(candidate) === index);
 }
 
-export async function loadDataTablesLanguage(locale = window.YAFFA?.locale, language = window.YAFFA?.language) {
+function getActiveLocale() {
+    return window.YAFFA?.userSettings?.locale || window.YAFFA?.locale || null;
+}
+
+function getActiveLanguage() {
+    return window.YAFFA?.userSettings?.language || window.YAFFA?.language || null;
+}
+
+export async function loadDataTablesLanguage(locale = getActiveLocale(), language = getActiveLanguage()) {
     const candidates = resolveDataTablesLocaleCandidates(locale, language);
 
     for (const candidate of candidates) {
@@ -89,7 +97,7 @@ function applyDataTablesLanguageToExistingTables(languageOptions) {
     tables.draw(false);
 }
 
-export async function initializeDataTablesI18n(locale = window.YAFFA?.locale, language = window.YAFFA?.language) {
+export async function initializeDataTablesI18n(locale = getActiveLocale(), language = getActiveLanguage()) {
     const languageOptions = await loadDataTablesLanguage(locale, language);
 
     if (!languageOptions) {
