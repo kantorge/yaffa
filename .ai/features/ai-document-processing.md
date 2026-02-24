@@ -1496,10 +1496,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 
 **Bugs to fix for MVP:**
 
-- ✅ Clarified: AI documents with multiple files are processed in one processing flow using all files.
-  - Verbose detail: Submission may include multiple photos for one receipt; all files are consumed by one AiDocument pipeline.
-- [MVP now] Clarify/enforce category hierarchy behavior (leaf-category preference vs parent eligibility).
-  - Verbose detail: Decide whether AI should always prefer lower-level categories and whether parent-level categories should be selectable/learnable, potentially with or without a user setting.
 - [MVP now] Improve mail notifications (content quality, CTA clarity, links).
   - Verbose detail: Current notifications are functional but draft-like; improve information hierarchy, calls to action, and relevant links.
   - Agent prompt: Rewrite AI processing success/failure email templates for clearer CTA, reason and next action; include links to review/config pages while keeping existing mailable wiring.
@@ -1518,5 +1514,3 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
 - [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.
   - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
-- [Post-MVP] Add moderation/safety gate for dangerous/off-topic custom prompts.
-  - Verbose detail: Decide whether this should be inline in main prompt or a separate moderation step; block clearly dangerous/off-topic custom instructions.
