@@ -50,6 +50,8 @@ class ProcessAiDocuments extends Command
         $dispatched = 0;
 
         foreach ($documentIds as $documentId) {
+            $document = null;
+
             try {
                 $claimed = AiDocument::query()
                     ->whereKey($documentId)
@@ -72,7 +74,8 @@ class ProcessAiDocuments extends Command
 
                 $this->line("✓ Dispatched processing job for document #{$document->id}");
             } catch (Exception $e) {
-                $this->error("✗ Failed to dispatch job for document #{$document->id}: {$e->getMessage()}");
+                $failedDocumentId = $document->id ?? $documentId;
+                $this->error("✗ Failed to dispatch job for document #{$failedDocumentId}: {$e->getMessage()}");
             }
         }
 
