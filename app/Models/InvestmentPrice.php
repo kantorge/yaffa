@@ -38,7 +38,7 @@ class InvestmentPrice extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var list<string>
      */
     protected $fillable = [
         'date',

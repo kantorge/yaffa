@@ -12,9 +12,9 @@ use App\Models\Transaction;
 use App\Models\TransactionDetailInvestment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class InvestmentService
 {
@@ -27,18 +27,25 @@ class InvestmentService
 
     public function delete(Investment $investment): array
     {
+        if ($investment->transactionDetailInvestment()->exists()) {
+            return [
+                'success' => false,
+                'error' => __('Investment is in use, cannot be deleted'),
+            ];
+        }
+
         $success = false;
         $error = null;
 
         try {
-            $investment->delete();
-            $success = true;
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1451) {
-                $error = __('Investment is in use, cannot be deleted');
-            } else {
-                $error = __('Database error:') . ' ' . $e->errorInfo[2];
+            $success = (bool) $investment->delete();
+
+            if (! $success) {
+                $error = __('Investment could not be deleted');
             }
+        } catch (Throwable $e) {
+            report($e);
+            $error = __('Database error:') . ' ' . $e->getMessage();
         }
 
         return [
@@ -91,7 +98,10 @@ class InvestmentService
         $scheduledTransactions = $investment->transactionsScheduled()
             ->get()
             ->load(['transactionSchedule'])
-            ->filter(fn ($transaction) => $transaction->transactionSchedule->active);
+            ->filter(
+                fn ($transaction): bool => $transaction instanceof Transaction
+                    && ($transaction->transactionSchedule?->active) === true
+            );
 
         // Add all scheduled items to list of transactions
         $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');
@@ -105,7 +115,13 @@ class InvestmentService
             ->map(function (Transaction $transaction) use (&$runningTotal, &$runningSchedule) {
                 // Quantity operator can be 1, -1 or null.
                 // It's the expected behavior to set the quantity to 0 if the operator is null.
-                $quantity = $transaction->transaction_type->quantityMultiplier() * $transaction->config->quantity;
+                $transactionConfig = $transaction->config;
+
+                if (! $transactionConfig instanceof TransactionDetailInvestment) {
+                    $quantity = 0.0;
+                } else {
+                    $quantity = $transaction->transaction_type->quantityMultiplier() * (float) ($transactionConfig->quantity ?? 0);
+                }
 
                 $runningSchedule += $quantity;
                 if (!$transaction->schedule) {
@@ -221,7 +237,7 @@ class InvestmentService
         if ($type === 'transaction') {
             $transaction = $this->getLatestTransactionWithPrice($investment, $onOrBefore);
 
-            return $transaction instanceof Transaction ? $transaction->config->price : null;
+            return $this->extractTransactionPrice($transaction);
         }
 
         // Proceed with combined price
@@ -291,7 +307,7 @@ class InvestmentService
                 return $price->price;
             }
 
-            return $transaction->config->price;
+            return $this->extractTransactionPrice($transaction);
         }
 
         // We have only stored data
@@ -301,10 +317,25 @@ class InvestmentService
 
         // We have only transaction data
         if ($transaction instanceof Transaction) {
-            return $transaction->config->price;
+            return $this->extractTransactionPrice($transaction);
         }
 
         return null;
+    }
+
+    private function extractTransactionPrice(?Transaction $transaction): ?float
+    {
+        if (! $transaction instanceof Transaction) {
+            return null;
+        }
+
+        $transactionConfig = $transaction->config;
+
+        if (! $transactionConfig instanceof TransactionDetailInvestment) {
+            return null;
+        }
+
+        return $transactionConfig->price;
     }
 
     /**

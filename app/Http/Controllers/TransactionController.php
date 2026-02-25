@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Gate;
 use App\Models\AccountEntity;
+use App\Models\Investment;
 use App\Models\TransactionDetailInvestment;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Models\Transaction;
@@ -20,20 +21,21 @@ class TransactionController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 
     public function create(Request $request, string $type): View|RedirectResponse
     {
         /**
-         * @get('/transactions/create/{type}
-         * @name('transaction.create')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/transactions/create/{type}")
+         * @name("transaction.create")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Sanity check for necessary assets: account is needed for any transactions
-        if ($request->user()->accounts()->active()->count() === 0) {
+        if (AccountEntity::query()->where('user_id', $request->user()->id)->accounts()->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.account'),
                 'info',
@@ -46,7 +48,7 @@ class TransactionController extends Controller implements HasMiddleware
 
         // Sanity check: an investment is needed for investment transactions
         // (Note, we don't check that the investment is in the right currency etc. here,)
-        if ($type === 'investment' && $request->user()->investments()->active()->count() === 0) {
+        if ($type === 'investment' && Investment::query()->where('user_id', $request->user()->id)->active()->count() === 0) {
             $this->addMessage(
                 __('transaction.requirement.investment'),
                 'info',
@@ -73,9 +75,9 @@ class TransactionController extends Controller implements HasMiddleware
     public function openTransaction(Transaction $transaction, string $action): View
     {
         /**
-         * @get('/transactions/{transaction}/{action}')
-         * @name('transaction.open')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/transactions/{transaction}/{action}")
+         * @name("transaction.open")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Authorize user for transaction
@@ -128,9 +130,9 @@ class TransactionController extends Controller implements HasMiddleware
     public function destroy(Transaction $transaction): RedirectResponse
     {
         /**
-         * @delete('/transactions/{transaction}')
-         * @name('transactions.destroy')
-         * @middlewares('web', 'auth', 'verified')
+         * @delete("/transactions/{transaction}")
+         * @name("transactions.destroy")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Authorize user for transaction
@@ -148,9 +150,9 @@ class TransactionController extends Controller implements HasMiddleware
     public function skipScheduleInstance(Transaction $transaction): RedirectResponse
     {
         /**
-         * @patch('/transactions/{transaction}/skip')
-         * @name('transactions.skipScheduleInstance')
-         * @middlewares('web', 'auth', 'verified')
+         * @patch("/transactions/{transaction}/skip")
+         * @name("transactions.skipScheduleInstance")
+         * @middlewares("web", "auth", "verified")
          */
         $transaction->transactionSchedule->skipNextInstance();
         self::addSimpleSuccessMessage(__('Transaction schedule instance skipped'));
@@ -161,9 +163,9 @@ class TransactionController extends Controller implements HasMiddleware
     public function createFromDraft(Request $request): View
     {
         /**
-         * @post('/transactions/create-from-draft')
-         * @name('transactions.createFromDraft')
-         * @middlewares('web', 'auth', 'verified')
+         * @post("/transactions/create-from-draft")
+         * @name("transactions.createFromDraft")
+         * @middlewares("web", "auth", "verified")
          */
 
         $transactionData = json_decode($request->input('transaction'), true) ?? [];
@@ -176,7 +178,7 @@ class TransactionController extends Controller implements HasMiddleware
         $transaction->transaction_type = TransactionTypeEnum::tryFrom($transactionData['transaction_type']) ?? ($configType === 'investment' ? TransactionTypeEnum::BUY : TransactionTypeEnum::WITHDRAWAL);
 
         // Ensure that a config relation exists, even if it's empty
-        if (!array_key_exists('config', $transactionData)) {
+        if (! array_key_exists('config', $transactionData)) {
             $transactionData['config'] = [];
         }
         if ($configType === 'investment') {
@@ -185,10 +187,10 @@ class TransactionController extends Controller implements HasMiddleware
             $transaction->setRelation('config', new TransactionDetailStandard($transactionData['config']));
 
             // Try to add relation for account and payee, if they exist
-            if ($transactionData['config']['account_from_id'] ?? null !== null) {
+            if (($transactionData['config']['account_from_id'] ?? null) !== null) {
                 $transaction->config->setRelation('account_from', AccountEntity::find($transactionData['config']['account_from_id']));
             }
-            if ($transactionData['config']['account_to_id'] ?? null !== null) {
+            if (($transactionData['config']['account_to_id'] ?? null) !== null) {
                 $transaction->config->setRelation('account_to', AccountEntity::find($transactionData['config']['account_to_id']));
             }
         }

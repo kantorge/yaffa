@@ -121,7 +121,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     /**
      * The attributes that should be hidden for arrays.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -148,7 +148,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<AccountEntity>
+     * @return HasMany<AccountEntity, $this>
      */
     public function accounts(): HasMany
     {
@@ -156,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<Category>
+     * @return HasMany<Category, $this>
      */
     public function categories(): HasMany
     {
@@ -170,9 +170,12 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
 
     public function baseCurrency(): Currency|null
     {
-        return $this->currencies()
+        /** @var Currency|null $baseCurrency */
+        $baseCurrency = $this->currencies()
             ->where('base', true)
             ->firstOr(fn () => null);
+
+        return $baseCurrency;
     }
 
     public function investmentGroups(): HasMany
@@ -186,7 +189,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<AccountEntity>
+     * @return HasMany<AccountEntity, $this>
      */
     public function payees(): HasMany
     {
@@ -219,7 +222,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<AiProviderConfig>
+     * @return HasMany<AiProviderConfig, $this>
      */
     public function aiProviderConfigs(): HasMany
     {
@@ -227,7 +230,7 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable
     }
 
     /**
-     * @return HasMany<GoogleDriveConfig>
+     * @return HasMany<GoogleDriveConfig, $this>
      */
     public function googleDriveConfigs(): HasMany
     {

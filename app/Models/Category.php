@@ -53,6 +53,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int|null $payees_defaulting_count
  * @property-read Collection<int, AccountEntity> $payeesPreferring
  * @property-read int|null $payees_preferring_count
+ * @property-read \Illuminate\Database\Eloquent\Relations\Pivot|null $pivot
  * @method static Builder<static>|Category childCategory()
  * @method static Builder<static>|Category parentCategory()
  * @method static Builder<static>|Category whereDefaultAggregation($value)
@@ -66,7 +67,7 @@ class Category extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',

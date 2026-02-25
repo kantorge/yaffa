@@ -30,7 +30,6 @@ class CategoryMergeValidSource implements DataAwareRule, ValidationRule
      * Determine if the validation rule passes.
      *
      * @param  mixed  $value
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function passes(string $attribute, $value): bool
     {

@@ -72,8 +72,9 @@ class ReportApiController extends Controller implements HasMiddleware
                 ->whereIn('category_id', $categories->pluck('id'))
                 ->whereHas('transaction', function ($query) use ($request, $accountSelection, $accountEntity) {
                     $query->whereUserId($request->user()->id)
-                        ->byScheduleType('none')
-                        ->byType('standard')
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
                         ->when($accountSelection === 'selected', fn ($query) => $query->whereHasMorph(
                             'config',
                             TransactionDetailStandard::class,
@@ -266,8 +267,9 @@ class ReportApiController extends Controller implements HasMiddleware
                         ->when($month === null, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year]))
                         ->when($year && $month, fn ($query) => $query->whereRaw('YEAR(date) = ?', [$year])
                             ->whereRaw('MONTH(date) = ?', [$month]))
-                        ->byScheduleType('none')
-                        ->byType('standard')
+                        ->where('schedule', false)
+                        ->where('budget', false)
+                        ->where('config_type', 'standard')
                         ->where('transaction_type', '!=', TransactionTypeEnum::TRANSFER);
                 })
                 ->get();
@@ -275,7 +277,9 @@ class ReportApiController extends Controller implements HasMiddleware
             $standardTransactions->each(function ($item) use (&$dataByCategory, $baseCurrency, $allRatesMap) {
                 // Determine the category group. This should be the top level category ideally.
                 // Category ID is mandatory on a database level, but we add an untranlated fallback name for safety in case of data issues
-                $category = $item->category?->parent?->name ?? $item->category?->name ?? 'Error: no category assigned';
+                $category = $item->category->parent
+                    ? $item->category->parent->name
+                    : $item->category->name;
 
                 // Ensure that we have an array element for the category
                 if (!array_key_exists($category, $dataByCategory)) {

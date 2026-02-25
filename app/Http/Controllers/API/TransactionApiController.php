@@ -386,11 +386,9 @@ class TransactionApiController extends Controller implements HasMiddleware
             }
 
             // Extend the amount field in the items
-            if ($transaction->transactionItems) {
-                $transaction->transactionItems->map(function ($item) use ($transaction) {
-                    $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
-                });
-            }
+            $transaction->transactionItems->map(function ($item) use ($transaction) {
+                $item->amount_in_base = $item->amount * $transaction->currencyRateToBase;
+            });
 
             return $transaction;
         });
@@ -777,7 +775,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         if ($validated['action'] !== 'finalize' || empty($validated['ai_document_id'])) {
             Log::debug('Skipping AI document finalization due to missing or invalid action or AI document ID', [
                 'action' => $validated['action'] ?? null,
-                'ai_document_id' => $validated['ai_document_id'] ?? null,
+                'ai_document_id' => $validated['ai_document_id'],
             ]);
             return;
         }
@@ -790,7 +788,7 @@ class TransactionApiController extends Controller implements HasMiddleware
         // Silently return if the AI document is not found
         if (! $aiDocument) {
             Log::debug('AI document not found for finalization', [
-                'ai_document_id' => $validated['ai_document_id'] ?? null,
+                'ai_document_id' => $validated['ai_document_id'],
                 'user_id' => $user->id,
             ]);
             return;

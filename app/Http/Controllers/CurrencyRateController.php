@@ -25,9 +25,7 @@ class CurrencyRateController extends Controller implements HasMiddleware
 
     public static function middleware(): array
     {
-        return [
-            ['auth', 'verified'],
-        ];
+        return ['auth', 'verified'];
     }
 
     /**
@@ -38,9 +36,9 @@ class CurrencyRateController extends Controller implements HasMiddleware
     public function index(Currency $from, Currency $to): View
     {
         /**
-         * @get('/currencyrates/{from}/{to}')
-         * @name('currency-rate.index')
-         * @middlewares('web')
+         * @get("/currencyrates/{from}/{to}")
+         * @name("currency-rate.index")
+         * @middlewares("web")
          */
 
         // Authorize user access to requested currencies

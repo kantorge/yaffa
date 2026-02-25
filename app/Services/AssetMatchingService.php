@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Category;
+use App\Models\CategoryLearning;
+use App\Models\Investment;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
 class AssetMatchingService
 {
@@ -35,6 +37,7 @@ class AssetMatchingService
             ->select('id', 'name', 'alias')
             ->get();
 
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
         $matches = [];
 
         foreach ($accounts as $account) {
@@ -81,6 +84,7 @@ class AssetMatchingService
             ->select('id', 'name', 'alias')
             ->get();
 
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
         $matches = [];
 
         foreach ($payees as $payee) {
@@ -124,9 +128,14 @@ class AssetMatchingService
 
         $investments = $this->user->investments()->get();
 
+        /** @var array<int, array{id: int, name: string, similarity: float}> $matches */
         $matches = [];
 
         foreach ($investments as $investment) {
+            if (! $investment instanceof Investment) {
+                continue;
+            }
+
             // Create array with symbol and ISIN as separate secondary parts
             $secondaryParts = array_filter([
                 $investment->symbol,
@@ -175,10 +184,15 @@ class AssetMatchingService
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->get();
 
+        /** @var array<int, array{id: int, description: string, category_id: int, category_name: string, similarity: float}> $matches */
         $matches = [];
         $normalizedSearch = $this->normalize($description);
 
         foreach ($learningRecords as $learning) {
+            if (! $learning instanceof CategoryLearning) {
+                continue;
+            }
+
             $normalizedItem = $this->normalize($learning->item_description);
 
             $similarity = 0;
@@ -221,7 +235,10 @@ class AssetMatchingService
             return 'No category learning data available.';
         }
 
-        return $learningRecords->map(fn ($learning) => "{$learning->category_id}: {$learning->item_description} ({$learning->usage_count} uses)")->join("\n");
+        return $learningRecords
+            ->filter(fn ($learning): bool => $learning instanceof CategoryLearning)
+            ->map(fn (CategoryLearning $learning): string => "{$learning->category_id}: {$learning->item_description} ({$learning->usage_count} uses)")
+            ->join("\n");
     }
 
     /**
@@ -239,7 +256,9 @@ class AssetMatchingService
             return 'No active categories configured.';
         }
 
-        return $categories->map(fn ($category) => "{$category->id}: {$category->full_name}")->join("\n");
+        return $categories
+            ->map(fn (Category $category): string => "{$category->id}: {$category->full_name}")
+            ->join("\n");
     }
 
     /**

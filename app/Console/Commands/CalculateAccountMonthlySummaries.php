@@ -122,11 +122,9 @@ class CalculateAccountMonthlySummaries extends Command
                     ->dispatch();
             }
 
-            if (! empty($jobs['account_balance-budget'] ?? [])) {
-                Bus::batch($jobs['account_balance-budget'])
-                    ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
-                    ->dispatch();
-            }
+            Bus::batch($jobs['account_balance-budget'])
+                ->name('CalculateAccountMonthlySummariesJob-account_balance-budget-' . $user->id)
+                ->dispatch();
         });
     }
 

@@ -8,6 +8,7 @@ use App\Http\Requests\AccountEntityRequest;
 use App\Http\Requests\MergePayeesRequest;
 use App\Models\Account;
 use App\Models\AccountEntity;
+use App\Models\Category;
 use App\Models\Payee;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -320,10 +321,10 @@ class AccountEntityController extends Controller implements HasMiddleware
         $accountEntity->load(['config', 'categoryPreference.parent']);
 
         // Simplify the category preference structure and pass it as JavaScript variable
-        $categoryPreference = $accountEntity->categoryPreference->map(fn ($item) => [
+        $categoryPreference = $accountEntity->categoryPreference->map(fn (Category $item): array => [
             'id' => $item->id,
             'full_name' => $item->full_name,
-            'preferred' => $item->pivot->preferred,
+            'preferred' => (bool) data_get($item, 'pivot.preferred', false),
         ]);
         JavaScriptFacade::put([
             'categoryPreferences' => $categoryPreference->toArray(),

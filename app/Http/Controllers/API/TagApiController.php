@@ -30,7 +30,7 @@ class TagApiController extends Controller implements HasMiddleware
         $tags = $request->user()
             ->tags()
             ->when($request->missing('withInactive'), function ($query) {
-                $query->active();
+                $query->where('active', true);
             })
             ->select(['id', 'name AS text'])
             ->when($request->get('q'), function ($query) use ($request) {

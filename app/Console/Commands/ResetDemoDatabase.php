@@ -311,7 +311,7 @@ class ResetDemoDatabase extends Command
                     'recommended_category_id' => $firstItem?->category_id ?: null,
                     'match_type' => null,
                     'confidence_score' => null,
-                    'description' => $firstItem?->comment ?? '',
+                    'description' => $firstItem->comment ?? '',
                 ],
             ],
         ];

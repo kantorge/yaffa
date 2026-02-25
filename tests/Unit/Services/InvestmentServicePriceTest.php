@@ -22,6 +22,45 @@ class InvestmentServicePriceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_delete_investment_successfully_when_not_in_use(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = new InvestmentService($registry);
+
+        $result = $service->delete($investment);
+
+        $this->assertTrue($result['success']);
+        $this->assertNull($result['error']);
+        $this->assertDatabaseMissing('investments', ['id' => $investment->id]);
+    }
+
+    public function test_delete_investment_fails_when_in_use(): void
+    {
+        $user = User::factory()->create();
+        $investment = Investment::factory()->for($user)->withUser($user)->create();
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user)->create(), 'config')
+            ->create();
+
+        TransactionDetailInvestment::factory()
+            ->for($investment)
+            ->for($account, 'account')
+            ->create();
+
+        $registry = new InvestmentPriceProviderRegistry();
+        $service = new InvestmentService($registry);
+
+        $result = $service->delete($investment);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame(__('Investment is in use, cannot be deleted'), $result['error']);
+        $this->assertDatabaseHas('investments', ['id' => $investment->id]);
+    }
+
     private function createMockProvider(array $prices = []): InvestmentPriceProvider
     {
         $provider = Mockery::mock(InvestmentPriceProvider::class);

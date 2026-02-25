@@ -10,17 +10,15 @@ class UserController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [
-            ['auth', 'verified'],
-        ];
+        return ['auth', 'verified'];
     }
 
     public function settings(): View
     {
         /**
-         * @get('/user/settings')
-         * @name('user.settings')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/user/settings")
+         * @name("user.settings")
+         * @middlewares("web", "auth", "verified")
          */
 
         JavaScript::put([

@@ -13,7 +13,8 @@ class SearchController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 
@@ -23,9 +24,9 @@ class SearchController extends Controller implements HasMiddleware
     public function search(Request $request): View
     {
         /**
-         * @get('/search')
-         * @name('search')
-         * @middlewares('web')
+         * @get("/search")
+         * @name("search")
+         * @middlewares("web")
          */
         $searchTerm = $request->get('q');
         $results = [];

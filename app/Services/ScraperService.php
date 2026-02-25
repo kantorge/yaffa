@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Spiders\InvestmentPriceScraper;
-use RoachPHP\ItemPipeline\Item;
+use RoachPHP\ItemPipeline\ItemInterface;
 use RoachPHP\Roach;
 use RoachPHP\Spider\Configuration\Overrides;
 
 class ScraperService
 {
     /**
-     * @return array<int, Item>
+     * @return array<int, ItemInterface>
      */
     public function scrape(string $url, string $selector): array
     {

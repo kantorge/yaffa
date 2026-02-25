@@ -5,6 +5,8 @@ namespace App\Listeners;
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Events\TransactionUpdated;
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
 use App\Services\TransactionService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -60,6 +62,10 @@ class ProcessTransactionUpdated implements ShouldQueue
             'config',
         ]);
 
+        if (! $transaction->config instanceof TransactionDetailInvestment) {
+            return;
+        }
+
         // Check if any of the following has changed:
         // date, anything in the config, or anything in the schedule_config
         if (!array_key_exists('date', $changedAttributes) &&
@@ -94,6 +100,10 @@ class ProcessTransactionUpdated implements ShouldQueue
             'config',
         ]);
 
+        if (! $transaction->config instanceof TransactionDetailStandard) {
+            return;
+        }
+
         // Check if the account_from_id has been changed
         if (array_key_exists('config', $changedAttributes)
             && array_key_exists('account_from_id', $changedAttributes['config'])) {
@@ -126,8 +136,7 @@ class ProcessTransactionUpdated implements ShouldQueue
             Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                 self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $transaction->config->account_to_id
             ]);
-        } elseif ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL
-            || $transaction->transaction_type === TransactionTypeEnum::TRANSFER) {
+        } elseif ($transaction->transaction_type === TransactionTypeEnum::WITHDRAWAL) {
             Artisan::call(self::CALCULATE_MONHTLY_SUMMARIES_COMMAND_SIGNATURE, [
                 self::CALCULATE_MONTHLY_SUMMARIES_ACCOUNT_PARAM => $transaction->config->account_from_id
             ]);

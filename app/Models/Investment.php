@@ -62,6 +62,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property-read int|null $transactions_count
  * @property-read Collection<int, Transaction> $transactionsBasic
  * @property array<int, array{date: string, quantity: float, schedule: float}>|null $quantities
+ * @property float|null $current_quantity
+ * @property float|null $latest_price
  * @property-read int|null $transactions_basic_count
  * @property-read Collection<int, Transaction> $transactionsScheduled
  * @property-read int|null $transactions_scheduled_count

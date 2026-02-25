@@ -64,6 +64,19 @@ use Recurr\Transformer\Constraint\BetweenConstraint;
  * @property float|null $cashflow_value
  * @property float|null $currencyRateToBase
  * @property float|null $sum
+ * @property int|null $originalId
+ * @property string|null $transactionGroup
+ * @property int|null $transactionOperator
+ * @property string|null $account_from_name
+ * @property string|null $account_to_name
+ * @property float|null $amount_from
+ * @property float|null $amount_to
+ * @property mixed $tags
+ * @property mixed $categories
+ * @property float|null $quantity
+ * @property float|null $price
+ * @property float|null $running_total
+ * @property bool|null $schedule_first_instance
  * @property-read AiDocument|null $aiDocument
  * @property-read Currency|null $currency
  * @property-read Currency|null $transaction_currency
@@ -364,7 +377,7 @@ class Transaction extends Model
             $newTransaction = $this->replicate();
 
             $newTransaction->originalId = $this->id;
-            $newTransaction->date = $instance->getStart();
+            $newTransaction->date = \Illuminate\Support\Carbon::instance($instance->getStart());
             $newTransaction->transactionGroup = 'forecast';
             $newTransaction->schedule_first_instance = $first;
 

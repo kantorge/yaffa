@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Http\Traits\ScheduleTrait;
+use App\Models\Account;
 use App\Models\AccountEntity;
 use App\Models\AccountMonthlySummary;
 use App\Models\Investment;
@@ -234,7 +235,9 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             'account_entity_id' => $this->accountEntity->id,
             'transaction_type' => 'account_balance',
             'data_type' => 'fact',
-            'amount' => $this->accountEntity->config->opening_balance,
+            'amount' => $this->accountEntity->config instanceof Account
+                ? $this->accountEntity->config->opening_balance
+                : 0,
         ]);
 
         return $results;
@@ -319,7 +322,8 @@ class CalculateAccountMonthlySummary implements ShouldQueue
             // Split the transactions into from and to transactions
             [$transactionsFrom, $transactionsTo] = ($scheduledStandardTransactionInstances[$month] ?? collect())->partition(
                 fn (Transaction $transaction) =>
-                    $transaction->config->account_from_id === $this->accountEntity->id
+                    $transaction->config instanceof TransactionDetailStandard
+                    && $transaction->config->account_from_id === $this->accountEntity->id
             );
 
             $amountFrom = $transactionsFrom->sum('config.amount_from');
@@ -457,6 +461,7 @@ class CalculateAccountMonthlySummary implements ShouldQueue
 
         $results = new Collection();
         $currentTransactionCount = 0;
+        $quantities = collect();
 
         foreach ($period as $month) {
             // Create a Carbon instance of the month

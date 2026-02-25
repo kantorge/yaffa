@@ -94,6 +94,8 @@ class ProcessGoogleDriveConfigJob implements ShouldQueue
                     'google_drive_file_id' => $file['id'],
                 ]);
 
+                /** @var AiDocument $aiDocument */
+
                 // Create AiDocumentFile
                 AiDocumentFile::create([
                     'ai_document_id' => $aiDocument->id,

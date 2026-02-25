@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\CurrencyRate;
+use App\Models\Currency;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
@@ -20,8 +21,13 @@ class CurrencyRateObserver
      */
     public function created(CurrencyRate $currencyRate): void
     {
+        $currencyFrom = $currencyRate->currencyFrom;
+        if (! $currencyFrom instanceof Currency) {
+            return;
+        }
+
         // Invalidate the cache for the monthly rates for this user
-        $this->invalidateMonthlyCurrencyRateCache($currencyRate->currencyFrom->user);
+        $this->invalidateMonthlyCurrencyRateCache($currencyFrom->user);
     }
 
     /**
@@ -29,8 +35,13 @@ class CurrencyRateObserver
      */
     public function updated(CurrencyRate $currencyRate): void
     {
+        $currencyFrom = $currencyRate->currencyFrom;
+        if (! $currencyFrom instanceof Currency) {
+            return;
+        }
+
         // Invalidate the cache for the monthly rates for this user
-        $this->invalidateMonthlyCurrencyRateCache($currencyRate->currencyFrom->user);
+        $this->invalidateMonthlyCurrencyRateCache($currencyFrom->user);
     }
 
     /**
@@ -38,7 +49,12 @@ class CurrencyRateObserver
      */
     public function deleted(CurrencyRate $currencyRate): void
     {
+        $currencyFrom = $currencyRate->currencyFrom;
+        if (! $currencyFrom instanceof Currency) {
+            return;
+        }
+
         // Invalidate the cache for the monthly rates for this user
-        $this->invalidateMonthlyCurrencyRateCache($currencyRate->currencyFrom->user);
+        $this->invalidateMonthlyCurrencyRateCache($currencyFrom->user);
     }
 }

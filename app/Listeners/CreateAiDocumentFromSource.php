@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\DocumentImported;
 use App\Events\EmailReceived;
+use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,6 +32,8 @@ class CreateAiDocumentFromSource implements ShouldQueue
                 'status' => 'ready_for_processing',
                 'received_mail_id' => $receivedMail->id,
             ]);
+
+            /** @var AiDocument $document */
 
             // Store email content as text file
             $emailContent = $this->formatEmailContent($receivedMail);
@@ -60,6 +63,8 @@ class CreateAiDocumentFromSource implements ShouldQueue
     {
         try {
             $importedDocument = $event->aiDocument;
+
+            /** @var AiDocument $importedDocument */
 
             // Document already created with AI document status
             Log::info("AI document {$importedDocument->id} created from Google Drive import");

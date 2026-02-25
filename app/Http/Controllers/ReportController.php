@@ -18,16 +18,17 @@ class ReportController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 
     public function cashFlow(Request $request): View
     {
         /**
-         * @get('/reports/cashflow')
-         * @name('reports.cashflow')
-         * @middlewares('web', 'auth', 'verified')
+         * @get("/reports/cashflow")
+         * @name("reports.cashflow")
+         * @middlewares("web", "auth", "verified")
          */
 
         // Check if forecast is required

@@ -15,7 +15,8 @@ class InvestmentPriceController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            ['auth', 'verified'],
+            'auth',
+            'verified',
         ];
     }
 

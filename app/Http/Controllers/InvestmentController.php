@@ -59,6 +59,10 @@ class InvestmentController extends Controller implements HasMiddleware
             ->get();
 
         $investments->map(function ($investment) {
+            if (! $investment instanceof Investment) {
+                return $investment;
+            }
+
             $investment['price'] = $this->investmentService->getLatestPrice($investment);
             $investment['quantity'] = $this->investmentService->getCurrentQuantity($investment);
 
@@ -155,7 +159,7 @@ class InvestmentController extends Controller implements HasMiddleware
          * @name("investment.store")
          * @middlewares("web", "auth", "verified")
          */
-        $investment = Investment::make($request->validated());
+        $investment = new Investment($request->validated());
         $investment->user()->associate($request->user());
         $investment->save();
 
@@ -225,7 +229,8 @@ class InvestmentController extends Controller implements HasMiddleware
                 'transactionSchedule',
             ])
             ->get()
-            ->filter(fn ($transaction) => $transaction->transactionSchedule && $transaction->transactionSchedule->active);
+            ->filter(fn ($transaction): bool => $transaction instanceof \App\Models\Transaction
+                && ($transaction->transactionSchedule?->active) === true);
 
         // Add all scheduled instances to list of transactions
         $scheduleInstances = $this->getScheduleInstances($scheduledTransactions, 'start');

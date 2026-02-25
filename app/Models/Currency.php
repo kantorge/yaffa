@@ -255,7 +255,7 @@ class Currency extends Model
             ->first();
 
         $this->retrieveCurrencyRateToBase(
-            $rate?->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
+            $rate->date ?? Carbon::parse('30 days ago') // Fallback to last 30 days
         );
     }
 

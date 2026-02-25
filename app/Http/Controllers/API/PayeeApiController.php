@@ -11,7 +11,6 @@ use App\Models\AccountEntity;
 use App\Models\Category;
 use App\Models\Payee;
 use App\Services\PayeeCategoryStatsService;
-use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -167,7 +166,7 @@ class PayeeApiController extends Controller implements HasMiddleware
             return response()->noContent(Response::HTTP_BAD_REQUEST);
         }
 
-        $accountEntity->config->category_suggestion_dismissed = Carbon::now();
+        $accountEntity->config->category_suggestion_dismissed = now();
         $accountEntity->config->save();
 
         return response()->noContent(Response::HTTP_OK);

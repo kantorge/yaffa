@@ -49,6 +49,10 @@ class CurrencyController extends Controller implements HasMiddleware
             ->get();
 
         $currencies->map(function ($currency) {
+            if (! $currency instanceof Currency) {
+                return $currency;
+            }
+
             $currency['latest_rate'] = $currency->rate();
 
             return $currency;
@@ -79,6 +83,7 @@ class CurrencyController extends Controller implements HasMiddleware
          * @name("currency.store")
          * @middlewares("web", "auth", "verified")
          */
+        /** @var Currency $currency */
         $currency = $request->user()->currencies()->create($request->validated());
 
         // The first currency created will be automatically set as the base currency
@@ -184,8 +189,8 @@ class CurrencyController extends Controller implements HasMiddleware
             self::addSimpleSuccessMessage(__('Base currency changed'));
 
             // Get all non-base, updatable currencies of the user, and dispatch the currency rate retrieval job
-            $currencies = $currency->user
-                ->currencies()
+            $currencies = Currency::query()
+                ->where('user_id', $currency->user_id)
                 ->notBase()
                 ->autoUpdate()
                 ->get();

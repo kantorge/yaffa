@@ -64,6 +64,7 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $transactions_standard_from_count
  * @property-read Collection<int, Transaction> $transactionsStandardTo
  * @property-read int|null $transactions_standard_to_count
+ * @property int|null $transactions_count
  * @method static Builder<static>|AccountEntity whereAlias($value)
  * @mixin Eloquent
  */
@@ -74,7 +75,7 @@ class AccountEntity extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',

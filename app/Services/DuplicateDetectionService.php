@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Transaction;
+use App\Models\TransactionDetailInvestment;
+use App\Models\TransactionDetailStandard;
 use App\Models\User;
 
 class DuplicateDetectionService
@@ -14,17 +16,13 @@ class DuplicateDetectionService
     /**
      * Find potential duplicate transactions based on extracted transaction data
      *
-     * @param  array{date: string, amount?: float, transaction_type?: string, account_from_id?: int, account_to_id?: int, investment_id?: int}  $extractedData
+     * @param  array{date: string, amount?: float, transaction_type?: string, config_type?: string, account_from_id?: int, account_to_id?: int, investment_id?: int, account_id?: int, payee_id?: int}  $extractedData
      * @return array<int, array{id: int, similarity: float}>
      */
     public function findDuplicates(array $extractedData): array
     {
         $dateWindowDays = config('ai-documents.duplicate_detection.date_window_days', 3);
         $amountTolerancePercent = config('ai-documents.duplicate_detection.amount_tolerance_percent', 10);
-
-        if (! isset($extractedData['date'])) {
-            return [];
-        }
 
         $date = \Carbon\Carbon::parse($extractedData['date']);
         $startDate = $date->clone()->subDays($dateWindowDays);
@@ -44,6 +42,10 @@ class DuplicateDetectionService
         $matches = [];
 
         foreach ($potentialMatches as $transaction) {
+            if (! $transaction instanceof Transaction) {
+                continue;
+            }
+
             $similarity = $this->calculateSimilarity($extractedData, $transaction, $amountTolerancePercent);
 
             if ($similarity > config('ai-documents.duplicate_detection.similarity_threshold', 0.5)) {
@@ -95,7 +97,7 @@ class DuplicateDetectionService
         $assetMatches = $this->countAssetMatches($extractedData, $transaction);
         $score += min($assetMatches, 2);
 
-        return $maxScore > 0 ? $score / $maxScore : 0;
+        return $score / $maxScore;
     }
 
     /**
@@ -108,13 +110,17 @@ class DuplicateDetectionService
         if ($transaction->isStandard()) {
             $config = $transaction->config;
 
+            if (! $config instanceof TransactionDetailStandard) {
+                return $matches;
+            }
+
             // Check account_from
-            if (isset($extractedData['account_from_id']) && $config?->account_from_id === $extractedData['account_from_id']) {
+            if (isset($extractedData['account_from_id']) && $config->account_from_id === $extractedData['account_from_id']) {
                 $matches++;
             }
 
             // Check account_to
-            if (isset($extractedData['account_to_id']) && $config?->account_to_id === $extractedData['account_to_id']) {
+            if (isset($extractedData['account_to_id']) && $config->account_to_id === $extractedData['account_to_id']) {
                 $matches++;
             }
 
@@ -131,13 +137,17 @@ class DuplicateDetectionService
         } elseif ($transaction->isInvestment()) {
             $config = $transaction->config;
 
+            if (! $config instanceof TransactionDetailInvestment) {
+                return $matches;
+            }
+
             // Check investment
-            if (isset($extractedData['investment_id']) && $config?->investment_id === $extractedData['investment_id']) {
+            if (isset($extractedData['investment_id']) && $config->investment_id === $extractedData['investment_id']) {
                 $matches++;
             }
 
             // Check account
-            if (isset($extractedData['account_id']) && $config?->account_id === $extractedData['account_id']) {
+            if (isset($extractedData['account_id']) && $config->account_id === $extractedData['account_id']) {
                 $matches++;
             }
         }

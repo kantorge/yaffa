@@ -241,7 +241,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         }
 
         $processedData = $aiDocument->processed_transaction_data;
-        $extractedData = is_array($processedData) ? ($processedData['raw'] ?? []) : [];
+        $extractedData = $processedData['raw'] ?? [];
 
         if (! is_array($extractedData) || ! array_key_exists('date', $extractedData)) {
             return response()->json([

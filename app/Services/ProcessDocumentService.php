@@ -7,12 +7,12 @@ use App\Exceptions\OcrUnavailableException;
 use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
 use App\Models\AccountEntity;
+use App\Models\CategoryLearning;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use JsonException;
-use Carbon\Carbon;
 
 class ProcessDocumentService
 {
@@ -126,7 +126,7 @@ class ProcessDocumentService
 
             // Step 5: Store processed data and update document
             $document->processed_transaction_data = $transactionData;
-            $document->processed_at = Carbon::now();
+            $document->processed_at = now();
             $document->status = 'ready_for_review';
             $document->save();
 
@@ -522,6 +522,8 @@ EOF;
             ->whereHas('category', fn ($q) => $q->where('active', 1))
             ->orderByDesc('usage_count')
             ->first();
+
+        /** @var CategoryLearning|null $learning */
 
         if ($learning) {
             return [

@@ -14,6 +14,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class InvestmentApiController extends Controller implements HasMiddleware
@@ -177,8 +178,11 @@ class InvestmentApiController extends Controller implements HasMiddleware
         $positions = [];
 
         // Loop through investments and get related transactions
-        $investments->map(fn ($investment) => $this->investmentService->enrichInvestmentWithQuantityHistory($investment))
-            ->each(function ($investment) use (&$positions, $request) {
+        $investments->map(fn ($investment) => $investment instanceof Investment
+            ? $this->investmentService->enrichInvestmentWithQuantityHistory($investment)
+            : null)
+            ->filter(fn ($investment) => $investment instanceof Investment)
+            ->each(function (Investment $investment) use (&$positions, $request) {
                 $start = true;
                 $period = [];
 
@@ -199,7 +203,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                         continue;
                     }
 
-                    if (!$start && ($item['schedule'] === 0 || $item['schedule'] === 0.0)) {
+                    if (! $start && $item['schedule'] === 0.0) {
                         $period['end'] = $item['date'];
                         $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined', new Carbon($item['date']));
                         $positions[] = $period;
@@ -214,7 +218,7 @@ class InvestmentApiController extends Controller implements HasMiddleware
                 }
 
                 // If period start was set but the end date is missing, then set it to the app config end date
-                if (($period['start'] ?? null) !== null && ($period['end'] ?? null) === null) {
+                if (Arr::has($period, 'start') && ! Arr::has($period, 'end')) {
                     $period['end'] = $request->user()->end_date;
                     $period['last_price'] = $this->investmentService->getLatestPrice($investment, 'combined');
                     $positions[] = $period;
