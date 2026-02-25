@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CategoryLearning;
 use App\Models\User;
 
 class CategoryLearningService
@@ -30,48 +31,6 @@ class CategoryLearningService
         return $normalized;
     }
 
-
-    /**
-     * Get learning data for AI prompt context
-     *
-     * @return array<array{description: string, category_id: int, usage_count: int}>
-     */
-    public function getLearningData(): array
-    {
-        if (! $this->user) {
-            return [];
-        }
-
-        return $this->user->categoryLearning()
-            ->orderByDesc('usage_count')
-            ->limit(50)
-            ->get(['item_description', 'category_id', 'usage_count'])
-            ->map(fn ($learning) => [
-                'description' => $learning->item_description,
-                'category_id' => $learning->category_id,
-                'usage_count' => $learning->usage_count,
-            ])
-            ->toArray();
-    }
-
-    /**
-     * Get category learning data formatted for AI prompt
-     */
-    public function getLearningDataForPrompt(User $user): string
-    {
-        $learnings = $user->categoryLearning()
-            ->select('item_description', 'category_id')
-            ->orderByDesc('usage_count')
-            ->limit(50)
-            ->get();
-
-        if ($learnings->isEmpty()) {
-            return 'No category learning data available.';
-        }
-
-        return $learnings->map(fn ($learning) => "{$learning->item_description} → Category ID: {$learning->category_id}")->join("\n");
-    }
-
     /**
      * Record a category selection for learning
      *
@@ -86,7 +45,7 @@ class CategoryLearningService
 
         $normalizedDescription = $this->normalize($description);
 
-        $learning = \App\Models\CategoryLearning::query()
+        $learning = CategoryLearning::query()
             ->where('user_id', $this->user->id)
             ->where('item_description', $normalizedDescription)
             ->first();
@@ -103,7 +62,7 @@ class CategoryLearningService
             }
         } else {
             // Create new learning record
-            \App\Models\CategoryLearning::create([
+            CategoryLearning::create([
                 'user_id' => $this->user->id,
                 'item_description' => $normalizedDescription,
                 'category_id' => $categoryId,

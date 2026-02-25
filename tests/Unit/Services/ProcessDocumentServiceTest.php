@@ -2,13 +2,22 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Models\Account;
+use App\Models\AccountEntity;
 use App\Models\AiProviderConfig;
 use App\Models\Category;
+use App\Models\Payee;
+use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\AssetMatchingService;
 use App\Services\CategoryLearningService;
+use App\Services\PayeeCategoryStatsService;
 use App\Services\ProcessDocumentService;
 use App\Services\TextExtractionService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,15 +37,17 @@ class ProcessDocumentServiceTest extends TestCase
             $this->createMock(TextExtractionService::class),
             $this->createMock(AssetMatchingService::class),
             $this->createMock(CategoryLearningService::class),
+            $this->createMock(PayeeCategoryStatsService::class),
             $category->id
         ) extends ProcessDocumentService {
             public function __construct(
                 TextExtractionService $textExtractor,
                 AssetMatchingService $assetMatchingService,
                 CategoryLearningService $categoryLearningService,
+                PayeeCategoryStatsService $payeeCategoryStatsService,
                 private int $categoryId
             ) {
-                parent::__construct($textExtractor, $assetMatchingService, $categoryLearningService);
+                parent::__construct($textExtractor, $assetMatchingService, $categoryLearningService, $payeeCategoryStatsService);
             }
 
             public function matchCategories(array $items, User $user, AiProviderConfig $config): array
@@ -66,5 +77,95 @@ class ProcessDocumentServiceTest extends TestCase
         $this->assertSame('ai', $result[0]['match_type']);
         $this->assertSame(0.4, $result[0]['confidence_score']);
         $this->assertSame($category->id, $result[0]['recommended_category_id']);
+    }
+
+    public function test_single_payee_category_shortcut_assigns_whole_amount_to_one_item(): void
+    {
+        $user = User::factory()->create();
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(Payee::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'payee',
+                'active' => true,
+                'name' => 'Coffee Shop',
+            ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(Account::factory()->withUser($user), 'config')
+            ->create([
+                'config_type' => 'account',
+                'active' => true,
+            ]);
+
+        $category = Category::factory()->for($user)->create(['active' => 1]);
+
+        $this->createTransactionWithCategory($user, $account->id, $payee->id, $category->id, now()->subMonths(1));
+        $this->createTransactionWithCategory($user, $account->id, $payee->id, $category->id, now()->subMonths(2));
+
+        $service = new class (
+            $this->createMock(TextExtractionService::class),
+            $this->createMock(AssetMatchingService::class),
+            $this->createMock(CategoryLearningService::class),
+            new PayeeCategoryStatsService()
+        ) extends ProcessDocumentService {
+            public function resolveShortcut(User $user, string $transactionType, ?int $payeeId, array $rawData): ?array
+            {
+                return $this->resolvePayeeCategoryShortcutItem($user, $transactionType, $payeeId, $rawData);
+            }
+
+            protected function callAi(AiProviderConfig $config, string $prompt): string
+            {
+                return '[]';
+            }
+        };
+
+        $result = $service->resolveShortcut($user, 'withdrawal', $payee->id, [
+            'amount' => 42.5,
+            'payee' => 'Coffee Shop',
+        ]);
+
+        $this->assertNotNull($result);
+        $this->assertSame(42.5, $result['amount']);
+        $this->assertSame('Coffee Shop', $result['description']);
+        $this->assertSame($category->id, $result['recommended_category_id']);
+        $this->assertSame('exact', $result['match_type']);
+        $this->assertSame(1.0, $result['confidence_score']);
+    }
+
+    private function createTransactionWithCategory(
+        User $user,
+        int $accountId,
+        int $payeeId,
+        int $categoryId,
+        Carbon $date
+    ): void {
+        $detail = TransactionDetailStandard::query()->create([
+            'account_from_id' => $accountId,
+            'account_to_id' => $payeeId,
+            'amount_from' => 10,
+            'amount_to' => 10,
+        ]);
+
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'date' => $date,
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'comment' => null,
+            'config_type' => 'standard',
+            'config_id' => $detail->id,
+        ]);
+
+        TransactionItem::query()->create([
+            'transaction_id' => $transaction->id,
+            'category_id' => $categoryId,
+            'amount' => 10,
+            'comment' => 'Test item',
+        ]);
     }
 }

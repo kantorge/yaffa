@@ -66,7 +66,7 @@ class TransactionService
             'config.accountTo.config',
         ]);
 
-        /** @var TransactionDetailStandard $config */
+        /** @var TransactionDetailStandard|null $config */
         $config = $this->getStandardConfig($transaction);
 
         if ($config === null) {
@@ -91,7 +91,7 @@ class TransactionService
             'config.account.config',
         ]);
 
-        /** @var TransactionDetailInvestment $config */
+        /** @var TransactionDetailInvestment|null $config */
         $config = $this->getInvestmentConfig($transaction);
 
         if ($config === null) {

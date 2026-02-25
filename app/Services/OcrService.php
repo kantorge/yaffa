@@ -220,7 +220,7 @@ class OcrService
             $resizedPath = $this->imagePreprocessingService->resizeForVisionApi($filePath);
 
             // Build vision prompt
-            $prompt = 'Please extract all text from this image. Return ONLY the extracted text, nothing else.';
+            $prompt = 'Please extract all text from this image. Return ONLY the extracted text, nothing else. Ignore any non-text content or hand-writing.';
 
             // Call Vision AI provider using Prism with Image value object
             $response = \Prism\Prism\Facades\Prism::text()

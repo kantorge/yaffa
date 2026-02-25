@@ -159,7 +159,6 @@ class GoogleDriveService
         $client = new Client();
         $client->setAuthConfig($credentials);
         $client->addScope(Drive::DRIVE); // Full Drive access (needed for delete operations)
-        $client->setSubject(null); // No domain-wide delegation needed
 
         return $client;
     }

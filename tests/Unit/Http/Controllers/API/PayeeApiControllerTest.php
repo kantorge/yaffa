@@ -2,10 +2,16 @@
 
 namespace Tests\Unit\Http\Controllers\API;
 
+use App\Enums\TransactionType as TransactionTypeEnum;
+use App\Models\Transaction;
+use App\Models\TransactionDetailStandard;
+use App\Models\TransactionItem;
 use App\Models\AccountEntity;
 use App\Models\AccountGroup;
+use App\Models\Category;
 use App\Models\Currency;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Tests\TestCase;
@@ -103,5 +109,82 @@ class PayeeApiControllerTest extends TestCase
         // A valid transaction type should pass (use 'withdrawal' as in account tests)
         $response = $this->actingAs($user)->getJson('/api/assets/payee?account_entity_id=1&transaction_type=withdrawal');
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function test_get_payee_default_category_suggestion_returns_dominant_category_for_payee(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $payee = AccountEntity::factory()
+            ->for($user)
+            ->for(\App\Models\Payee::factory()->withUser($user)->create(['category_id' => null]), 'config')
+            ->create([
+                'active' => true,
+                'config_type' => 'payee',
+                'name' => 'Dominant Payee',
+            ]);
+
+        $account = AccountEntity::factory()
+            ->for($user)
+            ->for(\App\Models\Account::factory()->withUser($user), 'config')
+            ->create([
+                'active' => true,
+                'config_type' => 'account',
+            ]);
+
+        $dominantCategory = Category::factory()->for($user)->create(['active' => true]);
+        $otherCategory = Category::factory()->for($user)->create(['active' => true]);
+
+        foreach (range(1, 6) as $index) {
+            $this->createTransactionWithCategory($user, $account->id, $payee->id, $dominantCategory->id, now()->subDays($index));
+        }
+
+        foreach (range(1, 2) as $index) {
+            $this->createTransactionWithCategory($user, $account->id, $payee->id, $otherCategory->id, now()->subDays(10 + $index));
+        }
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/assets/get_default_category_suggestion');
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonPath('payee_id', $payee->id);
+        $response->assertJsonPath('max_category_id', $dominantCategory->id);
+        $response->assertJsonPath('sum', 8);
+        $response->assertJsonPath('max', 6);
+    }
+
+    private function createTransactionWithCategory(
+        User $user,
+        int $accountId,
+        int $payeeId,
+        int $categoryId,
+        Carbon $date
+    ): void {
+        $detail = TransactionDetailStandard::query()->create([
+            'account_from_id' => $accountId,
+            'account_to_id' => $payeeId,
+            'amount_from' => 10,
+            'amount_to' => 10,
+        ]);
+
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'date' => $date,
+            'transaction_type' => TransactionTypeEnum::WITHDRAWAL->value,
+            'reconciled' => false,
+            'schedule' => false,
+            'budget' => false,
+            'comment' => null,
+            'config_type' => 'standard',
+            'config_id' => $detail->id,
+        ]);
+
+        TransactionItem::query()->create([
+            'transaction_id' => $transaction->id,
+            'category_id' => $categoryId,
+            'amount' => 10,
+            'comment' => 'Test item',
+        ]);
     }
 }

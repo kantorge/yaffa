@@ -172,8 +172,8 @@ class CategoryApiController extends Controller implements HasMiddleware
     /**
      * Store a newly created category in storage.
      *
-     * @post('/api/assets/category')
-     * @middlewares('api', 'auth:sanctum')
+     * @post("/api/assets/category")
+     * @middlewares("api", "auth:sanctum")
      */
     public function store(CategoryRequest $request): JsonResponse
     {

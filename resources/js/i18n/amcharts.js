@@ -1,8 +1,13 @@
-const amChartsLocaleLoaders = {
-    en_US: () => import('@amcharts/amcharts4/lang/en_US'),
-    fr_FR: () => import('@amcharts/amcharts4/lang/fr_FR'),
-    hu_HU: () => import('@amcharts/amcharts4/lang/hu_HU'),
-    pl_PL: () => import('@amcharts/amcharts4/lang/pl_PL'),
+import en_US from '@amcharts/amcharts4/lang/en_US';
+import fr_FR from '@amcharts/amcharts4/lang/fr_FR';
+import hu_HU from '@amcharts/amcharts4/lang/hu_HU';
+import pl_PL from '@amcharts/amcharts4/lang/pl_PL';
+
+const amChartsLocales = {
+    en_US,
+    fr_FR,
+    hu_HU,
+    pl_PL,
 };
 
 const amChartsLanguageFallbackLocales = {
@@ -37,17 +42,12 @@ export async function loadAmChartsLocale(locale, language) {
     const candidates = resolveAmChartsLocaleCandidates(locale, language);
 
     for (const candidate of candidates) {
-        const loader = amChartsLocaleLoaders[candidate];
-        if (!loader) {
+        const localeObject = amChartsLocales[candidate];
+        if (!localeObject) {
             continue;
         }
 
-        try {
-            const localeModule = await loader();
-            return localeModule?.default || localeModule;
-        } catch (_error) {
-            continue;
-        }
+        return localeObject;
     }
 
     return null;

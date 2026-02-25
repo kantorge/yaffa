@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Category;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +17,6 @@ class CategoryService
         try {
             $category->delete();
             $success = true;
-        } catch (ModelNotFoundException $e) {
-            $error = __('Category not found');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] === 1451) {
                 $error = __('Category is in use, cannot be deleted');

@@ -216,9 +216,9 @@ Introduce AI-powered document processing to convert user-submitted documents (te
       - Test coverage: GoogleDriveConfigApiControllerTest.php (31 tests including sync endpoint)
   - `PayeeStatsApiController` (✅ implemented)
     - `GET /api/ai/payees/{id}/category-stats` - Category usage stats for a payee
-      - Query params: `months` (default 6)
-      - Response: `{"payee_id": 123, "months": 6, "categories": [{"category_id": 7, "count": 14, "percent": 0.7}]}`
-      - Stats basis: transaction items linked to transactions for this payee within the time window; percent is based on total item count. (Handle if the same category appears multiple times in one transaction.)
+      - Route model binding uses `AccountEntity` (payee) with ownership validation (`config_type = payee`, `user_id` match)
+      - Response: `{"payee_id": 123, "payee_name": "Coffee Shop", "categories": [{"category_id": 7, "usage_count": 14}], "period_months": 6}`
+      - Stats basis: standard transaction items linked to the payee within a 6-month window; categories are returned sorted by usage_count desc.
   - **ReceivedMail controllers/services:** (✅ implemented)
     - `ReceivedMailController` is removed from user-facing routes (no direct view/edit/delete). (✅ implemented)
     - `ReceivedMailService` is removed becoming obsolete. (✅ implemented)
@@ -263,6 +263,10 @@ Introduce AI-powered document processing to convert user-submitted documents (te
     - Saves/updates learning records on transaction save
     - Retrieves learning data for AI prompt context
     - Increments usage_count on match
+  - `PayeeCategoryStatsService` (✅ implemented)
+    - Shared aggregation service used by `PayeeStatsApiController`, `PayeeApiController`, and `ProcessDocumentService`
+    - Computes per-payee category usage for a 6-month window
+    - Provides dominant-category data for default payee suggestion and AI document shortcut logic
   - `GoogleDriveService` (✅ implemented)
     - Methods:
       - `testConnection(array $credentials, string $folderId): array` - Tests connection, returns file count and delete permission status (✅ implemented)
@@ -919,10 +923,13 @@ A few notes on the statuses
     - Multiple duplicate warnings
     - Soft warning display
     - User can proceed despite warning
-  - `PayeeCategoryStatsTest`
-    - Returns top categories for a payee
-    - Honors `months` query parameter
-    - Returns empty categories array when no history exists
+  - `PayeeStatsApiControllerTest` (✅ implemented)
+    - Returns aggregated categories for a payee within last 6 months
+    - Returns not found for non-owned payee
+  - `PayeeApiControllerTest` (✅ updated)
+    - Default payee suggestion path uses shared stats data and dominant category selection
+  - `ProcessDocumentServiceTest` (✅ updated)
+    - Single-category payee shortcut assigns full amount to one recommended category item
 
 - **Frontend Component Tests:**
   - `DocumentUploadForm.spec.js`
@@ -1090,7 +1097,7 @@ The system will use multi-step prompting similar to existing email processing:
    - Returns: `[{item_index, recommended_category_id, confidence_score}]` for all items in single AI call
 
 **IMPORTANT:** line item matching is only needed for withdrawals and deposits, not for transfers or investment transactions.
-After payee matching, there should be a backend call to determine the most used categories for that payee during the past 6 months (via `GET /api/ai/payees/{id}/category-stats`). If only one category is present in the stats for that period, category matching is skipped and that category is assigned to the entire amount as one line item.
+After payee matching, backend processing resolves category usage from shared payee-stats logic (the same logic powering `GET /api/ai/payees/{id}/category-stats`). If only one category is present in the 6-month stats, category matching is skipped and that category is assigned to the entire amount as one line item.
 
 All prompts require JSON responses with strict schemas to ensure validation.
 
@@ -1300,7 +1307,12 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - ✅ **matchCategoriesForItems()** - Batch category matching orchestrator combining exact + AI matches (✅ Implemented)
   - ✅ **matchCategoriesBatch()** - AI-powered batch category matching with confidence scoring (✅ Implemented)
   - ✅ **buildCategoryMatchingPrompt()** - Batch prompt with learning patterns + active categories (✅ Implemented)
+  - ✅ **resolvePayeeCategoryShortcutItem()** - Uses 6-month payee category stats; if exactly one category exists, skips item-level AI matching and assigns full amount as one item (✅ Implemented)
   - ✅ Status management: processing → ready_for_review (success) or processing_failed (error)
+- ✅ Payee category stats architecture updated (✅ Implemented)
+  - ✅ Shared `PayeeCategoryStatsService` introduced and reused by API + processing flows
+  - ✅ `PayeeStatsApiController` ownership/binding corrected to `AccountEntity` payees
+  - ✅ `PayeeApiController::getPayeeDefaultSuggestion()` now uses the same shared aggregation logic
 - ✅ AssetMatchingService: Type compatibility fixes + category learning support (✅ Enhanced)
   - ✅ calculateMatches() signature changed from array to iterable for Collection compatibility
   - ✅ matchInvestments() method working properly
@@ -1370,6 +1382,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - DuplicateDetectionService with threshold logic (✅ implemented)
 - CategoryLearningService for item normalization (✅ implemented)
 - PayeeStatsApiController for category stats (✅ implemented)
+- PayeeCategoryStatsService shared by PayeeStatsApiController, PayeeApiController, and ProcessDocumentService (✅ implemented)
 - AiDocumentPolicy with authorization checks (✅ implemented)
 - Comprehensive test coverage for all services and controllers (✅ 50+ tests passing)
 
@@ -1493,6 +1506,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: If user overrides AI-selected account/payee/investment, provide quick path to learn/prefer that choice for future similar documents.
 - [Post-MVP tech debt] Revisit AI documents DataTable column width behavior after async refresh.
   - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
+- [Post-MVP] Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
 
 **Bugs to fix for MVP:**
 
@@ -1508,8 +1522,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - [MVP now] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
-- [Post-MVP] Add hint in AI image processing to ignore hand-written notes.
-  - Verbose detail: Add prompt instruction so incidental handwriting on receipts is deprioritized and does not pollute extracted transaction items.
 - [Post-MVP] Normalize quantities out of item descriptions to improve matching/learning.
   - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
 - [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.

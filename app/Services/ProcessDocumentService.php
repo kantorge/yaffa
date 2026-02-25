@@ -6,6 +6,7 @@ use App\Enums\TransactionType as TransactionTypeEnum;
 use App\Exceptions\OcrUnavailableException;
 use App\Models\AiDocument;
 use App\Models\AiProviderConfig;
+use App\Models\AccountEntity;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,8 @@ class ProcessDocumentService
     public function __construct(
         private TextExtractionService $textExtractor,
         private AssetMatchingService $assetMatchingService,
-        private CategoryLearningService $categoryLearningService
+        private CategoryLearningService $categoryLearningService,
+        private PayeeCategoryStatsService $payeeCategoryStatsService
     ) {
     }
 
@@ -64,6 +66,7 @@ class ProcessDocumentService
             $accountFromId = null;
             $accountToId = null;
             $investmentId = null;
+            $matchedPayeeId = null;
 
             if (in_array($transactionType, TransactionTypeEnum::investmentTypeValues())) {
                 // Investment transaction: match account and investment
@@ -88,16 +91,25 @@ class ProcessDocumentService
                 }
                 if (!empty($rawData['payee'])) {
                     $accountToId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $matchedPayeeId = $accountToId;
                 }
             } elseif ($transactionType === 'deposit') {
                 // Deposit: match payee (from) and account (to)
                 if (!empty($rawData['payee'])) {
                     $accountFromId = $this->matchPayee($config, $user, $rawData['payee']);
+                    $matchedPayeeId = $accountFromId;
                 }
                 if (!empty($rawData['account'])) {
                     $accountToId = $this->matchAccount($config, $user, $rawData['account']);
                 }
             }
+
+            $payeeCategoryShortcutItem = $this->resolvePayeeCategoryShortcutItem(
+                $user,
+                $transactionType,
+                $matchedPayeeId,
+                $rawData
+            );
 
             // Step 4: Build final transaction data structure
             $transactionData = $this->buildTransactionData(
@@ -107,6 +119,7 @@ class ProcessDocumentService
                 $accountFromId,
                 $accountToId,
                 $investmentId,
+                $payeeCategoryShortcutItem,
                 $user,
                 $config
             );
@@ -384,6 +397,7 @@ EOF;
         ?int $accountFromId,
         ?int $accountToId,
         ?int $investmentId,
+        ?array $payeeCategoryShortcutItem,
         User $user,
         AiProviderConfig $config
     ): array {
@@ -422,6 +436,12 @@ EOF;
                 'account_to_id' => $accountToId,
             ];
 
+            if ($payeeCategoryShortcutItem !== null) {
+                $data['transaction_items'] = [$payeeCategoryShortcutItem];
+
+                return $data;
+            }
+
         }
 
         // Build transaction_items array with category learning (batch AI matching)
@@ -430,6 +450,57 @@ EOF;
         }
 
         return $data;
+    }
+
+    /**
+     * Resolve a single category item based on payee category stats.
+     *
+     * If exactly one category is used by this payee in the last 6 months,
+     * category matching can be skipped and the whole amount is assigned to it.
+     *
+     * @return array{amount: float, description: string, recommended_category_id: int, match_type: string, confidence_score: float}|null
+     */
+    protected function resolvePayeeCategoryShortcutItem(
+        User $user,
+        string $transactionType,
+        ?int $payeeId,
+        array $rawData
+    ): ?array {
+        if (! in_array($transactionType, ['withdrawal', 'deposit'], true) || $payeeId === null) {
+            return null;
+        }
+
+        /** @var AccountEntity|null $payee */
+        $payee = $user->payees()->active()->find($payeeId);
+
+        if (! $payee) {
+            return null;
+        }
+
+        $categoryStats = $this->payeeCategoryStatsService->getCategoryStatsForPayee($user, $payee, 6);
+
+        if ($categoryStats->count() !== 1) {
+            return null;
+        }
+
+        $categoryId = (int) $categoryStats->first()['category_id'];
+        $amount = floatval($rawData['amount'] ?? 0);
+        $description = $rawData['transaction_items'][0]['description'] ?? ($rawData['payee'] ?? '');
+
+        Log::info('Single-category payee shortcut applied', [
+            'user_id' => $user->id,
+            'payee_id' => $payee->id,
+            'category_id' => $categoryId,
+            'transaction_type' => $transactionType,
+        ]);
+
+        return [
+            'amount' => $amount,
+            'description' => (string) $description,
+            'recommended_category_id' => $categoryId,
+            'match_type' => 'exact',
+            'confidence_score' => 1.0,
+        ];
     }
 
     /**
@@ -443,10 +514,7 @@ EOF;
             return null;
         }
 
-        // Create service instance with user context
-        $learningService = new CategoryLearningService($user);
-
-        $normalized = $learningService->normalize($description);
+        $normalized = $this->categoryLearningService->normalize($description);
 
         // Try to find exact match in learning data with active category
         $learning = $user->categoryLearning()
@@ -570,7 +638,7 @@ EOF;
         $prompt = $this->buildCategoryMatchingPrompt(
             $items,
             $learningContext,
-            $matchingService->formatCategoriesForPrompt($user)
+            $this->assetMatchingService->formatCategoriesForPrompt($user)
         );
 
         $response = $this->callAi($config, $prompt);
@@ -650,7 +718,7 @@ EOF;
                     $learningLines[] = "  - Recommended Category {$record['recommended_category_id']}: {$record['description']} (similarity: {$record['similarity']})";
                 }
             }
-            $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions):\n" . implode("\n", $learningLines) . "\n\n";
+            $learningSection = "CATEGORY LEARNING PATTERNS (past transaction descriptions with categories confirmed by the user):\n" . implode("\n", $learningLines) . "\n\n";
         }
 
         // Format items list

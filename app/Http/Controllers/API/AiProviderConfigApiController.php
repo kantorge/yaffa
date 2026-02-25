@@ -173,7 +173,7 @@ class AiProviderConfigApiController extends Controller implements HasMiddleware
                 ->withPrompt('Hello, this is a test. Reply with "OK".')
                 ->asText();
 
-            if ($response && $response->text) {
+            if ($response->text) {
                 return response()->json([
                     'message' => __('Connection successful'),
                 ], Response::HTTP_OK);
