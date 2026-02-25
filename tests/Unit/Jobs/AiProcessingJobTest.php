@@ -7,6 +7,7 @@ use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Services\ProcessDocumentService;
 use Exception;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Mockery;
@@ -15,6 +16,17 @@ use Tests\TestCase;
 class AiProcessingJobTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_job_is_unique_per_document(): void
+    {
+        /** @var AiDocument $document */
+        $document = AiDocument::factory()->create();
+
+        $job = new AiProcessingJob($document);
+
+        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertSame((string) $document->id, $job->uniqueId());
+    }
 
     public function test_dispatches_failure_event_with_serializable_error_fields(): void
     {

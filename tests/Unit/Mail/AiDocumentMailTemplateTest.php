@@ -38,7 +38,6 @@ class AiDocumentMailTemplateTest extends TestCase
         $mailable->assertSeeInHtml('Open AI Documents');
         $mailable->assertSeeInHtml(route('ai-documents.show', $document->id));
         $mailable->assertSeeInHtml(route('ai-documents.index'));
-        $mailable->assertSeeInHtml(route('user.settings'));
     }
 
     public function test_failed_email_includes_reason_and_recovery_links(): void

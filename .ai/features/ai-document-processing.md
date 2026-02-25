@@ -1512,6 +1512,3 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - [MVP now] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
-- [MVP now] Enforce one processing job instance per AiDocument in backend job layer.
-  - Verbose detail: UI/API already reduce duplicate attempts, but backend currently has no strict enforcement; this should be guaranteed at job level.
-  - Agent prompt: Implement backend single-run guarantee for `AiProcessingJob` per `ai_document_id` (queue uniqueness or overlap lock), prevent duplicate dispatch race between upload/reprocess and `app:process-ai-documents`, and add focused tests.

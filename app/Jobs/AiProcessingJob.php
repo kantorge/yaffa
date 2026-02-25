@@ -8,13 +8,14 @@ use App\Models\AiDocument;
 use App\Services\ProcessDocumentService;
 use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Log;
 
-class AiProcessingJob implements ShouldQueue
+class AiProcessingJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -25,10 +26,20 @@ class AiProcessingJob implements ShouldQueue
 
     public int $timeout = 300;
 
+    public int $uniqueFor = 1800;
+
     public function __construct(
         public AiDocument $document
     ) {
         $this->onQueue('default');
+    }
+
+    /**
+     * Get the unique ID for the job lock.
+     */
+    public function uniqueId(): string
+    {
+        return (string) $this->document->id;
     }
 
     /**

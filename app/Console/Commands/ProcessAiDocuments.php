@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\AiDocumentStatus;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use Illuminate\Console\Command;
@@ -31,25 +32,40 @@ class ProcessAiDocuments extends Command
     {
         $limit = (int) $this->option('limit');
 
-        // Get documents ready for processing
-        $documents = AiDocument::query()
-            ->where('status', 'ready_for_processing')
+        // Get candidate documents ready for processing
+        $documentIds = AiDocument::query()
+            ->where('status', AiDocumentStatus::ReadyForProcessing->value)
             ->orderBy('created_at', 'asc')
             ->limit($limit)
-            ->get();
+            ->pluck('id');
 
-        if ($documents->isEmpty()) {
+        if ($documentIds->isEmpty()) {
             $this->info('No documents ready for processing');
 
             return self::SUCCESS;
         }
 
-        $this->info("Found {$documents->count()} document(s) ready for processing");
+        $this->info("Found {$documentIds->count()} document(s) ready for processing");
 
         $dispatched = 0;
 
-        foreach ($documents as $document) {
+        foreach ($documentIds as $documentId) {
             try {
+                $claimed = AiDocument::query()
+                    ->whereKey($documentId)
+                    ->where('status', AiDocumentStatus::ReadyForProcessing->value)
+                    ->update(['status' => AiDocumentStatus::Processing->value]);
+
+                if ($claimed === 0) {
+                    continue;
+                }
+
+                $document = AiDocument::query()->find($documentId);
+
+                if (! $document) {
+                    continue;
+                }
+
                 // Dispatch processing job
                 AiProcessingJob::dispatch($document);
                 $dispatched++;
