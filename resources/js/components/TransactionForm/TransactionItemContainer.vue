@@ -62,9 +62,7 @@
           :id="item.id"
           :amount="item.amount"
           :category_id="item.category_id ? Number(item.category_id) : null"
-          :category_full_name="
-            item.category?.full_name || item.category_full_name || null
-          "
+          :category_full_name="item.category_full_name || null"
           :recommended_category_id="item.recommended_category_id || null"
           :recommended_category_full_name="
             item.recommended_category_full_name || null

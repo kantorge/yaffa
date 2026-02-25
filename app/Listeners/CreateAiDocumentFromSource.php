@@ -13,10 +13,6 @@ use Log;
 
 class CreateAiDocumentFromSource implements ShouldQueue
 {
-    public function __construct()
-    {
-    }
-
     /**
      * Handle EmailReceived event
      */
@@ -133,19 +129,4 @@ class CreateAiDocumentFromSource implements ShouldQueue
         return mb_trim($html);
     }
 
-    /**
-     * Register event listeners
-     */
-    public function subscribe($events)
-    {
-        $events->listen(
-            EmailReceived::class,
-            [self::class, 'handleEmailReceived']
-        );
-
-        $events->listen(
-            DocumentImported::class,
-            [self::class, 'handleDocumentImported']
-        );
-    }
 }

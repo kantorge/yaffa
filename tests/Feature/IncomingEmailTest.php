@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Events\EmailReceived;
+use App\Events\DocumentImported;
 use App\Listeners\CreateAiDocumentFromSource;
 use App\Mail\TestMail;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
 use App\Models\ReceivedMail;
 use App\Models\User;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -87,6 +89,30 @@ class IncomingEmailTest extends TestCase
         Event::assertDispatched(
             EmailReceived::class,
             fn (EmailReceived $event) => $event->receivedMail->user_id === $user->id
+        );
+    }
+
+    public function test_ai_document_listener_is_discovered_for_supported_events(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $receivedMail = ReceivedMail::factory()->for($user)->create();
+        $aiDocument = AiDocument::factory()->for($user)->create();
+
+        EmailReceived::dispatch($receivedMail);
+        DocumentImported::dispatch($aiDocument);
+
+        Queue::assertPushed(
+            CallQueuedListener::class,
+            fn (CallQueuedListener $job) => $job->class === CreateAiDocumentFromSource::class
+                && $job->method === 'handleEmailReceived'
+        );
+
+        Queue::assertPushed(
+            CallQueuedListener::class,
+            fn (CallQueuedListener $job) => $job->class === CreateAiDocumentFromSource::class
+                && $job->method === 'handleDocumentImported'
         );
     }
 

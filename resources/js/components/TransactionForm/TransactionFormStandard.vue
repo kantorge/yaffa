@@ -1036,29 +1036,7 @@
           // optional comment are saved. The 'description' field is preserved for category learning.
           if (this.transaction.transaction_items?.length > 0) {
             this.transaction.transaction_items
-              .map((item) => {
-                item.id = this.itemCounter++;
-                item.amount = Number(item.amount);
-                item.learnRecommendation = true; // Default to learning enabled
-
-                // Handle saved transaction properties (from database)
-                item.category_full_name =
-                  item.category?.full_name || item.category_full_name || null;
-
-                // Preserve AI recommendation metadata if present (from draft)
-                if (item.recommended_category_id) {
-                  item.recommended_category_id = item.recommended_category_id;
-                  item.recommended_category_full_name =
-                    item.recommended_category_full_name || null;
-                }
-
-                // Preserve AI-extracted description and metadata (ephemeral, for UI only)
-                item.description = item.description || null;
-                item.match_type = item.match_type || null;
-                item.confidence_score = item.confidence_score || null;
-
-                return item;
-              })
+              .map((item) => this.normalizeTransactionItem(item))
               .forEach((item) => this.form.items.push(item));
           }
 
@@ -1139,6 +1117,28 @@
         }
 
         return null;
+      },
+
+      normalizeTransactionItem(rawItem) {
+        const item = { ...rawItem };
+
+        item.id = this.itemCounter++;
+        item.amount = Number(item.amount);
+        item.learnRecommendation = true;
+
+        item.category_full_name =
+          item.category_full_name || item.category?.full_name || null;
+
+        item.recommended_category_full_name =
+          item.recommended_category_full_name ||
+          item.recommended_category?.full_name ||
+          null;
+
+        item.description = item.description || null;
+        item.match_type = item.match_type || null;
+        item.confidence_score = item.confidence_score || null;
+
+        return item;
       },
 
       changeTransactionType: function (event) {

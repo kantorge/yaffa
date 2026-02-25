@@ -391,6 +391,14 @@
           (this.match_type === 'ai' &&
             this.confidence_score >= this.confidenceThreshold));
 
+      const canPreloadCategory =
+        this.category_id && this.category_full_name && !this.suggestionRemoved;
+
+      const canPreloadRecommendation =
+        shouldAutoLoadRecommendation &&
+        this.recommended_category_full_name &&
+        !this.suggestionRemoved;
+
       const preloadCategory = (category) => {
         const option = new Option(category.full_name, category.id, true, true);
         elementCategory.append(option).trigger('change');
@@ -404,49 +412,22 @@
         });
       };
 
-      if (this.category_id && this.category_full_name) {
+      if (canPreloadCategory) {
         preloadCategory({
           id: this.category_id,
           full_name: this.category_full_name,
         });
-      } else if (shouldAutoLoadRecommendation) {
-        if (this.recommended_category_full_name) {
-          preloadCategory({
-            id: this.recommended_category_id,
-            full_name: this.recommended_category_full_name,
-          });
-
-          // Track if we're using the recommendation and emit the category_id
-          this.isRecommendationAccepted = true;
-          this.categoryIdData = this.recommended_category_id;
-          // Emit the category_id so parent component tracks it
-          this.$emit('update:category_id', this.recommended_category_id);
-        } else if (this.recommended_category_id) {
-          $.getJSON(
-            `/api/assets/category/${this.recommended_category_id}`,
-            (data) => {
-              if (data && data.id && data.full_name) {
-                preloadCategory({
-                  id: data.id,
-                  full_name: data.full_name,
-                });
-
-                this.isRecommendationAccepted = true;
-                this.categoryIdData = data.id;
-                this.$emit('update:category_id', data.id);
-              }
-            },
-          );
-        }
-      } else if (this.category_id) {
-        $.getJSON(`/api/assets/category/${this.category_id}`, (data) => {
-          if (data && data.id && data.full_name) {
-            preloadCategory({
-              id: data.id,
-              full_name: data.full_name,
-            });
-          }
+      } else if (canPreloadRecommendation) {
+        preloadCategory({
+          id: this.recommended_category_id,
+          full_name: this.recommended_category_full_name,
         });
+
+        // Track if we're using the recommendation and emit the category_id
+        this.isRecommendationAccepted = true;
+        this.categoryIdData = this.recommended_category_id;
+        // Emit the category_id so parent component tracks it
+        this.$emit('update:category_id', this.recommended_category_id);
       }
 
       // Add select2 functionality to tag
