@@ -1461,9 +1461,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: Manually uploaded documents are currently identified by the first uploaded filename, which may not be user-friendly. Add a simple optional text field in DB + form so users can name documents explicitly.
 - [Post-MVP] Add camera capture support in upload flow for mobile receipt capture.
   - Verbose detail: Add a camera-based upload option (same or similar modal as upload), likely using HTML5 `getUserMedia`, so mobile users can quickly capture receipts and submit as normal files.
-- [MVP now] Enforce one processing job instance per AiDocument in backend job layer.
-  - Verbose detail: UI/API already reduce duplicate attempts, but backend currently has no strict enforcement; this should be guaranteed at job level.
-  - Agent prompt: Implement backend single-run guarantee for `AiProcessingJob` per `ai_document_id` (queue uniqueness or overlap lock), prevent duplicate dispatch race between upload/reprocess and `app:process-ai-documents`, and add focused tests.
 - [Post-MVP] Store and display Google Drive folder name in addition to folder ID.
   - Verbose detail: Folder ID is sufficient for API calls but not user-friendly; store/display folder name too (optionally editable), fetched automatically when creating/updating config.
 - [Post-MVP] Add payee/account-level custom prompt support and optional prompt-learning UX.
@@ -1480,9 +1477,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: Add “create payee” action when extraction returns unidentified payee, likely aligned with the modal-based payee management direction in PR 371.
 - [Post-MVP] Add category-learning management UI (list, delete/archive).
   - Verbose detail: Once mappings are learned, users currently cannot manage them; add list + cleanup controls in category management.
-- [MVP now] Validate AI response against strict JSON schema in `extractTransactionData`.
-  - Verbose detail: Missing schema validation can cause unhandled failures on malformed AI responses; add robust validation and controlled retry/fail behavior (without infinite loops).
-  - Agent prompt: Add strict post-AI schema validator in `ProcessDocumentService::extractTransactionData()` for standard/investment payloads, fail with typed exception on missing/invalid keys, and add unit tests for malformed AI JSON and invalid schema.
 - [Post-MVP] Handle duplicate item descriptions with contextual learning (amount/position aware).
   - Verbose detail: Current learning key is mostly description-only, which can fail when same item text appears with different categories; consider amount/position/context-sensitive learning.
 - [Post-MVP] Improve receipt discount handling and optional warning heuristics.
@@ -1495,9 +1489,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: Category descriptions could enrich prompt semantics (“Utilities = electricity/water/gas”). Also consider category type flags (any/expense-preferred/expense-only/income-preferred/income-only) to improve AI and manual validation.
 - [Post-MVP] Make item-level editing foldable in finalization UI.
   - Verbose detail: Allow collapsing each item editor to show just category + amount summary for faster navigation on long receipts.
-- [MVP now] Improve failed-processing UX and allow prompt editing directly from AiDocument view.
-  - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing.
-  - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
 - [Post-MVP] Explore vector search for AI cost/performance optimization.
   - Verbose detail: Evaluate replacing or reducing local similarity passes with vector retrieval to lower prompt/API cost and improve context quality.
 - [Post-MVP] Consider storing AI conversation history per document for observability.
@@ -1507,13 +1498,20 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - [Post-MVP tech debt] Revisit AI documents DataTable column width behavior after async refresh.
   - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
 - [Post-MVP] Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
+- [Post-MVP] Normalize quantities out of item descriptions to improve matching/learning.
+  - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
+- [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.
+  - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
+- [Post-MVP] Improve failed-processing UX and allow prompt editing directly from AiDocument view.
+  - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing. This could be implemented together with the verbose processing history and AI conversation logging features for better transparency and control.
+  - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
+
 - [MVP now] Enforce Google Drive feature flag on config endpoints and align UI behavior when disabled.
   - Verbose detail: Prevent creating configs when Drive import is globally disabled and provide clear UI feedback/hiding to avoid user confusion.
   - Agent prompt: Apply `ai-documents.google_drive.enabled` guard consistently on Google Drive config `show/store/update/destroy/test/sync`, and mirror disabled state in settings UI with clear messaging.
 - [MVP now] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.
-- [Post-MVP] Normalize quantities out of item descriptions to improve matching/learning.
-  - Verbose detail: Example: convert `3x Coca-Cola` to description `Coca-Cola` (+ quantity if needed) so category learning remains stable across variable quantities.
-- [Post-MVP] Add overlap hint for multi-image receipts in extraction prompt.
-  - Verbose detail: In multi-image uploads, instruct AI to detect overlapping content/pages so repeated lines are not double-counted.
+- [MVP now] Enforce one processing job instance per AiDocument in backend job layer.
+  - Verbose detail: UI/API already reduce duplicate attempts, but backend currently has no strict enforcement; this should be guaranteed at job level.
+  - Agent prompt: Implement backend single-run guarantee for `AiProcessingJob` per `ai_document_id` (queue uniqueness or overlap lock), prevent duplicate dispatch race between upload/reprocess and `app:process-ai-documents`, and add focused tests.

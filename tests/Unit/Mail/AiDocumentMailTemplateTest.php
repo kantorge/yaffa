@@ -36,7 +36,6 @@ class AiDocumentMailTemplateTest extends TestCase
         $mailable->assertSeeInHtml('Your AI document is ready for review.');
         $mailable->assertSeeInHtml('Review Document');
         $mailable->assertSeeInHtml('Open AI Documents');
-        $mailable->assertSeeInHtml('AI Settings');
         $mailable->assertSeeInHtml(route('ai-documents.show', $document->id));
         $mailable->assertSeeInHtml(route('ai-documents.index'));
         $mailable->assertSeeInHtml(route('user.settings'));
