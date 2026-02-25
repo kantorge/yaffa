@@ -26,7 +26,7 @@ class AiDocumentProcessed extends Mailable
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), config('mail.from.name')),
-            subject: __('Document Processed - Ready for Review'),
+            subject: __('mail.ai_document_processed.subject'),
         );
     }
 

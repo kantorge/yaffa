@@ -18,6 +18,7 @@ class SendAiDocumentProcessedNotification implements ShouldQueue
     {
         try {
             Mail::to($event->document->user->email)
+                ->locale($event->document->user->language)
                 ->send(new AiDocumentProcessedMail($event->document));
 
             Log::info("Success notification sent for document {$event->document->id}");

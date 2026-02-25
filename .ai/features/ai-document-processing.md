@@ -1199,7 +1199,7 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - Navigation menu entry removed
 - Vue route loader removed from app.js
 - Breadcrumbs removed
-- Mail templates updated (TransactionCreatedFromEmail simplified, TransactionErrorFromEmail removed)
+- Previous emails and related templates removed (TransactionCreatedFromEmail, TransactionErrorFromEmail)
 
 **Event Architecture (✅ Completed):**
 
@@ -1507,15 +1507,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
 - [Post-MVP tech debt] Revisit AI documents DataTable column width behavior after async refresh.
   - Verbose detail: Current width recalculation in the AI documents list can behave inconsistently depending on rendered content and timing. Keep current implementation for MVP; later evaluate a more deterministic layout strategy (for example fixed column sizing/colgroup, stronger redraw hooks, or table-specific CSS constraints) so the title column remains dominant while date and linked-transaction columns stay compact.
 - [Post-MVP] Email notifications are added to the end of the queue when processing AI documents. It might make sense to introduce various queues for different types of jobs, and parallel workers for these.
-
-**Bugs to fix for MVP:**
-
-- [MVP now] Improve mail notifications (content quality, CTA clarity, links).
-  - Verbose detail: Current notifications are functional but draft-like; improve information hierarchy, calls to action, and relevant links.
-  - Agent prompt: Rewrite AI processing success/failure email templates for clearer CTA, reason and next action; include links to review/config pages while keeping existing mailable wiring.
-
-**Candidates to be added to MVP but not yet implemented:**
-
 - [MVP now] Enforce Google Drive feature flag on config endpoints and align UI behavior when disabled.
   - Verbose detail: Prevent creating configs when Drive import is globally disabled and provide clear UI feedback/hiding to avoid user confusion.
   - Agent prompt: Apply `ai-documents.google_drive.enabled` guard consistently on Google Drive config `show/store/update/destroy/test/sync`, and mirror disabled state in settings UI with clear messaging.

@@ -831,6 +831,9 @@ RULES:
 * For receipts with multiple line items, extract each item separately into the transaction_items array
 * For investment transactions, omit the "transaction_items" array (as it is not part of the sample schema anyway)
 * Date format must be yyyy-mm-dd, use today's date if not specified
+* You must extract at most one transaction from the document. If there are multiple transactions mentioned, extract only the first one that appears, that can be identified as a transaction qualifying the above schemas.
+* If you see multiple transactions, DON'T combine them into one transaction, and DON'T convert the output JSON to an array of transactions.
+* If you cannot find any transaction data in the document, return the standard JSON with all keys set to null (except transaction_type which can be set to "withdrawal" as default, and transaction_items as an empty array).
 
 {$customInstructions}
 

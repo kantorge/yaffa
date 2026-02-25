@@ -35,7 +35,7 @@ class AiDocumentProcessingFailed extends Mailable
     {
         return new Envelope(
             from: new Address(config('mail.from.address'), config('mail.from.name')),
-            subject: __('Document Processing Failed'),
+            subject: __('mail.ai_document_processing_failed.subject'),
         );
     }
 
