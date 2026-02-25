@@ -554,4 +554,100 @@ class GoogleDriveConfigApiControllerTest extends TestCase
             )
         );
     }
+
+    // ===== FEATURE FLAG DISABLED =====
+
+    public function test_show_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson('/api/google-drive/config');
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
+
+    public function test_store_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/google-drive/config', [
+                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+                'folder_id' => 'test-folder-id',
+                'delete_after_import' => false,
+                'enabled' => true,
+            ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
+
+    public function test_update_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->patchJson("/api/google-drive/config/{$config->id}", [
+                'folder_id' => 'updated-folder-id',
+            ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
+
+    public function test_destroy_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->deleteJson("/api/google-drive/config/{$config->id}");
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
+
+    public function test_test_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/google-drive/test', [
+                'service_account_json' => self::VALID_SERVICE_ACCOUNT_JSON,
+                'folder_id' => 'test-folder-id',
+            ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
+
+    public function test_sync_returns_forbidden_when_google_drive_feature_disabled(): void
+    {
+        config(['ai-documents.google_drive.enabled' => false]);
+
+        $config = GoogleDriveConfig::factory()->create(['user_id' => $this->user->id, 'enabled' => true]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/google-drive/sync/{$config->id}");
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'message' => __('Google Drive integration is disabled in configuration'),
+        ]);
+    }
 }

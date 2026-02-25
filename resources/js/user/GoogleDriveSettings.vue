@@ -24,7 +24,15 @@
         </div>
       </div>
       <div class="card-body" v-if="!sandbox_mode">
-        <div v-if="!hasConfig && !showForm" class="text-center py-2">
+        <div v-if="!googleDriveEnabled" class="alert alert-warning mb-0">
+          {{
+            __(
+              'Google Drive import is disabled by system configuration. Contact your administrator to enable this feature.',
+            )
+          }}
+        </div>
+
+        <div v-else-if="!hasConfig && !showForm" class="text-center py-2">
           <p class="mb-3">{{ __('No Google Drive configuration yet.') }}</p>
           <button
             type="button"
@@ -404,8 +412,14 @@
       sandbox_mode: window.YAFFA.config.sandbox_mode,
     }),
     computed: {
+      googleDriveEnabled() {
+        return (
+          window.YAFFA?.config?.ai_documents?.google_drive?.enabled ?? false
+        );
+      },
       canTest() {
         return (
+          this.googleDriveEnabled &&
           this.form.folder_id &&
           (this.form.service_account_json || this.hasConfig)
         );
@@ -434,6 +448,10 @@
       },
     },
     mounted() {
+      if (!this.googleDriveEnabled) {
+        return;
+      }
+
       this.loadConfig();
 
       // Initialize tooltips
@@ -511,6 +529,13 @@
         this.showServiceAccountJson = !this.showServiceAccountJson;
       },
       onSubmit() {
+        if (!this.googleDriveEnabled) {
+          toastHelpers.showErrorToast(
+            __('Google Drive import is disabled by system configuration.'),
+          );
+          return;
+        }
+
         let _vue = this;
         this.form.busy = true;
         this.testResult = null;
@@ -560,6 +585,13 @@
           });
       },
       testConnection() {
+        if (!this.googleDriveEnabled) {
+          toastHelpers.showErrorToast(
+            __('Google Drive import is disabled by system configuration.'),
+          );
+          return;
+        }
+
         this.testingConnection = true;
         this.testResult = null;
 
@@ -594,6 +626,13 @@
           });
       },
       triggerSync() {
+        if (!this.googleDriveEnabled) {
+          toastHelpers.showErrorToast(
+            __('Google Drive import is disabled by system configuration.'),
+          );
+          return;
+        }
+
         if (!this.configId) {
           return;
         }
@@ -617,6 +656,13 @@
           });
       },
       deleteConfig() {
+        if (!this.googleDriveEnabled) {
+          toastHelpers.showErrorToast(
+            __('Google Drive import is disabled by system configuration.'),
+          );
+          return;
+        }
+
         Swal.fire({
           animation: false,
           text: this.__('Are you sure you want to delete this configuration?'),

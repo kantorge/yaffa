@@ -473,4 +473,24 @@ class GoogleDriveSettingsTest extends DuskTestCase
                 ->assertSee('Test error message');
         });
     }
+
+    public function test_google_drive_feature_disabled_shows_warning_and_hides_actions(): void
+    {
+        $this->setConfig('ai-documents.google_drive.enabled', false);
+
+        $user = $this->createTestUser();
+
+        $this->browse(function (Browser $browser) use ($user) {
+            $browser->loginAs($user);
+            $this->visitSettings($browser)
+                ->assertSee('Google Drive import is disabled by system configuration.')
+                ->assertMissing('@button-add-google-drive')
+                ->assertMissing('@button-save-google-drive')
+                ->assertMissing('@button-test-google-drive')
+                ->assertMissing('@button-sync-google-drive')
+                ->assertMissing('@button-delete-google-drive');
+        });
+
+        $this->setConfig('ai-documents.google_drive.enabled', true);
+    }
 }

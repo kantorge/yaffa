@@ -1506,9 +1506,6 @@ All prompts require JSON responses with strict schemas to ensure validation.
   - Verbose detail: On processing failure, UI should clearly show error context and let user adjust custom prompt before reprocessing. This could be implemented together with the verbose processing history and AI conversation logging features for better transparency and control.
   - Agent prompt: In `AiDocumentViewer`, show actionable failure reason when status is `processing_failed`, allow inline edit/save of `custom_prompt`, and support reprocess flow without full page refresh.
 
-- [MVP now] Enforce Google Drive feature flag on config endpoints and align UI behavior when disabled.
-  - Verbose detail: Prevent creating configs when Drive import is globally disabled and provide clear UI feedback/hiding to avoid user confusion.
-  - Agent prompt: Apply `ai-documents.google_drive.enabled` guard consistently on Google Drive config `show/store/update/destroy/test/sync`, and mirror disabled state in settings UI with clear messaging.
 - [MVP now] Add scanned-PDF fallback to OCR when extracted PDF text is empty.
   - Verbose detail: Scanned PDFs currently fail due to empty text extraction; add fallback to OCR path (PDF/image extraction strategy) to reduce user friction.
   - Agent prompt: Enhance `TextExtractionService` so PDF extraction falls back to OCR when parsed text is empty (or below threshold), while preserving existing image OCR paths and adding tests.

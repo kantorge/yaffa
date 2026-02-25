@@ -21,6 +21,11 @@ class JavaScriptVariablesComposer
                 'config' => [
                     // This type of restriction is implemented primarily on server-side, but the UI can also adapt in some cases
                     'sandbox_mode' => config('yaffa.sandbox_mode'),
+                    'ai_documents' => [
+                        'google_drive' => [
+                            'enabled' => config('ai-documents.google_drive.enabled'),
+                        ],
+                    ],
                     // Transaction types for frontend usage
                     'transactionTypes' => TransactionType::all(),
                     // Date presets for date range pickers
