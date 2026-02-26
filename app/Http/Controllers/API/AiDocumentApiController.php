@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAiDocumentRequest;
 use App\Jobs\AiProcessingJob;
 use App\Models\AiDocument;
 use App\Models\AiDocumentFile;
+use App\Services\DuplicateDetectionService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -231,7 +232,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
      *
      * @throws AuthorizationException
      */
-    public function checkDuplicates(AiDocument $aiDocument): JsonResponse
+    public function checkDuplicates(AiDocument $aiDocument, DuplicateDetectionService $duplicateService): JsonResponse
     {
         Gate::authorize('view', $aiDocument);
 
@@ -252,8 +253,7 @@ class AiDocumentApiController extends Controller implements HasMiddleware
         /** @var \App\Models\User $user */
         $user = $aiDocument->user;
 
-        $duplicateService = new \App\Services\DuplicateDetectionService($user);
-        $duplicates = $duplicateService->findDuplicates($extractedData);
+        $duplicates = $duplicateService->findDuplicates($user, $extractedData);
 
         // Load full transaction details for frontend
         $transactionIds = array_column($duplicates, 'id');

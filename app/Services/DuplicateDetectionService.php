@@ -9,17 +9,13 @@ use App\Models\User;
 
 class DuplicateDetectionService
 {
-    public function __construct(private User $user)
-    {
-    }
-
     /**
      * Find potential duplicate transactions based on extracted transaction data
      *
      * @param  array{date: string, amount?: float, transaction_type?: string, config_type?: string, account_from_id?: int, account_to_id?: int, investment_id?: int, account_id?: int, payee_id?: int}  $extractedData
      * @return array<int, array{id: int, similarity: float}>
      */
-    public function findDuplicates(array $extractedData): array
+    public function findDuplicates(User $user, array $extractedData): array
     {
         $dateWindowDays = config('ai-documents.duplicate_detection.date_window_days', 3);
         $amountTolerancePercent = config('ai-documents.duplicate_detection.amount_tolerance_percent', 10);
@@ -29,7 +25,7 @@ class DuplicateDetectionService
         $endDate = $date->clone()->addDays($dateWindowDays);
 
         // Base query
-        $query = $this->user->transactions()
+        $query = $user->transactions()
             ->whereBetween('date', [$startDate, $endDate]);
 
         // Filter by transaction type if provided
